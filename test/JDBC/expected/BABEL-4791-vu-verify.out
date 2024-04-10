@@ -9,6 +9,54 @@ int
 ~~END~~
 
 
+select 1 where CAST('cantáis' AS text) like CAST('Cá%' AS text) collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('cantáis' AS ntext) like CAST('Cá%' AS ntext) collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('cantáis' AS varchar) like CAST('Cá%' AS varchar) collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('cantáis' AS nvarchar) like CAST('Cá%' AS nvarchar) collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('cantáis' AS char) like 'Cá%' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('cantáis' AS nchar) like 'Cá%' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 select 1 where 'shaEpéD' like '%Æ%e%' collate Latin1_General_CI_AI;
 GO
 ~~START~~
@@ -35,6 +83,54 @@ int
 
 
 select 1 where 'shaEpüD' collate Latin1_General_CI_AI like '%Æ%ú%';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS text) collate Latin1_General_CI_AI like CAST('%Æ%ú%' AS text);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS ntext) collate Latin1_General_CI_AI like CAST('%Æ%ú%' AS ntext);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS varchar) collate Latin1_General_CI_AI like CAST('%Æ%ú%' AS varchar);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS nvarchar) collate Latin1_General_CI_AI like CAST('%Æ%ú%' AS nvarchar);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS char) collate Latin1_General_CI_AI like '%Æ%ú%';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS nchar) collate Latin1_General_CI_AI like '%Æ%ú%';
 GO
 ~~START~~
 int
@@ -75,20 +171,67 @@ int
 ~~END~~
 
 
+select 1 where CAST('BleȘȘing' AS text) collate Latin1_General_CI_AI like CAST('%ŝ%nĜ' AS text) collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS ntext) collate Latin1_General_CI_AI like CAST('%ŝ%nĜ' AS ntext) collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS varchar) collate Latin1_General_CI_AI like CAST('%ŝ%nĜ' AS varchar) collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS nvarchar) collate Latin1_General_CI_AI like CAST('%ŝ%nĜ' AS nvarchar) collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS char) collate Latin1_General_CI_AI like '%ŝ%nĜ' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS nchar) collate Latin1_General_CI_AI like '%ŝ%nĜ' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 -- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
 -- Simple matches
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'cafe';
 GO
 ~~START~~
-nvarchar
-café
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'jalapeno';
 GO
 ~~START~~
-nvarchar
-jalapeño
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
 ~~END~~
 
 
@@ -96,21 +239,21 @@ jalapeño
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 're%';
 GO
 ~~START~~
-nvarchar
-résumé
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%n%';
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-TELÉFONO
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -118,8 +261,8 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'TELEFONO';
 GO
 ~~START~~
-nvarchar
-TELÉFONO
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
 ~~END~~
 
 
@@ -127,8 +270,8 @@ TELÉFONO
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'resume';
 GO
 ~~START~~
-nvarchar
-résumé
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
 
@@ -136,7 +279,7 @@ résumé
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'movie';
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -144,15 +287,15 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'naïve';
 GO
 ~~START~~
-nvarchar
-naïve
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'Piñata';
 GO
 ~~START~~
-nvarchar
-Piñata
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
 ~~END~~
 
 
@@ -160,30 +303,30 @@ Piñata
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%é%';
 GO
 ~~START~~
-nvarchar
-café
-jalapeño
-résumé
-naïve
-Año Nuevo
-TELÉFONO
-película
-canapé
-chaptéR
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ñ%';
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-TELÉFONO
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -191,8 +334,8 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ch%';
 GO
 ~~START~~
-nvarchar
-chaptéR
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
 
@@ -200,8 +343,8 @@ chaptéR
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%is';
 GO
 ~~START~~
-nvarchar
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -209,17 +352,17 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%é%';
 GO
 ~~START~~
-nvarchar
-café
-jalapeño
-résumé
-naïve
-Año Nuevo
-TELÉFONO
-película
-canapé
-chaptéR
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -227,7 +370,7 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ia%s';
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -235,7 +378,7 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'orange';
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -243,8 +386,8 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'jalapen%';
 GO
 ~~START~~
-nvarchar
-jalapeño
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
 ~~END~~
 
 
@@ -252,7 +395,7 @@ jalapeño
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'e%ito';
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -260,14 +403,14 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ñ%';
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-TELÉFONO
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -275,11 +418,187 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ú%';
 GO
 ~~START~~
-nvarchar
-résumé
-Año Nuevo
-película
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
 ~~END~~
+
+
+-- different datatypes
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
 
 
 -- CASE 5: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
@@ -287,15 +606,15 @@ película
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'cafe' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-café
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'jalapeno' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
 ~~END~~
 
 
@@ -303,21 +622,21 @@ jalapeño
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 're%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-résumé
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%n%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-TELÉFONO
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -325,8 +644,8 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'TELEFONO' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-TELÉFONO
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
 ~~END~~
 
 
@@ -334,8 +653,8 @@ TELÉFONO
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'resume' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-résumé
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
 
@@ -343,7 +662,7 @@ résumé
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'movie' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -351,15 +670,15 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'naïve' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-naïve
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'Piñata' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-Piñata
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
 ~~END~~
 
 
@@ -367,30 +686,30 @@ Piñata
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%é%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-café
-jalapeño
-résumé
-naïve
-Año Nuevo
-TELÉFONO
-película
-canapé
-chaptéR
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-TELÉFONO
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -398,8 +717,8 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ch%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-chaptéR
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
 
@@ -407,8 +726,8 @@ chaptéR
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%is' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -416,17 +735,17 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%é%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-café
-jalapeño
-résumé
-naïve
-Año Nuevo
-TELÉFONO
-película
-canapé
-chaptéR
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -434,7 +753,7 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ia%s' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -442,7 +761,7 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'orange' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -450,8 +769,8 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'jalapen%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
 ~~END~~
 
 
@@ -459,7 +778,7 @@ jalapeño
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -467,14 +786,14 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-TELÉFONO
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -482,10 +801,10 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ú%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-nvarchar
-résumé
-Año Nuevo
-película
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
 ~~END~~
 
 
@@ -1100,6 +1419,17 @@ int
 ~~END~~
 
 
+-- number of chars > 8000
+DECLARE @var VARCHAR(MAX);
+SET @var = REPLICATE('A', 8005);
+SELECT 1 WHERE @var COLLATE Latin1_General_CI_AI LIKE '%a%'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 -- CASE 11: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Param)
 declare @c varchar='e%ito';
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE @c;
@@ -1146,6 +1476,7 @@ int
 2
 2
 2
+2
 ~~END~~
 
 
@@ -1165,6 +1496,7 @@ int
 2
 2
 1
+2
 ~~END~~
 
 
@@ -1199,7 +1531,7 @@ canapé
 ~~END~~
 
 
--- COMPLEX SUBQUERY (LIKE OOPERATOR CONRTAINING SUBQUERY)
+-- COMPLEX SUBQUERY (LIKE OPERATOR CONRTAINING SUBQUERY)
 -- returns 1 row
 SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'shaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
 GO
@@ -1263,6 +1595,484 @@ canapé#!#crédito
 ~~END~~
 
 
+-- returns 1 row
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 IN (SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
+GO
+~~START~~
+nvarchar#!#nvarchar
+résumé#!#críquet
+~~END~~
+
+
+-- CASE 14: DIFFERENT WILDCARDS
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ca_e';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'c[hza]%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%[^oa]ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%[i-s]';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+árbol#!#árbol#!#árbol#!#árbol#!#árbol                                             #!#árbol                                             
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+-- CASE 15: LIKE CLAUSE AS FUNCTION ARGUMENT - works when LIKE returns one row (expected)
+SELECT SUM(10 + (SELECT 90 WHERE 'cantáis' like 'Cá%' collate Latin1_General_CI_AI));
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+SELECT CONCAT('Hi ', (SELECT col FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ca_e'));
+GO
+~~START~~
+text
+Hi café
+~~END~~
+
+
+SELECT UPPER((SELECT col FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%oNo'));
+GO
+~~START~~
+text
+TELÉFONO
+~~END~~
+
+
+-- CASE 16: JOIN
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci JOIN babel_4791_vu_prepare_t13_2_ci on babel_4791_vu_prepare_t13_1_ci.col2 LIKE babel_4791_vu_prepare_t13_2_ci.col
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+jalapeño#!#aburrí#!#aburrí
+Piñata#!#gárgola#!#gárgola
+Año Nuevo#!#gárgola#!#gárgola
+canapé#!#crédito#!#crédito
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+résumé#!#críquet#!#résumen
+résumé#!#críquet#!#reísteis
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE '%a%' AND t2.col LIKE '%a%';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+café#!#prójimo#!#aburrí
+jalapeño#!#aburrí#!#aburrí
+naïve#!#cuídate#!#aburrí
+Piñata#!#gárgola#!#aburrí
+Año Nuevo#!#gárgola#!#aburrí
+película#!#réquiem#!#aburrí
+árbol#!#difícil#!#aburrí
+canapé#!#crédito#!#aburrí
+chaptéR#!#enérgetico#!#aburrí
+café#!#prójimo#!#brújula
+jalapeño#!#aburrí#!#brújula
+naïve#!#cuídate#!#brújula
+Piñata#!#gárgola#!#brújula
+Año Nuevo#!#gárgola#!#brújula
+película#!#réquiem#!#brújula
+árbol#!#difícil#!#brújula
+canapé#!#crédito#!#brújula
+chaptéR#!#enérgetico#!#brújula
+café#!#prójimo#!#calabacín
+jalapeño#!#aburrí#!#calabacín
+naïve#!#cuídate#!#calabacín
+Piñata#!#gárgola#!#calabacín
+Año Nuevo#!#gárgola#!#calabacín
+película#!#réquiem#!#calabacín
+árbol#!#difícil#!#calabacín
+canapé#!#crédito#!#calabacín
+chaptéR#!#enérgetico#!#calabacín
+café#!#prójimo#!#gárgola
+jalapeño#!#aburrí#!#gárgola
+naïve#!#cuídate#!#gárgola
+Piñata#!#gárgola#!#gárgola
+Año Nuevo#!#gárgola#!#gárgola
+película#!#réquiem#!#gárgola
+árbol#!#difícil#!#gárgola
+canapé#!#crédito#!#gárgola
+chaptéR#!#enérgetico#!#gárgola
+café#!#prójimo#!#ácaro
+jalapeño#!#aburrí#!#ácaro
+naïve#!#cuídate#!#ácaro
+Piñata#!#gárgola#!#ácaro
+Año Nuevo#!#gárgola#!#ácaro
+película#!#réquiem#!#ácaro
+árbol#!#difícil#!#ácaro
+canapé#!#crédito#!#ácaro
+chaptéR#!#enérgetico#!#ácaro
+café#!#prójimo#!#gígabyte
+jalapeño#!#aburrí#!#gígabyte
+naïve#!#cuídate#!#gígabyte
+Piñata#!#gárgola#!#gígabyte
+Año Nuevo#!#gárgola#!#gígabyte
+película#!#réquiem#!#gígabyte
+árbol#!#difícil#!#gígabyte
+canapé#!#crédito#!#gígabyte
+chaptéR#!#enérgetico#!#gígabyte
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col2 LIKE '%o' AND t2.col LIKE '%o';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+café#!#prójimo#!#lúdico
+TELÉFONO#!#núcleo#!#lúdico
+canapé#!#crédito#!#lúdico
+chaptéR#!#enérgetico#!#lúdico
+café#!#prójimo#!#ácaro
+TELÉFONO#!#núcleo#!#ácaro
+canapé#!#crédito#!#ácaro
+chaptéR#!#enérgetico#!#ácaro
+café#!#prójimo#!#crédito
+TELÉFONO#!#núcleo#!#crédito
+canapé#!#crédito#!#crédito
+chaptéR#!#enérgetico#!#crédito
+café#!#prójimo#!#ídolo
+TELÉFONO#!#núcleo#!#ídolo
+canapé#!#crédito#!#ídolo
+chaptéR#!#enérgetico#!#ídolo
+~~END~~
+
+
+-- CASE 17: PREPARED STATEMENTS
+DECLARE @prefix NVARCHAR(50) = 'ár';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE @prefix + ''%'';', N'@prefix NVARCHAR(50)', @prefix;
+GO
+~~START~~
+nvarchar#!#nvarchar
+árbol#!#difícil
+~~END~~
+
+
+DECLARE @pattern NVARCHAR(50) = '%bo%';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE @pattern + ''%'';', N'@pattern NVARCHAR(50)', @pattern;
+GO
+~~START~~
+nvarchar#!#nvarchar
+árbol#!#difícil
+~~END~~
+
+
+DECLARE @suffix NVARCHAR(50) = 'éR';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE ''%'' + @suffix;', N'@suffix NVARCHAR(50)', @suffix;
+GO
+~~START~~
+nvarchar#!#nvarchar
+chaptéR#!#enérgetico
+~~END~~
+
+
+-- CASE 18: LIKE OBJECT_NAME()
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%4791%'))
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blâh%' COLLATE Latin1_General_CI_AI))
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blâh%'))
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+-- CASE 19: ESCAPE WITH LIKE
+--15% off using ESCAPE; should return rows 19
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+19#!#15% off
+~~END~~
+
+
+--15% off using a different ESCAPE character; should return rows 19
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+19#!#15% off
+~~END~~
+
+
+--15 % off ; should return rows 21
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+21#!#15 %off
+~~END~~
+
+
+--Searching for the escape character itself; should return rows 23
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+23#!#15 % /off
+~~END~~
+
+
+--As above, but also allow for "[". Should return 3-18, 24
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+3#!#Andersson
+4#!#Bertilsson
+5#!#Carlson
+6#!#Davidsson
+7#!#Eriksson
+8#!#Fredriksson
+9#!#F
+10#!#F.
+11#!#Göransson
+12#!#Karlsson
+13#!#KarlsTon
+14#!#Karlson
+15#!#Persson
+16#!#Uarlson
+17#!#McDonalds
+18#!#MacDonalds
+24#!#My[String
+~~END~~
+
+
+SELECT 1 WHERE 'a[abc]b' COLLATE Latin1_General_CI_AI LIKE 'a\[abc]b' escape '\'  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CI_AI LIKE '%[%' escape '~' OR @v COLLATE Latin1_General_CI_AI LIKE '%]%'                -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CI_AI LIKE '%~[%' escape '~' OR @v COLLATE Latin1_General_CI_AI LIKE '%~]%' escape '~'   -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CI_AI LIKE '%[%' escape '~' OR @v COLLATE Latin1_General_CI_AI LIKE '%]%'                -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 WHERE @v LIKE '%~[%' COLLATE Latin1_General_CI_AI escape '~' OR @v LIKE '%~]%' escape '~'  COLLATE Latin1_General_CI_AI -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'a[abc]b'set @p = 'a\[abc]b' set @esc = '\' -- 1
+SELECT 1 WHERE @v COLLATE Latin1_General_CI_AI LIKE @p escape @esc 
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE '_ab' COLLATE Latin1_General_CI_AI LIKE '\_ab'  escape '\'         -- 1 
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT 1 WHERE '%AAABBB%' COLLATE Latin1_General_CI_AI LIKE '\%AAA%' escape '\'   -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' COLLATE Latin1_General_CI_AI LIKE 'AB~[C]D' ESCAPE '~'  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB\[C]D' COLLATE Latin1_General_CI_AI ESCAPE '\'  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB\[C]D' ESCAPE '\'  COLLATE Latin1_General_CI_AI  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB [C]D' COLLATE Latin1_General_CI_AI ESCAPE ' '  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB[C]D' COLLATE Latin1_General_CI_AI ESCAPE 'B'   -- no row
+GO
+~~START~~
+int
+~~END~~
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'ABB[C]D' COLLATE Latin1_General_CI_AI ESCAPE 'B'  -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'ABZ[C]D' ESCAPE 'Z' COLLATE Latin1_General_CI_AI -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT 1 WHERE 'AB[C]D' COLLATE Latin1_General_CI_AI LIKE 'ABZ[C]D' ESCAPE 'z'  -- no row! Note: SQL Server treats the escape as case-sensitive!
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE null like null COLLATE Latin1_General_CI_AI escape null -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE null COLLATE Latin1_General_CI_AI like null escape null -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE null COLLATE Latin1_General_CI_AI like null COLLATE Latin1_General_CI_AI escape null -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE null like null escape null COLLATE Latin1_General_CI_AI  -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE 'ABCD' LIKE 'AB[C]D' COLLATE Latin1_General_CI_AI ESCAPE ''  -- should raise error , BABEL-4271
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CI_AI LIKE 'AB[C]D' ESCAPE 'xy'  -- raise error
+GO
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+
+SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CI_AI LIKE 'AB[C]D' ESCAPE null;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -1271,6 +2081,48 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+select 1 where CAST('cantáis' AS text) like CAST('Cá%' AS text) collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('cantáis' AS ntext) like CAST('Cá%' AS ntext) collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('cantáis' AS varchar) like CAST('Cá%' AS varchar) collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('cantáis' AS nvarchar) like CAST('Cá%' AS nvarchar) collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('cantáis' AS char) like 'Cá%' collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('cantáis' AS nchar) like 'Cá%' collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
 ~~END~~
 
 
@@ -1299,6 +2151,48 @@ int
 
 
 select 1 where 'shaEpüD' collate Latin1_General_CS_AI like '%ǣ%ú%';
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS text) collate Latin1_General_CS_AI like CAST('%Æ%ú%' AS text);
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS ntext) collate Latin1_General_CS_AI like CAST('%Æ%ú%' AS ntext);
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS varchar) collate Latin1_General_CS_AI like CAST('%Æ%ú%' AS varchar);
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS nvarchar) collate Latin1_General_CS_AI like CAST('%Æ%ú%' AS nvarchar);
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS char) collate Latin1_General_CS_AI like '%Æ%ú%';
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('shaEpüD' AS nchar) collate Latin1_General_CS_AI like '%Æ%ú%';
 GO
 ~~START~~
 int
@@ -1337,20 +2231,62 @@ int
 ~~END~~
 
 
+select 1 where CAST('BleȘȘing' AS text) collate Latin1_General_CS_AI like CAST('%ŝ%nĜ' AS text) collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS ntext) collate Latin1_General_CS_AI like CAST('%ŝ%nĜ' AS ntext) collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS varchar) collate Latin1_General_CS_AI like CAST('%ŝ%nĜ' AS varchar) collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS nvarchar) collate Latin1_General_CS_AI like CAST('%ŝ%nĜ' AS nvarchar) collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS char) collate Latin1_General_CS_AI like '%ŝ%nĜ' collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where CAST('BleȘȘing' AS nchar) collate Latin1_General_CS_AI like '%ŝ%nĜ' collate Latin1_General_CS_AI;
+GO
+~~START~~
+int
+~~END~~
+
+
 -- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
 -- Simple matches
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'cafe';
 GO
 ~~START~~
-nvarchar
-café
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'jalapeno';
 GO
 ~~START~~
-nvarchar
-jalapeño
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
 ~~END~~
 
 
@@ -1358,20 +2294,20 @@ jalapeño
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 're%';
 GO
 ~~START~~
-nvarchar
-résumé
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%n%';
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -1379,8 +2315,8 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'TELEFONO';
 GO
 ~~START~~
-nvarchar
-TELÉFONO
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
 ~~END~~
 
 
@@ -1388,8 +2324,8 @@ TELÉFONO
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'resume';
 GO
 ~~START~~
-nvarchar
-résumé
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
 
@@ -1397,7 +2333,7 @@ résumé
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'movie';
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1405,15 +2341,15 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'naïve';
 GO
 ~~START~~
-nvarchar
-naïve
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'Piñata';
 GO
 ~~START~~
-nvarchar
-Piñata
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
 ~~END~~
 
 
@@ -1421,27 +2357,27 @@ Piñata
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%é%';
 GO
 ~~START~~
-nvarchar
-café
-jalapeño
-résumé
-naïve
-Año Nuevo
-película
-canapé
-chaptéR
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ñ%';
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -1449,8 +2385,8 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ch%';
 GO
 ~~START~~
-nvarchar
-chaptéR
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
 
@@ -1458,7 +2394,7 @@ chaptéR
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%is';
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1466,15 +2402,15 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%é%';
 GO
 ~~START~~
-nvarchar
-café
-jalapeño
-résumé
-naïve
-Año Nuevo
-película
-canapé
-chaptéR
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
 
@@ -1482,7 +2418,7 @@ chaptéR
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ia%s';
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1490,7 +2426,7 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'orange';
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1498,8 +2434,8 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'jalapen%';
 GO
 ~~START~~
-nvarchar
-jalapeño
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
 ~~END~~
 
 
@@ -1507,7 +2443,7 @@ jalapeño
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'e%ito';
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1515,13 +2451,13 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ñ%';
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -1529,10 +2465,174 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ú%';
 GO
 ~~START~~
-nvarchar
-résumé
-Año Nuevo
-película
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+~~END~~
+
+
+-- different datatypes
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE 'cafe';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE 'ch%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE '%ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE '%is';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1541,15 +2641,15 @@ película
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'cafe' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-café
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'jalapeno' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
 ~~END~~
 
 
@@ -1557,20 +2657,20 @@ jalapeño
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 're%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-résumé
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%n%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -1578,8 +2678,8 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'TELEFONO' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-TELÉFONO
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
 ~~END~~
 
 
@@ -1587,8 +2687,8 @@ TELÉFONO
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'resume' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-résumé
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
 
@@ -1596,7 +2696,7 @@ résumé
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'movie' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1604,15 +2704,15 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'naïve' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-naïve
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'Piñata' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-Piñata
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
 ~~END~~
 
 
@@ -1620,27 +2720,27 @@ Piñata
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%é%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-café
-jalapeño
-résumé
-naïve
-Año Nuevo
-película
-canapé
-chaptéR
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -1648,8 +2748,8 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ch%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-chaptéR
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
 
@@ -1657,7 +2757,7 @@ chaptéR
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%is' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1665,15 +2765,15 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%é%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-café
-jalapeño
-résumé
-naïve
-Año Nuevo
-película
-canapé
-chaptéR
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
 
@@ -1681,7 +2781,7 @@ chaptéR
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ia%s' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1689,7 +2789,7 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'orange' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1697,8 +2797,8 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'jalapen%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
 ~~END~~
 
 
@@ -1706,7 +2806,7 @@ jalapeño
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
@@ -1714,13 +2814,13 @@ nvarchar
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-jalapeño
-naïve
-Piñata
-Año Nuevo
-canapé
-TEññiȘ
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
 
@@ -1728,10 +2828,10 @@ TEññiȘ
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ú%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
-nvarchar
-résumé
-Año Nuevo
-película
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
 ~~END~~
 
 
@@ -2301,6 +3401,17 @@ int
 ~~END~~
 
 
+-- number of chars > 8000
+DECLARE @var VARCHAR(MAX);
+SET @var = REPLICATE('A', 8005);
+SELECT 1 WHERE @var COLLATE Latin1_General_CS_AI LIKE '%A%'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 -- CASE 11: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Param)
 declare @c varchar='e%ito';
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE @c;
@@ -2347,6 +3458,7 @@ int
 2
 2
 2
+2
 ~~END~~
 
 
@@ -2354,6 +3466,7 @@ SELECT CASE WHEN col LIKE '%is' COLLATE Latin1_General_CS_AI THEN 1 ELSE 2 END F
 GO
 ~~START~~
 int
+2
 2
 2
 2
@@ -2400,7 +3513,7 @@ canapé
 ~~END~~
 
 
--- COMPLEX SUBQUERY (LIKE OOPERATOR CONRTAINING SUBQUERY)
+-- COMPLEX SUBQUERY (LIKE OPERATOR CONRTAINING SUBQUERY)
 -- returns 1 row
 SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'ShaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
 GO
@@ -2459,5 +3572,477 @@ café#!#prójimo
 résumé#!#críquet
 naïve#!#cuídate
 canapé#!#crédito
+~~END~~
+
+
+-- returns 1 row
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 IN (SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
+GO
+~~START~~
+nvarchar#!#nvarchar
+résumé#!#críquet
+~~END~~
+
+
+
+-- CASE 14: DIFFERENT WILDCARDS
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ca_e';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'c[hza]%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%[^oa]ñ%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%[i-s]';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+árbol#!#árbol#!#árbol#!#árbol#!#árbol                                             #!#árbol                                             
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+~~END~~
+
+
+-- CASE 15: LIKE CLAUSE AS FUNCTION ARGUMENT - works when LIKE returns one row (expected)
+SELECT SUM(10 + (SELECT 90 WHERE 'Cantáis' like 'Cá%' collate Latin1_General_CS_AI));
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+SELECT CONCAT('Hi ', (SELECT col FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ca_e'));
+GO
+~~START~~
+text
+Hi café
+~~END~~
+
+
+SELECT UPPER((SELECT col FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%no'));
+GO
+~~START~~
+text
+JALAPEÑO
+~~END~~
+
+
+-- CASE 16: JOIN
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs JOIN babel_4791_vu_prepare_t13_2_cs on babel_4791_vu_prepare_t13_1_cs.col2 LIKE babel_4791_vu_prepare_t13_2_cs.col
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+jalapeño#!#aburrí#!#aburrí
+Piñata#!#gárgola#!#gárgola
+Año Nuevo#!#gárgola#!#gárgola
+canapé#!#crédito#!#crédito
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+résumé#!#críquet#!#résumen
+résumé#!#críquet#!#reísteis
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE '%a%' AND t2.col LIKE '%a%';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+café#!#prójimo#!#aburrí
+jalapeño#!#aburrí#!#aburrí
+naïve#!#cuídate#!#aburrí
+Piñata#!#gárgola#!#aburrí
+película#!#réquiem#!#aburrí
+árbol#!#difícil#!#aburrí
+canapé#!#crédito#!#aburrí
+chaptéR#!#enérgetico#!#aburrí
+café#!#prójimo#!#brújula
+jalapeño#!#aburrí#!#brújula
+naïve#!#cuídate#!#brújula
+Piñata#!#gárgola#!#brújula
+película#!#réquiem#!#brújula
+árbol#!#difícil#!#brújula
+canapé#!#crédito#!#brújula
+chaptéR#!#enérgetico#!#brújula
+café#!#prójimo#!#calabacín
+jalapeño#!#aburrí#!#calabacín
+naïve#!#cuídate#!#calabacín
+Piñata#!#gárgola#!#calabacín
+película#!#réquiem#!#calabacín
+árbol#!#difícil#!#calabacín
+canapé#!#crédito#!#calabacín
+chaptéR#!#enérgetico#!#calabacín
+café#!#prójimo#!#gárgola
+jalapeño#!#aburrí#!#gárgola
+naïve#!#cuídate#!#gárgola
+Piñata#!#gárgola#!#gárgola
+película#!#réquiem#!#gárgola
+árbol#!#difícil#!#gárgola
+canapé#!#crédito#!#gárgola
+chaptéR#!#enérgetico#!#gárgola
+café#!#prójimo#!#ácaro
+jalapeño#!#aburrí#!#ácaro
+naïve#!#cuídate#!#ácaro
+Piñata#!#gárgola#!#ácaro
+película#!#réquiem#!#ácaro
+árbol#!#difícil#!#ácaro
+canapé#!#crédito#!#ácaro
+chaptéR#!#enérgetico#!#ácaro
+café#!#prójimo#!#gígabyte
+jalapeño#!#aburrí#!#gígabyte
+naïve#!#cuídate#!#gígabyte
+Piñata#!#gárgola#!#gígabyte
+película#!#réquiem#!#gígabyte
+árbol#!#difícil#!#gígabyte
+canapé#!#crédito#!#gígabyte
+chaptéR#!#enérgetico#!#gígabyte
+~~END~~
+
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col2 LIKE '%o' AND t2.col LIKE '%o';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+café#!#prójimo#!#lúdico
+TELÉFONO#!#núcleo#!#lúdico
+canapé#!#crédito#!#lúdico
+chaptéR#!#enérgetico#!#lúdico
+café#!#prójimo#!#ácaro
+TELÉFONO#!#núcleo#!#ácaro
+canapé#!#crédito#!#ácaro
+chaptéR#!#enérgetico#!#ácaro
+café#!#prójimo#!#crédito
+TELÉFONO#!#núcleo#!#crédito
+canapé#!#crédito#!#crédito
+chaptéR#!#enérgetico#!#crédito
+café#!#prójimo#!#ídolo
+TELÉFONO#!#núcleo#!#ídolo
+canapé#!#crédito#!#ídolo
+chaptéR#!#enérgetico#!#ídolo
+~~END~~
+
+
+-- CASE 17: PREPARED STATEMENTS
+DECLARE @prefix NVARCHAR(50) = 'ár';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE @prefix + ''%'';', N'@prefix NVARCHAR(50)', @prefix;
+GO
+~~START~~
+nvarchar#!#nvarchar
+árbol#!#difícil
+~~END~~
+
+
+DECLARE @pattern NVARCHAR(50) = '%bo%';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE @pattern + ''%'';', N'@pattern NVARCHAR(50)', @pattern;
+GO
+~~START~~
+nvarchar#!#nvarchar
+árbol#!#difícil
+~~END~~
+
+
+DECLARE @suffix NVARCHAR(50) = 'éR';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE ''%'' + @suffix;', N'@suffix NVARCHAR(50)', @suffix;
+GO
+~~START~~
+nvarchar#!#nvarchar
+chaptéR#!#enérgetico
+~~END~~
+
+
+-- CASE 18: LIKE OBJECT_NAME()
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%4791%'))
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blâh%' COLLATE Latin1_General_CI_AI))
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blâh%'))
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+-- CASE 19: ESCAPE WITH LIKE
+--15% off using ESCAPE; should return rows 19
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+19#!#15% off
+~~END~~
+
+
+--15% off using a different ESCAPE character; should return rows 19
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+19#!#15% off
+~~END~~
+
+
+--15 % off ; should return rows 21
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+21#!#15 %off
+~~END~~
+
+
+--Searching for the escape character itself; should return rows 23
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+23#!#15 % /off
+~~END~~
+
+
+--As above, but also allow for "[". Should return 3-18, 24
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
+GO
+~~START~~
+int#!#varchar
+3#!#Andersson
+4#!#Bertilsson
+5#!#Carlson
+6#!#Davidsson
+7#!#Eriksson
+8#!#Fredriksson
+9#!#F
+10#!#F.
+11#!#Göransson
+12#!#Karlsson
+13#!#KarlsTon
+14#!#Karlson
+15#!#Persson
+16#!#Uarlson
+17#!#McDonalds
+18#!#MacDonalds
+24#!#My[String
+~~END~~
+
+
+SELECT 1 WHERE 'a[abc]b' COLLATE Latin1_General_CS_AI LIKE 'a\[abc]b' escape '\'  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CS_AI LIKE '%[%' escape '~' OR @v COLLATE Latin1_General_CS_AI LIKE '%]%'                -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CS_AI LIKE '%~[%' escape '~' OR @v COLLATE Latin1_General_CS_AI LIKE '%~]%' escape '~'   -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CS_AI LIKE '%[%' escape '~' OR @v COLLATE Latin1_General_CS_AI LIKE '%]%'                -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 WHERE @v LIKE '%~[%' COLLATE Latin1_General_CS_AI escape '~' OR @v LIKE '%~]%' escape '~'  COLLATE Latin1_General_CS_AI -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'a[abc]b'set @p = 'a\[abc]b' set @esc = '\' -- 1
+SELECT 1 WHERE @v COLLATE Latin1_General_CS_AI LIKE @p escape @esc 
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE '_ab' COLLATE Latin1_General_CS_AI LIKE '\_ab'  escape '\'         -- 1 
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT 1 WHERE '%AAABBB%' COLLATE Latin1_General_CS_AI LIKE '\%AAA%' escape '\'   -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' COLLATE Latin1_General_CS_AI LIKE 'AB~[C]D' ESCAPE '~'  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB\[C]D' COLLATE Latin1_General_CS_AI ESCAPE '\'  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB\[C]D' ESCAPE '\'  COLLATE Latin1_General_CS_AI  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB [C]D' COLLATE Latin1_General_CS_AI ESCAPE ' '  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB[C]D' COLLATE Latin1_General_CS_AI ESCAPE 'B'   -- no row
+GO
+~~START~~
+int
+~~END~~
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'ABB[C]D' COLLATE Latin1_General_CS_AI ESCAPE 'B'  -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'ABZ[C]D' ESCAPE 'Z' COLLATE Latin1_General_CS_AI -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT 1 WHERE 'AB[C]D' COLLATE Latin1_General_CS_AI LIKE 'ABZ[C]D' ESCAPE 'z'  -- no row! Note: SQL Server treats the escape as case-sensitive!
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE null like null COLLATE Latin1_General_CS_AI escape null -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE null COLLATE Latin1_General_CS_AI like null escape null -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE null COLLATE Latin1_General_CS_AI like null COLLATE Latin1_General_CS_AI escape null -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE null like null escape null COLLATE Latin1_General_CS_AI  -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT 1 WHERE 'ABCD' LIKE 'AB[C]D' COLLATE Latin1_General_CS_AI ESCAPE ''  -- should raise error , BABEL-4271
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CS_AI LIKE 'AB[C]D' ESCAPE 'xy'  -- raise error
+GO
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+
+SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CS_AI LIKE 'AB[C]D' ESCAPE null;
+GO
+~~START~~
+int
+1
 ~~END~~
 

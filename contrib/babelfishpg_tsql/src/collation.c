@@ -25,15 +25,21 @@
 
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
-#define VARCHAR_MAX_SCALE 8000
+#define VARCHAR_MAX_STORAGE 1073741824
+/* 
+ * Rule applied to transliterate Latin and general category Nd character 
+ * then convert the Latin (source) char to ASCII (destination) representation
+ */
+#define TRANSFORMATION_RULE "[[:Latin:][:Nd:]]; Latin-ASCII"
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
+static Oid remove_accents_internal_oid;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
-static Node *ConvertNodeToFuncExpr(Node *node, void *context);
+static Node *convert_node_to_funcexpr_for_like(Node *node, void *context);
 
 extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 int ptype,
@@ -295,11 +301,6 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
 
-	tsql_get_server_collation_oid_internal(true);
-
-	if (!OidIsValid(server_collation_oid))
-		return node;
-
 	/*
 	 * Find the CS_AS collation corresponding to the CI_AS collation
 	 * Change the collation of the ILIKE op to the CS_AS collation
@@ -316,8 +317,13 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 	 * transformation in this case, which will generate a
 	 * 'nondeterministic collation not supported' error.
 	 */
+
 	if (NOT_FOUND == collidx_of_cs_as)
+	{
+		elog(DEBUG2, "No corresponding CS_AS collation found for collation \"%s\"", coll_info_of_inputcollid.collname);
 		return node;
+	}
+
 	/* Change the opno and oprfuncid to ILIKE */
 	op->opno = like_entry.ilike_oid;
 	op->opfuncid = like_entry.ilike_opfuncid;
@@ -414,18 +420,27 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 	return ret;
 }
 
+static void
+get_remove_accents_internal_oid()
+{
+	Oid funcargtypes[1] = {TEXTOID};
+	if (remove_accents_internal_oid)
+		return;
+
+	remove_accents_internal_oid = LookupFuncName(list_make1(makeString("remove_accents_internal")), -1, funcargtypes, true);
+}
+
 /*
  * Function responsible for obtaining unaccented version of input
  * string with the help of ICU provided APIs. 
  * We use a transformation rule to transliterate the string
  */
 
-PG_FUNCTION_INFO_V1(remove_accents);
+PG_FUNCTION_INFO_V1(remove_accents_internal);
 Datum
-remove_accents(PG_FUNCTION_ARGS)
+remove_accents_internal(PG_FUNCTION_ARGS)
 {
-	text *arg1 = PG_GETARG_TEXT_PP(0);
-	char *input = text_to_cstring(arg1);
+	char *input = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	UChar *rules; // Rule to remove diacritics 
 	UChar *utf16_intput;
 	int32_t len_uchar,
@@ -437,16 +452,11 @@ remove_accents(PG_FUNCTION_ARGS)
 	char *result;
 	UTransliterator *transliterator;
 
-	/* Rule applied to transliterate Latin and general category Nd character 
-	 * then convert the Latin (source) char to ASCII (destination) representation
-	 */
-	char* rule = "[[:Latin:][:Nd:]]; Latin-ASCII";
-
 #ifdef USE_ICU
-	len_uchar = icu_to_uchar(&rules, rule, strlen(rule));
+	len_uchar = icu_to_uchar(&rules, TRANSFORMATION_RULE, strlen(TRANSFORMATION_RULE));
 	len_uinput = icu_to_uchar(&utf16_intput, input, strlen(input));
 	
-	// Open a transliterator for conversion
+	/* Open a transliterator for conversion */
 	transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
 	if (U_FAILURE(status))
 	{
@@ -455,7 +465,7 @@ remove_accents(PG_FUNCTION_ARGS)
 	}
 
 	limit = len_uinput;
-	capacity = VARCHAR_MAX_SCALE;
+	capacity = VARCHAR_MAX_STORAGE / sizeof(char);
 
 	utrans_transUChars(transliterator,
 						utf16_intput,
@@ -478,11 +488,10 @@ remove_accents(PG_FUNCTION_ARGS)
 }
 
 static Node *
-ConvertNodeToFuncExpr(Node *node, void *context)
+convert_node_to_funcexpr_for_like(Node *node, void *context)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
-	Oid funcargtypes[1] = {CHAROID};
-	newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), -1, funcargtypes, true);;
+	newFuncExpr->funcid = remove_accents_internal_oid;
 
 	if (node == NULL)
 		return node;
@@ -492,6 +501,8 @@ ConvertNodeToFuncExpr(Node *node, void *context)
 		case T_Const:
 			{
 				Const *con = (Const *) node;
+				if (!con->constvalue)
+					return node;
 				newFuncExpr->funcresulttype = con->consttype;
 				newFuncExpr->args = list_make1(makeConst(con->consttype, -1, InvalidOid, con->constlen, con->constvalue, false, true));;
 				break;
@@ -531,8 +542,15 @@ ConvertNodeToFuncExpr(Node *node, void *context)
 				newFuncExpr->args = list_make1(relabel->arg);
 				break;
 			}
+		case T_CollateExpr:
+			{
+				CollateExpr        *coll = (CollateExpr *) node;
+				newFuncExpr->funcresulttype = exprType((Node *)coll->arg);
+				newFuncExpr->args = list_make1(coll->arg);
+				break;
+			}
 		default:
-			return expression_tree_mutator(node, ConvertNodeToFuncExpr, NULL);
+			return expression_tree_mutator(node, convert_node_to_funcexpr_for_like, NULL);
 	}
 
 	return (Node *) newFuncExpr;
@@ -545,38 +563,21 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 	Node       *leftop = (Node *) linitial(op->args);
 	Node       *rightop = (Node *) lsecond(op->args);
 
-	if (IsA(leftop, CollateExpr))
-	{
-		CollateExpr        *lcoll = (CollateExpr *) leftop;
-		linitial(op->args) = ConvertNodeToFuncExpr((Node*)lcoll->arg, NULL);
-	}
-	else
-	{
-		linitial(op->args) = ConvertNodeToFuncExpr(leftop, NULL);
-	}
-
-	if (IsA(rightop, CollateExpr))
-	{
-		CollateExpr        *rcoll = (CollateExpr *) rightop;
-		lsecond(op->args) = ConvertNodeToFuncExpr((Node*)rcoll->arg, NULL);
-	}
-	else
-	{
-		lsecond(op->args) = ConvertNodeToFuncExpr(rightop, NULL);
-	}
+	linitial(op->args) = convert_node_to_funcexpr_for_like(leftop, NULL);
+	lsecond(op->args) = convert_node_to_funcexpr_for_like(rightop, NULL);
 	
 	return node;
 }
 
+/*
+ * To handle CS_AI collation for LIKE, we simply find the corresponding CS_AS collation
+ * and modify the nodes by removing accents from them
+ */
+
 static Node *
-transform_from_cs_ai(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
 {
 	int			collidx_of_cs_as;
-
-	tsql_get_server_collation_oid_internal(true);
-
-	if (!OidIsValid(server_collation_oid))
-		return node;
 
 	/*
 	 * Find the CS_AS collation corresponding to the CS_AI collation
@@ -594,7 +595,10 @@ transform_from_cs_ai(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 	 * 'nondeterministic collation not supported' error.
 	 */
 	if (NOT_FOUND == collidx_of_cs_as)
+	{
+		elog(DEBUG2, "No corresponding CS_AS collation found for collation \"%s\"", coll_info_of_inputcollid.collname);
 		return node;
+	}
 
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
@@ -610,6 +614,8 @@ transform_likenode(Node *node)
 		OpExpr	   *op = (OpExpr *) node;
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
+
+		get_remove_accents_internal_oid();
 
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where
@@ -649,7 +655,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
 		{
-			return transform_from_cs_ai(node, op, like_entry, coll_info_of_inputcollid);
+			return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 		}
 
 		if (OidIsValid(like_entry.like_oid) &&

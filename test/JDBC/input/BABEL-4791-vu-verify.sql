@@ -4,6 +4,24 @@
 select 1 where 'cantáis' like 'Cá%' collate Latin1_General_CI_AI;
 GO
 
+select 1 where CAST('cantáis' AS text) like CAST('Cá%' AS text) collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('cantáis' AS ntext) like CAST('Cá%' AS ntext) collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('cantáis' AS varchar) like CAST('Cá%' AS varchar) collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('cantáis' AS nvarchar) like CAST('Cá%' AS nvarchar) collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('cantáis' AS char) like 'Cá%' collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('cantáis' AS nchar) like 'Cá%' collate Latin1_General_CI_AI;
+GO
+
 select 1 where 'shaEpéD' like '%Æ%e%' collate Latin1_General_CI_AI;
 GO
 
@@ -17,6 +35,24 @@ GO
 select 1 where 'shaEpüD' collate Latin1_General_CI_AI like '%Æ%ú%';
 GO
 
+select 1 where CAST('shaEpüD' AS text) collate Latin1_General_CI_AI like CAST('%Æ%ú%' AS text);
+GO
+
+select 1 where CAST('shaEpüD' AS ntext) collate Latin1_General_CI_AI like CAST('%Æ%ú%' AS ntext);
+GO
+
+select 1 where CAST('shaEpüD' AS varchar) collate Latin1_General_CI_AI like CAST('%Æ%ú%' AS varchar);
+GO
+
+select 1 where CAST('shaEpüD' AS nvarchar) collate Latin1_General_CI_AI like CAST('%Æ%ú%' AS nvarchar);
+GO
+
+select 1 where CAST('shaEpüD' AS char) collate Latin1_General_CI_AI like '%Æ%ú%';
+GO
+
+select 1 where CAST('shaEpüD' AS nchar) collate Latin1_General_CI_AI like '%Æ%ú%';
+GO
+
 select 1 where 'BleȘȘing' collate Latin1_General_CI_AI like '%ŝ%nĜ';
 GO
 
@@ -28,6 +64,24 @@ select 1 where 'shaEpüD' collate Latin1_General_CI_AI like '%Æ%ú%' collate La
 GO
 
 select 1 where 'BleȘȘing' collate Latin1_General_CI_AI like '%ŝ%nĜ' collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS text) collate Latin1_General_CI_AI like CAST('%ŝ%nĜ' AS text) collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS ntext) collate Latin1_General_CI_AI like CAST('%ŝ%nĜ' AS ntext) collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS varchar) collate Latin1_General_CI_AI like CAST('%ŝ%nĜ' AS varchar) collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS nvarchar) collate Latin1_General_CI_AI like CAST('%ŝ%nĜ' AS nvarchar) collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS char) collate Latin1_General_CI_AI like '%ŝ%nĜ' collate Latin1_General_CI_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS nchar) collate Latin1_General_CI_AI like '%ŝ%nĜ' collate Latin1_General_CI_AI;
 GO
 
 -- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
@@ -102,6 +156,53 @@ GO
 -- babel_4791_vu_prepare_t1_ci with ü
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ú%';
 GO
+
+-- different datatypes
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE '%is';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE '%is';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE '%is';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE '%is';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE '%is';
+GO
+
 
 -- CASE 5: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
 -- Simple matches
@@ -404,6 +505,12 @@ declare @b varchar='Ra%';
 SELECT 1 WHERE @a LIKE @b COLLATE Latin1_General_CI_AI;
 GO
 
+-- number of chars > 8000
+DECLARE @var VARCHAR(MAX);
+SET @var = REPLICATE('A', 8005);
+SELECT 1 WHERE @var COLLATE Latin1_General_CI_AI LIKE '%a%'
+GO
+
 -- CASE 11: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Param)
 declare @c varchar='e%ito';
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE @c;
@@ -435,7 +542,7 @@ GO
 SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_ci WHERE col LIKE '%ţÕ');
 GO
 
--- COMPLEX SUBQUERY (LIKE OOPERATOR CONRTAINING SUBQUERY)
+-- COMPLEX SUBQUERY (LIKE OPERATOR CONRTAINING SUBQUERY)
 -- returns 1 row
 SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'shaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
 GO
@@ -459,10 +566,186 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%a' ELSE '%é' END);
 GO
 
+-- returns 1 row
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 IN (SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
+GO
+
+-- CASE 14: DIFFERENT WILDCARDS
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ca_e';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'c[hza]%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%[^oa]ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%[i-s]';
+GO
+
+-- CASE 15: LIKE CLAUSE AS FUNCTION ARGUMENT - works when LIKE returns one row (expected)
+SELECT SUM(10 + (SELECT 90 WHERE 'cantáis' like 'Cá%' collate Latin1_General_CI_AI));
+GO
+
+SELECT CONCAT('Hi ', (SELECT col FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ca_e'));
+GO
+
+SELECT UPPER((SELECT col FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%oNo'));
+GO
+
+-- CASE 16: JOIN
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci JOIN babel_4791_vu_prepare_t13_2_ci on babel_4791_vu_prepare_t13_1_ci.col2 LIKE babel_4791_vu_prepare_t13_2_ci.col
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE '%a%' AND t2.col LIKE '%a%';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col2 LIKE '%o' AND t2.col LIKE '%o';
+GO
+
+-- CASE 17: PREPARED STATEMENTS
+DECLARE @prefix NVARCHAR(50) = 'ár';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE @prefix + ''%'';', N'@prefix NVARCHAR(50)', @prefix;
+GO
+
+DECLARE @pattern NVARCHAR(50) = '%bo%';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE @pattern + ''%'';', N'@pattern NVARCHAR(50)', @pattern;
+GO
+
+DECLARE @suffix NVARCHAR(50) = 'éR';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE ''%'' + @suffix;', N'@suffix NVARCHAR(50)', @suffix;
+GO
+
+-- CASE 18: LIKE OBJECT_NAME()
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%4791%'))
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blâh%' COLLATE Latin1_General_CI_AI))
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blâh%'))
+GO
+
+-- CASE 19: ESCAPE WITH LIKE
+--15% off using ESCAPE; should return rows 19
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
+GO
+
+--15% off using a different ESCAPE character; should return rows 19
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
+GO
+
+--15 % off ; should return rows 21
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
+GO
+
+--Searching for the escape character itself; should return rows 23
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
+GO
+
+--As above, but also allow for "[". Should return 3-18, 24
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
+GO
+
+SELECT 1 WHERE 'a[abc]b' COLLATE Latin1_General_CI_AI LIKE 'a\[abc]b' escape '\'  -- 1
+GO
+
+declare @v varchar = 'a[bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CI_AI LIKE '%[%' escape '~' OR @v COLLATE Latin1_General_CI_AI LIKE '%]%'                -- no row
+GO
+
+declare @v varchar = 'a[bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CI_AI LIKE '%~[%' escape '~' OR @v COLLATE Latin1_General_CI_AI LIKE '%~]%' escape '~'   -- no row
+GO
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CI_AI LIKE '%[%' escape '~' OR @v COLLATE Latin1_General_CI_AI LIKE '%]%'                -- no row
+GO
+
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 WHERE @v LIKE '%~[%' COLLATE Latin1_General_CI_AI escape '~' OR @v LIKE '%~]%' escape '~'  COLLATE Latin1_General_CI_AI -- no row
+GO
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'a[abc]b'set @p = 'a\[abc]b' set @esc = '\' -- 1
+SELECT 1 WHERE @v COLLATE Latin1_General_CI_AI LIKE @p escape @esc 
+GO
+
+SELECT 1 WHERE '_ab' COLLATE Latin1_General_CI_AI LIKE '\_ab'  escape '\'         -- 1 
+GO
+SELECT 1 WHERE '%AAABBB%' COLLATE Latin1_General_CI_AI LIKE '\%AAA%' escape '\'   -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' COLLATE Latin1_General_CI_AI LIKE 'AB~[C]D' ESCAPE '~'  -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB\[C]D' COLLATE Latin1_General_CI_AI ESCAPE '\'  -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB\[C]D' ESCAPE '\'  COLLATE Latin1_General_CI_AI  -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB [C]D' COLLATE Latin1_General_CI_AI ESCAPE ' '  -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB[C]D' COLLATE Latin1_General_CI_AI ESCAPE 'B'   -- no row
+GO
+SELECT 1 WHERE 'AB[C]D' LIKE 'ABB[C]D' COLLATE Latin1_General_CI_AI ESCAPE 'B'  -- no row
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'ABZ[C]D' ESCAPE 'Z' COLLATE Latin1_General_CI_AI -- 1
+GO
+SELECT 1 WHERE 'AB[C]D' COLLATE Latin1_General_CI_AI LIKE 'ABZ[C]D' ESCAPE 'z'  -- no row! Note: SQL Server treats the escape as case-sensitive!
+GO
+
+SELECT 1 WHERE null like null COLLATE Latin1_General_CI_AI escape null -- no row
+GO
+
+SELECT 1 WHERE null COLLATE Latin1_General_CI_AI like null escape null -- no row
+GO
+
+SELECT 1 WHERE null COLLATE Latin1_General_CI_AI like null COLLATE Latin1_General_CI_AI escape null -- no row
+GO
+
+SELECT 1 WHERE null like null escape null COLLATE Latin1_General_CI_AI  -- no row
+GO
+
+SELECT 1 WHERE 'ABCD' LIKE 'AB[C]D' COLLATE Latin1_General_CI_AI ESCAPE ''  -- should raise error , BABEL-4271
+GO
+SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CI_AI LIKE 'AB[C]D' ESCAPE 'xy'  -- raise error
+GO
+
+SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CI_AI LIKE 'AB[C]D' ESCAPE null;
+GO
+
 
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
 select 1 where 'cantáis' like 'cá%' collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('cantáis' AS text) like CAST('Cá%' AS text) collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('cantáis' AS ntext) like CAST('Cá%' AS ntext) collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('cantáis' AS varchar) like CAST('Cá%' AS varchar) collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('cantáis' AS nvarchar) like CAST('Cá%' AS nvarchar) collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('cantáis' AS char) like 'Cá%' collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('cantáis' AS nchar) like 'Cá%' collate Latin1_General_CS_AI;
 GO
 
 select 1 where 'shaEpéD' like '%ǣ%e%' collate Latin1_General_CS_AI;
@@ -478,6 +761,24 @@ GO
 select 1 where 'shaEpüD' collate Latin1_General_CS_AI like '%ǣ%ú%';
 GO
 
+select 1 where CAST('shaEpüD' AS text) collate Latin1_General_CS_AI like CAST('%Æ%ú%' AS text);
+GO
+
+select 1 where CAST('shaEpüD' AS ntext) collate Latin1_General_CS_AI like CAST('%Æ%ú%' AS ntext);
+GO
+
+select 1 where CAST('shaEpüD' AS varchar) collate Latin1_General_CS_AI like CAST('%Æ%ú%' AS varchar);
+GO
+
+select 1 where CAST('shaEpüD' AS nvarchar) collate Latin1_General_CS_AI like CAST('%Æ%ú%' AS nvarchar);
+GO
+
+select 1 where CAST('shaEpüD' AS char) collate Latin1_General_CS_AI like '%Æ%ú%';
+GO
+
+select 1 where CAST('shaEpüD' AS nchar) collate Latin1_General_CS_AI like '%Æ%ú%';
+GO
+
 select 1 where 'BlesȘing' collate Latin1_General_CS_AI like '%ŝ%nĝ';
 GO
 
@@ -489,6 +790,24 @@ select 1 where 'shaEpüD' collate Latin1_General_CS_AI like '%ǣ%ú%' collate La
 GO
 
 select 1 where 'BleȘsing' collate Latin1_General_CS_AI like '%ŝ%ng' collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS text) collate Latin1_General_CS_AI like CAST('%ŝ%nĜ' AS text) collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS ntext) collate Latin1_General_CS_AI like CAST('%ŝ%nĜ' AS ntext) collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS varchar) collate Latin1_General_CS_AI like CAST('%ŝ%nĜ' AS varchar) collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS nvarchar) collate Latin1_General_CS_AI like CAST('%ŝ%nĜ' AS nvarchar) collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS char) collate Latin1_General_CS_AI like '%ŝ%nĜ' collate Latin1_General_CS_AI;
+GO
+
+select 1 where CAST('BleȘȘing' AS nchar) collate Latin1_General_CS_AI like '%ŝ%nĜ' collate Latin1_General_CS_AI;
 GO
 
 -- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
@@ -562,6 +881,52 @@ GO
 
 -- babel_4791_vu_prepare_t1_cs with ü
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ú%';
+GO
+
+-- different datatypes
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE '%is';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE '%is';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE '%is';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE '%is';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE 'cafe';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE 'ch%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE '%ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE '%is';
 GO
 
 -- CASE 5: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
@@ -865,6 +1230,12 @@ declare @b varchar='ra%';
 SELECT 1 WHERE @a LIKE @b COLLATE Latin1_General_CS_AI;
 GO
 
+-- number of chars > 8000
+DECLARE @var VARCHAR(MAX);
+SET @var = REPLICATE('A', 8005);
+SELECT 1 WHERE @var COLLATE Latin1_General_CS_AI LIKE '%A%'
+GO
+
 -- CASE 11: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Param)
 declare @c varchar='e%ito';
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE @c;
@@ -896,7 +1267,7 @@ GO
 SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_cs WHERE col LIKE '%ţö');
 GO
 
--- COMPLEX SUBQUERY (LIKE OOPERATOR CONRTAINING SUBQUERY)
+-- COMPLEX SUBQUERY (LIKE OPERATOR CONRTAINING SUBQUERY)
 -- returns 1 row
 SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'ShaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
 GO
@@ -918,4 +1289,163 @@ GO
 
 -- returns 4 rows
 SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%a' ELSE '%é' END);
+GO
+
+-- returns 1 row
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 IN (SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
+GO
+
+
+-- CASE 14: DIFFERENT WILDCARDS
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ca_e';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'c[hza]%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%[^oa]ñ%';
+GO
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%[i-s]';
+GO
+
+-- CASE 15: LIKE CLAUSE AS FUNCTION ARGUMENT - works when LIKE returns one row (expected)
+SELECT SUM(10 + (SELECT 90 WHERE 'Cantáis' like 'Cá%' collate Latin1_General_CS_AI));
+GO
+
+SELECT CONCAT('Hi ', (SELECT col FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ca_e'));
+GO
+
+SELECT UPPER((SELECT col FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%no'));
+GO
+
+-- CASE 16: JOIN
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs JOIN babel_4791_vu_prepare_t13_2_cs on babel_4791_vu_prepare_t13_1_cs.col2 LIKE babel_4791_vu_prepare_t13_2_cs.col
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE '%a%' AND t2.col LIKE '%a%';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col2 LIKE '%o' AND t2.col LIKE '%o';
+GO
+
+-- CASE 17: PREPARED STATEMENTS
+DECLARE @prefix NVARCHAR(50) = 'ár';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE @prefix + ''%'';', N'@prefix NVARCHAR(50)', @prefix;
+GO
+
+DECLARE @pattern NVARCHAR(50) = '%bo%';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE @pattern + ''%'';', N'@pattern NVARCHAR(50)', @pattern;
+GO
+
+DECLARE @suffix NVARCHAR(50) = 'éR';
+EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE ''%'' + @suffix;', N'@suffix NVARCHAR(50)', @suffix;
+GO
+
+-- CASE 18: LIKE OBJECT_NAME()
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%4791%'))
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blâh%' COLLATE Latin1_General_CI_AI))
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blâh%'))
+GO
+
+-- CASE 19: ESCAPE WITH LIKE
+--15% off using ESCAPE; should return rows 19
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
+GO
+
+--15% off using a different ESCAPE character; should return rows 19
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
+GO
+
+--15 % off ; should return rows 21
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
+GO
+
+--Searching for the escape character itself; should return rows 23
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
+GO
+
+--As above, but also allow for "[". Should return 3-18, 24
+SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
+GO
+
+SELECT 1 WHERE 'a[abc]b' COLLATE Latin1_General_CS_AI LIKE 'a\[abc]b' escape '\'  -- 1
+GO
+
+declare @v varchar = 'a[bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CS_AI LIKE '%[%' escape '~' OR @v COLLATE Latin1_General_CS_AI LIKE '%]%'                -- no row
+GO
+
+declare @v varchar = 'a[bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CS_AI LIKE '%~[%' escape '~' OR @v COLLATE Latin1_General_CS_AI LIKE '%~]%' escape '~'   -- no row
+GO
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 WHERE @v COLLATE Latin1_General_CS_AI LIKE '%[%' escape '~' OR @v COLLATE Latin1_General_CS_AI LIKE '%]%'                -- no row
+GO
+
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 WHERE @v LIKE '%~[%' COLLATE Latin1_General_CS_AI escape '~' OR @v LIKE '%~]%' escape '~'  COLLATE Latin1_General_CS_AI -- no row
+GO
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'a[abc]b'set @p = 'a\[abc]b' set @esc = '\' -- 1
+SELECT 1 WHERE @v COLLATE Latin1_General_CS_AI LIKE @p escape @esc 
+GO
+
+SELECT 1 WHERE '_ab' COLLATE Latin1_General_CS_AI LIKE '\_ab'  escape '\'         -- 1 
+GO
+SELECT 1 WHERE '%AAABBB%' COLLATE Latin1_General_CS_AI LIKE '\%AAA%' escape '\'   -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' COLLATE Latin1_General_CS_AI LIKE 'AB~[C]D' ESCAPE '~'  -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB\[C]D' COLLATE Latin1_General_CS_AI ESCAPE '\'  -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB\[C]D' ESCAPE '\'  COLLATE Latin1_General_CS_AI  -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB [C]D' COLLATE Latin1_General_CS_AI ESCAPE ' '  -- 1
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'AB[C]D' COLLATE Latin1_General_CS_AI ESCAPE 'B'   -- no row
+GO
+SELECT 1 WHERE 'AB[C]D' LIKE 'ABB[C]D' COLLATE Latin1_General_CS_AI ESCAPE 'B'  -- no row
+GO
+
+SELECT 1 WHERE 'AB[C]D' LIKE 'ABZ[C]D' ESCAPE 'Z' COLLATE Latin1_General_CS_AI -- 1
+GO
+SELECT 1 WHERE 'AB[C]D' COLLATE Latin1_General_CS_AI LIKE 'ABZ[C]D' ESCAPE 'z'  -- no row! Note: SQL Server treats the escape as case-sensitive!
+GO
+
+SELECT 1 WHERE null like null COLLATE Latin1_General_CS_AI escape null -- no row
+GO
+
+SELECT 1 WHERE null COLLATE Latin1_General_CS_AI like null escape null -- no row
+GO
+
+SELECT 1 WHERE null COLLATE Latin1_General_CS_AI like null COLLATE Latin1_General_CS_AI escape null -- no row
+GO
+
+SELECT 1 WHERE null like null escape null COLLATE Latin1_General_CS_AI  -- no row
+GO
+
+SELECT 1 WHERE 'ABCD' LIKE 'AB[C]D' COLLATE Latin1_General_CS_AI ESCAPE ''  -- should raise error , BABEL-4271
+GO
+SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CS_AI LIKE 'AB[C]D' ESCAPE 'xy'  -- raise error
+GO
+
+SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CS_AI LIKE 'AB[C]D' ESCAPE null;
 GO

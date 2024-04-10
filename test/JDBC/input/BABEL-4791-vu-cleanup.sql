@@ -29,3 +29,8 @@ GO
 
 DROP TABLE babel_4791_vu_prepare_t13_2_cs;
 GO
+
+
+-- GENERIC --
+DROP TABLE babel_4791_vu_prepare_escape;
+GO
