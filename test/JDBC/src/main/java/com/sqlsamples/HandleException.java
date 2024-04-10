@@ -60,6 +60,8 @@ public class HandleException {
                         errorMsg = errorMsg.substring(0, index);
                     }
                     bw.write("~~ERROR (Message: "+ errorMsg + ")~~");
+                } else {
+                    bw.write("~~ERROR (Message: " + e.getMessage() + ")~~");
                 }
             } else {
                 bw.write("~~ERROR~~");
