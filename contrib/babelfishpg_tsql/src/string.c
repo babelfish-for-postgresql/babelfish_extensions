@@ -30,8 +30,6 @@ PG_FUNCTION_INFO_V1(quotename);
 PG_FUNCTION_INFO_V1(string_escape);
 PG_FUNCTION_INFO_V1(formatmessage);
 PG_FUNCTION_INFO_V1(tsql_varchar_substr);
-PG_FUNCTION_INFO_V1(tsql_upper);
-PG_FUNCTION_INFO_V1(tsql_lower);
 PG_FUNCTION_INFO_V1(float_str);
 
 /*
@@ -505,32 +503,6 @@ tsql_varchar_substr(PG_FUNCTION_ARGS)
 	return DirectFunctionCall3(text_substr, PG_GETARG_DATUM(0),
 											PG_GETARG_INT32(1),
 											PG_GETARG_INT32(2));
-}
-
-/*
- * tsql_upper()
- * Returns a character expression with lowercase character data converted to uppercase.
- */
-Datum
-tsql_upper(PG_FUNCTION_ARGS)
-{
-    if (PG_ARGISNULL(0))
-        PG_RETURN_NULL();
-
-    return DirectFunctionCall1Coll(upper, PG_GET_COLLATION(), PG_GETARG_DATUM(0));
-}
-
-/*
- * tsql_lower()
- * Returns a character expression with uppercase character data converted to lowercase.
- */
-Datum
-tsql_lower(PG_FUNCTION_ARGS)
-{
-    if (PG_ARGISNULL(0))
-        PG_RETURN_NULL();
-
-    return DirectFunctionCall1Coll(lower, PG_GET_COLLATION(), PG_GETARG_DATUM(0));
 }
 
 /*

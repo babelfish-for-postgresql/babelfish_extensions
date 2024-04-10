@@ -39,6 +39,42 @@ CREATE VIEW dep_view_upper AS
 select UPPER(a) AS upper_a, UPPER(b) AS upper_b, UPPER(c) AS upper_c, UPPER(d) AS upper_d from upper_lower_dt WHERE UPPER(a) = N'ANIKAIT' and UPPER(b) = N'AGRAWAL' and UPPER(c) = N'ANIKAIT' and UPPER(d) = N'AGRAWAL';
 GO
 
+CREATE TABLE tab_arabic_ci_ai(col varchar(20) COLLATE arabic_ci_ai);
+INSERT INTO tab_arabic_ci_ai VALUES ('COLLATION');
+GO
+
+CREATE TABLE tab_arabic_ci_as(col varchar(20) COLLATE arabic_ci_as);
+INSERT INTO tab_arabic_ci_as VALUES ('COLLATION');
+GO
+
+CREATE TABLE tab_arabic_cs_as(col varchar(20) COLLATE arabic_cs_as);
+INSERT INTO tab_arabic_cs_as VALUES ('COLLATION');
+GO
+
+CREATE TABLE tab_japanese_ci_ai(col varchar(20) COLLATE japanese_ci_ai);
+INSERT INTO tab_japanese_ci_ai VALUES ('COLLATION');
+GO
+
+CREATE TABLE tab_japanese_ci_as(col varchar(20) COLLATE japanese_ci_as);
+INSERT INTO tab_japanese_ci_as VALUES ('COLLATION');
+GO
+
+CREATE TABLE tab_japanese_cs_as(col varchar(20) COLLATE japanese_cs_as);
+INSERT INTO tab_japanese_cs_as VALUES ('COLLATION');
+GO
+
+CREATE TABLE tab_chinese_ci_ai(col varchar(20) COLLATE chinese_prc_ci_ai);
+INSERT INTO tab_chinese_ci_ai VALUES ('COLLATION');
+GO
+
+CREATE TABLE tab_chinese_ci_as(col varchar(20) COLLATE chinese_prc_ci_as);
+INSERT INTO tab_chinese_ci_as VALUES ('COLLATION');
+GO
+
+CREATE TABLE tab_chinese_cs_as(col varchar(20) COLLATE chinese_prc_cs_as);
+INSERT INTO tab_chinese_cs_as VALUES ('COLLATION');
+GO
+
 CREATE PROC dep_proc_upper AS
 select UPPER(a), UPPER(b), UPPER(c), UPPER(d) from upper_lower_dt WHERE UPPER(a) = N'ANIKAIT' and UPPER(b) = N'AGRAWAL' and UPPER(c) = N'ANIKAIT' and UPPER(d) = N'AGRAWAL';
 GO
@@ -66,4 +102,10 @@ AS
 BEGIN
 RETURN (select TOP 1 LOWER(a) from upper_lower_dt);
 END
+GO
+
+CREATE VIEW dep_view_lower1 AS (
+    select 
+        lower(cast(N'ADJNFJH' as varchar)) as db1
+    );
 GO

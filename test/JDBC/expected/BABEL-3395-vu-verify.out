@@ -709,6 +709,69 @@ varchar#!#nvarchar#!#varchar#!#nvarchar
 ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 
 ~~END~~
 
+SELECT upper(col), lower(col) FROM tab_arabic_ci_ai;
+GO
+~~START~~
+varchar#!#varchar
+COLLATION#!#collation
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_arabic_ci_as;
+GO
+~~START~~
+varchar#!#varchar
+COLLATION#!#collation
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_arabic_cs_as;
+GO
+~~START~~
+varchar#!#varchar
+COLLATION#!#collation
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_japanese_ci_ai;
+GO
+~~START~~
+varchar#!#varchar
+COLLATION#!#collation
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_japanese_ci_as;
+GO
+~~START~~
+varchar#!#varchar
+COLLATION#!#collation
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_japanese_cs_as;
+GO
+~~START~~
+varchar#!#varchar
+COLLATION#!#collation
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_chinese_ci_ai;
+GO
+~~START~~
+varchar#!#varchar
+COLLATION#!#collation
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_chinese_ci_as;
+GO
+~~START~~
+varchar#!#varchar
+COLLATION#!#collation
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_chinese_cs_as;
+GO
+~~START~~
+varchar#!#varchar
+COLLATION#!#collation
+~~END~~
+
 EXEC dep_proc_upper
 GO
 ~~START~~
@@ -743,5 +806,12 @@ GO
 ~~START~~
 varchar
 a
+~~END~~
+
+SELECT * from dep_view_lower1
+GO
+~~START~~
+varchar
+adjnfjh
 ~~END~~
 

@@ -223,6 +223,24 @@ GO
 
 SELECT * from dep_view_upper
 GO
+SELECT upper(col), lower(col) FROM tab_arabic_ci_ai;
+GO
+SELECT upper(col), lower(col) FROM tab_arabic_ci_as;
+GO
+SELECT upper(col), lower(col) FROM tab_arabic_cs_as;
+GO
+SELECT upper(col), lower(col) FROM tab_japanese_ci_ai;
+GO
+SELECT upper(col), lower(col) FROM tab_japanese_ci_as;
+GO
+SELECT upper(col), lower(col) FROM tab_japanese_cs_as;
+GO
+SELECT upper(col), lower(col) FROM tab_chinese_ci_ai;
+GO
+SELECT upper(col), lower(col) FROM tab_chinese_ci_as;
+GO
+SELECT upper(col), lower(col) FROM tab_chinese_cs_as;
+GO
 EXEC dep_proc_upper
 GO
 select dbo.dep_func_upper()
@@ -233,4 +251,6 @@ GO
 EXEC dep_proc_lower
 GO
 select dbo.dep_func_lower()
+GO
+SELECT * from dep_view_lower1
 GO

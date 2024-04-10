@@ -308,16 +308,8 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE parallel safe;
 
--- helper functions for upper and lower --
-CREATE OR REPLACE FUNCTION sys.upper_helper(sys.VARCHAR)
-RETURNS sys.VARCHAR
-AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.lower_helper(sys.VARCHAR)
-RETURNS sys.VARCHAR
-AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
-
--- upper --
+-- wrapper functions for upper --
+-- Function to handle datatypes which are implicitly convertable to VARCHAR
 CREATE OR REPLACE FUNCTION sys.upper(ANYELEMENT)
 RETURNS sys.VARCHAR
 AS $$
@@ -329,21 +321,30 @@ BEGIN
     END IF;
     varch := (SELECT CAST ($1 AS sys.varchar));
     -- Call the underlying function after preprocessing
-    RETURN (SELECT sys.upper_helper(varch));
+    RETURN (SELECT pg_catalog.upper(varch));
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Function to handle NCHAR because of return type NVARCHAR
 CREATE OR REPLACE FUNCTION sys.upper(sys.NCHAR)
 RETURNS sys.NVARCHAR
-AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.upper($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Function to handle NVARCHAR because of return type NVARCHAR
 CREATE OR REPLACE FUNCTION sys.upper(sys.NVARCHAR)
 RETURNS sys.NVARCHAR
-AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.upper($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
--- lower --
+-- wrapper functions for lower --
+-- Function to handle datatypes which are implicitly convertable to VARCHAR
 CREATE OR REPLACE FUNCTION sys.lower(ANYELEMENT)
 RETURNS sys.VARCHAR
 AS $$
@@ -355,19 +356,27 @@ BEGIN
     END IF;
     varch := (SELECT CAST ($1 AS sys.varchar));
     -- Call the underlying function after preprocessing
-    RETURN (SELECT sys.lower_helper(varch));
+    RETURN (SELECT pg_catalog.lower(varch));
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Function to handle NCHAR because of return type NVARCHAR
 CREATE OR REPLACE FUNCTION sys.lower(sys.NCHAR)
 RETURNS sys.NVARCHAR
-AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.lower($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Function to handle NVARCHAR because of return type NVARCHAR
 CREATE OR REPLACE FUNCTION sys.lower(sys.NVARCHAR)
 RETURNS sys.NVARCHAR
-AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.lower($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
