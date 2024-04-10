@@ -7,6 +7,7 @@
 #include "access/stratnum.h"
 #include "access/table.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_authid.h"
@@ -107,6 +108,14 @@ Oid			bbf_extended_properties_idx_oid = InvalidOid;
  * 			Catalog General
  *****************************************/
 
+static Oid bbf_assemblies_oid = InvalidOid;
+static Oid bbf_configurations_oid = InvalidOid;
+static Oid bbf_helpcollation_oid = InvalidOid;
+static Oid bbf_syslanguages_oid = InvalidOid;
+static Oid bbf_service_settings_oid = InvalidOid;
+static Oid spt_datatype_info_table_oid = InvalidOid;
+static Oid bbf_versions_oid = InvalidOid;
+
 static bool tsql_syscache_inited = false;
 extern bool babelfish_dump_restore;
 extern char *orig_proc_funcname;
@@ -205,6 +214,19 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_extended_properties_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_TABLE_NAME, sys_schema_oid);
 	bbf_extended_properties_idx_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_IDX_NAME, sys_schema_oid);
 
+	/* bbf_domain_mapping */
+	bbf_domain_mapping_oid = get_relname_relid(BBF_DOMAIN_MAPPING_TABLE_NAME, sys_schema_oid);
+	bbf_domain_mapping_idx_oid = get_relname_relid(BBF_DOMAIN_MAPPING_IDX_NAME, sys_schema_oid);
+
+	/* general catalog */
+	bbf_assemblies_oid = get_relname_relid(BBF_ASSEMBLIES_TABLE_NAME, sys_schema_oid);
+	bbf_configurations_oid = get_relname_relid(BBF_CONFIGURATIONS_TABLE_NAME, sys_schema_oid);
+	bbf_helpcollation_oid = get_relname_relid(BBF_HELPCOLLATION_TABLE_NAME, sys_schema_oid);
+	bbf_syslanguages_oid = get_relname_relid(BBF_SYSLANGUAGES_TABLE_NAME, sys_schema_oid);
+	bbf_service_settings_oid = get_relname_relid(BBF_SERVICE_SETTINGS_TABLE_NAME, sys_schema_oid);
+	spt_datatype_info_table_oid = get_relname_relid(SPT_DATATYPE_INFO_TABLE_NAME, sys_schema_oid);
+	bbf_versions_oid = get_relname_relid(BBF_VERSIONS_TABLE_NAME, sys_schema_oid);
+
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();
 
@@ -226,11 +248,23 @@ initTsqlSyscache()
 /*****************************************
  * 			Catalog Hooks
  *****************************************/
-
+/*
+ * The assumption of parent function is that it should not perform any
+ * catalog accesses.
+ */
 bool
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
-	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid)
+	/* Skip during Babelfish restore */
+	if (!babelfish_dump_restore && (relationId == sysdatabases_oid ||
+		relationId == bbf_function_ext_oid || relationId == namespace_ext_oid ||
+		relationId == bbf_authid_login_ext_oid || relationId == bbf_authid_user_ext_oid ||
+		relationId == bbf_view_def_oid || relationId == bbf_servers_def_oid ||
+		relationId == bbf_schema_perms_oid || relationId == bbf_domain_mapping_oid ||
+		relationId == bbf_extended_properties_oid || relationId == bbf_assemblies_oid ||
+		relationId == bbf_configurations_oid || relationId == bbf_helpcollation_oid ||
+		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
+		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid))
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -1296,18 +1330,11 @@ get_timeout_from_server_name(char *servername, int attnum)
 void
 clean_up_bbf_server_def()
 {
-	char 			*query_str;
-	StringInfoData 	query;
-
-	initStringInfo(&query);
-
-	appendStringInfo(&query, "TRUNCATE TABLE sys.babelfish_server_options CASCADE");
-
-	query_str = query.data;
-
-	exec_utility_cmd_helper(query_str);
-
-	pfree(query.data);
+	/* Fetch the relation */
+	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
+	/* Truncate the relation */
+	heap_truncate_one_rel(bbf_servers_def_rel);
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
 }
 
 /*****************************************
