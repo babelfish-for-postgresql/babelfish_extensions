@@ -216,7 +216,7 @@ ignore#!#TestUDD-before-15_7-or-16_3-vu-prepare
 ignore#!#TestUDD-before-15_7-or-16_3-vu-verify
 ignore#!#TestUDD-before-15_7-or-16_3-vu-cleanup
 ignore#!#BABEL_3571-before-15-5-vu-prepare
-ignore#!#BABEL_3571-before-15-7-vu-verify
+ignore#!#BABEL_3571-before-15-5-vu-verify
 ignore#!#BABEL_3571-15_5-or-15_6-or-16_1-or-16_2-vu-prepare
 ignore#!#BABEL_3571-15_5-or-15_6-or-16_1-or-16_2-vu-verify
 
