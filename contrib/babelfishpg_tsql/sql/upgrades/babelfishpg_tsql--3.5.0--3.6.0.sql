@@ -53,6 +53,67 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_schema_permissions', '
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
+	in_table_name sys.nvarchar(384) = '',
+	in_table_owner sys.nvarchar(384) = '', 
+	in_table_qualifier sys.sysname = '',
+	in_table_type sys.varchar(100) = '',
+	in_fusepattern sys.bit = '1')
+	RETURNS TABLE (
+		out_table_qualifier sys.sysname,
+		out_table_owner sys.sysname,
+		out_table_name sys.sysname,
+		out_table_type sys.varchar(32),
+		out_remarks sys.varchar(254)
+	)
+	AS $$
+		DECLARE opt_table sys.varchar(16) = '';
+		DECLARE opt_view sys.varchar(16) = '';
+		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
+	BEGIN
+		IF upper(cs_as_in_table_type) LIKE '%''TABLE''%' THEN
+			opt_table = 'TABLE';
+		END IF;
+		IF upper(cs_as_in_table_type) LIKE '%''VIEW''%' THEN
+			opt_view = 'VIEW';
+		END IF;
+		IF in_fusepattern = 1 THEN
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.database_default)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.database_default)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type = opt_table
+			    OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		ELSE 
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.database_default)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.database_default)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.database_default)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type = opt_table
+			    OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		END IF;
+	END;
+$$
+LANGUAGE plpgsql STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
