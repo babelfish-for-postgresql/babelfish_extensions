@@ -751,10 +751,11 @@ tdsstat_read_current_status(void)
 
 // what is current backend?
 bool
-get_tds_database_backend_count(int16 db_id)
+get_tds_database_backend_count(int16 db_id, bool ignore_current_connection)
 {
 	TdsStatus  *tdsentry;
 	LocalTdsStatus *local_tdsentry;
+	int number_of_connections = 0;
 
 	/* Read the latest activity from the shared mem. */
 	tdsstat_read_current_status();
@@ -771,9 +772,19 @@ get_tds_database_backend_count(int16 db_id)
 		/*
 		 * Return true if we find the first backend connected to
 		 * this database. Also sanity check that the pid is valid.
+		 * 
+		 * If ignore_current_connection is set to true then we need to skip
+		 * at least one connection using that database,
+		 * i.e. increment count to 1 and return true
+		 * only when we find another connection using same database.
 		 */
 		if (tdsentry->client_pid != 0 && tdsentry->database_id == db_id)
-			return true;
+		{
+			if (ignore_current_connection && number_of_connections == 0)
+				number_of_connections++;
+			else
+				return true;
+		}
 	}
 	return false;
 }

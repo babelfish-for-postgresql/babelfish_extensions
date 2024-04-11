@@ -3501,6 +3501,10 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 	char		*old_db_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char		*new_db_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	char	  **splited_object_name;
+	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
+
+	/* sp_renmae is not allowed inside a transaction. */
+	PreventInTransactionBlock(true, "SP_RENAME/SP_RENAMEDB");
 
 	if (!old_db_name)
 		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -3534,7 +3538,30 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 					splited_object_name[3] :
 					downcase_identifier(splited_object_name[3], strlen(splited_object_name[3]), false, false);
 
-	rename_tsql_db(old_db_name, new_db_name);
+	/* Truncate the database name if needed. */
+	truncate_tsql_identifier(old_db_name);
+	truncate_tsql_identifier(new_db_name);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+								GUC_CONTEXT_CONFIG,
+								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		rename_tsql_db(old_db_name, new_db_name);
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+					GUC_CONTEXT_CONFIG,
+					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+					GUC_CONTEXT_CONFIG,
+					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	PG_RETURN_VOID();
 }

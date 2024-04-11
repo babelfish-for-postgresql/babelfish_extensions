@@ -390,12 +390,11 @@ use master
 go
 
 -- cannot rename the database without sysadmin role, even when you're the owner already
--- ALTER DATABASE is not yet supported in Babelfish:
 alter database change_owner_db modify name = change_owner_db_renamed
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ALTER DATABASE' is not currently supported in Babelfish)~~
+~~ERROR (Message: Current login new_owner_login does not have permission to create new login)~~
 
 
 -- cannot rename the database without sysadmin role, even when you're the owner already

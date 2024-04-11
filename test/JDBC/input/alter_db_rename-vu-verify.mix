@@ -1,0 +1,128 @@
+-- tsql
+-- sanity checks for metadata stored in babelfish catalog
+select owner, name from sys.babelfish_sysdatabases where name = 'rename_db_database1';
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%';
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%';
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+go
+
+-- sanity check
+use rename_db_database1;
+go
+-- Renaming the current database is also allowed
+alter database rename_db_database1 modify name = rename_db_database2;
+go
+select db_name()
+go
+use rename_db_database1;
+go
+use rename_db_database2;
+go
+alter database rename_db_database2 modify name = rename_db_database1;
+go
+
+use master
+go
+alter database rename_db_database1 modify name = rename_db_database2;
+go
+-- should return updated rows
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%';
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%';
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+go
+
+-- sanity check to use db
+use rename_db_database1;
+go
+use rename_db_database2;
+go
+
+use master
+go
+
+-- rollback changes
+alter database rename_db_database2 modify name = rename_db_database1
+go
+
+-- Alter database inside transaction is not allowed
+Begin Transaction;
+go
+alter database db1 modify name = db2
+go
+-- does not rollback transaction
+select @@trancount
+go
+commit
+go
+
+-- Alter inside a function/procedure should fail
+create function f1() returns int Begin alter database db1 modify name = db2 END
+go
+create procedure p1 as alter database db1 modify name = db2
+go
+
+-- Renaming system databases is prohibited
+alter database master modify name rename_db_database1;
+go
+alter database tempdb modify name rename_db_database1;
+go
+alter database msdb modify name rename_db_database1;
+go
+
+-- Rename a case sensitive and len>64 database name
+alter database [ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]
+ modify name = [ThisNewDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]
+go
+
+-- should return updated rows
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+go
+
+-- sanity check to use db
+use [ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb];
+go
+use [ThisNewDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]
+go
+
+use master
+go
+
+-- tsql user=rename_db_login1 password=1234
+use rename_db_database1
+go
+-- user that does not have access to db, cannot modify name
+alter database rename_db_database1 modify name = rename_db_database2;
+go
+
+-- tsql
+-- give rename_db_login1 permission to the db
+alter server role sysadmin add member rename_db_login1
+go
+
+-- tsql user=rename_db_login1 password=1234
+-- should work now
+alter database rename_db_database1 modify name = rename_db_database2;
+go
+-- connect to the database to test concurrencies
+use rename_db_database2
+go
+
+-- tsql
+-- should throw error since there is an active session using rename_db_database2
+alter database rename_db_database2 modify name = rename_db_database1;
+go
+
+-- tsql user=rename_db_login1 password=1234
+-- now disconnect from that database in the 2nd connection and test alter again
+select db_name()
+go
+use master
+go
+
+-- tsql
+alter database rename_db_database2 modify name = rename_db_database1;
+go

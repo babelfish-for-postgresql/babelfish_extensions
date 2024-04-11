@@ -3883,6 +3883,9 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 static int
 exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
 {
+	/* Alter database is not allowed inside a transaction. */
+	PreventInTransactionBlock(true, "ALTER DATABASE");
+
 	/*
 	 * Currently Babelfish only support rename, when we extend
 	 * the support at that time we can add a boolean to the stmt
