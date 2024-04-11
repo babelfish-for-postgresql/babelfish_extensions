@@ -190,22 +190,17 @@ CREATE OPERATOR sys.<> (
     JOIN = neqjoinsel
 );
 
--- Opartor class for integer_ops to incorporate various operator between int and numeric for Index scan
-CREATE OPERATOR CLASS int_numeric FOR TYPE int4
-  USING btree FAMILY integer_ops AS
+-- Update operator family for integer, integer_ops to incorporate various operator between int and numeric for Index scan
+ALTER OPERATOR FAMILY integer_ops USING btree ADD
    OPERATOR 1 sys.< (int, numeric),
    OPERATOR 2 sys.<= (int, numeric),
    OPERATOR 3 sys.= (int, numeric),
    OPERATOR 4 sys.>= (int, numeric),
    OPERATOR 5 sys.> (int, numeric),
-   FUNCTION 1 sys.int4_numeric_cmp(int, numeric);
-
--- Opartor class for integer_ops to incorporate various operator between int and numeric for Index scan
-CREATE OPERATOR CLASS numeric_int FOR TYPE int4
-  USING btree FAMILY integer_ops AS
    OPERATOR 1 sys.< (numeric, int),
    OPERATOR 2 sys.<= (numeric, int),
    OPERATOR 3 sys.= (numeric, int),
    OPERATOR 4 sys.>= (numeric, int),
    OPERATOR 5 sys.> (numeric, int),
+   FUNCTION 1 sys.int4_numeric_cmp(int, numeric),
    FUNCTION 1 sys.numeric_int4_cmp(numeric, int);
