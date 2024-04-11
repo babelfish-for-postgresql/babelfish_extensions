@@ -2525,9 +2525,10 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
 			}
+
+			SPI_finish();
 		}
 
-		SPI_finish();
 		PopActiveSnapshot();
 		if (!xactStarted)
 			CommitTransactionCommand();
