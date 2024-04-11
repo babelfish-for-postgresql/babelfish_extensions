@@ -4,9 +4,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.sql.*;
-import java.util.*;
-
-import static java.util.Objects.isNull;
 
 import static com.sqlsamples.Config.*;
 import static com.sqlsamples.Statistics.exec_times;
@@ -231,7 +228,15 @@ public class batch_run {
                     String sourceTable = result[1];
                     String destinationTable = result[2];
                     jdbcBulkCopy.executeInsertBulk(con_bbl, destinationTable, sourceTable, logger, bw);
+                } else if (strLine.startsWith("dbmeta")) {
+                    bw.write(strLine);
+                    bw.newLine();
 
+                    String[] result = strLine.split("#!#");
+                    String method = result[1];
+                    String data = result.length >= 3 ? result[2] : "";
+
+                    JDBCMetadata.testDatabaseMetadata(bw, logger, con_bbl, method, data);
                 } else if (isCrossDialectFile && (  (tsqlDialect = strLine.toLowerCase().startsWith("-- tsql")) ||
                                                     (psqlDialect = strLine.toLowerCase().startsWith("-- psql")))) {
                     // Cross dialect testing

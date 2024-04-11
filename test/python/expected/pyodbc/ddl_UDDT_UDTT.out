@@ -24,7 +24,7 @@ CREATE TYPE [dbo].[inventoryitem] AS TABLE(
 	[price] [decimal](18, 4) NULL,
 	PRIMARY KEY NONCLUSTERED 
 (
-	[name]
+	[name] ASC
 )WITH (IGNORE_DUP_KEY = OFF)
 )
 GO

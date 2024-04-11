@@ -1,0 +1,292 @@
+
+create table dbmeta_tab1(col1 int primary key, col2 nvarchar(max) not null)
+create table dbmeta_tab2(fcol1 int not null, foreign key (fcol1) references dbmeta_tab1(col1))
+create view dbmeta_view1 as select * from dbmeta_tab1
+create function dbmeta_func1() returns int as begin return 1 end
+create function dbmeta_func2(@par1 int) returns table return select cast(@par1 as int) as col1, cast ('foo' as nvarchar(max)) as col2
+create index idx1 on dbmeta_tab1(col2)
+create unique index idx2 on dbmeta_tab1(col2)
+create procedure dbmeta_proc1 as begin return end
+create procedure dbmeta_proc2 @par1 int as select cast(@par1 as int) as col1, cast ('foo' as nvarchar(max)) as col2
+
+dbmeta#!#getCatalogs
+~~START~~
+varchar
+master
+msdb
+tempdb
+~~END~~
+
+
+dbmeta#!#getColumnPrivileges#!#master|dbo|dbmeta_tab1|col1
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#dbo#!#INSERT#!#YES
+master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#dbo#!#REFERENCES#!#YES
+master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#dbo#!#SELECT#!#YES
+master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+dbmeta#!#getTables#!#master|dbo|dbmeta_%
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#TABLE#!#<NULL>
+master#!#dbo#!#dbmeta_tab2#!#TABLE#!#<NULL>
+master#!#dbo#!#dbmeta_view1#!#VIEW#!#<NULL>
+~~END~~
+
+dbmeta#!#getTables#!#master|dbo|dbmeta_%|TABLE|VIEW
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#TABLE#!#<NULL>
+master#!#dbo#!#dbmeta_tab2#!#TABLE#!#<NULL>
+master#!#dbo#!#dbmeta_view1#!#VIEW#!#<NULL>
+~~END~~
+
+
+dbmeta#!#getColumns#!#master|dbo|dbmeta_tab1
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#tinyint#!#text#!#text#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#dbmeta_tab1#!#col1#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#NO#!#NO#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#dbmeta_tab1#!#col2#!#-9#!#nvarchar#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#2147483647#!#2#!#NO#!#<NULL>#!#<NULL>#!#<NULL>#!#39#!#NO#!#NO#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+dbmeta#!#getColumns#!#master|dbo|dbmeta_tab1|col1
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#tinyint#!#text#!#text#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#dbmeta_tab1#!#col1#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#NO#!#NO#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+dbmeta#!#getFunctions#!#master|dbo|dbmeta_%
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+master#!#dbo#!#dbmeta_func1;0#!#-1#!#-1#!#-1#!#<NULL>#!#2
+master#!#dbo#!#dbmeta_func2;0#!#-1#!#-1#!#-1#!#<NULL>#!#2
+master#!#dbo#!#dbmeta_proc1;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+master#!#dbo#!#dbmeta_proc2;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+dbmeta#!#getFunctions#!#master|dbo|dbmeta_func1
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+master#!#dbo#!#dbmeta_func1;0#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+dbmeta#!#getFunctionColumns#!#master|dbo|dbmeta_%
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+master#!#dbo#!#dbmeta_func1;0#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#YES#!#38
+master#!#dbo#!#dbmeta_func2;0#!#@TABLE_RETURN_VALUE#!#3#!#<NULL>#!#table#!#2147483647#!#2147483647#!#0#!#0#!#0#!#Result table returned by table valued function#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#NO#!#0
+master#!#dbo#!#dbmeta_func2;0#!#@par1#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+master#!#dbo#!#dbmeta_proc1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+master#!#dbo#!#dbmeta_proc2;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+master#!#dbo#!#dbmeta_proc2;1#!#@par1#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+~~END~~
+
+dbmeta#!#getFunctionColumns#!#master|dbo|dbmeta_func2|@par1
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+master#!#dbo#!#dbmeta_func2;0#!#@par1#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+~~END~~
+
+
+dbmeta#!#getBestRowIdentifier#!#master|dbo|dbmeta_tab1|1|true
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#col1#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+dbmeta#!#getCrossReference#!#master|dbo|dbmeta_tab1|master|dbo|dbmeta_tab2
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#int#!#int#!#varchar#!#varchar#!#smallint
+master#!#dbo#!#dbmeta_tab1#!#col1#!#master#!#dbo#!#dbmeta_tab2#!#fcol1#!#1#!#3#!#3#!#dbmeta_tab2_fcol1_fkey#!#dbmeta_tab1_pkey#!#7
+~~END~~
+
+
+dbmeta#!#getExportedKeys#!#master|dbo|dbmeta_tab1
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#int#!#int#!#varchar#!#varchar#!#smallint
+master#!#dbo#!#dbmeta_tab1#!#col1#!#master#!#dbo#!#dbmeta_tab2#!#fcol1#!#1#!#3#!#3#!#dbmeta_tab2_fcol1_fkey#!#dbmeta_tab1_pkey#!#7
+~~END~~
+
+dbmeta#!#getExportedKeys#!#master|dbo|dbmeta_tab2
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#int#!#int#!#varchar#!#varchar#!#smallint
+~~END~~
+
+
+dbmeta#!#getImportedKeys#!#master|dbo|dbmeta_tab1
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#int#!#int#!#varchar#!#varchar#!#smallint
+~~END~~
+
+dbmeta#!#getImportedKeys#!#master|dbo|dbmeta_tab2
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#int#!#int#!#varchar#!#varchar#!#smallint
+master#!#dbo#!#dbmeta_tab1#!#col1#!#master#!#dbo#!#dbmeta_tab2#!#fcol1#!#1#!#3#!#3#!#dbmeta_tab2_fcol1_fkey#!#dbmeta_tab1_pkey#!#7
+~~END~~
+
+
+dbmeta#!#getIndexInfo#!#master|dbo|dbmeta_tab1|false|true
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#0#!#dbmeta_tab1#!#dbmeta_tab1_pkey#!#3#!#1#!#col1#!#A#!#<NULL>#!#0#!#<NULL>
+master#!#dbo#!#dbmeta_tab1#!#0#!#dbmeta_tab1#!#idx2#!#3#!#1#!#col2#!#A#!#<NULL>#!#0#!#<NULL>
+master#!#dbo#!#dbmeta_tab1#!#1#!#dbmeta_tab1#!#idx1#!#3#!#1#!#col2#!#A#!#<NULL>#!#0#!#<NULL>
+master#!#dbo#!#dbmeta_tab1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+~~END~~
+
+dbmeta#!#getIndexInfo#!#master|dbo|dbmeta_tab2|true|true
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+master#!#dbo#!#dbmeta_tab2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+~~END~~
+
+
+dbmeta#!#getMaxConnections
+~~START~~
+0
+~~END~~
+
+
+dbmeta#!#getPrimaryKeys#!#master|dbo|dbmeta_tab1
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#col1#!#1#!#dbmeta_tab1_pkey
+~~END~~
+
+dbmeta#!#getPrimaryKeys#!#master|dbo|dbmeta_tab2
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar
+~~END~~
+
+
+dbmeta#!#getProcedureColumns#!#master|dbo|dbmeta_%
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+master#!#dbo#!#dbmeta_func1;0#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#YES#!#38
+master#!#dbo#!#dbmeta_func2;0#!#@TABLE_RETURN_VALUE#!#3#!#<NULL>#!#table#!#2147483647#!#2147483647#!#0#!#0#!#0#!#Result table returned by table valued function#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#NO#!#0
+master#!#dbo#!#dbmeta_func2;0#!#@par1#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+master#!#dbo#!#dbmeta_proc1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+master#!#dbo#!#dbmeta_proc2;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+master#!#dbo#!#dbmeta_proc2;1#!#@par1#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+~~END~~
+
+dbmeta#!#getProcedureColumns#!#master|dbo|dbmeta_proc2|@par1
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+master#!#dbo#!#dbmeta_proc2;1#!#@par1#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+~~END~~
+
+
+dbmeta#!#getProcedures#!#master|dbo|dbmeta_%
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+master#!#dbo#!#dbmeta_func1;0#!#-1#!#-1#!#-1#!#<NULL>#!#2
+master#!#dbo#!#dbmeta_func2;0#!#-1#!#-1#!#-1#!#<NULL>#!#2
+master#!#dbo#!#dbmeta_proc1;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+master#!#dbo#!#dbmeta_proc2;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+dbmeta#!#getProcedures#!#master|dbo|dbmeta_proc1
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+master#!#dbo#!#dbmeta_proc1;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+dbmeta#!#getSchemas#!#master
+~~START~~
+varchar#!#text
+dbo#!#<NULL>
+guest#!#<NULL>
+~~END~~
+
+dbmeta#!#getSchemas#!#master|dbo
+~~START~~
+varchar#!#text
+dbo#!#<NULL>
+~~END~~
+
+
+dbmeta#!#getTablePrivileges#!#master|dbo|dbmeta_tab1
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#DELETE#!#YES
+master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#INSERT#!#YES
+master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#REFERENCES#!#YES
+master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#SELECT#!#YES
+master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+dbmeta#!#getTypeInfo
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+vector#!#-2147483648#!#0#!#'#!#'#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#vector#!#<NULL>#!#<NULL>#!#-2147483648#!#<NULL>#!#<NULL>#!#<NULL>#!#-2147483648
+datetimeoffset#!#-155#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+time#!#92#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+xml#!#-16#!#0#!#N'#!#'#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#xml#!#<NULL>#!#<NULL>#!#-152#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geography#!#-3#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geography#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geometry#!#-3#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#1#!#0#!#<NULL>#!#0#!#<NULL>#!#geometry#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sql_variant#!#-150#!#8000#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#sql_variant#!#0#!#0#!#-150#!#<NULL>#!#10#!#<NULL>#!#0
+uniqueidentifier#!#1#!#36#!#'#!#'#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#uniqueidentifier#!#<NULL>#!#<NULL>#!#-11#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+ntext#!#-16#!#1073741823#!#N'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#ntext#!#<NULL>#!#<NULL>#!#-10#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+nchar#!#-15#!#4000#!#N'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nchar#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+bit#!#-7#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#bit#!#0#!#0#!#-7#!#<NULL>#!#<NULL>#!#<NULL>#!#16
+tinyint#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#1#!#0#!#0#!#tinyint#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+tinyint identity#!#-6#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#1#!#0#!#1#!#tinyint identity#!#0#!#0#!#-6#!#<NULL>#!#10#!#<NULL>#!#5
+bigint#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#bigint#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+bigint identity#!#-5#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#bigint identity#!#0#!#0#!#-5#!#<NULL>#!#10#!#<NULL>#!#0
+image#!#-4#!#2147483647#!#0x#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#0#!#<NULL>#!#image#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#<NULL>#!#<NULL>#!#20
+varbinary#!#-3#!#8000#!#0x#!#<NULL>#!#max length          #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#varbinary#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#<NULL>#!#4
+binary#!#-2#!#8000#!#0x#!#<NULL>#!#length              #!#1#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#binary#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+timestamp#!#-2#!#8#!#0x#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#<NULL>#!#0#!#<NULL>#!#timestamp#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#<NULL>#!#80
+text#!#-1#!#2147483647#!#'#!#'#!#<NULL>#!#1#!#1#!#1#!#<NULL>#!#0#!#<NULL>#!#text#!#<NULL>#!#<NULL>#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#19
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+numeric#!#2#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#numeric#!#0#!#38#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+numeric() identity#!#2#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#numeric() identity#!#0#!#0#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+decimal#!#3#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#decimal#!#0#!#38#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+money#!#3#!#19#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#money#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#11
+smallmoney#!#3#!#10#!#$#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#1#!#0#!#smallmoney#!#4#!#4#!#3#!#<NULL>#!#10#!#<NULL>#!#21
+decimal() identity#!#3#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#decimal() identity#!#0#!#0#!#3#!#<NULL>#!#10#!#<NULL>#!#24
+int#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#int#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+int identity#!#4#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#int identity#!#0#!#0#!#4#!#<NULL>#!#10#!#<NULL>#!#7
+smallint#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#smallint#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+smallint identity#!#5#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#2#!#0#!#0#!#1#!#smallint identity#!#0#!#0#!#5#!#<NULL>#!#10#!#<NULL>#!#6
+float#!#8#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#float#!#<NULL>#!#<NULL>#!#6#!#<NULL>#!#2#!#<NULL>#!#8
+real#!#7#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#2#!#0#!#0#!#0#!#real#!#<NULL>#!#<NULL>#!#7#!#<NULL>#!#2#!#<NULL>#!#23
+varchar#!#12#!#8000#!#'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#varchar#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#<NULL>#!#2
+date#!#91#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+datetime2#!#93#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+datetime#!#93#!#23#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime#!#3#!#3#!#9#!#3#!#<NULL>#!#<NULL>#!#12
+smalldatetime#!#93#!#16#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#smalldatetime#!#0#!#0#!#9#!#3#!#<NULL>#!#<NULL>#!#22
+~~END~~
+
+
+dbmeta#!#getUserName
+~~START~~
+jdbc_user
+~~END~~
+
+
+# sp_special_columns called with @col_type = 'V'
+dbmeta#!#getVersionColumns#!#master|dbo|dbmeta_tab1
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TIMESTAMP datatype is not currently supported in Babelfish)~~
+
+
+drop view dbmeta_view1
+drop table dbmeta_tab2
+drop table dbmeta_tab1
+drop function dbmeta_func1
+drop function dbmeta_func2
+drop procedure dbmeta_proc1
+drop procedure dbmeta_proc2

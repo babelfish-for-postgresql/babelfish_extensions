@@ -149,6 +149,7 @@ babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
+check_for_inconsistent_metadata
 babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
@@ -517,4 +518,6 @@ babel-3254
 babel-4517
 babel_table_type
 1_GRANT_SCHEMA
+BABEL-4707
+BABEL_4817
 babel_test_int4_numeric_oper
