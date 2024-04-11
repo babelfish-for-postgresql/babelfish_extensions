@@ -301,6 +301,12 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
 
+	tsql_get_server_collation_oid_internal(true);
+
+	if (!OidIsValid(server_collation_oid))
+		return node;
+
+
 	/*
 	 * Find the CS_AS collation corresponding to the CI_AS collation
 	 * Change the collation of the ILIKE op to the CS_AS collation
@@ -578,6 +584,11 @@ static Node *
 transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
 {
 	int			collidx_of_cs_as;
+
+	tsql_get_server_collation_oid_internal(true);
+
+	if (!OidIsValid(server_collation_oid))
+		return node;
 
 	/*
 	 * Find the CS_AS collation corresponding to the CS_AI collation
