@@ -1,0 +1,7 @@
+CREATE FUNCTION check_for_inconsistent_metadata_vu_prepare_func()
+RETURNS BOOLEAN
+AS
+BEGIN
+RETURN (SELECT sys.check_for_inconsistent_metadata())
+END
+GO

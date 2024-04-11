@@ -495,6 +495,26 @@ RETURNS table (
   detail jsonb
 ) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.check_for_inconsistent_metadata()
+RETURNS BOOLEAN AS $$
+DECLARE
+    has_inconsistent_metadata BOOLEAN;
+    num_rows INT;
+BEGIN
+    has_inconsistent_metadata := FALSE;
+
+    -- Count the number of inconsistent metadata rows from Babelfish catalogs
+    SELECT COUNT(*) INTO num_rows
+    FROM sys.babelfish_inconsistent_metadata();
+
+    has_inconsistent_metadata := num_rows > 0;
+
+    -- Additional checks can be added here to update has_inconsistent_metadata accordingly
+
+    RETURN has_inconsistent_metadata;
+END;
+$$
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.role_id(role_name SYS.SYSNAME)
 RETURNS INT
