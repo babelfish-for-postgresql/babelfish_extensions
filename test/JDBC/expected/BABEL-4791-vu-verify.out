@@ -1840,7 +1840,7 @@ int
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 19#!#15% off
 ~~END~~
 
@@ -1849,7 +1849,7 @@ int#!#varchar
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 19#!#15% off
 ~~END~~
 
@@ -1858,7 +1858,7 @@ int#!#varchar
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 21#!#15 %off
 ~~END~~
 
@@ -1867,7 +1867,7 @@ int#!#varchar
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 23#!#15 % /off
 ~~END~~
 
@@ -1876,7 +1876,7 @@ int#!#varchar
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 3#!#Andersson
 4#!#Bertilsson
 5#!#Carlson
@@ -2070,6 +2070,77 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+-- CASE 20: LIKE IN TARGET LIST
+SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM babel_4791_vu_prepare_t1_ci;
+GO
+~~START~~
+nvarchar#!#text
+café#!#No Match
+jalapeño#!#No Match
+résumé#!#No Match
+naïve#!#No Match
+Piñata#!#No Match
+Año Nuevo#!#No Match
+TELÉFONO#!#No Match
+película#!#No Match
+árbol#!#No Match
+canapé#!#No Match
+chaptéR#!#Prefix Match
+TEññiȘ#!#No Match
+~~END~~
+
+
+SELECT col,
+       CASE 
+           WHEN col LIKE 'prefix%' THEN 'Prefix Match'
+           WHEN col LIKE '%ONO' THEN 'Suffix Match'
+           ELSE 'No Match' 
+       END AS match_category
+FROM babel_4791_vu_prepare_t1_ci;
+GO
+~~START~~
+nvarchar#!#text
+café#!#No Match
+jalapeño#!#No Match
+résumé#!#No Match
+naïve#!#No Match
+Piñata#!#No Match
+Año Nuevo#!#No Match
+TELÉFONO#!#Suffix Match
+película#!#No Match
+árbol#!#No Match
+canapé#!#No Match
+chaptéR#!#No Match
+TEññiȘ#!#No Match
+~~END~~
+
+
+SELECT col,
+       CASE 
+           WHEN col LIKE 'prefix%' THEN 'Prefix Match'
+           WHEN col LIKE '%suffix' THEN 'Suffix Match'
+           WHEN col LIKE '%íc%' THEN 'Match'
+           ELSE 'No Match' 
+       END AS extracted_substring
+FROM babel_4791_vu_prepare_t1_ci;
+GO
+~~START~~
+nvarchar#!#text
+café#!#No Match
+jalapeño#!#No Match
+résumé#!#No Match
+naïve#!#No Match
+Piñata#!#No Match
+Año Nuevo#!#No Match
+TELÉFONO#!#No Match
+película#!#Match
+árbol#!#No Match
+canapé#!#No Match
+chaptéR#!#No Match
+TEññiȘ#!#No Match
 ~~END~~
 
 
@@ -3814,7 +3885,7 @@ int
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 19#!#15% off
 ~~END~~
 
@@ -3823,7 +3894,7 @@ int#!#varchar
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 19#!#15% off
 ~~END~~
 
@@ -3832,7 +3903,7 @@ int#!#varchar
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 21#!#15 %off
 ~~END~~
 
@@ -3841,7 +3912,7 @@ int#!#varchar
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 23#!#15 % /off
 ~~END~~
 
@@ -3850,7 +3921,7 @@ int#!#varchar
 SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
 GO
 ~~START~~
-int#!#varchar
+int#!#nvarchar
 3#!#Andersson
 4#!#Bertilsson
 5#!#Carlson
@@ -4044,5 +4115,76 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+-- CASE 20: LIKE IN TARGET LIST
+SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM babel_4791_vu_prepare_t1_ci;
+GO
+~~START~~
+nvarchar#!#text
+café#!#No Match
+jalapeño#!#No Match
+résumé#!#No Match
+naïve#!#No Match
+Piñata#!#No Match
+Año Nuevo#!#No Match
+TELÉFONO#!#No Match
+película#!#No Match
+árbol#!#No Match
+canapé#!#No Match
+chaptéR#!#Prefix Match
+TEññiȘ#!#No Match
+~~END~~
+
+
+SELECT col,
+       CASE 
+           WHEN col LIKE 'prefix%' THEN 'Prefix Match'
+           WHEN col LIKE '%ONO' THEN 'Suffix Match'
+           ELSE 'No Match' 
+       END AS match_category
+FROM babel_4791_vu_prepare_t1_ci;
+GO
+~~START~~
+nvarchar#!#text
+café#!#No Match
+jalapeño#!#No Match
+résumé#!#No Match
+naïve#!#No Match
+Piñata#!#No Match
+Año Nuevo#!#No Match
+TELÉFONO#!#Suffix Match
+película#!#No Match
+árbol#!#No Match
+canapé#!#No Match
+chaptéR#!#No Match
+TEññiȘ#!#No Match
+~~END~~
+
+
+SELECT col,
+       CASE 
+           WHEN col LIKE 'prefix%' THEN 'Prefix Match'
+           WHEN col LIKE '%suffix' THEN 'Suffix Match'
+           WHEN col LIKE '%íc%' THEN 'Match'
+           ELSE 'No Match' 
+       END AS extracted_substring
+FROM babel_4791_vu_prepare_t1_ci;
+GO
+~~START~~
+nvarchar#!#text
+café#!#No Match
+jalapeño#!#No Match
+résumé#!#No Match
+naïve#!#No Match
+Piñata#!#No Match
+Año Nuevo#!#No Match
+TELÉFONO#!#No Match
+película#!#Match
+árbol#!#No Match
+canapé#!#No Match
+chaptéR#!#No Match
+TEññiȘ#!#No Match
 ~~END~~
 

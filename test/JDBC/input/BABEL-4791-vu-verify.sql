@@ -724,6 +724,29 @@ GO
 SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CI_AI LIKE 'AB[C]D' ESCAPE null;
 GO
 
+-- CASE 20: LIKE IN TARGET LIST
+SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM babel_4791_vu_prepare_t1_ci;
+GO
+
+SELECT col,
+       CASE 
+           WHEN col LIKE 'prefix%' THEN 'Prefix Match'
+           WHEN col LIKE '%ONO' THEN 'Suffix Match'
+           ELSE 'No Match' 
+       END AS match_category
+FROM babel_4791_vu_prepare_t1_ci;
+GO
+
+SELECT col,
+       CASE 
+           WHEN col LIKE 'prefix%' THEN 'Prefix Match'
+           WHEN col LIKE '%suffix' THEN 'Suffix Match'
+           WHEN col LIKE '%íc%' THEN 'Match'
+           ELSE 'No Match' 
+       END AS extracted_substring
+FROM babel_4791_vu_prepare_t1_ci;
+GO
+
 
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -1448,4 +1471,27 @@ SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CS_AI LIKE 'AB[C]D' ESCAPE 'xy'  --
 GO
 
 SELECT 1 WHERE 'ABCD' COLLATE Latin1_General_CS_AI LIKE 'AB[C]D' ESCAPE null;
+GO
+
+-- CASE 20: LIKE IN TARGET LIST
+SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM babel_4791_vu_prepare_t1_ci;
+GO
+
+SELECT col,
+       CASE 
+           WHEN col LIKE 'prefix%' THEN 'Prefix Match'
+           WHEN col LIKE '%ONO' THEN 'Suffix Match'
+           ELSE 'No Match' 
+       END AS match_category
+FROM babel_4791_vu_prepare_t1_ci;
+GO
+
+SELECT col,
+       CASE 
+           WHEN col LIKE 'prefix%' THEN 'Prefix Match'
+           WHEN col LIKE '%suffix' THEN 'Suffix Match'
+           WHEN col LIKE '%íc%' THEN 'Match'
+           ELSE 'No Match' 
+       END AS extracted_substring
+FROM babel_4791_vu_prepare_t1_ci;
 GO

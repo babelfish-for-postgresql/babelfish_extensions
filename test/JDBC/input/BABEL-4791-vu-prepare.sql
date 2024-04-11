@@ -195,7 +195,7 @@ GO
 CREATE TABLE babel_4791_vu_prepare_escape
 (
  c1 int IDENTITY(1, 1)
-,string varchar(50) 
+,string nvarchar(50) 
 );
 GO
 

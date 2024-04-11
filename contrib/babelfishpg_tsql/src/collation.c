@@ -433,7 +433,7 @@ get_remove_accents_internal_oid()
 	if (remove_accents_internal_oid)
 		return;
 
-	remove_accents_internal_oid = LookupFuncName(list_make1(makeString("remove_accents_internal")), -1, funcargtypes, true);
+	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
 }
 
 /*
