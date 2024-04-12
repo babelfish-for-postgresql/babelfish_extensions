@@ -442,6 +442,8 @@ varchar
 
 SELECT LEFT(a, 5) from babel_4489_left_image;
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type image is invalid for argument 1 of left function.)~~
@@ -450,6 +452,8 @@ GO
 -- input datatype text
 SELECT LEFT(a, 5) FROM babel_4489_left_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type text is invalid for argument 1 of left function.)~~
@@ -458,6 +462,8 @@ GO
 -- input datatype ntext
 SELECT LEFT(b, 5) FROM babel_4489_left_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type ntext is invalid for argument 1 of left function.)~~

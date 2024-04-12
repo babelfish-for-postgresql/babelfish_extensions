@@ -1054,6 +1054,8 @@ GO
 
 SELECT TRIM(a FROM a) FROM babel_4489_trim_image;
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type image is invalid for argument 1 of trim function.)~~
@@ -1062,6 +1064,8 @@ GO
 DECLARE @charSet VARCHAR(10) = '6F';
 SELECT TRIM(@charSet FROM a) from babel_4489_trim_image;
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type image is invalid for argument 1 of trim function.)~~
@@ -1069,12 +1073,16 @@ GO
 
 SELECT TRIM(a FROM b) FROM babel_4489_trim_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type ntext is invalid for argument 1 of trim function.)~~
 
 SELECT TRIM(b FROM a) FROM babel_4489_trim_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type text is invalid for argument 1 of trim function.)~~
@@ -1083,6 +1091,8 @@ GO
 DECLARE @charSet VARCHAR(20) = 'ab? '
 SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type text is invalid for argument 1 of trim function.)~~
@@ -1091,6 +1101,8 @@ GO
 DECLARE @charSet VARCHAR(20) = 'ab? '
 SELECT TRIM(@charSet FROM b) FROM babel_4489_trim_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type ntext is invalid for argument 1 of trim function.)~~

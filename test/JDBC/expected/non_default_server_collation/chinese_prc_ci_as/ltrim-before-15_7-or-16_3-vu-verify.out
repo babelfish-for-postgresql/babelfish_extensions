@@ -336,6 +336,8 @@ varchar
 
 SELECT LTRIM(a) from babel_4489_ltrim_image;
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type image is invalid for argument 1 of ltrim function.)~~
@@ -344,6 +346,8 @@ GO
 -- input datatype text
 SELECT LTRIM(a) FROM babel_4489_ltrim_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type text is invalid for argument 1 of ltrim function.)~~
@@ -352,6 +356,8 @@ GO
 -- input datatype ntext
 SELECT LTRIM(b) FROM babel_4489_ltrim_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type ntext is invalid for argument 1 of ltrim function.)~~
