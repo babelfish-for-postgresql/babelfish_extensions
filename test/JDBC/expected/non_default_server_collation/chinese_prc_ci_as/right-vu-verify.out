@@ -18,8 +18,6 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 -- NULL
 SELECT RIGHT(NULL, -2)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid length parameter passed to the right function.)~~
@@ -60,8 +58,6 @@ varchar
 -- edge case values for second parameter
 SELECT RIGHT('AbdefGhi', -2)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid length parameter passed to the right function.)~~
@@ -446,8 +442,6 @@ varchar
 
 SELECT RIGHT(a, 5) from babel_4489_right_image;
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type image is invalid for argument 1 of right function.)~~
@@ -456,8 +450,6 @@ varchar
 -- input datatype text
 SELECT RIGHT(a, 5) FROM babel_4489_right_text
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type text is invalid for argument 1 of right function.)~~
@@ -466,8 +458,6 @@ varchar
 -- input datatype ntext
 SELECT RIGHT(b, 5) FROM babel_4489_right_text
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type ntext is invalid for argument 1 of right function.)~~
@@ -476,8 +466,6 @@ varchar
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 SELECT RIGHT(@inputString, 3)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of right function.)~~
@@ -486,8 +474,6 @@ varchar
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 SELECT RIGHT(@inputString, 3)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type xml is invalid for argument 1 of right function.)~~
@@ -496,8 +482,6 @@ varchar
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT RIGHT(@inputString, 3)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geometry is invalid for argument 1 of right function.)~~
@@ -506,8 +490,6 @@ varchar
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT RIGHT(@inputString, 3)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geography is invalid for argument 1 of right function.)~~
