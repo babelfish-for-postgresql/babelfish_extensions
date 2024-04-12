@@ -3073,7 +3073,7 @@ CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
--- TRIM
+-- wrapper functions for TRIM
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.BPCHAR)
 RETURNS sys.VARCHAR
 AS 
@@ -3086,7 +3086,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR)
 RETURNS sys.VARCHAR
@@ -3100,7 +3100,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NCHAR)
 RETURNS sys.NVARCHAR
@@ -3114,7 +3114,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NVARCHAR)
 RETURNS sys.NVARCHAR
@@ -3128,7 +3128,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string ANYELEMENT)
 RETURNS sys.VARCHAR
@@ -3139,6 +3139,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for trim function
     IF string_arg_datatype != 'sys.varchar'::regtype AND
         string_arg_datatype != 'sys.bpchar'::regtype AND
         string_arg_datatype != 'sys.nchar'::regtype AND
@@ -3153,9 +3154,10 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
--- Additional handling is added for TRIM function with 2 arguments, hence only following two definitions are required.
+-- Additional handling is added for TRIM function with 2 arguments, 
+-- hence only following two definitions are required.
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NVARCHAR, characters sys.VARCHAR)
 RETURNS sys.NVARCHAR
 AS 
@@ -3168,7 +3170,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text, characters::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR, characters sys.VARCHAR)
 RETURNS sys.VARCHAR
@@ -3182,9 +3184,9 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text, characters::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
--- LTRIM
+-- wrapper functions for LTRIM
 CREATE OR REPLACE FUNCTION sys.LTRIM(string ANYELEMENT)
 RETURNS sys.VARCHAR
 AS
@@ -3194,6 +3196,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for ltrim function
     IF string_arg_datatype = 'text'::regtype OR
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
@@ -3211,7 +3214,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.BPCHAR)
 RETURNS sys.VARCHAR
@@ -3225,7 +3228,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.VARCHAR)
 RETURNS sys.VARCHAR
@@ -3239,7 +3242,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.NCHAR)
 RETURNS sys.NVARCHAR
@@ -3253,7 +3256,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.NVARCHAR)
 RETURNS sys.NVARCHAR
@@ -3267,7 +3270,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string TEXT)
 RETURNS sys.VARCHAR
@@ -3277,7 +3280,7 @@ BEGIN
     RAISE 'Argument data type text is invalid for argument 1 of ltrim function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string NTEXT)
 RETURNS sys.VARCHAR
@@ -3287,9 +3290,9 @@ BEGIN
     RAISE 'Argument data type ntext is invalid for argument 1 of ltrim function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
--- RTRIM
+-- wrapper functions for RTRIM
 CREATE OR REPLACE FUNCTION sys.RTRIM(string ANYELEMENT)
 RETURNS sys.VARCHAR
 AS
@@ -3299,6 +3302,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for rtrim function
     IF string_arg_datatype = 'text'::regtype OR
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
@@ -3316,7 +3320,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.BPCHAR)
 RETURNS sys.VARCHAR
@@ -3330,7 +3334,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.VARCHAR)
 RETURNS sys.VARCHAR
@@ -3344,7 +3348,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.NCHAR)
 RETURNS sys.NVARCHAR
@@ -3358,7 +3362,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.NVARCHAR)
 RETURNS sys.NVARCHAR
@@ -3372,7 +3376,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string TEXT)
 RETURNS sys.VARCHAR
@@ -3382,7 +3386,7 @@ BEGIN
     RAISE 'Argument data type text is invalid for argument 1 of rtrim function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string NTEXT)
 RETURNS sys.VARCHAR
@@ -3392,9 +3396,10 @@ BEGIN
     RAISE 'Argument data type ntext is invalid for argument 1 of rtrim function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
--- LEFT
+
+-- wrapper functions for LEFT
 CREATE OR REPLACE FUNCTION sys.LEFT(string ANYELEMENT, i INTEGER)
 RETURNS sys.VARCHAR
 AS
@@ -3404,6 +3409,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for left function
     IF string_arg_datatype = 'text'::regtype OR
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
@@ -3425,7 +3431,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string sys.BPCHAR, i INTEGER)
 RETURNS sys.VARCHAR
@@ -3443,7 +3449,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string sys.VARCHAR, i INTEGER)
 RETURNS sys.VARCHAR
@@ -3461,7 +3467,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string sys.NCHAR, i INTEGER)
 RETURNS sys.NVARCHAR
@@ -3479,7 +3485,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string sys.NVARCHAR, i INTEGER)
 RETURNS sys.NVARCHAR
@@ -3497,7 +3503,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string TEXT, i INTEGER)
 RETURNS sys.VARCHAR
@@ -3507,7 +3513,7 @@ BEGIN
    RAISE 'Argument data type text is invalid for argument 1 of left function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string NTEXT, i INTEGER)
 RETURNS sys.VARCHAR
@@ -3517,9 +3523,10 @@ BEGIN
    RAISE 'Argument data type ntext is invalid for argument 1 of left function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
--- RIGHT
+
+-- wrapper functions for RIGHT
 CREATE OR REPLACE FUNCTION sys.RIGHT(string ANYELEMENT, i INTEGER)
 RETURNS sys.VARCHAR
 AS
@@ -3529,6 +3536,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for right function
     IF string_arg_datatype = 'text'::regtype OR
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
@@ -3550,7 +3558,7 @@ BEGIN
     RETURN sys.RIGHT(string::sys.VARCHAR, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.BPCHAR, i INTEGER)
 RETURNS sys.VARCHAR
@@ -3568,7 +3576,7 @@ BEGIN
     RETURN PG_CATALOG.right(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.VARCHAR, i INTEGER)
 RETURNS sys.VARCHAR
@@ -3586,7 +3594,7 @@ BEGIN
     RETURN PG_CATALOG.right(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.NCHAR, i INTEGER)
 RETURNS sys.NVARCHAR
@@ -3604,7 +3612,7 @@ BEGIN
     RETURN PG_CATALOG.right(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.NVARCHAR, i INTEGER)
 RETURNS sys.NVARCHAR
@@ -3622,7 +3630,7 @@ BEGIN
     RETURN PG_CATALOG.right(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string TEXT, i INTEGER)
 RETURNS sys.VARCHAR
@@ -3632,7 +3640,7 @@ BEGIN
    RAISE 'Argument data type text is invalid for argument 1 of right function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string NTEXT, i INTEGER)
 RETURNS sys.VARCHAR
@@ -3642,7 +3650,7 @@ BEGIN
    RAISE 'Argument data type ntext is invalid for argument 1 of right function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 -- For getting host os from PG_VERSION_STR
 CREATE OR REPLACE FUNCTION sys.get_host_os()

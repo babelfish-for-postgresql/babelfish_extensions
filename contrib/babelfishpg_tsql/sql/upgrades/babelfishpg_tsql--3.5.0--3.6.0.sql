@@ -331,7 +331,130 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 $$
 LANGUAGE plpgsql STABLE;
 
--- TRIM
+-- Updated deprecated object_id function since left function now restricts TEXT datatype
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    IF EXISTS(SELECT * 
+                FROM pg_proc p 
+                JOIN pg_namespace nsp 
+                    ON p.pronamespace = nsp.oid 
+                WHERE p.proname='object_id_deprecated_in_2_4_0' AND nsp.nspname='sys') THEN
+        
+        CREATE OR REPLACE FUNCTION sys.object_id_deprecated_in_2_4_0(IN object_name TEXT, IN object_type char(2) DEFAULT '')
+        RETURNS INTEGER AS
+        $BODY$
+        DECLARE
+            id oid;
+            db_name text collate "C";
+            bbf_schema_name text collate "C";
+            schema_name text collate "C";
+            schema_oid oid;
+            obj_name text collate "C";
+            is_temp_object boolean;
+            obj_type char(2) collate "C";
+            cs_as_object_name text collate "C" := object_name;
+        BEGIN
+            obj_type = object_type;
+            id = null;
+            schema_oid = NULL;
+
+            SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name 
+            FROM babelfish_split_object_name(cs_as_object_name) s;
+
+            -- Invalid object_name
+            IF obj_name IS NULL OR obj_name = '' collate sys.database_default THEN
+                RETURN NULL;
+            END IF;
+
+            IF bbf_schema_name IS NULL OR bbf_schema_name = '' collate sys.database_default THEN
+                bbf_schema_name := sys.schema_name();
+            END IF;
+
+            schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
+
+            -- Check if looking for temp object.
+            is_temp_object = PG_CATALOG.left(obj_name, 1) = '#' collate sys.database_default;
+
+            -- Can only search in current database. Allowing tempdb for temp objects.
+            IF db_name IS NOT NULL AND db_name collate sys.database_default <> db_name() AND db_name collate sys.database_default <> 'tempdb' THEN
+                RAISE EXCEPTION 'Can only do lookup in current database.';
+            END IF;
+
+            IF schema_name IS NULL OR schema_name = '' collate sys.database_default THEN
+                RETURN NULL;
+            END IF;
+
+            -- Searching within a schema. Get schema oid.
+            schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
+            IF schema_oid IS NULL THEN
+                RETURN NULL;
+            END IF;
+
+            if obj_type <> '' then
+                case
+                    -- Schema does not apply as much to temp objects.
+                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
+
+                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+                    id := (select oid from pg_class where lower(relname) collate sys.database_default = obj_name 
+                                and relnamespace = schema_oid limit 1);
+
+                    when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+                    id := (select oid from pg_constraint where lower(conname) collate sys.database_default = obj_name 
+                                and connamespace = schema_oid limit 1);
+
+                    when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+                    id := (select oid from pg_proc where lower(proname) collate sys.database_default = obj_name 
+                                and pronamespace = schema_oid limit 1);
+
+                    when upper(object_type) in ('TR', 'TA') then
+                    id := (select oid from pg_trigger where lower(tgname) collate sys.database_default = obj_name limit 1);
+
+                    -- Throwing exception as a reminder to add support in the future.
+                    when upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                        RAISE EXCEPTION 'Object type currently unsupported.';
+
+                    -- unsupported obj_type
+                    else id := null;
+                end case;
+            else
+                if not is_temp_object then 
+                    id := (
+                        select oid from pg_class where lower(relname) = obj_name
+                            and relnamespace = schema_oid
+                        union
+                        select oid from pg_constraint where lower(conname) = obj_name
+                            and connamespace = schema_oid
+                        union
+                        select oid from pg_proc where lower(proname) = obj_name
+                            and pronamespace = schema_oid
+                        union
+                        select oid from pg_trigger where lower(tgname) = obj_name
+                        limit 1
+                    );
+                else
+                    -- temp object without "object_type" in-argument
+                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
+                end if;
+            end if;
+
+            RETURN id::integer;
+        END;
+        $BODY$
+        LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
+    END IF;
+
+EXCEPTION WHEN duplicate_object THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+-- wrapper functions for TRIM
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.BPCHAR)
 RETURNS sys.VARCHAR
 AS 
@@ -344,7 +467,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR)
 RETURNS sys.VARCHAR
@@ -358,7 +481,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NCHAR)
 RETURNS sys.NVARCHAR
@@ -372,7 +495,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NVARCHAR)
 RETURNS sys.NVARCHAR
@@ -386,7 +509,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string ANYELEMENT)
 RETURNS sys.VARCHAR
@@ -397,6 +520,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for trim function
     IF string_arg_datatype != 'sys.varchar'::regtype AND
         string_arg_datatype != 'sys.bpchar'::regtype AND
         string_arg_datatype != 'sys.nchar'::regtype AND
@@ -411,8 +535,10 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
+-- Additional handling is added for TRIM function with 2 arguments, 
+-- hence only following two definitions are required.
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NVARCHAR, characters sys.VARCHAR)
 RETURNS sys.NVARCHAR
 AS 
@@ -425,7 +551,7 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text, characters::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR, characters sys.VARCHAR)
 RETURNS sys.VARCHAR
@@ -439,9 +565,9 @@ BEGIN
     RETURN PG_CATALOG.btrim(string::text, characters::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
--- LTRIM
+-- wrapper functions for LTRIM
 CREATE OR REPLACE FUNCTION sys.LTRIM(string ANYELEMENT)
 RETURNS sys.VARCHAR
 AS
@@ -451,6 +577,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for ltrim function
     IF string_arg_datatype = 'text'::regtype OR
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
@@ -468,7 +595,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.BPCHAR)
 RETURNS sys.VARCHAR
@@ -482,7 +609,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.VARCHAR)
 RETURNS sys.VARCHAR
@@ -496,7 +623,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.NCHAR)
 RETURNS sys.NVARCHAR
@@ -510,7 +637,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.NVARCHAR)
 RETURNS sys.NVARCHAR
@@ -524,7 +651,7 @@ BEGIN
     RETURN PG_CATALOG.ltrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string TEXT)
 RETURNS sys.VARCHAR
@@ -534,7 +661,7 @@ BEGIN
     RAISE 'Argument data type text is invalid for argument 1 of ltrim function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LTRIM(string NTEXT)
 RETURNS sys.VARCHAR
@@ -544,9 +671,9 @@ BEGIN
     RAISE 'Argument data type ntext is invalid for argument 1 of ltrim function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
--- RTRIM
+-- wrapper functions for RTRIM
 CREATE OR REPLACE FUNCTION sys.RTRIM(string ANYELEMENT)
 RETURNS sys.VARCHAR
 AS
@@ -556,6 +683,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for rtrim function
     IF string_arg_datatype = 'text'::regtype OR
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
@@ -573,7 +701,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.BPCHAR)
 RETURNS sys.VARCHAR
@@ -587,7 +715,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.VARCHAR)
 RETURNS sys.VARCHAR
@@ -601,7 +729,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.NCHAR)
 RETURNS sys.NVARCHAR
@@ -615,7 +743,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.NVARCHAR)
 RETURNS sys.NVARCHAR
@@ -629,7 +757,7 @@ BEGIN
     RETURN PG_CATALOG.rtrim(string::text);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string TEXT)
 RETURNS sys.VARCHAR
@@ -639,7 +767,7 @@ BEGIN
     RAISE 'Argument data type text is invalid for argument 1 of rtrim function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RTRIM(string NTEXT)
 RETURNS sys.VARCHAR
@@ -649,9 +777,10 @@ BEGIN
     RAISE 'Argument data type ntext is invalid for argument 1 of rtrim function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
--- LEFT
+
+-- wrapper functions for LEFT
 CREATE OR REPLACE FUNCTION sys.LEFT(string ANYELEMENT, i INTEGER)
 RETURNS sys.VARCHAR
 AS
@@ -661,6 +790,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for left function
     IF string_arg_datatype = 'text'::regtype OR
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
@@ -682,7 +812,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string sys.BPCHAR, i INTEGER)
 RETURNS sys.VARCHAR
@@ -700,7 +830,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string sys.VARCHAR, i INTEGER)
 RETURNS sys.VARCHAR
@@ -718,7 +848,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string sys.NCHAR, i INTEGER)
 RETURNS sys.NVARCHAR
@@ -736,7 +866,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string sys.NVARCHAR, i INTEGER)
 RETURNS sys.NVARCHAR
@@ -754,7 +884,7 @@ BEGIN
     RETURN PG_CATALOG.left(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string TEXT, i INTEGER)
 RETURNS sys.VARCHAR
@@ -764,7 +894,7 @@ BEGIN
    RAISE 'Argument data type text is invalid for argument 1 of left function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.LEFT(string NTEXT, i INTEGER)
 RETURNS sys.VARCHAR
@@ -774,9 +904,10 @@ BEGIN
    RAISE 'Argument data type ntext is invalid for argument 1 of left function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
--- RIGHT
+
+-- wrapper functions for RIGHT
 CREATE OR REPLACE FUNCTION sys.RIGHT(string ANYELEMENT, i INTEGER)
 RETURNS sys.VARCHAR
 AS
@@ -786,6 +917,7 @@ DECLARE
 BEGIN
     string_arg_datatype := pg_typeof(string);
 
+    -- restricting arguments with invalid datatypes for right function
     IF string_arg_datatype = 'text'::regtype OR
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
@@ -807,7 +939,7 @@ BEGIN
     RETURN sys.RIGHT(string::sys.VARCHAR, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.BPCHAR, i INTEGER)
 RETURNS sys.VARCHAR
@@ -825,7 +957,7 @@ BEGIN
     RETURN PG_CATALOG.right(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.VARCHAR, i INTEGER)
 RETURNS sys.VARCHAR
@@ -843,7 +975,7 @@ BEGIN
     RETURN PG_CATALOG.right(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.NCHAR, i INTEGER)
 RETURNS sys.NVARCHAR
@@ -861,7 +993,7 @@ BEGIN
     RETURN PG_CATALOG.right(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.NVARCHAR, i INTEGER)
 RETURNS sys.NVARCHAR
@@ -879,7 +1011,7 @@ BEGIN
     RETURN PG_CATALOG.right(string::text, i);
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string TEXT, i INTEGER)
 RETURNS sys.VARCHAR
@@ -889,7 +1021,7 @@ BEGIN
    RAISE 'Argument data type text is invalid for argument 1 of right function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.RIGHT(string NTEXT, i INTEGER)
 RETURNS sys.VARCHAR
@@ -899,7 +1031,7 @@ BEGIN
    RAISE 'Argument data type ntext is invalid for argument 1 of right function.';
 END;
 $BODY$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_who(
 	IN "@loginame" sys.sysname DEFAULT NULL,
@@ -1172,7 +1304,7 @@ BEGIN
 		BEGIN
 			IF EXISTS ( -- Search in the sys schema 
 					SELECT * FROM sys.sp_stored_procedures_view
-					WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
+					WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 						AND (LOWER(procedure_owner) = 'sys'))
 			BEGIN
 				SELECT PROCEDURE_QUALIFIER,
@@ -1183,13 +1315,13 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = 'sys')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			ELSE IF EXISTS ( 
 				SELECT * FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
 					)
 			BEGIN
@@ -1201,7 +1333,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -1215,7 +1347,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = 'dbo')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -1232,7 +1364,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
+			WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 				AND (LOWER(procedure_owner) = LOWER(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -1247,7 +1379,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(PG_CATALOG.LEFT(procedure_name, -2)) LIKE LOWER(@sp_name))
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) LIKE LOWER(@sp_name))
 				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
