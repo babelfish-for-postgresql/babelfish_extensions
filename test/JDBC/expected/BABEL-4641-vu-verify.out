@@ -1,0 +1,291 @@
+-- CHAR
+-- customer case
+SELECT convert(char(6),CAST('2023-02-03 19:08:35.527' as sys.DATETIME),12) as FDate
+GO
+~~START~~
+char
+230203
+~~END~~
+
+
+SELECT * FROM babel_4461_char_vu_prepare_view1
+GO
+~~START~~
+char
+2023-02-03
+~~END~~
+
+
+SELECT * FROM babel_4461_char_vu_prepare_view11
+GO
+~~START~~
+char
+03-02-2023
+~~END~~
+
+
+SELECT * FROM babel_4461_char_vu_prepare_view2
+GO
+~~START~~
+char
+19:08:35.5
+~~END~~
+
+
+SELECT * FROM babel_4461_char_vu_prepare_view22
+GO
+~~START~~
+char
+19:08:35  
+~~END~~
+
+
+EXEC babel_4461_char_vu_prepare_proc1
+GO
+~~START~~
+char
+2023-02-03
+~~END~~
+
+
+EXEC babel_4461_char_vu_prepare_proc11
+GO
+~~START~~
+char
+03-02-2023
+~~END~~
+
+
+EXEC babel_4461_char_vu_prepare_proc2
+GO
+~~START~~
+char
+19:08:35.5
+~~END~~
+
+
+EXEC babel_4461_char_vu_prepare_proc22
+GO
+~~START~~
+char
+19:08:35  
+~~END~~
+
+
+-- error should not have been thrown, should be fixed under BABEL-4561
+SELECT * FROM babel_4461_char_vu_prepare_func1()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+-- error should not have been thrown, should be fixed under BABEL-4561
+SELECT * FROM babel_4461_char_vu_prepare_func11()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+-- error should not have been thrown, should be fixed under BABEL-4561
+SELECT * FROM babel_4461_char_vu_prepare_func2()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+-- error should not have been thrown, should be fixed under BABEL-4561
+SELECT * FROM babel_4461_char_vu_prepare_func22()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+SELECT * FROM babel_4461_char_vu_prepare_view3
+GO
+~~START~~
+char
+Feb  3 202
+~~END~~
+
+
+SELECT * FROM babel_4461_char_vu_prepare_view4
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_4461_char_vu_prepare_view5
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_4461_char_vu_prepare_view6
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_4461_char_vu_prepare_view7
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+-- NCHAR
+-- customer case
+SELECT convert(nchar(6),CAST('2023-02-03 19:08:35.527' as sys.DATETIME),12) as FDate
+GO
+~~START~~
+nchar
+230203
+~~END~~
+
+
+SELECT * FROM babel_4461_nchar_vu_prepare_view1
+GO
+~~START~~
+nchar
+2023-02-03
+~~END~~
+
+
+SELECT * FROM babel_4461_nchar_vu_prepare_view11
+GO
+~~START~~
+nchar
+03-02-2023
+~~END~~
+
+
+SELECT * FROM babel_4461_nchar_vu_prepare_view2
+GO
+~~START~~
+nchar
+19:08:35.5
+~~END~~
+
+
+SELECT * FROM babel_4461_nchar_vu_prepare_view22
+GO
+~~START~~
+nchar
+19:08:35  
+~~END~~
+
+
+EXEC babel_4461_nchar_vu_prepare_proc1
+GO
+~~START~~
+nchar
+2023-02-03
+~~END~~
+
+
+EXEC babel_4461_nchar_vu_prepare_proc11
+GO
+~~START~~
+nchar
+03-02-2023
+~~END~~
+
+
+EXEC babel_4461_nchar_vu_prepare_proc2
+GO
+~~START~~
+nchar
+19:08:35.5
+~~END~~
+
+
+EXEC babel_4461_nchar_vu_prepare_proc22
+GO
+~~START~~
+nchar
+19:08:35  
+~~END~~
+
+
+-- error should not have been thrown, should be fixed under BABEL-4561
+SELECT * FROM babel_4461_nchar_vu_prepare_func1()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+-- error should not have been thrown, should be fixed under BABEL-4561
+SELECT * FROM babel_4461_nchar_vu_prepare_func11()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+-- error should not have been thrown, should be fixed under BABEL-4561
+SELECT * FROM babel_4461_nchar_vu_prepare_func2()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+-- error should not have been thrown, should be fixed under BABEL-4561
+SELECT * FROM babel_4461_nchar_vu_prepare_func22()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+SELECT * FROM babel_4461_nchar_vu_prepare_view3
+GO
+~~START~~
+nchar
+Feb  3 202
+~~END~~
+
+
+SELECT * FROM babel_4461_nchar_vu_prepare_view4
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_4461_nchar_vu_prepare_view5
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_4461_nchar_vu_prepare_view6
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_4461_nchar_vu_prepare_view7
+GO
+~~START~~
+text
+true
+~~END~~
+
