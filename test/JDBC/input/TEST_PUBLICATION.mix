@@ -1,0 +1,25 @@
+-- psql
+DO
+$$
+DECLARE
+    is_publishable BOOL = TRUE;
+    tab TEXT;
+    tab_names TEXT = '';
+BEGIN
+    FOR tab IN
+        SELECT relname FROM pg_class WHERE relnamespace = 'sys'::regnamespace AND relkind = 'r' ORDER BY relname
+    LOOP
+        BEGIN
+            is_publishable = TRUE;
+            EXECUTE 'CREATE PUBLICATION catalog_pub FOR TABLE sys.' || tab;
+        EXCEPTION WHEN invalid_parameter_value or insufficient_privilege THEN
+            tab_names = tab_names || E'\n' || 'sys.' || tab;
+            is_publishable = FALSE;
+        END;
+        IF is_publishable THEN
+            RAISE EXCEPTION 'Babelfish extended catalog table sys.% is not marked as a catalog relation.', tab;
+        END IF;
+    END LOOP;
+    RAISE WARNING 'cannot add relations to publication: %', tab_names;
+END $$;
+GO
