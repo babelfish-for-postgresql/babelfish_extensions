@@ -331,11 +331,12 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 $$
 LANGUAGE plpgsql STABLE;
 
--- Updated deprecated object_id function since left function now restricts TEXT datatype
+-- Update deprecated object_id function(s) since left function now restricts TEXT datatype
 DO $$
 DECLARE
     exception_message text;
 BEGIN
+    -- Update body of object_id_deprecated_in_2_4_0 to use PG_CATALOG.LEFT instead, if function exists
     IF EXISTS(SELECT * 
                 FROM pg_proc p 
                 JOIN pg_namespace nsp 
@@ -343,6 +344,118 @@ BEGIN
                 WHERE p.proname='object_id_deprecated_in_2_4_0' AND nsp.nspname='sys') THEN
         
         CREATE OR REPLACE FUNCTION sys.object_id_deprecated_in_2_4_0(IN object_name TEXT, IN object_type char(2) DEFAULT '')
+        RETURNS INTEGER AS
+        $BODY$
+        DECLARE
+            id oid;
+            db_name text collate "C";
+            bbf_schema_name text collate "C";
+            schema_name text collate "C";
+            schema_oid oid;
+            obj_name text collate "C";
+            is_temp_object boolean;
+            obj_type char(2) collate "C";
+            cs_as_object_name text collate "C" := object_name;
+        BEGIN
+            obj_type = object_type;
+            id = null;
+            schema_oid = NULL;
+
+            SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name 
+            FROM babelfish_split_object_name(cs_as_object_name) s;
+
+            -- Invalid object_name
+            IF obj_name IS NULL OR obj_name = '' collate sys.database_default THEN
+                RETURN NULL;
+            END IF;
+
+            IF bbf_schema_name IS NULL OR bbf_schema_name = '' collate sys.database_default THEN
+                bbf_schema_name := sys.schema_name();
+            END IF;
+
+            schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
+
+            -- Check if looking for temp object.
+            is_temp_object = PG_CATALOG.left(obj_name, 1) = '#' collate sys.database_default;
+
+            -- Can only search in current database. Allowing tempdb for temp objects.
+            IF db_name IS NOT NULL AND db_name collate sys.database_default <> db_name() AND db_name collate sys.database_default <> 'tempdb' THEN
+                RAISE EXCEPTION 'Can only do lookup in current database.';
+            END IF;
+
+            IF schema_name IS NULL OR schema_name = '' collate sys.database_default THEN
+                RETURN NULL;
+            END IF;
+
+            -- Searching within a schema. Get schema oid.
+            schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
+            IF schema_oid IS NULL THEN
+                RETURN NULL;
+            END IF;
+
+            if obj_type <> '' then
+                case
+                    -- Schema does not apply as much to temp objects.
+                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
+
+                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+                    id := (select oid from pg_class where lower(relname) collate sys.database_default = obj_name 
+                                and relnamespace = schema_oid limit 1);
+
+                    when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+                    id := (select oid from pg_constraint where lower(conname) collate sys.database_default = obj_name 
+                                and connamespace = schema_oid limit 1);
+
+                    when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+                    id := (select oid from pg_proc where lower(proname) collate sys.database_default = obj_name 
+                                and pronamespace = schema_oid limit 1);
+
+                    when upper(object_type) in ('TR', 'TA') then
+                    id := (select oid from pg_trigger where lower(tgname) collate sys.database_default = obj_name limit 1);
+
+                    -- Throwing exception as a reminder to add support in the future.
+                    when upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                        RAISE EXCEPTION 'Object type currently unsupported.';
+
+                    -- unsupported obj_type
+                    else id := null;
+                end case;
+            else
+                if not is_temp_object then 
+                    id := (
+                        select oid from pg_class where lower(relname) = obj_name
+                            and relnamespace = schema_oid
+                        union
+                        select oid from pg_constraint where lower(conname) = obj_name
+                            and connamespace = schema_oid
+                        union
+                        select oid from pg_proc where lower(proname) = obj_name
+                            and pronamespace = schema_oid
+                        union
+                        select oid from pg_trigger where lower(tgname) = obj_name
+                        limit 1
+                    );
+                else
+                    -- temp object without "object_type" in-argument
+                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
+                end if;
+            end if;
+
+            RETURN id::integer;
+        END;
+        $BODY$
+        LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
+    END IF;
+
+    -- Update body of object_id_deprecated_in_3_1_0 to use PG_CATALOG.LEFT instead, if function exists
+    IF EXISTS(SELECT * 
+                FROM pg_proc p 
+                JOIN pg_namespace nsp 
+                    ON p.pronamespace = nsp.oid 
+                WHERE p.proname='object_id_deprecated_in_3_1_0' AND nsp.nspname='sys') THEN
+        
+        CREATE OR REPLACE FUNCTION sys.object_id_deprecated_in_3_1_0(IN object_name TEXT, IN object_type char(2) DEFAULT '')
         RETURNS INTEGER AS
         $BODY$
         DECLARE
