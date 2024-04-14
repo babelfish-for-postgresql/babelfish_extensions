@@ -211,6 +211,7 @@
 							case TSQL_CHECK_POLICY:
 							case TSQL_CHOOSE:
 							case TSQL_CLUSTERED:
+							case TSQL_COALESCE:
 							case TSQL_COLUMNSTORE:
 							case TSQL_DATEADD:
 							case TSQL_DATEDIFF:

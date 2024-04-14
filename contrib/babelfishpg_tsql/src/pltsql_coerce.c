@@ -24,6 +24,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
+#include "parser/parse_expr.h"
 #include "src/collation.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
@@ -55,6 +56,7 @@ PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
 
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
+static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
 
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
@@ -1267,6 +1269,8 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 		return InvalidOid;
 	else if (strncmp(context, "ISNULL", strlen("ISNULL")) == 0)
 		return select_common_type_for_isnull(pstate, exprs);
+	else if(strncmp(context, "TSQL_COALESCE", strlen("TSQL_COALESCE")) == 0)
+		return select_common_type_for_coalesce_function(pstate,exprs);
 	else if (strncmp(context, "UNION", strlen("UNION")) == 0 || 
 			strncmp(context, "INTERSECT", strlen("INTERSECT")) == 0 ||
 			strncmp(context, "EXCEPT", strlen("EXCEPT")) == 0 ||
@@ -1355,6 +1359,50 @@ select_common_type_for_isnull(ParseState *pstate, List *exprs)
 		return get_sys_varcharoid();
 	}
 	return ptype;
+}
+
+static Oid
+select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
+{
+	Node	   *pexpr;
+	Oid		   ptype;
+	ListCell   *lc;
+	Oid		   commontype = InvalidOid;
+	int curr_precedence;
+
+	Assert(exprs != NIL);
+
+	foreach(lc, exprs)
+	{
+		pexpr = (Node *) lfirst(lc);
+		ptype = exprType(pexpr);
+
+		/* Check if arg is NULL literal */
+		if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
+			continue;
+
+		/* If the arg is non-null string literal */
+		if (ptype == UNKNOWNOID)
+		{
+			Oid curr_oid = get_sys_varcharoid();
+			if (commontype == InvalidOid 
+				|| tsql_get_type_precedence(curr_oid) < curr_precedence)
+				commontype = curr_oid;
+			
+			continue;
+		}
+
+		if (commontype == InvalidOid || tsql_get_type_precedence(ptype) < curr_precedence)
+		{
+			commontype = ptype;
+			curr_precedence = tsql_get_type_precedence(ptype);
+		}
+	}
+
+	if (commontype == InvalidOid)
+		return INT4OID;
+	
+	return commontype;
 }
 
 /* 
