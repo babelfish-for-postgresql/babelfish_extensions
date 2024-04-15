@@ -655,6 +655,9 @@ GO
 SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
 GO
 
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_ci WHERE 1=1 AND OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) LIKE '%AI_prepãr%' COLLATE Latin1_General_CI_AI;
+GO
+
 SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) LIKE 'Blah%' COLLATE Latin1_General_CI_AI;
 GO
 
@@ -1442,22 +1445,25 @@ EXEC sp_executesql N'SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 
 GO
 
 -- CASE 18: LIKE OBJECT_NAME()
-SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CS_AI;
 GO
 
-SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE 'Blah%' COLLATE Latin1_General_CI_AI;
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%AI_prepãr%' COLLATE Latin1_General_CS_AI;
 GO
 
-SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blah' COLLATE Latin1_General_CI_AI;
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE 'Blah%' COLLATE Latin1_General_CS_AI;
 GO
 
-SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%like_for_AI%'))
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blah' COLLATE Latin1_General_CS_AI;
 GO
 
-SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blâh%' COLLATE Latin1_General_CI_AI))
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CS_AI) AND (OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CS_AI LIKE '%like_for_AI%'))
 GO
 
-SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blâh%'))
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CS_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blâh%' COLLATE Latin1_General_CS_AI))
+GO
+
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CS_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CS_AI LIKE '%Blâh%'))
 GO
 
 -- CASE 19: ESCAPE WITH LIKE
