@@ -3965,10 +3965,8 @@ update_babelfish_namespace_ext_rename_db(int16 db_id, char *new_db_name)
 	bool			nulls[NAMESPACE_EXT_NUM_COLS];
 	bool			replaces[NAMESPACE_EXT_NUM_COLS];
 
-
 	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
-	namespace_rel_descr = RelationGetDescr(namespace_rel);	
-
+	namespace_rel_descr = RelationGetDescr(namespace_rel);
 
 	ScanKeyInit(&key,
 				Anum_namespace_ext_dbid,
@@ -3987,13 +3985,13 @@ update_babelfish_namespace_ext_rename_db(int16 db_id, char *new_db_name)
 	{
 		bool		isNull;
 		char		*schema_name = TextDatumGetCString(heap_getattr(old_tuple, Anum_namespace_ext_orig_name, namespace_rel_descr, &isNull));
-		
+
 		list_of_schemas_to_rename = lappend(list_of_schemas_to_rename, pstrdup(schema_name));
 
-		/* Update the */
+		/* Update the Physical Db Name. */
 		values[Anum_namespace_ext_namespace - 1] = CStringGetDatum(get_physical_schema_name(new_db_name, schema_name));
 		replaces[Anum_namespace_ext_namespace - 1] = true;	
-									
+
 		new_tuple = heap_modify_tuple(old_tuple,
 								namespace_rel_descr,
 								values,
@@ -4008,7 +4006,7 @@ update_babelfish_namespace_ext_rename_db(int16 db_id, char *new_db_name)
 	/* Cleanup. */
 	systable_endscan(tblscan);
 	table_close(namespace_rel, AccessShareLock);
-	
+
 	return list_of_schemas_to_rename;
 }
 
@@ -4033,7 +4031,7 @@ update_babelfish_authid_user_ext_rename_db(
 	bool		nulls[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool		replaces[BBF_AUTHID_USER_EXT_NUM_COLS];
 
-	/* Fetch the relation */
+	/* Fetch the relation. */
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(), RowExclusiveLock);
 	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);	
 
@@ -4070,7 +4068,7 @@ update_babelfish_authid_user_ext_rename_db(
 		values[USER_EXT_DATABASE_NAME]   = CStringGetTextDatum(new_db_name);
 		replaces[USER_EXT_DATABASE_NAME] = true;
 
-		/* Update the modify date */
+		/* update the modify date */
 		values[USER_EXT_MODIFY_DATE]   = TimestampTzGetDatum(GetCurrentStatementStartTimestamp());
 		replaces[USER_EXT_MODIFY_DATE] = true;
 
@@ -4109,7 +4107,7 @@ update_babelfish_authid_login_ext_rename_db(
 	ScanKeyData scanKey;
 	SysScanDesc scan;
 
-	/* Fetch the relation */
+	/* Fetch the relation. */
 	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(),
 										  RowExclusiveLock);
 	bbf_authid_login_ext_dsc = RelationGetDescr(bbf_authid_login_ext_rel);
@@ -4151,7 +4149,7 @@ update_babelfish_authid_login_ext_rename_db(
 	}
 	systable_endscan(scan);
 
-	/* Close bbf_authid_login_ext, but keep lock till commit */
+	/* Close bbf_authid_login_ext, but keep lock till commit. */
 	table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
 }
 
@@ -4161,7 +4159,7 @@ static char
 	StringInfoData query;
 	initStringInfo(&query);
 	/*
-	 * We prepare the following query to Rename a schema or a ROLE
+	 * We prepare the following query to Rename a schema or a ROLE.
 	 *
 	 * ALTER SCHEMA/ROLE <name>
 	 *
@@ -4258,12 +4256,11 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 				errmsg("The database could not be exclusively locked to perform the operation.")));
 
 	/* Check permission on the given database. */
-	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))
-			&& strncmp(GetUserNameFromId(GetSessionUserId(), true), get_owner_of_db(old_db_name), NAMEDATALEN))
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
 		ereport(ERROR,
 			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("Current login %s does not have permission to create new login",
-					GetUserNameFromId(GetSessionUserId(), true))));
+				errmsg("User does not have permission to rename the database \'%s\', the database does not exist, or the database is not in a state that allows access checks.",
+					old_db_name)));
 
 	/*
 	 * Get an exclusive lock on the logical database we are trying to rename.
@@ -4283,25 +4280,25 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		ListCell *lc;
 		char message[128];
 
+		SetCurrentRoleId(get_bbf_role_admin_oid(), true);
 		/*
-		* We have checked for all permissions.
-		* Now change context to admin to perform the renames.
-		*/
+		 * We have checked for all permissions.
+		 * Now change context to admin to perform the renames.
+		 */
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 		prev_current_user = GetUserId();
-		SetCurrentRoleId(get_bbf_role_admin_oid(), true);
 
 		/*
-		* Update the database name in sys.babelfish_sysdatabases.
-		* This should happen irrespective of the migration mode.
-		*/
+		 * Update the database name in sys.babelfish_sysdatabases.
+		 * This should happen irrespective of the migration mode.
+		 */
 		update_sysdatabases_db_name(old_db_name, new_db_name);
 
 		/*
-		* There is no need to rename schemas and roles for single-db mode.
-		* Therefore, no updates required Babelfish catalogs.
-		*/
+		 * There is no need to rename schemas and roles for single-db mode.
+		 * Therefore, no updates required Babelfish catalogs.
+		 */
 		if (MULTI_DB == get_migration_mode())
 		{
 			/*
@@ -4338,8 +4335,8 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		/* Update the default_database field in babelfish_authid_login_ext. */
 		update_babelfish_authid_login_ext_rename_db(old_db_name, new_db_name);
 
-		SetCurrentRoleId(prev_current_user, true);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
+		SetCurrentRoleId(prev_current_user, true);
 
 		if (dbid == get_cur_db_id())
 			snprintf(message, sizeof(message), "Changed database context to '%s'.\nThe database name '%s' has been set.", new_db_name, new_db_name);
@@ -4356,9 +4353,9 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 	}
 	PG_CATCH();
 	{
-		SetCurrentRoleId(prev_current_user, true);
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
+		SetCurrentRoleId(prev_current_user, true);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();

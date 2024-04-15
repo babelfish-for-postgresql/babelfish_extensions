@@ -7,7 +7,7 @@ select rolname, default_database_name from sys.babelfish_authid_login_ext where 
 go
 ~~START~~
 varchar#!#text
-kush#!#rename_db_database1
+jdbc_user#!#rename_db_database1
 ~~END~~
 
 ~~START~~
@@ -68,7 +68,7 @@ select rolname, default_database_name from sys.babelfish_authid_login_ext where 
 go
 ~~START~~
 varchar#!#text
-kush#!#rename_db_database2
+jdbc_user#!#rename_db_database2
 ~~END~~
 
 ~~START~~
