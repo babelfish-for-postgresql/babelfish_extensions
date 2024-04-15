@@ -13,6 +13,7 @@
 #include "catalog/namespace.h"
 #include "tsearch/ts_locale.h"
 #include "parser/parser.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
@@ -498,6 +499,7 @@ convert_node_to_funcexpr_for_like(Node *node, void *context)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	newFuncExpr->funcid = remove_accents_internal_oid;
+	newFuncExpr->funcresulttype = get_sys_varcharoid();
 
 	if (node == NULL)
 		return node;
@@ -505,61 +507,35 @@ convert_node_to_funcexpr_for_like(Node *node, void *context)
 	switch (nodeTag(node))
 	{
 		case T_Const:
-			{
-				Const *con = (Const *) node;
-				if (!con->constvalue)
-					return node;
-				newFuncExpr->funcresulttype = con->consttype;
-				newFuncExpr->args = list_make1(makeConst(con->consttype, -1, InvalidOid, con->constlen, con->constvalue, false, true));;
-				break;
-			}
 		case T_FuncExpr:
-			{
-				FuncExpr *func = (FuncExpr *) node;
-				newFuncExpr->funcresulttype = func->funcresulttype;
-				newFuncExpr->args = list_make1(func);
-				break;
-			}
 		case T_Var:
-			{
-				Var *var = (Var *) node;
-				newFuncExpr->funcresulttype = var->vartype;
-				newFuncExpr->args = list_make1(var);
-				break;
-			}
 		case T_Param:
-			{
-				Param *param = (Param *) node;
-				newFuncExpr->funcresulttype = param->paramtype;
-				newFuncExpr->args = list_make1(param);
-				break;
-			}
 		case T_CaseExpr:
-			{
-				CaseExpr *case_expr = (CaseExpr *) node;
-				newFuncExpr->funcresulttype = exprType((Node *)case_expr);
-				newFuncExpr->args = list_make1(case_expr);
-				break;
-			}
 		case T_RelabelType:
-			{
-				RelabelType        *relabel = (RelabelType *) node;
-				newFuncExpr->funcresulttype = relabel->resulttype;
-				newFuncExpr->args = list_make1(relabel->arg);
-				break;
-			}
 		case T_CollateExpr:
 			{
-				CollateExpr        *coll = (CollateExpr *) node;
-				newFuncExpr->funcresulttype = exprType((Node *)coll->arg);
-				newFuncExpr->args = list_make1(coll->arg);
-				break;
+				Node *new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+														TEXTOID, -1,
+														COERCION_EXPLICIT,
+														COERCE_EXPLICIT_CAST,
+														exprLocation(node));
+				if (unlikely(new_node == NULL))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+				}
+				newFuncExpr->args = list_make1(new_node);
+				return (Node *) newFuncExpr;
 			}
 		default:
-			return expression_tree_mutator(node, convert_node_to_funcexpr_for_like, NULL);
+			{
+				ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("unrecognized node type: %d", (int) nodeTag(node))));
+				break;
+			}
 	}
-
-	return (Node *) newFuncExpr;
 }
 
 
@@ -569,9 +545,20 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 	Node       *leftop = (Node *) linitial(op->args);
 	Node       *rightop = (Node *) lsecond(op->args);
 
-	linitial(op->args) = convert_node_to_funcexpr_for_like(leftop, NULL);
-	lsecond(op->args) = convert_node_to_funcexpr_for_like(rightop, NULL);
-	
+	linitial(op->args) = coerce_to_target_type(NULL,
+												convert_node_to_funcexpr_for_like(leftop, NULL),
+												get_sys_varcharoid(),
+												exprType(leftop), -1,
+												COERCION_EXPLICIT,
+												COERCE_EXPLICIT_CAST,
+												-1);
+	lsecond(op->args) = coerce_to_target_type(NULL,
+												convert_node_to_funcexpr_for_like(rightop, NULL),
+												get_sys_varcharoid(),
+												exprType(rightop), -1,
+												COERCION_EXPLICIT,
+												COERCE_EXPLICIT_CAST,
+												-1);
 	return node;
 }
 
