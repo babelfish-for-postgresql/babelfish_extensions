@@ -2008,15 +2008,6 @@ func_expr_common_subexpr:
 					c->tsql_is_null = true;
 					$$ = (Node *)c;
 				}
-			| TSQL_COALESCE '(' expr_list ')'
-				{
-					CoalesceExpr *c = makeNode(CoalesceExpr);
-
-					c->args = $3;
-					c->location = @1;
-					c->tsql_coalesce_func = true;
-					$$ = (Node *) c;
-				}
 			| TSQL_IIF '(' a_expr ',' a_expr ',' a_expr ')'
 				{
 					$$ = TsqlFunctionIIF($3, $5, $7, @1);
@@ -4627,7 +4618,6 @@ unreserved_keyword:
 reserved_keyword:
 			  TSQL_APPLY
 			| TSQL_CHOOSE
-			| TSQL_COALESCE
 			| TSQL_CONVERT
 			| TSQL_CROSS
 			| TSQL_DATEADD
