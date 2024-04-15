@@ -220,14 +220,14 @@ int
 
 -- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'jalapeno';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'jalapeno';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -236,14 +236,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 're%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 're%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%n%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%n%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -258,7 +258,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'TELefONO';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'TELefONO';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -267,7 +267,7 @@ TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                       
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'resume';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'resume';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -276,7 +276,7 @@ résumé#!#résumé#!#résumé#!#résumé#!#résumé                            
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'movie';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'movie';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -284,14 +284,14 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'naïve';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'naïve';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'Piñata';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'Piñata';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -300,7 +300,7 @@ Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                 
 
 
 -- Different positions
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%é%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%é%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -316,7 +316,7 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -331,7 +331,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -340,7 +340,7 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -349,7 +349,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%é%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%é%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -367,7 +367,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ia%s';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%ia%s';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -375,7 +375,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'orange';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'orange';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -383,7 +383,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'jalapen%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'jalapen%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -392,14 +392,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'e%ito';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'e%ito';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'c%eR';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'c%eR';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -407,8 +407,8 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 ~~END~~
 
 
--- babel_4791_vu_prepare_t1_ci with ñ 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ñ%';
+-- test_like_for_AI_prepare_t1_ci with ñ 
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -422,8 +422,8 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 ~~END~~
 
 
--- babel_4791_vu_prepare_t1_ci with ü
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ú%';
+-- test_like_for_AI_prepare_t1_ci with ü
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%ú%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -434,21 +434,21 @@ película#!#película#!#película#!#película#!#película                       
 
 
 -- different datatypes
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_v LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_v LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_v LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -461,7 +461,7 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_v LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_v LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -469,21 +469,21 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_t LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_t LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_t LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -496,7 +496,7 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_t LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_t LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -504,21 +504,21 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_ntext LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_ntext LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_ntext LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -531,7 +531,7 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_ntext LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_ntext LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -539,21 +539,21 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_c LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_c LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_c LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -566,28 +566,28 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_c LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_c LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_nchar LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_nchar LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_nchar LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -600,7 +600,7 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col_nchar LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_nchar LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -611,14 +611,14 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 -- CASE 5: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'cafe' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'cafe' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'jalapeno' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'jalapeno' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -627,14 +627,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 're%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 're%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%n%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%n%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -649,7 +649,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'TELefONO' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'TELefONO' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -658,7 +658,7 @@ TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                       
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'resume' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'resume' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -667,7 +667,7 @@ résumé#!#résumé#!#résumé#!#résumé#!#résumé                            
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'movie' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'movie' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -675,14 +675,14 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'naïve' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'naïve' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'Piñata' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'Piñata' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -691,7 +691,7 @@ Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                 
 
 
 -- Different positions
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%é%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%é%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -707,7 +707,7 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -722,7 +722,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ch%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'ch%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -731,7 +731,7 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%is' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%is' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -740,7 +740,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%é%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%é%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -758,7 +758,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ia%s' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%ia%s' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -766,7 +766,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'orange' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'orange' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -774,7 +774,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'jalapen%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'jalapen%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -783,14 +783,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'c%eR' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'c%eR' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -798,8 +798,8 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 ~~END~~
 
 
--- babel_4791_vu_prepare_t1_ci with ñ 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
+-- test_like_for_AI_prepare_t1_ci with ñ 
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -813,8 +813,8 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 ~~END~~
 
 
--- babel_4791_vu_prepare_t1_ci with ü
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ú%' COLLATE Latin1_General_CI_AI;
+-- test_like_for_AI_prepare_t1_ci with ü
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%ú%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -826,7 +826,7 @@ película#!#película#!#película#!#película#!#película                       
 
 
 -- CASE 6: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Var)
-SELECT * FROM babel_4791_vu_prepare_t6_ci WHERE a LIKE b
+SELECT * FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE b
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -841,14 +841,14 @@ THazmEEm#!#%z%
 
 -- CASE 7: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_Const
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'cafe';
 GO
 ~~START~~
 nvarchar
 café
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'jalapeno';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'jalapeno';
 GO
 ~~START~~
 nvarchar
@@ -857,14 +857,14 @@ jalapeño
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 're%';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 're%';
 GO
 ~~START~~
 nvarchar
 résumé
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%n%';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%n%';
 GO
 ~~START~~
 nvarchar
@@ -879,7 +879,7 @@ TEññiȘ
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'TELefONO';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'TELefONO';
 GO
 ~~START~~
 nvarchar
@@ -888,7 +888,7 @@ TELÉFONO
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'resume';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'resume';
 GO
 ~~START~~
 nvarchar
@@ -897,7 +897,7 @@ résumé
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'movie';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'movie';
 GO
 ~~START~~
 nvarchar
@@ -905,14 +905,14 @@ nvarchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'naïve';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'naïve';
 GO
 ~~START~~
 nvarchar
 naïve
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'Piñata';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'Piñata';
 GO
 ~~START~~
 nvarchar
@@ -921,7 +921,7 @@ Piñata
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'ch%';
 GO
 ~~START~~
 nvarchar
@@ -930,7 +930,7 @@ chaptéR
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%is';
 GO
 ~~START~~
 nvarchar
@@ -939,7 +939,7 @@ TEññiȘ
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%é%';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%é%';
 GO
 ~~START~~
 nvarchar
@@ -957,7 +957,7 @@ TEññiȘ
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ia%s';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ia%s';
 GO
 ~~START~~
 nvarchar
@@ -965,7 +965,7 @@ nvarchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'orange';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'orange';
 GO
 ~~START~~
 nvarchar
@@ -973,7 +973,7 @@ nvarchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'jalapen%';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'jalapen%';
 GO
 ~~START~~
 nvarchar
@@ -982,14 +982,14 @@ jalapeño
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'e%ito';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'e%ito';
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'c%eR';
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'c%eR';
 GO
 ~~START~~
 nvarchar
@@ -997,8 +997,8 @@ chaptéR
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_ci with ñ 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ñ%';
+-- test_like_for_AI_prepare_t7_ci with ñ 
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar
@@ -1012,8 +1012,8 @@ TEññiȘ
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_ci with ü
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ú%';
+-- test_like_for_AI_prepare_t7_ci with ü
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ú%';
 GO
 ~~START~~
 nvarchar
@@ -1026,14 +1026,14 @@ película
 
 -- CASE 8: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_CollateExpr(T_Const)
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'cafe' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'cafe' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
 café
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'jalapeno' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'jalapeno' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1042,14 +1042,14 @@ jalapeño
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 're%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 're%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
 résumé
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%n%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%n%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1064,7 +1064,7 @@ TEññiȘ
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'TELefONO' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'TELefONO' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1073,7 +1073,7 @@ TELÉFONO
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'resume' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'resume' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1082,7 +1082,7 @@ résumé
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'movie' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'movie' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1090,14 +1090,14 @@ nvarchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'naïve' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'naïve' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
 naïve
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'Piñata' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'Piñata' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1106,7 +1106,7 @@ Piñata
 
 
 -- Different positions
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%é%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%é%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1122,7 +1122,7 @@ chaptéR
 TEññiȘ
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1137,7 +1137,7 @@ TEññiȘ
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'ch%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'ch%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1146,7 +1146,7 @@ chaptéR
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%is' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%is' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1155,7 +1155,7 @@ TEññiȘ
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%é%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%é%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1173,7 +1173,7 @@ TEññiȘ
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ia%s' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ia%s' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1181,7 +1181,7 @@ nvarchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'orange' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'orange' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1189,7 +1189,7 @@ nvarchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'jalapen%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'jalapen%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1198,14 +1198,14 @@ jalapeño
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'c%eR' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'c%eR' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1213,8 +1213,8 @@ chaptéR
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_ci with ñ 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
+-- test_like_for_AI_prepare_t7_ci with ñ 
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1228,8 +1228,8 @@ TEññiȘ
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_ci with ü
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ú%' COLLATE Latin1_General_CI_AI;
+-- test_like_for_AI_prepare_t7_ci with ü
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ú%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1242,14 +1242,14 @@ película
 
 -- CASE 9: T_FuncExpr LIKE T_CollateExpr(T_Const)
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE 'cafe' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE 'cafe' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
 café
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE 'jalapeno' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE 'jalapeno' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1258,14 +1258,14 @@ jalapeño
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE SUBSTRING(col, 1, 3) COLLATE Latin1_General_CI_AI LIKE 're%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE SUBSTRING(col, 1, 3) COLLATE Latin1_General_CI_AI LIKE 're%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
 résumé
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE '%n%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE '%n%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1280,7 +1280,7 @@ TEññiȘ
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'TELefONO' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'TELefONO' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1289,7 +1289,7 @@ TELÉFONO
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE 'resume' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE 'resume' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1298,7 +1298,7 @@ résumé
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(LOWER(col)) COLLATE Latin1_General_CI_AI LIKE 'movie' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(LOWER(col)) COLLATE Latin1_General_CI_AI LIKE 'movie' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1306,14 +1306,14 @@ nvarchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(LOWER(col)) COLLATE Latin1_General_CI_AI LIKE 'naïve' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(LOWER(col)) COLLATE Latin1_General_CI_AI LIKE 'naïve' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
 naïve
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(UPPER(col)) COLLATE Latin1_General_CI_AI LIKE 'Piñata' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE LOWER(UPPER(col)) COLLATE Latin1_General_CI_AI LIKE 'Piñata' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1322,7 +1322,7 @@ Piñata
 
 
 -- Different positions
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE SUBSTRING(UPPER(LOWER(col)), 1, 3) COLLATE Latin1_General_CI_AI LIKE '%é%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE SUBSTRING(UPPER(LOWER(col)), 1, 3) COLLATE Latin1_General_CI_AI LIKE '%é%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1332,7 +1332,7 @@ película
 TEññiȘ
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1348,7 +1348,7 @@ TEññiȘ
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE SUBSTRING(col, 1, 3) COLLATE Latin1_General_CI_AI LIKE 'ch%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE SUBSTRING(col, 1, 3) COLLATE Latin1_General_CI_AI LIKE 'ch%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1357,7 +1357,7 @@ chaptéR
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE '%is' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE '%is' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1366,7 +1366,7 @@ TEññiȘ
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE '%é%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE '%é%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1384,7 +1384,7 @@ TEññiȘ
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE '%ia%s' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE '%ia%s' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1392,7 +1392,7 @@ nvarchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE 'orange' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE UPPER(col) COLLATE Latin1_General_CI_AI LIKE 'orange' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1400,7 +1400,7 @@ nvarchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'jalapen%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'jalapen%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1409,14 +1409,14 @@ jalapeño
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'c%eR' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'c%eR' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1424,8 +1424,8 @@ chaptéR
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_ci with ñ 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
+-- test_like_for_AI_prepare_t7_ci with ñ 
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1439,8 +1439,8 @@ TEññiȘ
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_ci with ü
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE '%ú%' COLLATE Latin1_General_CI_AI;
+-- test_like_for_AI_prepare_t7_ci with ü
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE '%ú%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1451,7 +1451,7 @@ película
 
 
 -- same experiments as above with column collated with Latin1_General_CI_AI
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE LOWER(col) LIKE 'c%eR';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE LOWER(col) LIKE 'c%eR';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -1459,7 +1459,7 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE LOWER(col) LIKE 'jalapen%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE LOWER(col) LIKE 'jalapen%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -1467,14 +1467,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE UPPER(col) LIKE '%ia%s';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE UPPER(col) LIKE '%ia%s';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE SUBSTRING(col, 1, 3) LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE SUBSTRING(col, 1, 3) LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -1506,7 +1506,7 @@ int
 
 -- CASE 11: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Param)
 declare @c varchar(51)='e%ito';
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE @c;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE @c;
 GO
 ~~START~~
 nvarchar
@@ -1514,7 +1514,7 @@ nvarchar
 
 
 declare @c varchar(51)='c%eR';
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE @c;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE @c;
 GO
 ~~START~~
 nvarchar
@@ -1523,7 +1523,7 @@ chaptéR
 
 
 declare @d varchar(51)='%ú%';
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col LIKE @d COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE @d COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 nvarchar
@@ -1534,7 +1534,7 @@ película
 
 
 -- CASE 12: LIKE inside CASE
-SELECT CASE WHEN col COLLATE Latin1_General_CI_AI LIKE 'jalapen%' THEN 1 ELSE 2 END FROM babel_4791_vu_prepare_t7_ci;
+SELECT CASE WHEN col COLLATE Latin1_General_CI_AI LIKE 'jalapen%' THEN 1 ELSE 2 END FROM test_like_for_AI_prepare_t7_ci;
 GO
 ~~START~~
 int
@@ -1554,7 +1554,7 @@ int
 ~~END~~
 
 
-SELECT CASE WHEN col LIKE '%is' COLLATE Latin1_General_CI_AI THEN 1 ELSE 2 END FROM babel_4791_vu_prepare_t7_ci;
+SELECT CASE WHEN col LIKE '%is' COLLATE Latin1_General_CI_AI THEN 1 ELSE 2 END FROM test_like_for_AI_prepare_t7_ci;
 GO
 ~~START~~
 int
@@ -1578,7 +1578,7 @@ int
 -- CASE 13: SUBQUERY
 -- SIMPLE SUBQUERY (LIKE OPERATOR AS SUBQUERY)
 -- returns 1 row
-SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_ci WHERE col LIKE 'Àb%');
+SELECT col1 FROM test_like_for_AI_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM test_like_for_AI_prepare_t13_2_ci WHERE col LIKE 'Àb%');
 GO
 ~~START~~
 nvarchar
@@ -1587,7 +1587,7 @@ jalapeño
 
 
 -- returns 2 rows
-SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_ci WHERE col LIKE '%aŖ%l%');
+SELECT col1 FROM test_like_for_AI_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM test_like_for_AI_prepare_t13_2_ci WHERE col LIKE '%aŖ%l%');
 GO
 ~~START~~
 nvarchar
@@ -1597,7 +1597,7 @@ Año Nuevo
 
 
 -- returns 1 rows
-SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_ci WHERE col LIKE '%ţÕ');
+SELECT col1 FROM test_like_for_AI_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM test_like_for_AI_prepare_t13_2_ci WHERE col LIKE '%ţÕ');
 GO
 ~~START~~
 nvarchar
@@ -1607,7 +1607,7 @@ canapé
 
 -- COMPLEX SUBQUERY (LIKE OPERATOR CONRTAINING SUBQUERY)
 -- returns 1 row
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'shaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'shaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1615,7 +1615,7 @@ TEññiȘ#!#patín
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1624,7 +1624,7 @@ nvarchar#!#nvarchar
 
 
 -- returns 4 rows
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN 1 = 1 THEN '%I%' ELSE '%t%' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN 1 = 1 THEN '%I%' ELSE '%t%' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1637,7 +1637,7 @@ lúdico#!#lúdico
 
 
 -- rerurns 4 rows
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN 2 = 1 THEN '%I%' ELSE '%t%' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN 2 = 1 THEN '%I%' ELSE '%t%' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1649,7 +1649,7 @@ TEññiȘ#!#patín
 
 
 -- returns 2 rows
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'shaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%a' ELSE '%é' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'shaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%a' ELSE '%é' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1659,7 +1659,7 @@ película#!#réquiem
 
 
 -- returns 4 rows
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%a' ELSE '%é' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%a' ELSE '%é' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1671,7 +1671,7 @@ canapé#!#crédito
 
 
 -- returns 1 row
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 IN (SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 IN (SELECT col1 FROM test_like_for_AI_prepare_t13_1_ci t1 JOIN test_like_for_AI_prepare_t13_2_ci t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1680,7 +1680,7 @@ résumé#!#críquet
 
 
 -- returns 1 row
-SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_ci WHERE col LIKE babel_4791_vu_prepare_t13_1_ci.col1);
+SELECT col1 FROM test_like_for_AI_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM test_like_for_AI_prepare_t13_2_ci WHERE col LIKE test_like_for_AI_prepare_t13_1_ci.col1);
 GO
 ~~START~~
 nvarchar
@@ -1689,14 +1689,14 @@ lúdico
 
 
 -- CASE 14: DIFFERENT WILDCARDS
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ca_e';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'ca_e';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'c[ĥżâ]%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'c[ĥżâ]%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -1705,7 +1705,7 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%[^oa]ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%[^oa]ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -1715,7 +1715,7 @@ Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                  
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%[i-s]';
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%[i-s]';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -1737,7 +1737,7 @@ int
 ~~END~~
 
 
-SELECT CONCAT('Hi ', (SELECT col FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ca_e'));
+SELECT CONCAT('Hi ', (SELECT col FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'ca_e'));
 GO
 ~~START~~
 text
@@ -1745,7 +1745,7 @@ Hi café
 ~~END~~
 
 
-SELECT UPPER((SELECT col FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%oNo'));
+SELECT UPPER((SELECT col FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%oNo'));
 GO
 ~~START~~
 text
@@ -1754,7 +1754,7 @@ TELÉFONO
 
 
 -- CASE 16: JOIN
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci JOIN babel_4791_vu_prepare_t13_2_ci on babel_4791_vu_prepare_t13_1_ci.col2 LIKE babel_4791_vu_prepare_t13_2_ci.col
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci JOIN test_like_for_AI_prepare_t13_2_ci on test_like_for_AI_prepare_t13_1_ci.col2 LIKE test_like_for_AI_prepare_t13_2_ci.col
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
@@ -1766,7 +1766,7 @@ canapé#!#crédito#!#crédito
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%';
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci t1 JOIN test_like_for_AI_prepare_t13_2_ci t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%';
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
@@ -1775,7 +1775,7 @@ résumé#!#críquet#!#reísteis
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE '%a%' AND t2.col LIKE '%a%';
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci t1 JOIN test_like_for_AI_prepare_t13_2_ci t2 ON t1.col1 LIKE '%a%' AND t2.col LIKE '%a%';
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
@@ -1836,7 +1836,7 @@ chaptéR#!#enérgetico#!#gígabyte
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col2 LIKE '%o' AND t2.col LIKE '%o';
+SELECT * FROM test_like_for_AI_prepare_t13_1_ci t1 JOIN test_like_for_AI_prepare_t13_2_ci t2 ON t1.col2 LIKE '%o' AND t2.col LIKE '%o';
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
@@ -1865,7 +1865,7 @@ lúdico#!#lúdico#!#ídolo
 
 -- CASE 17: PREPARED STATEMENTS
 DECLARE @prefix NVARCHAR(50) = 'ár';
-EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE @prefix + ''%'';', N'@prefix NVARCHAR(50)', @prefix;
+EXEC sp_executesql N'SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 LIKE @prefix + ''%'';', N'@prefix NVARCHAR(50)', @prefix;
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1874,7 +1874,7 @@ nvarchar#!#nvarchar
 
 
 DECLARE @pattern NVARCHAR(50) = '%bo%';
-EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE @pattern + ''%'';', N'@pattern NVARCHAR(50)', @pattern;
+EXEC sp_executesql N'SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 LIKE @pattern + ''%'';', N'@pattern NVARCHAR(50)', @pattern;
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1883,7 +1883,7 @@ nvarchar#!#nvarchar
 
 
 DECLARE @suffix NVARCHAR(50) = 'éR';
-EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 LIKE ''%'' + @suffix;', N'@suffix NVARCHAR(50)', @suffix;
+EXEC sp_executesql N'SELECT * FROM test_like_for_AI_prepare_t13_1_ci WHERE col1 LIKE ''%'' + @suffix;', N'@suffix NVARCHAR(50)', @suffix;
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -1892,7 +1892,7 @@ chaptéR#!#enérgetico
 
 
 -- CASE 18: LIKE OBJECT_NAME()
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 int
@@ -1900,7 +1900,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE 'Blah%' COLLATE Latin1_General_CI_AI;
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) LIKE 'Blah%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 int
@@ -1908,7 +1908,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah' COLLATE Latin1_General_CI_AI;
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) LIKE '%Blah' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 int
@@ -1916,7 +1916,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%4791%'))
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_ci WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%like_for_AI%'))
 GO
 ~~START~~
 int
@@ -1924,7 +1924,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blâh%' COLLATE Latin1_General_CI_AI))
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_ci WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) LIKE '%Blâh%' COLLATE Latin1_General_CI_AI))
 GO
 ~~START~~
 int
@@ -1932,7 +1932,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blâh%'))
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_ci WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%Blâh%'))
 GO
 ~~START~~
 int
@@ -1942,7 +1942,7 @@ int
 
 -- CASE 19: ESCAPE WITH LIKE
 --15% off using ESCAPE; should return rows 19
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -1951,7 +1951,7 @@ int#!#nvarchar
 
 
 --15% off using a different ESCAPE character; should return rows 19
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -1960,7 +1960,7 @@ int#!#nvarchar
 
 
 --15 % off ; should return rows 21
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -1969,7 +1969,7 @@ int#!#nvarchar
 
 
 --Searching for the escape character itself; should return rows 23
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CI_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -1978,7 +1978,7 @@ int#!#nvarchar
 
 
 --As above, but also allow for "[". Should return 3-18, 24
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CI_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CI_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -2179,7 +2179,7 @@ int
 
 
 -- CASE 20: LIKE IN TARGET LIST
-SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM babel_4791_vu_prepare_t1_ci;
+SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
 nvarchar#!#text
@@ -2204,7 +2204,7 @@ SELECT col,
            WHEN col LIKE '%ONO' THEN 'Suffix Match'
            ELSE 'No Match' 
        END AS match_category
-FROM babel_4791_vu_prepare_t1_ci;
+FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
 nvarchar#!#text
@@ -2230,7 +2230,7 @@ SELECT col,
            WHEN col LIKE '%íc%' THEN 'Match'
            ELSE 'No Match' 
        END AS extracted_substring
-FROM babel_4791_vu_prepare_t1_ci;
+FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
 nvarchar#!#text
@@ -2451,14 +2451,14 @@ int
 
 -- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'jalapeno';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'jalapeno';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2467,14 +2467,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 're%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 're%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%n%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%n%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2488,7 +2488,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'TELefONO';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'TELefONO';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2496,7 +2496,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'resume';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'resume';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2505,7 +2505,7 @@ résumé#!#résumé#!#résumé#!#résumé#!#résumé                            
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'movie';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'movie';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2513,14 +2513,14 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'naïve';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'naïve';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'Piñata';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'Piñata';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2529,7 +2529,7 @@ Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                 
 
 
 -- Different positions
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%é%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%é%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2543,7 +2543,7 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2557,7 +2557,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2566,7 +2566,7 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2574,7 +2574,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%é%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%é%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2590,7 +2590,7 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ia%s';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%ia%s';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2598,7 +2598,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'orange';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'orange';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2606,7 +2606,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'jalapen%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'jalapen%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2615,14 +2615,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'e%ito';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'e%ito';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'c%eR';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'c%eR';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2630,8 +2630,8 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 ~~END~~
 
 
--- babel_4791_vu_prepare_t1_cs with ñ 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ñ%';
+-- test_like_for_AI_prepare_t1_cs with ñ 
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2644,8 +2644,8 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 ~~END~~
 
 
--- babel_4791_vu_prepare_t1_cs with ü
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ú%';
+-- test_like_for_AI_prepare_t1_cs with ü
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%ú%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2656,21 +2656,21 @@ película#!#película#!#película#!#película#!#película                       
 
 
 -- different datatypes
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_v LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_v LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_v LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2682,28 +2682,28 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_v LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_v LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_t LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_t LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_t LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2715,28 +2715,28 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_t LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_t LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_ntext LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_ntext LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_ntext LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2748,27 +2748,27 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_ntext LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_ntext LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_c LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_c LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_c LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2780,27 +2780,27 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_c LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_c LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_nchar LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_nchar LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE '%ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_nchar LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2812,7 +2812,7 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col_nchar LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_nchar LIKE '%is';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2821,14 +2821,14 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 -- CASE 5: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'cafe' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'cafe' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'jalapeno' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'jalapeno' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2837,14 +2837,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 're%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 're%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%n%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%n%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2858,7 +2858,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'TELefONO' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'TELefONO' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2866,7 +2866,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'resume' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'resume' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2875,7 +2875,7 @@ résumé#!#résumé#!#résumé#!#résumé#!#résumé                            
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'movie' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'movie' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2883,14 +2883,14 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'naïve' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'naïve' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'Piñata' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'Piñata' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2899,7 +2899,7 @@ Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                 
 
 
 -- Different positions
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%é%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%é%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2913,7 +2913,7 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2927,7 +2927,7 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ch%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'ch%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2936,7 +2936,7 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%is' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%is' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2944,7 +2944,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%é%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%é%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2960,7 +2960,7 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ia%s' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%ia%s' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2968,7 +2968,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'orange' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'orange' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2976,7 +2976,7 @@ nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'jalapen%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'jalapen%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -2985,14 +2985,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'c%eR' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'c%eR' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -3000,8 +3000,8 @@ chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                            
 ~~END~~
 
 
--- babel_4791_vu_prepare_t1_cs with ñ 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
+-- test_like_for_AI_prepare_t1_cs with ñ 
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -3014,8 +3014,8 @@ TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                          
 ~~END~~
 
 
--- babel_4791_vu_prepare_t1_cs with ü
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ú%' COLLATE Latin1_General_CS_AI;
+-- test_like_for_AI_prepare_t1_cs with ü
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%ú%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -3027,7 +3027,7 @@ película#!#película#!#película#!#película#!#película                       
 
 
 -- CASE 6: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Var)
-SELECT * FROM babel_4791_vu_prepare_t6_cs WHERE a LIKE b
+SELECT * FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE b
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -3039,14 +3039,14 @@ THazmEEm#!#%z%
 
 -- CASE 7: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_Const
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'cafe';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'cafe';
 GO
 ~~START~~
 nvarchar
 café
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'jalapeno';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'jalapeno';
 GO
 ~~START~~
 nvarchar
@@ -3055,14 +3055,14 @@ jalapeño
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 're%';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 're%';
 GO
 ~~START~~
 nvarchar
 résumé
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%n%';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%n%';
 GO
 ~~START~~
 nvarchar
@@ -3076,7 +3076,7 @@ TEññiȘ
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'TELefONO';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'TELefONO';
 GO
 ~~START~~
 nvarchar
@@ -3084,7 +3084,7 @@ nvarchar
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'resume';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'resume';
 GO
 ~~START~~
 nvarchar
@@ -3093,7 +3093,7 @@ résumé
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'movie';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'movie';
 GO
 ~~START~~
 nvarchar
@@ -3101,14 +3101,14 @@ nvarchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'naïve';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'naïve';
 GO
 ~~START~~
 nvarchar
 naïve
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'Piñata';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'Piñata';
 GO
 ~~START~~
 nvarchar
@@ -3117,7 +3117,7 @@ Piñata
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'ch%';
 GO
 ~~START~~
 nvarchar
@@ -3126,7 +3126,7 @@ chaptéR
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%is';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%is';
 GO
 ~~START~~
 nvarchar
@@ -3134,7 +3134,7 @@ nvarchar
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%é%';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%é%';
 GO
 ~~START~~
 nvarchar
@@ -3150,7 +3150,7 @@ chaptéR
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ia%s';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ia%s';
 GO
 ~~START~~
 nvarchar
@@ -3158,7 +3158,7 @@ nvarchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'orange';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'orange';
 GO
 ~~START~~
 nvarchar
@@ -3166,7 +3166,7 @@ nvarchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'jalapen%';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'jalapen%';
 GO
 ~~START~~
 nvarchar
@@ -3175,14 +3175,14 @@ jalapeño
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'e%ito';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'e%ito';
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'c%eR';
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'c%eR';
 GO
 ~~START~~
 nvarchar
@@ -3190,8 +3190,8 @@ chaptéR
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_cs with ñ 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ñ%';
+-- test_like_for_AI_prepare_t7_cs with ñ 
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ñ%';
 GO
 ~~START~~
 nvarchar
@@ -3204,8 +3204,8 @@ TEññiȘ
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_cs with ü
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ú%';
+-- test_like_for_AI_prepare_t7_cs with ü
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ú%';
 GO
 ~~START~~
 nvarchar
@@ -3218,14 +3218,14 @@ película
 
 -- CASE 8: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_CollateExpr(T_Const)
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'cafe' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'cafe' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 café
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'jalapeno' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'jalapeno' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3234,14 +3234,14 @@ jalapeño
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 're%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 're%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 résumé
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%n%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%n%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3255,7 +3255,7 @@ TEññiȘ
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'TELefONO' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'TELefONO' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3263,7 +3263,7 @@ nvarchar
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'resume' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'resume' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3272,7 +3272,7 @@ résumé
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'movie' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'movie' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3280,14 +3280,14 @@ nvarchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'naïve' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'naïve' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 naïve
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'Piñata' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'Piñata' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3296,7 +3296,7 @@ Piñata
 
 
 -- Different positions
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%é%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%é%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3310,7 +3310,7 @@ canapé
 chaptéR
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3324,7 +3324,7 @@ TEññiȘ
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'ch%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'ch%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3333,7 +3333,7 @@ chaptéR
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%is' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%is' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3341,7 +3341,7 @@ nvarchar
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%é%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%é%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3357,7 +3357,7 @@ chaptéR
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ia%s' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ia%s' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3365,7 +3365,7 @@ nvarchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'orange' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'orange' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3373,7 +3373,7 @@ nvarchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'jalapen%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'jalapen%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3382,14 +3382,14 @@ jalapeño
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'c%eR' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'c%eR' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3397,8 +3397,8 @@ chaptéR
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_cs with ñ 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
+-- test_like_for_AI_prepare_t7_cs with ñ 
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3411,8 +3411,8 @@ TEññiȘ
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_cs with ü
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ú%' COLLATE Latin1_General_CS_AI;
+-- test_like_for_AI_prepare_t7_cs with ü
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ú%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3425,13 +3425,13 @@ película
 
 -- CASE 9: T_FuncExpr LIKE T_CollateExpr(T_Const)
 -- Simple matches
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE 'cafe' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE 'cafe' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE 'jalapeno' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE 'jalapeno' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3439,14 +3439,14 @@ nvarchar
 
 
 -- Wildcards
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE SUBSTRING(col, 1, 3) COLLATE Latin1_General_CS_AI LIKE 're%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE SUBSTRING(col, 1, 3) COLLATE Latin1_General_CS_AI LIKE 're%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 résumé
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE '%n%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE '%n%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3461,7 +3461,7 @@ TEññiȘ
 
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'TELefONO' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'TELefONO' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3469,7 +3469,7 @@ nvarchar
 
 
 -- Accents variations 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE 'resume' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE 'resume' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3477,7 +3477,7 @@ nvarchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(LOWER(col)) COLLATE Latin1_General_CS_AI LIKE 'movie' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(LOWER(col)) COLLATE Latin1_General_CS_AI LIKE 'movie' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3485,13 +3485,13 @@ nvarchar
 
 
 -- Multiple accented characters
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(LOWER(col)) COLLATE Latin1_General_CS_AI LIKE 'naïve' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(LOWER(col)) COLLATE Latin1_General_CS_AI LIKE 'naïve' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(UPPER(col)) COLLATE Latin1_General_CS_AI LIKE 'Piñata' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE LOWER(UPPER(col)) COLLATE Latin1_General_CS_AI LIKE 'Piñata' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3499,13 +3499,13 @@ nvarchar
 
 
 -- Different positions
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE SUBSTRING(UPPER(LOWER(col)), 1, 3) COLLATE Latin1_General_CS_AI LIKE '%é%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE SUBSTRING(UPPER(LOWER(col)), 1, 3) COLLATE Latin1_General_CS_AI LIKE '%é%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3514,7 +3514,7 @@ nvarchar
 
 
 -- Wildcard start
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE SUBSTRING(col, 1, 3) COLLATE Latin1_General_CS_AI LIKE 'ch%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE SUBSTRING(col, 1, 3) COLLATE Latin1_General_CS_AI LIKE 'ch%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3523,7 +3523,7 @@ chaptéR
 
 
 -- Wildcard end 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE '%is' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE '%is' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3531,7 +3531,7 @@ nvarchar
 
 
 -- Wildcard middle
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE '%é%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE '%é%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3539,7 +3539,7 @@ nvarchar
 
 
 -- Multiple wildcards 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE '%ia%s' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE '%ia%s' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3547,7 +3547,7 @@ nvarchar
 
 
 -- No match
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE 'orange' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE UPPER(col) COLLATE Latin1_General_CS_AI LIKE 'orange' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3555,7 +3555,7 @@ nvarchar
 
 
 -- Diacritic variations
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'jalapen%' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'jalapen%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3564,22 +3564,22 @@ jalapeño
 
 
 -- Different accented vowels
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'c%eR' COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'c%eR' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_cs with ñ 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
+-- test_like_for_AI_prepare_t7_cs with ñ 
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3593,8 +3593,8 @@ TEññiȘ
 ~~END~~
 
 
--- babel_4791_vu_prepare_t7_cs with ü
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE '%ú%' COLLATE Latin1_General_CS_AI;
+-- test_like_for_AI_prepare_t7_cs with ü
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE '%ú%' COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3605,14 +3605,14 @@ película
 
 
 -- same experiments as above with column collated with Latin1_General_CS_AI
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE LOWER(col) LIKE 'c%eR';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE LOWER(col) LIKE 'c%eR';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE LOWER(col) LIKE 'jalapen%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE LOWER(col) LIKE 'jalapen%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -3620,14 +3620,14 @@ jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                       
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE UPPER(col) LIKE '%ia%s';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE UPPER(col) LIKE '%ia%s';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE SUBSTRING(col, 1, 3) LIKE 'ch%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE SUBSTRING(col, 1, 3) LIKE 'ch%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -3659,7 +3659,7 @@ int
 
 -- CASE 11: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Param)
 declare @c varchar(51)='e%ito';
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE @c;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE @c;
 GO
 ~~START~~
 nvarchar
@@ -3667,7 +3667,7 @@ nvarchar
 
 
 declare @c varchar(51)='c%eR';
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE @c;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE @c;
 GO
 ~~START~~
 nvarchar
@@ -3676,7 +3676,7 @@ chaptéR
 
 
 declare @d varchar(51)='%ú%';
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col LIKE @d COLLATE Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE @d COLLATE Latin1_General_CS_AI;
 GO
 ~~START~~
 nvarchar
@@ -3687,7 +3687,7 @@ película
 
 
 -- CASE 12: LIKE inside CASE
-SELECT CASE WHEN col COLLATE Latin1_General_CS_AI LIKE 'jalapen%' THEN 1 ELSE 2 END FROM babel_4791_vu_prepare_t7_cs;
+SELECT CASE WHEN col COLLATE Latin1_General_CS_AI LIKE 'jalapen%' THEN 1 ELSE 2 END FROM test_like_for_AI_prepare_t7_cs;
 GO
 ~~START~~
 int
@@ -3707,7 +3707,7 @@ int
 ~~END~~
 
 
-SELECT CASE WHEN col LIKE '%is' COLLATE Latin1_General_CS_AI THEN 1 ELSE 2 END FROM babel_4791_vu_prepare_t7_cs;
+SELECT CASE WHEN col LIKE '%is' COLLATE Latin1_General_CS_AI THEN 1 ELSE 2 END FROM test_like_for_AI_prepare_t7_cs;
 GO
 ~~START~~
 int
@@ -3731,7 +3731,7 @@ int
 -- CASE 13: SUBQUERY
 -- SIMPLE SUBQUERY (LIKE OPERATOR AS SUBQUERY)
 -- returns 1 row
-SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_cs WHERE col LIKE 'áb%');
+SELECT col1 FROM test_like_for_AI_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM test_like_for_AI_prepare_t13_2_cs WHERE col LIKE 'áb%');
 GO
 ~~START~~
 nvarchar
@@ -3740,7 +3740,7 @@ jalapeño
 
 
 -- returns 2 rows
-SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_cs WHERE col LIKE '%ar%l%');
+SELECT col1 FROM test_like_for_AI_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM test_like_for_AI_prepare_t13_2_cs WHERE col LIKE '%ar%l%');
 GO
 ~~START~~
 nvarchar
@@ -3750,7 +3750,7 @@ Año Nuevo
 
 
 -- returns 1 rows
-SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_cs WHERE col LIKE '%ţö');
+SELECT col1 FROM test_like_for_AI_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM test_like_for_AI_prepare_t13_2_cs WHERE col LIKE '%ţö');
 GO
 ~~START~~
 nvarchar
@@ -3760,7 +3760,7 @@ canapé
 
 -- COMPLEX SUBQUERY (LIKE OPERATOR CONRTAINING SUBQUERY)
 -- returns 1 row
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'ShaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'ShaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -3768,7 +3768,7 @@ TEññiȘ#!#patín
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN 'TEñ%' ELSE 'ár%' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -3777,7 +3777,7 @@ nvarchar#!#nvarchar
 
 
 -- returns 4 rows
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN 1 = 1 THEN '%i%' ELSE '%t%' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN 1 = 1 THEN '%i%' ELSE '%t%' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -3790,7 +3790,7 @@ lúdico#!#lúdico
 
 
 -- rerurns 2 rows
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN 2 = 1 THEN '%i%' ELSE '%t%' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN 2 = 1 THEN '%i%' ELSE '%t%' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -3800,7 +3800,7 @@ chaptéR#!#enérgetico
 
 
 -- returns 2 rows
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'ShaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%a' ELSE '%é' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'ShaEpéD' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%a' ELSE '%é' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -3810,7 +3810,7 @@ película#!#réquiem
 
 
 -- returns 4 rows
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%a' ELSE '%é' END);
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 LIKE (CASE WHEN (SELECT 1 WHERE 'naïve' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%a' ELSE '%é' END);
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -3822,7 +3822,7 @@ canapé#!#crédito
 
 
 -- returns 1 row
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 IN (SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 IN (SELECT col1 FROM test_like_for_AI_prepare_t13_1_cs t1 JOIN test_like_for_AI_prepare_t13_2_cs t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -3831,7 +3831,7 @@ résumé#!#críquet
 
 
 -- returns 1 row
-SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_cs WHERE col LIKE babel_4791_vu_prepare_t13_1_cs.col1);
+SELECT col1 FROM test_like_for_AI_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM test_like_for_AI_prepare_t13_2_cs WHERE col LIKE test_like_for_AI_prepare_t13_1_cs.col1);
 GO
 ~~START~~
 nvarchar
@@ -3840,14 +3840,14 @@ lúdico
 
 
 -- CASE 14: DIFFERENT WILDCARDS
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ca_e';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'ca_e';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'c[ĥżâ]%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'c[ĥżâ]%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -3856,7 +3856,7 @@ canapé#!#canapé#!#canapé#!#canapé#!#canapé                                 
 chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%[^oa]ñ%';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%[^oa]ñ%';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -3866,7 +3866,7 @@ Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                  
 TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
 ~~END~~
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%[i-s]';
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%[i-s]';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
@@ -3887,7 +3887,7 @@ int
 ~~END~~
 
 
-SELECT CONCAT('Hi ', (SELECT col FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ca_e'));
+SELECT CONCAT('Hi ', (SELECT col FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'ca_e'));
 GO
 ~~START~~
 text
@@ -3895,7 +3895,7 @@ Hi café
 ~~END~~
 
 
-SELECT UPPER((SELECT col FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%no'));
+SELECT UPPER((SELECT col FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%no'));
 GO
 ~~START~~
 text
@@ -3904,7 +3904,7 @@ JALAPEÑO
 
 
 -- CASE 16: JOIN
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs JOIN babel_4791_vu_prepare_t13_2_cs on babel_4791_vu_prepare_t13_1_cs.col2 LIKE babel_4791_vu_prepare_t13_2_cs.col
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs JOIN test_like_for_AI_prepare_t13_2_cs on test_like_for_AI_prepare_t13_1_cs.col2 LIKE test_like_for_AI_prepare_t13_2_cs.col
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
@@ -3916,7 +3916,7 @@ canapé#!#crédito#!#crédito
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%';
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs t1 JOIN test_like_for_AI_prepare_t13_2_cs t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%';
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
@@ -3925,7 +3925,7 @@ résumé#!#críquet#!#reísteis
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE '%a%' AND t2.col LIKE '%a%';
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs t1 JOIN test_like_for_AI_prepare_t13_2_cs t2 ON t1.col1 LIKE '%a%' AND t2.col LIKE '%a%';
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
@@ -3980,7 +3980,7 @@ chaptéR#!#enérgetico#!#gígabyte
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col2 LIKE '%o' AND t2.col LIKE '%o';
+SELECT * FROM test_like_for_AI_prepare_t13_1_cs t1 JOIN test_like_for_AI_prepare_t13_2_cs t2 ON t1.col2 LIKE '%o' AND t2.col LIKE '%o';
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
@@ -4009,7 +4009,7 @@ lúdico#!#lúdico#!#ídolo
 
 -- CASE 17: PREPARED STATEMENTS
 DECLARE @prefix NVARCHAR(50) = 'ár';
-EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE @prefix + ''%'';', N'@prefix NVARCHAR(50)', @prefix;
+EXEC sp_executesql N'SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 LIKE @prefix + ''%'';', N'@prefix NVARCHAR(50)', @prefix;
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -4018,7 +4018,7 @@ nvarchar#!#nvarchar
 
 
 DECLARE @pattern NVARCHAR(50) = '%bo%';
-EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE @pattern + ''%'';', N'@pattern NVARCHAR(50)', @pattern;
+EXEC sp_executesql N'SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 LIKE @pattern + ''%'';', N'@pattern NVARCHAR(50)', @pattern;
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -4027,7 +4027,7 @@ nvarchar#!#nvarchar
 
 
 DECLARE @suffix NVARCHAR(50) = 'éR';
-EXEC sp_executesql N'SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 LIKE ''%'' + @suffix;', N'@suffix NVARCHAR(50)', @suffix;
+EXEC sp_executesql N'SELECT * FROM test_like_for_AI_prepare_t13_1_cs WHERE col1 LIKE ''%'' + @suffix;', N'@suffix NVARCHAR(50)', @suffix;
 GO
 ~~START~~
 nvarchar#!#nvarchar
@@ -4036,7 +4036,7 @@ chaptéR#!#enérgetico
 
 
 -- CASE 18: LIKE OBJECT_NAME()
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 int
@@ -4044,7 +4044,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE 'Blah%' COLLATE Latin1_General_CI_AI;
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE 'Blah%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 int
@@ -4052,7 +4052,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah' COLLATE Latin1_General_CI_AI;
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blah' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 int
@@ -4060,7 +4060,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%4791%'))
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%like_for_AI%'))
 GO
 ~~START~~
 int
@@ -4068,7 +4068,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blâh%' COLLATE Latin1_General_CI_AI))
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE 1>1 OR ((NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') AND (NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) LIKE '%Blâh%' COLLATE Latin1_General_CI_AI))
 GO
 ~~START~~
 int
@@ -4076,7 +4076,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blâh%'))
+SELECT COUNT(*) FROM test_like_for_AI_prepare_t13_1_cs WHERE (1=1 AND NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blah%') OR ((NOT 2<1) AND (NOT OBJECT_NAME(OBJECT_ID('test_like_for_AI_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%Blâh%'))
 GO
 ~~START~~
 int
@@ -4086,7 +4086,7 @@ int
 
 -- CASE 19: ESCAPE WITH LIKE
 --15% off using ESCAPE; should return rows 19
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15/% %' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -4095,7 +4095,7 @@ int#!#nvarchar
 
 
 --15% off using a different ESCAPE character; should return rows 19
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15!% %' ESCAPE '!' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -4104,7 +4104,7 @@ int#!#nvarchar
 
 
 --15 % off ; should return rows 21
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 /%___' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -4113,7 +4113,7 @@ int#!#nvarchar
 
 
 --Searching for the escape character itself; should return rows 23
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CS_AI LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -4122,7 +4122,7 @@ int#!#nvarchar
 
 
 --As above, but also allow for "[". Should return 3-18, 24
-SELECT * FROM babel_4791_vu_prepare_escape WHERE string COLLATE Latin1_General_CS_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
+SELECT * FROM test_like_for_AI_prepare_escape WHERE string COLLATE Latin1_General_CS_AI NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
 GO
 ~~START~~
 int#!#nvarchar
@@ -4323,7 +4323,7 @@ int
 
 
 -- CASE 20: LIKE IN TARGET LIST
-SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM babel_4791_vu_prepare_t1_ci;
+SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
 nvarchar#!#text
@@ -4348,7 +4348,7 @@ SELECT col,
            WHEN col LIKE '%ONO' THEN 'Suffix Match'
            ELSE 'No Match' 
        END AS match_category
-FROM babel_4791_vu_prepare_t1_ci;
+FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
 nvarchar#!#text
@@ -4374,7 +4374,7 @@ SELECT col,
            WHEN col LIKE '%íc%' THEN 'Match'
            ELSE 'No Match' 
        END AS extracted_substring
-FROM babel_4791_vu_prepare_t1_ci;
+FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
 nvarchar#!#text
@@ -4403,18 +4403,18 @@ GO
 ~~ERROR (Message: collation mismatch between explicit collations "bbf_unicode_cp1_cs_ai" and "bbf_unicode_cp1_ci_ai")~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%a%' Latin1_General_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%a%' COLLATE Latin1_General_CS_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near ';' at line 1 and character position 83)~~
+~~ERROR (Message: collation mismatch between explicit collations "bbf_unicode_cp1_ci_ai" and "bbf_unicode_cp1_cs_ai")~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE'%a%' Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col COLLATE Latin1_General_CS_AI LIKE'%a%' COLLATE Latin1_General_CI_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near ';' at line 1 and character position 82)~~
+~~ERROR (Message: collation mismatch between explicit collations "bbf_unicode_cp1_cs_ai" and "bbf_unicode_cp1_ci_ai")~~
 
 
 
@@ -4448,52 +4448,52 @@ GO
 
 
 
-SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CI_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
 
-SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CS_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: collation "chinese_prc_cs_ai" for encoding "UTF8" does not exist)~~
 
 
-SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CI_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
 
-SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CS_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: collation "chinese_prc_cs_ai" for encoding "UTF8" does not exist)~~
 
 
-SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CI_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
 
-SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CS_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: collation "chinese_prc_cs_ai" for encoding "UTF8" does not exist)~~
 
 
-SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CI_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
 
-SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CS_AI;
+SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CS_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -4501,28 +4501,28 @@ GO
 
 
 -- col LIKE NULL
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE NULL;
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE NULL;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE NULL;
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE NULL;
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE NULL;
+SELECT * FROM test_like_for_AI_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE NULL;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
 
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE NULL;
+SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE NULL;
 GO
 ~~START~~
 nvarchar
@@ -4530,7 +4530,7 @@ nvarchar
 
 
 -- test cases which would test our restriction on capacity of removing accents
-SELECT * FROM babel_4791_vu_prepare_max_test WHERE a LIKE '%a%' COLLATE Latin1_General_CI_AI;
+SELECT * FROM test_like_for_AI_prepare_max_test WHERE a LIKE '%a%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
 text
@@ -4539,7 +4539,7 @@ text
 ~~ERROR (Message: The input string may have cause buffer overflow)~~
 
 
-SELECT * FROM babel_4791_vu_prepare_max_test WHERE a COLLATE Latin1_General_CI_AI LIKE '%Á%'
+SELECT * FROM test_like_for_AI_prepare_max_test WHERE a COLLATE Latin1_General_CI_AI LIKE '%Á%'
 GO
 ~~START~~
 text

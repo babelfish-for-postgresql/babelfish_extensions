@@ -545,18 +545,15 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 	Node		*leftop = (Node *) linitial(op->args);
 	Node		*rightop = (Node *) lsecond(op->args);
 
-	linitial(op->args) = convert_node_to_funcexpr_for_like(leftop);
-	lsecond(op->args) = convert_node_to_funcexpr_for_like(rightop);
-
 	linitial(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(leftop, NULL),
+												convert_node_to_funcexpr_for_like(leftop),
 												get_sys_varcharoid(),
 												exprType(leftop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
 	lsecond(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(rightop, NULL),
+												convert_node_to_funcexpr_for_like(rightop),
 												get_sys_varcharoid(),
 												exprType(rightop), -1,
 												COERCION_EXPLICIT,
