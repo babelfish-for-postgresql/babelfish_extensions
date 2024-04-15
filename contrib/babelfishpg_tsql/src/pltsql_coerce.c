@@ -1269,8 +1269,8 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 		return InvalidOid;
 	else if (strncmp(context, "ISNULL", strlen("ISNULL")) == 0)
 		return select_common_type_for_isnull(pstate, exprs);
-	else if(strncmp(context, "TSQL_COALESCE", strlen("TSQL_COALESCE")) == 0)
-		return select_common_type_for_coalesce_function(pstate,exprs);
+	// else if(strncmp(context, "TSQL_COALESCE", strlen("TSQL_COALESCE")) == 0)
+	// 	return select_common_type_for_coalesce_function(pstate,exprs);
 	else if (strncmp(context, "UNION", strlen("UNION")) == 0 || 
 			strncmp(context, "INTERSECT", strlen("INTERSECT")) == 0 ||
 			strncmp(context, "EXCEPT", strlen("EXCEPT")) == 0 ||
