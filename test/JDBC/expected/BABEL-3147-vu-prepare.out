@@ -1,8 +1,13 @@
+-- error should not have been thrown, should be fixed under BABEL-1710
 CREATE TABLE BABEL_3147_vu_prepare_t_1 (
         c [int] NULL,
         c_comp AS ISNULL(CONVERT(CHAR(1), 'A'), 'B')
 )
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
 
 CREATE TABLE BABEL_3147_vu_prepare_t_2 (
         a numeric(6, 4),
