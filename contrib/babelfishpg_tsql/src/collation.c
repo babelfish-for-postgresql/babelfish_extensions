@@ -20,13 +20,12 @@
 #include "nodes/nodes.h"
 #include <unicode/utrans.h>
 
-
 #include "pltsql.h"
 #include "src/collation.h"
 
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
-#define VARCHAR_MAX_STORAGE 1073741824
+
 /* 
  * Rule applied to transliterate Latin and general category Nd character 
  * then convert the Latin (source) char to ASCII (destination) representation
@@ -40,7 +39,6 @@ static Oid remove_accents_internal_oid;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
-static Node *convert_node_to_funcexpr_for_like(Node *node, void *context);
 
 extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 int ptype,
@@ -472,7 +470,7 @@ remove_accents_internal(PG_FUNCTION_ARGS)
 	}
 
 	limit = len_uinput;
-	capacity = VARCHAR_MAX_STORAGE / sizeof(char);
+	capacity = MaxAttrSize / sizeof(char);
 
 	utrans_transUChars(transliterator,
 						utf16_intput,
@@ -484,7 +482,9 @@ remove_accents_internal(PG_FUNCTION_ARGS)
 
 	if (U_FAILURE(status))
 	{
-		elog(ERROR, "Error normalising the input string: %s", u_errorName(status));
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("The input string may have cause buffer overflow")));
 	}
 
 	len_result = icu_from_uchar(&result, utf16_intput, len_uinput);
@@ -495,7 +495,7 @@ remove_accents_internal(PG_FUNCTION_ARGS)
 }
 
 static Node *
-convert_node_to_funcexpr_for_like(Node *node, void *context)
+convert_node_to_funcexpr_for_like(Node *node)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	newFuncExpr->funcid = remove_accents_internal_oid;
@@ -542,8 +542,11 @@ convert_node_to_funcexpr_for_like(Node *node, void *context)
 static Node *
 transform_likenode_for_AI(Node *node, OpExpr *op)
 {
-	Node       *leftop = (Node *) linitial(op->args);
-	Node       *rightop = (Node *) lsecond(op->args);
+	Node		*leftop = (Node *) linitial(op->args);
+	Node		*rightop = (Node *) lsecond(op->args);
+
+	linitial(op->args) = convert_node_to_funcexpr_for_like(leftop);
+	lsecond(op->args) = convert_node_to_funcexpr_for_like(rightop);
 
 	linitial(op->args) = coerce_to_target_type(NULL,
 												convert_node_to_funcexpr_for_like(leftop, NULL),
@@ -653,14 +656,24 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
 		{
-			return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
+			if (coll_info_of_inputcollid.code_page == 1250 || coll_info_of_inputcollid.code_page == 1252 || coll_info_of_inputcollid.code_page == 1257)
+				return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
+			else
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("LIKE operator is not supported for \"%s\"", coll_info_of_inputcollid.collname)));
 		}
 
 		if (OidIsValid(like_entry.like_oid) &&
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
-			return transform_from_ci_as(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
+			if (coll_info_of_inputcollid.code_page == 1250 || coll_info_of_inputcollid.code_page == 1252 || coll_info_of_inputcollid.code_page == 1257)
+				return transform_from_ci_as(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
+			else
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("LIKE operator is not supported for \"%s\"", coll_info_of_inputcollid.collname)));
 		}
 
 		/* check if this is LIKE expr, and collation is CI_AS */

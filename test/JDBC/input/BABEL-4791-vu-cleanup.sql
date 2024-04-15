@@ -34,3 +34,9 @@ GO
 -- GENERIC --
 DROP TABLE babel_4791_vu_prepare_escape;
 GO
+
+DROP TABLE babel_4791_vu_prepare_max_test;
+GO
+
+DROP TABLE babel_4791_vu_prepare_chinese;
+GO

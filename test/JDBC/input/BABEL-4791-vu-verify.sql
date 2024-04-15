@@ -98,7 +98,7 @@ SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%n%';
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'TELEFONO';
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'TELefONO';
 GO
 
 -- Accents variations 
@@ -147,6 +147,9 @@ GO
 
 -- Different accented vowels
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'e%ito';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'c%eR';
 GO
 
 -- babel_4791_vu_prepare_t1_ci with ñ 
@@ -218,7 +221,7 @@ SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%n%' COLLATE Latin1_Ge
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'TELEFONO' COLLATE Latin1_General_CI_AI;
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'TELefONO' COLLATE Latin1_General_CI_AI;
 GO
 
 -- Accents variations 
@@ -269,6 +272,9 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
 GO
 
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'c%eR' COLLATE Latin1_General_CI_AI;
+GO
+
 -- babel_4791_vu_prepare_t1_ci with ñ 
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
@@ -296,7 +302,7 @@ SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'TELEFONO';
+SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'TELefONO';
 GO
 
 -- Accents variations 
@@ -341,6 +347,9 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'e%ito';
 GO
 
+SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'c%eR';
+GO
+
 -- babel_4791_vu_prepare_t7_ci with ñ 
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ñ%';
 GO
@@ -364,7 +373,7 @@ SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'TELEFONO' COLLATE Latin1_General_CI_AI;
+SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'TELefONO' COLLATE Latin1_General_CI_AI;
 GO
 
 -- Accents variations 
@@ -415,6 +424,9 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
 GO
 
+SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE 'c%eR' COLLATE Latin1_General_CI_AI;
+GO
+
 -- babel_4791_vu_prepare_t7_ci with ñ 
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
@@ -438,7 +450,7 @@ SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_Genera
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'TELEFONO' COLLATE Latin1_General_CI_AI;
+SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'TELefONO' COLLATE Latin1_General_CI_AI;
 GO
 
 -- Accents variations 
@@ -490,6 +502,9 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'e%ito' COLLATE Latin1_General_CI_AI;
 GO
 
+SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE 'c%eR' COLLATE Latin1_General_CI_AI;
+GO
+
 -- babel_4791_vu_prepare_t7_ci with ñ 
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE '%ñ%' COLLATE Latin1_General_CI_AI;
 GO
@@ -498,6 +513,18 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE LOWER(col) COLLATE Latin1_General_CI_AI LIKE '%ú%' COLLATE Latin1_General_CI_AI;
 GO
 
+-- same experiments as above with column collated with Latin1_General_CI_AI
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE LOWER(col) LIKE 'c%eR';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE LOWER(col) LIKE 'jalapen%';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE UPPER(col) LIKE '%ia%s';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE SUBSTRING(col, 1, 3) LIKE 'ch%';
+GO
 
 -- CASE 10: T_ReLabelType(T_Param) LIKE T_ReLabelType(T_Param)
 declare @a varchar='RaŊdom';
@@ -512,11 +539,15 @@ SELECT 1 WHERE @var COLLATE Latin1_General_CI_AI LIKE '%a%'
 GO
 
 -- CASE 11: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Param)
-declare @c varchar='e%ito';
+declare @c varchar(51)='e%ito';
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE @c;
 GO
 
-declare @d varchar='%ú%';
+declare @c varchar(51)='c%eR';
+SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE @c;
+GO
+
+declare @d varchar(51)='%ú%';
 SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col LIKE @d COLLATE Latin1_General_CI_AI;
 GO
 
@@ -570,10 +601,14 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t13_1_ci WHERE col1 IN (SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci t1 JOIN babel_4791_vu_prepare_t13_2_ci t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
 GO
 
+-- returns 1 row
+SELECT col1 FROM babel_4791_vu_prepare_t13_1_ci WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_ci WHERE col LIKE babel_4791_vu_prepare_t13_1_ci.col1);
+GO
+
 -- CASE 14: DIFFERENT WILDCARDS
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'ca_e';
 GO
-SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'c[hza]%';
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE 'c[ĥżâ]%';
 GO
 SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%[^oa]ñ%';
 GO
@@ -618,6 +653,12 @@ GO
 
 -- CASE 18: LIKE OBJECT_NAME()
 SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE 'Blah%' COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah' COLLATE Latin1_General_CI_AI;
 GO
 
 SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_ci WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_ci')) COLLATE Latin1_General_CI_AI LIKE '%4791%'))
@@ -847,7 +888,7 @@ SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%n%';
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'TELEFONO';
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'TELefONO';
 GO
 
 -- Accents variations 
@@ -896,6 +937,9 @@ GO
 
 -- Different accented vowels
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'e%ito';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'c%eR';
 GO
 
 -- babel_4791_vu_prepare_t1_cs with ñ 
@@ -966,7 +1010,7 @@ SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%n%' COLLATE Latin1_Ge
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'TELEFONO' COLLATE Latin1_General_CS_AI;
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'TELefONO' COLLATE Latin1_General_CS_AI;
 GO
 
 -- Accents variations 
@@ -1017,6 +1061,9 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
 GO
 
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'c%eR' COLLATE Latin1_General_CS_AI;
+GO
+
 -- babel_4791_vu_prepare_t1_cs with ñ 
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
@@ -1044,7 +1091,7 @@ SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'TELEFONO';
+SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'TELefONO';
 GO
 
 -- Accents variations 
@@ -1089,6 +1136,9 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'e%ito';
 GO
 
+SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'c%eR';
+GO
+
 -- babel_4791_vu_prepare_t7_cs with ñ 
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ñ%';
 GO
@@ -1112,7 +1162,7 @@ SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'TELEFONO' COLLATE Latin1_General_CS_AI;
+SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'TELefONO' COLLATE Latin1_General_CS_AI;
 GO
 
 -- Accents variations 
@@ -1163,6 +1213,9 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
 GO
 
+SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE 'c%eR' COLLATE Latin1_General_CS_AI;
+GO
+
 -- babel_4791_vu_prepare_t7_cs with ñ 
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
@@ -1186,7 +1239,7 @@ SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_Genera
 GO
 
 -- Case insensitive
-SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'TELEFONO' COLLATE Latin1_General_CS_AI;
+SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'TELefONO' COLLATE Latin1_General_CS_AI;
 GO
 
 -- Accents variations 
@@ -1238,12 +1291,28 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'e%ito' COLLATE Latin1_General_CS_AI;
 GO
 
+SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE 'c%eR' COLLATE Latin1_General_CS_AI;
+GO
+
 -- babel_4791_vu_prepare_t7_cs with ñ 
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE '%ñ%' COLLATE Latin1_General_CS_AI;
 GO
 
 -- babel_4791_vu_prepare_t7_cs with ü
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE LOWER(col) COLLATE Latin1_General_CS_AI LIKE '%ú%' COLLATE Latin1_General_CS_AI;
+GO
+
+-- same experiments as above with column collated with Latin1_General_CS_AI
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE LOWER(col) LIKE 'c%eR';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE LOWER(col) LIKE 'jalapen%';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE UPPER(col) LIKE '%ia%s';
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE SUBSTRING(col, 1, 3) LIKE 'ch%';
 GO
 
 
@@ -1260,11 +1329,15 @@ SELECT 1 WHERE @var COLLATE Latin1_General_CS_AI LIKE '%A%'
 GO
 
 -- CASE 11: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Param)
-declare @c varchar='e%ito';
+declare @c varchar(51)='e%ito';
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE @c;
 GO
 
-declare @d varchar='%ú%';
+declare @c varchar(51)='c%eR';
+SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE @c;
+GO
+
+declare @d varchar(51)='%ú%';
 SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col LIKE @d COLLATE Latin1_General_CS_AI;
 GO
 
@@ -1318,11 +1391,14 @@ GO
 SELECT * FROM babel_4791_vu_prepare_t13_1_cs WHERE col1 IN (SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs t1 JOIN babel_4791_vu_prepare_t13_2_cs t2 ON t1.col1 LIKE 'r%' AND t2.col LIKE 'r%');
 GO
 
+-- returns 1 row
+SELECT col1 FROM babel_4791_vu_prepare_t13_1_cs WHERE col2 IN (SELECT col FROM babel_4791_vu_prepare_t13_2_cs WHERE col LIKE babel_4791_vu_prepare_t13_1_cs.col1);
+GO
 
 -- CASE 14: DIFFERENT WILDCARDS
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'ca_e';
 GO
-SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'c[hza]%';
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE 'c[ĥżâ]%';
 GO
 SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE '%[^oa]ñ%';
 GO
@@ -1367,6 +1443,12 @@ GO
 
 -- CASE 18: LIKE OBJECT_NAME()
 SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE 'Blah%' COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE 1=1 AND NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah' COLLATE Latin1_General_CI_AI;
 GO
 
 SELECT COUNT(*) FROM babel_4791_vu_prepare_t13_1_cs WHERE NOT 1>1 AND ((NOT OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) LIKE '%Blah%' COLLATE Latin1_General_CI_AI) AND (OBJECT_NAME(OBJECT_ID('babel_4791_vu_prepare_t13_1_cs')) COLLATE Latin1_General_CI_AI LIKE '%4791%'))
@@ -1494,4 +1576,71 @@ SELECT col,
            ELSE 'No Match' 
        END AS extracted_substring
 FROM babel_4791_vu_prepare_t1_ci;
+GO
+
+--- ADDITIONAL CORNER CASE TESTING ---
+
+-- different collation on both arguments
+SELECT 1 WHERE 'cantáis' COLLATE Latin1_General_CS_AI LIKE 'Cá%' COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE '%a%' Latin1_General_CS_AI;
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE'%a%' Latin1_General_CI_AI;
+GO
+
+-- NON-Latin based collation 
+
+select 1 where 'cantáis' like 'Cá%' collate Chinese_PRC_CI_AI
+GO
+
+select 1 where 'cantáis' like 'Cá%' collate Chinese_PRC_CS_AI
+GO
+
+select 1 where '幸福' like '幸福%' collate Chinese_PRC_CI_AI
+GO
+
+select 1 where '幸福' like '幸福%' collate Chinese_PRC_CS_AI
+GO
+
+
+SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CI_AI;
+GO
+SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CS_AI;
+GO
+
+SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CI_AI;
+GO
+SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CS_AI;
+GO
+
+SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CI_AI;
+GO
+SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CS_AI;
+GO
+
+SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CI_AI;
+GO
+SELECT * FROM babel_4791_vu_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CS_AI;
+GO
+
+-- col LIKE NULL
+SELECT * FROM babel_4791_vu_prepare_t1_ci WHERE col LIKE NULL;
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t1_cs WHERE col LIKE NULL;
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t7_ci WHERE col COLLATE Latin1_General_CI_AI LIKE NULL;
+GO
+
+SELECT * FROM babel_4791_vu_prepare_t7_cs WHERE col COLLATE Latin1_General_CS_AI LIKE NULL;
+GO
+
+-- test cases which would test our restriction on capacity of removing accents
+SELECT * FROM babel_4791_vu_prepare_max_test WHERE a LIKE '%a%' COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT * FROM babel_4791_vu_prepare_max_test WHERE a COLLATE Latin1_General_CI_AI LIKE '%Á%'
 GO

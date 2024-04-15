@@ -29,7 +29,7 @@ GO
 CREATE TABLE babel_4791_vu_prepare_t6_ci(a nvarchar(11) collate Latin1_General_CI_AI, b nvarchar(11) collate Latin1_General_CI_AI);
 GO
 
-INSERT INTO babel_4791_vu_prepare_t6_ci VALUES ('THazmEEm', 'ThÅzeEm'),('Ŭwmed', 'uŴɱêÐ'),('Æmed','aeMéD'),('Șpain','SPÅǏn');
+INSERT INTO babel_4791_vu_prepare_t6_ci VALUES ('THazmEEm', 'ThÅzeEm'),('Ŭwmed', 'uŴɱêÐ'),('Æmed','aeMéD'),('Șpain','SPÅǏn'), ('THazmEEm', '%z%'), ('Ŭwmed', 'Uw%'), ('Æmed','%éd');
 GO
 
 CREATE TABLE babel_4791_vu_prepare_t7_ci (
@@ -71,6 +71,7 @@ INSERT INTO babel_4791_vu_prepare_t13_1_ci VALUES
   ('canapé', 'crédito'),
   ('chaptéR', 'enérgetico'),
   ('TEññiȘ', 'patín'),
+  ('lúdico', 'lúdico'),
   (null, null);
 GO
 
@@ -125,7 +126,7 @@ GO
 CREATE TABLE babel_4791_vu_prepare_t6_cs(a nvarchar(11) collate Latin1_General_CS_AI, b nvarchar(11) collate Latin1_General_CS_AI);
 GO
 
-INSERT INTO babel_4791_vu_prepare_t6_cs VALUES ('THazmEEm', 'ThÅzeEm'),('Ŭwmed', 'uŴɱêÐ'),('Æmed','aeMéD'),('Șpain','SPÅǏn');
+INSERT INTO babel_4791_vu_prepare_t6_cs VALUES ('THazmEEm', 'ThÅzeEm'),('Ŭwmed', 'uŴɱêÐ'),('Æmed','aeMéD'),('Șpain','SPÅǏn'), ('THazmEEm', '%z%'), ('Ŭwmed', 'Uw%'), ('Æmed','%éd');
 GO
 
 CREATE TABLE babel_4791_vu_prepare_t7_cs (
@@ -167,6 +168,7 @@ INSERT INTO babel_4791_vu_prepare_t13_1_cs VALUES
   ('canapé', 'crédito'),
   ('chaptéR', 'enérgetico'),
   ('TEññiȘ', 'patín'),
+  ('lúdico', 'lúdico'),
   (null, null);
 GO
 
@@ -233,4 +235,21 @@ VALUES
 ,('My[valid]String')
 ,(null);
 
+GO
+
+
+--- ADDITIONAL CORNER CASE TESTING ---
+
+-- Insert the string into the table
+CREATE TABLE babel_4791_vu_prepare_max_test(a TEXT);
+GO
+
+INSERT INTO babel_4791_vu_prepare_max_test VALUES (REPLICATE('a', 10 * 1024 * 1024 + 1));
+GO
+
+-- create and insert data for chinese
+CREATE TABLE babel_4791_vu_prepare_chinese(a nvarchar(MAX));
+GO
+
+INSERT INTO babel_4791_vu_prepare_chinese VALUES('中国人'), ('微笑'), ('谢谢你。');
 GO
