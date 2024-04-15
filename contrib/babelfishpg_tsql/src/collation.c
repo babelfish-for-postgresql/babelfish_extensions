@@ -526,16 +526,16 @@ convert_node_to_funcexpr_for_like(Node *node)
 							 errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
 				}
 				newFuncExpr->args = list_make1(new_node);
-				return (Node *) newFuncExpr;
+				break;
 			}
 		default:
 			{
 				ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							 errmsg("unrecognized node type: %d", (int) nodeTag(node))));
-				break;
 			}
 	}
+	return (Node *) newFuncExpr;
 }
 
 
