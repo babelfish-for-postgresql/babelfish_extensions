@@ -445,8 +445,7 @@ get_remove_accents_internal_oid()
 PG_FUNCTION_INFO_V1(remove_accents_internal);
 Datum remove_accents_internal(PG_FUNCTION_ARGS)
 {
-	text *input_text = PG_GETARG_TEXT_PP(0);
-	char *input_str = text_to_cstring(input_text);
+	char *input_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	UChar *utf16_input;
 	int32_t len_uinput, limit, capacity, len_result;
 	char *result;
@@ -508,7 +507,6 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 
 	// Clean up
 	pfree(input_str);
-	pfree(utf16_input);
 
 	// Return result as VARCHAR
 	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result + 1));
