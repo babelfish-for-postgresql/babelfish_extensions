@@ -96,7 +96,6 @@ extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
 extern bool pltsql_nocount;
-static slist_head guc_stack_list;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -250,6 +249,7 @@ int			text_size;
 Portal		pltsql_snapshot_portal = NULL;
 int			pltsql_non_tsql_proc_entry_count = 0;
 int			pltsql_sys_func_entry_count = 0;
+static 		slist_head guc_stack_list;
 static int	PltsqlGUCNestLevel = 0;
 static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
