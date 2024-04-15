@@ -328,7 +328,7 @@ public class JDBCTempTable {
         try {
             s.execute(queryString);
         } catch (Exception e) {
-            if (!e.getMessage().equals("error while trying to look up trigger")) {
+            if (!e.getMessage().equals("trigger \"bar\" does not exist")) {
                 bw.write(e.getMessage());
                 bw.newLine();
             }

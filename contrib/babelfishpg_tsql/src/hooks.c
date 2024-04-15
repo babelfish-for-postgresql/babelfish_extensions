@@ -2340,9 +2340,7 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
 			if (pg_trigger_physical_schema == NULL)
 			{
-				ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						errmsg("error while trying to look up trigger")));
+				return InvalidOid;
 			}
 			if (strcasecmp(pg_trigger_physical_schema, cur_physical_schema) == 0)
 			{
