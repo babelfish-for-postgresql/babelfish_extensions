@@ -475,7 +475,6 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 						errmsg("Error opening transliterator: %s", u_errorName(status))));
-			return 1;
 		}
 
 		// Switch back to original memory context
@@ -505,10 +504,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 
 	len_result = icu_from_uchar(&result, utf16_input, len_uinput);
 
-	// Clean up
-	pfree(input_str);
-
-	// Return result as VARCHAR
+	// Return result as NVARCHAR
 	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result + 1));
 	#else
 	ereport(ERROR,
