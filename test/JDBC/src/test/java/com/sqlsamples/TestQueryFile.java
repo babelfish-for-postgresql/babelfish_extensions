@@ -422,7 +422,12 @@ public class TestQueryFile {
         BufferedWriter bw = new BufferedWriter(fw);
         curr_exec_time = 0L;
         checkParallelQueryExpected = false;
-        batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
+        if (inputFileName.equals("temp_table_jdbc")) {
+            JDBCTempTable.runTest(bw, logger);
+            sla = defaultSLA*1000000L * 2; /* Increase SLA to avoid flakiness */
+        } else {
+            batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
+        }
         bw.close();
         if(sla == 0){
             sla = defaultSLA*1000000L;
