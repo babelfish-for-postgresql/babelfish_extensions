@@ -36,6 +36,7 @@ Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
 static Oid remove_accents_internal_oid;
+static UTransliterator *cached_transliterator = NULL;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
@@ -286,7 +287,7 @@ transform_funcexpr(Node *node)
  */
 
 static Node *
-transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
 {
 	Node	   *leftop = (Node *) linitial(op->args);
 	Node	   *rightop = (Node *) lsecond(op->args);
@@ -428,8 +429,8 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 static void
 get_remove_accents_internal_oid()
 {
-	Oid funcargtypes[1] = {TEXTOID};
-	if (remove_accents_internal_oid)
+	const Oid funcargtypes[1] = {TEXTOID};
+	if (OidIsValid(remove_accents_internal_oid))
 		return;
 
 	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
@@ -442,38 +443,53 @@ get_remove_accents_internal_oid()
  */
 
 PG_FUNCTION_INFO_V1(remove_accents_internal);
-Datum
-remove_accents_internal(PG_FUNCTION_ARGS)
+Datum remove_accents_internal(PG_FUNCTION_ARGS)
 {
-	char *input = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	UChar *rules; // Rule to remove diacritics 
-	UChar *utf16_intput;
-	int32_t len_uchar,
-			len_uinput,
-			limit,
-			capacity,
-			len_result;
-	UErrorCode status = U_ZERO_ERROR;
+	text *input_text = PG_GETARG_TEXT_PP(0);
+	char *input_str = text_to_cstring(input_text);
+	UChar *utf16_input;
+	int32_t len_uinput, limit, capacity, len_result;
 	char *result;
-	UTransliterator *transliterator;
+	UErrorCode status = U_ZERO_ERROR;
 
-#ifdef USE_ICU
-	len_uchar = icu_to_uchar(&rules, TRANSFORMATION_RULE, strlen(TRANSFORMATION_RULE));
-	len_uinput = icu_to_uchar(&utf16_intput, input, strlen(input));
-	
-	/* Open a transliterator for conversion */
-	transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
-	if (U_FAILURE(status))
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	#ifdef USE_ICU
+	// Check if transliterator is not yet cached
+	if (!cached_transliterator)
 	{
-		elog(ERROR, "Error opening transliterator: %s", u_errorName(status));
-		return 1;
+		MemoryContext oldcontext;
+		UChar *rules;
+		int32_t len_uchar;
+
+		// Switch to TopMemoryContext for allocating cached transliterator
+		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+
+		// Load transliterator rules
+		len_uchar = icu_to_uchar(&rules, TRANSFORMATION_RULE, strlen(TRANSFORMATION_RULE));
+
+		// Open transliterator
+		cached_transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
+		if (U_FAILURE(status))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+						errmsg("Error opening transliterator: %s", u_errorName(status))));
+			return 1;
+		}
+
+		// Switch back to original memory context
+		MemoryContextSwitchTo(oldcontext);
 	}
+
+	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
 
 	limit = len_uinput;
 	capacity = MaxAttrSize / sizeof(char);
 
-	utrans_transUChars(transliterator,
-						utf16_intput,
+	utrans_transUChars(cached_transliterator,
+						utf16_input,
 						&len_uinput,
 						capacity,
 						0,
@@ -484,15 +500,25 @@ remove_accents_internal(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("The input string may have cause buffer overflow")));
+					errmsg("Error normalising the input string: %s", u_errorName(status)),
+					errdetail("The input string may have caused buffer overflow")));
 	}
 
-	len_result = icu_from_uchar(&result, utf16_intput, len_uinput);
+	len_result = icu_from_uchar(&result, utf16_input, len_uinput);
 
-	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result+1));
-#endif
+	// Clean up
+	pfree(input_str);
+	pfree(utf16_input);
+
+	// Return result as VARCHAR
+	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result + 1));
+	#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("This function requires ICU library, which is not available")));
 	PG_RETURN_NULL();
-}
+	#endif
+	}
 
 static Node *
 convert_node_to_funcexpr_for_like(Node *node)
@@ -603,6 +629,13 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	return transform_likenode_for_AI(node, op);	
 }
 
+static bool
+supported_AI_collation_for_like(int32_t code_page)
+{
+	if (code_page == 1250 || code_page == 1252 || code_page == 1257)
+		return true;
+	return false;
+}
 
 static Node *
 transform_likenode(Node *node)
@@ -653,7 +686,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
 		{
-			if (coll_info_of_inputcollid.code_page == 1250 || coll_info_of_inputcollid.code_page == 1252 || coll_info_of_inputcollid.code_page == 1257)
+			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
 				return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
@@ -665,8 +698,8 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
-			if (coll_info_of_inputcollid.code_page == 1250 || coll_info_of_inputcollid.code_page == 1252 || coll_info_of_inputcollid.code_page == 1257)
-				return transform_from_ci_as(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
+			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
+				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -678,7 +711,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
 		{
-			return transform_from_ci_as(node, op, like_entry, coll_info_of_inputcollid);
+			return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 		}
 	}
 	return node;

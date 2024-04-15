@@ -4426,11 +4426,12 @@ GO
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
 
 
-select 1 where 'cantáis' like 'Cá%' collate Chinese_PRC_CS_AI
+-- should throw error as bbf_unicode_cp1258_ci_ai is related with code page 1258 which contains vietnamese chars
+select 1 where 'cantáis' like 'Cá%' collate bbf_unicode_cp1258_ci_ai
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: collation "chinese_prc_cs_ai" for encoding "UTF8" does not exist)~~
+~~ERROR (Message: LIKE operator is not supported for "bbf_unicode_cp1258_ci_ai")~~
 
 
 select 1 where '幸福' like '幸福%' collate Chinese_PRC_CI_AI
@@ -4440,25 +4441,12 @@ GO
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
 
 
-select 1 where '幸福' like '幸福%' collate Chinese_PRC_CS_AI
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: collation "chinese_prc_cs_ai" for encoding "UTF8" does not exist)~~
-
-
 
 SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CI_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
-
-SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CS_AI;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: collation "chinese_prc_cs_ai" for encoding "UTF8" does not exist)~~
 
 
 SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CI_AI;
@@ -4467,12 +4455,6 @@ GO
 
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
 
-SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CS_AI;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: collation "chinese_prc_cs_ai" for encoding "UTF8" does not exist)~~
-
 
 SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CI_AI;
 GO
@@ -4480,24 +4462,12 @@ GO
 
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
 
-SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CS_AI;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: collation "chinese_prc_cs_ai" for encoding "UTF8" does not exist)~~
-
 
 SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CI_AI;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: LIKE operator is not supported for "chinese_prc_ci_ai")~~
-
-SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CS_AI;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: collation "chinese_prc_cs_ai" for encoding "UTF8" does not exist)~~
 
 
 -- col LIKE NULL
@@ -4536,7 +4506,7 @@ GO
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The input string may have cause buffer overflow)~~
+~~ERROR (Message: Error normalising the input string: U_ILLEGAL_ARGUMENT_ERROR)~~
 
 
 SELECT * FROM test_like_for_AI_prepare_max_test WHERE a COLLATE Latin1_General_CI_AI LIKE '%Á%'
@@ -4545,5 +4515,5 @@ GO
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The input string may have cause buffer overflow)~~
+~~ERROR (Message: Error normalising the input string: U_ILLEGAL_ARGUMENT_ERROR)~~
 

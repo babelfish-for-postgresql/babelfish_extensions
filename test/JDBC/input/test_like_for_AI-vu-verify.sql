@@ -1595,34 +1595,24 @@ GO
 select 1 where 'cantáis' like 'Cá%' collate Chinese_PRC_CI_AI
 GO
 
-select 1 where 'cantáis' like 'Cá%' collate Chinese_PRC_CS_AI
+-- should throw error as bbf_unicode_cp1258_ci_ai is related with code page 1258 which contains vietnamese chars
+select 1 where 'cantáis' like 'Cá%' collate bbf_unicode_cp1258_ci_ai
 GO
 
 select 1 where '幸福' like '幸福%' collate Chinese_PRC_CI_AI
 GO
 
-select 1 where '幸福' like '幸福%' collate Chinese_PRC_CS_AI
-GO
-
 
 SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CI_AI;
-GO
-SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '中%' COLLATE Chinese_PRC_CS_AI;
 GO
 
 SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CI_AI;
 GO
-SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '微笑' COLLATE Chinese_PRC_CS_AI;
-GO
 
 SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CI_AI;
 GO
-SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%谢%' COLLATE Chinese_PRC_CS_AI;
-GO
 
 SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CI_AI;
-GO
-SELECT * FROM test_like_for_AI_prepare_chinese WHERE a LIKE '%笑' COLLATE Chinese_PRC_CS_AI;
 GO
 
 -- col LIKE NULL
