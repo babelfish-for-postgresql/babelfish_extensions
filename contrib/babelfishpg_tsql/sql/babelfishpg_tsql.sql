@@ -3451,7 +3451,7 @@ BEGIN
 
 	-- Get the executing statement for each spid and extract the main stmt type
 	-- This is for informational purposes only
-	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
+	SELECT pid, CAST(query AS sys.VARCHAR(MAX)) INTO #sp_who_tmp FROM pg_stat_activity pgsa
 	
 	UPDATE #sp_who_tmp SET query = ' ' + TRIM(CAST(UPPER(query) AS sys.VARCHAR(MAX)))
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
@@ -3484,7 +3484,7 @@ BEGIN
 
 	-- The executing spid is always shown as doing a SELECT
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
-	UPDATE #sp_who_tmp SET query = TRIM(CAST(query AS sys.VARCHAR(MAX)))
+	UPDATE #sp_who_tmp SET query = TRIM(query)
 
 	-- Get all current connections
 	SELECT 
