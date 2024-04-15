@@ -191,7 +191,7 @@ CREATE OPERATOR sys.<> (
 );
 
 -- Opartor class for integer_ops to incorporate various operator between int and numeric for Index scan
-CREATE OPERATOR CLASS int_numeric FOR TYPE int4
+CREATE OPERATOR CLASS sys.int_numeric FOR TYPE int4
   USING btree FAMILY integer_ops AS
    OPERATOR 1 sys.< (int, numeric),
    OPERATOR 2 sys.<= (int, numeric),
@@ -201,7 +201,7 @@ CREATE OPERATOR CLASS int_numeric FOR TYPE int4
    FUNCTION 1 sys.int4_numeric_cmp(int, numeric);
 
 -- Opartor class for integer_ops to incorporate various operator between int and numeric for Index scan
-CREATE OPERATOR CLASS numeric_int FOR TYPE int4
+CREATE OPERATOR CLASS sys.numeric_int FOR TYPE int4
   USING btree FAMILY integer_ops AS
    OPERATOR 1 sys.< (numeric, int),
    OPERATOR 2 sys.<= (numeric, int),
