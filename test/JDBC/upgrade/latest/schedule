@@ -120,6 +120,7 @@ BABEL-405
 BABEL-4078
 BABEL-4098
 BABEL-4214
+BABEL-4516
 babel_417
 BABEL-493
 BABEL_539
@@ -148,6 +149,7 @@ babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
+check_for_inconsistent_metadata
 babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
@@ -516,3 +518,6 @@ babel-3254
 babel-4517
 babel_table_type
 1_GRANT_SCHEMA
+BABEL-4707
+BABEL_4817
+BABEL-4641

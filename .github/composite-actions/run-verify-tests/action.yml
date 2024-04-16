@@ -9,10 +9,6 @@ inputs:
   migration_mode:
     description: "Database migration mode for Babelfish"
     required: true
-  logical_database:
-    description: "Logical Babelfish database to dump and restore"
-    required: false
-    default: 'null'
   server_collation_name:
     description: "Server collation name"
     required: false
@@ -49,11 +45,6 @@ runs:
         else
           base_dir="singledb"
           export inputFilesPath=upgrade/singledb/verification_cleanup
-        fi
-
-        if [[ '${{ inputs.logical_database }}' != 'null' ]];then
-          base_dir="${{ inputs.logical_database }}"
-          export inputFilesPath=upgrade/$base_dir/verification_cleanup
         fi
 
         mvn test

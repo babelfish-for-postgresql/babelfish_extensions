@@ -2338,6 +2338,10 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+			if (pg_trigger_physical_schema == NULL)
+			{
+				return InvalidOid;
+			}
 			if (strcasecmp(pg_trigger_physical_schema, cur_physical_schema) == 0)
 			{
 				trigger_rel_oid = reloid;

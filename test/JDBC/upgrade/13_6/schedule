@@ -87,6 +87,7 @@ BABEL-404
 BABEL-405
 BABEL-4078-before-14_8-or-15_3
 babel_417
+BABEL-4516
 BABEL-493
 BABEL-4672
 BABEL_539
@@ -337,3 +338,4 @@ permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 GRANT_SCHEMA-before-15_7-16_3
 babel-4517
+BABEL-4641-before-16_3-or-15_7-or-14_12

@@ -3879,7 +3879,6 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 	return PLTSQL_RC_OK;
 }
 
-// TODO explain
 static int
 exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
 {

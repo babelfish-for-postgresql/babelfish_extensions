@@ -749,7 +749,14 @@ tdsstat_read_current_status(void)
 	isLocalStatusTableValid = true;
 }
 
-// what is current backend?
+/*
+ * get_tds_database_backend_count: Returns true if there are
+ * any active connections to the database for which the
+ * db_id is provided.
+ * If ignore_current_connection is set to true then we need
+ * to ignore the current connection, i.e. return true only
+ * if there are more than 1 active connections on the db_id.
+ */
 bool
 get_tds_database_backend_count(int16 db_id, bool ignore_current_connection)
 {

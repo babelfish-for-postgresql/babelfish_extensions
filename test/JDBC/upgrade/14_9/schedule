@@ -141,6 +141,7 @@ BABEL-3646
 BABEL-3748
 BABEL-383
 BABEL-405
+BABEL-4516
 BABEL-937
 forjson
 forjson-subquery
@@ -176,7 +177,7 @@ babelfish_authid_user_ext
 babelfish_inconsistent_metadata
 babelfish_migration_mode
 schema_resolution_func
-BABEL-3147
+BABEL-3147-before-16_3-or-15_7-or-14_12
 collation_tests_arabic
 collation_tests_greek
 collation_tests_mongolian
@@ -427,3 +428,6 @@ sys-parsename-before-15_6-or-16_1
 permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 babel-4517
+BABEL-4815
+BABEL_4817
+BABEL-4641-before-16_3-or-15_7-or-14_12
