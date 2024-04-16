@@ -454,7 +454,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	#ifdef USE_ICU
+#ifdef USE_ICU
 	// Check if transliterator is not yet cached
 	if (!cached_transliterator)
 	{
@@ -482,6 +482,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	}
 
 	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
+	pfree(input_str);
 
 	limit = len_uinput;
 	capacity = MaxAttrSize / sizeof(char);
@@ -506,13 +507,13 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 
 	// Return result as NVARCHAR
 	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result + 1));
-	#else
+#else
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 				errmsg("This function requires ICU library, which is not available")));
 	PG_RETURN_NULL();
-	#endif
-	}
+#endif
+}
 
 static Node *
 convert_node_to_funcexpr_for_like(Node *node)
