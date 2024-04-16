@@ -5556,7 +5556,7 @@ makeFetchCursorStatement(TSqlParser::Fetch_cursorContext *ctx)
 	if (is_compiling_create_function() && !ctx->INTO())
 	{
 		throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "SELECT statements included within a function cannot return data to a client.", getLineAndPos(ctx));
-    }
+	}
 	/* fetch option */
 	if (ctx->NEXT()) {
 		result->direction = FETCH_FORWARD;
