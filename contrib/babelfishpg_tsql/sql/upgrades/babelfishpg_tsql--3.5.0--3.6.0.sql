@@ -331,6 +331,76 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 $$
 LANGUAGE plpgsql STABLE;
 
+-- wrapper functions for upper --
+-- Function to handle datatypes which are implicitly convertable to VARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(ANYELEMENT)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    varch sys.varchar;
+BEGIN
+    IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
+    END IF;
+    varch := (SELECT CAST ($1 AS sys.varchar));
+    -- Call the underlying function after preprocessing
+    RETURN (SELECT pg_catalog.upper(varch));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.upper($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NVARCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.upper($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- wrapper functions for lower --
+-- Function to handle datatypes which are implicitly convertable to VARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(ANYELEMENT)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    varch sys.varchar;
+BEGIN
+    IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
+    END IF;
+    varch := (SELECT CAST ($1 AS sys.varchar));
+    -- Call the underlying function after preprocessing
+    RETURN (SELECT pg_catalog.lower(varch));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.lower($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NVARCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.lower($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
