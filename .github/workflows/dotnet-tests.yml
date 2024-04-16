@@ -58,3 +58,33 @@ jobs:
             babel_password=12345678 \
             testName="all---TestUDD.txt;TestChar.txt;TestSqlVariant.txt;TestVarChar.txt;TestTvp.txt;TestAuthentication.txt;TestText.txt" \
             dotnet test
+          echo "-###############################################"
+          cd ..
+          find ./ -name "*.gcda"
+          ls
+          echo "-###############################################"
+          cd ..
+          find ./ -name "*.gcda"
+          ls
+          echo "-###############################################"
+          cd ..
+          find ./ -name "*.gcda"
+          ls
+          lcov -d . -c -o lcov.info
+          genhtml lcov.info --output-directory out --ignore-errors source
+          zip -r out.zip out
+          pwd
+          ls **/*.gcda
+          ls **/*.gcno
+          sudo gcov -abcfu **/*.c
+      - name: Upload
+        if: always()
+        uses: codecov/codecov-action@v2
+        with:
+          files: "**/*.gcov"
+      - name: Genhtml
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage
+          path: ./out.zip
