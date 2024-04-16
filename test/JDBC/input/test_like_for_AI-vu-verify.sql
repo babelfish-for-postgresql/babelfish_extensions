@@ -1,3 +1,4 @@
+-- sla 45000
 ------------------- CI_AI ----------------------
 
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
