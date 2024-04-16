@@ -3943,7 +3943,7 @@ update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name)
 
 	if (!db_found)
 	{
-		/* Database should have been verified to exist, but if not, exit politely */
+		/* Database should have been verified to exist, but if not, exit politely. */
 		table_close(sysdatabases_rel, RowExclusiveLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
@@ -4028,6 +4028,8 @@ update_babelfish_namespace_ext_rename_db(int16 db_id, char *new_db_name)
 		/* Perform the actual catalog update. */
 		CatalogTupleUpdate(namespace_rel, &new_tuple->t_self, new_tuple);
 		heap_freetuple(new_tuple);
+		if (schema_name)
+			pfree(schema_name);
 	}
 
 	/* Cleanup. */
@@ -4106,8 +4108,9 @@ update_babelfish_authid_user_ext_rename_db(
 									replaces);
 
 		CatalogTupleUpdate(bbf_authid_user_ext_rel, &new_tuple->t_self, new_tuple);
-
 		heap_freetuple(new_tuple);
+		if (role_name)
+			pfree(role_name);
 	}
 
 	/* Cleanup. */
@@ -4307,14 +4310,15 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		ListCell *lc;
 		char message[128];
 
+		prev_current_user = GetUserId();
 		SetCurrentRoleId(get_bbf_role_admin_oid(), true);
+
 		/*
 		 * We have checked for all permissions.
 		 * Now change context to admin to perform the renames.
 		 */
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		prev_current_user = GetUserId();
 
 		/*
 		 * Update the database name in sys.babelfish_sysdatabases.
@@ -4370,10 +4374,11 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		else
 			snprintf(message, sizeof(message), "The database name '%s' has been set.", new_db_name);
 		/* send env change token to user */
-		// TODO verify if sql server sends this
+
+		/* Send env change token if User is renaming current database. */
 		if (dbid == get_cur_db_id() && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
 			((*pltsql_protocol_plugin_ptr)->send_env_change) (1, new_db_name, old_db_name);
-		/* send message to user */
+		/* Send message to User. */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
 			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
 	
