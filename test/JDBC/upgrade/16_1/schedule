@@ -502,3 +502,6 @@ BABEL_4553
 GRANT_SCHEMA-before-15_7-16_3
 BABEL-4815
 BABEL-4641-before-16_3-or-15_7-or-14_12
+alter_db_rename
+sp_renamedb
+sp_rename_database

@@ -4207,7 +4207,7 @@ static char
  * features depend like Beegees.
  */
 static void
-exec_rename_db(char *old_db_name, char *new_db_name, bool is_schema)
+exec_rename_db_util(char *old_db_name, char *new_db_name, bool is_schema)
 {
 	char *query_str = gen_rename_schema_or_role_cmds(old_db_name, new_db_name, is_schema);
 	List		*res;
@@ -4311,12 +4311,12 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		char message[128];
 
 		prev_current_user = GetUserId();
-		SetCurrentRoleId(get_bbf_role_admin_oid(), true);
 
 		/*
 		 * We have checked for all permissions.
 		 * Now change context to admin to perform the renames.
 		 */
+		SetCurrentRoleId(get_bbf_role_admin_oid(), true);
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
@@ -4327,8 +4327,8 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		update_sysdatabases_db_name(old_db_name, new_db_name);
 
 		/*
-		 * There is no need to rename schemas and roles for single-db mode.
-		 * Therefore, no updates required Babelfish catalogs.
+		 * There is no need to rename schemas for single-db mode.
+		 * Therefore, no updates required Babelfish catalog as well.
 		 */
 		if (MULTI_DB == get_migration_mode())
 		{
@@ -4344,23 +4344,29 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 				char *old_schema_name = get_physical_schema_name(old_db_name, sch);
 				char *new_schema_name = get_physical_schema_name(new_db_name, sch);
 
-				exec_rename_db(old_schema_name, new_schema_name, true);
+				exec_rename_db_util(old_schema_name, new_schema_name, true);
 			}
-		
-			/*
-			 * Rename the physical roles and update the metadata in
-			 * sys.babelfish_authid_user_ext.
-			 * This includes system default and user created roles in that db.
-			 */
-			list_of_roles_to_rename = update_babelfish_authid_user_ext_rename_db(old_db_name, new_db_name);
-			foreach (lc, list_of_roles_to_rename)
-			{
-				char *role = (char *) lfirst(lc);
-				char *old_role_name = get_physical_schema_name(old_db_name, role);
-				char *new_role_name = get_physical_schema_name(new_db_name, role);
+		}
 
-				exec_rename_db(old_role_name, new_role_name, false);
-			}
+		/*
+		 * Rename the physical roles and update the metadata in
+		 * sys.babelfish_authid_user_ext.
+		 * This includes system default and user created roles in that db.
+		 */
+		list_of_roles_to_rename = update_babelfish_authid_user_ext_rename_db(old_db_name, new_db_name);
+		foreach (lc, list_of_roles_to_rename)
+		{
+			char *role = (char *) lfirst(lc);
+			char *old_role_name;
+			char *new_role_name;
+
+			if ((strlen(role) == 3 && strncmp(role, "dbo", 3) == 0) ||
+				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0))
+				continue;
+
+			old_role_name = get_physical_user_name(old_db_name, role, true);
+			new_role_name = get_physical_user_name(new_db_name, role, true);
+			exec_rename_db_util(old_role_name, new_role_name, false);
 		}
 
 		/* Update the default_database field in babelfish_authid_login_ext. */

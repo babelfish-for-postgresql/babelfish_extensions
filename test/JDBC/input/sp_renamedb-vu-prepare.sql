@@ -1,18 +1,18 @@
-Create database rename_db_database1;
+Create database sp_renamedb_database1;
 go
-use rename_db_database1
+use sp_renamedb_database1
 go
-Create role rename_db_role1;
+Create role sp_renamedb_role1;
 go
-Create schema rename_db_schema1;
+Create schema sp_renamedb_schema1;
 go
-Create login rename_db_login1 with password = '1234', default_database = rename_db_database1;
+Create login sp_renamedb_login1 with password = '1234', default_database = sp_renamedb_database1;
 go
-Create database [ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb];
+Create database [sp_renamedb_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb];
 go
-Create login rename_db_login2 with password = '1234';
+Create login sp_renamedb_login2 with password = '1234';
 go
-Use rename_db_database1
+Use sp_renamedb_database1
 go
-Create User rename_db_login2;
+Create User sp_renamedb_login2;
 go

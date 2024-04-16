@@ -217,7 +217,7 @@ alter database rename_db_database1 modify name = rename_db_database2;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Current login rename_db_login1 does not have permission to create new login)~~
+~~ERROR (Message: User does not have permission to rename the database 'rename_db_database1', the database does not exist, or the database is not in a state that allows access checks.)~~
 
 
 -- tsql
