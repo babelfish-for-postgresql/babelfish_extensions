@@ -16,7 +16,6 @@ go
 select 0x1F1;
 go
 
--- invalid hex input
 select 0x1G2A;
 go
 
