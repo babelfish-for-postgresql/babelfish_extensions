@@ -24,16 +24,24 @@ GO
 INSERT INTO babel_4489_left_text VALUES (N'abc🙂defghi🙂🙂', N'abc🙂defghi🙂🙂')
 GO
 
-CREATE VIEW babel_4489_left_view AS
+CREATE VIEW babel_4489_left_dep_view AS
     SELECT LEFT(a, 5) as result from babel_4489_left_t2
 GO
 
-CREATE PROCEDURE babel_4489_left_proc AS
+CREATE PROCEDURE babel_4489_left_dep_proc AS
     SELECT LEFT(a, 5) as result from babel_4489_left_t2
 GO
 
-CREATE FUNCTION babel_4489_left_func()
+CREATE FUNCTION babel_4489_left_dep_func()
+RETURNS NVARCHAR(50)
+AS
+BEGIN
+RETURN (SELECT TOP 1 LEFT(a, 5) from babel_4489_left_t2)
+END
+GO
+
+CREATE FUNCTION babel_4489_left_itvf_func()
 RETURNS TABLE
 AS
-RETURN (SELECT CAST(LEFT(a, 5) AS sys.NVARCHAR(50)) as result from babel_4489_left_t2)
+RETURN (SELECT LEFT(a, 5) as result from babel_4489_left_t2)
 GO

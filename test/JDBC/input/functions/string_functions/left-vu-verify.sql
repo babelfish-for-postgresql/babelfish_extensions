@@ -114,13 +114,16 @@ SELECT LEFT(@inputString, 50)
 GO
 
 -- dependent objects
-SELECT * FROM babel_4489_left_view
+SELECT * FROM babel_4489_left_dep_view
 GO
 
-EXEC babel_4489_left_proc
+EXEC babel_4489_left_dep_proc
 GO
 
-SELECT * FROM babel_4489_left_func()
+SELECT * FROM babel_4489_left_dep_func()
+GO
+
+SELECT * FROM babel_4489_left_itvf_func()
 GO
 
 -- other different datatypes, all of these should not be allowed

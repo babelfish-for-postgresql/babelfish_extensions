@@ -174,13 +174,16 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 
 -- dependent objects
-SELECT * FROM babel_4489_trim_view
+SELECT * FROM babel_4489_trim_dep_view
 GO
 
-EXEC babel_4489_trim_proc
+EXEC babel_4489_trim_dep_proc
 GO
 
-SELECT * FROM babel_4489_trim_func()
+SELECT * FROM babel_4489_trim_dep_func()
+GO
+
+SELECT * FROM babel_4489_trim_itvf_func()
 GO
 
 -- different datatypes of inputString and charSet

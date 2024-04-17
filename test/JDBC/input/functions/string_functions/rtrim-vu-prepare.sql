@@ -24,16 +24,24 @@ GO
 INSERT INTO babel_4489_rtrim_text VALUES (N'  abc🙂defghi🙂🙂    ', N'  abc🙂defghi🙂🙂    ')
 GO
 
-CREATE VIEW babel_4489_rtrim_view AS
+CREATE VIEW babel_4489_rtrim_dep_view AS
     SELECT ('|' + RTRIM(a) + '|') as result from babel_4489_rtrim_t2
 GO
 
-CREATE PROCEDURE babel_4489_rtrim_proc AS
+CREATE PROCEDURE babel_4489_rtrim_dep_proc AS
     SELECT ('|' + RTRIM(a) + '|') as result from babel_4489_rtrim_t2
 GO
 
-CREATE FUNCTION babel_4489_rtrim_func()
+CREATE FUNCTION babel_4489_rtrim_dep_func()
+RETURNS NVARCHAR(50)
+AS
+BEGIN
+RETURN (SELECT TOP 1 ('|' + RTRIM(a) + '|') FROM babel_4489_rtrim_t2)
+END
+GO
+
+CREATE FUNCTION babel_4489_rtrim_itvf_func()
 RETURNS TABLE
 AS
-RETURN (SELECT CAST(('|' + RTRIM(a) + '|') AS sys.NVARCHAR(50)) as result from babel_4489_rtrim_t2)
+RETURN (SELECT ('|' + RTRIM(a) + '|') as result FROM babel_4489_rtrim_t2)
 GO

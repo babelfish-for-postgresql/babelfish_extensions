@@ -385,7 +385,7 @@ nvarchar
 
 
 -- dependent objects
-SELECT * FROM babel_4489_trim_view
+SELECT * FROM babel_4489_trim_dep_view
 GO
 ~~START~~
 varchar
@@ -393,7 +393,7 @@ varchar
 ~~END~~
 
 
-EXEC babel_4489_trim_proc
+EXEC babel_4489_trim_dep_proc
 GO
 ~~START~~
 nvarchar
@@ -401,11 +401,19 @@ nvarchar
 ~~END~~
 
 
-SELECT * FROM babel_4489_trim_func()
+SELECT * FROM babel_4489_trim_dep_func()
 GO
 ~~START~~
 nvarchar
 |c🙂defghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_itvf_func()
+GO
+~~START~~
+varchar
+|c?defghi|
 ~~END~~
 
 

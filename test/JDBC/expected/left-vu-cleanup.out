@@ -1,10 +1,13 @@
-DROP FUNCTION babel_4489_left_func
+DROP FUNCTION babel_4489_left_itvf_func
 GO
 
-DROP PROCEDURE babel_4489_left_proc
+DROP FUNCTION babel_4489_left_dep_func
 GO
 
-DROP VIEW babel_4489_left_view
+DROP PROCEDURE babel_4489_left_dep_proc
+GO
+
+DROP VIEW babel_4489_left_dep_view
 GO
 
 DROP TABLE babel_4489_left_text

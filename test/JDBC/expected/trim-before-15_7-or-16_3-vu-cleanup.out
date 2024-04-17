@@ -1,10 +1,13 @@
-DROP FUNCTION babel_4489_trim_func
+DROP FUNCTION babel_4489_trim_itvf_func
 GO
 
-DROP PROCEDURE babel_4489_trim_proc
+DROP FUNCTION babel_4489_trim_dep_func
 GO
 
-DROP VIEW babel_4489_trim_view
+DROP PROCEDURE babel_4489_trim_dep_proc
+GO
+
+DROP VIEW babel_4489_trim_dep_view
 GO
 
 DROP TABLE babel_4489_trim_text

@@ -1,10 +1,13 @@
-DROP FUNCTION babel_4489_ltrim_func
+DROP FUNCTION babel_4489_ltrim_itvf_func
 GO
 
-DROP PROCEDURE babel_4489_ltrim_proc
+DROP FUNCTION babel_4489_ltrim_dep_func
 GO
 
-DROP VIEW babel_4489_ltrim_view
+DROP PROCEDURE babel_4489_ltrim_dep_proc
+GO
+
+DROP VIEW babel_4489_ltrim_dep_view
 GO
 
 DROP TABLE babel_4489_ltrim_text

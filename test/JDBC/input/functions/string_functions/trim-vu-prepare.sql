@@ -24,16 +24,24 @@ GO
 INSERT INTO babel_4489_trim_text VALUES (N'  abc🙂defghi🙂🙂    ', N'  abc🙂defghi🙂🙂    ')
 GO
 
-CREATE VIEW babel_4489_trim_view AS
-    SELECT ('|' + TRIM(b FROM a) + '|') as result from babel_4489_trim_t2
+CREATE VIEW babel_4489_trim_dep_view AS
+    SELECT ('|' + TRIM(b FROM a) + '|') as result FROM babel_4489_trim_t2
 GO
 
-CREATE PROCEDURE babel_4489_trim_proc AS
-    SELECT ('|' + TRIM(b FROM a) + '|') as result from babel_4489_trim_t2
+CREATE PROCEDURE babel_4489_trim_dep_proc AS
+    SELECT ('|' + TRIM(b FROM a) + '|') as result FROM babel_4489_trim_t2
 GO
 
-CREATE FUNCTION babel_4489_trim_func()
+CREATE FUNCTION babel_4489_trim_dep_func()
+RETURNS NVARCHAR(50)
+AS
+BEGIN
+RETURN (SELECT TOP 1 ('|' + TRIM(b FROM a) + '|') FROM babel_4489_trim_t2)
+END
+GO
+
+CREATE FUNCTION babel_4489_trim_itvf_func()
 RETURNS TABLE
 AS
-RETURN (SELECT CAST(('|' + TRIM(b FROM a) + '|') AS sys.NVARCHAR(50)) as result from babel_4489_trim_t2)
+RETURN (SELECT CAST(('|' + TRIM(b FROM a) + '|') AS sys.NVARCHAR(50)) as result FROM babel_4489_trim_t2)
 GO

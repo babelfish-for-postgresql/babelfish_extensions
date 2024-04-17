@@ -114,13 +114,16 @@ SELECT RIGHT(@inputString, 50)
 GO
 
 -- dependent objects
-SELECT * FROM babel_4489_right_view
+SELECT * FROM babel_4489_right_dep_view
 GO
 
-EXEC babel_4489_right_proc
+EXEC babel_4489_right_dep_proc
 GO
 
-SELECT * FROM babel_4489_right_func()
+SELECT * FROM babel_4489_right_dep_func()
+GO
+
+SELECT * FROM babel_4489_right_itvf_func()
 GO
 
 -- other different datatypes, all of these should not be allowed

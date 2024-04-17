@@ -70,13 +70,16 @@ SELECT '|' + RTRIM(@inputString) + '|'
 GO
 
 -- dependent objects
-SELECT * FROM babel_4489_rtrim_view
+SELECT * FROM babel_4489_rtrim_dep_view
 GO
 
-EXEC babel_4489_rtrim_proc
+EXEC babel_4489_rtrim_dep_proc
 GO
 
-SELECT * FROM babel_4489_rtrim_func()
+SELECT * FROM babel_4489_rtrim_dep_func()
+GO
+
+SELECT * FROM babel_4489_rtrim_itvf_func()
 GO
 
 -- other different datatypes, all of these should be blocked
