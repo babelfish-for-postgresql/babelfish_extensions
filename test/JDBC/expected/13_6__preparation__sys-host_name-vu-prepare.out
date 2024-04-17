@@ -33,7 +33,7 @@ GO
 CREATE FUNCTION sys_host_name_vu_prepare__dm_exec_sessions_func(@pid int)
 RETURNS TABLE
 AS
-RETURN (select language, host_name, client_version, CAST(TRIM('0123456789.' FROM client_interface_name) AS sys.NVARCHAR(32)), program_name, date_format, date_first from sys.dm_exec_sessions where session_id = @pid);
+RETURN (select language, host_name, client_version, TRIM('0123456789.' FROM client_interface_name), program_name, date_format, date_first from sys.dm_exec_sessions where session_id = @pid);
 GO
 
 CREATE PROCEDURE sys_host_name_vu_prepare__dm_exec_sessions_proc
