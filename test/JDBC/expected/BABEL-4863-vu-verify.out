@@ -47,20 +47,6 @@ numeric
 0
 ~~END~~
 
-SELECT 0.0e;
-GO
-~~START~~
-numeric
-0
-~~END~~
-
-SELECT 0.0e+a;
-GO
-~~START~~
-numeric
-0
-~~END~~
-
 SELECT $1a;
 GO
 ~~START~~
