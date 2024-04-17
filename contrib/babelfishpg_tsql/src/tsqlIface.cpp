@@ -2316,15 +2316,13 @@ static void process_query_specification(
 			auto column_alias_as = elem->expression_elem()->as_column_alias();
 			if (!column_alias_as->AS())
 			{
-				std::string orig_text = ::getFullText(column_alias_as->column_alias());
-				std::string repl_text = std::string("AS ");
-
 				if (is_quotation_needed_for_column_alias(column_alias_as->column_alias()))
-					repl_text += std::string("\"") + orig_text + "\"";
+				{
+					mutator->add(column_alias_as->start->getStartIndex(), "", " AS \"");
+					mutator->add(column_alias_as->stop->getStopIndex() + 1, "", "\"");
+				}
 				else
-					repl_text += orig_text;
-
-				mutator->add(column_alias_as->start->getStartIndex(), "", "AS ");
+					mutator->add(column_alias_as->start->getStartIndex(), "", " AS ");
 			}
 		}
 	}
