@@ -1,0 +1,143 @@
+SELECT 123abc;
+GO
+~~START~~
+int
+123
+~~END~~
+
+SELECT 0x0o;
+GO
+~~START~~
+varbinary
+00
+~~END~~
+
+SELECT 1_2_3;
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT 0.a;
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+SELECT 0.0a;
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+SELECT .0a;
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+SELECT 0.0e1a;
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+SELECT 0.0e;
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+SELECT 0.0e+a;
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+SELECT $1a;
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT CASE WHEN 1=1  THEN 1 ELSE 0 END[c]
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT CASE WHEN 1=1  THEN 1 ELSE 0 END'c'
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT CASE WHEN 1=1  THEN 1 ELSE 0 END"c"
+GO
+~~START~~
+int
+1
+~~END~~
+
+select a[c] from babel_4863_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+select a"c" from babel_4863_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+select a'c' from babel_4863_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+declare @v int=1
+select @v[c]
+GO
+~~START~~
+int
+1
+~~END~~
+
+declare @v int=1
+select @v'c'
+GO
+~~START~~
+int
+1
+~~END~~
+
+declare @v int=1
+select @v"c"
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_4863_func()[a];
+GO
+~~START~~
+varchar
+1
+~~END~~
+
