@@ -1372,6 +1372,11 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 
 	Assert(exprs != NIL);
 
+	if (exprs->length < 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COALESCE function should have at least 2 arguments")));
+
 	foreach(lc, exprs)
 	{
 		pexpr = (Node *) lfirst(lc);
@@ -1387,7 +1392,10 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 			Oid curr_oid = get_sys_varcharoid();
 			if (commontype == InvalidOid 
 				|| tsql_get_type_precedence(curr_oid) < curr_precedence)
+			{
 				commontype = curr_oid;
+				curr_precedence = tsql_get_type_precedence(curr_oid);
+			}
 			
 			continue;
 		}
@@ -1400,7 +1408,9 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 	}
 
 	if (commontype == InvalidOid)
-		return INT4OID;
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("At least one of the arguments to COALESCE must be a non NULL constant")));
 	
 	return commontype;
 }
