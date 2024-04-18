@@ -37,3 +37,35 @@ select @v"c"
 GO
 select babel_4863_func()[a];
 GO
+select 1[c];
+GO
+select 1'c';
+GO
+select 1"c";
+GO
+select 'abc'[def];
+GO
+select 'abc''def';
+GO
+select 'abc'"def";
+GO
+select 123[this is a $.^ test]
+GO
+select 123'this is a $.^ test'
+GO
+select 123"this is a $.^ test"
+GO
+SELECT CASE WHEN 1=1  THEN 1 ELSE 0 END[this is a $.^ test]
+GO
+SELECT CASE WHEN 1=1  THEN 1 ELSE 0 END'this is a $.^ test'
+GO
+SELECT CASE WHEN 1=1  THEN 1 ELSE 0 END"this is a $.^ test"
+GO
+select * from babel_4863_func1();
+GO
+exec babel_4863_proc 1;
+GO
+exec babel_4863_proc 2;
+GO
+SELECT * FROM babel_4863_view;
+GO
