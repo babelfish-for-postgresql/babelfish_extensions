@@ -1,0 +1,25 @@
+-- tsql
+select name, type, usage from sys.login_token;
+go
+select name, type, usage from sys.user_token;
+go
+
+-- tsql user=lt1 password = 123
+select name, type, usage from sys.login_token;
+go
+select name, type, usage from sys.user_token;
+go
+
+-- tsql user=lt2 password = 123
+select name, type, usage from sys.login_token;
+go
+select name, type, usage from sys.user_token;
+go
+select name, type, usage from sys.user_token;
+go
+
+-- tsql user=lt3 password = 123
+select name, type, usage from sys.login_token;
+go
+select name, type, usage from sys.user_token;
+go
