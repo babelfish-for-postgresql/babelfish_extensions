@@ -12,6 +12,13 @@ go
 select coalesce(2, '   ')
 go
 
+-- constant string literal
+SELECT COALESCE(NULL, 1, 2, 'I am a string')
+go
+
+SELECT COALESCE(NULL, 'I am a string', 1, 2)
+go
+
 -- precedence correctness
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 go

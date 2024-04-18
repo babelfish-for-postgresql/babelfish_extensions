@@ -30,6 +30,22 @@ int
 ~~END~~
 
 
+-- constant string literal
+SELECT COALESCE(NULL, 1, 2, 'I am a string')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COALESCE(NULL, 'I am a string', 1, 2)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "I am a string")~~
+
+
 -- precedence correctness
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 go
