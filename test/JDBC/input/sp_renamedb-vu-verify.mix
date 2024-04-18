@@ -1,9 +1,9 @@
 -- tsql
 -- sanity checks for metadata stored in babelfish catalog
-select owner, name from sys.babelfish_sysdatabases where name = 'sp_renamedb_database1';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%';
+select owner, name from sys.babelfish_sysdatabases where name = 'sp_renamedb_database1' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%' order by rolname;
 go
 
 -- sanity check
@@ -26,10 +26,10 @@ go
 exec sp_renamedb 'sp_renamedb_database1', 'sp_renamedb_database2';
 go
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_renamedb_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_renamedb_database%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%' order by rolname;
 go
 
 -- sanity check to use db
@@ -81,10 +81,10 @@ exec sp_renamedb '[sp_renamedb_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_renamedb_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE '%this%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE '%this%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE '%this%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE '%this%' order by rolname;
 go
 
 -- sanity check to use db
@@ -134,4 +134,43 @@ go
 
 drop function sp_renamedb_function
 drop procedure sp_renamedb_procedure
+go
+
+-- testing invalid args for sp_renamedb
+create database sp_renamedb_db1_temp;
+go
+-- NULL old_db_name
+exec sp_renamedb NULL, 'sp_renamedb_db1_temp';
+go
+-- NULL new_db_name
+exec sp_renamedb 'sp_renamedb_db1_temp  ', NULL;
+go
+-- both NULL
+exec sp_renamedb NULL, NULL;
+go
+-- empty string old_db_name
+exec sp_renamedb '', '     sp_renamedb_db1_temp';
+go
+-- empty string new_db_name
+exec sp_renamedb '    sp_renamedb_db1_temp', '';
+go
+-- both empty string
+exec sp_renamedb '    ', ' '
+go
+-- 3 part names
+exec sp_renamedb ' sp_renamedb_db1_temp.sch1.t1', 'db2      '
+go
+-- 3 part names
+exec sp_renamedb 'sp_renamedb_db1_temp', 'db2.sch2.t2'
+go
+-- 3 part names
+exec sp_renamedb 'db1.sch1.t1', 'db2.sch2.t2'
+go
+-- valid input, should get db does not exist
+exec sp_renamedb '[db1.sch1.t1]', 'sp_renamedb_db1_temp      '
+go
+-- valid input, should get db does not exist
+exec sp_renamedb 'sp_renamedb_db1_temp', '[db2.sch2.t2]     '
+go
+drop database sp_renamedb_db1_temp
 go

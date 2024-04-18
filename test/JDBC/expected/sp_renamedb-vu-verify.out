@@ -1,9 +1,9 @@
 -- tsql
 -- sanity checks for metadata stored in babelfish catalog
-select owner, name from sys.babelfish_sysdatabases where name = 'sp_renamedb_database1';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%';
+select owner, name from sys.babelfish_sysdatabases where name = 'sp_renamedb_database1' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%' order by rolname;
 go
 ~~START~~
 varchar#!#text
@@ -19,11 +19,11 @@ sp_renamedb_database1_sp_renamedb_schema1#!#sp_renamedb_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
-sp_renamedb_database1_dbo#!##!#dbo#!#sp_renamedb_database1
 sp_renamedb_database1_db_owner#!##!#db_owner#!#sp_renamedb_database1
+sp_renamedb_database1_dbo#!##!#dbo#!#sp_renamedb_database1
 sp_renamedb_database1_guest#!##!#guest#!#sp_renamedb_database1
-sp_renamedb_database1_sp_renamedb_role1#!##!#sp_renamedb_role1#!#sp_renamedb_database1
 sp_renamedb_database1_sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_database1
+sp_renamedb_database1_sp_renamedb_role1#!##!#sp_renamedb_role1#!#sp_renamedb_database1
 ~~END~~
 
 ~~START~~
@@ -61,10 +61,10 @@ go
 exec sp_renamedb 'sp_renamedb_database1', 'sp_renamedb_database2';
 go
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_renamedb_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_renamedb_database%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%' order by rolname;
 go
 ~~START~~
 varchar#!#text
@@ -80,11 +80,11 @@ sp_renamedb_database2_sp_renamedb_schema1#!#sp_renamedb_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
-sp_renamedb_database2_dbo#!##!#dbo#!#sp_renamedb_database2
 sp_renamedb_database2_db_owner#!##!#db_owner#!#sp_renamedb_database2
+sp_renamedb_database2_dbo#!##!#dbo#!#sp_renamedb_database2
 sp_renamedb_database2_guest#!##!#guest#!#sp_renamedb_database2
-sp_renamedb_database2_sp_renamedb_role1#!##!#sp_renamedb_role1#!#sp_renamedb_database2
 sp_renamedb_database2_sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_database2
+sp_renamedb_database2_sp_renamedb_role1#!##!#sp_renamedb_role1#!#sp_renamedb_database2
 ~~END~~
 
 ~~START~~
@@ -177,21 +177,27 @@ exec sp_renamedb '[sp_renamedb_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_renamedb_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE '%this%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE '%this%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE '%this%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE '%this%' order by rolname;
 go
 ~~START~~
 varchar#!#text
+jdbc_user#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
 ~~END~~
 
 ~~START~~
 varchar#!#nvarchar
+sp_renamedb_thisnewdatabasename115699cc11f7805d9b9b640d6455580c#!#dbo
+sp_renamedb_thisnewdatabasenamedeb7cafbbedd23f312d90e7c10a60901#!#guest
 ~~END~~
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+sp_renamedb_thisnewdatabasename115699cc11f7805d9b9b640d6455580c#!##!#dbo#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
+sp_renamedb_thisnewdatabasenameb0dffbb56deab7ad4e684df689419c65#!##!#db_owner#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
+sp_renamedb_thisnewdatabasenamedeb7cafbbedd23f312d90e7c10a60901#!##!#guest#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
 ~~END~~
 
 ~~START~~
@@ -267,4 +273,87 @@ go
 
 drop function sp_renamedb_function
 drop procedure sp_renamedb_procedure
+go
+
+-- testing invalid args for sp_renamedb
+create database sp_renamedb_db1_temp;
+go
+-- NULL old_db_name
+exec sp_renamedb NULL, 'sp_renamedb_db1_temp';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database '(null)' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
+-- NULL new_db_name
+exec sp_renamedb 'sp_renamedb_db1_temp  ', NULL;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @newname parameter contains invalid characters or violates a basic restriction ((null)).)~~
+
+-- both NULL
+exec sp_renamedb NULL, NULL;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database '(null)' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
+-- empty string old_db_name
+exec sp_renamedb '', '     sp_renamedb_db1_temp';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction (()).)~~
+
+-- empty string new_db_name
+exec sp_renamedb '    sp_renamedb_db1_temp', '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @newname parameter contains invalid characters or violates a basic restriction (()).)~~
+
+-- both empty string
+exec sp_renamedb '    ', ' '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction (()).)~~
+
+-- 3 part names
+exec sp_renamedb ' sp_renamedb_db1_temp.sch1.t1', 'db2      '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction (( sp_renamedb_db1_temp.sch1.t1)).)~~
+
+-- 3 part names
+exec sp_renamedb 'sp_renamedb_db1_temp', 'db2.sch2.t2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @newname parameter contains invalid characters or violates a basic restriction ((db2.sch2.t2)).)~~
+
+-- 3 part names
+exec sp_renamedb 'db1.sch1.t1', 'db2.sch2.t2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction ((db1.sch1.t1)).)~~
+
+-- valid input, should get db does not exist
+exec sp_renamedb '[db1.sch1.t1]', 'sp_renamedb_db1_temp      '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database db1.sch1.t1 does not exist. Make sure that the name is entered correctly.)~~
+
+-- valid input, should get db does not exist
+exec sp_renamedb 'sp_renamedb_db1_temp', '[db2.sch2.t2]     '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ".")~~
+
+drop database sp_renamedb_db1_temp
 go

@@ -4184,7 +4184,7 @@ update_babelfish_authid_login_ext_rename_db(
 }
 
 static char
-*gen_rename_schema_or_role_cmds(char *old_role_name, char *new_role_name, bool is_schema)
+*gen_rename_schema_or_role_cmds(char *old_name, char *new_name, bool is_schema)
 {
 	StringInfoData query;
 	initStringInfo(&query);
@@ -4196,7 +4196,7 @@ static char
 	 */
 	appendStringInfo(&query, is_schema ? "ALTER SCHEMA " : "ALTER ROLE ");
 
-	appendStringInfo(&query, "%s RENAME TO %s", old_role_name, new_role_name);
+	appendStringInfo(&query, "%s RENAME TO %s", old_name, new_name);
 	return query.data;
 }
 
@@ -4373,9 +4373,6 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		/* Update the default_database field in babelfish_authid_login_ext. */
 		update_babelfish_authid_login_ext_rename_db(old_db_name, new_db_name);
 
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-		SetCurrentRoleId(prev_current_user, true);
-
 		if (dbid == get_cur_db_id())
 			snprintf(message, sizeof(message), "Changed database context to '%s'.\nThe database name '%s' has been set.", new_db_name, new_db_name);
 		else
@@ -4399,8 +4396,10 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 	}
 	PG_END_TRY();
 
+	UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
+	SetUserIdAndSecContext(save_userid, save_sec_context);
+	SetCurrentRoleId(prev_current_user, true);
+
 	if (!xactStarted)
 		CommitTransactionCommand();
-
-	UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
 }

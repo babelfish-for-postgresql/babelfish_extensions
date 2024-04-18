@@ -1,9 +1,9 @@
 -- tsql
 -- sanity checks for metadata stored in babelfish catalog
-select owner, name from sys.babelfish_sysdatabases where name = 'rename_db_database1';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+select owner, name from sys.babelfish_sysdatabases where name = 'rename_db_database1' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%' order by rolname;
 go
 
 -- sanity check
@@ -26,10 +26,10 @@ go
 alter database rename_db_database1 modify name = rename_db_database2;
 go
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%' order by rolname;
 go
 
 -- sanity check to use db
@@ -76,10 +76,10 @@ alter database [ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestR
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE '%this%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE '%this%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE '%this%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE '%this%' order by rolname;
 go
 
 -- sanity check to use db

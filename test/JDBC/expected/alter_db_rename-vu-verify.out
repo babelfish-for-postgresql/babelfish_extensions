@@ -1,9 +1,9 @@
 -- tsql
 -- sanity checks for metadata stored in babelfish catalog
-select owner, name from sys.babelfish_sysdatabases where name = 'rename_db_database1';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+select owner, name from sys.babelfish_sysdatabases where name = 'rename_db_database1' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%' order by rolname;
 go
 ~~START~~
 varchar#!#text
@@ -19,11 +19,11 @@ rename_db_database1_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
-rename_db_database1_dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_db_owner#!##!#db_owner#!#rename_db_database1
+rename_db_database1_dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_guest#!##!#guest#!#rename_db_database1
-rename_db_database1_rename_db_role1#!##!#rename_db_role1#!#rename_db_database1
 rename_db_database1_rename_db_login2#!#rename_db_login2#!#rename_db_login2#!#rename_db_database1
+rename_db_database1_rename_db_role1#!##!#rename_db_role1#!#rename_db_database1
 ~~END~~
 
 ~~START~~
@@ -61,10 +61,10 @@ go
 alter database rename_db_database1 modify name = rename_db_database2;
 go
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'rename_db_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'rename_db_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%' order by rolname;
 go
 ~~START~~
 varchar#!#text
@@ -80,11 +80,11 @@ rename_db_database2_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
-rename_db_database2_dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_db_owner#!##!#db_owner#!#rename_db_database2
+rename_db_database2_dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_guest#!##!#guest#!#rename_db_database2
-rename_db_database2_rename_db_role1#!##!#rename_db_role1#!#rename_db_database2
 rename_db_database2_rename_db_login2#!#rename_db_login2#!#rename_db_login2#!#rename_db_database2
+rename_db_database2_rename_db_role1#!##!#rename_db_role1#!#rename_db_database2
 ~~END~~
 
 ~~START~~
@@ -170,21 +170,27 @@ alter database [ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestR
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE '%this%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE '%this%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE '%this%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE '%this%' order by rolname;
 go
 ~~START~~
 varchar#!#text
+jdbc_user#!#thisnewdatabasenameiscasesensit44f3247005ec268e1a10c736599cfb7e
 ~~END~~
 
 ~~START~~
 varchar#!#nvarchar
+thisnewdatabasenameiscasesensit4e1f355d810759b9f1a59b04496ed2e1#!#guest
+thisnewdatabasenameiscasesensitc4313f9adf0e47cfa5aca25228e02f29#!#dbo
 ~~END~~
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+thisnewdatabasenameiscasesensit4e1f355d810759b9f1a59b04496ed2e1#!##!#guest#!#thisnewdatabasenameiscasesensit44f3247005ec268e1a10c736599cfb7e
+thisnewdatabasenameiscasesensit72e4dcc7ed25f5536033cf547cd7f001#!##!#db_owner#!#thisnewdatabasenameiscasesensit44f3247005ec268e1a10c736599cfb7e
+thisnewdatabasenameiscasesensitc4313f9adf0e47cfa5aca25228e02f29#!##!#dbo#!#thisnewdatabasenameiscasesensit44f3247005ec268e1a10c736599cfb7e
 ~~END~~
 
 ~~START~~

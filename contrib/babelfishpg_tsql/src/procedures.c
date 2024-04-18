@@ -3502,8 +3502,9 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 	char		*new_db_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	char	  **splited_object_name;
 	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
+	int len;
 
-	/* sp_renmae is not allowed inside a transaction. */
+	/* sp_rename is not allowed inside a transaction. */
 	PreventInTransactionBlock(true, "SP_RENAME/SP_RENAMEDB");
 
 	if (!old_db_name)
@@ -3513,8 +3514,19 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 			errmsg("The value for the @newname parameter contains invalid characters or violates a basic restriction ((null)).")));
 
+	len = strlen(old_db_name);
+	/* Truncate Trailing white spaces. */
+	while (len > 0 && isspace((unsigned char) old_db_name[len - 1]))
+		old_db_name[--len] = '\0';
+	len = strlen(new_db_name);
+	/* Truncate Trailing white spaces. */
+	while (len > 0 && isspace((unsigned char) new_db_name[len - 1]))
+		new_db_name[--len] = '\0';
+
 	/* Sanity checks. */
 	splited_object_name = split_object_name(old_db_name);
+
+	/* First 3 parts should be empty strings while object name should not be. */
 	if (strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], "")
 			|| strcmp(splited_object_name[2], "") || strcmp(splited_object_name[3], "") == 0)
 		ereport(ERROR,
@@ -3523,10 +3535,16 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 
 	pfree(old_db_name);
 	old_db_name = !pltsql_case_insensitive_identifiers ?
-					splited_object_name[3] :
+					pstrdup(splited_object_name[3]) :
 					downcase_identifier(splited_object_name[3], strlen(splited_object_name[3]), false, false);
 
+	for (int j = 0; j < 4; j++)
+		pfree(splited_object_name[j]);
+	pfree(splited_object_name);
+
 	splited_object_name = split_object_name(new_db_name);
+
+	/* First 3 parts should be empty strings while object name should not be. */
 	if (strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], "")
 			|| strcmp(splited_object_name[2], "") || strcmp(splited_object_name[3], "") == 0)
 		ereport(ERROR,
@@ -3535,8 +3553,18 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 
 	pfree(new_db_name);
 	new_db_name = !pltsql_case_insensitive_identifiers ?
-					splited_object_name[3] :
+					pstrdup(splited_object_name[3]) :
 					downcase_identifier(splited_object_name[3], strlen(splited_object_name[3]), false, false);
+
+	for (int j = 0; j < 4; j++)
+		pfree(splited_object_name[j]);
+	pfree(splited_object_name);
+
+	/* length should be restricted to 4000 */
+	if (strlen(old_db_name) > 4000 || strlen(new_db_name) > 4000)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				 errmsg("Value is too long for database name")));
 
 	/* Truncate the database name if needed. */
 	truncate_tsql_identifier(old_db_name);
@@ -3562,6 +3590,13 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 					GUC_CONTEXT_CONFIG,
 					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	if (old_db_name)
+		pfree(old_db_name);
+	if (new_db_name)
+		pfree(new_db_name);
+	if (splited_object_name)
+		pfree(splited_object_name);
 
 	PG_RETURN_VOID();
 }

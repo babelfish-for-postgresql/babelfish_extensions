@@ -1,9 +1,9 @@
 -- tsql
 -- sanity checks for metadata stored in babelfish catalog
-select owner, name from sys.babelfish_sysdatabases where name = 'sp_rename_database1';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%';
+select owner, name from sys.babelfish_sysdatabases where name = 'sp_rename_database1' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%' order by rolname;
 go
 
 -- sanity check
@@ -26,10 +26,10 @@ go
 exec sp_rename 'sp_rename_database1', 'sp_rename_database2', 'database';
 go
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_rename_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_rename_database%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%' order by rolname;
 go
 
 -- sanity check to use db
@@ -81,10 +81,10 @@ exec sp_rename '[sp_rename_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64Di
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_rename_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE '%this%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE '%this%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE '%this%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE '%this%' order by rolname;
 go
 
 -- sanity check to use db
@@ -134,4 +134,43 @@ go
 
 drop function sp_rename_function
 drop procedure sp_rename_procedure
+go
+
+-- testing invalid args for sp_rename
+create database sp_rename_db1_temp;
+go
+-- NULL old_db_name
+exec sp_rename NULL, 'sp_rename_db1_temp', 'DATABASE';
+go
+-- NULL new_db_name
+exec sp_rename 'sp_rename_db1_temp  ', NULL, 'Database';
+go
+-- both NULL
+exec sp_rename NULL, NULL, 'DaTaBaSe';
+go
+-- empty string old_db_name
+exec sp_rename '', '     sp_rename_db1_temp', 'database';
+go
+-- empty string new_db_name
+exec sp_rename '    sp_rename_db1_temp', '', 'dAtAbAsE';
+go
+-- both empty string
+exec sp_rename '    ', ' ', ' Database '
+go
+-- 3 part names
+exec sp_rename ' sp_rename_db1_temp.sch1.t1', 'db2      ', '   DATABASE'
+go
+-- 3 part names
+exec sp_rename 'sp_rename_db1_temp', 'db2.sch2.t2', 'DATABASE   '
+go
+-- 3 part names
+exec sp_rename 'db1.sch1.t1', 'db2.sch2.t2', 'DATABASE'
+go
+-- valid input, should get db does not exist
+exec sp_rename '[db1.sch1.t1]', 'sp_rename_db1_temp      ', 'DATABASE'
+go
+-- valid input, should get db does not exist
+exec sp_rename 'sp_rename_db1_temp', '[db2.sch2.t2]     ', 'DATABASE'
+go
+drop database sp_rename_db1_temp
 go

@@ -1,9 +1,9 @@
 -- tsql
 -- sanity checks for metadata stored in babelfish catalog
-select owner, name from sys.babelfish_sysdatabases where name = 'sp_rename_database1';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%';
+select owner, name from sys.babelfish_sysdatabases where name = 'sp_rename_database1' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%' order by rolname;
 go
 ~~START~~
 varchar#!#text
@@ -19,11 +19,11 @@ sp_rename_database1_sp_rename_schema1#!#sp_rename_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
-sp_rename_database1_dbo#!##!#dbo#!#sp_rename_database1
 sp_rename_database1_db_owner#!##!#db_owner#!#sp_rename_database1
+sp_rename_database1_dbo#!##!#dbo#!#sp_rename_database1
 sp_rename_database1_guest#!##!#guest#!#sp_rename_database1
-sp_rename_database1_sp_rename_role1#!##!#sp_rename_role1#!#sp_rename_database1
 sp_rename_database1_sp_rename_login2#!#sp_rename_login2#!#sp_rename_login2#!#sp_rename_database1
+sp_rename_database1_sp_rename_role1#!##!#sp_rename_role1#!#sp_rename_database1
 ~~END~~
 
 ~~START~~
@@ -61,10 +61,10 @@ go
 exec sp_rename 'sp_rename_database1', 'sp_rename_database2', 'database';
 go
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_rename_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_rename_database%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%' order by rolname;
 go
 ~~START~~
 varchar#!#text
@@ -80,11 +80,11 @@ sp_rename_database2_sp_rename_schema1#!#sp_rename_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
-sp_rename_database2_dbo#!##!#dbo#!#sp_rename_database2
 sp_rename_database2_db_owner#!##!#db_owner#!#sp_rename_database2
+sp_rename_database2_dbo#!##!#dbo#!#sp_rename_database2
 sp_rename_database2_guest#!##!#guest#!#sp_rename_database2
-sp_rename_database2_sp_rename_role1#!##!#sp_rename_role1#!#sp_rename_database2
 sp_rename_database2_sp_rename_login2#!#sp_rename_login2#!#sp_rename_login2#!#sp_rename_database2
+sp_rename_database2_sp_rename_role1#!##!#sp_rename_role1#!#sp_rename_database2
 ~~END~~
 
 ~~START~~
@@ -177,21 +177,27 @@ exec sp_rename '[sp_rename_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64Di
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_rename_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_DatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE '%this%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE '%this%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE '%this%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE '%this%' order by rolname;
 go
 ~~START~~
 varchar#!#text
+jdbc_user#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
 ~~END~~
 
 ~~START~~
 varchar#!#nvarchar
+sp_rename_thisnewdatabasenameis21f79a8b66248a73068dca6edd5b0ca3#!#guest
+sp_rename_thisnewdatabasenameisfacf8af797f428fdc401ffddc672894d#!#dbo
 ~~END~~
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+sp_rename_thisnewdatabasenameis1e39ca7c78a1fba2342467331fb5bd56#!##!#db_owner#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
+sp_rename_thisnewdatabasenameis21f79a8b66248a73068dca6edd5b0ca3#!##!#guest#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
+sp_rename_thisnewdatabasenameisfacf8af797f428fdc401ffddc672894d#!##!#dbo#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
 ~~END~~
 
 ~~START~~
@@ -267,4 +273,87 @@ go
 
 drop function sp_rename_function
 drop procedure sp_rename_procedure
+go
+
+-- testing invalid args for sp_rename
+create database sp_rename_db1_temp;
+go
+-- NULL old_db_name
+exec sp_rename NULL, 'sp_rename_db1_temp', 'DATABASE';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database '(null)' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
+-- NULL new_db_name
+exec sp_rename 'sp_rename_db1_temp  ', NULL, 'Database';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @newname parameter contains invalid characters or violates a basic restriction ((null)).)~~
+
+-- both NULL
+exec sp_rename NULL, NULL, 'DaTaBaSe';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database '(null)' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
+-- empty string old_db_name
+exec sp_rename '', '     sp_rename_db1_temp', 'database';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction (()).)~~
+
+-- empty string new_db_name
+exec sp_rename '    sp_rename_db1_temp', '', 'dAtAbAsE';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @newname parameter contains invalid characters or violates a basic restriction (()).)~~
+
+-- both empty string
+exec sp_rename '    ', ' ', ' Database '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction (()).)~~
+
+-- 3 part names
+exec sp_rename ' sp_rename_db1_temp.sch1.t1', 'db2      ', '   DATABASE'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction (( sp_rename_db1_temp.sch1.t1)).)~~
+
+-- 3 part names
+exec sp_rename 'sp_rename_db1_temp', 'db2.sch2.t2', 'DATABASE   '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @newname parameter contains invalid characters or violates a basic restriction ((db2.sch2.t2)).)~~
+
+-- 3 part names
+exec sp_rename 'db1.sch1.t1', 'db2.sch2.t2', 'DATABASE'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction ((db1.sch1.t1)).)~~
+
+-- valid input, should get db does not exist
+exec sp_rename '[db1.sch1.t1]', 'sp_rename_db1_temp      ', 'DATABASE'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database db1.sch1.t1 does not exist. Make sure that the name is entered correctly.)~~
+
+-- valid input, should get db does not exist
+exec sp_rename 'sp_rename_db1_temp', '[db2.sch2.t2]     ', 'DATABASE'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ".")~~
+
+drop database sp_rename_db1_temp
 go
