@@ -173,12 +173,12 @@ SELECT UPPER(NULL)
 SELECT LOWER(NULL)
 GO
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
@@ -601,14 +601,14 @@ point(1 2)
 Select UPPER(a), LOWER(a) from upper_lower_text
 GO
 ~~START~~
-text#!#text
+varchar#!#varchar
 6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
 ~~END~~
 
 Select UPPER(a), LOWER(a) from upper_lower_ntext
 GO
 ~~START~~
-text#!#text
+varchar#!#varchar
 6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
 ~~END~~
 
@@ -666,17 +666,17 @@ varchar
 ~~END~~
 
 
-SELECT * from upper_lower_dt;
+SELECT upper(a), lower(b), lower(c), upper(d) from upper_lower_dt;
 GO
 ~~START~~
-varchar#!#nvarchar#!#char#!#nchar
+varchar#!#nvarchar#!#varchar#!#nvarchar
 ANIKAIT #!#agrawal #!#anikait             #!#AGRAWAL                 
  ANIKAIT#!# agrawal#!# anikait            #!# AGRAWAL                
-   A#!#   🤣😃#!#   a                #!#   🤣😃                 
+   A#!#   🤣😃#!#   a                #!#   🤣😃                   
  #!# #!#                    #!#                        
- #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆            
+ #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆
 #!##!#                    #!#                        
-A#!#a#!#A                   #!#a                       
+A#!#a#!#a                   #!#A                       
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ??·?#!#比尔·拉#!#??·?                #!#比尔·拉                    
 ~~END~~
@@ -685,7 +685,7 @@ SELECT * from upper_lower_dt where UPPER(a) = N'Anikait';
 GO
 ~~START~~
 varchar#!#nvarchar#!#char#!#nchar
-ANIKAIT #!#agrawal #!#anikait             #!#AGRAWAL                 
+Anikait #!#Agrawal #!#Anikait             #!#Agrawal                 
 ~~END~~
 
 SELECT * from upper_lower_dt where LOWER(c) = N'比尔·拉';
@@ -713,42 +713,42 @@ SELECT upper(col), lower(col) FROM tab_arabic_ci_ai;
 GO
 ~~START~~
 varchar#!#varchar
-COLLATION#!#collation
+لقد#!#لقد
 ~~END~~
 
 SELECT upper(col), lower(col) FROM tab_arabic_ci_as;
 GO
 ~~START~~
 varchar#!#varchar
-COLLATION#!#collation
+لقد#!#لقد
 ~~END~~
 
 SELECT upper(col), lower(col) FROM tab_arabic_cs_as;
 GO
 ~~START~~
 varchar#!#varchar
-COLLATION#!#collation
+لقد#!#لقد
 ~~END~~
 
 SELECT upper(col), lower(col) FROM tab_chinese_ci_ai;
 GO
 ~~START~~
 varchar#!#varchar
-COLLATION#!#collation
+比尔·拉#!#比尔·拉
 ~~END~~
 
 SELECT upper(col), lower(col) FROM tab_chinese_ci_as;
 GO
 ~~START~~
 varchar#!#varchar
-COLLATION#!#collation
+比尔·拉#!#比尔·拉
 ~~END~~
 
 SELECT upper(col), lower(col) FROM tab_chinese_cs_as;
 GO
 ~~START~~
 varchar#!#varchar
-COLLATION#!#collation
+比尔·拉#!#比尔·拉
 ~~END~~
 
 EXEC dep_proc_upper
@@ -762,7 +762,7 @@ select dbo.dep_func_upper()
 GO
 ~~START~~
 varchar
-A
+ANIKAIT 
 ~~END~~
 
 
@@ -784,7 +784,7 @@ select dbo.dep_func_lower()
 GO
 ~~START~~
 varchar
-a
+anikait 
 ~~END~~
 
 select dbo.tvp_func_upper_lower()

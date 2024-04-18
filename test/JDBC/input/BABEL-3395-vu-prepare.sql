@@ -1,22 +1,22 @@
 CREATE TABLE upper_lower_dt (a VARCHAR(20), b NVARCHAR(24), c CHAR(20), d NCHAR(24))
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(N'Anikait '), LOWER(N'Agrawal '), LOWER(N'Anikait '), UPPER(N'Agrawal '))
+INSERT INTO upper_lower_dt(a,b,c,d) values(N'Anikait ', N'Agrawal ', N'Anikait ', N'Agrawal ')
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(N' Anikait'), LOWER(N' Agrawal'), LOWER(N' Anikait'), UPPER(N' Agrawal'))
+INSERT INTO upper_lower_dt(a,b,c,d) values(N' Anikait', N' Agrawal', N' Anikait', N' Agrawal')
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(N'   A'),LOWER(N'   🤣😃'),LOWER(N'   A'),UPPER(N'   🤣😃'))
+INSERT INTO upper_lower_dt(a,b,c,d) values(N'   A',N'   🤣😃',N'   A',N'   🤣😃')
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(LOWER(N' '),UPPER(N' '),UPPER(N' '),LOWER(N' '))
+INSERT INTO upper_lower_dt(a,b,c,d) values(N' ',N' ',N' ',N' ')
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(LOWER(N' '),UPPER(N'😊😋😎😍😅😆'),UPPER(N' '),LOWER(N'😊😋😎😍😅😆'))
+INSERT INTO upper_lower_dt(a,b,c,d) values(N' ',N'😊😋😎😍😅😆',N' ',N'😊😋😎😍😅😆')
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(LOWER(N''),UPPER(N''),UPPER(N''),LOWER(N''))
+INSERT INTO upper_lower_dt(a,b,c,d) values(N'',N'',N'',N'')
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(N'a'),LOWER(N'A'),UPPER(N'a'),LOWER(N'A'))
+INSERT INTO upper_lower_dt(a,b,c,d) values(N'a',N'A',N'a',N'A')
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(NULL),LOWER(NULL),UPPER(NULL),LOWER(NULL))
+INSERT INTO upper_lower_dt(a,b,c,d) values(NULL,NULL,NULL,NULL)
 GO
-INSERT INTO upper_lower_dt(a, b, c, d) values(UPPER(N'比尔·拉'), LOWER(N'比尔·拉'), LOWER(N'比尔·拉'), UPPER(N'比尔·拉'))
+INSERT INTO upper_lower_dt(a, b, c, d) values(N'比尔·拉', N'比尔·拉', N'比尔·拉', N'比尔·拉')
 GO
 
 CREATE TABLE upper_lower_text(a TEXT)
@@ -40,27 +40,27 @@ select UPPER(a) AS upper_a, UPPER(b) AS upper_b, UPPER(c) AS upper_c, UPPER(d) A
 GO
 
 CREATE TABLE tab_arabic_ci_ai(col varchar(20) COLLATE arabic_ci_ai);
-INSERT INTO tab_arabic_ci_ai VALUES ('COLLATION');
+INSERT INTO tab_arabic_ci_ai VALUES ('لقد');
 GO
 
 CREATE TABLE tab_arabic_ci_as(col varchar(20) COLLATE arabic_ci_as);
-INSERT INTO tab_arabic_ci_as VALUES ('COLLATION');
+INSERT INTO tab_arabic_ci_as VALUES ('لقد');
 GO
 
 CREATE TABLE tab_arabic_cs_as(col varchar(20) COLLATE arabic_cs_as);
-INSERT INTO tab_arabic_cs_as VALUES ('COLLATION');
+INSERT INTO tab_arabic_cs_as VALUES ('لقد');
 GO
 
 CREATE TABLE tab_chinese_ci_ai(col varchar(20) COLLATE chinese_prc_ci_ai);
-INSERT INTO tab_chinese_ci_ai VALUES ('COLLATION');
+INSERT INTO tab_chinese_ci_ai VALUES ('比尔·拉');
 GO
 
 CREATE TABLE tab_chinese_ci_as(col varchar(20) COLLATE chinese_prc_ci_as);
-INSERT INTO tab_chinese_ci_as VALUES ('COLLATION');
+INSERT INTO tab_chinese_ci_as VALUES ('比尔·拉');
 GO
 
 CREATE TABLE tab_chinese_cs_as(col varchar(20) COLLATE chinese_prc_cs_as);
-INSERT INTO tab_chinese_cs_as VALUES ('COLLATION');
+INSERT INTO tab_chinese_cs_as VALUES ('比尔·拉');
 GO
 
 CREATE PROC dep_proc_upper AS
@@ -68,7 +68,7 @@ select UPPER(a), UPPER(b), UPPER(c), UPPER(d) from upper_lower_dt WHERE UPPER(a)
 GO
 
 CREATE FUNCTION dbo.dep_func_upper()
-RETURNS VARCHAR
+RETURNS VARCHAR(50)
 AS
 BEGIN
 RETURN (select TOP 1 UPPER(a) from upper_lower_dt);
@@ -85,7 +85,7 @@ select LOWER(a), LOWER(b), LOWER(c), LOWER(d) from upper_lower_dt WHERE LOWER(a)
 GO
 
 CREATE FUNCTION dbo.dep_func_lower()
-RETURNS VARCHAR
+RETURNS VARCHAR(50)
 AS
 BEGIN
 RETURN (select TOP 1 LOWER(a) from upper_lower_dt);
@@ -97,13 +97,13 @@ RETURNS TABLE
 AS 
 RETURN 
 (
-    SELECT CAST (UPPER(a) as VARCHAR) AS upper_a, CAST (LOWER(a) as VARCHAR) AS lower_a
+    SELECT UPPER(a) AS upper_a, LOWER(a) AS lower_a
     FROM upper_lower_dt
 );
 GO
 
 CREATE VIEW dep_view_lower1 AS (
     select 
-        lower(cast(N'ADJNFJH' as varchar)) as db1
+        lower(cast(N'ADJNFJH' as varchar(50))) as db1
     );
 GO

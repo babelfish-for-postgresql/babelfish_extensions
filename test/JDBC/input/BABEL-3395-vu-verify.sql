@@ -212,7 +212,7 @@ select UPPER(@string1)
 select LOWER(@string1)
 GO
 
-SELECT * from upper_lower_dt;
+SELECT upper(a), lower(b), lower(c), upper(d) from upper_lower_dt;
 GO
 SELECT * from upper_lower_dt where UPPER(a) = N'Anikait';
 GO

@@ -3108,6 +3108,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+-- Function to handle TEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(TEXT)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.upper($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NTEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(NTEXT)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.upper($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- wrapper functions for lower --
 -- Function to handle datatypes which are implicitly convertable to VARCHAR
 CREATE OR REPLACE FUNCTION sys.lower(ANYELEMENT)
@@ -3137,6 +3155,24 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 -- Function to handle NVARCHAR because of return type NVARCHAR
 CREATE OR REPLACE FUNCTION sys.lower(sys.NVARCHAR)
 RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.lower($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle TEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(TEXT)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    RETURN (SELECT pg_catalog.lower($1));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NTEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(NTEXT)
+RETURNS sys.VARCHAR
 AS $$
 BEGIN
     RETURN (SELECT pg_catalog.lower($1));
