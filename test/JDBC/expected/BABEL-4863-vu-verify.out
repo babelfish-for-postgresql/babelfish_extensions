@@ -127,3 +127,115 @@ varchar
 1
 ~~END~~
 
+select 1[c];
+GO
+~~START~~
+int
+1
+~~END~~
+
+select 1'c';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select 1"c";
+GO
+~~START~~
+int
+1
+~~END~~
+
+select 'abc'[def];
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+select 'abc''def';
+GO
+~~START~~
+varchar
+abc'def
+~~END~~
+
+select 'abc'"def";
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+select 123[this is a $.^ test]
+GO
+~~START~~
+int
+123
+~~END~~
+
+select 123'this is a $.^ test'
+GO
+~~START~~
+int
+123
+~~END~~
+
+select 123"this is a $.^ test"
+GO
+~~START~~
+int
+123
+~~END~~
+
+SELECT CASE WHEN 1=1  THEN 1 ELSE 0 END[this is a $.^ test]
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT CASE WHEN 1=1  THEN 1 ELSE 0 END'this is a $.^ test'
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT CASE WHEN 1=1  THEN 1 ELSE 0 END"this is a $.^ test"
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_4863_func1();
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+exec babel_4863_proc 1;
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+exec babel_4863_proc 2;
+GO
+~~START~~
+int#!#int#!#int
+0#!#0#!#0
+~~END~~
+
+SELECT * FROM babel_4863_view;
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
