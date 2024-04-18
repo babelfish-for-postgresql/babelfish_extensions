@@ -1,0 +1,968 @@
+#setup
+create table txnproctable (c1 int not null, c2 varchar(100))
+
+# PROC
+# 		BEGIN TRAN
+#			SAVEPOINT
+#  		ROLLBACK SAVEPOINT
+#		COMMIT
+create procedure txnproc1 as begin tran; insert into txnproctable values (1, 'abc'); save tran sp1; update txnproctable set c1 = c1 + 1;  rollback tran sp1; commit tran;
+select @@trancount;
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+~~END~~
+
+exec txnproc1;
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select @@trancount;
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+
+
+# PROC
+# 		BEGIN TRAN
+#			SAVEPOINT
+#  		ROLLBACK SAVEPOINT
+#		ROLLBACK
+drop procedure txnproc1;
+create procedure txnproc1 as begin tran; insert into txnproctable values(2, 'xyz'); save tran sp1; delete from txnproctable; rollback tran sp1; rollback tran;
+select @@trancount;
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+exec txnproc1;
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+select @@trancount;
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+
+
+# PROC
+# 		BEGIN TRAN
+#			SAVEPOINT
+#  		ROLLBACK SAVEPOINT
+# COMMIT
+drop procedure txnproc1
+create procedure txnproc1 as begin tran; insert into txnproctable values(3, 'dbd'); save tran sp1; update txnproctable set c1 = c1 + 1; rollback tran sp1;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+exec txnproc1;
+~~ERROR (Code: 266)~~
+
+~~ERROR (Message: Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count 0 current count 1)~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+~~END~~
+
+commit tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+~~END~~
+
+
+
+# PROC
+# 		BEGIN TRAN
+#			SAVEPOINT
+# ROLLBACK SAVEPOINT
+# COMMIT
+drop procedure txnproc1
+create procedure txnproc1 as begin tran; insert into txnproctable values(4, 'sbd'); save tran sp1; update txnproctable set c1 = c1 + 1;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+~~END~~
+
+exec txnproc1;
+~~ERROR (Code: 266)~~
+
+~~ERROR (Message: Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count 0 current count 1)~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 3~~
+
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+~~END~~
+
+rollback tran sp1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+~~END~~
+
+commit tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+~~END~~
+
+
+
+# BEGIN TRAN 
+# PROC
+#		SAVEPOINT
+# 		ROLLBACK SAVEPOINT
+# COMMIT
+begin tran;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+~~END~~
+
+drop procedure txnproc1
+create procedure txnproc1 as insert into txnproctable values(5, 'abc'); save tran sp1; update txnproctable set c1 = c1 + 1; rollback tran sp1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+~~END~~
+
+exec txnproc1;
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 4~~
+
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+5#!#abc
+~~END~~
+
+commit tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+5#!#abc
+~~END~~
+
+
+
+# BEGIN TRAN 
+# PROC
+#		SAVEPOINT
+# 		ROLLBACK SAVEPOINT
+# ROLLBACK	
+begin tran;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+5#!#abc
+~~END~~
+
+drop procedure txnproc1
+create procedure txnproc1 as insert into txnproctable values(6, 'abc'); save tran sp1; update txnproctable set c1 = c1 + 1; rollback tran sp1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+5#!#abc
+~~END~~
+
+exec txnproc1;
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 5~~
+
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+5#!#abc
+6#!#abc
+~~END~~
+
+commit tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+5#!#abc
+6#!#abc
+~~END~~
+
+
+# BEGIN TRAN 
+# PROC
+#		SAVEPOINT
+# 		ROLLBACK SAVEPOINT
+#		COMMIT
+begin tran;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+5#!#abc
+6#!#abc
+~~END~~
+
+drop procedure txnproc1
+create procedure txnproc1 as insert into txnproctable values(7, 'abc'); save tran sp1; update txnproctable set c1 = c1 + 1; rollback tran sp1; update txnproctable set c1 = c1 + 1; commit tran; 
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+1#!#abc
+3#!#dbd
+4#!#sbd
+5#!#abc
+6#!#abc
+~~END~~
+
+exec txnproc1;
+~~ERROR (Code: 266)~~
+
+~~ERROR (Message: Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count 1 current count 0)~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 6~~
+
+~~ROW COUNT: 6~~
+
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+
+# BEGIN TRAN 
+# PROC
+#		SAVEPOINT
+# 		ROLLBACK SAVEPOINT
+#		ROLLBACK
+begin tran;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+drop procedure txnproc1
+create procedure txnproc1 as insert into txnproctable values(8, 'abc'); save tran sp1; update txnproctable set c1 = c1 + 1; rollback tran sp1; update txnproctable set c1 = c1 + 1; rollback tran; 
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+exec txnproc1;
+~~ERROR (Code: 266)~~
+
+~~ERROR (Message: Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count 1 current count 0)~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 7~~
+
+~~ROW COUNT: 7~~
+
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+
+# BEGIN TRAN
+# START SAVEPOINT
+# PROC
+# ROLLBACK SAVEPOINT
+# ROLLBACK
+begin tran;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+save tran sp1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+drop procedure txnproc1
+create procedure txnproc1 as insert into txnproctable values(9, 'abc'); update txnproctable set c1 = c1 + 1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+exec txnproc1;
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 7~~
+
+rollback tran sp1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+rollback tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+
+# BEGIN TRAN
+# START SAVEPOINT
+# PROC
+# ROLLBACK SAVEPOINT
+# ROLLBACK
+begin tran;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+save tran sp1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+drop procedure txnproc1
+create procedure txnproc1 as insert into txnproctable values(10, 'abc'); update txnproctable set c1 = c1 + 1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+exec txnproc1;
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 7~~
+
+rollback tran sp1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+commit tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+
+# BEGIN TRAN
+# START SAVEPOINT
+# PROC
+# 		ROLLBACK SAVEPOINT
+# ROLLBACK
+begin tran;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+save tran sp1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+drop procedure txnproc1
+create procedure txnproc1 as insert into txnproctable values(11, 'abc'); rollback tran sp1; update txnproctable set c1 = c1 + 1;
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+2#!#abc
+4#!#dbd
+5#!#sbd
+6#!#abc
+7#!#abc
+8#!#abc
+~~END~~
+
+exec txnproc1;
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 6~~
+
+commit tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+3#!#abc
+5#!#dbd
+6#!#sbd
+7#!#abc
+8#!#abc
+9#!#abc
+~~END~~
+
+
+# PROC1
+#		BEGIN TRAN
+#		PROC2
+#			PROC3
+#				BEGIN TRAN
+#				START SAVEPOINT
+#				ROLLBACK SAVEPOINT
+#			COMMIT
+#	COMMIT
+create procedure txnProc3 as begin tran; insert into txnproctable values (16, 'abc'); save tran sp1; update txnproctable set c1 = c1 + 1;  rollback tran sp1;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+3#!#abc
+5#!#dbd
+6#!#sbd
+7#!#abc
+8#!#abc
+9#!#abc
+~~END~~
+
+create procedure txnProc2 as update txnproctable set c1 = c1 + 1; exec txnProc3; commit tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+3#!#abc
+5#!#dbd
+6#!#sbd
+7#!#abc
+8#!#abc
+9#!#abc
+~~END~~
+
+drop procedure txnproc1
+create procedure txnproc1 as delete from txnproctable; begin tran; exec txnProc2;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+3#!#abc
+5#!#dbd
+6#!#sbd
+7#!#abc
+8#!#abc
+9#!#abc
+~~END~~
+
+exec txnproc1;
+~~ERROR (Code: 266)~~
+
+~~ERROR (Message: Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count 1 current count 2)~~
+
+~~ROW COUNT: 6~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select @@trancount
+~~START~~
+int
+1
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+16#!#abc
+~~END~~
+
+commit tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+16#!#abc
+~~END~~
+
+
+# PROC1
+#		BEGIN TRAN
+#		PROC2
+#			PROC3
+#				BEGIN TRAN
+#				START SAVEPOINT
+#				ROLLBACK SAVEPOINT
+#			ROLLBACK TRAN
+#	COMMIT
+drop procedure txnproc3
+create procedure txnProc3 as begin tran; insert into txnproctable values (20, 'abc'); save tran sp1; update txnproctable set c1 = c1 + 1;  rollback tran sp1;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+16#!#abc
+~~END~~
+
+drop procedure txnproc2
+create procedure txnProc2 as update txnproctable set c1 = c1 + 1; exec txnProc3; rollback tran;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+16#!#abc
+~~END~~
+
+drop procedure txnproc1
+create procedure txnproc1 as delete from txnproctable; begin tran; exec txnProc2;
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+16#!#abc
+~~END~~
+
+exec txnproc1;
+~~ERROR (Code: 266)~~
+
+~~ERROR (Message: Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count 1 current count 2)~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select @@trancount
+~~START~~
+int
+0
+~~END~~
+
+select * from txnproctable order by c1;
+~~START~~
+int#!#varchar
+~~END~~
+
+
+#cleanup
+drop procedure txnproc3
+drop procedure txnproc2
+drop procedure txnproc1
+drop table txnproctable

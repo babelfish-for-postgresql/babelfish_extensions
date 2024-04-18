@@ -55,10 +55,19 @@ TestUniqueIdentifier
 jtds-TestSQLQueries
 
 # errorHandling
-# Failure: error reporting is defferent on jTDS
-# TestSimpleErrors
-# Failure: error reporting is defferent on jTDS
-# TestErrorsWithTryCatch
+# When error happens in a batch that contains DML operations, then in mssql-jdbc stmt.execute() returns
+# successfully, number of updated rows can be read from stmt.getUpdateCount() and the Exception is thrown
+# on stmt.getMoreResults() only after all successful update counts are read.
+# Unlike this, in jTDS the Exception is thrown on stmt.execute() and then, if it is caught anf handled,
+# update counts can be read with stmt.getUpdateCount().
+jtds-TestSimpleErrors
+# When "Uncommittable transaction is detected at the end of the batch" error happens,
+# in mssql-jdbc stmt.execute() returns successfully, then all update counts and result sets
+# can be read and the Exception is thrown on stmt.getMoreResults().
+# In jTDS stmt.execute() also returns successfully and updated counts and result sets also
+# can be read, but the Exception id thrown when rs.next() is called on last available result set
+# after all the records are read.
+jtds-TestErrorsWithTryCatch
 
 # storedProcedures
 # jTDS reports column type as nvarchar instead of date, behavior on MSSQL and Babelfish is the same
@@ -72,8 +81,8 @@ jtds-TestStoredProcedures
 
 # transactions
 TestTransactionsSQLBatch
-# Failure: error reporting is defferent on jTDS
-# TestTransactionSupportForProcedure
+# See comment to TestSimpleErrors above
+jtds-TestTransactionSupportForProcedure
 
 # temporary
 jtds-varchar-max-length-check
