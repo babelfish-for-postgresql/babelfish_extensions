@@ -525,5 +525,49 @@ varbinary
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go
 
+create table babel_726_t2 (a int, b varchar(10), c float)
+go
+
+insert into babel_726_t2 values (1, 'abcde', 1.02)
+insert into babel_726_t2 values (NULL, '2.01', 1.02)
+insert into babel_726_t2 values (NULL, NULL, 1.02)
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select coalesce(a,b,c) from babel_726_t2
+go
+~~START~~
+float
+1.0
+2.01
+1.02
+~~END~~
+
+
+insert into babel_726_t2 values (NULL, 'abcde', 1.02)
+go
+~~ROW COUNT: 1~~
+
+
+select coalesce(a,b,c) from babel_726_t2
+go
+~~START~~
+float
+1.0
+2.01
+1.02
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "abcde")~~
+
+
 drop table babel_726_t1
+go
+
+drop table babel_726_t2
 go

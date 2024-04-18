@@ -244,5 +244,25 @@ GO
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go
 
+create table babel_726_t2 (a int, b varchar(10), c float)
+go
+
+insert into babel_726_t2 values (1, 'abcde', 1.02)
+insert into babel_726_t2 values (NULL, '2.01', 1.02)
+insert into babel_726_t2 values (NULL, NULL, 1.02)
+go
+
+select coalesce(a,b,c) from babel_726_t2
+go
+
+insert into babel_726_t2 values (NULL, 'abcde', 1.02)
+go
+
+select coalesce(a,b,c) from babel_726_t2
+go
+
 drop table babel_726_t1
+go
+
+drop table babel_726_t2
 go
