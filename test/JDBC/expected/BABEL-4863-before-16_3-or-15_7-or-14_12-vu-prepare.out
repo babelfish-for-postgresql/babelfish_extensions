@@ -1,7 +1,7 @@
 create function babel_4863_func()
 	returns table as return 
 	(
-		select 'value' = '1'
+		select '1' as val
 	)
 go
 
