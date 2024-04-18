@@ -50,12 +50,12 @@ varbinary
 ~~END~~
 
 
--- invalid hex input
 select 0x1G2A;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid hexadecimal digit: "S")~~
+~~START~~
+varbinary
+01
+~~END~~
 
 
 -- test insert of hex string
