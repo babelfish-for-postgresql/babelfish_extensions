@@ -425,7 +425,6 @@ InstallExtendedHooks(void)
 	prev_bbf_get_sysadmin_oid_hook = bbf_get_sysadmin_oid_hook;
 	bbf_get_sysadmin_oid_hook = get_sysadmin_oid;
 
-	get_bbf_admin_oid_hook = get_bbf_admin_oid_hook;
 	get_bbf_admin_oid_hook = get_bbf_role_admin_oid;
 
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
