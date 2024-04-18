@@ -55,5 +55,5 @@ GO
 CREATE FUNCTION babel_4489_trim_itvf_func()
 RETURNS TABLE
 AS
-RETURN (SELECT CAST(('|' + TRIM(b FROM a) + '|') AS sys.NVARCHAR(50)) as result FROM babel_4489_trim_t2)
+RETURN (SELECT ('|' + TRIM(b FROM a) + '|') as result FROM babel_4489_trim_t2)
 GO

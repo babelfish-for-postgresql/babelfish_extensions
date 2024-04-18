@@ -252,7 +252,7 @@ abc🙂defghi🙂🙂
 
 
 -- dependent objects
-SELECT * FROM babel_4489_right_view
+SELECT * FROM babel_4489_right_dep_view
 GO
 ~~START~~
 text
@@ -260,7 +260,7 @@ ghi??
 ~~END~~
 
 
-EXEC babel_4489_right_proc
+EXEC babel_4489_right_dep_proc
 GO
 ~~START~~
 nvarchar
@@ -268,11 +268,19 @@ ghi🙂🙂
 ~~END~~
 
 
-SELECT * FROM babel_4489_right_func()
+SELECT * FROM babel_4489_right_dep_func()
 GO
 ~~START~~
 nvarchar
 ghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_4489_right_itvf_func()
+GO
+~~START~~
+text
+ghi??
 ~~END~~
 
 

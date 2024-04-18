@@ -146,7 +146,7 @@ nvarchar
 
 
 -- dependent objects
-SELECT * FROM babel_4489_rtrim_view
+SELECT * FROM babel_4489_rtrim_dep_view
 GO
 ~~START~~
 varchar
@@ -154,7 +154,7 @@ varchar
 ~~END~~
 
 
-EXEC babel_4489_rtrim_proc
+EXEC babel_4489_rtrim_dep_proc
 GO
 ~~START~~
 nvarchar
@@ -162,11 +162,19 @@ nvarchar
 ~~END~~
 
 
-SELECT * FROM babel_4489_rtrim_func()
+SELECT * FROM babel_4489_rtrim_dep_func()
 GO
 ~~START~~
 nvarchar
 |  abc🙂defghi🙂🙂|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_itvf_func()
+GO
+~~START~~
+varchar
+|  abc?defghi??|
 ~~END~~
 
 
