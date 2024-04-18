@@ -721,19 +721,22 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 							case TDS_TYPE_CHAR:
 							case TDS_TYPE_VARCHAR:
 								rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].encoding, colmetadata[i].columnTdsType);
-								rowData->isAllocated[i] = true;
 								break;
 							case TDS_TYPE_NCHAR:
 							case TDS_TYPE_NVARCHAR:
 								rowData->columnValues[i] = TdsTypeNCharToDatum(temp);
-								rowData->isAllocated[i] = true;
 								break;
 							case TDS_TYPE_BINARY:
 							case TDS_TYPE_VARBINARY:
 								rowData->columnValues[i] = TdsTypeVarbinaryToDatum(temp);
-								rowData->isAllocated[i] = true;
 								break;
 						}
+
+						/*
+						 * All three of Varchar, NChar and Varbinary conversions allocate
+						 * their results with palloc.
+						 */
+						rowData->isAllocated[i] = true;
 
 						/*
 						 * Free temp->data only if this was created as part of
@@ -801,17 +804,20 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						{
 							case TDS_TYPE_TEXT:
 								rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].encoding, colmetadata[i].columnTdsType);
-								rowData->isAllocated[i] = true;
 								break;
 							case TDS_TYPE_NTEXT:
 								rowData->columnValues[i] = TdsTypeNCharToDatum(temp);
-								rowData->isAllocated[i] = true;
 								break;
 							case TDS_TYPE_IMAGE:
 								rowData->columnValues[i] = TdsTypeVarbinaryToDatum(temp);
-								rowData->isAllocated[i] = true;
 								break;
 						}
+
+						/*
+						 * All three of Varchar, NChar and Varbinary conversions allocate
+						 * their results with palloc.
+						 */
+						rowData->isAllocated[i] = true;
 
 						offset += len;
 						request->currentBatchSize += len;

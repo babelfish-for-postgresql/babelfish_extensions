@@ -633,7 +633,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 	for (int i = 0; i < rowCount * colCount; i++)
 	{
 		cstate->bufferedValues = lappend(cstate->bufferedValues, (void *) Values[i]);
-		cstate->bufferedValueAllocFlags = lappend_int(cstate->bufferedValueAllocFlags, ValueAllocFlags[i] ? 1 : 0);
+		cstate->bufferedValueAllocFlags = lappend_int(cstate->bufferedValueAllocFlags, ValueAllocFlags[i]);
 	}
 
 	ExecOpenIndices(cstate->resultRelInfo, false);
