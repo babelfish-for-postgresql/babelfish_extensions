@@ -76,10 +76,10 @@ alter database [ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestR
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE '%this%' order by name;
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE '%this%' order by nspname;
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE '%this%' order by rolname;
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE '%this%' order by rolname;
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'this%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'this%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'this%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'this%' order by rolname;
 go
 
 -- sanity check to use db
