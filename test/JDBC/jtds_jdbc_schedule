@@ -2,6 +2,23 @@
 # mssql-jdbc driver. When 'useJTDSInsteadOfMSSQLJDBC' config option is set to
 # 'true' this file is used instead of 'jdbc_schedule' file.
 
+# About the test that were copied with "jtds-prefix":
+#
+# jTDS has different behaviour from mssql-jdbc when error happens in a batch with multiple statements.
+# If a batch contains multiple DML statements and one of them is causing an error (like constraint violation),
+# then with mssql-jdbc stmt.execute() returns successfully, number of updated rows can be read from
+# stmt.getUpdateCount() and the Exception is thrown on stmt.getMoreResults() only after all successful
+# update counts are read.
+#
+# With jTDS, if none of the statements return a result set (no selects in batch, only DML), then the Exception
+# is thrown on stmt.execute(). If this exception is caught and handled, then update counts from successul
+# DML statements can be read with stmt.getUpdateCount().
+# And if the successful batch statements return one or more result sets, then stmt.execute() succeeds,
+# and update counts and result sets can be read successfully up to the errored one. And the Exception
+# is thrown on rs.next() after the last successfull result set is exhausted.
+#
+# This jTDS behaviour is the same with both Babelfish and MSSQL.
+
 # datatypes
 TestInt
 TestSmallInt
@@ -44,10 +61,9 @@ TestImage-vu-cleanup
 # TestSQLVariant-vu-cleanup
 # Failure: conn.createSQLXML() is not supported in jTDS
 # TestXML
-# Failure: select output differs on jTDS
-# TestTableType-vu-prepare
-# TestTableType-vu-verify
-# TestTableType-vu-cleanup
+jtds-TestTableType-vu-prepare
+jtds-TestTableType-vu-verify
+jtds-TestTableType-vu-cleanup
 TestUniqueIdentifier
 
 # sqlBatch
@@ -55,18 +71,7 @@ TestUniqueIdentifier
 jtds-TestSQLQueries
 
 # errorHandling
-# When error happens in a batch that contains DML operations, then in mssql-jdbc stmt.execute() returns
-# successfully, number of updated rows can be read from stmt.getUpdateCount() and the Exception is thrown
-# on stmt.getMoreResults() only after all successful update counts are read.
-# Unlike this, in jTDS the Exception is thrown on stmt.execute() and then, if it is caught anf handled,
-# update counts can be read with stmt.getUpdateCount().
 jtds-TestSimpleErrors
-# When "Uncommittable transaction is detected at the end of the batch" error happens,
-# in mssql-jdbc stmt.execute() returns successfully, then all update counts and result sets
-# can be read and the Exception is thrown on stmt.getMoreResults().
-# In jTDS stmt.execute() also returns successfully and updated counts and result sets also
-# can be read, but the Exception id thrown when rs.next() is called on last available result set
-# after all the records are read.
 jtds-TestErrorsWithTryCatch
 
 # storedProcedures
@@ -74,9 +79,13 @@ jtds-TestErrorsWithTryCatch
 jtds-TestStoredProcedures
 
 # cursors
-# Failure: The CLOSE_CURSORS_AT_COMMIT option is not currently supported by the setHoldability method
+# Failure:
+# ERROR:  cursor fetch type 100 not supported
+# jTDS calls sp_cursorfetch procedure with FETCH_INFO (100) option
 # TestCursorFetchNext
-# Failure: The CLOSE_CURSORS_AT_COMMIT option is not currently supported by the setHoldability method
+# Failure:
+# ERROR:  column "@p0" does not exist at character 59
+# QUERY:  SELECT * FROM test_cursor_prep_exec_fetch_next WHERE b >  @P0
 # TestCursorPrepExecFetchNext
 
 # transactions

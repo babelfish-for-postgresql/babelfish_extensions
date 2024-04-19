@@ -1,0 +1,85 @@
+declare @tv TestTableType_vu_prepare_t1;
+insert @tv values (1,1);
+insert @tv values (2,2);
+select * from @tv;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+~~END~~
+
+
+declare @tv TestTableType_vu_prepare_t2;
+insert @tv values(1,'one');
+insert @tv values(2,'two');
+insert @tv values(3,'three');
+select * from @tv;
+insert @tv values(6,'six');
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+3#!#three
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "@tv_0" violates check constraint "testtabletype_vu_prepare_t2_c1_check")~~
+
+
+declare @tv TestTableType_vu_prepare_t3;
+insert @tv  values ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1); 
+insert @tv (a, b, c, e, f, g) values ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5);
+select * from @tv;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
+Apple#!#red#!#1#!#Delhi          #!#Sad😞                    #!#2000-12-13 12:58:23.123#!#123.1
+Orange#!#<NULL>#!#3#!#Whoops!        #!#Happy😀                  #!#1900-02-28 23:59:59.99#!#342.5
+~~END~~
+
+
+
+
+declare @tv TestTableType_vu_prepare_t3;
+insert @tv  values ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1); 
+insert @tv  values ('Apple', N'blue', 2, 'Chennai', N'Neutral😐',  '2006-11-11 22:47:23.128', 512.4); 
+select * from @tv;
+go
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_0_a_key")~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
+~~END~~
+
+
+exec TestTableType_vu_prepare_proc1;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text#!#int#!#int#!#int
+hello1#!#1#!#1001#!#1004
+hello2#!#2#!#1002#!#1004
+~~END~~
+
