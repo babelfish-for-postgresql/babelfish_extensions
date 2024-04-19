@@ -1,7 +1,7 @@
 BEGIN TRANSACTION babel_4815
 GO
 
-SELECT set_config('debug_parallel_query', '1', true)
+SELECT set_config('force_parallel_mode', '1', true)
 SELECT set_config('parallel_setup_cost', '0', true)
 SELECT set_config('parallel_tuple_cost', '0', true)
 select set_config('max_parallel_workers_per_gather', '1', true);
