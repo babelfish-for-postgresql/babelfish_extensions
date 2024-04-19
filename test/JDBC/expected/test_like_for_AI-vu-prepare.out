@@ -1,3 +1,4 @@
+-- tsql
 
 ------------------- CI_AI ----------------------
 CREATE TABLE test_like_for_AI_prepare_t1_ci (
@@ -263,10 +264,10 @@ GO
 
 --- ADDITIONAL CORNER CASE TESTING ---
 -- Insert the string into the table
-CREATE TABLE test_like_for_AI_prepare_max_test(a TEXT);
+CREATE TABLE test_like_for_AI_prepare_max_test(a nvarchar(4000));
 GO
 
-INSERT INTO test_like_for_AI_prepare_max_test VALUES (REPLICATE('a', 10 * 1024 * 1024 + 1));
+INSERT INTO test_like_for_AI_prepare_max_test VALUES (REPLICATE('Æ', 4000));
 GO
 ~~ROW COUNT: 1~~
 
@@ -279,3 +280,32 @@ INSERT INTO test_like_for_AI_prepare_chinese VALUES('中国人'), ('微笑'), ('
 GO
 ~~ROW COUNT: 3~~
 
+
+
+-- psql
+-- TESTS for remove_accents_internal
+-- function
+CREATE FUNCTION sys.test_like_for_AI_prepare_function(input_text TEXT) RETURNS sys.NVARCHAR AS
+$$
+DECLARE
+    output_text sys.NVARCHAR;
+BEGIN
+    output_text := sys.remove_accents_internal(input_text);
+    RETURN output_text;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+-- tsql
+-- view
+CREATE VIEW test_like_for_AI_prepare_view AS
+SELECT
+    sys.remove_accents_internal(col) AS cleaned_col
+FROM
+    test_like_for_AI_prepare_t1_ci;
+GO
+
+-- procedure
+CREATE PROCEDURE test_like_for_AI_prepare_procedure @input_text TEXT AS
+SELECT sys.remove_accents_internal(@input_text);
+GO

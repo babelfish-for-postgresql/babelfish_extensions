@@ -32,6 +32,13 @@
  */
 #define TRANSFORMATION_RULE "[[:Latin:][:Nd:]]; Latin-ASCII"
 
+/*
+ * The maximum number of bytes per character is 4 according 
+ * to RFC3629 which limited the character table to U+10FFFF
+ * Ref: https://www.rfc-editor.org/rfc/rfc3629#section-3
+ */
+#define MAX_BYTES_PER_CHAR 4
+
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
@@ -485,7 +492,12 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	pfree(input_str);
 
 	limit = len_uinput;
-	capacity = MaxAttrSize / sizeof(char);
+	/* 
+	 * set the capacity to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
+	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can 
+	 * has maximum INT32_MAX value
+	 */
+	capacity = limit * MAX_BYTES_PER_CHAR < INT32_MAX ? limit * MAX_BYTES_PER_CHAR : INT32_MAX;
 
 	utrans_transUChars(cached_transliterator,
 						utf16_input,

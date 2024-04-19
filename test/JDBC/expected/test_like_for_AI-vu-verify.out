@@ -4516,20 +4516,90 @@ nvarchar
 
 
 -- test cases which would test our restriction on capacity of removing accents
-SELECT * FROM test_like_for_AI_prepare_max_test WHERE a LIKE '%a%' COLLATE Latin1_General_CI_AI;
+SELECT count(*) FROM test_like_for_AI_prepare_max_test WHERE a LIKE '%ae%' COLLATE Latin1_General_CI_AI;
 GO
 ~~START~~
-text
-~~ERROR (Code: 33557097)~~
+int
+1
+~~END~~
 
-~~ERROR (Message: Error normalising the input string: U_ILLEGAL_ARGUMENT_ERROR)~~
 
-
-SELECT * FROM test_like_for_AI_prepare_max_test WHERE a COLLATE Latin1_General_CI_AI LIKE '%Á%'
+SELECT count(*) FROM test_like_for_AI_prepare_max_test WHERE a COLLATE Latin1_General_CI_AI LIKE '%Áe%'
 GO
 ~~START~~
-text
-~~ERROR (Code: 33557097)~~
+int
+1
+~~END~~
 
-~~ERROR (Message: Error normalising the input string: U_ILLEGAL_ARGUMENT_ERROR)~~
+
+
+-- TESTS for remove_accents_internal
+-- function
+SELECT sys.test_like_for_AI_prepare_function('ǪǞǛ');
+GO
+~~START~~
+nvarchar
+OAU
+~~END~~
+
+
+SELECT sys.test_like_for_AI_prepare_function('ĵķżƁ');
+GO
+~~START~~
+nvarchar
+jkzB
+~~END~~
+
+
+SELECT sys.test_like_for_AI_prepare_function('ȌÆß');
+GO
+~~START~~
+nvarchar
+OAEss
+~~END~~
+
+
+-- view
+SELECT * FROM test_like_for_AI_prepare_view;
+GO
+~~START~~
+nvarchar
+cafe
+jalapeno
+resume
+naive
+Pinata
+Ano Nuevo
+TELEFONO
+pelicula
+arbol
+canape
+chapteR
+TEnniS
+~~END~~
+
+
+-- procedure
+EXEC test_like_for_AI_prepare_procedure @input_text = 'ǪǞǛ';
+GO
+~~START~~
+nvarchar
+OAU
+~~END~~
+
+
+EXEC test_like_for_AI_prepare_procedure @input_text = 'ĵķżƁ';
+GO
+~~START~~
+nvarchar
+jkzB
+~~END~~
+
+
+EXEC test_like_for_AI_prepare_procedure @input_text = 'ȌÆß';
+GO
+~~START~~
+nvarchar
+OAEss
+~~END~~
 

@@ -1635,8 +1635,34 @@ SELECT * FROM test_like_for_AI_prepare_t7_cs WHERE col COLLATE Latin1_General_CS
 GO
 
 -- test cases which would test our restriction on capacity of removing accents
-SELECT * FROM test_like_for_AI_prepare_max_test WHERE a LIKE '%a%' COLLATE Latin1_General_CI_AI;
+SELECT count(*) FROM test_like_for_AI_prepare_max_test WHERE a LIKE '%ae%' COLLATE Latin1_General_CI_AI;
 GO
 
-SELECT * FROM test_like_for_AI_prepare_max_test WHERE a COLLATE Latin1_General_CI_AI LIKE '%Á%'
+SELECT count(*) FROM test_like_for_AI_prepare_max_test WHERE a COLLATE Latin1_General_CI_AI LIKE '%Áe%'
+GO
+
+-- TESTS for remove_accents_internal
+
+-- function
+SELECT sys.test_like_for_AI_prepare_function('ǪǞǛ');
+GO
+
+SELECT sys.test_like_for_AI_prepare_function('ĵķżƁ');
+GO
+
+SELECT sys.test_like_for_AI_prepare_function('ȌÆß');
+GO
+
+-- view
+SELECT * FROM test_like_for_AI_prepare_view;
+GO
+
+-- procedure
+EXEC test_like_for_AI_prepare_procedure @input_text = 'ǪǞǛ';
+GO
+
+EXEC test_like_for_AI_prepare_procedure @input_text = 'ĵķżƁ';
+GO
+
+EXEC test_like_for_AI_prepare_procedure @input_text = 'ȌÆß';
 GO
