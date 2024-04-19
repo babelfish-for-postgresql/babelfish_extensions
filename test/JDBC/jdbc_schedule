@@ -225,6 +225,9 @@ ignore#!#BABEL-4641-before-16_3-or-15_7-or-14_12-vu-cleanup
 ignore#!#BABEL-3147-before-16_3-or-15_7-or-14_12-vu-prepare
 ignore#!#BABEL-3147-before-16_3-or-15_7-or-14_12-vu-verify
 ignore#!#BABEL-3147-before-16_3-or-15_7-or-14_12-vu-cleanup
+ignore#!#BABEL-4863-before-16_3-or-15_7-or-14_12-vu-prepare
+ignore#!#BABEL-4863-before-16_3-or-15_7-or-14_12-vu-verify
+ignore#!#BABEL-4863-before-16_3-or-15_7-or-14_12-vu-cleanup
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
