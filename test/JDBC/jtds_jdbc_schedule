@@ -84,8 +84,9 @@ jtds-TestStoredProcedures
 # jTDS calls sp_cursorfetch procedure with FETCH_INFO (100) option
 # TestCursorFetchNext
 # Failure:
-# ERROR:  column "@p0" does not exist at character 59
-# QUERY:  SELECT * FROM test_cursor_prep_exec_fetch_next WHERE b >  @P0
+# LOG:  Unmapped error found. Code: 1088, Message: 
+#	 Tds SP_CURSORPREPARE not supported yet, File: tdsrpc.c, Line: 3367, Context: TDS
+# jTDS calls sp_cursorprepare procedure with unsupported parameters
 # TestCursorPrepExecFetchNext
 
 # transactions
