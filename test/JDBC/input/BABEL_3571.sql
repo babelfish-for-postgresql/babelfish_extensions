@@ -354,3 +354,25 @@ GO
 
 DROP TABLE babel_3571_1, babel_3571_2, babel_3571_3
 GO
+
+CREATE TABLE babel_3571_1 (id INT)
+GO
+INSERT INTO babel_3571_1 VALUES (NULL), (NULL)
+GO
+-- more than one NULL value, unqiue constraint/index creation should error out
+ALTER TABLE babel_3571_1 ADD CONSTRAINT babel_3571_constraint UNIQUE (id)
+GO
+CREATE UNIQUE INDEX babel_3571_idx ON babel_3571_1(id)
+GO
+-- now table will contain only one NULL value and create unique index/constraint shoudl start working
+DELETE TOP (1) FROM babel_3571_1 WHERE id IS NULL;
+GO
+ALTER TABLE babel_3571_1 ADD CONSTRAINT babel_3571_constraint UNIQUE (id)
+GO
+CREATE UNIQUE INDEX babel_3571_idx ON babel_3571_1(id)
+GO
+-- SHould not be able to insert this
+INSERT INTO babel_3571_1 VALUES (NULL)
+GO
+DROP TABLE babel_3571_1
+GO

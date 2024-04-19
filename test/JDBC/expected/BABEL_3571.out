@@ -818,3 +818,41 @@ on
 
 DROP TABLE babel_3571_1, babel_3571_2, babel_3571_3
 GO
+
+CREATE TABLE babel_3571_1 (id INT)
+GO
+INSERT INTO babel_3571_1 VALUES (NULL), (NULL)
+GO
+~~ROW COUNT: 2~~
+
+-- more than one NULL value, unqiue constraint/index creation should error out
+ALTER TABLE babel_3571_1 ADD CONSTRAINT babel_3571_constraint UNIQUE (id)
+GO
+~~ERROR (Code: 1505)~~
+
+~~ERROR (Message: could not create unique index "babel_3571_constraintbabel_3571c746e4b45548ea46bfc9090993bb46c3")~~
+
+CREATE UNIQUE INDEX babel_3571_idx ON babel_3571_1(id)
+GO
+~~ERROR (Code: 1505)~~
+
+~~ERROR (Message: could not create unique index "babel_3571_idxbabel_3571_176ad772d1712c20d411961692b38d002")~~
+
+-- now table will contain only one NULL value and create unique index/constraint shoudl start working
+DELETE TOP (1) FROM babel_3571_1 WHERE id IS NULL;
+GO
+~~ROW COUNT: 1~~
+
+ALTER TABLE babel_3571_1 ADD CONSTRAINT babel_3571_constraint UNIQUE (id)
+GO
+CREATE UNIQUE INDEX babel_3571_idx ON babel_3571_1(id)
+GO
+-- SHould not be able to insert this
+INSERT INTO babel_3571_1 VALUES (NULL)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_constraintbabel_3571c746e4b45548ea46bfc9090993bb46c3")~~
+
+DROP TABLE babel_3571_1
+GO
