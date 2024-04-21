@@ -1,6 +1,5 @@
 package com.sqlsamples;
 
-import net.sourceforge.jtds.jdbc.JtdsConnection;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedWriter;
@@ -52,7 +51,8 @@ public class JDBCCursor {
     }
 
     void setHoldabilityOnConnection(Connection conn, int holdability) throws SQLException {
-        if (conn instanceof JtdsConnection && ResultSet.CLOSE_CURSORS_AT_COMMIT == holdability) {
+        if ("JtdsConnection".equals(conn.getClass().getSimpleName()) &&
+                ResultSet.CLOSE_CURSORS_AT_COMMIT == holdability) {
             // CLOSE_CURSORS_AT_COMMIT option not supported i jTDS
             return;
         }

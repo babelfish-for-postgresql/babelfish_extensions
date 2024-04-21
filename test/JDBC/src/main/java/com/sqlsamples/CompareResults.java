@@ -1,7 +1,5 @@
 package com.sqlsamples;
 
-import org.junit.jupiter.api.Assertions;
-import org.opentest4j.AssertionFailedError;
 import microsoft.sql.DateTimeOffset;
 import org.apache.logging.log4j.Logger;
 

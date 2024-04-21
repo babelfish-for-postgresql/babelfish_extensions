@@ -59,8 +59,9 @@ TestImage-vu-cleanup
 # TestSQLVariant-vu-prepare
 # TestSQLVariant-vu-verify
 # TestSQLVariant-vu-cleanup
-# Failure: conn.createSQLXML() is not supported in jTDS
-# TestXML
+# jTDS reports XML column as ntext in ResultSetMetaData, this behaviour is the same
+# with both MSSQL and Babelfish
+jtds-TestXML
 jtds-TestTableType-vu-prepare
 jtds-TestTableType-vu-verify
 jtds-TestTableType-vu-cleanup
@@ -91,7 +92,6 @@ jtds-TestStoredProcedures
 
 # transactions
 TestTransactionsSQLBatch
-# See comment to TestSimpleErrors above
 jtds-TestTransactionSupportForProcedure
 
 # temporary

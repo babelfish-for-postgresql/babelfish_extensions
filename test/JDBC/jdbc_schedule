@@ -321,4 +321,5 @@ ignore#!#jtds-TestErrorsWithTryCatch
 ignore#!#jtds-TestSQLQueries
 ignore#!#jtds-TestStoredProcedures
 ignore#!#jtds-TestTransactionSupportForProcedure
+ignore#!#jtds-TestXML
 ignore#!#jtds-varchar-max-length-check

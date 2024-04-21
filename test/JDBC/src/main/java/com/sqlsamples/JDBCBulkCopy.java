@@ -1,7 +1,6 @@
 package com.sqlsamples;
 
 import com.microsoft.sqlserver.jdbc.SQLServerBulkCopy;
-import com.microsoft.sqlserver.jdbc.SQLServerException;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedWriter;

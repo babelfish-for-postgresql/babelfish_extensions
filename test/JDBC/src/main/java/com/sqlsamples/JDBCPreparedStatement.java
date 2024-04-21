@@ -15,7 +15,6 @@ import java.sql.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -156,9 +155,13 @@ public class JDBCPreparedStatement {
                     byte [] byteArray = bos.toByteArray();
                     pstmt.setBytes(j - 1, byteArray);
                 } else if (parameter[0].equalsIgnoreCase("xml")) {
-                    SQLXML sqlxml = pstmt.getConnection().createSQLXML();
-                    sqlxml.setString(parameter[2]);
-                    pstmt.setSQLXML(j - 1, sqlxml);
+                    if ("JtdsPreparedStatement".equals(pstmt.getClass().getSimpleName())) {
+                        pstmt.setString(j - 1, parameter[2]);
+                    } else {
+                        SQLXML sqlxml = pstmt.getConnection().createSQLXML();
+                        sqlxml.setString(parameter[2]);
+                        pstmt.setSQLXML(j - 1, sqlxml);
+                    }
                 } else if (parameter[0].equalsIgnoreCase("tvp")) {
                     FileInputStream fstream = new FileInputStream(Paths.get(Paths.get("").toAbsolutePath().toString(), parameter[2]).toString());
                     DataInputStream in = new DataInputStream(fstream);
