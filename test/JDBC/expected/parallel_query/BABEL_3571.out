@@ -1,0 +1,894 @@
+
+-- deprecated escape hatch should not throw an error but print a simple message
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+CREATE TABLE babel_3571_t (id INT)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+EXEC sp_babelfish_configure 'escape_hatch_unique_constraint', 'ignore';
+INSERT INTO babel_3571_t VALUES (1);
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Config option babelfishpg_tsql.escape_hatch_unique_constraint has been deprecated, babelfish now supports unique constraints on nullable columns  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE PROC babel_3571_p
+AS
+BEGIN
+    EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore', 'server';
+    INSERT INTO babel_3571_t VALUES (1);
+END
+GO
+
+EXEC babel_3571_p
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Config option babelfishpg_tsql.escape_hatch_unique_constraint has been deprecated, babelfish now supports unique constraints on nullable columns  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_3571_t
+GO
+~~START~~
+int
+1
+1
+~~END~~
+
+
+DROP PROC babel_3571_p
+GO
+
+DROP TABLE babel_3571_t
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+
+CREATE TABLE babel_3571_1 (id1 INT UNIQUE, id2 VARCHAR(30) UNIQUE, id3 VARBINARY(30))
+GO
+CREATE TABLE babel_3571_2 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), UNIQUE(id1, id2))
+GO
+CREATE TABLE babel_3571_3 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30))
+GO
+CREATE UNIQUE INDEX babel_3571_3_unique_idx ON babel_3571_3(id1, id2)
+GO
+
+
+-- table 1 id1 & id2 should be individually unique
+INSERT INTO babel_3571_1 VALUES (-1, '-a', 0x0001), (1, '+a', 0x1001), (NULL, '', NULL), (0, NULL, NULL)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_3571_1 VALUES (NULL, 'random', 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_1_id1_key")~~
+
+
+INSERT INTO babel_3571_1 VALUES (9999, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_1_id2_key")~~
+
+
+INSERT INTO babel_3571_1 VALUES (9999, 'random', NULL)
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- table 2 Combination of id1 & id2 should be unique
+INSERT INTO babel_3571_2 VALUES (-1, '-a', 0x0001), (1, '+a', 0x1001), (NULL, '', NULL), (0, NULL, NULL)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_3571_2 VALUES (NULL, '', 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_id1_id2_key")~~
+
+
+INSERT INTO babel_3571_2 VALUES (0, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_id1_id2_key")~~
+
+
+INSERT INTO babel_3571_2 VALUES (NULL, NULL, NULL)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_3571_2 VALUES (NULL, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_id1_id2_key")~~
+
+
+
+-- table 3 Combination of id1 & id2 should be unique
+INSERT INTO babel_3571_3 VALUES (-1, '-a', 0x0001), (1, '+a', 0x1001), (NULL, '', NULL), (0, NULL, NULL)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_3571_3 VALUES (NULL, '', 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
+
+
+INSERT INTO babel_3571_3 VALUES (0, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
+
+
+INSERT INTO babel_3571_3 VALUES (NULL, NULL, NULL)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_3571_3 VALUES (NULL, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
+
+
+SELECT indexdef FROM pg_indexes 
+WHERE tablename LIKE '%babel_3571%'
+ORDER BY indexdef
+GO
+~~START~~
+text
+CREATE UNIQUE INDEX babel_3571_1_id1_key ON master_dbo.babel_3571_1 USING btree (id1 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree (id2 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1 NULLS FIRST, id2 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce ON master_dbo.babel_3571_3 USING btree (id1 NULLS FIRST, id2 NULLS FIRST) NULLS NOT DISTINCT
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE ON;
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_seqscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+SELECT * FROM babel_3571_1 ORDER BY id1
+GO
+~~START~~
+int#!#varchar#!#varbinary
+<NULL>#!##!#<NULL>
+-1#!#-a#!#0001
+0#!#<NULL>#!#<NULL>
+1#!#+a#!#1001
+9999#!#random#!#<NULL>
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_3571_1 ORDER BY id1
+Gather (actual rows=5 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5 loops=1)
+~~END~~
+
+SELECT * FROM babel_3571_2 ORDER BY id1
+GO
+~~START~~
+int#!#varchar#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!##!#<NULL>
+-1#!#-a#!#0001
+0#!#<NULL>#!#<NULL>
+1#!#+a#!#1001
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_3571_2 ORDER BY id1
+Gather (actual rows=5 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Scan using babel_3571_2_id1_id2_key on babel_3571_2 (actual rows=5 loops=1)
+~~END~~
+
+SELECT * FROM babel_3571_3 ORDER BY id1
+GO
+~~START~~
+int#!#varchar#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!##!#<NULL>
+-1#!#-a#!#0001
+0#!#<NULL>#!#<NULL>
+1#!#+a#!#1001
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_3571_3 ORDER BY id1
+Gather (actual rows=5 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Scan using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=5 loops=1)
+~~END~~
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+DROP TABLE babel_3571_1, babel_3571_2, babel_3571_3
+GO
+
+
+-- Repeat same tests but with more table/column specification
+CREATE TABLE babel_3571_1 (id1 INT NOT NULL UNIQUE NULL, id2 VARCHAR(30) UNIQUE, id3 VARBINARY(30) PRIMARY KEY)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: conflicting NULL/NOT NULL declarations for column "id1" of table "babel_3571_1")~~
+
+CREATE TABLE babel_3571_1 (id1 INT NOT NULL UNIQUE, id2 VARCHAR(30) UNIQUE NOT NULL, id3 VARBINARY(30) PRIMARY KEY)
+GO
+CREATE TABLE babel_3571_2 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), UNIQUE(id1 ASC, id2 DESC), PRIMARY KEY (id3))
+GO
+CREATE TABLE babel_3571_3 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30))
+GO
+ALTER TABLE babel_3571_3 ADD CONSTRAINT babel_3571_3_pkey PRIMARY KEY (id3)
+GO
+ALTER TABLE babel_3571_3 ADD CONSTRAINT babel_3571_3_unique_idx UNIQUE (id1 DESC, id2 ASC)
+GO
+
+
+-- table 1 id1 & id2 should be individually unique
+INSERT INTO babel_3571_1 VALUES (-1, '-a', 0x0001), (1, '+a', 0x1001), (2, '', 0x0002), (0, 'something', 0x0003)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_3571_1 VALUES (NULL, 'random', 0x9999)
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "id1" of relation "babel_3571_1" violates not-null constraint)~~
+
+
+INSERT INTO babel_3571_1 VALUES (9999, NULL, 0x9999)
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "id2" of relation "babel_3571_1" violates not-null constraint)~~
+
+
+INSERT INTO babel_3571_1 VALUES (9999, 'random', NULL)
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "id3" of relation "babel_3571_1" violates not-null constraint)~~
+
+
+INSERT INTO babel_3571_1 VALUES (9999, 'random', 0x1234)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_3571_1 VALUES (8888, 'random_again', 0x1234)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_1_pkey")~~
+
+
+
+-- table 2 Combination of id1 & id2 should be unique
+INSERT INTO babel_3571_2 VALUES (-1, '-a', 0x0001), (1, '+a', 0x1001), (NULL, '', 0x0002), (0, NULL, 0x0003)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_3571_2 VALUES (NULL, '', 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_id1_id2_key")~~
+
+
+INSERT INTO babel_3571_2 VALUES (0, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_id1_id2_key")~~
+
+
+INSERT INTO babel_3571_2 VALUES (1234, 'somethingrandom', NULL)
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "id3" of relation "babel_3571_2" violates not-null constraint)~~
+
+
+INSERT INTO babel_3571_2 VALUES (1234, 'somethingrandom', 0x1234)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_3571_2 VALUES (4321, 'somethingrandomagain', 0x1234)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_pkey")~~
+
+
+
+-- table 3 Combination of id1 & id2 should be unique
+INSERT INTO babel_3571_3 VALUES (-1, '-a', 0x0001), (1, '+a', 0x1001), (NULL, '', 0x0002), (0, NULL, 0x0003)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_3571_3 VALUES (NULL, '', 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
+
+
+INSERT INTO babel_3571_3 VALUES (9999, NULL, 0x9999)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_3571_3 VALUES (0, 'somethingagain', NULL)
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "id3" of relation "babel_3571_3" violates not-null constraint)~~
+
+
+INSERT INTO babel_3571_3 VALUES (0, 'somethingagain', 0x1234)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_3571_3 VALUES (8888, 'newsomething', 0x1234)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0")~~
+
+
+SELECT indexdef FROM pg_indexes 
+WHERE tablename LIKE '%babel_3571%'
+ORDER BY indexdef
+GO
+~~START~~
+text
+CREATE UNIQUE INDEX babel_3571_1_id1_key ON master_dbo.babel_3571_1 USING btree (id1 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree (id2 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_1_pkey ON master_dbo.babel_3571_1 USING btree (id3)
+CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1 NULLS FIRST, id2 DESC NULLS LAST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_2_pkey ON master_dbo.babel_3571_2 USING btree (id3)
+CREATE UNIQUE INDEX babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0 ON master_dbo.babel_3571_3 USING btree (id3)
+CREATE UNIQUE INDEX babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce ON master_dbo.babel_3571_3 USING btree (id1 DESC NULLS LAST, id2 NULLS FIRST) NULLS NOT DISTINCT
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE ON;
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_seqscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+SELECT * FROM babel_3571_1 ORDER BY id1
+GO
+~~START~~
+int#!#varchar#!#varbinary
+-1#!#-a#!#0001
+0#!#something#!#0003
+1#!#+a#!#1001
+2#!##!#0002
+9999#!#random#!#1234
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_3571_1 ORDER BY id1
+Gather (actual rows=5 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5 loops=1)
+~~END~~
+
+SELECT * FROM babel_3571_2 ORDER BY id1
+GO
+~~START~~
+int#!#varchar#!#varbinary
+<NULL>#!##!#0002
+-1#!#-a#!#0001
+0#!#<NULL>#!#0003
+1#!#+a#!#1001
+1234#!#somethingrandom#!#1234
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_3571_2 ORDER BY id1
+Gather (actual rows=5 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Scan using babel_3571_2_id1_id2_key on babel_3571_2 (actual rows=5 loops=1)
+~~END~~
+
+SELECT * FROM babel_3571_3 ORDER BY id1
+GO
+~~START~~
+int#!#varchar#!#varbinary
+<NULL>#!##!#0002
+-1#!#-a#!#0001
+0#!#somethingagain#!#1234
+0#!#<NULL>#!#0003
+1#!#+a#!#1001
+9999#!#<NULL>#!#9999
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_3571_3 ORDER BY id1
+Gather (actual rows=6 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Scan Backward using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=6 loops=1)
+~~END~~
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+-- drop constraint
+ALTER TABLE babel_3571_3 DROP CONSTRAINT babel_3571_3_unique_idx
+GO
+
+-- duplicate values should now accepted in col1 & col2
+INSERT INTO babel_3571_3 VALUES (NULL, NULL, 0X91)
+INSERT INTO babel_3571_3 VALUES (1, '+a', 0X92)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- primary key col should still block duplicates
+INSERT INTO babel_3571_3 VALUES (NULL, NULL, 0X0001)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0")~~
+
+
+SELECT indexdef FROM pg_indexes 
+WHERE tablename LIKE '%babel_3571%'
+ORDER BY indexdef
+GO
+~~START~~
+text
+CREATE UNIQUE INDEX babel_3571_1_id1_key ON master_dbo.babel_3571_1 USING btree (id1 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree (id2 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_1_pkey ON master_dbo.babel_3571_1 USING btree (id3)
+CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1 NULLS FIRST, id2 DESC NULLS LAST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_2_pkey ON master_dbo.babel_3571_2 USING btree (id3)
+CREATE UNIQUE INDEX babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0 ON master_dbo.babel_3571_3 USING btree (id3)
+~~END~~
+
+
+
+-- DROP primary keys as well
+ALTER TABLE babel_3571_3 DROP CONSTRAINT babel_3571_3_pkey
+-- duplicates should work in col3 now
+INSERT INTO babel_3571_3 VALUES (NULL, NULL, 0X0001)
+GO
+~~ROW COUNT: 1~~
+
+
+DROP TABLE babel_3571_1, babel_3571_2, babel_3571_3
+GO
+
+
+
+-- CREATE TABLE WITH CONSTRAINT -- DROP COLUMN -- ADD COLUMN WITHOUT CONTRAINT
+CREATE TABLE babel_3571_1 (id1 INT UNIQUE, id2 int)
+GO
+CREATE TABLE babel_3571_2 (id1 INT, UNIQUE(id1), id2 int)
+GO
+CREATE TABLE babel_3571_3 (id1 INT, id2 int)
+GO
+CREATE UNIQUE INDEX babel_3571_3_unique_idx ON babel_3571_3(id1)
+GO
+
+ALTER TABLE babel_3571_1 DROP COLUMN id1;
+ALTER TABLE babel_3571_2 DROP COLUMN id1;
+ALTER TABLE babel_3571_3 DROP COLUMN id1;
+GO
+
+ALTER TABLE babel_3571_1 ADD id1 INT;
+ALTER TABLE babel_3571_2 ADD id1 INT;
+ALTER TABLE babel_3571_3 ADD id1 INT;
+GO
+
+INSERT INTO babel_3571_1 VALUES (1,1), (1,1), (NULL, NULL), (NULL, NULL);
+INSERT INTO babel_3571_2 VALUES (1,1), (1,1), (NULL, NULL), (NULL, NULL);
+INSERT INTO babel_3571_3 VALUES (1,1), (1,1), (NULL, NULL), (NULL, NULL);
+GO
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 4~~
+
+
+DROP TABLE babel_3571_1, babel_3571_2, babel_3571_3
+GO
+
+-- Test with identity column
+CREATE TABLE babel_3571_1 (id1 INT IDENTITY UNIQUE, id2 int)
+GO
+CREATE TABLE babel_3571_2 (id1 INT IDENTITY, UNIQUE(id1), id2 int)
+GO
+CREATE TABLE babel_3571_3 (id1 INT IDENTITY, id2 int)
+GO
+CREATE UNIQUE INDEX babel_3571_3_unique_idx ON babel_3571_3(id1)
+GO
+
+INSERT INTO babel_3571_1 VALUES (1), (2), (3)
+INSERT INTO babel_3571_2 VALUES (1), (2), (3)
+INSERT INTO babel_3571_3 VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+
+SET IDENTITY_INSERT dbo.babel_3571_1 ON;
+GO
+
+-- shoudl fail
+INSERT INTO babel_3571_1 (id1, id2) VALUES (1,10)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_1_id1_key")~~
+
+INSERT INTO babel_3571_1 (id1, id2) VALUES (NULL,10)
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "id1" of relation "babel_3571_1" violates not-null constraint)~~
+
+
+-- should insert
+INSERT INTO babel_3571_1 (id1, id2) VALUES (4,10)
+INSERT INTO babel_3571_1 (id1, id2) VALUES (5, NULL)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SET IDENTITY_INSERT dbo.babel_3571_1 OFF;
+GO
+
+SET IDENTITY_INSERT dbo.babel_3571_2 ON;
+GO
+
+-- shoudl fail
+INSERT INTO babel_3571_2 (id1, id2) VALUES (1,10)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_id1_key")~~
+
+INSERT INTO babel_3571_2 (id1, id2) VALUES (NULL,10)
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "id1" of relation "babel_3571_2" violates not-null constraint)~~
+
+
+-- should insert
+INSERT INTO babel_3571_2 (id1, id2) VALUES (4,10)
+INSERT INTO babel_3571_2 (id1, id2) VALUES (5, NULL)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SET IDENTITY_INSERT dbo.babel_3571_2 OFF;
+GO
+
+SET IDENTITY_INSERT dbo.babel_3571_3 ON;
+GO
+
+-- shoudl fail
+INSERT INTO babel_3571_3 (id1, id2) VALUES (1,10)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
+
+INSERT INTO babel_3571_3 (id1, id2) VALUES (NULL,10)
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "id1" of relation "babel_3571_3" violates not-null constraint)~~
+
+
+-- should insert
+INSERT INTO babel_3571_3 (id1, id2) VALUES (4,10)
+INSERT INTO babel_3571_3 (id1, id2) VALUES (5, NULL)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SET IDENTITY_INSERT dbo.babel_3571_3 OFF;
+GO
+
+SELECT indexdef FROM pg_indexes 
+WHERE tablename LIKE '%babel_3571%'
+ORDER BY indexdef
+GO
+~~START~~
+text
+CREATE UNIQUE INDEX babel_3571_1_id1_key ON master_dbo.babel_3571_1 USING btree (id1 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_2_id1_key ON master_dbo.babel_3571_2 USING btree (id1 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce ON master_dbo.babel_3571_3 USING btree (id1 NULLS FIRST) NULLS NOT DISTINCT
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE ON;
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_seqscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+SELECT * FROM babel_3571_1 ORDER BY id1
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#10
+5#!#<NULL>
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_3571_1 ORDER BY id1
+Gather (actual rows=5 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5 loops=1)
+~~END~~
+
+SELECT * FROM babel_3571_2 ORDER BY id1
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#10
+5#!#<NULL>
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_3571_2 ORDER BY id1
+Gather (actual rows=5 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Scan using babel_3571_2_id1_key on babel_3571_2 (actual rows=5 loops=1)
+~~END~~
+
+SELECT * FROM babel_3571_3 ORDER BY id1
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#10
+5#!#<NULL>
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_3571_3 ORDER BY id1
+Gather (actual rows=5 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Scan using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=5 loops=1)
+~~END~~
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+DROP TABLE babel_3571_1, babel_3571_2, babel_3571_3
+GO
+
+CREATE TABLE babel_3571_1 (id INT)
+GO
+INSERT INTO babel_3571_1 VALUES (NULL), (NULL)
+GO
+~~ROW COUNT: 2~~
+
+-- more than one NULL value, unqiue constraint/index creation should error out
+ALTER TABLE babel_3571_1 ADD CONSTRAINT babel_3571_constraint UNIQUE (id)
+GO
+~~ERROR (Code: 1505)~~
+
+~~ERROR (Message: could not create unique index "babel_3571_constraintbabel_3571c746e4b45548ea46bfc9090993bb46c3")~~
+
+CREATE UNIQUE INDEX babel_3571_idx ON babel_3571_1(id)
+GO
+~~ERROR (Code: 1505)~~
+
+~~ERROR (Message: could not create unique index "babel_3571_idxbabel_3571_176ad772d1712c20d411961692b38d002")~~
+
+-- now table will contain only one NULL value and create unique index/constraint shoudl start working
+DELETE TOP (1) FROM babel_3571_1 WHERE id IS NULL;
+GO
+~~ROW COUNT: 1~~
+
+ALTER TABLE babel_3571_1 ADD CONSTRAINT babel_3571_constraint UNIQUE (id)
+GO
+CREATE UNIQUE INDEX babel_3571_idx ON babel_3571_1(id)
+GO
+-- SHould not be able to insert this
+INSERT INTO babel_3571_1 VALUES (NULL)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_constraintbabel_3571c746e4b45548ea46bfc9090993bb46c3")~~
+
+DROP TABLE babel_3571_1
+GO

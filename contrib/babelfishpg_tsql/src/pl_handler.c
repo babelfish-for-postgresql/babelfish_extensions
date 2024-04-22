@@ -90,7 +90,6 @@
 
 #include "access/xact.h"
 
-extern bool escape_hatch_unique_constraint;
 extern int  escape_hatch_set_transaction_isolation_level;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
@@ -146,10 +145,6 @@ extern void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid language
 extern void pltsql_function_probin_reader(ParseState *pstate, List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
 static void check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column);
 static bool is_identity_constraint(ColumnDef *column);
-static bool has_unique_nullable_constraint(ColumnDef *column);
-static bool has_nullable_constraint(ColumnDef *column);
-static bool is_nullable_constraint(Constraint *cst, Oid rel_oid);
-static bool is_nullable_index(IndexStmt *stmt);
 extern PLtsql_function *find_cached_batch(int handle);
 extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args);
 Datum		sp_prepare(PG_FUNCTION_ARGS);
@@ -162,7 +157,6 @@ extern char *construct_unique_index_name(char *index_name, char *relation_name);
 extern int	CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
 static void pltsql_non_tsql_proc_entry(int proc_count, int sys_func_count);
-static bool get_attnotnull(Oid relid, AttrNumber attnum);
 static void set_procid(Oid oid);
 static bool is_rowversion_column(ParseState *pstate, ColumnDef *column);
 static void validate_rowversion_column_constraints(ColumnDef *column);
@@ -1009,14 +1003,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 												 errmsg("Only one identity column is allowed in a table")));
 									seen_identity = true;
 								}
-								if (escape_hatch_unique_constraint != EH_IGNORE &&
-									has_unique_nullable_constraint((ColumnDef *) element))
-								{
-									ereport(ERROR,
-											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-											 errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-													"or add a NOT NULL constraint")));
-								}
 								if (is_rowversion_column(pstate, (ColumnDef *) element))
 								{
 									ColumnDef  *def = (ColumnDef *) element;
@@ -1034,48 +1020,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 							case T_Constraint:
 								{
 									Constraint *c = (Constraint *) element;
-									ListCell   *lc;
 
 									c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
-
-									if (escape_hatch_unique_constraint != EH_IGNORE &&
-										c->contype == CONSTR_UNIQUE)
-									{
-										foreach(lc, (List *) c->keys)
-										{
-											char	*colname = NULL;
-											int		 colname_len = 0;
-
-											/* T-SQL Parser might have directly prepared IndexElem instead of String*/
-											if (nodeTag(lfirst(lc)) == T_IndexElem) {
-												IndexElem *ie = (IndexElem *) lfirst(lc);
-												colname = ie->name;
-												colname_len = strlen(colname);
-											} else {
-												colname = strVal(lfirst(lc));
-												colname_len = strlen(colname);
-											}
-
-											foreach(elements, stmt->tableElts)
-											{
-												Node	*element = lfirst(elements);
-												if (nodeTag(element) == T_ColumnDef)
-												{
-													ColumnDef* def = (ColumnDef *) element;
-
-													if (strlen(def->colname) == colname_len &&
-														strncmp(def->colname, colname, colname_len) == 0 &&
-														has_nullable_constraint(def))
-													{
-														ereport(ERROR,
-															(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-															errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-																"or add a NOT NULL constraint")));
-													}
-												}
-											}
-										}
-									}
 
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
@@ -1146,14 +1092,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 												 errmsg("Only one identity column is allowed in a table")));
 									seen_identity = true;
 								}
-								if (escape_hatch_unique_constraint != EH_IGNORE &&
-									has_unique_nullable_constraint(castNode(ColumnDef, cmd->def)))
-								{
-									ereport(ERROR,
-											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-												"or add a NOT NULL constraint")));
-								}
 								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
 								{
 									ColumnDef  *def = castNode(ColumnDef, cmd->def);
@@ -1173,16 +1111,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 									Constraint *c = castNode(Constraint, cmd->def);
 
 									c->conname = construct_unique_index_name(c->conname, atstmt->relation->relname);
-
-									if (escape_hatch_unique_constraint != EH_IGNORE &&
-										c->contype == CONSTR_UNIQUE &&
-										is_nullable_constraint(c, relid))
-									{
-										ereport(ERROR,
-												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												 errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-														"or add a NOT NULL constraint")));
-									}
 
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
@@ -1277,16 +1205,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 					IndexStmt  *stmt = (IndexStmt *) parsetree;
 
 					stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
-
-					if (escape_hatch_unique_constraint != EH_IGNORE &&
-						stmt->unique &&
-						is_nullable_index(stmt))
-					{
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Nullable UNIQUE index is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-										"or add a NOT NULL constraint")));
-					}
 				}
 				break;
 			case T_CreateTableAsStmt:
@@ -1933,158 +1851,6 @@ check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column)
 				 errmsg("Could not create IDENTITY attribute on nullable column '%s', table '%s'.",
 						column->colname,
 						relation->relname)));
-}
-
-static bool
-has_unique_nullable_constraint(ColumnDef *column)
-{
-	ListCell   *clist;
-	bool		is_unique = false;
-	bool		is_notnull = false;
-
-	foreach(clist, column->constraints)
-	{
-		Constraint *constraint = lfirst_node(Constraint, clist);
-
-		switch (constraint->contype)
-		{
-			case CONSTR_UNIQUE:
-				is_unique = true;
-				break;
-			case CONSTR_NOTNULL:
-				is_notnull = true;
-				break;
-			default:
-				break;
-		}
-	}
-
-	return is_unique & !is_notnull;
-}
-
-/* has_nullable_constraint
- *		Given a Column definition
- *		return true if column does not have any NOT NULL constraint else false
- */
-static bool
-has_nullable_constraint(ColumnDef *column)
-{
-	ListCell   *clist;
-	bool		is_notnull = false;
-
-	foreach(clist, column->constraints)
-	{
-		Constraint *constraint = lfirst_node(Constraint, clist);
-
-		switch (constraint->contype)
-		{
-			case CONSTR_NOTNULL:
-				is_notnull = true;
-				break;
-			default:
-				break;
-		}
-	}
-
-	return !is_notnull;
-}
-
-/* is_nullable_constraint
- *		Given a Constraint
- *		return true if atleast one of the attribute in the constraint is nullable else false
- */
-static bool
-is_nullable_constraint(Constraint *cst, Oid rel_oid)
-{
-	ListCell   *lc;
-	bool		is_null = false;
-
-	/* Loop through the constraint keys */
-	foreach(lc, cst->keys)
-	{
-		Node       *node = (Node *) lfirst(lc);
-		String	   *strval;
-		const char *col_name = NULL;
-		AttrNumber	attnum = InvalidAttrNumber;
-
-		if (nodeTag(node) == T_IndexElem){
-			col_name = ((IndexElem *)node)->name;
-		}
-		else
-		{
-			strval = (String *)node;
-			col_name = strVal(strval);
-		}
-
-		attnum = get_attnum(rel_oid, col_name);
-
-		if (!get_attnotnull(rel_oid, attnum))
-		{
-			/* found a NULL attr, break and return */
-			is_null = true;
-			break;
-		}
-	}
-
-	return is_null;
-}
-
-/*
- * get_attnotnull
- *		Given the relation id and the attribute number,
- *		return the "attnotnull" field from the attribute relation.
- */
-static bool
-get_attnotnull(Oid relid, AttrNumber attnum)
-{
-	HeapTuple	tp;
-	Form_pg_attribute att_tup;
-
-	tp = SearchSysCache2(ATTNUM,
-						 ObjectIdGetDatum(relid),
-						 Int16GetDatum(attnum));
-
-	if (HeapTupleIsValid(tp))
-	{
-		bool result;
-
-		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		result = att_tup->attnotnull;
-
-		ReleaseSysCache(tp);
-
-		return result;
-	}
-	/* Assume att is nullable if no valid heap tuple is found */
-	return false;
-}
-
-/* is_nullable_index
- *		Given an Index Statement
- *		return true if atleast one of the attribute in the index is nullable else false
- */
-static bool
-is_nullable_index(IndexStmt *stmt)
-{
-	ListCell   *lc;
-	bool		is_null = false;
-	Oid			rel_oid = RangeVarGetRelid(stmt->relation, NoLock, false);
-
-	/* Loop through the index columns */
-	foreach(lc, stmt->indexParams)
-	{
-		IndexElem  *elem = lfirst_node(IndexElem, lc);
-		const char *col_name = elem->name;
-		AttrNumber	attnum = get_attnum(rel_oid, col_name);
-
-		if (!get_attnotnull(rel_oid, attnum))
-		{
-			is_null = true;
-			break;
-		}
-	}
-
-	return is_null;
 }
 
 static void
