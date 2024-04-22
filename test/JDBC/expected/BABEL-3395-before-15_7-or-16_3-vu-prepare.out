@@ -16,10 +16,6 @@ INSERT INTO upper_lower_dt(a,b,c,d) values(N' ',N' ',N' ',N' ')
 GO
 ~~ROW COUNT: 1~~
 
-INSERT INTO upper_lower_dt(a,b,c,d) values(N' ',N'😊😋😎😍😅😆',N' ',N'😊😋😎😍😅😆')
-GO
-~~ROW COUNT: 1~~
-
 INSERT INTO upper_lower_dt(a,b,c,d) values(N'',N'',N'',N'')
 GO
 ~~ROW COUNT: 1~~

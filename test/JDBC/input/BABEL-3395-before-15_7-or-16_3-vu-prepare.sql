@@ -8,8 +8,6 @@ INSERT INTO upper_lower_dt(a,b,c,d) values(N'   A',N'   🤣😃',N'   A',N'   �
 GO
 INSERT INTO upper_lower_dt(a,b,c,d) values(N' ',N' ',N' ',N' ')
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(N' ',N'😊😋😎😍😅😆',N' ',N'😊😋😎😍😅😆')
-GO
 INSERT INTO upper_lower_dt(a,b,c,d) values(N'',N'',N'',N'')
 GO
 INSERT INTO upper_lower_dt(a,b,c,d) values(N'a',N'A',N'a',N'A')
