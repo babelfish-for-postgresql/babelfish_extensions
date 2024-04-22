@@ -372,6 +372,7 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 
 #define TOTAL_TSQL_PRECEDENCE_COUNT (sizeof(tsql_precedence_infos)/sizeof(tsql_precedence_infos[0]))
 
+/* Following constants value are defined based on the exception function list */
 #define EFUNC_MAX_ARGS 2
 #define EFUNC_MAX_VALID_TYPES 4
 
@@ -379,6 +380,7 @@ typedef struct tsql_valid_type
 {
 	int		len;
 	char   *valid_types[EFUNC_MAX_VALID_TYPES];
+	Oid		valid_types_oid[EFUNC_MAX_VALID_TYPES];
 } tsql_valid_type_t;
 
 typedef struct tsql_exception_function
@@ -391,7 +393,7 @@ typedef struct tsql_exception_function
 
 tsql_exception_function_t tsql_exception_function_list[] = 
 {
-	{"sys", "trim", 2, {{4, {"bpchar","varchar","nchar","nvarchar"}}, {4, {"bpchar","varchar","nchar","nvarchar"}}}}
+	{"sys", "trim", 2, {{4, {"bpchar","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"bpchar","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
 
 #define TOTAL_TSQL_EXCEPTION_FUNCTION_COUNT (sizeof(tsql_exception_function_list)/sizeof(tsql_exception_function_list[0]))
@@ -914,12 +916,13 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
  * For a given function details, validate whether it is in exception function list
  * and also validate the input argument data types.
  */
-bool validate_exception_fuction(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
+bool validate_exception_function(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
 {
 	tsql_exception_function_t  *exception_func = NULL;
 	int							i;
 	bool						type_match;
-	Oid							typId;
+	Oid							inputTypId, validTypId;
+	Oid							sys_varcharoid;
 
 	/* Sanity checks */
 	if (func_name == NULL || (nargs != 0 && input_typeids == NULL))
@@ -950,17 +953,23 @@ bool validate_exception_fuction(char *func_nsname, char *func_name, int nargs, O
 		return false;
 	}
 
+	sys_varcharoid = get_sys_varcharoid();
 	/* Report error in case of invalid argument datatype */
 	for (i = 0; i < exception_func->nargs; i++)
 	{
-		if (input_typeids[i] == UNKNOWNOID)
-			continue;
+		/* for unknown literals consider its type as sys.VARCHAR */
+		inputTypId = (input_typeids[i] == UNKNOWNOID) ? sys_varcharoid : input_typeids[i];
 
 		type_match = false;
 		for (int j = 0; j < exception_func->valid_arg_types[i].len; j++)
 		{
-			typId = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) (exception_func->valid_arg_types[i].valid_types[j]);
-			if (input_typeids[i] == typId)
+			if (!OidIsValid(exception_func->valid_arg_types[i].valid_types_oid[j]))
+				exception_func->valid_arg_types[i].valid_types_oid[j] = 
+					(*common_utility_plugin_ptr->lookup_tsql_datatype_oid) (exception_func->valid_arg_types[i].valid_types[j]);
+
+			validTypId = exception_func->valid_arg_types[i].valid_types_oid[j];
+
+			if (inputTypId == validTypId)
 			{
 				type_match = true;
 				break;
@@ -987,13 +996,14 @@ bool validate_exception_fuction(char *func_nsname, char *func_name, int nargs, O
 static FuncCandidateList
 tsql_func_select_candidate_for_exception(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
-	FuncCandidateList			current_candidate;
+	FuncCandidateList			current_candidate, best_candidate;
 	HeapTuple					tuple;
 	Oid 						expr_result_type;
 	Form_pg_proc 				procform;
 	char					   *proc_nsname;
 	char					   *proc_name;
 	bool						is_func_validated;
+	int							ncandidates;
 
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
@@ -1005,7 +1015,7 @@ tsql_func_select_candidate_for_exception(List *names, int nargs, Oid *input_type
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
-	is_func_validated = validate_exception_fuction(proc_nsname, proc_name, nargs, input_typeids);
+	is_func_validated = validate_exception_function(proc_nsname, proc_name, nargs, input_typeids);
 
 	/* Return NULL if function is not an exception function */
 	if (!is_func_validated)
@@ -1034,6 +1044,8 @@ tsql_func_select_candidate_for_exception(List *names, int nargs, Oid *input_type
 	}
 
 	/* Get the candidate with matching return type */
+	ncandidates = 0;
+	best_candidate = NULL;
 	for (current_candidate = candidates;
 			current_candidate != NULL;
 			current_candidate = current_candidate->next)
@@ -1045,14 +1057,17 @@ tsql_func_select_candidate_for_exception(List *names, int nargs, Oid *input_type
 		procform = (Form_pg_proc) GETSTRUCT(tuple);
 		if (expr_result_type == procform->prorettype)
 		{
-			current_candidate->next = NULL;
-			ReleaseSysCache(tuple);
-			break;
+			best_candidate = current_candidate;
+			ncandidates++;
 		}
 		ReleaseSysCache(tuple);
 	}
-	
-	return current_candidate;
+
+	/* Only one definition should exists per return type for exception function */
+	Assert(ncandidates == 1);
+	if (best_candidate != NULL)
+		best_candidate->next = NULL;
+	return best_candidate;
 }
 
 static FuncCandidateList

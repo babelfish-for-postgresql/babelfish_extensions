@@ -2260,7 +2260,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, Oid *input
 				 * Check whether function is an exception function or not, and 
 				 * report appropriate error if applicable 
 				 */
-				validate_exception_fuction(schemaname, funcname, nargs, input_typeids);
+				validate_exception_function(schemaname, funcname, nargs, input_typeids);
 			}
 
 			ereport(ERROR,
