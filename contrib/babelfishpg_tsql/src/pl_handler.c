@@ -3832,6 +3832,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 				}
+
+				if(IS_TDS_CLIENT() &&
+				   (strcmp(variable_set->name, "session_authorization") == 0 ||
+					strcmp(variable_set->name, "role") == 0))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("SET/RESET %s not is not supported from TDS endpoint.",
+							        variable_set->name)));
+				}
 				break;
 			}
 		case T_GrantStmt:
