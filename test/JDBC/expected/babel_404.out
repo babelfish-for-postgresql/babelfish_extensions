@@ -1,6 +1,3 @@
-EXECUTE sp_babelfish_configure 'escape_hatch_unique_constraint', 'ignore'
-go
-
 create table table_1 (
     a int,
     b int,

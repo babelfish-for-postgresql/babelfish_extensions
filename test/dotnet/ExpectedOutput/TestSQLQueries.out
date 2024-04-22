@@ -1,14 +1,4 @@
-#Q#CREATE TABLE tmp(a int PRIMARY KEY, b int UNIQUE);
-#E#Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore or add a NOT NULL constraint
-#Q#INSERT INTO tmp(a,b) values(1,1);
-#E#relation "tmp" does not exist
-#Q#INSERT INTO tmp(a,b) values(2,2);
-#E#relation "tmp" does not exist
-#Q#SELECT * FROM tmp;
-#E#relation "tmp" does not exist
-#Q#DROP TABLE tmp;
-#E#table "tmp" does not exist
-#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int NOT NULL);
+#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int);
 #Q#INSERT INTO tmp(a,b) values(1,1);
 #Q#INSERT INTO tmp(a,b) values(2,1);
 #Q#SELECT * FROM tmp;
