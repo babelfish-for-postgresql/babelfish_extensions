@@ -115,7 +115,7 @@ BABEL-3914
 BABEL-3938
 BABEL-3952
 BABEL-3953-datetrunc
-BABEL-404
+BABEL-404-before-15_7-or-16_3
 BABEL-405
 BABEL-4078
 BABEL-4098
@@ -124,7 +124,7 @@ BABEL-4516
 babel_417
 BABEL-493
 BABEL_539
-BABEL-621
+BABEL-621-before-15_7-or-16_3
 BABEL-728
 BABEL-733
 BABEL-741
@@ -449,7 +449,7 @@ TestTableType
 TestText
 TestTime
 TestTinyInt
-TestUDD
+TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 Test_user_from_win_login
 TestVarChar
@@ -500,7 +500,7 @@ pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
 TestDatatypeAggSort
-babel_index_nulls_order
+babel_index_nulls_order-15_5-or-15_6-or-16_1-or-16_2
 BABEL-2999
 BABEL-4606
 BABEL-4672
@@ -513,6 +513,7 @@ babel-4475
 babel-3254
 babel-4517
 GRANT_SCHEMA-before-15_7-16_3
+BABEL_3571-15_5-or-15_6-or-16_1-or-16_2
 BABEL_4817
 BABEL-4641-before-16_3-or-15_7-or-14_12
 trim-before-15_7-or-16_3

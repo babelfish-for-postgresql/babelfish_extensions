@@ -41,9 +41,6 @@ go
 insert into babel_1206_t2 values (1, 0xaaa);
 go
 
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-go
-
 CREATE TABLE babel_1206_t3(
       [DistinctApplicationID] [bigint] IDENTITY(1,1) NOT NULL,
       [Description] [nvarchar](1024) NOT NULL,
@@ -68,6 +65,4 @@ go
 drop table babel_1206_t2;
 go
 drop table babel_1206_t3;
-go
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';
 go
