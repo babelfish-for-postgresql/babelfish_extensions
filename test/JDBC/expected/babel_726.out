@@ -30,6 +30,24 @@ int
 ~~END~~
 
 
+-- tab space
+select coalesce(NULL, CHAR(9))
+go
+~~START~~
+text
+	
+~~END~~
+
+
+-- line break
+select coalesce(NULL, char(13) + char(10))
+go
+~~START~~
+varchar
+<newline>
+~~END~~
+
+
 -- constant string literal
 SELECT COALESCE(NULL, 1, 2, 'I am a string')
 go

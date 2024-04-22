@@ -12,6 +12,14 @@ go
 select coalesce(2, '   ')
 go
 
+-- tab space
+select coalesce(NULL, CHAR(9))
+go
+
+-- line break
+select coalesce(NULL, char(13) + char(10))
+go
+
 -- constant string literal
 SELECT COALESCE(NULL, 1, 2, 'I am a string')
 go

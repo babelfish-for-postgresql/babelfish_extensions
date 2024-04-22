@@ -1270,7 +1270,7 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 	else if (strncmp(context, "ISNULL", strlen("ISNULL")) == 0)
 		return select_common_type_for_isnull(pstate, exprs);
 	else if(strncmp(context, "TSQL_COALESCE", strlen("TSQL_COALESCE")) == 0)
-		return select_common_type_for_coalesce_function(pstate,exprs);
+		return select_common_type_for_coalesce_function(pstate, exprs);
 	else if (strncmp(context, "UNION", strlen("UNION")) == 0 || 
 			strncmp(context, "INTERSECT", strlen("INTERSECT")) == 0 ||
 			strncmp(context, "EXCEPT", strlen("EXCEPT")) == 0 ||
@@ -1364,11 +1364,11 @@ select_common_type_for_isnull(ParseState *pstate, List *exprs)
 static Oid
 select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 {
-	Node	   *pexpr;
-	Oid		   ptype;
-	ListCell   *lc;
-	Oid		   commontype = InvalidOid;
-	int curr_precedence;
+	Node		*pexpr;
+	Oid		ptype;
+	ListCell	*lc;
+	Oid		commontype = InvalidOid;
+	int 		curr_precedence = INT_MAX, temp_precedence = 0;
 
 	Assert(exprs != NIL);
 
@@ -1383,27 +1383,30 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 		ptype = exprType(pexpr);
 
 		/* Check if arg is NULL literal */
-		if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
+		if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull)
 			continue;
 
 		/* If the arg is non-null string literal */
 		if (ptype == UNKNOWNOID)
 		{
 			Oid curr_oid = get_sys_varcharoid();
+			temp_precedence = tsql_get_type_precedence(curr_oid);
 			if (commontype == InvalidOid 
-				|| tsql_get_type_precedence(curr_oid) < curr_precedence)
+				|| temp_precedence < curr_precedence)
 			{
 				commontype = curr_oid;
-				curr_precedence = tsql_get_type_precedence(curr_oid);
+				curr_precedence = temp_precedence;
 			}
 			
 			continue;
 		}
 
-		if (commontype == InvalidOid || tsql_get_type_precedence(ptype) < curr_precedence)
+		temp_precedence = tsql_get_type_precedence(ptype);
+
+		if (commontype == InvalidOid || temp_precedence < curr_precedence)
 		{
 			commontype = ptype;
-			curr_precedence = tsql_get_type_precedence(ptype);
+			curr_precedence = temp_precedence;
 		}
 	}
 
