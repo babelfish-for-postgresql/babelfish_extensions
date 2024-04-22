@@ -244,6 +244,10 @@ SELECT * from dep_view_upper_lower
 GO
 EXEC dep_proc_upper_lower
 GO
+SELECT * from dep_view_upper_lower1
+GO
+EXEC dep_proc_upper_lower1
+GO
 select dbo.dep_func_lower()
 GO
 select dbo.tvp_func_upper_lower()

@@ -24,6 +24,10 @@ DROP VIEW IF EXISTS dep_view_upper_lower
 GO
 DROP PROCEDURE IF EXISTS dep_proc_upper_lower
 GO
+DROP VIEW IF EXISTS dep_view_upper_lower1
+GO
+DROP PROCEDURE IF EXISTS dep_proc_upper_lower1
+GO
 DROP FUNCTION IF EXISTS dep_func_lower
 GO
 DROP FUNCTION IF EXISTS tvp_func_upper_lower

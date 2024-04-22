@@ -3087,7 +3087,7 @@ BEGIN
     typnam := (SELECT typname FROM pg_type WHERE oid in (typ_oid));
     IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
-    ELSIF typnam IN ( 'image'::regtype::name, 'sql_variant'::regtype::name, 'xml'::regtype::name, 'geometry'::regtype::name, 'geography'::regtype::name ) THEN
+    ELSIF typnam IN ( 'image'::regtype::name COLLATE "C", 'sql_variant'::regtype::name COLLATE "C", 'xml'::regtype::name COLLATE "C", 'geometry'::regtype::name COLLATE "C", 'geography'::regtype::name COLLATE "C") THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', typnam;
     END IF;
     IF $1 IS NULL THEN
@@ -3149,7 +3149,7 @@ BEGIN
     typnam := (SELECT typname FROM pg_type WHERE oid in (typ_oid));
     IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
-    ELSIF typnam IN ( 'image'::regtype::name, 'sql_variant'::regtype::name, 'xml'::regtype::name, 'geometry'::regtype::name, 'geography'::regtype::name ) THEN
+    ELSIF typnam IN ( 'image'::regtype::name COLLATE "C", 'sql_variant'::regtype::name COLLATE "C", 'xml'::regtype::name COLLATE "C", 'geometry'::regtype::name COLLATE "C", 'geography'::regtype::name COLLATE "C") THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', typnam;
     END IF;
     IF $1 IS NULL THEN

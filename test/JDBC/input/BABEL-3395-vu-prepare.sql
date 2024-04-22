@@ -83,6 +83,14 @@ CREATE PROC dep_proc_upper_lower AS
 select UPPER(a), LOWER(a) from upper_lower_text;
 GO
 
+CREATE VIEW dep_view_upper_lower1 AS
+select UPPER(a) AS upper_a, LOWER(a) AS lower_a from upper_lower_ntext;
+GO
+
+CREATE PROC dep_proc_upper_lower1 AS
+select UPPER(a), LOWER(a) from upper_lower_ntext;
+GO
+
 -- LOWER
 CREATE VIEW dep_view_lower AS
 select LOWER(a) AS lower_a, LOWER(b) AS lower_b, LOWER(c) AS lower_c, LOWER(d) AS lower_d from upper_lower_dt WHERE LOWER(a) = N'anikait' and LOWER(b) = N'agrawal' and LOWER(c) = N'anikait' and LOWER(d) = N'agrawal';
