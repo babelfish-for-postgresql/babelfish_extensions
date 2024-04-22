@@ -123,6 +123,8 @@ static Node* optimize_explicit_cast(ParseState *pstate, Node *node);
 
 static ResTarget* make_restarget_from_cstr_list(List * l);
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
+static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
+													SortByDir ordering);
 
 /*****************************************
  * 			Commands Hooks
@@ -241,6 +243,7 @@ static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
+static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_constraint_nulls_ordering_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -418,6 +421,9 @@ InstallExtendedHooks(void)
 
 	prev_pltsql_pgstat_end_function_usage_hook = pltsql_pgstat_end_function_usage_hook;
 	pltsql_pgstat_end_function_usage_hook = is_function_pg_stat_valid;
+
+	prev_pltsql_unique_constraint_nulls_ordering_hook = pltsql_unique_constraint_nulls_ordering_hook;
+	pltsql_unique_constraint_nulls_ordering_hook = unique_constraint_nulls_ordering;
 }
 
 void
@@ -483,6 +489,7 @@ UninstallExtendedHooks(void)
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
+	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -4672,4 +4679,24 @@ is_function_pg_stat_valid(FunctionCallInfo fcinfo, PgStat_FunctionCallUsage *fcu
 	}
 
 	pgstat_end_function_usage(fcu, finalize);
+}
+
+static SortByNulls
+unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
+{
+	if (constraint_type == CONSTR_UNIQUE)
+	{
+		switch (ordering)
+		{
+			case SORTBY_ASC:
+			case SORTBY_DEFAULT:
+				return SORTBY_NULLS_FIRST;
+			case SORTBY_DESC:
+				return SORTBY_NULLS_LAST;
+			default:
+				return SORTBY_NULLS_DEFAULT;
+		}
+	}
+
+	return SORTBY_NULLS_DEFAULT;
 }
