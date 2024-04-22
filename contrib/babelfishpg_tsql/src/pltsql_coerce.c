@@ -48,6 +48,7 @@ extern func_select_candidate_hook_type func_select_candidate_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
+extern handle_constant_literals_hook_type handle_constant_literals_hook;
 
 extern bool babelfish_dump_restore;
 
@@ -1282,6 +1283,39 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 }
 
 /*
+ * Hook to handle constant string literal inputs for
+ * COALESCE function. This function also handles empty and
+ * white space string literals.
+ */
+static Node*
+tsql_handle_constant_literals_hook(ParseState *pstate, Node *e)
+{
+	Const	   *con = (Const *) e;
+	char	   *val = DatumGetCString(con->constvalue);
+	int	   i = -1;
+
+	if (val != NULL)
+		i = strlen(val) - 1;
+
+	/*
+	 *	Additional handling for empty or white space string literals as
+	 *	T-SQL treats an empty string literal as 0 in certain datatypes
+	 */
+	for (; i >= 0; i--)
+	{
+		if (!isspace(val[i]))
+			break;
+	}
+
+	if (i != -1)
+		e = coerce_to_common_type(pstate, e,
+						VARCHAROID,
+						"COALESCE");
+
+	return e;
+}
+
+/*
  * When we must merge types together (i.e. UNION), if all types are
  * null, literals, or [n][var]char types, then return the correct
  * output type based on TSQL's precedence rules
@@ -1481,6 +1515,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
 	select_common_type_hook = tsql_select_common_type_hook;
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
+	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);
