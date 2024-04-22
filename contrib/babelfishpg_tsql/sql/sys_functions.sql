@@ -3080,15 +3080,24 @@ RETURNS sys.VARCHAR
 AS $$
 DECLARE
     varch sys.varchar;
+    typ_oid oid;
+    typnam text;
 BEGIN
+    typ_oid := (SELECT typbasetype FROM pg_type WHERE oid = pg_typeof($1));
+    typnam := (SELECT typname FROM pg_type WHERE oid in (typ_oid));
     IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
+    ELSIF typnam IN ( 'image'::regtype::name, 'sql_variant'::regtype::name, 'xml'::regtype::name, 'geometry'::regtype::name, 'geography'::regtype::name ) THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', typnam;
+    END IF;
+    IF $1 IS NULL THEN
+        RETURN NULL;
     END IF;
     varch := (SELECT CAST ($1 AS sys.varchar));
     -- Call the underlying function after preprocessing
     RETURN (SELECT pg_catalog.upper(varch));
 END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 -- Function to handle NCHAR because of return type NVARCHAR
 CREATE OR REPLACE FUNCTION sys.upper(sys.NCHAR)
@@ -3133,15 +3142,24 @@ RETURNS sys.VARCHAR
 AS $$
 DECLARE
     varch sys.varchar;
+    typ_oid oid;
+    typnam text;
 BEGIN
+    typ_oid := (SELECT typbasetype FROM pg_type WHERE oid = pg_typeof($1));
+    typnam := (SELECT typname FROM pg_type WHERE oid in (typ_oid));
     IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
+    ELSIF typnam IN ( 'image'::regtype::name, 'sql_variant'::regtype::name, 'xml'::regtype::name, 'geometry'::regtype::name, 'geography'::regtype::name ) THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', typnam;
+    END IF;
+    IF $1 IS NULL THEN
+        RETURN NULL;
     END IF;
     varch := (SELECT CAST ($1 AS sys.varchar));
     -- Call the underlying function after preprocessing
     RETURN (SELECT pg_catalog.lower(varch));
 END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 -- Function to handle NCHAR because of return type NVARCHAR
 CREATE OR REPLACE FUNCTION sys.lower(sys.NCHAR)

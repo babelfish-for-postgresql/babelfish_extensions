@@ -240,9 +240,16 @@ SELECT * from dep_view_lower
 GO
 EXEC dep_proc_lower
 GO
+SELECT * from dep_view_upper_lower
+GO
+EXEC dep_proc_upper_lower
+GO
 select dbo.dep_func_lower()
 GO
 select dbo.tvp_func_upper_lower()
 GO
 SELECT * from dep_view_lower1
+GO
+declare @b dbo.MyUDT = CAST('scsdc' AS dbo.MyUDT)
+select upper(@b)
 GO

@@ -781,6 +781,20 @@ varchar#!#nvarchar#!#varchar#!#nvarchar
 anikait #!#agrawal #!#anikait             #!#agrawal                 
 ~~END~~
 
+SELECT * from dep_view_upper_lower
+GO
+~~START~~
+varchar#!#varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
+
+EXEC dep_proc_upper_lower
+GO
+~~START~~
+varchar#!#varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
+
 select dbo.dep_func_lower()
 GO
 ~~START~~
@@ -809,4 +823,11 @@ GO
 varchar
 adjnfjh
 ~~END~~
+
+declare @b dbo.MyUDT = CAST('scsdc' AS dbo.MyUDT)
+select upper(@b)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of upper function.)~~
 
