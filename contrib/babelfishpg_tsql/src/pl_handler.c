@@ -249,8 +249,8 @@ int			text_size;
 Portal		pltsql_snapshot_portal = NULL;
 int			pltsql_non_tsql_proc_entry_count = 0;
 int			pltsql_sys_func_entry_count = 0;
+static 		slist_head guc_stack_list;
 static int	PltsqlGUCNestLevel = 0;
-static bool pltsql_guc_dirty;
 static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
@@ -5671,7 +5671,6 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("Set action not supported")));
 		}
-		Assert(pltsql_guc_dirty);
 		return;
 	}
 
@@ -5699,8 +5698,9 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
 	stack->scontext = gconf->scontext;
 	guc_set_stack_value(gconf, &stack->prior);
 
+	if (gconf->session_stack == NULL)
+		slist_push_head(&guc_stack_list, &gconf->stack_link);
 	gconf->session_stack = stack;
-	pltsql_guc_dirty = true;
 }
 
 int
@@ -5712,25 +5712,14 @@ pltsql_new_guc_nest_level(void)
 void
 pltsql_revert_guc(int nest_level)
 {
-	bool		still_dirty;
-	int			i;
-	int			num_guc_variables;
-	struct config_generic **guc_variables;
+	slist_mutable_iter iter;
 
 	Assert(nest_level > 0 && nest_level == PltsqlGUCNestLevel);
 
-	/* Quick exit if nothing's changed in this procedure */
-	if (!pltsql_guc_dirty)
+	slist_foreach_modify(iter, &guc_stack_list)
 	{
-		PltsqlGUCNestLevel = nest_level - 1;
-		return;
-	}
-
-	still_dirty = false;
-	guc_variables = get_guc_variables(&num_guc_variables);
-	for (i = 0; i < num_guc_variables; i++)
-	{
-		struct config_generic *gconf = guc_variables[i];
+		struct config_generic *gconf = slist_container(struct config_generic,
+													   stack_link, iter.cur);
 		GucStack   *stack = gconf->session_stack;
 
 		if (stack != NULL && stack->nest_level == nest_level)
@@ -5852,19 +5841,14 @@ pltsql_revert_guc(int nest_level)
 			/* Finish popping the state stack */
 			gconf->session_stack = prev;
 
+			if (prev == NULL)
+				slist_delete_current(&iter);
 			pfree(stack);
 		}						/* end of stack-popping loop */
-
-		if (stack != NULL)
-			still_dirty = true;
 	}
-
-	/* If there are no remaining stack entries, we can reset guc_dirty */
-	pltsql_guc_dirty = still_dirty;
 
 	/* Update nesting level */
 	PltsqlGUCNestLevel = nest_level - 1;
-
 }
 
 static char *

@@ -3121,15 +3121,13 @@ static void process_query_specification(
 			auto column_alias_as = elem->expression_elem()->as_column_alias();
 			if (!column_alias_as->AS())
 			{
-				std::string orig_text = ::getFullText(column_alias_as->column_alias());
-				std::string repl_text = std::string("AS ");
-
 				if (is_quotation_needed_for_column_alias(column_alias_as->column_alias()))
-					repl_text += std::string("\"") + orig_text + "\"";
+				{
+					mutator->add(column_alias_as->start->getStartIndex(), "", " AS \"");
+					mutator->add(column_alias_as->stop->getStopIndex() + 1, "", "\"");
+				}
 				else
-					repl_text += orig_text;
-
-				mutator->add(column_alias_as->start->getStartIndex(), "", "AS ");
+					mutator->add(column_alias_as->start->getStartIndex(), "", " AS ");
 			}
 		}
 	}
@@ -5632,6 +5630,12 @@ makeFetchCursorStatement(TSqlParser::Fetch_cursorContext *ctx)
 	auto targetText = ::getFullText(ctx->cursor_name());
 	result->curvar = lookup_cursor_variable(targetText.c_str())->dno;
 
+	/* FETCH CURSOR without destination should be blocked inside a function. */
+
+	if (is_compiling_create_function() && !ctx->INTO())
+	{
+		throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "SELECT statements included within a function cannot return data to a client.", getLineAndPos(ctx));
+	}
 	/* fetch option */
 	if (ctx->NEXT()) {
 		result->direction = FETCH_FORWARD;
