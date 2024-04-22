@@ -543,7 +543,6 @@ SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_c LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
-café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
 SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_c LIKE 'ch%';
@@ -577,7 +576,6 @@ SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_nchar LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
-café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
 SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE col_nchar LIKE 'ch%';

@@ -294,7 +294,7 @@ transform_funcexpr(Node *node)
  */
 
 static Node *
-transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid, bool is_CI_AI)
 {
 	Node	   *leftop = (Node *) linitial(op->args);
 	Node	   *rightop = (Node *) lsecond(op->args);
@@ -342,6 +342,22 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	op->opfuncid = like_entry.ilike_opfuncid;
 
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
+	/* 
+	 * This is needed to process CI_AI for Const nodes
+	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
+	 * we obtain a Relabel node which won't help us to perform optimization
+	 * for constant prefix. Hence, we process that here
+	 */
+	if (IsA(rightop, RelabelType) && is_CI_AI)
+	{
+		RelabelType		*relabel = (RelabelType *) rightop;
+		if (IsA(relabel->arg, Const))
+		{
+			lsecond(op->args) = relabel->arg;
+			rightop = (Node *) lsecond(op->args);
+		}
+	}
 
 	/* no constant prefix found in pattern, or pattern is not constant */
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
@@ -531,15 +547,35 @@ static Node *
 convert_node_to_funcexpr_for_like(Node *node)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
+	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
 	newFuncExpr->funcresulttype = get_sys_varcharoid();
 
 	if (node == NULL)
 		return node;
 
-	switch (nodeTag(node))
+	new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+														TEXTOID, -1,
+														COERCION_EXPLICIT,
+														COERCE_EXPLICIT_CAST,
+														exprLocation(node));
+	if (unlikely(new_node == NULL))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+	}
+
+	switch (nodeTag(new_node))
 	{
 		case T_Const:
+			{
+				Const *con = (Const *) new_node;
+				if (!con->constvalue)
+					return new_node;
+				con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+				return (Node *) con;
+			}
 		case T_FuncExpr:
 		case T_Var:
 		case T_Param:
@@ -547,17 +583,6 @@ convert_node_to_funcexpr_for_like(Node *node)
 		case T_RelabelType:
 		case T_CollateExpr:
 			{
-				Node *new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
-														TEXTOID, -1,
-														COERCION_EXPLICIT,
-														COERCE_EXPLICIT_CAST,
-														exprLocation(node));
-				if (unlikely(new_node == NULL))
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
-				}
 				newFuncExpr->args = list_make1(new_node);
 				break;
 			}
@@ -706,7 +731,7 @@ transform_likenode(Node *node)
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
 			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
-				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
+				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid, true);
 			else
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -718,7 +743,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
 		{
-			return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
+			return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid, false);
 		}
 	}
 	return node;
