@@ -1,4 +1,3 @@
--- tsql
 ------------------- CI_AI ----------------------
 
 CREATE TABLE test_like_for_AI_prepare_t1_ci (
@@ -256,22 +255,16 @@ INSERT INTO test_like_for_AI_prepare_chinese VALUES('中国人'), ('微笑'), ('
 GO
 
 -- TESTS for remove_accents_internal
-
 -- function
--- psql
-CREATE FUNCTION sys.test_like_for_AI_prepare_function(input_text TEXT) RETURNS sys.NVARCHAR AS
-$$
-DECLARE
-    output_text sys.NVARCHAR;
-BEGIN
-    output_text := sys.remove_accents_internal(input_text);
-    RETURN output_text;
+CREATE FUNCTION test_like_for_AI_prepare_function(@input_text TEXT) RETURNS sys.NVARCHAR(MAX)
+AS BEGIN
+    DECLARE @output_text NVARCHAR(MAX);
+    SET @output_text = sys.remove_accents_internal(@input_text);
+    RETURN @output_text;
 END;
-$$ LANGUAGE plpgsql;
 GO
 
 -- view
--- tsql
 CREATE VIEW test_like_for_AI_prepare_view AS
 SELECT
     sys.remove_accents_internal(col) AS cleaned_col

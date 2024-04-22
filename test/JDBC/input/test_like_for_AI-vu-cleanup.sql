@@ -1,4 +1,3 @@
--- tsql
 ------------------- CI_AI ----------------------
 DROP TABLE test_like_for_AI_prepare_t6_ci;
 GO
@@ -40,11 +39,9 @@ DROP TABLE test_like_for_AI_prepare_chinese;
 GO
 
 -- TESTS for remove_accents_internal
--- psql
-DROP FUNCTION sys.test_like_for_AI_prepare_function;
+DROP FUNCTION test_like_for_AI_prepare_function;
 GO
 
--- tsql
 DROP VIEW test_like_for_AI_prepare_view;
 GO
 

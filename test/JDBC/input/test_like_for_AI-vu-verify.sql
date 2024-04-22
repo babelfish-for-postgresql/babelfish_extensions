@@ -1644,13 +1644,13 @@ GO
 -- TESTS for remove_accents_internal
 
 -- function
-SELECT sys.test_like_for_AI_prepare_function('ǪǞǛ');
+SELECT test_like_for_AI_prepare_function('ǪǞǛ');
 GO
 
-SELECT sys.test_like_for_AI_prepare_function('ĵķżƁ');
+SELECT test_like_for_AI_prepare_function('ĵķżƁ');
 GO
 
-SELECT sys.test_like_for_AI_prepare_function('ȌÆß');
+SELECT test_like_for_AI_prepare_function('ȌÆß');
 GO
 
 -- view
