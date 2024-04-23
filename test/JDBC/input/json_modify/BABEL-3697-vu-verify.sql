@@ -24,3 +24,12 @@ GO
 
 SELECT * FROM babel_3697_multi_function
 GO
+
+select * from babel_4793_view_1;
+GO
+
+select * from babel_4793_view_2;
+GO
+
+select * from babel_4793_view_3;
+GO

@@ -71,3 +71,24 @@ nvarchar#!#nvarchar
 {"name": "Mike", "skills": ["C#", "SQL", "Azure"], "surname": "Smith"}#!#{"Price": 49.99}
 ~~END~~
 
+
+select * from babel_4793_view_1;
+GO
+~~START~~
+nvarchar#!#int#!#int
+~~END~~
+
+
+select * from babel_4793_view_2;
+GO
+~~START~~
+int#!#int#!#nvarchar
+~~END~~
+
+
+select * from babel_4793_view_3;
+GO
+~~START~~
+int#!#int#!#int
+~~END~~
+

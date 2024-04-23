@@ -45,3 +45,38 @@ create view babel_3697_multi_function as
 SELECT JSON_MODIFY(JSON_MODIFY(JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike'),'$.surname','Smith'),'append $.skills','Azure') AS mf_1, 
        JSON_MODIFY(JSON_MODIFY('{"price":49.99}','$.Price',CAST(JSON_VALUE('{"price":49.99}','$.price') AS NUMERIC(4,2))),'$.price',NULL) AS mf_2;
 go
+
+CREATE  FUNCTION [dbo].[o7getcodevaluedesc] ()
+returns nvarchar(256)
+as BEGIN
+   return "ddd"
+end;
+GO
+
+create table babel_4793(a int , b int)
+GO
+
+create view babel_4793_view_1 as select dbo.o7getcodevaluedesc() , kk , dd from (
+   select a as kk, count(b) as dd from babel_4793  group by a 
+)
+GO
+
+create view babel_4793_view_2 as select kk , dd, dbo.o7getcodevaluedesc() from (
+   select a as kk, count(b) as dd from babel_4793  group by a 
+)
+GO
+
+create schema babel_4793_schema
+GO
+
+CREATE  FUNCTION babel_4793_schema.babel_4793_func ()
+returns int 
+as BEGIN
+    return 1;
+end;
+GO
+
+create view babel_4793_view_3 as select babel_4793_schema.babel_4793_func() , kk , dd from (
+   select a as kk, count(b) as dd from babel_4793  group by a 
+)
+GO
