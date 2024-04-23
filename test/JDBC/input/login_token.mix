@@ -1,52 +1,52 @@
 -- tsql
-create login lt1 with password = '123';
+create login login_token1 with password = '12345678';
 go
 
-create login lt2 with password = '123';
+create login login_token2 with password = '12345678';
 go
 
-create user lt2;
+create user login_token2;
 go
 
-create login lt3 with password = '123'
+create login login_token3 with password = '12345678'
 go
 
-alter server role sysadmin add member lt3;
-go
-
--- tsql
-select name, type, usage from sys.login_token;
-go
-select name, type, usage from sys.user_token;
-go
-
--- tsql user=lt1 password = 123
-select name, type, usage from sys.login_token;
-go
-select name, type, usage from sys.user_token;
-go
-
--- tsql user=lt2 password = 123
-select name, type, usage from sys.login_token;
-go
-select name, type, usage from sys.user_token;
-go
-select name, type, usage from sys.user_token;
-go
-
--- tsql user=lt3 password = 123
-select name, type, usage from sys.login_token;
-go
-select name, type, usage from sys.user_token;
+alter server role sysadmin add member login_token3;
 go
 
 -- tsql
-drop user lt2;
+select name, type, usage from sys.login_token;
+go
+select name, type, usage from sys.user_token;
+go
+
+-- tsql user=login_token1 password = 12345678
+select name, type, usage from sys.login_token;
+go
+select name, type, usage from sys.user_token;
+go
+
+-- tsql user=login_token2 password = 12345678
+select name, type, usage from sys.login_token;
+go
+select name, type, usage from sys.user_token;
+go
+select name, type, usage from sys.user_token;
+go
+
+-- tsql user=login_token3 password = 12345678
+select name, type, usage from sys.login_token;
+go
+select name, type, usage from sys.user_token;
+go
+
+-- tsql
+drop user login_token2;
 go
 
 -- psql
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'lt1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+WHERE sys.suser_name(usesysid) = 'login_token1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 go
 
 -- Wait to sync with another session
@@ -54,7 +54,7 @@ SELECT pg_sleep(1);
 go
 
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'lt2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+WHERE sys.suser_name(usesysid) = 'login_token2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 go
 
 -- Wait to sync with another session
@@ -62,7 +62,7 @@ SELECT pg_sleep(1);
 go
 
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'lt3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+WHERE sys.suser_name(usesysid) = 'login_token3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 go
 
 -- Wait to sync with another session
@@ -70,9 +70,9 @@ SELECT pg_sleep(1);
 go
 
 -- tsql
-drop login lt1;
+drop login login_token1;
 go
-drop login lt2;
+drop login login_token2;
 go
-drop login lt3;
+drop login login_token3;
 go
