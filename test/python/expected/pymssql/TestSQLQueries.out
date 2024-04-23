@@ -1,24 +1,19 @@
 #1 CREATE TABLE with primary and unique keyword
 CREATE TABLE tmp(a int PRIMARY KEY, b int UNIQUE);
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: 'Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore or add a NOT NULL constraintDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
-
 INSERT INTO tmp(a,b) values(1,1);
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: 'relation "tmp" does not existDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+~~ROW COUNT: 1~~
 
 INSERT INTO tmp(a,b) values(2,2);
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: 'relation "tmp" does not existDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+~~ROW COUNT: 1~~
 
 SELECT * FROM tmp;
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: 'relation "tmp" does not existDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+~~END~~
 
 DROP TABLE tmp;
-~~ERROR (Code: 3701)~~
-~~ERROR (Message: 'table "tmp" does not existDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
-
 
 #2 2 table with foreign key relation
 #CREATE TABLE tmp1(b int PRIMARY KEY);

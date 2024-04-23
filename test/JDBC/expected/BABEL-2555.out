@@ -1,35 +1,3 @@
--- default is strict
-SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_unique_constraint', true);
-GO
-~~START~~
-text
-strict
-~~END~~
-
-
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-GO
-
-SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_unique_constraint', true);
-GO
-~~START~~
-text
-ignore
-~~END~~
-
-
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'default';
-GO
-
--- should be changed to strict
-SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_unique_constraint', true);
-GO
-~~START~~
-text
-strict
-~~END~~
-
-
 -- default is ignore
 SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_schemabinding_function', true);
 GO
@@ -115,18 +83,6 @@ ignore
 ~~END~~
 
 
--- default is strict
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-GO
-
-SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_unique_constraint', true);
-GO
-~~START~~
-text
-ignore
-~~END~~
-
-
 EXEC sp_babelfish_configure '%', 'default', 'server';
 GO
 
@@ -147,12 +103,4 @@ text
 strict
 ~~END~~
 
-
--- should be changed to strict
-SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_unique_constraint', true);
-GO
-~~START~~
-text
-strict
-~~END~~
 

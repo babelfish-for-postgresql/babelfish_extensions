@@ -4,6 +4,6 @@ GO
 SELECT * FROM sys_all_columns_dep_vu_prepare_func1();
 GO
 
-SELECT * FROM sys_all_columns_dep_vu_prepare_view1;
+SELECT * FROM sys_all_columns_dep_vu_prepare_view1 order by max_length;
 GO
 
