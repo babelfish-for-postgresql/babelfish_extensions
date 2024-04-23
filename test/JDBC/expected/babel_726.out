@@ -3,7 +3,7 @@ select coalesce(NULL, NULL)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: At least one of the arguments to COALESCE must be a non NULL constant)~~
+~~ERROR (Message: At least one of the arguments to COALESCE must be a non-NULL constant)~~
 
 
 select coalesce(NULL)
@@ -95,7 +95,8 @@ create table babel_726_t1 (
     a24 varchar(15),
     a25 char(15),
     a26 varbinary(15),
-    a27 binary
+    a27 binary,
+    a28 numeric
 )
 go
 
@@ -126,7 +127,8 @@ insert into babel_726_t1 values (
     'asdfg',
     'b',
     1234,
-    1
+    1,
+    234.546
 )
 go
 ~~ROW COUNT: 1~~
@@ -537,6 +539,39 @@ GO
 ~~START~~
 varbinary
 01
+~~END~~
+
+
+-- numeric and varchar
+select coalesce(a28, a24) from babel_726_t1
+GO
+~~START~~
+numeric
+235.00000000
+~~END~~
+
+select coalesce(a24, a28) from babel_726_t1
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "asdfg")~~
+
+
+-- numeric and float
+select coalesce(a28, a8) from babel_726_t1
+GO
+~~START~~
+float
+235.0
+~~END~~
+
+select coalesce(a8, a28) from babel_726_t1
+GO
+~~START~~
+float
+1.05
 ~~END~~
 
 

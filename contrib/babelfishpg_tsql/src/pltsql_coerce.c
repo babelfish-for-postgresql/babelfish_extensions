@@ -1304,8 +1304,8 @@ tsql_handle_constant_literals_hook(ParseState *pstate, Node *e)
 		i = strlen(val) - 1;
 
 	/*
-	 *	Additional handling for empty or white space string literals as
-	 *	T-SQL treats an empty string literal as 0 in certain datatypes
+	 * Additional handling for empty or white space string literals as
+	 * T-SQL treats an empty string literal as 0 in certain datatypes
 	 */
 	for (; i >= 0; i--)
 	{
@@ -1453,7 +1453,7 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 	if (commontype == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("At least one of the arguments to COALESCE must be a non NULL constant")));
+				 errmsg("At least one of the arguments to COALESCE must be a non-NULL constant")));
 	
 	return commontype;
 }

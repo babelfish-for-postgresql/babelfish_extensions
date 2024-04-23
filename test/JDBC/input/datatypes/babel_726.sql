@@ -58,7 +58,8 @@ create table babel_726_t1 (
     a24 varchar(15),
     a25 char(15),
     a26 varbinary(15),
-    a27 binary
+    a27 binary,
+    a28 numeric
 )
 go
 
@@ -89,7 +90,8 @@ insert into babel_726_t1 values (
     'asdfg',
     'b',
     1234,
-    1
+    1,
+    234.546
 )
 go
 
@@ -247,6 +249,18 @@ GO
 select coalesce(a26, a27) from babel_726_t1
 GO
 select coalesce(a27, a26) from babel_726_t1
+GO
+
+-- numeric and varchar
+select coalesce(a28, a24) from babel_726_t1
+GO
+select coalesce(a24, a28) from babel_726_t1
+GO
+
+-- numeric and float
+select coalesce(a28, a8) from babel_726_t1
+GO
+select coalesce(a8, a28) from babel_726_t1
 GO
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
