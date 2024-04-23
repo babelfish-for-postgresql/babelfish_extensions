@@ -3079,23 +3079,25 @@ CREATE OR REPLACE FUNCTION sys.upper(ANYELEMENT)
 RETURNS sys.VARCHAR
 AS $$
 DECLARE
-    varch sys.varchar;
-    typ_oid oid;
+    type_oid oid;
+    typ_base_oid oid;
     typnam text;
 BEGIN
-    typ_oid := (SELECT typbasetype FROM pg_type WHERE oid = pg_typeof($1));
-    typnam := (SELECT typname FROM pg_type WHERE oid in (typ_oid));
-    IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
-        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
-    ELSIF typnam IN ( 'image'::regtype::name COLLATE "C", 'sql_variant'::regtype::name COLLATE "C", 'xml'::regtype::name COLLATE "C", 'geometry'::regtype::name COLLATE "C", 'geography'::regtype::name COLLATE "C") THEN
+    typnam := NULL;
+    type_oid := pg_typeof($1);
+    typnam := sys.translate_pg_type_to_tsql(type_oid);
+    IF typnam IS NULL THEN
+        typ_base_oid := (SELECT typbasetype FROM pg_type WHERE oid = type_oid);
+        typnam := sys.translate_pg_type_to_tsql(typ_base_oid);
+    END IF;
+    IF typnam IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', typnam;
     END IF;
     IF $1 IS NULL THEN
         RETURN NULL;
     END IF;
-    varch := (SELECT CAST ($1 AS sys.varchar));
     -- Call the underlying function after preprocessing
-    RETURN (SELECT pg_catalog.upper(varch));
+    RETURN pg_catalog.upper($1::sys.varchar);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
@@ -3104,7 +3106,7 @@ CREATE OR REPLACE FUNCTION sys.upper(sys.NCHAR)
 RETURNS sys.NVARCHAR
 AS $$
 BEGIN
-    RETURN (SELECT pg_catalog.upper($1));
+    RETURN pg_catalog.upper($1);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -3113,7 +3115,7 @@ CREATE OR REPLACE FUNCTION sys.upper(sys.NVARCHAR)
 RETURNS sys.NVARCHAR
 AS $$
 BEGIN
-    RETURN (SELECT pg_catalog.upper($1));
+    RETURN pg_catalog.upper($1);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -3122,7 +3124,7 @@ CREATE OR REPLACE FUNCTION sys.upper(TEXT)
 RETURNS sys.VARCHAR
 AS $$
 BEGIN
-    RETURN (SELECT pg_catalog.upper($1));
+    RETURN pg_catalog.upper($1);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -3131,7 +3133,7 @@ CREATE OR REPLACE FUNCTION sys.upper(NTEXT)
 RETURNS sys.VARCHAR
 AS $$
 BEGIN
-    RETURN (SELECT pg_catalog.upper($1));
+    RETURN pg_catalog.upper($1);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -3141,23 +3143,25 @@ CREATE OR REPLACE FUNCTION sys.lower(ANYELEMENT)
 RETURNS sys.VARCHAR
 AS $$
 DECLARE
-    varch sys.varchar;
-    typ_oid oid;
+    type_oid oid;
+    typ_base_oid oid;
     typnam text;
 BEGIN
-    typ_oid := (SELECT typbasetype FROM pg_type WHERE oid = pg_typeof($1));
-    typnam := (SELECT typname FROM pg_type WHERE oid in (typ_oid));
-    IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
-        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
-    ELSIF typnam IN ( 'image'::regtype::name COLLATE "C", 'sql_variant'::regtype::name COLLATE "C", 'xml'::regtype::name COLLATE "C", 'geometry'::regtype::name COLLATE "C", 'geography'::regtype::name COLLATE "C") THEN
+    typnam := NULL;
+    type_oid := pg_typeof($1);
+    typnam := sys.translate_pg_type_to_tsql(type_oid);
+    IF typnam IS NULL THEN
+        typ_base_oid := (SELECT typbasetype FROM pg_type WHERE oid = type_oid);
+        typnam := sys.translate_pg_type_to_tsql(typ_base_oid);
+    END IF;
+    IF typnam IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', typnam;
     END IF;
     IF $1 IS NULL THEN
         RETURN NULL;
     END IF;
-    varch := (SELECT CAST ($1 AS sys.varchar));
     -- Call the underlying function after preprocessing
-    RETURN (SELECT pg_catalog.lower(varch));
+    RETURN pg_catalog.lower($1::sys.varchar);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
@@ -3166,7 +3170,7 @@ CREATE OR REPLACE FUNCTION sys.lower(sys.NCHAR)
 RETURNS sys.NVARCHAR
 AS $$
 BEGIN
-    RETURN (SELECT pg_catalog.lower($1));
+    RETURN pg_catalog.lower($1);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -3175,7 +3179,7 @@ CREATE OR REPLACE FUNCTION sys.lower(sys.NVARCHAR)
 RETURNS sys.NVARCHAR
 AS $$
 BEGIN
-    RETURN (SELECT pg_catalog.lower($1));
+    RETURN pg_catalog.lower($1);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -3184,7 +3188,7 @@ CREATE OR REPLACE FUNCTION sys.lower(TEXT)
 RETURNS sys.VARCHAR
 AS $$
 BEGIN
-    RETURN (SELECT pg_catalog.lower($1));
+    RETURN pg_catalog.lower($1);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -3193,7 +3197,7 @@ CREATE OR REPLACE FUNCTION sys.lower(NTEXT)
 RETURNS sys.VARCHAR
 AS $$
 BEGIN
-    RETURN (SELECT pg_catalog.lower($1));
+    RETURN pg_catalog.lower($1);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
