@@ -1,0 +1,332 @@
+
+-- pg_class, pg_type, pg_depend, pg_attribute, pg_constraint, pg_index, pg_sequence are all covered by below tests. 
+-------------------------------
+-- Temp Table CREATE + ROLLBACK
+-------------------------------
+BEGIN TRAN
+CREATE TABLE #temp_table_rollback_t1(a int identity primary key, b int)
+select * from enr_view
+ROLLBACK
+GO
+~~START~~
+text
+#temp_table_rollback_t1_a_seq
+#temp_table_rollback_t1
+#temp_table_rollback_t1_pkey
+~~END~~
+
+
+-- Should be empty
+select * from enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+-- Should not exist
+SELECT * FROM #temp_table_rollback_t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temp_table_rollback_t1" does not exist)~~
+
+
+-----------------------------
+-- Temp Table DROP + ROLLBACK
+-----------------------------
+CREATE TABLE #temp_table_rollback_t1(a int identity primary key, b int)
+go
+
+INSERT INTO #temp_table_rollback_t1 VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+ROLLBACK
+go
+
+-- Should still exist
+select * from enr_view
+GO
+~~START~~
+text
+#temp_table_rollback_t1_a_seq
+#temp_table_rollback_t1
+#temp_table_rollback_t1_pkey
+~~END~~
+
+
+-- Should show results
+BEGIN TRAN
+select * from #temp_table_rollback_t1
+COMMIT
+go
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+-- Should not error
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+COMMIT
+GO
+
+----------------------------------------------------------
+-- ALTER TABLE (should fail due to BABEL-4912)
+----------------------------------------------------------
+CREATE TABLE #temp_table_rollback_t1 (a int, b int)
+GO
+
+BEGIN TRAN
+ALTER TABLE #temp_table_rollback_t1 DROP COLUMN b
+ROLLBACK
+GO
+~~ERROR (Code: 3726)~~
+
+~~ERROR (Message: cannot drop column b of table "#temp_table_rollback_t1" because other objects depend on it)~~
+
+
+BEGIN TRAN
+ALTER TABLE #temp_table_rollback_t1 ALTER COLUMN b VARCHAR
+ROLLBACK
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unexpected object depending on column: type "#temp_table_rollback_t1")~~
+
+
+BEGIN TRAN
+ALTER TABLE #temp_table_rollback_t1 DROP COLUMN b
+COMMIT
+GO
+~~ERROR (Code: 3726)~~
+
+~~ERROR (Message: cannot drop column b of table "#temp_table_rollback_t1" because other objects depend on it)~~
+
+
+BEGIN TRAN
+ALTER TABLE #temp_table_rollback_t1 ALTER COLUMN b VARCHAR
+COMMIT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unexpected object depending on column: type "#temp_table_rollback_t1")~~
+
+
+DROP TABLE #temp_table_rollback_t1
+GO
+
+----------------------------------------------------------
+-- Multiple tables in one transaction
+----------------------------------------------------------
+CREATE TABLE #temp_table_rollback_t1(a int identity primary key, b int, c varchar)
+GO
+
+create table #temp_table_rollback_t2(a varchar)
+GO
+
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+DROP TABLE #temp_table_rollback_t2
+ROLLBACK
+GO
+
+-- Tables are still visible and usable
+select * from enr_view
+GO
+~~START~~
+text
+#temp_table_rollback_t1_a_seq
+#temp_table_rollback_t1
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+#temp_table_rollback_t1_pkey
+#temp_table_rollback_t2
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+~~END~~
+
+
+INSERT INTO #temp_table_rollback_t1 values (1, 'b')
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO #temp_table_rollback_t2 values ('c')
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #temp_table_rollback_t1
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#1#!#b
+~~END~~
+
+
+SELECT * FROM #temp_table_rollback_t2
+GO
+~~START~~
+varchar
+c
+~~END~~
+
+
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+DROP TABLE #temp_table_rollback_t2
+COMMIT
+GO
+
+----------------------------------------------------------
+-- Implicit rollback due to error
+----------------------------------------------------------
+CREATE TABLE #temp_table_rollback_t1(a int primary key, b int, c varchar)
+CREATE TABLE #temp_table_rollback_t2(a int)
+GO
+
+INSERT INTO #temp_table_rollback_t2 VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+
+-- Transaction will error out
+BEGIN TRAN
+drop table #temp_table_rollback_t2
+insert into #temp_table_rollback_t1 values (1, 1, 1) -- Wrong should error out 
+GO
+~~ROW COUNT: 1~~
+
+
+-- Table + data should still exist, due to implicit rollback. 
+SELECT * FROM #temp_table_rollback_t2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temp_table_rollback_t2" does not exist)~~
+
+
+-- Duplicate key doesn't cause implicit rollback, so the drop will succeed here. 
+BEGIN TRAN
+drop table #temp_table_rollback_t2
+insert into #temp_table_rollback_t1 values (1, 1, 'a')
+insert into #temp_table_rollback_t1 values (1, 1, 'a')
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "#temp_table_rollback_t1_pkey")~~
+
+
+SELECT * FROM #temp_table_rollback_t2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temp_table_rollback_t2" does not exist)~~
+
+
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+DROP TABLE #temp_table_rollback_t2
+COMMIT
+GO
+
+----------------------------------------------------------
+-- Nested transactions
+----------------------------------------------------------
+BEGIN TRANSACTION T1
+    CREATE TABLE #t1(a varchar(16))
+    INSERT INTO #t1 VALUES ('t1')
+    SAVE TRANSACTION T2
+        INSERT INTO #t1 VALUES ('t2')
+        SAVE TRANSACTION T3
+            INSERT INTO #t1 VALUES ('t3')
+            SAVE TRANSACTION T4
+                INSERT INTO #t1 VALUES ('t4')
+                SELECT * FROM #t1
+            ROLLBACK TRANSACTION T4
+            SELECT * FROM #t1
+        ROLLBACK TRANSACTION T3
+        SELECT * FROM #t1
+    ROLLBACK TRANSACTION T2
+    SELECT * FROM #t1
+ROLLBACK TRANSACTION T1
+SELECT * FROM #t1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+t1
+t2
+t3
+t4
+~~END~~
+
+~~START~~
+varchar
+t1
+t2
+t3
+~~END~~
+
+~~START~~
+varchar
+t1
+t2
+~~END~~
+
+~~START~~
+varchar
+t1
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t1" does not exist)~~
+
+
+----------------------------------------------------------
+-- Savepoint CREATE and DROP
+----------------------------------------------------------
+BEGIN TRANSACTION T1
+    CREATE TABLE #t1(a int primary key, b varchar(16))
+    SAVE TRANSACTION T2
+        INSERT INTO #t1 VALUES (1, 't2')
+        SAVE TRANSACTION T3
+            UPDATE #t1 SET a = 2 WHERE a = 1
+            SELECT * FROM #t1
+            SAVE TRANSACTION T4
+                DROP TABLE #t1
+            ROLLBACK TRANSACTION T4
+        ROLLBACK TRANSACTION T3
+        SELECT * FROM #t1
+    ROLLBACK TRANSACTION T2
+select * from enr_view
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+2#!#t2
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t1" does not exist)~~
+

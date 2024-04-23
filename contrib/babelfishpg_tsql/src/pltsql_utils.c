@@ -20,6 +20,7 @@
 #include "utils/fmgroids.h"
 #include "utils/catcache.h"
 #include "utils/acl.h"
+#include "utils/queryenvironment.h"
 #include "access/table.h"
 #include "access/genam.h"
 #include "catalog.h"
@@ -755,6 +756,7 @@ PLTsqlStartTransaction(char *txnName)
 void
 PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 {
+	ENRCommitChanges(currentQueryEnv);
 	elog(DEBUG2, "TSQL TXN Commit transaction %d", NestedTranCount);
 	if (NestedTranCount <= 1)
 	{
@@ -779,6 +781,7 @@ PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 void
 PLTsqlRollbackTransaction(char *txnName, QueryCompletion *qc, bool chain)
 {
+	ENRRollbackChanges(currentQueryEnv);
 	if (IsTopTransactionName(txnName))
 	{
 		elog(DEBUG2, "TSQL TXN Rollback transaction");
