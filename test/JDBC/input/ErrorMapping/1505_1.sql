@@ -4,9 +4,6 @@ CREATE TABLE t1505(c1 int);
 INSERT INTO t1505 VALUES(1), (1); 
 GO
 
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-GO
-
 create procedure ErrorHandling1 as
 begin
 --Generate the error
@@ -205,7 +202,4 @@ set implicit_transactions OFF;
 GO
 --Post
 DROP TABLE t1505;
-GO
-
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';
 GO
