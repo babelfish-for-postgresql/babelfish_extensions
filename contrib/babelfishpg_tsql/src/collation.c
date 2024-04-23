@@ -577,6 +577,7 @@ convert_node_to_funcexpr_for_like(Node *node)
 					if (!con->constvalue)
 						return new_node;
 					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+					return (Node *) con;
 				}
 				else if (IsA(new_node, RelabelType))
 				{
@@ -587,6 +588,7 @@ convert_node_to_funcexpr_for_like(Node *node)
 						if (!con->constvalue)
 							return new_node;
 						con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+						return (Node *) con;
 					}
 				}
 				else
@@ -595,7 +597,7 @@ convert_node_to_funcexpr_for_like(Node *node)
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							 errmsg("unrecognized node type: %d", (int) nodeTag(node))));
 				}
-				return (Node *) con;
+				return new_node;
 			}
 		case T_FuncExpr:
 		case T_Var:
