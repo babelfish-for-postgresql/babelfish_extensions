@@ -92,9 +92,9 @@ BEGIN
     IF EXISTS (SELECT 1 FROM
 information_schema.tables WHERE
 table_name = 'tbl_creation_should_succeed' AND
-table_schema = '<NULL>') THEN
+table_schema = 'master_dbo') THEN
         EXECUTE 'GRANT ALL ON
-<NULL>.tbl_creation_should_succeed TO <NULL>';
+master_dbo.tbl_creation_should_succeed TO master_dbo';
     END IF;
 END $$;
 GO
