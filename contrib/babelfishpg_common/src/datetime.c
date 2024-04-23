@@ -81,6 +81,7 @@ datetime_in_str(char *str, Node *escontext)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+	int			i = 0;
 
 	/*
 	 * Set input to default '1900-01-01 00:00:00.000' if empty string
@@ -94,6 +95,33 @@ datetime_in_str(char *str, Node *escontext)
 
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
+
+	/*
+	 * Modify time field to accept ':' as separator for
+	 * seconds and milliseconds
+	 */
+	for (i = 0; i < nf; i++)
+	{
+		char	*cp = field[i];
+		int	num_colons = 0;
+		if (ftype[i] != DTK_TIME)
+			continue;
+
+		strtoi64(cp, &cp, 10);
+
+		while (*cp == ':')
+		{
+			num_colons++;
+			if(num_colons == 3)
+			{
+				*cp = '.';
+				break;
+			}
+			cp++;
+			strtoi64(cp, &cp, 10);
+		}
+	}			
+	
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, 
 							   &dtype, tm, &fsec, &tz, &extra);
