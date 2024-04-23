@@ -511,9 +511,9 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	/* 
 	 * set the capacity to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
 	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can 
-	 * has maximum INT32_MAX value
+	 * have maximum INT32_MAX value
 	 */
-	capacity = limit * MAX_BYTES_PER_CHAR < INT32_MAX ? limit * MAX_BYTES_PER_CHAR : INT32_MAX;
+	capacity = ((limit * MAX_BYTES_PER_CHAR) < INT32_MAX) ? (limit * MAX_BYTES_PER_CHAR) : INT32_MAX;
 
 	utrans_transUChars(cached_transliterator,
 						utf16_input,
