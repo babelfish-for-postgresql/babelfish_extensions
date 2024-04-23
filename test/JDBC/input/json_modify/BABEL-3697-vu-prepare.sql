@@ -58,12 +58,12 @@ GO
 
 create view babel_4793_view_1 as select dbo.o7getcodevaluedesc() , kk , dd from (
    select a as kk, count(b) as dd from babel_4793  group by a 
-)
+) as drived
 GO
 
 create view babel_4793_view_2 as select kk , dd, dbo.o7getcodevaluedesc() from (
    select a as kk, count(b) as dd from babel_4793  group by a 
-)
+) as drived
 GO
 
 create schema babel_4793_schema
@@ -78,5 +78,5 @@ GO
 
 create view babel_4793_view_3 as select babel_4793_schema.babel_4793_func() , kk , dd from (
    select a as kk, count(b) as dd from babel_4793  group by a 
-)
+) as drived
 GO
