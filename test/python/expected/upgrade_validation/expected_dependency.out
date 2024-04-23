@@ -1020,7 +1020,6 @@ View sys.fulltext_catalogs
 View sys.fulltext_index_columns
 View sys.fulltext_languages
 View sys.fulltext_stoplists
-View sys.login_token
 View sys.master_files
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists
@@ -1041,5 +1040,4 @@ View sys.spt_tablecollations_view
 View sys.synonyms
 View sys.syscharsets
 View sys.syslanguages
-View sys.user_token
 View sys.xml_schema_collections
