@@ -258,7 +258,7 @@ varchar
 
 
 -- with table column of type varchar with collation chinese_prc_ci_as
-SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_t3
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_chinese_prc_ci_as
 GO
 ~~START~~
 varchar
@@ -266,11 +266,96 @@ varchar
 ~~END~~
 
 
-SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_trim_t3
+SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_trim_chinese_prc_ci_as
 GO
 ~~START~~
 varchar
 |尔·拉莫|
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CS_AS + '|' FROM babel_4489_trim_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CI_AI + '|' FROM babel_4489_trim_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_arabic_ci_as
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE ARABIC_CI_AS + '|' FROM babel_4489_trim_arabic_ci_as
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_arabic_cs_as
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE ARABIC_CS_AS + '|' FROM babel_4489_trim_arabic_cs_as
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_arabic_ci_ai
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE ARABIC_CI_AI + '|' FROM babel_4489_trim_arabic_ci_ai
+GO
+~~START~~
+varchar
+|الله مع المتق|
 ~~END~~
 
 
@@ -846,6 +931,42 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of trim function.)~~
+
+
+-- input type UDT
+-- -- in table babel_4489_trim_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT TRIM(a) FROM babel_4489_trim_UDT
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of Trim function.)~~
+
+
+SELECT TRIM(b) FROM babel_4489_trim_UDT
+GO
+~~START~~
+varchar
+abcdef
+~~END~~
+
+
+DECLARE @charSet VARCHAR(10) = 'ab'
+SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_UDT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of trim function.)~~
+
+
+DECLARE @charSet VARCHAR(10) = 'ab'
+SELECT TRIM(@charSet FROM b) FROM babel_4489_trim_UDT
+GO
+~~START~~
+varchar
+cdef
+~~END~~
 
 
 -- other different datatypes, all of these should be blocked

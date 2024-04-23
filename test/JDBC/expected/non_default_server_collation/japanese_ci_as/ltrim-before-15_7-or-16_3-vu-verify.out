@@ -81,7 +81,7 @@ varchar
 
 
 -- with table column of type varchar with collation chinese_prc_ci_as
-SELECT '|' + LTRIM(a) + '|' FROM babel_4489_ltrim_t3
+SELECT '|' + LTRIM(a) + '|' FROM babel_4489_ltrim_chinese_prc_ci_as
 GO
 ~~START~~
 varchar
@@ -89,11 +89,96 @@ varchar
 ~~END~~
 
 
-SELECT '|' + LTRIM(a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_ltrim_t3
+SELECT '|' + LTRIM(a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_ltrim_chinese_prc_ci_as
 GO
 ~~START~~
 varchar
 |比尔·拉莫斯    |
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT '|' + LTRIM(a) + '|' FROM babel_4489_ltrim_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+|比尔·拉莫斯    |
+~~END~~
+
+
+SELECT '|' + LTRIM(a) COLLATE CHINESE_PRC_CS_AS + '|' FROM babel_4489_ltrim_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+|比尔·拉莫斯    |
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT '|' + LTRIM(a) + '|' FROM babel_4489_ltrim_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+|比尔·拉莫斯    |
+~~END~~
+
+
+SELECT '|' + LTRIM(a) COLLATE CHINESE_PRC_CI_AI + '|' FROM babel_4489_ltrim_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+|比尔·拉莫斯    |
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT '|' + LTRIM(a) + '|' FROM babel_4489_ltrim_arabic_ci_as
+GO
+~~START~~
+varchar
+|الله مع المتقين    |
+~~END~~
+
+
+SELECT '|' + LTRIM(a) COLLATE ARABIC_CI_AS + '|' FROM babel_4489_ltrim_arabic_ci_as
+GO
+~~START~~
+varchar
+|الله مع المتقين    |
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT '|' + LTRIM(a) + '|' FROM babel_4489_ltrim_arabic_cs_as
+GO
+~~START~~
+varchar
+|الله مع المتقين    |
+~~END~~
+
+
+SELECT '|' + LTRIM(a) COLLATE ARABIC_CS_AS + '|' FROM babel_4489_ltrim_arabic_cs_as
+GO
+~~START~~
+varchar
+|الله مع المتقين    |
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT '|' + LTRIM(a) + '|' FROM babel_4489_ltrim_arabic_ci_ai
+GO
+~~START~~
+varchar
+|الله مع المتقين    |
+~~END~~
+
+
+SELECT '|' + LTRIM(a) COLLATE ARABIC_CI_AI + '|' FROM babel_4489_ltrim_arabic_ci_ai
+GO
+~~START~~
+varchar
+|الله مع المتقين    |
 ~~END~~
 
 
@@ -175,6 +260,25 @@ GO
 ~~START~~
 varchar
 |abc?defghi??    |
+~~END~~
+
+
+-- input type UDT
+-- -- in table babel_4489_ltrim_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT LTRIM(a) FROM babel_4489_ltrim_UDT
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of ltrim function.)~~
+
+
+SELECT LTRIM(b) FROM babel_4489_ltrim_UDT
+GO
+~~START~~
+varchar
+abcdef
 ~~END~~
 
 

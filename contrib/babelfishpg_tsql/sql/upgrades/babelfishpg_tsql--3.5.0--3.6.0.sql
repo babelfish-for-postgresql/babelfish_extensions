@@ -606,16 +606,19 @@ RETURNS sys.VARCHAR
 AS 
 $BODY$
 DECLARE
-    string_arg_datatype regtype;
+    string_arg_datatype text;
+    string_basetype oid;
 BEGIN
-    string_arg_datatype := pg_typeof(string);
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use base type to check for argument datatype validation
+        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
 
     -- restricting arguments with invalid datatypes for trim function
-    IF string_arg_datatype != 'sys.varchar'::regtype AND
-        string_arg_datatype != 'sys.bpchar'::regtype AND
-        string_arg_datatype != 'sys.nchar'::regtype AND
-        string_arg_datatype != 'sys.nvarchar'::regtype THEN
-            RAISE 'Argument data type % is invalid for argument 1 of Trim function.', string_arg_datatype;
+    IF string_arg_datatype NOT IN ('char', 'varchar', 'nchar', 'nvarchar') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of Trim function.', string_arg_datatype;
     END IF;
 
     IF string IS NULL THEN
@@ -655,17 +658,19 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 DECLARE
-    string_arg_datatype regtype;
+    string_arg_datatype text;
+    string_basetype oid;
 BEGIN
-    string_arg_datatype := pg_typeof(string);
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use base type to check for argument datatype validation
+        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
 
     -- restricting arguments with invalid datatypes for ltrim function
-    IF string_arg_datatype = 'sys.image'::regtype OR
-        string_arg_datatype = 'sys.sql_variant'::regtype OR
-        string_arg_datatype = 'xml'::regtype OR
-        string_arg_datatype = 'geometry'::regtype OR
-        string_arg_datatype = 'geography'::regtype  THEN
-            RAISE 'Argument data type % is invalid for argument 1 of ltrim function.', string_arg_datatype;
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of ltrim function.', string_arg_datatype;
     END IF;
 
     IF string IS NULL THEN
@@ -724,7 +729,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RAISE 'Argument data type text is invalid for argument 1 of ltrim function.';
+    RAISE EXCEPTION 'Argument data type text is invalid for argument 1 of ltrim function.';
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -736,7 +741,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RAISE 'Argument data type ntext is invalid for argument 1 of ltrim function.';
+    RAISE EXCEPTION 'Argument data type ntext is invalid for argument 1 of ltrim function.';
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -747,17 +752,19 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 DECLARE
-    string_arg_datatype regtype;
+    string_arg_datatype text;
+    string_basetype oid;
 BEGIN
-    string_arg_datatype := pg_typeof(string);
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use base type to check for argument datatype validation
+        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
 
     -- restricting arguments with invalid datatypes for rtrim function
-    IF string_arg_datatype = 'sys.image'::regtype OR
-        string_arg_datatype = 'sys.sql_variant'::regtype OR
-        string_arg_datatype = 'xml'::regtype OR
-        string_arg_datatype = 'geometry'::regtype OR
-        string_arg_datatype = 'geography'::regtype  THEN
-            RAISE 'Argument data type % is invalid for argument 1 of rtrim function.', string_arg_datatype;
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of rtrim function.', string_arg_datatype;
     END IF;
 
     IF string IS NULL THEN
@@ -816,7 +823,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RAISE 'Argument data type text is invalid for argument 1 of rtrim function.';
+    RAISE EXCEPTION 'Argument data type text is invalid for argument 1 of rtrim function.';
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -828,7 +835,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RAISE 'Argument data type ntext is invalid for argument 1 of rtrim function.';
+    RAISE EXCEPTION 'Argument data type ntext is invalid for argument 1 of rtrim function.';
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -840,17 +847,19 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 DECLARE
-    string_arg_datatype regtype;
+    string_arg_datatype text;
+    string_basetype oid;
 BEGIN
-    string_arg_datatype := pg_typeof(string);
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use base type to check for argument datatype validation
+        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
 
     -- restricting arguments with invalid datatypes for left function
-    IF string_arg_datatype = 'sys.image'::regtype OR
-        string_arg_datatype = 'sys.sql_variant'::regtype OR
-        string_arg_datatype = 'xml'::regtype OR
-        string_arg_datatype = 'geometry'::regtype OR
-        string_arg_datatype = 'geography'::regtype THEN
-            RAISE 'Argument data type % is invalid for argument 1 of left function.', string_arg_datatype;
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of left function.', string_arg_datatype;
     END IF;
 
     IF i IS NULL THEN
@@ -858,7 +867,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the left function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
     END IF;
 
     IF string IS NULL THEN
@@ -880,7 +889,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the left function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
     END IF;
 
     IF string IS NULL THEN
@@ -902,7 +911,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the left function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
     END IF;
 
     IF string IS NULL THEN
@@ -924,7 +933,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the left function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
     END IF;
 
     IF string IS NULL THEN
@@ -946,7 +955,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the left function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
     END IF;
 
     IF string IS NULL THEN
@@ -965,7 +974,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-   RAISE 'Argument data type text is invalid for argument 1 of left function.';
+   RAISE EXCEPTION 'Argument data type text is invalid for argument 1 of left function.';
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -977,7 +986,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-   RAISE 'Argument data type ntext is invalid for argument 1 of left function.';
+   RAISE EXCEPTION 'Argument data type ntext is invalid for argument 1 of left function.';
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -989,17 +998,19 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 DECLARE
-    string_arg_datatype regtype;
+    string_arg_datatype text;
+    string_basetype oid;
 BEGIN
-    string_arg_datatype := pg_typeof(string);
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use base type to check for argument datatype validation
+        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
 
     -- restricting arguments with invalid datatypes for right function
-    IF string_arg_datatype = 'sys.image'::regtype OR
-        string_arg_datatype = 'sys.sql_variant'::regtype OR
-        string_arg_datatype = 'xml'::regtype OR
-        string_arg_datatype = 'geometry'::regtype OR
-        string_arg_datatype = 'geography'::regtype THEN
-            RAISE 'Argument data type % is invalid for argument 1 of right function.', string_arg_datatype;
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of right function.', string_arg_datatype;
     END IF;
 
     IF i IS NULL THEN
@@ -1007,7 +1018,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the right function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
     END IF;
 
     IF string IS NULL THEN
@@ -1028,7 +1039,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the right function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
     END IF;
 
     IF string IS NULL THEN
@@ -1050,7 +1061,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the right function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
     END IF;
 
     IF string IS NULL THEN
@@ -1072,7 +1083,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the right function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
     END IF;
 
     IF string IS NULL THEN
@@ -1094,7 +1105,7 @@ BEGIN
     END IF;
 
     IF i < 0 THEN
-        RAISE 'Invalid length parameter passed to the right function.';
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
     END IF;
 
     IF string IS NULL THEN
@@ -1113,7 +1124,19 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-   RAISE 'Argument data type text is invalid for argument 1 of right function.';
+   RAISE EXCEPTION 'Argument data type text is invalid for argument 1 of right function.';
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Adding following definition will make sure that right with ntext input
+-- will use following definition instead of PG right
+CREATE OR REPLACE FUNCTION sys.RIGHT(string NTEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+   RAISE EXCEPTION 'Argument data type ntext is invalid for argument 1 of right function.';
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

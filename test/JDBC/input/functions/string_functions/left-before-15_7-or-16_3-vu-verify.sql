@@ -42,6 +42,20 @@ GO
 SELECT LEFT('AbdefGhi', 2147483650)
 GO
 
+-- misc tests
+DECLARE @procedure_name NVARCHAR(134) = ';1'
+SELECT LEFT(@procedure_name, LEN(@procedure_name)-2)
+GO
+
+DECLARE @procedure_name NVARCHAR(134) = 'procedureName;1'
+SELECT LEFT(@procedure_name, LEN(@procedure_name)-2)
+GO
+
+-- procedure name with length equal to 134
+DECLARE @procedure_name NVARCHAR(134) = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;1'
+SELECT LEFT(@procedure_name, LEN(@procedure_name)-2)
+GO
+
 -- input type char
 DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
 SELECT '|' + LEFT(@inputString, 5) + '|'
@@ -77,10 +91,45 @@ SELECT LEFT(@inputString, 50)
 GO
 
 -- with table column of type varchar with collation chinese_prc_ci_as
-SELECT LEFT(a, 4) FROM babel_4489_left_t3
+SELECT LEFT(a, 4) FROM babel_4489_left_chinese_prc_ci_as
 GO
 
-SELECT LEFT(a, 4) COLLATE CHINESE_PRC_CI_AS FROM babel_4489_left_t3
+SELECT LEFT(a, 4) COLLATE CHINESE_PRC_CI_AS FROM babel_4489_left_chinese_prc_ci_as
+GO
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT LEFT(a, 4) FROM babel_4489_left_chinese_prc_cs_as
+GO
+
+SELECT LEFT(a, 4) COLLATE CHINESE_PRC_CS_AS FROM babel_4489_left_chinese_prc_cs_as
+GO
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT LEFT(a, 4) FROM babel_4489_left_chinese_prc_ci_ai
+GO
+
+SELECT LEFT(a, 4) COLLATE CHINESE_PRC_CI_AI FROM babel_4489_left_chinese_prc_ci_ai
+GO
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT LEFT(a, 4) FROM babel_4489_left_arabic_ci_as
+GO
+
+SELECT LEFT(a, 4) COLLATE ARABIC_CI_AS FROM babel_4489_left_arabic_ci_as
+GO
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT LEFT(a, 4) FROM babel_4489_left_arabic_cs_as
+GO
+
+SELECT LEFT(a, 4) COLLATE ARABIC_CS_AS FROM babel_4489_left_arabic_cs_as
+GO
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT LEFT(a, 4) FROM babel_4489_left_arabic_ci_ai
+GO
+
+SELECT LEFT(a, 4) COLLATE ARABIC_CI_AI FROM babel_4489_left_arabic_ci_ai
 GO
 
 -- input type nchar
@@ -124,6 +173,14 @@ SELECT * FROM babel_4489_left_dep_func()
 GO
 
 SELECT * FROM babel_4489_left_itvf_func()
+GO
+
+-- input type UDT
+-- -- in table babel_4489_left_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT LEFT(a, 3) FROM babel_4489_left_UDT
+GO
+
+SELECT LEFT(b, 3) FROM babel_4489_left_UDT
 GO
 
 -- other different datatypes, all of these should not be allowed

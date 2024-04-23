@@ -10,13 +10,37 @@ GO
 DROP VIEW babel_4489_left_dep_view
 GO
 
+DROP TABLE babel_4489_left_UDT
+GO
+
+DROP TYPE dbo.babel_4489_left_varUDT
+GO
+
+DROP TYPE dbo.babel_4489_left_imageUDT
+GO
+
 DROP TABLE babel_4489_left_text
 GO
 
 DROP TABLE babel_4489_left_image
 GO
 
-DROP TABLE babel_4489_left_t3
+DROP TABLE babel_4489_left_arabic_ci_ai
+GO
+
+DROP TABLE babel_4489_left_arabic_cs_as
+GO
+
+DROP TABLE babel_4489_left_arabic_ci_as
+GO
+
+DROP TABLE babel_4489_left_chinese_prc_ci_ai
+GO
+
+DROP TABLE babel_4489_left_chinese_prc_cs_as
+GO
+
+DROP TABLE babel_4489_left_chinese_prc_ci_as
 GO
 
 DROP TABLE babel_4489_left_t2

@@ -41,10 +41,45 @@ SELECT '|' + RTRIM(@inputString) COLLATE CHINESE_PRC_CI_AS + '|'
 GO
 
 -- with table column of type varchar with collation chinese_prc_ci_as
-SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_t3
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_chinese_prc_ci_as
 GO
 
-SELECT '|' + RTRIM(a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_rtrim_t3
+SELECT '|' + RTRIM(a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_rtrim_chinese_prc_ci_as
+GO
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_chinese_prc_cs_as
+GO
+
+SELECT '|' + RTRIM(a) COLLATE CHINESE_PRC_CS_AS + '|' FROM babel_4489_rtrim_chinese_prc_cs_as
+GO
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_chinese_prc_ci_ai
+GO
+
+SELECT '|' + RTRIM(a) COLLATE CHINESE_PRC_CI_AI + '|' FROM babel_4489_rtrim_chinese_prc_ci_ai
+GO
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_arabic_ci_as
+GO
+
+SELECT '|' + RTRIM(a) COLLATE ARABIC_CI_AS + '|' FROM babel_4489_rtrim_arabic_ci_as
+GO
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_arabic_cs_as
+GO
+
+SELECT '|' + RTRIM(a) COLLATE ARABIC_CS_AS + '|' FROM babel_4489_rtrim_arabic_cs_as
+GO
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_arabic_ci_ai
+GO
+
+SELECT '|' + RTRIM(a) COLLATE ARABIC_CI_AI + '|' FROM babel_4489_rtrim_arabic_ci_ai
 GO
 
 -- input type nchar
@@ -80,6 +115,14 @@ SELECT * FROM babel_4489_rtrim_dep_func()
 GO
 
 SELECT * FROM babel_4489_rtrim_itvf_func()
+GO
+
+-- input type UDT
+-- -- in table babel_4489_rtrim_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT RTRIM(a) FROM babel_4489_rtrim_UDT
+GO
+
+SELECT RTRIM(b) FROM babel_4489_rtrim_UDT
 GO
 
 -- other different datatypes, all of these should be blocked

@@ -9,6 +9,8 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/genam.h"
+#include "access/table.h"
 #include "access/parallel.h"	/* InitializingParallelWorker */
 #include "miscadmin.h"
 #include "catalog/pg_authid.h"
@@ -27,6 +29,7 @@
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/guc.h"
+#include "utils/fmgroids.h"
 #include "common/int.h"
 #include "utils/numeric.h"
 #include "utils/memutils.h"
@@ -43,7 +46,7 @@
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
 extern func_select_candidate_hook_type func_select_candidate_hook;
-extern func_select_candidate_for_exception_hook_type func_select_candidate_for_exception_hook;
+extern func_select_candidate_for_special_func_hook_type func_select_candidate_for_special_func_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
@@ -372,31 +375,32 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 
 #define TOTAL_TSQL_PRECEDENCE_COUNT (sizeof(tsql_precedence_infos)/sizeof(tsql_precedence_infos[0]))
 
-/* Following constants value are defined based on the exception function list */
-#define EFUNC_MAX_ARGS 2
-#define EFUNC_MAX_VALID_TYPES 4
+/* Following constants value are defined based on the special function list */
+#define SFUNC_MAX_ARGS 2			/* maximum number of args special function in special function list can have */
+#define SFUNC_MAX_VALID_TYPES 4		/* maximum number of valid types supported argument of function in special function list can have */
 
-typedef struct tsql_valid_type
+/* struct to store details of valid types supported for a argument */
+typedef struct tsql_valid_arg_type
 {
-	int		len;
-	char   *valid_types[EFUNC_MAX_VALID_TYPES];
-	Oid		valid_types_oid[EFUNC_MAX_VALID_TYPES];
-} tsql_valid_type_t;
+	int     len;                                      /* length of list of valid types for the argument */
+	char   *valid_types[SFUNC_MAX_VALID_TYPES];       /* list of valid type name supported for the argument */
+} tsql_valid_arg_type_t;
 
-typedef struct tsql_exception_function
+/* struct to store details of special function */
+typedef struct tsql_special_function
 {
-	const char		   *nsp;
-	const char		   *funcname;
-	int					nargs;
-	tsql_valid_type_t	valid_arg_types[EFUNC_MAX_ARGS];
-} tsql_exception_function_t;
+	const char             *nsp;                              /* namespace of special function */
+	const char             *funcname;                         /* name of special function */
+	int                     nargs;                            /* number of arguments of special function */
+	tsql_valid_arg_type_t   valid_arg_types[SFUNC_MAX_ARGS];  /* list for storing details of all the valid types supported for each arguments */
+} tsql_special_function_t;
 
-tsql_exception_function_t tsql_exception_function_list[] = 
+tsql_special_function_t tsql_special_function_list[] = 
 {
-	{"sys", "trim", 2, {{4, {"bpchar","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"bpchar","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
+	{"sys", "trim", 2, {{4, {"char","varchar","nchar","nvarchar"}}, {4, {"char","varchar","nchar","nvarchar"}}}}
 };
 
-#define TOTAL_TSQL_EXCEPTION_FUNCTION_COUNT (sizeof(tsql_exception_function_list)/sizeof(tsql_exception_function_list[0]))
+#define TOTAL_TSQL_SPECIAL_FUNCTION_COUNT (sizeof(tsql_special_function_list)/sizeof(tsql_special_function_list[0]))
 
 /* T-SQL Cast */
 typedef struct tsql_cast_info_key
@@ -913,61 +917,116 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
 }
 
 /*
- * For a given function details, validate whether it is in exception function list
+ * getImmediateBaseTypeOfUDT()
+ * This funciton 
+ */
+static Oid getImmediateBaseTypeOfUDT(Oid typeid)
+{
+	Relation					relsetting;
+	HeapTuple					tuple;
+	ScanKeyData					scankey;
+	SysScanDesc					scan;
+	bool						isnull;
+	Datum						datum;
+	Datum                       tsql_typename;
+	LOCAL_FCINFO(fcinfo, 1);
+
+	/* if tsql_typename is NULL it implies that inputTypId corresponds to UDT */
+	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+	fcinfo->args[0].value = ObjectIdGetDatum(typeid);
+	fcinfo->args[0].isnull = false;
+	tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+
+	/* if given type is not an UDT then return InvalidOid */
+	if (tsql_typename)
+		return InvalidOid;
+
+	/* Get immediate base type id of given type id */
+	relsetting = table_open(TypeRelationId, AccessShareLock);
+	ScanKeyInit(&scankey,
+				Anum_pg_type_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(typeid));
+
+	scan = systable_beginscan(relsetting, TypeOidIndexId, true, NULL, 1, &scankey);
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		datum = heap_getattr(tuple, Anum_pg_type_typbasetype, RelationGetDescr(relsetting), &isnull);
+		if (!isnull)
+		{
+			return DatumGetObjectId(datum);
+		}
+	}
+	systable_endscan(scan);
+	table_close(relsetting, AccessShareLock);
+
+	return InvalidOid;
+}
+
+/*
+ * For a given function details, validate whether it is in special function list
  * and also validate the input argument data types.
  */
-bool validate_exception_function(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
+bool validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
 {
-	tsql_exception_function_t  *exception_func = NULL;
-	int							i;
-	bool						type_match;
-	Oid							inputTypId, validTypId;
-	Oid							sys_varcharoid;
+	tsql_special_function_t    *special_func;
+	bool                        type_match;
+	Oid                         inputTypId, validTypId, baseTypeId;
+	Oid                         sys_varcharoid;
 
 	/* Sanity checks */
 	if (func_name == NULL || (nargs != 0 && input_typeids == NULL))
 		return false;
 
 	/* 
-	 * Exception function handling is only for system functions.
+	 * Special function handling is only for some specific system functions.
 	 * If func_nsname is NULL, consider it to be a "sys".
 	 */
 	if (func_nsname != NULL &&
 		(strlen(func_nsname) != 3 || strncmp(func_nsname, "sys", 3) != 0))
 		return false;
 
-	/* Get Exception function details */
-	for (i = 0; i < TOTAL_TSQL_EXCEPTION_FUNCTION_COUNT; i++)
+	/* Get Special function details */
+	special_func = NULL;
+	for (int i = 0; i < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; i++)
 	{
-		exception_func = &tsql_exception_function_list[i];
-		if (strcmp(func_name, exception_func->funcname) == 0
-			&& nargs == exception_func->nargs)
-				break;
-		exception_func = NULL;
+		if (strcmp(func_name, tsql_special_function_list[i].funcname) == 0
+			&& nargs == tsql_special_function_list[i].nargs)
+		{
+			special_func = &tsql_special_function_list[i];
+			break;
+		}
 	}
 
-	/* If function is not an exception function no additional handling required */
-	if (i >= TOTAL_TSQL_EXCEPTION_FUNCTION_COUNT
-		|| exception_func == NULL)
-	{
+	/* If function is not a special function no additional handling required */
+	if (special_func == NULL)
 		return false;
-	}
 
 	sys_varcharoid = get_sys_varcharoid();
 	/* Report error in case of invalid argument datatype */
-	for (i = 0; i < exception_func->nargs; i++)
+	for (int i = 0; i < special_func->nargs; i++)
 	{
 		/* for unknown literals consider its type as sys.VARCHAR */
 		inputTypId = (input_typeids[i] == UNKNOWNOID) ? sys_varcharoid : input_typeids[i];
 
-		type_match = false;
-		for (int j = 0; j < exception_func->valid_arg_types[i].len; j++)
-		{
-			if (!OidIsValid(exception_func->valid_arg_types[i].valid_types_oid[j]))
-				exception_func->valid_arg_types[i].valid_types_oid[j] = 
-					(*common_utility_plugin_ptr->lookup_tsql_datatype_oid) (exception_func->valid_arg_types[i].valid_types[j]);
+		/* if common_utility_plugin_ptr is not initialised */
+		if (common_utility_plugin_ptr == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("Failed to find common utility plugin.")));
 
-			validTypId = exception_func->valid_arg_types[i].valid_types_oid[j];
+		/* for UDT use its base type for input argument datatype validation */
+		baseTypeId = getImmediateBaseTypeOfUDT(inputTypId);
+		if(OidIsValid(baseTypeId))
+		{
+			inputTypId = baseTypeId;
+		}
+
+		type_match = false;
+		for (int j = 0; j < special_func->valid_arg_types[i].len; j++)
+		{
+			validTypId = (*common_utility_plugin_ptr->get_tsql_datatype_oid)(special_func->valid_arg_types[i].valid_types[j]);
 
 			if (inputTypId == validTypId)
 			{
@@ -980,7 +1039,7 @@ bool validate_exception_function(char *func_nsname, char *func_name, int nargs, 
 			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("Argument data type %s is invalid for argument %d of %s function.", 
-				 		 format_type_be(input_typeids[i]), i+1, exception_func->funcname)));
+				 		 format_type_be(inputTypId), i+1, special_func->funcname)));
 		}
 	}
 
@@ -988,42 +1047,45 @@ bool validate_exception_function(char *func_nsname, char *func_name, int nargs, 
 }
 
 /*
- * tsql_func_select_candidate_for_exception()
+ * tsql_func_select_candidate_for_special_func()
  *
- * For functions present in exception function list, and try to find best candidate 
+ * For functions present in special function list, and try to find best candidate 
  * based on matching return type. Also throw error in case of invalid argument data type.
  */
 static FuncCandidateList
-tsql_func_select_candidate_for_exception(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
 	FuncCandidateList			current_candidate, best_candidate;
-	HeapTuple					tuple;
 	Oid 						expr_result_type;
-	Form_pg_proc 				procform;
 	char					   *proc_nsname;
 	char					   *proc_name;
 	bool						is_func_validated;
 	int							ncandidates;
-
-	if (nargs > FUNC_MAX_ARGS)
-		ereport(ERROR,
-				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				 errmsg_plural("cannot pass more than %d argument to a function",
-								"cannot pass more than %d arguments to a function",
-								FUNC_MAX_ARGS,
-								FUNC_MAX_ARGS)));
+	Relation					relsetting;
+	HeapTuple					tuple;
+	ScanKeyData					scankey;
+	SysScanDesc					scan;
+	bool						isnull;
+	Oid							retType;
+	Datum						datum;
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
-	is_func_validated = validate_exception_function(proc_nsname, proc_name, nargs, input_typeids);
+	is_func_validated = validate_special_function(proc_nsname, proc_name, nargs, input_typeids);
 
-	/* Return NULL if function is not an exception function */
+	/* Return NULL if function is not a special function */
 	if (!is_func_validated)
 		return NULL;
 
+	/* if common_utility_plugin_ptr is not initialised */
+	if (common_utility_plugin_ptr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Failed to find common utility plugin.")));
+
 	/* function based logic to decide return type */
-	expr_result_type = -1;
-	if (strcmp(proc_name,"trim") == 0)
+	expr_result_type = InvalidOid;
+	if (strlen(proc_name) == 4 && strcmp(proc_name,"trim") == 0)
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[0])
 			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[0]))
@@ -1038,32 +1100,42 @@ tsql_func_select_candidate_for_exception(List *names, int nargs, Oid *input_type
 		}
 	}
 
-	if (expr_result_type == -1)
-	{
+	if (!OidIsValid(expr_result_type))
 		return NULL;
-	}
 
 	/* Get the candidate with matching return type */
 	ncandidates = 0;
 	best_candidate = NULL;
+	relsetting = table_open(ProcedureRelationId, AccessShareLock);
 	for (current_candidate = candidates;
 			current_candidate != NULL;
 			current_candidate = current_candidate->next)
 	{
-		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(current_candidate->oid));
-		if (!HeapTupleIsValid(tuple))
-			continue;
-
-		procform = (Form_pg_proc) GETSTRUCT(tuple);
-		if (expr_result_type == procform->prorettype)
+		ScanKeyInit(&scankey,
+					Anum_pg_proc_oid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(current_candidate->oid));
+	
+		scan = systable_beginscan(relsetting, ProcedureOidIndexId, true, NULL, 1, &scankey);
+		tuple = systable_getnext(scan);
+		if (HeapTupleIsValid(tuple))
 		{
-			best_candidate = current_candidate;
-			ncandidates++;
+			datum = heap_getattr(tuple, Anum_pg_proc_prorettype, RelationGetDescr(relsetting), &isnull);
+			if (!isnull)
+			{
+				retType = DatumGetObjectId(datum);	
+				if (expr_result_type == retType)
+				{
+					best_candidate = current_candidate;
+					ncandidates++;
+				}
+			}
 		}
-		ReleaseSysCache(tuple);
+		systable_endscan(scan);
 	}
+	table_close(relsetting, AccessShareLock);
 
-	/* Only one definition should exists per return type for exception function */
+	/* Only one definition should exists per return type for special function */
 	Assert(ncandidates == 1);
 	if (best_candidate != NULL)
 		best_candidate->next = NULL;
@@ -1558,7 +1630,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	/* Register Hooks */
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
 	func_select_candidate_hook = tsql_func_select_candidate;
-	func_select_candidate_for_exception_hook = tsql_func_select_candidate_for_exception;
+	func_select_candidate_for_special_func_hook = tsql_func_select_candidate_for_special_func;
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
 	select_common_type_hook = tsql_select_common_type_hook;
 	select_common_typmod_hook = tsql_select_common_typmod_hook;

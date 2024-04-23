@@ -118,10 +118,45 @@ SELECT '|' + TRIM(@charSet FROM @inputString) COLLATE CHINESE_PRC_CI_AS + '|'
 GO
 
 -- with table column of type varchar with collation chinese_prc_ci_as
-SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_t3
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_chinese_prc_ci_as
 GO
 
-SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_trim_t3
+SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_trim_chinese_prc_ci_as
+GO
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_chinese_prc_cs_as
+GO
+
+SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CS_AS + '|' FROM babel_4489_trim_chinese_prc_cs_as
+GO
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_chinese_prc_ci_ai
+GO
+
+SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CI_AI + '|' FROM babel_4489_trim_chinese_prc_ci_ai
+GO
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_arabic_ci_as
+GO
+
+SELECT '|' + TRIM(b FROM a) COLLATE ARABIC_CI_AS + '|' FROM babel_4489_trim_arabic_ci_as
+GO
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_arabic_cs_as
+GO
+
+SELECT '|' + TRIM(b FROM a) COLLATE ARABIC_CS_AS + '|' FROM babel_4489_trim_arabic_cs_as
+GO
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_arabic_ci_ai
+GO
+
+SELECT '|' + TRIM(b FROM a) COLLATE ARABIC_CI_AI + '|' FROM babel_4489_trim_arabic_ci_ai
 GO
 
 -- input type nchar
@@ -377,6 +412,22 @@ GO
 
 DECLARE @inputString VARBINARY(50) = 0x41424344, @charSet VARBINARY(2) = 0x4144
 SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+
+-- input type UDT
+-- -- in table babel_4489_trim_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT TRIM(a) FROM babel_4489_trim_UDT
+GO
+
+SELECT TRIM(b) FROM babel_4489_trim_UDT
+GO
+
+DECLARE @charSet VARCHAR(10) = 'ab'
+SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_UDT
+GO
+
+DECLARE @charSet VARCHAR(10) = 'ab'
+SELECT TRIM(@charSet FROM b) FROM babel_4489_trim_UDT
 GO
 
 -- other different datatypes, all of these should be blocked
