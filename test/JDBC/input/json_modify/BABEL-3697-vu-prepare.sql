@@ -56,16 +56,6 @@ GO
 create table babel_4793(a int , b int)
 GO
 
-create view babel_4793_view_1 as select dbo.o7getcodevaluedesc() , kk , dd from (
-   select a as kk, count(b) as dd from babel_4793  group by a 
-) as drived
-GO
-
-create view babel_4793_view_2 as select kk , dd, dbo.o7getcodevaluedesc() from (
-   select a as kk, count(b) as dd from babel_4793  group by a 
-) as drived
-GO
-
 create schema babel_4793_schema
 GO
 
@@ -76,7 +66,26 @@ as BEGIN
 end;
 GO
 
-create view babel_4793_view_3 as select babel_4793_schema.babel_4793_func() , kk , dd from (
-   select a as kk, count(b) as dd from babel_4793  group by a 
-) as drived
-GO
+create procedure babel_4793_pro1
+as begin
+   select kk , dd, dbo.o7getcodevaluedesc() from (
+      select a as kk, count(b) as dd from babel_4793  group by a 
+   ) as drived
+end;
+go
+
+create procedure babel_4793_pro2
+as begin
+   select dbo.o7getcodevaluedesc() , kk , dd from (
+      select a as kk, count(b) as dd from babel_4793  group by a 
+   ) as drived
+end;
+go
+
+create procedure babel_4793_pro3
+as begin
+   select babel_4793_schema.babel_4793_func() , kk , dd from (
+      select a as kk, count(b) as dd from babel_4793  group by a 
+   ) as drived
+end;
+go
