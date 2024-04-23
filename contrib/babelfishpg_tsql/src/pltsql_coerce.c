@@ -1290,9 +1290,15 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 static Node*
 tsql_handle_constant_literals_hook(ParseState *pstate, Node *e)
 {
-	Const	   *con = (Const *) e;
-	char	   *val = DatumGetCString(con->constvalue);
+	Const	   *con;
+	char	   *val;
 	int	   i = -1;
+
+	if (exprType(e) != UNKNOWNOID || !IsA(e, Const))
+		return e;
+
+	con = (Const *) e;
+	val = DatumGetCString(con->constvalue);
 
 	if (val != NULL)
 		i = strlen(val) - 1;
