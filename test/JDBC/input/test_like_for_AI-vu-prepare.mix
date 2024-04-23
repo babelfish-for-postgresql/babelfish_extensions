@@ -1,3 +1,4 @@
+-- tsql
 ------------------- CI_AI ----------------------
 
 CREATE TABLE test_like_for_AI_prepare_t1_ci (
@@ -254,6 +255,24 @@ GO
 INSERT INTO test_like_for_AI_prepare_chinese VALUES('中国人'), ('微笑'), ('谢谢你。');
 GO
 
+-- TESTS FOR INDEX SCAN
+create table test_like_for_AI_prepare_index (c1 varchar(20) COLLATE Latin1_General_CI_AI, c2 nvarchar(20) COLLATE Latin1_General_CS_AI);
+create index c1_idx on test_like_for_AI_prepare_index (c1);
+create index c2_idx on test_like_for_AI_prepare_index (c2);
+GO
+
+insert into test_like_for_AI_prepare_index values ('JONES','JONES');
+insert into test_like_for_AI_prepare_index values ('JoneS','JoneS');
+insert into test_like_for_AI_prepare_index values ('jOnes','jOnes');
+insert into test_like_for_AI_prepare_index values ('abcD','ABCd');
+insert into test_like_for_AI_prepare_index values ('äbĆD','äƀCd');
+GO
+
+-- psql
+ANALYZE master_dbo.test_like_for_AI_prepare_index;
+GO
+
+-- tsql
 -- TESTS for remove_accents_internal
 -- function
 CREATE FUNCTION test_like_for_AI_prepare_function(@input_text TEXT) RETURNS sys.NVARCHAR(MAX)

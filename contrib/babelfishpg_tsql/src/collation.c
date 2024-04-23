@@ -513,7 +513,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can 
 	 * have maximum INT32_MAX value
 	 */
-	capacity = ((limit * MAX_BYTES_PER_CHAR) < INT32_MAX) ? (limit * MAX_BYTES_PER_CHAR) : INT32_MAX;
+	capacity = (limit < (PG_INT32_MAX / MAX_BYTES_PER_CHAR)) ? (limit * MAX_BYTES_PER_CHAR) : PG_INT32_MAX;
 
 	utrans_transUChars(cached_transliterator,
 						utf16_input,
@@ -554,26 +554,47 @@ convert_node_to_funcexpr_for_like(Node *node)
 	if (node == NULL)
 		return node;
 
-	new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
-														TEXTOID, -1,
-														COERCION_EXPLICIT,
-														COERCE_EXPLICIT_CAST,
-														exprLocation(node));
-	if (unlikely(new_node == NULL))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
-	}
-
-	switch (nodeTag(new_node))
+	switch (nodeTag(node))
 	{
 		case T_Const:
 			{
-				Const *con = (Const *) new_node;
-				if (!con->constvalue)
-					return new_node;
-				con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+				Const *con;
+				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+				if (unlikely(new_node == NULL))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+				}
+
+				if (IsA(new_node, Const))
+				{
+					con = (Const *) new_node;
+					if (!con->constvalue)
+						return new_node;
+					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+				}
+				else if (IsA(new_node, RelabelType))
+				{
+					RelabelType		*relabel = (RelabelType *) new_node;
+					if (IsA(relabel->arg, Const))
+					{
+						con = (Const *) relabel->arg;
+						if (!con->constvalue)
+							return new_node;
+						con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+					}
+				}
+				else
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("unrecognized node type: %d", (int) nodeTag(node))));
+				}
 				return (Node *) con;
 			}
 		case T_FuncExpr:
@@ -583,6 +604,17 @@ convert_node_to_funcexpr_for_like(Node *node)
 		case T_RelabelType:
 		case T_CollateExpr:
 			{
+				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+				if (unlikely(new_node == NULL))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+				}
 				newFuncExpr->args = list_make1(new_node);
 				break;
 			}

@@ -1641,6 +1641,48 @@ GO
 SELECT count(*) FROM test_like_for_AI_prepare_max_test WHERE a COLLATE Latin1_General_CI_AI LIKE '%Áe%'
 GO
 
+-- TESTS FOR INDEX SCAN 
+select set_config('enable_seqscan','off','false');
+GO
+
+
+SET babelfish_showplan_all ON;
+GO
+-- for CI_AI
+select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jones'; -- this gets converted to '='
+GO
+
+select c1 from test_like_for_AI_prepare_index where c1 LIKE 'Jon%';
+GO
+
+select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jone_';
+GO
+
+select c1 from test_like_for_AI_prepare_index where c1 LIKE '_one_';
+GO
+
+select c1 from test_like_for_AI_prepare_index where c1 LIKE '%on%s';
+GO
+
+-- for CS_AI
+select c2 from test_like_for_AI_prepare_index where c2 LIKE 'jones'; -- this does not get converted to '=' as we are not using optimization for CS_AI
+GO
+
+select c2 from test_like_for_AI_prepare_index where c2 LIKE 'Jon%';
+GO
+
+select c2 from test_like_for_AI_prepare_index where c2 LIKE 'jone_';
+GO
+
+select c2 from test_like_for_AI_prepare_index where c2 LIKE '_one_';
+GO
+
+select c2 from test_like_for_AI_prepare_index where c2 LIKE '%on%s';
+GO
+
+SET babelfish_showplan_all OFF;
+GO
+
 -- TESTS for remove_accents_internal
 
 -- function

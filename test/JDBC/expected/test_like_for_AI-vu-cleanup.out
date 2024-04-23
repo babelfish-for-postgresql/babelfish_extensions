@@ -51,3 +51,13 @@ GO
 
 DROP TABLE test_like_for_AI_prepare_t1_ci;
 GO
+
+-- TESTS FOR INDEX SCAN
+DROP INDEX c1_idx ON test_like_for_AI_prepare_index;
+GO
+
+DROP INDEX c2_idx ON test_like_for_AI_prepare_index;
+GO
+
+DROP TABLE test_like_for_AI_prepare_index;
+GO
