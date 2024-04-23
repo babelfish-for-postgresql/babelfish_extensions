@@ -1,3 +1,4 @@
+-- tsql
 
 ------------------- CI_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -4539,7 +4540,11 @@ off
 ~~END~~
 
 
+-- psql
+ANALYZE master_dbo.test_like_for_AI_prepare_index;
+GO
 
+-- tsql
 SET babelfish_showplan_all ON;
 GO
 -- for CI_AI

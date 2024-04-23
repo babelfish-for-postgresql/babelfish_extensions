@@ -1,4 +1,3 @@
--- tsql
 ------------------- CI_AI ----------------------
 
 CREATE TABLE test_like_for_AI_prepare_t1_ci (
@@ -268,11 +267,6 @@ insert into test_like_for_AI_prepare_index values ('abcD','ABCd');
 insert into test_like_for_AI_prepare_index values ('äbĆD','äƀCd');
 GO
 
--- psql
-ANALYZE master_dbo.test_like_for_AI_prepare_index;
-GO
-
--- tsql
 -- TESTS for remove_accents_internal
 -- function
 CREATE FUNCTION test_like_for_AI_prepare_function(@input_text TEXT) RETURNS sys.NVARCHAR(MAX)

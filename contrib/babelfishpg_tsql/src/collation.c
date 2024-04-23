@@ -294,7 +294,7 @@ transform_funcexpr(Node *node)
  */
 
 static Node *
-transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid, bool is_CI_AI)
+transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
 {
 	Node	   *leftop = (Node *) linitial(op->args);
 	Node	   *rightop = (Node *) lsecond(op->args);
@@ -349,7 +349,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	 * we obtain a Relabel node which won't help us to perform optimization
 	 * for constant prefix. Hence, we process that here
 	 */
-	if (IsA(rightop, RelabelType) && is_CI_AI)
+	if (IsA(rightop, RelabelType))
 	{
 		RelabelType		*relabel = (RelabelType *) rightop;
 		if (IsA(relabel->arg, Const))
@@ -574,28 +574,16 @@ convert_node_to_funcexpr_for_like(Node *node)
 				if (IsA(new_node, Const))
 				{
 					con = (Const *) new_node;
-					if (!con->constvalue)
+					if (con->constisnull)
 						return new_node;
 					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
 					return (Node *) con;
-				}
-				else if (IsA(new_node, RelabelType))
-				{
-					RelabelType		*relabel = (RelabelType *) new_node;
-					if (IsA(relabel->arg, Const))
-					{
-						con = (Const *) relabel->arg;
-						if (!con->constvalue)
-							return new_node;
-						con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
-						return (Node *) con;
-					}
 				}
 				else
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("unrecognized node type: %d", (int) nodeTag(node))));
+							 errmsg("Could not convert Const node to desired node type")));
 				}
 				return new_node;
 			}
@@ -765,7 +753,7 @@ transform_likenode(Node *node)
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
 			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
-				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid, true);
+				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -777,7 +765,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
 		{
-			return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid, false);
+			return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 		}
 	}
 	return node;
