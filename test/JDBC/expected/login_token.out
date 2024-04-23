@@ -1,4 +1,20 @@
 -- tsql
+create login lt1 with password = '123';
+go
+
+create login lt2 with password = '123';
+go
+
+create user lt2;
+go
+
+create login lt3 with password = '123'
+go
+
+alter server role sysadmin add member lt3;
+go
+
+-- tsql
 select name, type, usage from sys.login_token;
 go
 ~~START~~
@@ -73,3 +89,70 @@ nvarchar#!#nvarchar#!#nvarchar
 dbo#!#SQL USER#!#GRANT OR DENY
 ~~END~~
 
+
+-- tsql
+drop user lt2;
+go
+
+-- psql
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lt1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lt2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lt3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login lt1;
+go
+drop login lt2;
+go
+drop login lt3;
+go
