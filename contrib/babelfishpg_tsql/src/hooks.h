@@ -19,10 +19,20 @@ extern bool output_update_transformation;
 extern bool output_into_insert_transformation;
 extern char *extract_identifier(const char *start);
 extern char *gen_func_arg_list(Oid objectId);
+extern char * gen_func_arg_list_from_params(List* parameters);
 extern void pltsql_store_func_default_positions(ObjectAddress address,
                                                 List *parameters,
                                                 const char *queryString,
                                                 int origname_location);
+extern void alter_bbf_function_ext(ObjectAddress address,
+									ObjectWithArgs *owa, 
+									List *parameters, 
+									const char *queryString, 
+									int origname_location);
+extern void alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, 
+                                                    List *parameters,
+                                                    int objtypeInt,
+                                                    Oid oid);
 extern Oid  get_tsql_trigger_oid(List *object,
                                  const char *tsql_trigger_name,
                                  bool object_from_input);

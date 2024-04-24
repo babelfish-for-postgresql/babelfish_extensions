@@ -1,0 +1,125 @@
+exec alter_proc_p1
+go
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#j#!#o#!#testemail
+1#!#e#!#l#!#testemail2
+~~END~~
+
+
+ALTER PROCEDURE alter_proc_p1
+AS
+    select * from alter_proc_orders
+GO
+
+exec alter_proc_p1
+go
+~~START~~
+int#!#int#!#int#!#int#!#date
+1#!#1#!#1#!#5#!#2023-06-25
+2#!#1#!#1#!#6#!#2023-06-25
+~~END~~
+
+
+exec alter_proc_p2
+go
+~~START~~
+int#!#int#!#int#!#int#!#date
+1#!#1#!#1#!#5#!#2023-06-25
+2#!#1#!#1#!#6#!#2023-06-25
+~~END~~
+
+
+
+ALTER PROCEDURE alter_proc_p1
+    @param INT
+AS
+    IF (@param = 1)
+    BEGIN
+        select * from alter_proc_users
+    END
+    ELSE
+    BEGIN
+        select * from alter_proc_orders
+    END
+GO
+
+exec alter_proc_p1 @param = 1
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#j#!#o#!#testemail
+1#!#e#!#l#!#testemail2
+~~END~~
+
+
+exec alter_proc_p1 @param = 2
+GO
+~~START~~
+int#!#int#!#int#!#int#!#date
+1#!#1#!#1#!#5#!#2023-06-25
+2#!#1#!#1#!#6#!#2023-06-25
+~~END~~
+
+
+-- expect error for no param provided
+exec alter_proc_p2
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure alter_proc_p1 expects parameter "@param", which was not supplied.)~~
+
+
+
+ALTER PROCEDURE alter_proc_p1
+    @param date
+AS
+    IF (@param = '2020-01-01')
+    BEGIN
+        select * from alter_proc_users
+    END
+    ELSE
+    BEGIN
+        select * from alter_proc_orders
+    END
+GO
+
+exec alter_proc_p1 @param = '2020-01-01'
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#j#!#o#!#testemail
+1#!#e#!#l#!#testemail2
+~~END~~
+
+
+exec alter_proc_p1 @param = '2020-01-02'
+GO
+~~START~~
+int#!#int#!#int#!#int#!#date
+1#!#1#!#1#!#5#!#2023-06-25
+2#!#1#!#1#!#6#!#2023-06-25
+~~END~~
+
+
+alter procedure alter_proc_p2
+AS
+    exec alter_proc_p1 @param = '2020-01-01'
+GO
+
+exec alter_proc_p2
+go
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#j#!#o#!#testemail
+1#!#e#!#l#!#testemail2
+~~END~~
+
+
+exec alter_proc_p1
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure alter_proc_p1 expects parameter "@param", which was not supplied.)~~
+
+

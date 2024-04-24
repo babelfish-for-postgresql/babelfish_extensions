@@ -317,6 +317,8 @@ extern int permissions[];
 extern Oid bbf_schema_perms_oid;
 extern Oid bbf_schema_perms_idx_oid;
 
+extern Oid get_bbf_schema_perms_oid(void);
+
 typedef struct FormData_bbf_schema_perms
 {
 	int16		dbid;
