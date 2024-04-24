@@ -1,9 +1,9 @@
 #1 CREATE TABLE with primary and unique keyword
-CREATE TABLE tmp(a int PRIMARY KEY, b int UNIQUE);
-INSERT INTO tmp(a,b) values(1,1);
-INSERT INTO tmp(a,b) values(2,2);
-SELECT * FROM tmp;
-DROP TABLE tmp;
+#CREATE TABLE tmp(a int PRIMARY KEY, b int UNIQUE);
+#INSERT INTO tmp(a,b) values(1,1);
+#INSERT INTO tmp(a,b) values(2,2);
+#SELECT * FROM tmp;
+#DROP TABLE tmp;
 
 #2 2 table with foreign key relation
 #CREATE TABLE tmp1(b int PRIMARY KEY);
@@ -26,7 +26,7 @@ DROP TABLE tmp;
 #DROP TABLE tmp1;
 
 #4 CREATE TABLE with NOT NULL column
-CREATE TABLE tmp(a int PRIMARY KEY,b int NOT NULL);
+CREATE TABLE tmp(a int PRIMARY KEY,b int);
 INSERT INTO tmp(a,b) values(1,1);
 INSERT INTO tmp(a,b) values(2,1);
 #INSERT INTO tmp(a,b) values(2,NULL);

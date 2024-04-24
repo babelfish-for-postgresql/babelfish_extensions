@@ -872,36 +872,36 @@ ColQualList: /* extend it allow to consume nullable (tsql_ColConstraint) */
 			ColQualList tsql_ColConstraint { $$ = (($2 != NULL) ? lappend($1, $2) : $1); }
 		;
 ConstraintElem:
-			UNIQUE tsql_cluster '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
+			UNIQUE opt_unique_null_treatment tsql_cluster '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_opt_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
-					n->nulls_not_distinct = true;
-					n->keys = $4;
-					n->including = $6;
-					n->options = $7;
+					n->nulls_not_distinct = !$2;
+					n->keys = $5;
+					n->including = $7;
+					n->options = $8;
 					n->indexname = NULL;
-					n->indexspace = $8;
-					processCASbits($9, @9, "UNIQUE",
+					n->indexspace = $9;
+					processCASbits($10, @10, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| UNIQUE tsql_cluster '(' columnListWithOptAscDesc ')' opt_c_include opt_definition OptConsTableSpace
+			| UNIQUE opt_unique_null_treatment tsql_cluster '(' columnListWithOptAscDesc ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_opt_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
-					n->nulls_not_distinct = true;
-					n->keys = $4;
-					n->including = $6;
-					n->options = $7;
+					n->nulls_not_distinct = !$2;
+					n->keys = $5;
+					n->including = $7;
+					n->options = $8;
 					n->indexname = NULL;
-					n->indexspace = $8;
-					processCASbits($9, @9, "UNIQUE",
+					n->indexspace = $9;
+					processCASbits($10, @10, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
@@ -912,7 +912,7 @@ ConstraintElem:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
-					n->nulls_not_distinct = true;
+					n->nulls_not_distinct = !$2;
 					n->keys = $4;
 					n->including = $6;
 					n->options = $7;
@@ -929,7 +929,7 @@ ConstraintElem:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
-					n->nulls_not_distinct = true;
+					n->nulls_not_distinct = !$2;
 					n->keys = $4;
 					n->including = $6;
 					n->options = $7;
@@ -940,17 +940,18 @@ ConstraintElem:
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| UNIQUE tsql_cluster ExistingIndex ConstraintAttributeSpec
+			| UNIQUE opt_unique_null_treatment tsql_cluster ExistingIndex ConstraintAttributeSpec
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
+					n->nulls_not_distinct = !$2;
 					n->keys = NIL;
 					n->including = NIL;
 					n->options = NIL;
-					n->indexname = $3;
+					n->indexname = $4;
 					n->indexspace = NULL;
-					processCASbits($4, @4, "UNIQUE",
+					processCASbits($5, @5, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
@@ -3247,6 +3248,7 @@ tsql_IndexStmt:
 					n->accessMethod = $10;
 					n->indexParams = $12;
 					n->indexIncludingParams = $14;
+					n->nulls_not_distinct = $2;
 					n->whereClause = $15;
 					n->options = $16;
 					n->excludeOpNames = NIL;
@@ -4338,15 +4340,16 @@ tsql_ColConstraint:
 		;
 
 tsql_ColConstraintElem: /* nullable */
-			  UNIQUE tsql_cluster opt_definition OptConsTableSpace
+			  UNIQUE opt_unique_null_treatment tsql_cluster opt_definition OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
+					n->nulls_not_distinct = !$2;
 					n->keys = NULL;
-					n->options = $3;
+					n->options = $4;
 					n->indexname = NULL;
-					n->indexspace = $4;
+					n->indexspace = $5;
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY tsql_cluster opt_definition OptConsTableSpace

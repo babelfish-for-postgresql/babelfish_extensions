@@ -1,0 +1,241 @@
+-- Nulls check
+SELECT * FROM babel_index_nulls_order_a_v1
+go
+~~START~~
+int
+5
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_a_v2
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_a_v3
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_b_v1
+go
+~~START~~
+varchar
+pqr
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_b_v2
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_b_v3
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_ab_v1
+go
+~~START~~
+int#!#varchar
+3#!#ghi
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_ab_v2
+go
+~~START~~
+int#!#varchar
+<NULL>#!#<NULL>
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_ab_v3
+go
+~~START~~
+int#!#varchar
+<NULL>#!#<NULL>
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_ab_v4
+go
+~~START~~
+int#!#varchar
+8#!#xyz
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_ab_v5
+go
+~~START~~
+int#!#varchar
+<NULL>#!#<NULL>
+~~END~~
+
+SELECT * FROM babel_index_nulls_order_ab_v6
+go
+~~START~~
+int#!#varchar
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Check query plans, all aggregations should be optimized
+-- into LIMIT + index scan.
+SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('enable_seqscan', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('enable_bitmapscan', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+SET babelfish_showplan_all ON
+go
+
+SELECT TOP 1 a FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_asc_idx_a)) WHERE a <= 5 ORDER BY a DESC
+go
+~~START~~
+text
+Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_order_asc_idxe9daa5ef2b0c11acbc565480994a3b5f) */ TOP 1 a FROM babel_index_nulls_order_tbl                                                  WHERE a <= 5 ORDER BY a DESC
+Limit
+  ->  Index Scan Backward using babel_index_nulls_order_asc_idxe9daa5ef2b0c11acbc565480994a3b5f on babel_index_nulls_order_tbl
+        Index Cond: (a <= 5)
+~~END~~
+
+SELECT TOP 1 a FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_asc_idx_a)) WHERE a > 5 ORDER BY a ASC
+go
+~~START~~
+text
+Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_order_asc_idxe9daa5ef2b0c11acbc565480994a3b5f) */ TOP 1 a FROM babel_index_nulls_order_tbl                                                  WHERE a > 5 ORDER BY a ASC
+Limit
+  ->  Index Scan using babel_index_nulls_order_asc_idxe9daa5ef2b0c11acbc565480994a3b5f on babel_index_nulls_order_tbl
+        Index Cond: (a > 5)
+~~END~~
+
+SELECT TOP 1 a FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_asc_idx_a)) WHERE a > 5 ORDER BY a
+go
+~~START~~
+text
+Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_order_asc_idxe9daa5ef2b0c11acbc565480994a3b5f) */ TOP 1 a FROM babel_index_nulls_order_tbl                                                  WHERE a > 5 ORDER BY a
+Limit
+  ->  Index Scan using babel_index_nulls_order_asc_idxe9daa5ef2b0c11acbc565480994a3b5f on babel_index_nulls_order_tbl
+        Index Cond: (a > 5)
+~~END~~
+
+SELECT TOP 1 b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_desc_idx_b)) WHERE b <= 'sss' ORDER BY b DESC
+go
+~~START~~
+text
+Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac) */ TOP 1 b FROM babel_index_nulls_order_tbl                                                   WHERE b <= 'sss' ORDER BY b DESC
+Limit
+  ->  Index Scan using babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac on babel_index_nulls_order_tbl
+        Index Cond: (b <= 'sss'::"varchar")
+~~END~~
+
+SELECT TOP 1 b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_desc_idx_b)) WHERE b > 'sss' ORDER BY b ASC
+go
+~~START~~
+text
+Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac) */ TOP 1 b FROM babel_index_nulls_order_tbl                                                   WHERE b > 'sss' ORDER BY b ASC
+Limit
+  ->  Index Scan Backward using babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac on babel_index_nulls_order_tbl
+        Index Cond: (b > 'sss'::"varchar")
+~~END~~
+
+SELECT TOP 1 b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_desc_idx_b)) WHERE b > 'sss' ORDER BY b
+go
+~~START~~
+text
+Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac) */ TOP 1 b FROM babel_index_nulls_order_tbl                                                   WHERE b > 'sss' ORDER BY b
+Limit
+  ->  Index Scan Backward using babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac on babel_index_nulls_order_tbl
+        Index Cond: (b > 'sss'::"varchar")
+~~END~~
+
+SELECT TOP 1 a, b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_default_idx_ab)) WHERE (a = 3 AND b <= 'sss') ORDER BY b DESC
+go
+~~START~~
+text
+Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_order_default36696f80588c2802b7570cf53f8a7d93) */ TOP 1 a, b FROM babel_index_nulls_order_tbl                                                       WHERE (a = 3 AND b <= 'sss') ORDER BY b DESC
+Limit
+  ->  Index Scan Backward using babel_index_nulls_order_default36696f80588c2802b7570cf53f8a7d93 on babel_index_nulls_order_tbl
+        Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
+~~END~~
+
+SELECT TOP 1 a, b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_default_idx_ab)) WHERE (a = 3 AND b <= 'sss') ORDER BY b ASC
+go
+~~START~~
+text
+Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_order_default36696f80588c2802b7570cf53f8a7d93) */ TOP 1 a, b FROM babel_index_nulls_order_tbl                                                       WHERE (a = 3 AND b <= 'sss') ORDER BY b ASC
+Limit
+  ->  Index Scan using babel_index_nulls_order_default36696f80588c2802b7570cf53f8a7d93 on babel_index_nulls_order_tbl
+        Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
+~~END~~
+
+SELECT TOP 1 a, b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_default_idx_ab))  WHERE (a = 3 AND b <= 'sss') ORDER BY b
+go
+~~START~~
+text
+Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_order_default36696f80588c2802b7570cf53f8a7d93) */ TOP 1 a, b FROM babel_index_nulls_order_tbl                                                        WHERE (a = 3 AND b <= 'sss') ORDER BY b
+Limit
+  ->  Index Scan using babel_index_nulls_order_default36696f80588c2802b7570cf53f8a7d93 on babel_index_nulls_order_tbl
+        Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
+~~END~~
+
+
+-- Reset
+SET babelfish_showplan_all OFF
+go
+SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('enable_seqscan', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('enable_bitmapscan', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
