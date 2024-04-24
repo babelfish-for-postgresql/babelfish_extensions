@@ -166,6 +166,7 @@ Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 BABEL-404
 BABEL-493
+BABEL-4672
 BABEL-621
 BABEL-775
 BABEL-1206-before-15-5-or-14-10
@@ -316,5 +317,6 @@ BABEL-4410
 AUTO_ANALYZE-before-15-5-or-14-10
 permission_restrictions_from_pg
 babel-4517
+BABEL-4672
 BABEL-4641-before-16_3-or-15_7-or-14_12
 BABEL-4863-before-16_3-or-15_7-or-14_12
