@@ -145,23 +145,23 @@ go
 
 
 -- Renaming system databases is prohibited
-alter database master modify name rename_db_database1;
+alter database master modify name = rename_db_database1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'rename_db_database1' at line 2 and character position 34)~~
+~~ERROR (Message: Cannot change the name of the system database master.)~~
 
-alter database tempdb modify name rename_db_database1;
+alter database tempdb modify name = rename_db_database1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'rename_db_database1' at line 1 and character position 34)~~
+~~ERROR (Message: Cannot change the name of the system database tempdb.)~~
 
-alter database msdb modify name rename_db_database1;
+alter database msdb modify name = rename_db_database1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'rename_db_database1' at line 1 and character position 32)~~
+~~ERROR (Message: Cannot change the name of the system database msdb.)~~
 
 
 -- Rename a case sensitive and len>64 database name

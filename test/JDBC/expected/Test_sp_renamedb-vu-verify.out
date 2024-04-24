@@ -152,23 +152,23 @@ go
 
 
 -- Renaming system databases is prohibited
-exec sp_renamedb master modify name sp_renamedb_database1;
+exec sp_renamedb 'master', 'master1';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'name' at line 2 and character position 31)~~
+~~ERROR (Message: Cannot change the name of the system database master.)~~
 
-exec sp_renamedb tempdb modify name sp_renamedb_database1;
+exec sp_renamedb 'tempdb', 'tempdb1';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'name' at line 1 and character position 31)~~
+~~ERROR (Message: Cannot change the name of the system database tempdb.)~~
 
-exec sp_renamedb msdb modify name sp_renamedb_database1;
+exec sp_renamedb 'msdb', 'msdb1';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'name' at line 1 and character position 29)~~
+~~ERROR (Message: Cannot change the name of the system database msdb.)~~
 
 
 -- Rename a case sensitive and len>64 database name

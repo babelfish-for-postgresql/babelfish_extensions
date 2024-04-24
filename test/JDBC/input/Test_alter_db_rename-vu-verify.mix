@@ -63,11 +63,11 @@ create procedure p1 as alter database db1 modify name = db2
 go
 
 -- Renaming system databases is prohibited
-alter database master modify name rename_db_database1;
+alter database master modify name = rename_db_database1;
 go
-alter database tempdb modify name rename_db_database1;
+alter database tempdb modify name = rename_db_database1;
 go
-alter database msdb modify name rename_db_database1;
+alter database msdb modify name = rename_db_database1;
 go
 
 -- Rename a case sensitive and len>64 database name

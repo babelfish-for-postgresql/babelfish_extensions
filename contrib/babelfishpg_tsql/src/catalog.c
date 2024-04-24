@@ -4041,8 +4041,8 @@ update_babelfish_namespace_ext_rename_db(int16 db_id, char *new_db_name)
 
 /*
  * Update the fields relevant to database name in babelfish_authid_user_ext.
- * It returns the List of Original schema names which can be used to
- * produce the new schema name after rename db.
+ * It returns the List of Original role names which can be used to
+ * produce the new role name after rename db.
  */
 static List*
 update_babelfish_authid_user_ext_rename_db(
@@ -4082,7 +4082,6 @@ update_babelfish_authid_user_ext_rename_db(
 	while (HeapTupleIsValid(old_tuple = systable_getnext(tblscan)))
 	{
 		bool isNull;
-		/* update orig_username */
 		char *role_name = TextDatumGetCString(heap_getattr(old_tuple,
 							Anum_bbf_authid_user_ext_orig_username, bbf_authid_user_ext_dsc, &isNull));
 		
@@ -4204,7 +4203,7 @@ static char
  * We use processUtility to execute the renaming of schemas and roles
  * instead of directly calling the individual APIs to rename them in
  * order to adhere to the common high level code flow on which a lot of
- * features depend like Beegees.
+ * features depend.
  */
 static void
 exec_rename_db_util(char *old_db_name, char *new_db_name, bool is_schema)
@@ -4251,9 +4250,6 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 	int tries;
 	Oid     	prev_current_user = InvalidOid;
 
-	/* Alter database is not allowed inside a transaction. */
-	PreventInTransactionBlock(true, "ALTER DATABASE");
-
 	/*
 	 * Check that db_name is not "master", "tempdb", or "msdb",
 	 * IDs 1-4 are reserved for these native system databases.
@@ -4271,12 +4267,14 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
 	for (tries = 0; tries < 50; tries++)
 	{
-		if (!(*pltsql_protocol_plugin_ptr)->get_tds_database_backend_count(dbid, dbid == get_cur_db_id()))
+		if ((*pltsql_protocol_plugin_ptr)->get_tds_database_backend_count &&
+			!(*pltsql_protocol_plugin_ptr)->get_tds_database_backend_count(dbid, dbid == get_cur_db_id()))
 			break;
 
 		/* sleep, then try again */
 		pg_usleep(100 * 1000L); /* 100ms */
-		(*pltsql_protocol_plugin_ptr)->invalidate_stat_view();
+		if ((*pltsql_protocol_plugin_ptr)->invalidate_stat_view)
+			(*pltsql_protocol_plugin_ptr)->invalidate_stat_view();
 		/* timed out, still conflicts */
 	}
 

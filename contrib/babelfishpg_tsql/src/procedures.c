@@ -3595,8 +3595,6 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 		pfree(old_db_name);
 	if (new_db_name)
 		pfree(new_db_name);
-	if (splited_object_name)
-		pfree(splited_object_name);
 
 	PG_RETURN_VOID();
 }

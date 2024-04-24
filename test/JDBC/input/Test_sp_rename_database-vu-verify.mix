@@ -68,11 +68,11 @@ exec sp_rename_procedure @a = 'sp_rename_database1', @b = 'sp_rename_database1'
 go
 
 -- Renaming system databases is prohibited
-exec sp_rename master modify name sp_rename_database1;
+exec sp_rename 'master', 'master1', 'DATABASE';
 go
-exec sp_rename tempdb modify name sp_rename_database1;
+exec sp_rename 'tempdb', 'tempdb1', 'DATABASE';
 go
-exec sp_rename msdb modify name sp_rename_database1;
+exec sp_rename 'msdb', 'msdb1', 'DATABASE';
 go
 
 -- Rename a case sensitive and len>64 database name

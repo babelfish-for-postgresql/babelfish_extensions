@@ -2088,7 +2088,7 @@ char
  * inputs are sanitized to prevent unexpected behaviour.
  */
 void
-exec_alter_role_cmd(char *query_str, RoleSpec *role) 
+exec_alter_role_cmd(char *query_str, RoleSpec *role)
 {
 	List	   *parsetree_list;
 	Node	   *stmt;
