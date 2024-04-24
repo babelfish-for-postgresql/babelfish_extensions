@@ -15,29 +15,27 @@ alter server role sysadmin add member login_token3;
 go
 
 -- tsql
-select name, type, usage from sys.login_token;
+select name, type, usage from sys.login_token order by name;
 go
-select name, type, usage from sys.user_token;
+select name, type, usage from sys.user_token order by name;
 go
 
 -- tsql user=login_token1 password = 12345678
-select name, type, usage from sys.login_token;
+select name, type, usage from sys.login_token order by name;
 go
-select name, type, usage from sys.user_token;
+select name, type, usage from sys.user_token order by name;
 go
 
 -- tsql user=login_token2 password = 12345678
-select name, type, usage from sys.login_token;
+select name, type, usage from sys.login_token order by name;
 go
-select name, type, usage from sys.user_token;
-go
-select name, type, usage from sys.user_token;
+select name, type, usage from sys.user_token order by name;
 go
 
 -- tsql user=login_token3 password = 12345678
-select name, type, usage from sys.login_token;
+select name, type, usage from sys.login_token order by name;
 go
-select name, type, usage from sys.user_token;
+select name, type, usage from sys.user_token order by name;
 go
 
 -- tsql
