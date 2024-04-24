@@ -64,14 +64,6 @@ login_token2#!#SQL USER#!#GRANT OR DENY
 public#!#ROLE#!#GRANT OR DENY
 ~~END~~
 
-select name, type, usage from sys.user_token order by name;
-go
-~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-login_token2#!#SQL USER#!#GRANT OR DENY
-public#!#ROLE#!#GRANT OR DENY
-~~END~~
-
 
 -- tsql user=login_token3 password = 12345678
 select name, type, usage from sys.login_token order by name;
