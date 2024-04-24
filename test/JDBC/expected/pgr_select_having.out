@@ -70,7 +70,7 @@ SELECT lower(c), count(c) FROM test_having
 	ORDER BY lower(c);
 GO
 ~~START~~
-varchar#!#int
+text#!#int
 bbbb    #!#3
 cccc    #!#4
 xxxx    #!#1
