@@ -9,7 +9,7 @@ bit
 SELECT * FROM babel_726_v1
 GO
 ~~START~~
-smallint
+bit
 1
 ~~END~~
 
