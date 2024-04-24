@@ -241,10 +241,10 @@ GO
 --- ADDITIONAL CORNER CASE TESTING ---
 
 -- Insert the string into the table
-CREATE TABLE test_like_for_AI_prepare_max_test(a TEXT);
+CREATE TABLE test_like_for_AI_prepare_max_test(a nvarchar(4000));
 GO
 
-INSERT INTO test_like_for_AI_prepare_max_test VALUES (REPLICATE('a', 10 * 1024 * 1024 + 1));
+INSERT INTO test_like_for_AI_prepare_max_test VALUES (REPLICATE('Æ', 4000));
 GO
 
 -- create and insert data for chinese
@@ -252,4 +252,40 @@ CREATE TABLE test_like_for_AI_prepare_chinese(a nvarchar(MAX));
 GO
 
 INSERT INTO test_like_for_AI_prepare_chinese VALUES('中国人'), ('微笑'), ('谢谢你。');
+GO
+
+-- TESTS FOR INDEX SCAN
+create table test_like_for_AI_prepare_index (c1 varchar(20) COLLATE Latin1_General_CI_AI, c2 nvarchar(20) COLLATE Latin1_General_CS_AI);
+create index c1_idx on test_like_for_AI_prepare_index (c1);
+create index c2_idx on test_like_for_AI_prepare_index (c2);
+GO
+
+insert into test_like_for_AI_prepare_index values ('JONES','JONES');
+insert into test_like_for_AI_prepare_index values ('JoneS','JoneS');
+insert into test_like_for_AI_prepare_index values ('jOnes','jOnes');
+insert into test_like_for_AI_prepare_index values ('abcD','ABCd');
+insert into test_like_for_AI_prepare_index values ('äbĆD','äƀCd');
+GO
+
+-- TESTS for remove_accents_internal
+-- function
+CREATE FUNCTION test_like_for_AI_prepare_function(@input_text TEXT) RETURNS sys.NVARCHAR(MAX)
+AS BEGIN
+    DECLARE @output_text NVARCHAR(MAX);
+    SET @output_text = sys.remove_accents_internal(@input_text);
+    RETURN @output_text;
+END;
+GO
+
+-- view
+CREATE VIEW test_like_for_AI_prepare_view AS
+SELECT
+    sys.remove_accents_internal(col) AS cleaned_col
+FROM
+    test_like_for_AI_prepare_t1_ci;
+GO
+
+-- procedure
+CREATE PROCEDURE test_like_for_AI_prepare_procedure @input_text TEXT AS
+SELECT sys.remove_accents_internal(@input_text);
 GO
