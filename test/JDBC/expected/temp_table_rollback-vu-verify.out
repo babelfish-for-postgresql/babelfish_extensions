@@ -53,9 +53,9 @@ select * from enr_view
 GO
 ~~START~~
 text
+#temp_table_rollback_t1_pkey
 #temp_table_rollback_t1_a_seq
 #temp_table_rollback_t1
-#temp_table_rollback_t1_pkey
 ~~END~~
 
 
@@ -141,14 +141,14 @@ select * from enr_view
 GO
 ~~START~~
 text
+#temp_table_rollback_t1_pkey
+#pg_toast_#oid_masked#_index
+#pg_toast_#oid_masked#
 #temp_table_rollback_t1_a_seq
 #temp_table_rollback_t1
-#pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
-#temp_table_rollback_t1_pkey
+#pg_toast_#oid_masked#
 #temp_table_rollback_t2
-#pg_toast_#oid_masked#
-#pg_toast_#oid_masked#_index
 ~~END~~
 
 
@@ -329,4 +329,58 @@ int#!#varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "#t1" does not exist)~~
+
+
+
+---------------------------------------------------------------------------
+-- Same temp table name in one transaction
+---------------------------------------------------------------------------
+CREATE TABLE #temp_table_rollback_t3(c1 INT, c2 INT)
+GO
+
+BEGIN TRANSACTION
+    ALTER TABLE #temp_table_rollback_t3 ADD C3 INT;
+    INSERT INTO #temp_table_rollback_t3 VALUES (1, 2, 3)
+    DROP TABLE #temp_table_rollback_t3
+    CREATE TABLE #temp_table_rollback_t3(c1 INT, c2 INT)
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+
+DROP TABLE #temp_table_rollback_t3
+GO
+
+CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+GO
+
+
+
+BEGIN TRANSACTION
+    DROP TABLE #temp_table_rollback_t4
+    CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+    INSERT INTO #temp_table_rollback_t4 VALUES (1, 'one')
+    SELECT * FROM #temp_table_rollback_t4 -- should return 1, 'one'
+    DROP TABLE #temp_table_rollback_t4
+    INSERT INTO #temp_table_rollback_t4 VALUES (2, 'two')
+    SELECT * FROM #temp_table_rollback_t4
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char
+1#!#one       
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temp_table_rollback_t4" does not exist)~~
+
+
+SELECT * FROM #temp_table_rollback_t4
+GO
+~~START~~
+int#!#char
+~~END~~
 
