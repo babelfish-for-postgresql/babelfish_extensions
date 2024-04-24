@@ -55,7 +55,7 @@ isc_check_constraints_db1#!#dbo#!#test_tsql_const_c_varbinary_check#!#((c_varbin
 isc_check_constraints_db1#!#dbo#!#test_udd_c_udd_check#!#((c_udd < CAST((133.230182309832423) AS float)))
 isc_check_constraints_db1#!#dbo#!#test_udd_c_udd1_check#!#((c_udd1 < '2020-10-20 09:00:00'))
 isc_check_constraints_db1#!#dbo#!#test_udd_c_udd2_check#!#((c_udd2 < '09:00:00'))
-isc_check_constraints_db1#!#dbo#!#test_upper_a_check#!#((upper(a) IN ('A', 'B')))
+isc_check_constraints_db1#!#dbo#!#test_upper_a_check#!#((pg_catalog.upper(a) IN ('A', 'B')))
 ~~END~~
 
 
