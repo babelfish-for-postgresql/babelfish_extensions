@@ -3390,7 +3390,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (strcmp(queryString, "(DROP DATABASE )") != 0)
 					{
 						/*
-						 * Prevent cleaning up the catalag here if it is a part
+						 * Prevent cleaning up the catalog here if it is a part
 						 * of drop database command.
 						 */
 						clean_up_bbf_schema_permissions(logicalschema, NULL, true);
