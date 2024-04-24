@@ -207,7 +207,7 @@ select
 ;
 go
 ~~START~~
-varchar#!#text#!#int#!#int#!#int#!#int#!#int
+text#!#text#!#int#!#int#!#int#!#int#!#int
 a    #!#a #!#0#!#97#!#5#!#5#!#3
 ~~END~~
 
