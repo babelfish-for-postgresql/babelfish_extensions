@@ -3339,8 +3339,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
 					char	   *cur_db = get_cur_db_name();
 					const char	*logicalschema = get_logical_schema_name(schemaname, true);
+					bool	is_drop_db_statement = 0 == strcmp(queryString, "(DROP DATABASE )");
 
-					if (strcmp(queryString, "(DROP DATABASE )") != 0)
+					if (!is_drop_db_statement)
 					{
 						char	   *guest_schema_name = get_physical_schema_name(cur_db, "guest");
 
@@ -3354,7 +3355,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
-					if (strcmp(queryString, "(DROP DATABASE )") != 0)
+					if (!is_drop_db_statement)
 					{
 						/*
 						 * Prevent cleaning up the catalog here if it is a part
