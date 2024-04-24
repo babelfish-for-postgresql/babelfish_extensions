@@ -3129,15 +3129,13 @@ static void process_query_specification(
 			auto column_alias_as = elem->expression_elem()->as_column_alias();
 			if (!column_alias_as->AS())
 			{
-				std::string orig_text = ::getFullText(column_alias_as->column_alias());
-				std::string repl_text = std::string("AS ");
-
 				if (is_quotation_needed_for_column_alias(column_alias_as->column_alias()))
-					repl_text += std::string("\"") + orig_text + "\"";
+				{
+					mutator->add(column_alias_as->start->getStartIndex(), "", " AS \"");
+					mutator->add(column_alias_as->stop->getStopIndex() + 1, "", "\"");
+				}
 				else
-					repl_text += orig_text;
-
-				mutator->add(column_alias_as->start->getStartIndex(), "", "AS ");
+					mutator->add(column_alias_as->start->getStartIndex(), "", " AS ");
 			}
 		}
 	}
@@ -5640,6 +5638,12 @@ makeFetchCursorStatement(TSqlParser::Fetch_cursorContext *ctx)
 	auto targetText = ::getFullText(ctx->cursor_name());
 	result->curvar = lookup_cursor_variable(targetText.c_str())->dno;
 
+	/* FETCH CURSOR without destination should be blocked inside a function. */
+
+	if (is_compiling_create_function() && !ctx->INTO())
+	{
+		throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "SELECT statements included within a function cannot return data to a client.", getLineAndPos(ctx));
+	}
 	/* fetch option */
 	if (ctx->NEXT()) {
 		result->direction = FETCH_FORWARD;
@@ -6799,6 +6803,8 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 static void
 post_process_column_constraint(TSqlParser::Column_constraintContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
+	if (ctx->UNIQUE())
+		rewritten_query_fragment.emplace(std::make_pair(ctx->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
 	if (ctx && ctx->clustered() && ctx->clustered()->CLUSTERED())
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->CLUSTERED(), baseCtx);
 	if (ctx && ctx->clustered() && ctx->clustered()->NONCLUSTERED())
@@ -6890,6 +6896,8 @@ post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql
 static void
 post_process_table_constraint(TSqlParser::Table_constraintContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
+	if (ctx->UNIQUE())
+		rewritten_query_fragment.emplace(std::make_pair(ctx->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
 	if (ctx->clustered() && ctx->clustered()->CLUSTERED())
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->CLUSTERED(), baseCtx);
 	if (ctx->clustered() && ctx->clustered()->NONCLUSTERED())

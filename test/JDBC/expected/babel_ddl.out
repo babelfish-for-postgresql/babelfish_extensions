@@ -65,12 +65,12 @@ t1_idx3t19eceb46c036c3c1bd6895a34ec3c93f1#!#CREATE INDEX t1_idx3t19eceb46c036c3c
 t1_idx4t1fb4b953a652720bfa47919dff09b172e#!#CREATE INDEX t1_idx4t1fb4b953a652720bfa47919dff09b172e ON master_dbo.t1 USING btree (a NULLS FIRST)
 t2_pkey#!#CREATE UNIQUE INDEX t2_pkey ON master_dbo.t2 USING btree (a)
 t3_pkey#!#CREATE UNIQUE INDEX t3_pkey ON master_dbo.t3 USING btree (a)
-t4_a_key#!#CREATE UNIQUE INDEX t4_a_key ON master_dbo.t4 USING btree (a)
-t5_a_key#!#CREATE UNIQUE INDEX t5_a_key ON master_dbo.t5 USING btree (a)
+t4_a_key#!#CREATE UNIQUE INDEX t4_a_key ON master_dbo.t4 USING btree (a NULLS FIRST) NULLS NOT DISTINCT
+t5_a_key#!#CREATE UNIQUE INDEX t5_a_key ON master_dbo.t5 USING btree (a NULLS FIRST) NULLS NOT DISTINCT
 t6_pkey#!#CREATE UNIQUE INDEX t6_pkey ON master_dbo.t6 USING btree (a)
 t7_pkey#!#CREATE UNIQUE INDEX t7_pkey ON master_dbo.t7 USING btree (a)
-t8_a_key#!#CREATE UNIQUE INDEX t8_a_key ON master_dbo.t8 USING btree (a)
-t9_a_key#!#CREATE UNIQUE INDEX t9_a_key ON master_dbo.t9 USING btree (a)
+t8_a_key#!#CREATE UNIQUE INDEX t8_a_key ON master_dbo.t8 USING btree (a NULLS FIRST) NULLS NOT DISTINCT
+t9_a_key#!#CREATE UNIQUE INDEX t9_a_key ON master_dbo.t9 USING btree (a NULLS FIRST) NULLS NOT DISTINCT
 ~~END~~
 
 

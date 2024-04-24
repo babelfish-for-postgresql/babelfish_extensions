@@ -6,9 +6,6 @@ GO
 ~~ROW COUNT: 2~~
 
 
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-GO
-
 
 create procedure ErrorHandling1 as
 begin
@@ -261,7 +258,4 @@ smallint
 
 --Post
 DROP TABLE t1505;
-GO
-
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';
 GO

@@ -3061,7 +3061,6 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	int16	dbid = get_cur_db_id();
-	char	*user = GetUserNameFromId(GetUserId(), false);
 
 	/* Immediately return, if grantee is NULL or PUBLIC. */
 	if ((grantee == NULL) || (strcmp(grantee, PUBLIC_ROLE_NAME) == 0))
@@ -3086,7 +3085,7 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 		new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(func_args);
 	else
 		new_record_nulls_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = true;
-	new_record_bbf_schema[Anum_bbf_schema_perms_grantor - 1] = CStringGetTextDatum(pstrdup(user));
+	new_record_nulls_bbf_schema[Anum_bbf_schema_perms_grantor - 1] = true;
 
 	tuple_bbf_schema = heap_form_tuple(bbf_schema_dsc,
 									new_record_bbf_schema,

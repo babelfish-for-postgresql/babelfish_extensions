@@ -567,38 +567,6 @@ GO
 SELECT set_config('babelfishpg_tsql.escape_hatch_index_clustering', 'ignore', 'false')
 GO
 
--- BABEL-1484
--- escape hatch escape_hatch_unique_constraint
--- 'strict' is default
--- Test UNIQUE CONSTRAINT is not allowed on nullable column
--- this includes: create unique index, alter table add constraint unique
--- and create table with column constraint
-CREATE TABLE t_unsupported_uc1(a int, b int NOT NULL, c int NOT NULL);
-GO
-CREATE UNIQUE INDEX i_unsupported_uc1 on t_unsupported_uc1(a);
-GO
-ALTER TABLE t_unsupported_uc1 ADD CONSTRAINT UQ_a UNIQUE (a);
-GO
-CREATE TABLE t_unsupported_uc2(a int UNIQUE, b int);
-GO
-
--- Test UNIQUE CONSTRAINT is allowed on NOT NULL column
-CREATE UNIQUE INDEX i_unsupported_uc1 on t_unsupported_uc1(b);
-GO
-ALTER TABLE t_unsupported_uc1 ADD CONSTRAINT UQ_c UNIQUE (c);
-GO
-CREATE TABLE t_unsupported_uc2(a int UNIQUE NOT NULL, b int NOT NULL UNIQUE);
-GO
-
-DROP TABLE t_unsupported_uc1;
-DROP TABLE t_unsupported_uc2;
-GO
-
--- test UNIQUE INDEX/CONSTRAINT is allowed on nullable column
--- if escap_hatch_unique_constraint is set to ignore
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-GO
-
 CREATE TABLE t_unsupported_uc1(a int, b varchar(10));
 GO
 
@@ -1629,3 +1597,53 @@ CREATE PROCEDURE proc_hierarchyid (@var_hierarchyid2 HIERARCHYID) AS BEGIN PRINT
 GO
 DROP PROCEDURE proc_hierarchyid;
 GO
+
+-- INILNE INDEX should throw unsupported error
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline CLUSTERED (id1, id2))
+GO
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30) INDEX babel_3571_idx_inline UNIQUE (id1, id2), id3 VARBINARY(30))
+GO
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30) UNIQUE NOT NULL INDEX babel_3571_idx_inline UNIQUE (id1, id2), id3 VARBINARY(30))
+GO
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30) PRIMARY KEY INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline_1 (id1), INDEX babel_3571_idx_inline_2 (id2))
+GO
+CREATE TABLE #babel_3571 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline CLUSTERED (id1, id2))
+GO
+CREATE TABLE #babel_3571 (id1 INT, id2 VARCHAR(30) INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+CREATE TABLE #babel_3571 (id1 INT, id2 VARCHAR(30) UNIQUE NOT NULL INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+CREATE TABLE #babel_3571 (id1 INT, id2 VARCHAR(30) PRIMARY KEY INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+DECLARE @babel_3571_table_var TABLE(id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline (id1, id2))
+GO
+DECLARE @babel_3571_table_var TABLE(id1 INT, id2 VARCHAR(30) INDEX babel_3571_idx_inline CLUSTERED (id1, id2), id3 VARBINARY(30))
+GO
+CREATE TYPE babel_3571_table_type AS TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline (id1, id2))
+GO
+CREATE TYPE babel_3571_table_type AS TABLE (id1 INT, id2 VARCHAR(30) INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+CREATE TYPE babel_3571_table_type AS TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline_1 (id1), INDEX babel_3571_idx_inline_2 (id2))
+GO
+
+CREATE FUNCTION babel_3571_f1()
+RETURNS @result TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline CLUSTERED (id1, id2))
+AS
+BEGIN
+	RETURN;
+END
+GO
+
+CREATE FUNCTION babel_3571_f1()
+RETURNS TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline (id1, id2))
+AS
+EXTERNAL NAME babel_3571
+GO
+
+-- INSERT BULK is No op. No point in failing this 
+INSERT BULK babel_3571 (
+    ID INT PRIMARY KEY NOT NULL IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50) INDEX babel_3571_idx_inline_1 (ID, FIRSTNAME)
+);

@@ -32,7 +32,7 @@ TestSQLVariant
 TestText
 TestTime
 TestTinyInt
-TestUDD
+TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 TestVarChar
 TestXML
@@ -84,10 +84,10 @@ sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 schema_resolution_proc
-BABEL-404
+BABEL-404-before-15_7-or-16_3
 BABEL-493
 BABEL_539
-BABEL-621
+BABEL-621-before-15_7-or-16_3
 BABEL-775
 BABEL-1206
 BABEL-1251
@@ -410,7 +410,6 @@ BABEL-4046
 table_constraint_wo_comma-before-15_6-or-16_2
 getdate
 BABEL_4330
-BABEL-2619
 BABEL-4410
 AUTO_ANALYZE-before-15-5-or-14-10
 default_params
@@ -429,5 +428,7 @@ permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 babel-4517
 BABEL-4815
+BABEL_3571-before-15-5
 BABEL_4817
 BABEL-4641-before-16_3-or-15_7-or-14_12
+BABEL-4863-before-16_3-or-15_7-or-14_12
