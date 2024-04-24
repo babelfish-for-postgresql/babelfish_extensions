@@ -3363,7 +3363,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					break;
 				}
 
-
 				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
 					/*
@@ -3388,7 +3387,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
-					clean_up_bbf_schema_permissions(logicalschema, NULL, true);
+					if (strcmp(queryString, "(DROP DATABASE )") != 0)
+					{
+						/*
+						 * Prevent cleaning up the catalag here if it is a part
+						 * of drop database command.
+						 */
+						clean_up_bbf_schema_permissions(logicalschema, NULL, true);
+					}
 
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
