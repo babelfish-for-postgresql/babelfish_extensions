@@ -32,6 +32,13 @@
  */
 #define TRANSFORMATION_RULE "[[:Latin:][:Nd:]]; Latin-ASCII"
 
+/*
+ * The maximum number of bytes per character is 4 according 
+ * to RFC3629 which limited the character table to U+10FFFF
+ * Ref: https://www.rfc-editor.org/rfc/rfc3629#section-3
+ */
+#define MAX_BYTES_PER_CHAR 4
+
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
@@ -336,6 +343,22 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
+	/* 
+	 * This is needed to process CI_AI for Const nodes
+	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
+	 * we obtain a Relabel node which won't help us to perform optimization
+	 * for constant prefix. Hence, we process that here
+	 */
+	if (IsA(rightop, RelabelType))
+	{
+		RelabelType		*relabel = (RelabelType *) rightop;
+		if (IsA(relabel->arg, Const))
+		{
+			lsecond(op->args) = relabel->arg;
+			rightop = (Node *) lsecond(op->args);
+		}
+	}
+
 	/* no constant prefix found in pattern, or pattern is not constant */
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull)
@@ -485,7 +508,12 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	pfree(input_str);
 
 	limit = len_uinput;
-	capacity = MaxAttrSize / sizeof(char);
+	/* 
+	 * set the capacity to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
+	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can 
+	 * have maximum INT32_MAX value
+	 */
+	capacity = (limit < (PG_INT32_MAX / MAX_BYTES_PER_CHAR)) ? (limit * MAX_BYTES_PER_CHAR) : PG_INT32_MAX;
 
 	utrans_transUChars(cached_transliterator,
 						utf16_input,
@@ -519,6 +547,7 @@ static Node *
 convert_node_to_funcexpr_for_like(Node *node)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
+	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
 	newFuncExpr->funcresulttype = get_sys_varcharoid();
 
@@ -528,6 +557,36 @@ convert_node_to_funcexpr_for_like(Node *node)
 	switch (nodeTag(node))
 	{
 		case T_Const:
+			{
+				Const *con;
+				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+				if (unlikely(new_node == NULL))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+				}
+
+				if (IsA(new_node, Const))
+				{
+					con = (Const *) new_node;
+					if (con->constisnull)
+						return new_node;
+					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+					return (Node *) con;
+				}
+				else
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("Could not convert Const node to desired node type")));
+				}
+				return new_node;
+			}
 		case T_FuncExpr:
 		case T_Var:
 		case T_Param:
@@ -535,16 +594,16 @@ convert_node_to_funcexpr_for_like(Node *node)
 		case T_RelabelType:
 		case T_CollateExpr:
 			{
-				Node *new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
-														TEXTOID, -1,
-														COERCION_EXPLICIT,
-														COERCE_EXPLICIT_CAST,
-														exprLocation(node));
+				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
 				if (unlikely(new_node == NULL))
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
 				}
 				newFuncExpr->args = list_make1(new_node);
 				break;
