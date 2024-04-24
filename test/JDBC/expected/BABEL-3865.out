@@ -136,6 +136,9 @@ GO
 ~~ERROR (Message: role "master_role_a" cannot be dropped because some objects depend on it)~~
 
 
+REVOKE ALL ON #temp_5 FROM role_a
+GO
+
 DROP TABLE #temp_5
 GO
 

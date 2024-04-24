@@ -1,8 +1,3 @@
--- psql
-select * from sys.babelfish_schema_permissions;
-go
-
--- tsql
 SELECT * FROM babelfish_inconsistent_metadata_vu_prepare_view
 GO
 
