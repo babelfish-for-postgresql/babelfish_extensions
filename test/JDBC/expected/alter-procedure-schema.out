@@ -1,0 +1,92 @@
+-- tsql
+create schema alter_proc_schema1
+go
+
+create login alter_proc_l1 with password = '12345678'
+go
+
+create user alter_proc_u1 for login alter_proc_l1
+go
+
+create proc alter_proc_schema1.p1 @l int as select @l;
+go
+
+exec alter_proc_schema1.p1 @l = 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+GRANT EXECUTE ON alter_proc_schema1.p1 TO alter_proc_u1
+GO
+
+GRANT SELECT, EXECUTE ON SCHEMA::alter_proc_schema1 TO alter_proc_u1
+GO
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_proc_schema1' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+alter_proc_schema1#!#ALL#!#130#!#master_alter_proc_u1#!#s#!#<NULL>#!#master_dbo
+alter_proc_schema1#!#p1#!#128#!#master_alter_proc_u1#!#p#!#pg_catalog.int4#!#master_dbo
+~~END~~
+
+
+-- tsql
+alter procedure alter_proc_schema1.p1 @l int as select (@l + 3);
+go
+
+-- tsql
+exec alter_proc_schema1.p1 @l = 1
+go
+~~START~~
+int
+4
+~~END~~
+
+
+drop proc alter_proc_schema1.p1
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_proc_schema1' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+alter_proc_schema1#!#ALL#!#130#!#master_alter_proc_u1#!#s#!#<NULL>#!#master_dbo
+~~END~~
+
+
+-- tsql
+drop schema alter_proc_schema1;
+go
+
+drop user alter_proc_u1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'alter_proc_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql 
+drop login alter_proc_l1;
+go
