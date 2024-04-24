@@ -1647,14 +1647,9 @@ SELECT ManufactureID, STORE2, STORE3, STORE4, STORE5, STORE6
 FROM pivot_view
 ORDER BY ManufactureID
 GO
-~~START~~
-int#!#int#!#int#!#int#!#int#!#int
-1200#!#1#!#1#!#1#!#2#!#0
-1201#!#0#!#0#!#2#!#0#!#0
-1202#!#1#!#0#!#0#!#1#!#0
-1203#!#0#!#0#!#0#!#1#!#0
-1204#!#0#!#0#!#0#!#0#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "pivot_view" does not exist)~~
 
 
 -- aggregate string value, when no row is selected, should output NULL

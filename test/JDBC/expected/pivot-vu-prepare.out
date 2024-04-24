@@ -676,6 +676,10 @@ PIVOT (
     FOR StoreID in ([2], [3], [4], [5], [6])
 ) AS pvt
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Create view on stmt with PIVOT operator is not currently supported.)~~
+
 
 -- BABEL-4558 
 CREATE TABLE OSTable(
