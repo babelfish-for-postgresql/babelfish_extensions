@@ -1,4 +1,5 @@
 Could not find dependencies on
+Collation sys.arabic_cs_as
 Collation sys.bbf_unicode_cp1250_ci_ai
 Collation sys.bbf_unicode_cp1250_cs_ai
 Collation sys.bbf_unicode_cp1251_ci_ai
@@ -36,6 +37,8 @@ Collation sys.bbf_unicode_pref_cp1257_cs_as
 Collation sys.bbf_unicode_pref_cp1258_cs_as
 Collation sys.bbf_unicode_pref_cp1_cs_as
 Collation sys.bbf_unicode_pref_cp874_cs_as
+Collation sys.chinese_prc_ci_as
+Collation sys.chinese_prc_cs_as
 Collation sys.cyrillic_general_ci_ai
 Collation sys.cyrillic_general_ci_as
 Collation sys.estonian_ci_as
