@@ -190,3 +190,40 @@ BEGIN TRANSACTION T1
     ROLLBACK TRANSACTION T2
 select * from enr_view
 GO
+
+---------------------------------------------------------------------------
+-- Same temp table name in one transaction
+---------------------------------------------------------------------------
+
+CREATE TABLE #temp_table_rollback_t3(c1 INT, c2 INT)
+GO
+
+BEGIN TRANSACTION
+    ALTER TABLE #temp_table_rollback_t3 ADD C3 INT;
+    INSERT INTO #temp_table_rollback_t3 VALUES (1, 2, 3)
+    DROP TABLE #temp_table_rollback_t3
+    CREATE TABLE #temp_table_rollback_t3(c1 INT, c2 INT)
+COMMIT
+GO
+
+DROP TABLE #temp_table_rollback_t3
+GO
+
+CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+GO
+
+BEGIN TRANSACTION
+    DROP TABLE #temp_table_rollback_t4
+
+    CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+    INSERT INTO #temp_table_rollback_t4 VALUES (1, 'one')
+    SELECT * FROM #temp_table_rollback_t4 -- should return 1, 'one'
+    DROP TABLE #temp_table_rollback_t4
+
+    INSERT INTO #temp_table_rollback_t4 VALUES (2, 'two')
+    SELECT * FROM #temp_table_rollback_t4
+COMMIT
+GO
+
+SELECT * FROM #temp_table_rollback_t4
+GO
