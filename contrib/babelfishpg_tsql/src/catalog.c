@@ -4033,7 +4033,7 @@ update_babelfish_namespace_ext_rename_db(int16 db_id, char *new_db_name)
 
 	/* Cleanup. */
 	systable_endscan(tblscan);
-	table_close(namespace_rel, AccessShareLock);
+	table_close(namespace_rel, RowExclusiveLock);
 
 	return list_of_schemas_to_rename;
 }
