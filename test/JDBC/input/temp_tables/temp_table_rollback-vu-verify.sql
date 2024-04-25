@@ -227,3 +227,163 @@ GO
 
 SELECT * FROM #temp_table_rollback_t4
 GO
+
+DROP TABLE #temp_table_rollback_t4
+GO
+
+CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+GO
+
+BEGIN TRANSACTION T1
+ALTER TABLE #temp_table_rollback_t4 ADD C3 INT
+DROP TABLE #temp_table_rollback_t4
+
+CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+DROP  TABLE #temp_table_rollback_t4
+
+INSERT INTO #temp_table_rollback_t4 VALUES (2, 'two')
+COMMIT
+GO
+
+---------------------------------------------------------------------------
+-- Index creation
+---------------------------------------------------------------------------
+-- Created index in transaction
+
+CREATE TABLE #temp_table_rollback_t5(a int, b varchar, c int, d int)
+GO
+
+BEGIN TRAN T1
+    SAVE TRANSACTION S2
+        CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
+        INSERT INTO #temp_table_rollback_t5 VALUES (1, 'a', 2, 3)
+    ROLLBACK TRANSACTION S2
+COMMIT
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+INSERT INTO #temp_table_rollback_t5 VALUES (2, 'b', 3, 4)
+GO
+
+BEGIN TRAN
+    CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
+ROLLBACK
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+DROP INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5
+GO
+
+SELECT * FROM enr_view
+GO
+
+-- Drop index in transaction
+
+CREATE INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5(b)
+GO
+
+BEGIN TRAN T1
+    SAVE TRANSACTION S2
+        DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+        INSERT INTO #temp_table_rollback_t5 VALUES (3, 'c', 4, 5)
+    ROLLBACK TRANSACTION S2
+COMMIT
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+BEGIN TRAN
+    DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+ROLLBACK
+GO
+
+DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+GO
+
+CREATE INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5(b)
+GO
+
+DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+GO
+
+-- Create and drop in transaction
+BEGIN TRAN T1
+    SAVE TRANSACTION S2
+        CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
+        DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
+    ROLLBACK TRANSACTION S2
+COMMIT
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+BEGIN TRAN T1
+    CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
+    DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
+ROLLBACK
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
+DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+-- Drop - Create
+CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(d)
+GO
+
+BEGIN TRAN T1
+    SAVE TRANSACTION S2
+        DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
+        CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
+    ROLLBACK TRANSACTION S2
+COMMIT
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+BEGIN TRAN T1
+    DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
+    CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
+ROLLBACK
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
+CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+
+---------------------------------------------------------------------------
+-- Triggers
+---------------------------------------------------------------------------
+
+-- TODO
+
+---------------------------------------------------------------------------
+-- Procedures
+---------------------------------------------------------------------------
+
+-- TODO
