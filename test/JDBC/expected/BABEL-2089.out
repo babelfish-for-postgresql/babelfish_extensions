@@ -369,7 +369,7 @@ go
 select * from babel_2089_OpsDbView
 go
 ~~START~~
-int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#datetime#!#datetime#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#nvarchar#!#int#!#int#!#nvarchar#!#int#!#int#!#int#!#int#!#varchar#!#datetime2#!#int#!#int#!#int#!#int#!#int#!#datetime2#!#int#!#varchar#!#varchar#!#int#!#nvarchar#!#int#!#varchar
+int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#datetime#!#datetime#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#nvarchar#!#int#!#int#!#nvarchar#!#int#!#int#!#int#!#int#!#varchar#!#datetime2#!#int#!#int#!#int#!#int#!#int#!#datetime2#!#int#!#varchar#!#varchar#!#int#!#nvarchar#!#int#!#nvarchar
 ~~END~~
 
 
