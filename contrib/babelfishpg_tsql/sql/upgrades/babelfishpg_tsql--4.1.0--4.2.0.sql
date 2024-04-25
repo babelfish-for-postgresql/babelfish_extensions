@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   grantee sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
   object_type CHAR(1) NOT NULL COLLATE sys.database_default,
   function_args TEXT COLLATE "C",
-  grantor sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  grantor sys.NVARCHAR(128) COLLATE sys.database_default,
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 
