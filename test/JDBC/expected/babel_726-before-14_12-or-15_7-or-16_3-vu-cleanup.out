@@ -1,0 +1,8 @@
+DROP FUNCTION babel_726_f1
+GO
+
+DROP VIEW babel_726_v1
+GO
+
+DROP PROCEDURE babel_726_p1
+GO
