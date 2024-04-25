@@ -2385,15 +2385,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					address = CreateFunction(pstate, cfs); // if this is the same proc, will just update the existing one
 					pg_proc_update_oid_acl(address, oldoid, *proacl);
 					/* Update function/procedure related metadata in babelfish catalog */
-					if (isSameProc)
+					if (isSameProc) {
+						/* In this case we do not need to update bbf tables because the signature is the same */
 						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
+					}
 					else {
 						// use a different function to lookup the catalog entry manually and update it
 						alter_bbf_function_ext(address, stmt->func, cfs->parameters, queryString, origname_location);
 						alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, OBJECT_PROCEDURE, oldoid);
-						deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
-						deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
 					}
+					/* Clean up table entries for the create function statement */
+					deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
+					deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
 					CommitTransactionCommand();
 				}
 				PG_FINALLY();
