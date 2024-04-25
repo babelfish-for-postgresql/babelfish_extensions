@@ -77,28 +77,28 @@ GO
 CREATE TRIGGER tr_emp_salary_instead_insert ON emp_salary
 INSTEAD OF INSERT
 AS
-DELETE FROM emp_salary where emp_id = DELETED.emp_id-1;
+DELETE FROM emp_salary where emp_id = (SELECT emp_id from INSERTED);
 GO
 
 CREATE TRIGGER tr_emp_salary_after_delete ON emp_salary
 AFTER DELETE
 AS
-DELETE FROM emp_salary where emp_id = DELETED.emp_id-1;
+DELETE FROM emp_salary where emp_id = (SELECT emp_id -1 from DELETED);
 GO
 
-INSERT INTO emp_salary VALUES (4,1000);
+INSERT INTO emp_salary VALUES (3,1000);
 GO
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: missing FROM-clause entry for table "deleted")~~
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 
 SELECT emp_id, salary FROM emp_salary ORDER BY emp_id;
 GO
 ~~START~~
 int#!#int
-2#!#12998
-3#!#3000
 ~~END~~
 
 
@@ -197,28 +197,28 @@ GO
 CREATE TRIGGER tr_emp_salary_instead_update ON emp_salary
 INSTEAD OF UPDATE
 AS
-DELETE FROM emp_salary where emp_id = DELETED.emp_id + 1;
+DELETE FROM emp_salary where emp_id = (SELECT emp_id from INSERTED);
 GO
 
 CREATE TRIGGER tr_emp_salary_after_delete ON emp_salary
 AFTER DELETE
 AS
-DELETE FROM emp_salary where emp_id = DELETED.emp_id + 1;
+DELETE FROM emp_salary where emp_id = (SELECT emp_id +1 from DELETED);
 GO
 
 UPDATE emp_salary SET salary = salary + 5 where emp_id = 1;
 GO
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: missing FROM-clause entry for table "deleted")~~
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 
 SELECT emp_id, salary FROM emp_salary ORDER BY emp_id;
 GO
 ~~START~~
 int#!#int
-1#!#1000
-2#!#12998
 3#!#3000
 ~~END~~
 
@@ -394,8 +394,14 @@ int#!#int
 ~~END~~
 
 
-UPDATE vw_emp_salary SET salary = salary + 500 where emp_id = 8;
+UPDATE vw_emp_salary SET salary = salary + 500 where emp_id = 9;
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 SELECT emp_id, salary FROM vw_emp_salary ORDER BY emp_id, salary;
 GO
@@ -405,6 +411,7 @@ int#!#int
 2#!#2000
 3#!#3000
 9#!#8998
+11#!#11496
 ~~END~~
 
 
@@ -426,8 +433,16 @@ GO
 ~~ROW COUNT: 1~~
 
 
-UPDATE vw_emp_salary SET salary = salary + 500 where emp_id = 21;
+UPDATE vw_emp_salary SET salary = salary + 500 where emp_id = 22;
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 SELECT emp_id, salary FROM vw_emp_salary ORDER BY emp_id, salary;
 GO
@@ -437,8 +452,11 @@ int#!#int
 2#!#2000
 3#!#3000
 9#!#8998
+11#!#11496
 22#!#11998
 23#!#12997
+24#!#14496
+25#!#15495
 ~~END~~
 
 
@@ -522,9 +540,12 @@ GO
 DROP TRIGGER IF EXISTS tr_vw_emp_salary_instead_delete;
 GO
 
+TRUNCATE TABLE emp_salary;
+GO
+
 ----Section 6 AFTER Triggers with Disabled IOT Trigger BABEL-4801
 -- DISABLED IOT INSERT TRIGGER -> AFTER INSERT TRIGGER
-TRUNCATE TABLE tbl_emp_salary;
+TRUNCATE TABLE emp_salary;
 GO
 
 CREATE TRIGGER tr_emp_salary_instead_insert ON emp_salary
