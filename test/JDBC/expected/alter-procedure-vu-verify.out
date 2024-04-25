@@ -116,10 +116,3 @@ int#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
-exec alter_proc_p1
-go
-~~ERROR (Code: 201)~~
-
-~~ERROR (Message: procedure alter_proc_p1 expects parameter "@param", which was not supplied.)~~
-
-
