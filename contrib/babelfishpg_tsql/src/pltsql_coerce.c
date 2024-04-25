@@ -51,6 +51,11 @@ extern bool babelfish_dump_restore;
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
 
+static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
+static Oid tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context);
+static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
+static Node* tsql_handle_constant_literals_hook(ParseState *pstate, Node *e);
+
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
 
@@ -1152,6 +1157,8 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
 	func_select_candidate_hook = tsql_func_select_candidate;
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
+	select_common_type_hook = tsql_select_common_type_hook;
+	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);
@@ -1525,4 +1532,156 @@ pltsql_bpchar_name(PG_FUNCTION_ARGS)
 	memcpy(NameStr(*result), s_data, len);
 
 	PG_RETURN_NAME(result);
+}
+
+static Oid
+tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context)
+{
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return InvalidOid;
+	if (!context)
+		return InvalidOid;
+	else if (strncmp(context, "ISNULL", strlen("ISNULL")) == 0)
+		return select_common_type_for_isnull(pstate, exprs);
+	else if(strncmp(context, "TSQL_COALESCE", strlen("TSQL_COALESCE")) == 0)
+		return select_common_type_for_coalesce_function(pstate, exprs);
+	
+	return InvalidOid;
+}
+
+/*
+ * select_common_type_for_isnull - Deduce common data type for ISNULL(check_expression , replacement_value) 
+ * function.
+ * This function should return same as check_expression. If that expression is NULL then reyurn the data type of
+ * replacement_value. If replacement_value is also NULL then return INT.
+ */
+static Oid
+select_common_type_for_isnull(ParseState *pstate, List *exprs)
+{
+	Node	   *pexpr;
+	Oid		   ptype;
+
+	Assert(exprs != NIL);
+	pexpr = (Node *) linitial(exprs);
+	ptype = exprType(pexpr);
+
+	/* Check if first arg (check_expression) is NULL literal */
+	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
+	{
+		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
+		Oid ntype = exprType(nexpr);
+		/* Check if second arg (replace_expression) is NULL literal */
+		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
+		{
+			return INT4OID;
+		}
+		/* If second argument is non-null string literal */
+		if (ntype == UNKNOWNOID)
+		{
+			return get_sys_varcharoid();
+		}
+		return ntype;
+	}
+	/* If first argument is non-null string literal */
+	if (ptype == UNKNOWNOID)
+	{
+		return get_sys_varcharoid();
+	}
+	return ptype;
+}
+
+static Oid
+select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
+{
+	Node		*pexpr;
+	Oid		ptype;
+	ListCell	*lc;
+	Oid		commontype = InvalidOid;
+	int 		curr_precedence = INT_MAX, temp_precedence = 0;
+
+	Assert(exprs != NIL);
+
+	if (exprs->length < 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("COALESCE function should have at least 2 arguments")));
+
+	foreach(lc, exprs)
+	{
+		pexpr = (Node *) lfirst(lc);
+		ptype = exprType(pexpr);
+
+		/* Check if arg is NULL literal */
+		if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull)
+			continue;
+
+		/* If the arg is non-null string literal */
+		if (ptype == UNKNOWNOID)
+		{
+			Oid curr_oid = get_sys_varcharoid();
+			temp_precedence = tsql_get_type_precedence(curr_oid);
+			if (commontype == InvalidOid 
+				|| temp_precedence < curr_precedence)
+			{
+				commontype = curr_oid;
+				curr_precedence = temp_precedence;
+			}
+
+			continue;
+		}
+
+		temp_precedence = tsql_get_type_precedence(ptype);
+
+		if (commontype == InvalidOid || temp_precedence < curr_precedence)
+		{
+			commontype = ptype;
+			curr_precedence = temp_precedence;
+		}
+	}
+
+	if (commontype == InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("At least one of the arguments to COALESCE must be a non-NULL constant")));
+
+	return commontype;
+}
+
+/*
+ * Hook to handle constant string literal inputs for
+ * COALESCE function. This function also handles empty and
+ * white space string literals.
+ */
+static Node*
+tsql_handle_constant_literals_hook(ParseState *pstate, Node *e)
+{
+	Const	   *con;
+	char	   *val;
+	int	   i = -1;
+
+	if (exprType(e) != UNKNOWNOID || !IsA(e, Const))
+		return e;
+
+	con = (Const *) e;
+	val = DatumGetCString(con->constvalue);
+
+	if (val != NULL)
+		i = strlen(val) - 1;
+
+	/*
+	 * Additional handling for empty or white space string literals as
+	 * T-SQL treats an empty string literal as 0 in certain datatypes
+	 */
+	for (; i >= 0; i--)
+	{
+		if (!isspace(val[i]))
+			break;
+	}
+
+	if (i != -1)
+		e = coerce_to_common_type(pstate, e,
+						VARCHAROID,
+						"COALESCE");
+
+	return e;
 }
