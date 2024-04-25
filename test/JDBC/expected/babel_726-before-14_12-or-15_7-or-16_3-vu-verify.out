@@ -1,0 +1,23 @@
+SELECT babel_726_f1(6,0)
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+SELECT * FROM babel_726_v1
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+EXEC babel_726_p1
+GO
+~~START~~
+smallint
+1
+~~END~~
+
