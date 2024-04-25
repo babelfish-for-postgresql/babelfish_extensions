@@ -420,6 +420,7 @@ sys_asymmetric_keys
 sys_certificates
 sys_database_permissions
 BABEL-4606
+BABEL-4672
 babel-4475
 sys_availability_groups
 sys_availability_replicas
