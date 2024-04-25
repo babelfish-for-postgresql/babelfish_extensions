@@ -384,6 +384,7 @@ typedef struct tsql_valid_arg_type
 {
 	int     len;                                      /* length of list of valid types for the argument */
 	char   *valid_types[SFUNC_MAX_VALID_TYPES];       /* list of valid type name supported for the argument */
+	Oid     valid_types_oid[SFUNC_MAX_VALID_TYPES];   /* list of valid type oid supported for the argument */
 } tsql_valid_arg_type_t;
 
 /* struct to store details of special function */
@@ -397,7 +398,7 @@ typedef struct tsql_special_function
 
 tsql_special_function_t tsql_special_function_list[] = 
 {
-	{"sys", "trim", 2, {{4, {"char","varchar","nchar","nvarchar"}}, {4, {"char","varchar","nchar","nvarchar"}}}}
+	{"sys", "trim", 2, {{4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
 
 #define TOTAL_TSQL_SPECIAL_FUNCTION_COUNT (sizeof(tsql_special_function_list)/sizeof(tsql_special_function_list[0]))
@@ -931,6 +932,12 @@ static Oid getImmediateBaseTypeOfUDT(Oid typeid)
 	Datum                       tsql_typename;
 	LOCAL_FCINFO(fcinfo, 1);
 
+	/* if common_utility_plugin_ptr is not initialised */
+	if (common_utility_plugin_ptr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Failed to find common utility plugin.")));
+
 	/* if tsql_typename is NULL it implies that inputTypId corresponds to UDT */
 	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
 	fcinfo->args[0].value = ObjectIdGetDatum(typeid);
@@ -1010,12 +1017,6 @@ bool validate_special_function(char *func_nsname, char *func_name, int nargs, Oi
 		/* for unknown literals consider its type as sys.VARCHAR */
 		inputTypId = (input_typeids[i] == UNKNOWNOID) ? sys_varcharoid : input_typeids[i];
 
-		/* if common_utility_plugin_ptr is not initialised */
-		if (common_utility_plugin_ptr == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("Failed to find common utility plugin.")));
-
 		/* for UDT use its base type for input argument datatype validation */
 		baseTypeId = getImmediateBaseTypeOfUDT(inputTypId);
 		if(OidIsValid(baseTypeId))
@@ -1026,7 +1027,18 @@ bool validate_special_function(char *func_nsname, char *func_name, int nargs, Oi
 		type_match = false;
 		for (int j = 0; j < special_func->valid_arg_types[i].len; j++)
 		{
-			validTypId = (*common_utility_plugin_ptr->get_tsql_datatype_oid)(special_func->valid_arg_types[i].valid_types[j]);
+			if (!OidIsValid(special_func->valid_arg_types[i].valid_types_oid[j]))
+			{
+				/* if common_utility_plugin_ptr is not initialised */
+				if (common_utility_plugin_ptr == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							errmsg("Failed to find common utility plugin.")));
+
+				special_func->valid_arg_types[i].valid_types_oid[j] = (*common_utility_plugin_ptr->get_tsql_datatype_oid)(special_func->valid_arg_types[i].valid_types[j]);
+			}
+
+			validTypId = special_func->valid_arg_types[i].valid_types_oid[j];
 
 			if (inputTypId == validTypId)
 			{
