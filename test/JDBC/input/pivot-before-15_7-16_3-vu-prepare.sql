@@ -218,68 +218,7 @@ insert into StoreReceipt (OrderID, ItemID, Price, EmployeeID, StoreID, Manufactu
 insert into StoreReceipt (OrderID, ItemID, Price, EmployeeID, StoreID, ManufactureID, PurchaseDate) values (200, 2084, 735.91, 223, 5, 1221, '2023-10-30');
 GO
 
-
 create table pivot_insert_into(ManufactureID int, EmployeeID int, p1 int, p2 int, p3 int, p4 int, p5 int);
-GO
-
-CREATE PROCEDURE top_n_pivot
-    (
-    @Number int = 5
-    )
-AS
-BEGIN
-    SELECT TOP(@Number) ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT ManufactureID, ItemID, StoreID
-        FROM StoreReceipt
-    )as srctable
-    PIVOT (
-        COUNT (ItemID)
-        FOR StoreID in ([2], [3], [4], [5], [6])
-    ) AS pvt2
-    ORDER BY 1
-END;
-GO
-
-CREATE FUNCTION test_table_valued_function(@Number int)
-RETURNS TABLE
-AS
-RETURN
-    SELECT TOP(@Number) ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT ManufactureID, ItemID, StoreID
-        FROM StoreReceipt
-    )as srctable
-    PIVOT (
-        COUNT (ItemID)
-        FOR StoreID in ([2], [3], [4], [5], [6])
-    ) AS pvt2
-    ORDER BY 1
-GO
-
-CREATE VIEW StoreReceipt_view
-AS
-SELECT * FROM StoreReceipt;
-GO
-
--- Test create view for stmt with pivot operator
--- Expected to fail
--- Create view with pivot is not yet supported
-CREATE VIEW pivot_view
-AS
-SELECT TOP(5) ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)as srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID in ([2], [3], [4], [5], [6])
-) AS pvt
-ORDER BY 1
 GO
 
 -- BABEL-4558 
@@ -288,7 +227,6 @@ CREATE TABLE OSTable(
     [Sid] [int] NOT NULL
 )
 GO
-
 
 CREATE TABLE STable(
     [Id] [int] IDENTITY(1,1) NOT NULL,

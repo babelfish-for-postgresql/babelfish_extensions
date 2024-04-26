@@ -13,6 +13,13 @@ GO
 drop view StoreReceipt_view;
 GO
 
+drop view pivot_view;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "pivot_view" does not exist)~~
+
+
 drop table pivot_insert_into;
 GO
 

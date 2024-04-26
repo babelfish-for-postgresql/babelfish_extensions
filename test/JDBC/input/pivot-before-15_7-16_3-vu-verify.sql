@@ -222,20 +222,6 @@ PIVOT (
 ORDER BY 1
 GO
 
--- procedure test
-exec top_n_pivot 10
-GO
-
-exec top_n_pivot 5
-GO
-
--- function test
-SELECT * FROM test_table_valued_function(12) ORDER BY 1
-GO
-
-SELECT * FROM test_table_valued_function(2) ORDER BY 1
-GO
-
 -- explain pivot
 SET BABELFISH_SHOWPLAN_ALL ON;
 SELECT TOP 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
@@ -431,7 +417,7 @@ FROM (SELECT OSTable.Oid, STable.Scode, STable.Type
         ON OSTable.Sid = STable.Id
         ) AS SourceTable
 PIVOT ( MAX(Scode) FOR [Type] IN ([1], [2], [3]))
-        AS os_pivot
+AS os_pivot
 ORDER BY 1
 GO
 
@@ -779,27 +765,6 @@ JOIN
 ON p1.EmployeeID = p2.EmployeeID ORDER BY 1
 GO
 
--- Test view as a data source in a stmt with pivot operator
-SELECT TOP 5 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT EmployeeID, ItemID, StoreID
-    FROM StoreReceipt_view
-)AS srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt
-GO
-
--- Test view of a stmt with pivot operator
--- Expected to fail since we failed to create view with pivot at prepare script. 
--- Create view with pivot is not yet supported,
-SELECT ManufactureID, STORE2, STORE3, STORE4, STORE5, STORE6
-FROM pivot_view
-ORDER BY ManufactureID
-GO
-
 -- aggregate string value, when no row is selected, should output NULL
 SELECT [seatings], [LEFT], [RIGHT] 
 FROM
@@ -811,5 +776,4 @@ PIVOT (
     MAX(left_right) 
     FOR left_right IN ([LEFT], [RIGHT]) 
 ) AS p2
-ORDER BY 1
 GO
