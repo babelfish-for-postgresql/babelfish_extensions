@@ -756,8 +756,9 @@ PLTsqlStartTransaction(char *txnName)
 void
 PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 {
-	ENRCommitChanges(currentQueryEnv);
 	elog(DEBUG2, "TSQL TXN Commit transaction %d", NestedTranCount);
+	if (temp_table_xact_support)
+		ENRCommitChanges(currentQueryEnv);
 	if (NestedTranCount <= 1)
 	{
 		RequireTransactionBlock(true, "COMMIT");
@@ -781,7 +782,8 @@ PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 void
 PLTsqlRollbackTransaction(char *txnName, QueryCompletion *qc, bool chain)
 {
-	ENRRollbackChanges(currentQueryEnv);
+	if (temp_table_xact_support)
+		ENRRollbackChanges(currentQueryEnv);
 	if (IsTopTransactionName(txnName))
 	{
 		elog(DEBUG2, "TSQL TXN Rollback transaction");
