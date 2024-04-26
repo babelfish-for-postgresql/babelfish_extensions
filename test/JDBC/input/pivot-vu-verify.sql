@@ -15,6 +15,10 @@ PIVOT (
 ORDER BY 1
 GO
 
+-- testing trigger with pivot 
+insert into trigger_testing (col) select N'Muffler'
+GO
+
 -- 3 column in src table pivot
 SELECT EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
 FROM
