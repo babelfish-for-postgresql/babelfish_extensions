@@ -184,6 +184,18 @@ DROP TABLE #temp_table_rollback_t2
 COMMIT
 GO
 
+BEGIN TRAN
+    CREATE TABLE #t1(a int)
+    ROLLBACK
+GO
+
+SELECT * FROM enr_view
+go
+~~START~~
+text
+~~END~~
+
+
 ----------------------------------------------------------
 -- Implicit rollback due to error
 ----------------------------------------------------------
@@ -237,6 +249,13 @@ DROP TABLE #temp_table_rollback_t1
 DROP TABLE #temp_table_rollback_t2
 COMMIT
 GO
+
+SELECT * FROM enr_view;
+GO
+~~START~~
+text
+~~END~~
+
 
 ----------------------------------------------------------
 -- Nested transactions
@@ -299,6 +318,24 @@ t1
 ~~ERROR (Message: relation "#t1" does not exist)~~
 
 
+
+
+
+-- SELECT * FROM enr_view;
+-- GO
+-- BEGIN TRANSACTION T1
+--     SAVE TRANSACTION S2
+--         create table #t3(a int)
+--         create table #t4(a int identity primary key, b varchar(50))
+--         insert into #t3 values (5)
+--         insert into #t4 values ('six')
+--         SELECT * FROM #t3
+--         SELECT * FROM #t4
+--         SELECT * FROM enr_view;
+--     ROLLBACK TRANSACTION S2
+--     SELECT * FROM enr_view;
+-- COMMIT
+-- GO
 ----------------------------------------------------------
 -- Savepoint CREATE and DROP
 ----------------------------------------------------------
@@ -406,6 +443,9 @@ GO
 ~~ERROR (Message: relation "#temp_table_rollback_t4" does not exist)~~
 
 
+DROP TABLE #temp_table_rollback_t4
+GO
+
 
 ---------------------------------------------------------------------------
 -- Index creation
@@ -467,14 +507,6 @@ SELECT * FROM enr_view
 GO
 ~~START~~
 text
-#temp_table_rollback_t1_pkey
-#pg_toast_#oid_masked#_index
-#pg_toast_#oid_masked#
-#temp_table_rollback_t1
-#temp_table_rollback_t2
-#pg_toast_#oid_masked#_index
-#pg_toast_#oid_masked#
-#temp_table_rollback_t4
 #temp_table_rollback_t5
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
@@ -607,6 +639,97 @@ int#!#varchar#!#int#!#int
 ~~END~~
 
 
+DROP TABLE #temp_table_rollback_t5
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
 
 
+---------------------------------------------------------------------------
+-- Procedures
+---------------------------------------------------------------------------
+exec test_rollback_in_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#two
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+three
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int
+four#!#1
+~~END~~
+
+~~START~~
+int
+6
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t2" does not exist)~~
+
+
+BEGIN TRANSACTION
+    CREATE TABLE #outer_tab1(a int)
+    SELECT * FROM enr_view
+    exec implicit_rollback_in_proc
+    select * from #outer_tab1
+ROLLBACK
+GO
+~~START~~
+text
+#outer_tab1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#two
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+three
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int
+four#!#1
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT has more expressions than target columns)~~
+
+
+-- Everything should be rolled back due to error
+-- Nothing from the proc should be here either
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
 

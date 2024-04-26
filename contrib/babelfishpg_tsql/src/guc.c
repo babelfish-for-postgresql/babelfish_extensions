@@ -1139,6 +1139,15 @@ define_custom_variables(void)
 							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   check_babelfish_dump_restore_min_oid, NULL, NULL);
 
+	DefineCustomBoolVariable("babelfishpg_tsql.temp_table_xact_support",
+							 gettext_noop("Enable temp table changes to respect transactional behavior"),
+							 NULL,
+							 &temp_table_xact_support,
+							 true,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
 	/* T-SQL Hint Mapping */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_hint_mapping",
 							 gettext_noop("Enables T-SQL hint mapping in ANTLR parser"),

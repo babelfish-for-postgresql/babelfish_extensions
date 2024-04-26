@@ -113,6 +113,14 @@ DROP TABLE #temp_table_rollback_t2
 COMMIT
 GO
 
+BEGIN TRAN
+    CREATE TABLE #t1(a int)
+    ROLLBACK
+GO
+
+SELECT * FROM enr_view
+go
+
 ----------------------------------------------------------
 -- Implicit rollback due to error
 ----------------------------------------------------------
@@ -149,6 +157,9 @@ DROP TABLE #temp_table_rollback_t2
 COMMIT
 GO
 
+SELECT * FROM enr_view;
+GO
+
 ----------------------------------------------------------
 -- Nested transactions
 ----------------------------------------------------------
@@ -171,6 +182,24 @@ BEGIN TRANSACTION T1
 ROLLBACK TRANSACTION T1
 SELECT * FROM #t1
 GO
+
+-- SELECT * FROM enr_view;
+-- GO
+
+-- BEGIN TRANSACTION T1
+--     SAVE TRANSACTION S2
+--         create table #t3(a int)
+--         create table #t4(a int identity primary key, b varchar(50))
+--         insert into #t3 values (5)
+--         insert into #t4 values ('six')
+--         SELECT * FROM #t3
+--         SELECT * FROM #t4
+--         SELECT * FROM enr_view;
+--     ROLLBACK TRANSACTION S2
+--     SELECT * FROM enr_view;
+-- COMMIT
+-- GO
+
 
 ----------------------------------------------------------
 -- Savepoint CREATE and DROP
@@ -243,6 +272,9 @@ DROP  TABLE #temp_table_rollback_t4
 
 INSERT INTO #temp_table_rollback_t4 VALUES (2, 'two')
 COMMIT
+GO
+
+DROP TABLE #temp_table_rollback_t4
 GO
 
 ---------------------------------------------------------------------------
@@ -376,14 +408,27 @@ GO
 SELECT * FROM #temp_table_rollback_t5
 GO
 
----------------------------------------------------------------------------
--- Triggers
----------------------------------------------------------------------------
+DROP TABLE #temp_table_rollback_t5
+GO
 
--- TODO
-
+SELECT * FROM enr_view
+GO
 ---------------------------------------------------------------------------
 -- Procedures
 ---------------------------------------------------------------------------
 
--- TODO
+exec test_rollback_in_proc
+GO
+
+BEGIN TRANSACTION
+    CREATE TABLE #outer_tab1(a int)
+    SELECT * FROM enr_view
+    exec implicit_rollback_in_proc
+    select * from #outer_tab1
+ROLLBACK
+GO
+
+-- Everything should be rolled back due to error
+-- Nothing from the proc should be here either
+SELECT * FROM enr_view
+GO
