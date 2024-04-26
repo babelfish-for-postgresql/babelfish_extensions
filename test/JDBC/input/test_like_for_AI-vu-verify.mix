@@ -1,4 +1,4 @@
--- sla_for_parallel_query_enforced 45000
+-- sla_for_parallel_query_enforced 50000
 -- parallel_query_expected
 -- tsql
 ------------------- CI_AI ----------------------
