@@ -4442,6 +4442,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	List			*pivot_extrainfo;
 	char			*query_string;
 	char			*funcName;
+	Node 			*node;	
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -4454,21 +4455,31 @@ bbf_pivot(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 	
-	if (fcinfo->context == NULL || !IsA(fcinfo->context, List) || list_length((List *) fcinfo->context) != 2)
+	if (fcinfo->context == NULL || !IsA(fcinfo->context, List) || list_length((List *) fcinfo->context) != 3)
 		ereport(ERROR,
 			(errcode(ERRCODE_CHECK_VIOLATION),
 				errmsg("Babelfish PIVOT is not properly initialized.")));
+
+	node = list_nth((List *)fcinfo->context, 0);
+	if (!IsA(node, List) 
+			|| !IsA(list_nth((List *)node, 0), String) 
+			|| strcmp(((String *)list_nth((List *)node, 0))->sval, "bbf_pivot_func") != 0)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_CHECK_VIOLATION),
+				errmsg("Babelfish PIVOT is not properly initialized.")));
+	}
+	pivot_parsetree = (List *) list_nth((List *) fcinfo->context, 1);
+	pivot_extrainfo = (List *) list_nth((List *) fcinfo->context, 2);
 	
-	pivot_parsetree = (List *) list_nth((List *) fcinfo->context, 0);
-	pivot_extrainfo = (List *) list_nth((List *) fcinfo->context, 1);
+	bbf_pivot_src_sql = (RawStmt *) list_nth(pivot_parsetree, 0);
+	bbf_pivot_cat_sql = (RawStmt *) list_nth(pivot_parsetree, 1);
 
 	if (!IsA(pivot_parsetree, List) || !IsA(pivot_extrainfo, List))
 		ereport(ERROR,
 			(errcode(ERRCODE_CHECK_VIOLATION),
 				errmsg("Babelfish PIVOT is not properly initialized.")));
 
-	bbf_pivot_src_sql = (RawStmt *) list_nth(pivot_parsetree, 0);
-	bbf_pivot_cat_sql = (RawStmt *) list_nth(pivot_parsetree, 1);
 	query_string = ((String *) list_nth(pivot_extrainfo, 0))->sval;
 	funcName = ((String *) list_nth(pivot_extrainfo, 1))->sval;
 

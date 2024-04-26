@@ -527,7 +527,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_view(TSqlP
 		else if (option->VIEW_METADATA())
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_VIEW_VIEW_METADATA_OPTION, option->VIEW_METADATA());
 	}
-	
+
 	is_inside_view = true;
 	auto ret =  visitChildren(ctx);
 	is_inside_view = false;
@@ -1370,8 +1370,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlP
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
-{
-	
+{	
 	if (ctx->PIVOT())
 	{
 		if (is_inside_view)
@@ -1380,7 +1379,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlPars
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Create view on stmt with PIVOT operator is not currently supported.", 0, 0);
 		}
 	}
-
 	if (ctx->UNPIVOT())
 		handle(INSTR_UNSUPPORTED_TSQL_UNPIVOT, ctx->UNPIVOT());
 

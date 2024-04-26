@@ -12,6 +12,7 @@ PIVOT (
     COUNT (OrderID)
     FOR StoreID IN ([1], [2], [3],[4], [5])
 ) AS pvt
+ORDER BY 1
 GO
 
 -- 3 column in src table pivot
@@ -25,6 +26,7 @@ PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt
+ORDER BY 1
 GO
 
 -- 3+ column IN src table pivot
@@ -38,6 +40,7 @@ PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt
+ORDER BY 1
 GO
 
 -- ORDER by test
@@ -66,6 +69,7 @@ PIVOT (
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt
 WHERE ManufactureID < 1220
+ORDER BY 1
 GO
 
 -- groupby, having clause test
@@ -97,6 +101,7 @@ PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt
+ORDER BY 1
 GO
 
 -- distinct test 
@@ -110,6 +115,7 @@ PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt
+ORDER BY 1
 GO
 
 -- INSERT INTO test
@@ -123,7 +129,8 @@ FROM
 PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt;
+) AS pvt
+ORDER BY 1
 
 SELECT TOP 10 * FROM pivot_insert_into ORDER by 1, 2;
 GO
@@ -139,7 +146,8 @@ FROM
 PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt;
+) AS pvt
+ORDER BY 1
 
 SELECT TOP 10 * FROM pivot_SELECT_into ORDER by 1, 2;
 GO
@@ -182,6 +190,7 @@ SELECT TOP 3 * FROM (
         FOR StoreID IN ([2], [3], [4], [5], [6])
     ) AS pvt2
 ) p
+ORDER BY 1
 GO
 
 -- table variable test
@@ -198,6 +207,7 @@ PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt2
+ORDER BY 1
 GO
 
 -- temp table test
@@ -209,6 +219,7 @@ PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt2
+ORDER BY 1
 GO
 
 -- procedure test
@@ -219,10 +230,10 @@ exec top_n_pivot 5
 GO
 
 -- function test
-SELECT * FROM test_table_valued_function(12);
+SELECT * FROM test_table_valued_function(12) ORDER BY 1
 GO
 
-SELECT * FROM test_table_valued_function(2);
+SELECT * FROM test_table_valued_function(2) ORDER BY 1
 GO
 
 -- explain pivot
@@ -237,6 +248,7 @@ PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt
+ORDER BY 1
 GO
 SET BABELFISH_SHOWPLAN_ALL OFF;
 GO
@@ -253,6 +265,7 @@ PIVOT (
     COUNT (srctable.ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt
+ORDER BY 1
 GO
 
 -- test column name win indirection (category column)
@@ -266,6 +279,7 @@ PIVOT (
     COUNT (ItemID)
     FOR srctable.StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt
+ORDER BY 1
 GO
 
 -- CTE test data
@@ -309,7 +323,8 @@ SELECT st.FruitType, st.[2023_Total], sa.[2023_Avg],
   st.[2024_Total], sa.[2024_Avg]
 FROM SalesTotal AS st
   INNER JOIN SalesAvg AS sa
-  ON st.FruitType = sa.FruitType;
+  ON st.FruitType = sa.FruitType
+ORDER BY 1
 GO
 
 
@@ -402,6 +417,7 @@ FROM SalesTotal AS st
   ON st.FruitType = sa.FruitType
   INNER JOIN SalesMin as sm
   ON sa.FruitType = sm.FruitType
+ORDER BY 1
 GO
 
 DROP TABlE IF EXISTS #FruitSales
@@ -416,6 +432,7 @@ FROM (SELECT OSTable.Oid, STable.Scode, STable.Type
         ) AS SourceTable
 PIVOT ( MAX(Scode) FOR [Type] IN ([1], [2], [3]))
         AS os_pivot
+ORDER BY 1
 GO
 
 -- JOIN TEST
@@ -568,6 +585,35 @@ FULL JOIN
 ON p1.EmployeeID = p2.EmployeeID ORDER BY 1
 GO
 
+-- CROSS JOIN TEST
+SELECT * FROM
+(
+    SELECT TOP 5 EmployeeID, [2] AS STORE2
+    FROM
+    (
+        SELECT EmployeeID, ItemID, StoreID
+        FROM StoreReceipt
+    )AS srctable
+    PIVOT (
+        COUNT (srctable.ItemID)
+        FOR StoreID IN ([2], [3], [4], [5], [6])
+    ) AS pvt where EmployeeID > 250
+) AS p1
+CROSS JOIN
+(
+    SELECT TOP 5 EmployeeID, [10] AS STORE10
+    FROM
+    (
+        SELECT EmployeeID, ItemID, StoreID
+        FROM StoreReceipt
+    )AS srctable
+    PIVOT (
+        COUNT (srctable.ItemID)
+        FOR StoreID IN ([7], [8], [9], [10])
+    ) AS pvt where EmployeeID > 245
+) AS p2 ORDER BY 1
+GO
+
 -- COMMA JOIN TEST
 SELECT * FROM
 (
@@ -596,6 +642,35 @@ SELECT * FROM
     ) AS pvt where EmployeeID > 245
 ) AS p2
 WHERE p1.EmployeeID = p2.EmployeeID ORDER BY 1
+GO
+
+-- COMMA CROSS JOIN TEST
+SELECT * FROM
+(
+    SELECT TOP 5 EmployeeID, [2] AS STORE2
+    FROM
+    (
+        SELECT EmployeeID, ItemID, StoreID
+        FROM StoreReceipt
+    )AS srctable
+    PIVOT (
+        COUNT (srctable.ItemID)
+        FOR StoreID IN ([2], [3], [4], [5], [6])
+    ) AS pvt where EmployeeID > 250
+) AS p1
+,
+(
+    SELECT TOP 5 EmployeeID, [10] AS STORE10
+    FROM
+    (
+        SELECT EmployeeID, ItemID, StoreID
+        FROM StoreReceipt
+    )AS srctable
+    PIVOT (
+        COUNT (srctable.ItemID)
+        FOR StoreID IN ([7], [8], [9], [10])
+    ) AS pvt where EmployeeID > 245
+) AS p2 ORDER BY 1
 GO
 
 --3+ JOIN TEST
@@ -718,6 +793,8 @@ PIVOT (
 GO
 
 -- Test view of a stmt with pivot operator
+-- Expected to fail since we failed to create view with pivot at prepare script. 
+-- Create view with pivot is not yet supported,
 SELECT ManufactureID, STORE2, STORE3, STORE4, STORE5, STORE6
 FROM pivot_view
 ORDER BY ManufactureID
@@ -734,4 +811,5 @@ PIVOT (
     MAX(left_right) 
     FOR left_right IN ([LEFT], [RIGHT]) 
 ) AS p2
+ORDER BY 1
 GO

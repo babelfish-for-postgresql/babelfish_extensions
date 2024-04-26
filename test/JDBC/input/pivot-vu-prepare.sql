@@ -238,6 +238,7 @@ BEGIN
         COUNT (ItemID)
         FOR StoreID in ([2], [3], [4], [5], [6])
     ) AS pvt2
+    ORDER BY 1
 END;
 GO
 
@@ -255,6 +256,7 @@ RETURN
         COUNT (ItemID)
         FOR StoreID in ([2], [3], [4], [5], [6])
     ) AS pvt2
+    ORDER BY 1
 GO
 
 CREATE VIEW StoreReceipt_view
@@ -263,6 +265,8 @@ SELECT * FROM StoreReceipt;
 GO
 
 -- Test create view for stmt with pivot operator
+-- Expected to fail
+-- Create view with pivot is not yet supported
 CREATE VIEW pivot_view
 AS
 SELECT TOP(5) ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
@@ -275,6 +279,7 @@ PIVOT (
     COUNT (ItemID)
     FOR StoreID in ([2], [3], [4], [5], [6])
 ) AS pvt
+ORDER BY 1
 GO
 
 -- BABEL-4558 

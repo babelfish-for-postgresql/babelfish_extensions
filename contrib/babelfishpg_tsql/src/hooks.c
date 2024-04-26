@@ -4718,6 +4718,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	List		*src_sql_groupbylist;
 	List		*src_sql_sortbylist;
 	List		*src_sql_fromClause_copy;
+	List 		*pivot_context_list;
 	char		*pivot_colstr;
 	char		*value_colstr;
 	String		*funcName;
@@ -4848,10 +4849,18 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	c_sql->stmt_location = 0;
 	c_sql->stmt_len = 0;
 
+	pivot_context_list = list_make3(list_make1(makeString("bbf_pivot_func")),
+									list_make2((Node *) copyObject(s_sql),
+												(Node *) copyObject(c_sql)
+												),
+									list_make2(makeString(pstrdup(pstate->p_sourcetext)),
+												makeString(pstrdup(funcName->sval))
+												)
+									);
+
 	/* Store pivot information in FuncCall to live through parser analyzer */
 	pivot_func = makeFuncCall(list_make2(makeString("sys"), makeString("bbf_pivot")), NIL, COERCE_EXPLICIT_CALL, -1);
-	pivot_func->pivot_parsetree = list_make2((Node *) copyObject(s_sql), (Node *) copyObject(c_sql));
-	pivot_func->pivot_extrainfo = list_make2(makeString(pstrdup(pstate->p_sourcetext)), makeString(pstrdup(funcName->sval)));
+	pivot_func->context = (Node *) pivot_context_list;
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
 }
 
