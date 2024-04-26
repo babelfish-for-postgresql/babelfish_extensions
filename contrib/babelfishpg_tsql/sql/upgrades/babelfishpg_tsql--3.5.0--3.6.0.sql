@@ -331,6 +331,11 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 $$
 LANGUAGE plpgsql STABLE;
 
+create or replace function sys.remove_accents_internal(IN TEXT) RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'remove_accents_internal'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
 -- login_token
 CREATE OR REPLACE VIEW sys.login_token
 AS SELECT
