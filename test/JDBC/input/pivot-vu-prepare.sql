@@ -340,3 +340,22 @@ VALUES ('SEAT1', 'LEFT'),
        ('SEAT3', 'LEFT'),
        ('SEAT3', 'RIGHT');
 GO
+
+create table trigger_testing(col nvarchar(60))
+GO
+
+create trigger pivot_trigger on trigger_testing after insert
+as
+begin
+  SELECT 'OrderNumbers' AS OrderCountbyStore, [1] AS STORE1, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5
+    FROM
+    (
+        SELECT StoreID, OrderID
+        FROM StoreReceipt
+    )AS SrcTable
+    PIVOT (
+        COUNT (OrderID)
+        FOR StoreID IN ([1], [2], [3],[4], [5])
+    ) AS pvt
+end
+GO

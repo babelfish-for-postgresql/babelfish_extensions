@@ -20,6 +20,17 @@ OrderNumbers#!#19#!#19#!#19#!#16#!#14
 ~~END~~
 
 
+-- testing trigger with pivot 
+insert into trigger_testing (col) select N'Muffler'
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#int
+OrderNumbers#!#19#!#19#!#19#!#16#!#14
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
 -- 3 column in src table pivot
 SELECT EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
 FROM

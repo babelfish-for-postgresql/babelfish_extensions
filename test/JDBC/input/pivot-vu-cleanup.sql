@@ -1,6 +1,12 @@
 use pivot_test;
 GO
 
+drop trigger pivot_trigger
+GO
+
+drop table trigger_testing
+GO
+
 drop table OSTable;
 GO
 
