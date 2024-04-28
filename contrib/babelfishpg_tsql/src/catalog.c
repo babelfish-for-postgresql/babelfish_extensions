@@ -3059,7 +3059,6 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	int16	dbid = get_cur_db_id();
-	char	*user = GetUserNameFromId(GetUserId(), false);
 
 	/* Immediately return, if grantee is NULL or PUBLIC. */
 	if ((grantee == NULL) || (strcmp(grantee, PUBLIC_ROLE_NAME) == 0))
@@ -3084,7 +3083,7 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 		new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(func_args);
 	else
 		new_record_nulls_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = true;
-	new_record_bbf_schema[Anum_bbf_schema_perms_grantor - 1] = CStringGetTextDatum(pstrdup(user));
+	new_record_nulls_bbf_schema[Anum_bbf_schema_perms_grantor - 1] = true;
 
 	tuple_bbf_schema = heap_form_tuple(bbf_schema_dsc,
 									new_record_bbf_schema,
@@ -3537,6 +3536,42 @@ clean_up_bbf_schema_permissions(const char *schema_name,
 					get_bbf_schema_perms_idx_oid(),
 					true, NULL, 3, scanKey);
 	}
+
+	while ((tuple_bbf_schema = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(tuple_bbf_schema))
+			CatalogTupleDelete(bbf_schema_rel,
+							   &tuple_bbf_schema->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
+}
+
+/*
+ * Clean up babelfish_schema_permissions table for a given database
+ * when database is dropped.
+ */
+void
+drop_bbf_schema_permission_entries(int16 dbid)
+{
+	Relation	bbf_schema_rel;
+	HeapTuple	tuple_bbf_schema;
+	ScanKeyData scanKey[1];
+	SysScanDesc scan;
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(), RowExclusiveLock);
+
+	/* Search and drop the entries */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	scan = systable_beginscan(bbf_schema_rel,
+							  get_bbf_schema_perms_idx_oid(),
+							  true, NULL, 1, scanKey);
 
 	while ((tuple_bbf_schema = systable_getnext(scan)) != NULL)
 	{

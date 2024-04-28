@@ -1,0 +1,150 @@
+-- tsql
+create login login_token1 with password = '12345678';
+go
+
+create login login_token2 with password = '12345678';
+go
+
+create user login_token2;
+go
+
+create login login_token3 with password = '12345678'
+go
+
+alter server role sysadmin add member login_token3;
+go
+
+-- tsql
+select name, type, usage from sys.login_token order by name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL LOGIN#!#GRANT OR DENY
+sysadmin#!#SERVER ROLE#!#GRANT OR DENY
+~~END~~
+
+select name, type, usage from sys.user_token order by name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+dbo#!#SQL USER#!#GRANT OR DENY
+~~END~~
+
+
+-- tsql user=login_token1 password = 12345678
+select name, type, usage from sys.login_token order by name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+login_token1#!#SQL LOGIN#!#GRANT OR DENY
+~~END~~
+
+select name, type, usage from sys.user_token order by name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+guest#!#SQL USER#!#GRANT OR DENY
+public#!#ROLE#!#GRANT OR DENY
+~~END~~
+
+
+-- tsql user=login_token2 password = 12345678
+select name, type, usage from sys.login_token order by name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+login_token2#!#SQL LOGIN#!#GRANT OR DENY
+~~END~~
+
+select name, type, usage from sys.user_token order by name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+login_token2#!#SQL USER#!#GRANT OR DENY
+public#!#ROLE#!#GRANT OR DENY
+~~END~~
+
+
+-- tsql user=login_token3 password = 12345678
+select name, type, usage from sys.login_token order by name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+login_token3#!#SQL LOGIN#!#GRANT OR DENY
+sysadmin#!#SERVER ROLE#!#GRANT OR DENY
+~~END~~
+
+select name, type, usage from sys.user_token order by name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+dbo#!#SQL USER#!#GRANT OR DENY
+~~END~~
+
+
+-- tsql
+drop user login_token2;
+go
+
+-- psql
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'login_token1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'login_token2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'login_token3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login login_token1;
+go
+drop login login_token2;
+go
+drop login login_token3;
+go

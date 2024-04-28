@@ -2272,3 +2272,45 @@ drop login l5;
 go
 drop login l6;
 go
+
+-- test drop database removes correct entries from the catalog
+-- tsql
+create table babel_4344_t1(a int);
+go
+grant select on babel_4344_t1 to guest;
+go
+create database babel_4344_d1;
+go
+use babel_4344_d1;
+go
+create table babel_4344_t1(a int);
+go
+grant select on babel_4344_t1 to guest;
+go
+use master;
+go
+
+-- psql
+-- should have 2 entries for master and babel_4344_d1 databases
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where object_name = 'babel_4344_t1';
+go
+
+-- tsql
+use master
+go
+drop database babel_4344_d1;
+go
+
+-- psql
+-- should have 1 entry for master database since babel_4344_d1 is dropped
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where object_name = 'babel_4344_t1';
+go
+
+-- tsql
+drop table babel_4344_t1;
+go
+
+-- psql
+-- should have no entries since the table is dropped
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where object_name = 'babel_4344_t1';
+go

@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   grantee sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
   object_type CHAR(1) NOT NULL COLLATE sys.database_default,
   function_args TEXT COLLATE "C",
-  grantor sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  grantor sys.NVARCHAR(128) COLLATE sys.database_default,
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 
@@ -611,6 +611,61 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 	END;
 $$
 LANGUAGE plpgsql STABLE;
+
+-- login_token
+CREATE OR REPLACE VIEW sys.login_token
+AS SELECT
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
+CAST(CASE
+WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+ELSE 'SQL LOGIN' END AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as sys.nvarchar(128)) as usage
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE Ext.orig_loginname = sys.suser_name()
+AND Ext.type in ('S','U')
+UNION ALL
+SELECT
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
+CAST('SERVER ROLE' AS sys.nvarchar(128)) AS type,
+CAST ('GRANT OR DENY' as sys.nvarchar(128)) as usage
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE Ext.type = 'R' AND
+(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER'));
+
+GRANT SELECT ON sys.login_token TO PUBLIC;
+
+-- user_token
+CREATE OR REPLACE VIEW sys.user_token AS
+SELECT
+CAST(Base.oid AS INT) AS principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
+CAST(CASE
+WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+ELSE 'SQL USER' END
+AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = sys.DB_NAME()
+AND Ext.rolname = CURRENT_USER
+AND Ext.type in ('S','U')
+UNION ALL
+SELECT
+CAST(-1 AS INT) AS principal_id,
+CAST(CAST(-1 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
+CAST('ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
+WHERE (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo';
+
+GRANT SELECT ON sys.user_token TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_configure(IN "@option_name" varchar(128),  IN "@option_value" varchar(128), IN "@option_scope" varchar(128))
 AS $$
