@@ -196,6 +196,7 @@ static bool in_execute_body_batch_parameter = false;
 static const std::string fragment_SELECT_prefix = "SELECT "; // fragment prefix for expressions
 static const std::string fragment_EXEC_prefix   = "EXEC ";   // fragment prefix for execute_body_batch
 static PLtsql_stmt *makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx);
+static PLtsql_stmt *makeAlterDatabaseStatement(TSqlParser::Alter_databaseContext *ctx);
 static void handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx); 
 static void handleTableConstraintWithoutComma(TSqlParser::Column_def_table_constraintsContext *ctx);
 static void handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx);
@@ -1797,6 +1798,10 @@ public:
 		{
 			stmt = makeChangeDbOwnerStatement(ctx->alter_authorization());
 		}
+		else if (ctx->alter_database())
+		{
+			stmt = makeAlterDatabaseStatement(ctx->alter_database());
+		}
 		else if (ctx->create_fulltext_index())
 		{
 			stmt = makeCreateFulltextIndexStmt(ctx->create_fulltext_index());
@@ -1820,7 +1825,10 @@ public:
 			// Exit in case of Change DB owner
 			return;
 		}
-		
+		if (ctx->alter_database())
+		{
+			return;
+		}
 		if (ctx->create_fulltext_index())
 		{
 			clear_rewritten_query_fragment();
@@ -8468,6 +8476,23 @@ makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
 	// Login name for the new owner
 	std::string new_owner_name_str = stripQuoteFromId(ctx->authorization_grantee()->id());
 	result->new_owner_name = pstrdup(downcase_truncate_identifier(new_owner_name_str.c_str(), new_owner_name_str.length(), true));
+
+	return (PLtsql_stmt *) result;
+}
+
+static PLtsql_stmt *
+makeAlterDatabaseStatement(TSqlParser::Alter_databaseContext *ctx)
+{
+	PLtsql_stmt_alter_db *result = (PLtsql_stmt_alter_db *) palloc0(sizeof(*result));
+
+	result->cmd_type = PLTSQL_STMT_ALTER_DB;
+	result->lineno = getLineNo(ctx);
+
+	std::string old_db_name_str = stripQuoteFromId(ctx->database);
+	std::string new_old_name_str = stripQuoteFromId(ctx->new_name);
+
+	result->old_db_name = pstrdup(downcase_truncate_identifier(old_db_name_str.c_str(), old_db_name_str.length(), true));
+	result->new_db_name = pstrdup(downcase_truncate_identifier(new_old_name_str.c_str(), new_old_name_str.length(), true));
 
 	return (PLtsql_stmt *) result;
 }

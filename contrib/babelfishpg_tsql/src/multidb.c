@@ -255,7 +255,7 @@ rewrite_object_refs(Node *stmt)
 				 * Try to get physical granted role name, see if it's an
 				 * existing db role
 				 */
-				physical_role_name = get_physical_user_name(db_name, role_name);
+				physical_role_name = get_physical_user_name(db_name, role_name, false);
 				if (get_role_oid(physical_role_name, true) == InvalidOid)
 					break;
 
@@ -274,7 +274,7 @@ rewrite_object_refs(Node *stmt)
 				pfree(granted->priv_name);
 				granted->priv_name = physical_role_name;
 
-				physical_principal_name = get_physical_user_name(db_name, principal_name);
+				physical_principal_name = get_physical_user_name(db_name, principal_name, false);
 				pfree(grantee->rolename);
 				grantee->rolename = physical_principal_name;
 
@@ -344,7 +344,7 @@ rewrite_object_refs(Node *stmt)
 						char	   *user_name;
 						char	   *db_name = get_cur_db_name();
 
-						user_name = get_physical_user_name(db_name, create_role->role);
+						user_name = get_physical_user_name(db_name, create_role->role, false);
 						pfree(create_role->role);
 						create_role->role = user_name;
 
@@ -400,7 +400,7 @@ rewrite_object_refs(Node *stmt)
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									 errmsg("Cannot alter the user %s", user_name)));
 
-						physical_user_name = get_physical_user_name(db_name, user_name);
+						physical_user_name = get_physical_user_name(db_name, user_name, false);
 						pfree(alter_role->role->rolename);
 						alter_role->role->rolename = physical_user_name;
 					}
@@ -1093,7 +1093,7 @@ rewrite_role_name(RoleSpec *role)
 {
 	char	   *cur_db = get_cur_db_name();
 
-	role->rolename = get_physical_user_name(cur_db, role->rolename);
+	role->rolename = get_physical_user_name(cur_db, role->rolename, false);
 }
 
 bool
@@ -1329,7 +1329,7 @@ get_physical_schema_name(char *db_name, const char *schema_name)
  * Map the logical user name to its physical name in the database.
  */
 char *
-get_physical_user_name(char *db_name, char *user_name)
+get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 {
 	char	   *new_user_name;
 	char	   *result;
@@ -1342,7 +1342,7 @@ get_physical_user_name(char *db_name, char *user_name)
 	if (len == 0)
 		return NULL;
 
-	if (!DbidIsValid(get_db_id(db_name)))
+	if (!DbidIsValid(get_db_id(db_name)) && !suppress_error)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist.", db_name)));

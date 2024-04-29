@@ -1,0 +1,176 @@
+-- tsql
+-- sanity checks for metadata stored in babelfish catalog
+select owner, name from sys.babelfish_sysdatabases where name = 'sp_rename_database1' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%' order by rolname;
+go
+
+-- sanity check
+use sp_rename_database1;
+go
+-- Renaming the current database is also allowed
+exec sp_rename 'sp_rename_database1' , 'sp_rename_database2', 'database';
+go
+select db_name()
+go
+use sp_rename_database1;
+go
+use sp_rename_database2;
+go
+exec sp_rename 'sp_rename_database2', 'sp_rename_database1', 'database';
+go
+
+use master
+go
+exec sp_rename 'sp_rename_database1', 'sp_rename_database2', 'database';
+go
+-- should return updated rows
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_rename_database%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_database%' order by rolname;
+go
+
+-- sanity check to use db
+use sp_rename_database1;
+go
+use sp_rename_database2;
+go
+
+use master
+go
+
+-- rollback changes
+exec sp_rename 'sp_rename_database2', 'sp_rename_database1', 'database'
+go
+
+-- sp_rename inside transaction is allowed
+Begin Transaction;
+go
+exec sp_rename 'sp_rename_database2', 'sp_rename_database1', 'database'
+go
+-- does not rollback transaction
+select @@trancount
+go
+commit
+go
+
+-- exec sp_rename inside a function/procedure should pass
+create function sp_rename_function(@a text, @b text) returns int Begin exec sp_rename @a, @b, 'database' END
+go
+create procedure sp_rename_procedure(@a text, @b text) as exec sp_rename @a, @b, 'database'
+go
+
+select sp_rename_function('sp_rename_database1', 'sp_rename_database2');
+go
+exec sp_rename_procedure @a = 'sp_rename_database1', @b = 'sp_rename_database1'
+go
+
+-- Renaming system databases is prohibited
+exec sp_rename 'master', 'master1', 'DATABASE';
+go
+exec sp_rename 'tempdb', 'tempdb1', 'DATABASE';
+go
+exec sp_rename 'msdb', 'msdb1', 'DATABASE';
+go
+
+-- Rename a case sensitive and len>64 database name
+exec sp_rename '[sp_rename_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]',
+ '[sp_rename_ThisNewDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]', 'database'
+go
+
+-- should return updated rows
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_rename_this%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_rename_this%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_rename_this%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_rename_this%' order by rolname;
+go
+
+-- sanity check to use db
+use [sp_rename_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb];
+go
+use [sp_rename_ThisNewDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]
+go
+
+use master
+go
+
+-- tsql user=sp_rename_login1 password=1234
+use sp_rename_database1
+go
+-- user that does not have access to db, cannot modify name
+exec sp_rename 'sp_rename_database1', 'sp_rename_database2', 'database';
+go
+
+-- tsql
+-- give sp_rename_login1 permission to the db
+alter server role sysadmin add member sp_rename_login1
+go
+
+-- tsql user=sp_rename_login1 password=1234
+-- should work now
+exec sp_rename 'sp_rename_database1', 'sp_rename_database2', 'database';
+go
+-- connect to the database to test concurrencies
+use sp_rename_database2
+go
+
+-- tsql
+-- should throw error since there is an active session using sp_rename_database2
+exec sp_rename 'sp_rename_database2', 'sp_rename_database1', 'database';
+go
+
+-- tsql user=sp_rename_login1 password=1234
+-- now disconnect from that database in the 2nd connection and test alter again
+select db_name()
+go
+use master
+go
+
+-- tsql
+exec sp_rename 'sp_rename_database2', 'sp_rename_database1', 'database';
+go
+
+drop function sp_rename_function
+drop procedure sp_rename_procedure
+go
+
+-- testing invalid args for sp_rename
+create database sp_rename_db1_temp;
+go
+-- NULL old_db_name
+exec sp_rename NULL, 'sp_rename_db1_temp', 'DATABASE';
+go
+-- NULL new_db_name
+exec sp_rename 'sp_rename_db1_temp  ', NULL, 'Database';
+go
+-- both NULL
+exec sp_rename NULL, NULL, 'DaTaBaSe';
+go
+-- empty string old_db_name
+exec sp_rename '', '     sp_rename_db1_temp', 'database';
+go
+-- empty string new_db_name
+exec sp_rename '    sp_rename_db1_temp', '', 'dAtAbAsE';
+go
+-- both empty string
+exec sp_rename '    ', ' ', ' Database '
+go
+-- 3 part names
+exec sp_rename ' sp_rename_db1_temp.sch1.t1', 'db2      ', '   DATABASE'
+go
+-- 3 part names
+exec sp_rename 'sp_rename_db1_temp', 'db2.sch2.t2', 'DATABASE   '
+go
+-- 3 part names
+exec sp_rename 'db1.sch1.t1', 'db2.sch2.t2', 'DATABASE'
+go
+-- valid input, should get db does not exist
+exec sp_rename '[db1.sch1.t1]', 'sp_rename_db1_temp      ', 'DATABASE'
+go
+-- valid input, should get db does not exist
+exec sp_rename 'sp_rename_db1_temp', '[db2.sch2.t2]     ', 'DATABASE'
+go
+drop database sp_rename_db1_temp
+go

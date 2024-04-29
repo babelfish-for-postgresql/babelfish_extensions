@@ -222,7 +222,6 @@ use master
 go
 
 -- cannot rename the database without sysadmin role, even when you're the owner already
--- ALTER DATABASE is not yet supported in Babelfish:
 alter database change_owner_db modify name = change_owner_db_renamed
 go
 

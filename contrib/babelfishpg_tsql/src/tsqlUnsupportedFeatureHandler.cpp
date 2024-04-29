@@ -908,7 +908,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_database(TSqlParser::Alter_databaseContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_ALTER_DATABASE, "ALTER DATABASE", getLineAndPos(ctx));
+	if (!(ctx->MODIFY() && ctx->NAME() && ctx->EQUAL()))
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_DATABASE, "ALTER DATABASE", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
@@ -1644,7 +1645,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_procoption",
 	"sp_recompile",
 	"sp_refreshview",
-	"sp_renamedb",
 	"sp_resetstatus",
 	"sp_sequence_get_range",
 	"sp_setnetname",
@@ -1794,6 +1794,8 @@ void TsqlUnsupportedFeatureHandlerImpl::visitSqlClauses(TSqlParser::Sql_clausesC
 {
 	if(option->another_statement() && option->another_statement()->use_statement())
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "a USE database statement is not allowed in a procedure, function or trigger.", getLineAndPos(option));
+	if(option->ddl_statement() && option->ddl_statement()->alter_database())
+		throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "An ALTER database statement is not allowed in a procedure, function or trigger.", getLineAndPos(option));
 
 	if(option->cfl_statement())
 	{
