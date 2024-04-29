@@ -523,5 +523,6 @@ BABEL_4817
 BABEL-4641
 BABEL-4863
 babel_test_int4_numeric_oper
+babel_test_int8_numeric_oper
 login_token-dep
 test_like_for_AI
