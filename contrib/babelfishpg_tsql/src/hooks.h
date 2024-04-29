@@ -24,11 +24,6 @@ extern void pltsql_store_func_default_positions(ObjectAddress address,
                                                 List *parameters,
                                                 const char *queryString,
                                                 int origname_location);
-extern void alter_bbf_function_ext(ObjectAddress address,
-									ObjectWithArgs *owa, 
-									List *parameters, 
-									const char *queryString, 
-									int origname_location);
 extern void alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, 
                                                     List *parameters,
                                                     int objtypeInt,
