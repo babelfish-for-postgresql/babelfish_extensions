@@ -3,11 +3,10 @@
 ------------------------------------------------------------------------------
 
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO "4.1.0"" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO "4.2.0"" to load this file. \quit
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
--- need to conver this into IF NOT EXIST format in order to prevent it from upgrade failure
 -- Operators between int and numeric 
 -- create support function for int and numeric comparison
 CREATE OR REPLACE FUNCTION sys.int4_numeric_cmp (int, numeric)
@@ -83,7 +82,7 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 -- Operators between int and numeric
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<' and oprresult != 0) THEN
 CREATE OPERATOR sys.< (
     LEFTARG = int,
     RIGHTARG = numeric,
@@ -98,7 +97,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<' and oprresult != 0) THEN
 CREATE OPERATOR sys.< (
     LEFTARG = numeric,
     RIGHTARG = int,
@@ -113,7 +112,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<=') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<=' and oprresult != 0) THEN
 CREATE OPERATOR sys.<= (
     LEFTARG = int,
     RIGHTARG = numeric,
@@ -128,7 +127,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<=') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<=' and oprresult != 0) THEN
 CREATE OPERATOR sys.<= (
     LEFTARG = numeric,
     RIGHTARG = int,
@@ -143,7 +142,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>' and oprresult != 0) THEN
 CREATE OPERATOR sys.> (
     LEFTARG = int,
     RIGHTARG = numeric,
@@ -158,7 +157,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>' and oprresult != 0) THEN
 CREATE OPERATOR sys.> (
     LEFTARG = numeric,
     RIGHTARG = int,
@@ -173,7 +172,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>=') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>=' and oprresult != 0) THEN
 CREATE OPERATOR sys.>= (
     LEFTARG = int,
     RIGHTARG = numeric,
@@ -188,7 +187,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>=') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>=' and oprresult != 0) THEN
 CREATE OPERATOR sys.>= (
     LEFTARG = numeric,
     RIGHTARG = int,
@@ -203,7 +202,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '=') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '=' and oprresult != 0) THEN
 CREATE OPERATOR sys.= (
     LEFTARG = int,
     RIGHTARG = numeric,
@@ -218,7 +217,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '=') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '=' and oprresult != 0) THEN
 CREATE OPERATOR sys.= (
     LEFTARG = numeric,
     RIGHTARG = int,
@@ -233,7 +232,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<>') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<>' and oprresult != 0) THEN
 CREATE OPERATOR sys.<> (
     LEFTARG = int,
     RIGHTARG = numeric,
@@ -248,7 +247,7 @@ END $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<>') THEN
+IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<>' and oprresult != 0) THEN
 CREATE OPERATOR sys.<> (
     LEFTARG = numeric,
     RIGHTARG = int,
@@ -260,8 +259,6 @@ CREATE OPERATOR sys.<> (
 );
 END IF;
 END $$;
-
-select * from pg_operator where oprleft = 23 and oprright = 1700;
 
 
 -- Opartor class for integer_ops to incorporate various operator between int and numeric for Index scan
