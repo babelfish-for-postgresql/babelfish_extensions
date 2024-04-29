@@ -9,12 +9,12 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 
 -- Operators between int and numeric 
 -- create support function for int and numeric comparison
-CREATE OR REPLACE FUNCTION sys.int4_numeric_cmp (int, numeric)
+CREATE OR REPLACE FUNCTION sys.int4_numeric_cmp (int4, numeric)
 RETURNS int
 AS 'babelfishpg_common', 'int4_numeric_cmp'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.numeric_int4_cmp (numeric, int)
+CREATE OR REPLACE FUNCTION sys.numeric_int4_cmp (numeric, int4)
 RETURNS int
 AS 'babelfishpg_common', 'numeric_int4_cmp'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -84,7 +84,7 @@ DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<' and oprresult != 0) THEN
 CREATE OPERATOR sys.< (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_lt,
     COMMUTATOR = >,
@@ -100,7 +100,7 @@ BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<' and oprresult != 0) THEN
 CREATE OPERATOR sys.< (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_lt,
     COMMUTATOR = >,
     NEGATOR = >=,
@@ -114,7 +114,7 @@ DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<=' and oprresult != 0) THEN
 CREATE OPERATOR sys.<= (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_lte,
     COMMUTATOR = >=,
@@ -130,7 +130,7 @@ BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<=' and oprresult != 0) THEN
 CREATE OPERATOR sys.<= (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_lte,
     COMMUTATOR = >=,
     NEGATOR = >,
@@ -144,7 +144,7 @@ DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>' and oprresult != 0) THEN
 CREATE OPERATOR sys.> (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_gt,
     COMMUTATOR = <,
@@ -160,7 +160,7 @@ BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>' and oprresult != 0) THEN
 CREATE OPERATOR sys.> (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_gt,
     COMMUTATOR = <,
     NEGATOR = <=,
@@ -174,7 +174,7 @@ DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>=' and oprresult != 0) THEN
 CREATE OPERATOR sys.>= (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_gte,
     COMMUTATOR = <=,
@@ -190,7 +190,7 @@ BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '>=' and oprresult != 0) THEN
 CREATE OPERATOR sys.>= (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_gte,
     COMMUTATOR = <=,
     NEGATOR = <,
@@ -204,7 +204,7 @@ DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '=' and oprresult != 0) THEN
 CREATE OPERATOR sys.= (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_eq,
     COMMUTATOR = =,
@@ -220,7 +220,7 @@ BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '=' and oprresult != 0) THEN
 CREATE OPERATOR sys.= (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_eq,
     COMMUTATOR = =,
     NEGATOR = <>,
@@ -234,7 +234,7 @@ DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'int4'::pg_catalog.regtype and oprright = 'numeric'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<>' and oprresult != 0) THEN
 CREATE OPERATOR sys.<> (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_neq,
     COMMUTATOR = <>,
@@ -250,7 +250,7 @@ BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'numeric'::pg_catalog.regtype and oprright = 'int4'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '<>' and oprresult != 0) THEN
 CREATE OPERATOR sys.<> (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_neq,
     COMMUTATOR = <>,
     NEGATOR = =,
@@ -267,12 +267,12 @@ BEGIN
 IF NOT EXISTS(select 1 from pg_opclass opc join pg_opfamily opf on opc.opcfamily = opf.oid where opc.opcname = 'int_numeric' and opc.opcnamespace = 'sys'::regnamespace and opf.opfname = 'integer_ops') THEN
 CREATE OPERATOR CLASS sys.int_numeric FOR TYPE int4
   USING btree FAMILY integer_ops AS
-   OPERATOR 1 sys.< (int, numeric),
-   OPERATOR 2 sys.<= (int, numeric),
-   OPERATOR 3 sys.= (int, numeric),
-   OPERATOR 4 sys.>= (int, numeric),
-   OPERATOR 5 sys.> (int, numeric),
-   FUNCTION 1 sys.int4_numeric_cmp(int, numeric);
+   OPERATOR 1 sys.< (int4, numeric),
+   OPERATOR 2 sys.<= (int4, numeric),
+   OPERATOR 3 sys.= (int4, numeric),
+   OPERATOR 4 sys.>= (int4, numeric),
+   OPERATOR 5 sys.> (int4, numeric),
+   FUNCTION 1 sys.int4_numeric_cmp(int4, numeric);
 END IF;
 END $$;
 
@@ -282,12 +282,12 @@ BEGIN
 IF NOT EXISTS(select 1 from pg_opclass opc join pg_opfamily opf on opc.opcfamily = opf.oid where opc.opcname = 'numeric_int' and opc.opcnamespace = 'sys'::regnamespace and opf.opfname = 'integer_ops') THEN
 CREATE OPERATOR CLASS sys.numeric_int FOR TYPE int4
   USING btree FAMILY integer_ops AS
-   OPERATOR 1 sys.< (numeric, int),
-   OPERATOR 2 sys.<= (numeric, int),
-   OPERATOR 3 sys.= (numeric, int),
-   OPERATOR 4 sys.>= (numeric, int),
-   OPERATOR 5 sys.> (numeric, int),
-   FUNCTION 1 sys.numeric_int4_cmp(numeric, int);
+   OPERATOR 1 sys.< (numeric, int4),
+   OPERATOR 2 sys.<= (numeric, int4),
+   OPERATOR 3 sys.= (numeric, int4),
+   OPERATOR 4 sys.>= (numeric, int4),
+   OPERATOR 5 sys.> (numeric, int4),
+   FUNCTION 1 sys.numeric_int4_cmp(numeric, int4);
 END IF;
 END $$;
 

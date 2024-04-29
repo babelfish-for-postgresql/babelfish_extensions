@@ -1,10 +1,10 @@
 -- create support function for int and numeric comparison
-CREATE FUNCTION sys.int4_numeric_cmp (int, numeric)
+CREATE FUNCTION sys.int4_numeric_cmp (int4, numeric)
 RETURNS int
 AS 'babelfishpg_common', 'int4_numeric_cmp'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.numeric_int4_cmp (numeric, int)
+CREATE FUNCTION sys.numeric_int4_cmp (numeric, int4)
 RETURNS int
 AS 'babelfishpg_common', 'numeric_int4_cmp'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -71,7 +71,7 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Operators between int and numeric
 CREATE OPERATOR sys.< (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_lt,
     COMMUTATOR = >,
@@ -82,7 +82,7 @@ CREATE OPERATOR sys.< (
 
 CREATE OPERATOR sys.< (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_lt,
     COMMUTATOR = >,
     NEGATOR = >=,
@@ -91,7 +91,7 @@ CREATE OPERATOR sys.< (
 );
 
 CREATE OPERATOR sys.<= (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_lte,
     COMMUTATOR = >=,
@@ -102,7 +102,7 @@ CREATE OPERATOR sys.<= (
 
 CREATE OPERATOR sys.<= (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_lte,
     COMMUTATOR = >=,
     NEGATOR = >,
@@ -111,7 +111,7 @@ CREATE OPERATOR sys.<= (
 );
 
 CREATE OPERATOR sys.> (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_gt,
     COMMUTATOR = <,
@@ -122,7 +122,7 @@ CREATE OPERATOR sys.> (
 
 CREATE OPERATOR sys.> (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_gt,
     COMMUTATOR = <,
     NEGATOR = <=,
@@ -131,7 +131,7 @@ CREATE OPERATOR sys.> (
 );
 
 CREATE OPERATOR sys.>= (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_gte,
     COMMUTATOR = <=,
@@ -142,7 +142,7 @@ CREATE OPERATOR sys.>= (
 
 CREATE OPERATOR sys.>= (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_gte,
     COMMUTATOR = <=,
     NEGATOR = <,
@@ -151,7 +151,7 @@ CREATE OPERATOR sys.>= (
 );
 
 CREATE OPERATOR sys.= (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_eq,
     COMMUTATOR = =,
@@ -162,7 +162,7 @@ CREATE OPERATOR sys.= (
 
 CREATE OPERATOR sys.= (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_eq,
     COMMUTATOR = =,
     NEGATOR = <>,
@@ -171,7 +171,7 @@ CREATE OPERATOR sys.= (
 );
 
 CREATE OPERATOR sys.<> (
-    LEFTARG = int,
+    LEFTARG = int4,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_neq,
     COMMUTATOR = <>,
@@ -182,7 +182,7 @@ CREATE OPERATOR sys.<> (
 
 CREATE OPERATOR sys.<> (
     LEFTARG = numeric,
-    RIGHTARG = int,
+    RIGHTARG = int4,
     FUNCTION = sys.numeric_int4_neq,
     COMMUTATOR = <>,
     NEGATOR = =,
@@ -193,22 +193,22 @@ CREATE OPERATOR sys.<> (
 -- Opartor class for integer_ops to incorporate various operator between int and numeric for Index scan
 CREATE OPERATOR CLASS sys.int_numeric FOR TYPE int4
   USING btree FAMILY integer_ops AS
-   OPERATOR 1 sys.< (int, numeric),
-   OPERATOR 2 sys.<= (int, numeric),
-   OPERATOR 3 sys.= (int, numeric),
-   OPERATOR 4 sys.>= (int, numeric),
-   OPERATOR 5 sys.> (int, numeric),
-   FUNCTION 1 sys.int4_numeric_cmp(int, numeric);
+   OPERATOR 1 sys.< (int4, numeric),
+   OPERATOR 2 sys.<= (int4, numeric),
+   OPERATOR 3 sys.= (int4, numeric),
+   OPERATOR 4 sys.>= (int4, numeric),
+   OPERATOR 5 sys.> (int4, numeric),
+   FUNCTION 1 sys.int4_numeric_cmp(int4, numeric);
 
 -- Opartor class for integer_ops to incorporate various operator between int and numeric for Index scan
 CREATE OPERATOR CLASS sys.numeric_int FOR TYPE int4
   USING btree FAMILY integer_ops AS
-   OPERATOR 1 sys.< (numeric, int),
-   OPERATOR 2 sys.<= (numeric, int),
-   OPERATOR 3 sys.= (numeric, int),
-   OPERATOR 4 sys.>= (numeric, int),
-   OPERATOR 5 sys.> (numeric, int),
-   FUNCTION 1 sys.numeric_int4_cmp(numeric, int);
+   OPERATOR 1 sys.< (numeric, int4),
+   OPERATOR 2 sys.<= (numeric, int4),
+   OPERATOR 3 sys.= (numeric, int4),
+   OPERATOR 4 sys.>= (numeric, int4),
+   OPERATOR 5 sys.> (numeric, int4),
+   FUNCTION 1 sys.numeric_int4_cmp(numeric, int4);
 
 -- Update operator family for integer, integer_ops to incorporate various operator between int and numeric for Index scan
 -- ALTER OPERATOR FAMILY integer_ops USING btree ADD
