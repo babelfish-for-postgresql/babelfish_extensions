@@ -1,5 +1,5 @@
 -- tsql
-create table test_int8_numeric_vu(a int);
+create table test_int8_numeric_vu(a bigint);
 GO
 
 -- insert 1M rows of data
@@ -10,9 +10,7 @@ GO
 
 INSERT INTO test_int8_numeric_vu VALUES (NULL), (-9223372036854775808), (9223372036854775807);
 GO
-~~ERROR (Code: 8115)~~
-
-~~ERROR (Message: integer out of range)~~
+~~ROW COUNT: 3~~
 
 
 CREATE INDEX test_int8_numeric_vu_idx on test_int8_numeric_vu(a);
