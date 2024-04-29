@@ -1503,9 +1503,6 @@ typedef struct PLtsql_execstate
 	 */
 	bool		insert_exec;
 
-	int		    pivot_number;
-	List	   *pivot_parsetree_list;
-
 	List	   *explain_infos;
 	char	   *schema_name;
 	const char *db_name;
@@ -1829,14 +1826,6 @@ typedef struct tsql_identity_insert_fields
 	Oid			rel_oid;
 	Oid			schema_oid;
 } tsql_identity_insert_fields;
-
-typedef struct tsql_pivot_fields
-{
-	RawStmt	*s_sql;
-	RawStmt	*c_sql;
-	char 	*sourcetext;
-	char	*funcName;
-}tsql_pivot_fields;
 
 extern tsql_identity_insert_fields tsql_identity_insert;
 extern check_lang_as_clause_hook_type check_lang_as_clause_hook;

@@ -53,16 +53,16 @@ GO
 CREATE TRIGGER tr_emp_salary_instead_insert ON emp_salary
 INSTEAD OF INSERT
 AS
-DELETE FROM emp_salary where emp_id = DELETED.emp_id-1;
+DELETE FROM emp_salary where emp_id = (SELECT emp_id from INSERTED);
 GO
 
 CREATE TRIGGER tr_emp_salary_after_delete ON emp_salary
 AFTER DELETE
 AS
-DELETE FROM emp_salary where emp_id = DELETED.emp_id-1;
+DELETE FROM emp_salary where emp_id = (SELECT emp_id -1 from DELETED);
 GO
 
-INSERT INTO emp_salary VALUES (4,1000);
+INSERT INTO emp_salary VALUES (3,1000);
 GO
 
 SELECT emp_id, salary FROM emp_salary ORDER BY emp_id;
@@ -135,13 +135,13 @@ GO
 CREATE TRIGGER tr_emp_salary_instead_update ON emp_salary
 INSTEAD OF UPDATE
 AS
-DELETE FROM emp_salary where emp_id = DELETED.emp_id + 1;
+DELETE FROM emp_salary where emp_id = (SELECT emp_id from INSERTED);
 GO
 
 CREATE TRIGGER tr_emp_salary_after_delete ON emp_salary
 AFTER DELETE
 AS
-DELETE FROM emp_salary where emp_id = DELETED.emp_id + 1;
+DELETE FROM emp_salary where emp_id = (SELECT emp_id +1 from DELETED);
 GO
 
 UPDATE emp_salary SET salary = salary + 5 where emp_id = 1;
@@ -266,7 +266,7 @@ GO
 SELECT emp_id, salary FROM vw_emp_salary ORDER BY emp_id, salary;
 GO
 
-UPDATE vw_emp_salary SET salary = salary + 500 where emp_id = 8;
+UPDATE vw_emp_salary SET salary = salary + 500 where emp_id = 9;
 GO
 
 SELECT emp_id, salary FROM vw_emp_salary ORDER BY emp_id, salary;
@@ -282,7 +282,7 @@ GO
 INSERT INTO vw_emp_salary VALUES (20,10000);
 GO
 
-UPDATE vw_emp_salary SET salary = salary + 500 where emp_id = 21;
+UPDATE vw_emp_salary SET salary = salary + 500 where emp_id = 22;
 GO
 
 SELECT emp_id, salary FROM vw_emp_salary ORDER BY emp_id, salary;
@@ -344,9 +344,12 @@ GO
 DROP TRIGGER IF EXISTS tr_vw_emp_salary_instead_delete;
 GO
 
+TRUNCATE TABLE emp_salary;
+GO
+
 ----Section 6 AFTER Triggers with Disabled IOT Trigger BABEL-4801
 -- DISABLED IOT INSERT TRIGGER -> AFTER INSERT TRIGGER
-TRUNCATE TABLE tbl_emp_salary;
+TRUNCATE TABLE emp_salary;
 GO
 
 CREATE TRIGGER tr_emp_salary_instead_insert ON emp_salary

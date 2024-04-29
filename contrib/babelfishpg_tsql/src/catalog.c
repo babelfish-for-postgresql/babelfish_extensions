@@ -3551,6 +3551,42 @@ clean_up_bbf_schema_permissions(const char *schema_name,
 }
 
 /*
+ * Clean up babelfish_schema_permissions table for a given database
+ * when database is dropped.
+ */
+void
+drop_bbf_schema_permission_entries(int16 dbid)
+{
+	Relation	bbf_schema_rel;
+	HeapTuple	tuple_bbf_schema;
+	ScanKeyData scanKey[1];
+	SysScanDesc scan;
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(), RowExclusiveLock);
+
+	/* Search and drop the entries */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	scan = systable_beginscan(bbf_schema_rel,
+							  get_bbf_schema_perms_idx_oid(),
+							  true, NULL, 1, scanKey);
+
+	while ((tuple_bbf_schema = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(tuple_bbf_schema))
+			CatalogTupleDelete(bbf_schema_rel,
+							   &tuple_bbf_schema->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
+}
+
+/*
  * For all objects belonging to a schema which has OBJECT level permission,
  * It grants the permission explicitly when REVOKE has been executed on that
  * specific schema.

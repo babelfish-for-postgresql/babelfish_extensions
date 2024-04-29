@@ -207,6 +207,7 @@ extern HeapTuple search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid,
 									 const char *logical_schema_name, const char *view_name);
 extern bool check_is_tsql_view(Oid relid);
 extern void clean_up_bbf_view_def(int16 dbid);
+extern void drop_bbf_schema_permission_entries(int16 dbid);
 
 typedef struct FormData_bbf_view_def
 {

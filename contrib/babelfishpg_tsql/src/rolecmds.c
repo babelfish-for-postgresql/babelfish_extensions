@@ -75,6 +75,8 @@ static bool has_user_in_db(const char *login, char **db_name);
 static void validateNetBIOS(char *netbios);
 static void validateFQDN(char *fqdn);
 
+static Oid bbf_admin_oid = InvalidOid;
+
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 {
@@ -607,7 +609,9 @@ gen_droplogin_subcmds(const char *login)
 Oid
 get_bbf_role_admin_oid(void)
 {
-	return get_role_oid("bbf_role_admin", false);
+	if (!OidIsValid(bbf_admin_oid))
+		bbf_admin_oid = get_role_oid("bbf_role_admin", false);
+	return bbf_admin_oid;
 }
 
 /*
