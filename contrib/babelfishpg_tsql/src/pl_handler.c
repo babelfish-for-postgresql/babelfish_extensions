@@ -2382,16 +2382,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc);
 					if (!isSameProc) /* i.e. different signature */
 						RemoveFunctionById(oldoid);
-					address = CreateFunction(pstate, cfs); // if this is the same proc, will just update the existing one
+					address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
 					pg_proc_update_oid_acl(address, oldoid, *proacl);
 					/* Update function/procedure related metadata in babelfish catalog */
-					if (isSameProc) {
-						/* In this case we do not need to update bbf tables because the signature is the same */
-						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
-					}
-					else {
-						// use a different function to lookup the catalog entry manually and update it
-						alter_bbf_function_ext(address, stmt->func, cfs->parameters, queryString, origname_location);
+					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
+					if (!isSameProc) {
+						/*
+						 * When the signatures differ we need to manually update the 'function_args' column in 
+						 * the 'bbf_schema_permissions' catalog
+						 */
 						alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, OBJECT_PROCEDURE, oldoid);
 					}
 					/* Clean up table entries for the create function statement */
