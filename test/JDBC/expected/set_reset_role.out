@@ -1,0 +1,205 @@
+-- tsql
+create login set_reset_login with password='12345678';
+GO
+
+create user set_reset_user for login set_reset_login;
+GO
+
+-- psql
+CREATE PROCEDURE master_dbo.set_role_proc()
+AS
+$$
+BEGIN
+  SET ROLE master_set_reset_user;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE master_dbo.reset_role_proc()
+AS
+$$
+BEGIN
+  RESET ROLE;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE FUNCTION master_dbo.set_role_func() RETURNS int AS $$
+BEGIN
+  EXECUTE 'SET ROLE master_set_reset_user';
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE FUNCTION master_dbo.reset_role_func() RETURNS int AS $$
+BEGIN
+  EXECUTE 'RESET ROLE';
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE PROCEDURE master_dbo.set_session_auth_proc()
+AS
+$$
+BEGIN
+  SET SESSION AUTHORIZATION master_set_reset_user;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE master_dbo.reset_session_auth_proc()
+AS
+$$
+BEGIN
+  RESET SESSION AUTHORIZATION;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE FUNCTION master_dbo.set_session_auth_func() RETURNS int AS $$
+BEGIN
+  EXECUTE 'SET SESSION AUTHORIZATION master_set_reset_user';
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE FUNCTION master_dbo.reset_session_auth_func() RETURNS int AS $$
+BEGIN
+  EXECUTE 'RESET SESSION AUTHORIZATION';
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+-- tsql
+select current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+exec set_role_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET/RESET role not is not supported from TDS endpoint.)~~
+
+
+exec reset_role_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET/RESET role not is not supported from TDS endpoint.)~~
+
+
+select set_role_func();
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET/RESET role not is not supported from TDS endpoint.)~~
+
+
+select reset_role_func();
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET/RESET role not is not supported from TDS endpoint.)~~
+
+
+select current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+select suser_name();
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+exec set_session_auth_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET/RESET session_authorization not is not supported from TDS endpoint.)~~
+
+
+exec reset_session_auth_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET/RESET session_authorization not is not supported from TDS endpoint.)~~
+
+
+select set_session_auth_func();
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET/RESET session_authorization not is not supported from TDS endpoint.)~~
+
+
+select reset_session_auth_func();
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET/RESET session_authorization not is not supported from TDS endpoint.)~~
+
+
+select suser_name();
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+-- tsql
+-- cleanup
+drop user set_reset_user;
+GO
+
+drop login set_reset_login;
+GO
+
+-- psql
+drop procedure master_dbo.set_role_proc;
+GO
+
+drop procedure master_dbo.reset_role_proc;
+GO
+
+drop function master_dbo.set_role_func();
+GO
+
+drop function master_dbo.reset_role_func();
+GO
+
+drop procedure master_dbo.set_session_auth_proc;
+GO
+
+drop procedure master_dbo.reset_session_auth_proc;
+GO
+
+drop function master_dbo.set_session_auth_func();
+GO
+
+drop function master_dbo.reset_session_auth_func();
+GO
