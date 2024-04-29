@@ -68,10 +68,8 @@ text
 Query Text: EXEC test_int2_numeric_p4
   Query Text: select count(*) from test_int2_numeric_vu where a < 5.0
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (a < 5.0)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a < 5.0)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a < 5.0)
 ~~END~~
 
 exec test_int2_numeric_p5;
@@ -81,10 +79,8 @@ text
 Query Text: EXEC test_int2_numeric_p5
   Query Text: select count(*) from test_int2_numeric_vu where 5.0 > a
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (5.0 > a)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a < 5.0)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a < 5.0)
 ~~END~~
 
 exec test_int2_numeric_p6;
@@ -116,10 +112,8 @@ text
 Query Text: EXEC test_int2_numeric_p8
   Query Text: select count(*) from test_int2_numeric_vu where a <= 5.0
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (a <= 5.0)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a <= 5.0)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a <= 5.0)
 ~~END~~
 
 exec test_int2_numeric_p9;
@@ -129,10 +123,8 @@ text
 Query Text: EXEC test_int2_numeric_p9
   Query Text: select count(*) from test_int2_numeric_vu where 5.0 >= a
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (5.0 >= a)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a <= 5.0)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a <= 5.0)
 ~~END~~
 
 exec test_int2_numeric_p10;
@@ -142,10 +134,8 @@ text
 Query Text: EXEC test_int2_numeric_p10
   Query Text: select count(*) from test_int2_numeric_vu where a > 32763.0
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (a > 32763.0)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a > 32763.0)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a > 32763.0)
 ~~END~~
 
 exec test_int2_numeric_p11;
@@ -155,10 +145,8 @@ text
 Query Text: EXEC test_int2_numeric_p11
   Query Text: select count(*) from test_int2_numeric_vu where 32763.0 < a
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (32763.0 < a)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a > 32763.0)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a > 32763.0)
 ~~END~~
 
 exec test_int2_numeric_p12;
@@ -168,10 +156,8 @@ text
 Query Text: EXEC test_int2_numeric_p12
   Query Text: select count(*) from test_int2_numeric_vu where a >= 32763.0
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (a >= 32763.0)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a >= 32763.0)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a >= 32763.0)
 ~~END~~
 
 exec test_int2_numeric_p13;
@@ -181,10 +167,8 @@ text
 Query Text: EXEC test_int2_numeric_p13
   Query Text: select count(*) from test_int2_numeric_vu where 32763.0 <= a
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (32763.0 <= a)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a >= 32763.0)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a >= 32763.0)
 ~~END~~
 
 exec test_int2_numeric_p14;
@@ -238,10 +222,8 @@ text
 Query Text: EXEC test_int2_numeric_p18
   Query Text: select count(*) from test_int2_numeric_vu where a between 5.0 and 10.0
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: ((a >= 5.0) AND (a <= 10.0))
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: ((a >= 5.0) AND (a <= 10.0))
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: ((a >= 5.0) AND (a <= 10.0))
 ~~END~~
 
 exec test_int2_numeric_p19;
@@ -260,12 +242,10 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_int2_numeric_p20
-  Query Text: select count(*) from test_int2_numeric_vu where (a between 5.0 and 32763.0) and a = 10
+  Query Text: select count(*) from test_int2_numeric_vu where (a between 5.0 and 32768.0) and a = 10
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: ((a >= 5.0) AND (a <= 32763.0) AND (a = 10))
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: ((a >= 5.0) AND (a <= 32763.0) AND (a = 10))
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: ((a >= 5.0) AND (a <= 32768.0) AND (a = 10))
 ~~END~~
 
 exec test_int2_numeric_p21;
@@ -308,10 +288,8 @@ text
 Query Text: EXEC test_int2_numeric_p24
   Query Text: select count(*) from test_int2_numeric_vu where a < 5
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (a < 5)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a < 5)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a < 5)
 ~~END~~
 
 exec test_int2_numeric_p25;
@@ -332,10 +310,8 @@ text
 Query Text: EXEC test_int2_numeric_p26
   Query Text: select count(*) from test_int2_numeric_vu where a <= 5
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (a <= 5)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a <= 5)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a <= 5)
 ~~END~~
 
 exec test_int2_numeric_p27;
@@ -345,10 +321,8 @@ text
 Query Text: EXEC test_int2_numeric_p27
   Query Text: select count(*) from test_int2_numeric_vu where a > 32763
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (a > 32763)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a > 32763)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a > 32763)
 ~~END~~
 
 exec test_int2_numeric_p28;
@@ -358,10 +332,8 @@ text
 Query Text: EXEC test_int2_numeric_p28
   Query Text: select count(*) from test_int2_numeric_vu where a >= 32763
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: (a >= 32763)
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: (a >= 32763)
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a >= 32763)
 ~~END~~
 
 exec test_int2_numeric_p29;
@@ -393,10 +365,8 @@ text
 Query Text: EXEC test_int2_numeric_p31
   Query Text: select count(*) from test_int2_numeric_vu where a between 5 and 10
   ->  Aggregate
-        ->  Bitmap Heap Scan on test_int2_numeric_vu
-              Recheck Cond: ((a >= 5) AND (a <= 10))
-              ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-                    Index Cond: ((a >= 5) AND (a <= 10))
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: ((a >= 5) AND (a <= 10))
 ~~END~~
 
 exec test_int2_numeric_p32;
@@ -404,10 +374,10 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_int2_numeric_p32
-  Query Text: select count(*) from test_int2_numeric_vu where a between 5 and 32763
+  Query Text: select count(*) from test_int2_numeric_vu where a between 5 and 32768
   ->  Aggregate
         ->  Seq Scan on test_int2_numeric_vu
-              Filter: ((a >= 5) AND (a <= 32763))
+              Filter: ((a >= 5) AND (a <= 32768))
 ~~END~~
 
 
@@ -635,7 +605,7 @@ exec test_int2_numeric_p32;
 GO
 ~~START~~
 int
-999756
+999847
 ~~END~~
 
 
@@ -716,7 +686,7 @@ text
 Query Text: select * from test_int2_numeric_v2
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
-        Filter: (a <> 5.0)
+        Filter: ((a)::numeric <> 5.0)
 ~~END~~
 
 select * from test_int2_numeric_v3;
@@ -726,7 +696,7 @@ text
 Query Text: select * from test_int2_numeric_v3
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
-        Filter: (5.0 <> a)
+        Filter: (5.0 <> (a)::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v4;
@@ -735,10 +705,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v4
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (a < 5.0)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a < 5.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: ((a)::numeric < 5.0)
 ~~END~~
 
 select * from test_int2_numeric_v5;
@@ -747,10 +715,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v5
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (5.0 > a)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a < 5.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: (5.0 > (a)::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v6;
@@ -759,8 +725,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v6
 Aggregate
-  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
-        Index Cond: (a < '-32768.0'::numeric)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: ((a)::numeric < '-32768.0'::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v7;
@@ -769,8 +735,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v7
 Aggregate
-  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
-        Index Cond: (a < '-32768.0'::numeric)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: ('-32768.0'::numeric > (a)::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v8;
@@ -779,10 +745,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v8
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (a <= 5.0)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a <= 5.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: ((a)::numeric <= 5.0)
 ~~END~~
 
 select * from test_int2_numeric_v9;
@@ -791,10 +755,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v9
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (5.0 >= a)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a <= 5.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: (5.0 >= (a)::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v10;
@@ -803,10 +765,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v10
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (a > 32763.0)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a > 32763.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: ((a)::numeric > 32763.0)
 ~~END~~
 
 select * from test_int2_numeric_v11;
@@ -815,10 +775,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v11
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (32763.0 < a)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a > 32763.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: (32763.0 < (a)::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v12;
@@ -827,10 +785,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v12
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (a >= 32763.0)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a >= 32763.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: ((a)::numeric >= 32763.0)
 ~~END~~
 
 select * from test_int2_numeric_v13;
@@ -839,10 +795,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v13
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (32763.0 <= a)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a >= 32763.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: (32763.0 <= (a)::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v14;
@@ -851,8 +805,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v14
 Aggregate
-  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
-        Index Cond: (a > 32767.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: ((a)::numeric > 32767.0)
 ~~END~~
 
 select * from test_int2_numeric_v15;
@@ -861,8 +815,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v15
 Aggregate
-  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
-        Index Cond: (a > 32767.0)
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: (32767.0 < (a)::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v16;
@@ -872,7 +826,7 @@ text
 Query Text: select * from test_int2_numeric_v16
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
-        Filter: (a > 5.0)
+        Filter: ((a)::numeric > 5.0)
 ~~END~~
 
 select * from test_int2_numeric_v17;
@@ -882,7 +836,7 @@ text
 Query Text: select * from test_int2_numeric_v17
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
-        Filter: (5.0 < a)
+        Filter: (5.0 < (a)::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v18;
@@ -891,10 +845,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v18
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: ((a >= 5.0) AND (a <= 10.0))
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: ((a >= 5.0) AND (a <= 10.0))
+  ->  Seq Scan on test_int2_numeric_vu
+        Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 10.0))
 ~~END~~
 
 select * from test_int2_numeric_v19;
@@ -904,7 +856,7 @@ text
 Query Text: select * from test_int2_numeric_v19
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
-        Filter: ((a >= 5.0) AND (a <= 32763.0))
+        Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 32768.0))
 ~~END~~
 
 select * from test_int2_numeric_v20;
@@ -913,10 +865,9 @@ GO
 text
 Query Text: select * from test_int2_numeric_v20
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: ((a >= 5.0) AND (a <= 32763.0) AND (a = 10))
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: ((a >= 5.0) AND (a <= 32763.0) AND (a = 10))
+  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+        Index Cond: (a = 10)
+        Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 32768.0))
 ~~END~~
 
 select * from test_int2_numeric_v21;
@@ -926,7 +877,8 @@ text
 Query Text: select * from test_int2_numeric_v21
 Aggregate
   ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
-        Index Cond: ((a > 5.0) AND (a < 7))
+        Index Cond: (a < 7)
+        Filter: ((a)::numeric > 5.0)
 ~~END~~
 
 select * from test_int2_numeric_v22;
@@ -936,7 +888,8 @@ text
 Query Text: select * from test_int2_numeric_v22
 Aggregate
   ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
-        Index Cond: ((a > 5.0) AND (a < 7))
+        Index Cond: (a < 7)
+        Filter: (5.0 < (a)::numeric)
 ~~END~~
 
 select * from test_int2_numeric_v23;
@@ -955,10 +908,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v24
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (a < 5)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a < 5)
+  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+        Index Cond: (a < 5)
 ~~END~~
 
 select * from test_int2_numeric_v25;
@@ -977,10 +928,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v26
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (a <= 5)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a <= 5)
+  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+        Index Cond: (a <= 5)
 ~~END~~
 
 select * from test_int2_numeric_v27;
@@ -989,10 +938,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v27
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (a > 32763)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a > 32763)
+  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+        Index Cond: (a > 32763)
 ~~END~~
 
 select * from test_int2_numeric_v28;
@@ -1001,10 +948,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v28
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: (a >= 32763)
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: (a >= 32763)
+  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+        Index Cond: (a >= 32763)
 ~~END~~
 
 select * from test_int2_numeric_v29;
@@ -1033,10 +978,8 @@ GO
 text
 Query Text: select * from test_int2_numeric_v31
 Aggregate
-  ->  Bitmap Heap Scan on test_int2_numeric_vu
-        Recheck Cond: ((a >= 5) AND (a <= 10))
-        ->  Bitmap Index Scan on test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a
-              Index Cond: ((a >= 5) AND (a <= 10))
+  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+        Index Cond: ((a >= 5) AND (a <= 10))
 ~~END~~
 
 select * from test_int2_numeric_v32;
@@ -1046,7 +989,7 @@ text
 Query Text: select * from test_int2_numeric_v32
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
-        Filter: ((a >= 5) AND (a <= 32763))
+        Filter: ((a >= 5) AND (a <= 32768))
 ~~END~~
 
 
@@ -1183,7 +1126,7 @@ select * from test_int2_numeric_v19;
 GO
 ~~START~~
 int
-999756
+999847
 ~~END~~
 
 select * from test_int2_numeric_v20;
@@ -1274,7 +1217,7 @@ select * from test_int2_numeric_v32;
 GO
 ~~START~~
 int
-999756
+999847
 ~~END~~
 
 
@@ -1468,7 +1411,7 @@ select test_int2_numeric_f19();
 GO
 ~~START~~
 int
-999756
+999847
 ~~END~~
 
 select test_int2_numeric_f20();
@@ -1559,7 +1502,7 @@ select test_int2_numeric_f32();
 GO
 ~~START~~
 int
-999756
+999847
 ~~END~~
 
 
@@ -1645,11 +1588,11 @@ ORDER  BY conname;
 GO
 ~~START~~
 varchar#!#text
-test_int2_numeric_t1_check#!#CHECK ((a = f))
-test_int2_numeric_t1_check1#!#CHECK ((b < f))
-test_int2_numeric_t1_check2#!#CHECK ((c <= f))
-test_int2_numeric_t1_check3#!#CHECK ((d > f))
-test_int2_numeric_t1_check4#!#CHECK ((e >= f))
+test_int2_numeric_t1_check#!#CHECK (((a)::numeric = f))
+test_int2_numeric_t1_check1#!#CHECK (((b)::numeric < f))
+test_int2_numeric_t1_check2#!#CHECK (((c)::numeric <= f))
+test_int2_numeric_t1_check3#!#CHECK (((d)::numeric > f))
+test_int2_numeric_t1_check4#!#CHECK (((e)::numeric >= f))
 ~~END~~
 
 
@@ -1699,11 +1642,11 @@ ORDER  BY conname;
 GO
 ~~START~~
 varchar#!#text
-test_int2_numeric_t2_check#!#CHECK ((a = f))
-test_int2_numeric_t2_check1#!#CHECK ((b < f))
-test_int2_numeric_t2_check2#!#CHECK ((c <= f))
-test_int2_numeric_t2_check3#!#CHECK ((d > f))
-test_int2_numeric_t2_check4#!#CHECK ((e >= f))
+test_int2_numeric_t2_check#!#CHECK ((a = (f)::numeric))
+test_int2_numeric_t2_check1#!#CHECK ((b < (f)::numeric))
+test_int2_numeric_t2_check2#!#CHECK ((c <= (f)::numeric))
+test_int2_numeric_t2_check3#!#CHECK ((d > (f)::numeric))
+test_int2_numeric_t2_check4#!#CHECK ((e >= (f)::numeric))
 ~~END~~
 
 
