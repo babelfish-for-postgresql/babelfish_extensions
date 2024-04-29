@@ -957,50 +957,6 @@ ignore
 ~~END~~
 
 
--- BABEL-1484
--- escape hatch escape_hatch_unique_constraint
--- 'strict' is default
--- Test UNIQUE CONSTRAINT is not allowed on nullable column
--- this includes: create unique index, alter table add constraint unique
--- and create table with column constraint
-CREATE TABLE t_unsupported_uc1(a int, b int NOT NULL, c int NOT NULL);
-GO
-CREATE UNIQUE INDEX i_unsupported_uc1 on t_unsupported_uc1(a);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Nullable UNIQUE index is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore or add a NOT NULL constraint)~~
-
-ALTER TABLE t_unsupported_uc1 ADD CONSTRAINT UQ_a UNIQUE (a);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore or add a NOT NULL constraint)~~
-
-CREATE TABLE t_unsupported_uc2(a int UNIQUE, b int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore or add a NOT NULL constraint)~~
-
-
--- Test UNIQUE CONSTRAINT is allowed on NOT NULL column
-CREATE UNIQUE INDEX i_unsupported_uc1 on t_unsupported_uc1(b);
-GO
-ALTER TABLE t_unsupported_uc1 ADD CONSTRAINT UQ_c UNIQUE (c);
-GO
-CREATE TABLE t_unsupported_uc2(a int UNIQUE NOT NULL, b int NOT NULL UNIQUE);
-GO
-
-DROP TABLE t_unsupported_uc1;
-DROP TABLE t_unsupported_uc2;
-GO
-
--- test UNIQUE INDEX/CONSTRAINT is allowed on nullable column
--- if escap_hatch_unique_constraint is set to ignore
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-GO
-
 CREATE TABLE t_unsupported_uc1(a int, b varchar(10));
 GO
 
@@ -2052,6 +2008,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
+babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
 babelfishpg_tsql.escape_hatch_login_hashed_password#!#strict#!#escape hatch for login hashed passwords
@@ -2074,7 +2031,6 @@ babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_
 babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_table_hints#!#ignore#!#escape hatch for table hints
-babelfishpg_tsql.escape_hatch_unique_constraint#!#ignore#!#escape hatch for unique constraint
 babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
 babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
 babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
@@ -2121,6 +2077,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
+babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
 babelfishpg_tsql.escape_hatch_login_hashed_password#!#strict#!#escape hatch for login hashed passwords
@@ -2143,7 +2100,6 @@ babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_
 babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_table_hints#!#ignore#!#escape hatch for table hints
-babelfishpg_tsql.escape_hatch_unique_constraint#!#ignore#!#escape hatch for unique constraint
 babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
 babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
 babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
@@ -2171,6 +2127,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
+babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
 babelfishpg_tsql.escape_hatch_login_hashed_password#!#strict#!#escape hatch for login hashed passwords
@@ -2193,7 +2150,6 @@ babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_
 babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_table_hints#!#ignore#!#escape hatch for table hints
-babelfishpg_tsql.escape_hatch_unique_constraint#!#ignore#!#escape hatch for unique constraint
 babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
 babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
 babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
@@ -2903,4 +2859,113 @@ GO
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: could not find a procedure named "proc_hierarchyid")~~
+
+
+-- INILNE INDEX should throw unsupported error
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline CLUSTERED (id1, id2))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30) INDEX babel_3571_idx_inline UNIQUE (id1, id2), id3 VARBINARY(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30) UNIQUE NOT NULL INDEX babel_3571_idx_inline UNIQUE (id1, id2), id3 VARBINARY(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30) PRIMARY KEY INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TABLE babel_3571 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline_1 (id1), INDEX babel_3571_idx_inline_2 (id2))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TABLE #babel_3571 (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline CLUSTERED (id1, id2))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TABLE #babel_3571 (id1 INT, id2 VARCHAR(30) INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TABLE #babel_3571 (id1 INT, id2 VARCHAR(30) UNIQUE NOT NULL INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TABLE #babel_3571 (id1 INT, id2 VARCHAR(30) PRIMARY KEY INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+DECLARE @babel_3571_table_var TABLE(id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline (id1, id2))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+DECLARE @babel_3571_table_var TABLE(id1 INT, id2 VARCHAR(30) INDEX babel_3571_idx_inline CLUSTERED (id1, id2), id3 VARBINARY(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TYPE babel_3571_table_type AS TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline (id1, id2))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TYPE babel_3571_table_type AS TABLE (id1 INT, id2 VARCHAR(30) INDEX babel_3571_idx_inline (id1, id2), id3 VARBINARY(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+CREATE TYPE babel_3571_table_type AS TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline_1 (id1), INDEX babel_3571_idx_inline_2 (id2))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION babel_3571_f1()
+RETURNS @result TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline CLUSTERED (id1, id2))
+AS
+BEGIN
+	RETURN;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE INDEX' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION babel_3571_f1()
+RETURNS TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline (id1, id2))
+AS
+EXTERNAL NAME babel_3571
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'EXTERNAL NAME' is not currently supported in Babelfish)~~
+
 

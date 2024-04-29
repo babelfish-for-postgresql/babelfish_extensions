@@ -32,7 +32,7 @@ TestSQLVariant
 TestText
 TestTime
 TestTinyInt
-TestUDD
+TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 TestVarChar
 TestXML
@@ -85,9 +85,9 @@ sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 schema_resolution_proc
-BABEL-404
+BABEL-404-before-15_7-or-16_3
 BABEL-493
-BABEL-621
+BABEL-621-before-15_7-or-16_3
 BABEL-775
 BABEL-1206
 BABEL-1251
@@ -141,6 +141,7 @@ BABEL-3646
 BABEL-3748
 BABEL-383
 BABEL-405
+BABEL-4516
 BABEL-937
 forjson
 forjson-subquery
@@ -176,7 +177,7 @@ babelfish_authid_user_ext
 babelfish_inconsistent_metadata
 babelfish_migration_mode
 schema_resolution_func
-BABEL-3147
+BABEL-3147-before-16_3-or-15_7-or-14_12
 collation_tests_arabic
 collation_tests_greek
 collation_tests_mongolian
@@ -430,3 +431,9 @@ GRANT_SCHEMA-before-15_7-16_3
 babel-4475
 babel-3254
 babel-4517
+BABEL-4815
+BABEL_3571-before-15-5
+BABEL_4817
+BABEL-4641-before-16_3-or-15_7-or-14_12
+BABEL-4863-before-16_3-or-15_7-or-14_12
+babel_726-before-14_12-or-15_7-or-16_3

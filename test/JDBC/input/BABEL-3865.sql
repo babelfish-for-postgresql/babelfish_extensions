@@ -106,6 +106,9 @@ GO
 DROP ROLE role_a
 GO
 
+REVOKE ALL ON #temp_5 FROM role_a
+GO
+
 DROP TABLE #temp_5
 GO
 

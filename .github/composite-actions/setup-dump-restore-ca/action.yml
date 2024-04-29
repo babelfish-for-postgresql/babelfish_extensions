@@ -43,8 +43,8 @@ runs:
           uses_file=./.github/composite-actions/dump-restore-util
           temp="&& steps.dump-restore-version-$(($i-1)).outcome == 'success'"; [[ i -eq 1 ]] && temp=""
 
-          logical_database_var=".\"dump-restore-version\"[${{ matrix.upgrade-path.id }}][$i].\"logical-database\""
-          logical_database=$(yq $logical_database_var ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)
+          database_level_var=".\"dump-restore-version\"[${{ matrix.upgrade-path.id }}][$i].\"database-level\""
+          database_level=$(yq $database_level_var ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)
           dump_data_as_var=".\"dump-restore-version\"[${{ matrix.upgrade-path.id }}][$i].\"dump-data-as\""
           dump_data_as=$(yq $dump_data_as_var ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)
           dump_format_var=".\"dump-restore-version\"[${{ matrix.upgrade-path.id }}][$i].\"dump-format\""
@@ -52,12 +52,7 @@ runs:
           type_var=".\"dump-restore-version\"[${{ matrix.upgrade-path.id }}][$i].\"type\""
           type=$(yq $type_var ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)
 
-          if [[ $logical_database == 'null' ]]
-          then
-            printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        dump_data_as: ${dump_data_as}\n        dump_format: ${dump_format}\n        type: ${type}\n\n"   >> $dump_restore_version_dir_path/action.yml
-          else
-            printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        logical_database: ${logical_database}\n        dump_data_as: ${dump_data_as}\n        dump_format: ${dump_format}\n        type: ${type}\n\n"   >> $dump_restore_version_dir_path/action.yml
-          fi
+          printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        database_level: ${database_level}\n        dump_data_as: ${dump_data_as}\n        dump_format: ${dump_format}\n        type: ${type}\n\n"   >> $dump_restore_version_dir_path/action.yml
 
           previous_installed_version=$dump_restore_version
         done

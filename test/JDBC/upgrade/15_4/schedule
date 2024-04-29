@@ -65,7 +65,7 @@ BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
-BABEL-3147
+BABEL-3147-before-16_3-or-15_7-or-14_12
 BABEL-3166-before-14_11-or-15_6
 BABEL-3192
 BABEL-3204
@@ -110,14 +110,16 @@ BABEL-383
 BABEL-3844
 BABEL-3914
 BABEL-3938
-BABEL-404
+BABEL-404-before-15_7-or-16_3
 BABEL-405
 BABEL-4078
 BABEL-4098
+BABEL-4516
 babel_417
 BABEL-493
 BABEL_539
-BABEL-621
+BABEL-621-before-15_7-or-16_3
+babel_726-before-14_12-or-15_7-or-16_3
 BABEL-728
 BABEL-733
 BABEL-741
@@ -431,7 +433,7 @@ TestTableType
 TestText
 TestTime
 TestTinyInt
-TestUDD
+TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 Test_user_from_win_login
 TestVarChar
@@ -467,3 +469,6 @@ permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 GRANT_SCHEMA-before-15_7-16_3
 babel-4517
+BABEL_3571-before-15-5
+BABEL-4641-before-16_3-or-15_7-or-14_12
+BABEL-4863-before-16_3-or-15_7-or-14_12

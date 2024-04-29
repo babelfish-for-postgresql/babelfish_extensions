@@ -1,0 +1,107 @@
+
+-- table 1 id1 & id2 should be individually unique
+INSERT INTO babel_3571_1 VALUES (-1, '-a', 0x0001), (1, '+a', 0x1001), (NULL, '', NULL), (0, NULL, NULL)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_3571_1 VALUES (NULL, 'random', 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_1_id1_key")~~
+
+
+INSERT INTO babel_3571_1 VALUES (9999, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_1_id2_key")~~
+
+
+INSERT INTO babel_3571_1 VALUES (9999, 'random', NULL)
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- table 2 Combination of id1 & id2 should be unique
+INSERT INTO babel_3571_2 VALUES (-1, '-a', 0x0001), (1, '+a', 0x1001), (NULL, '', NULL), (0, NULL, NULL)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_3571_2 VALUES (NULL, '', 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_id1_id2_key")~~
+
+
+INSERT INTO babel_3571_2 VALUES (0, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_id1_id2_key")~~
+
+
+INSERT INTO babel_3571_2 VALUES (NULL, NULL, NULL)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_3571_2 VALUES (NULL, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_2_id1_id2_key")~~
+
+
+
+-- table 3 Combination of id1 & id2 should be unique
+INSERT INTO babel_3571_3 VALUES (-1, '-a', 0x0001), (1, '+a', 0x1001), (NULL, '', NULL), (0, NULL, NULL)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_3571_3 VALUES (NULL, '', 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
+
+
+INSERT INTO babel_3571_3 VALUES (0, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
+
+
+INSERT INTO babel_3571_3 VALUES (NULL, NULL, NULL)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_3571_3 VALUES (NULL, NULL, 0x9999)
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
+
+
+SELECT indexdef FROM pg_indexes 
+WHERE tablename LIKE '%babel_3571%'
+ORDER BY indexdef
+GO
+~~START~~
+text
+CREATE UNIQUE INDEX babel_3571_1_id1_key ON master_dbo.babel_3571_1 USING btree (id1) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree (id2) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1, id2) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce ON master_dbo.babel_3571_3 USING btree (id1 NULLS FIRST, id2 NULLS FIRST) NULLS NOT DISTINCT
+~~END~~
+
+
+DROP TABLE babel_3571_1, babel_3571_2, babel_3571_3
+GO
