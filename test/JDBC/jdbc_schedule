@@ -257,3 +257,12 @@ ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-cleanup
 ignore#!#BABEL-4279-vu-prepare
 ignore#!#BABEL-4279-vu-verify
 ignore#!#BABEL-4279-vu-cleanup
+ignore#!#Test_alter_db_rename-vu-prepare
+ignore#!#Test_alter_db_rename-vu-verify
+ignore#!#Test_alter_db_rename-vu-cleanup
+ignore#!#Test_sp_rename_database-vu-prepare
+ignore#!#Test_sp_rename_database-vu-verify
+ignore#!#Test_sp_rename_database-vu-cleanup
+ignore#!#Test_sp_renamedb-vu-prepare
+ignore#!#Test_sp_renamedb-vu-verify
+ignore#!#Test_sp_renamedb-vu-cleanup

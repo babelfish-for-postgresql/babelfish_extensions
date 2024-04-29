@@ -3072,7 +3072,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									RoleSpec   *rolspec = lfirst(item);
 									char	   *user_name;
 
-									user_name = get_physical_user_name(db_name, rolspec->rolename);
+									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
 
 									/*
 									 * If a role has members, do not drop it.

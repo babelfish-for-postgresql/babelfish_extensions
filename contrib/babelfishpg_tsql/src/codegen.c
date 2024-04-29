@@ -310,6 +310,7 @@ stmt_default_act(Walker_context *ctx, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_SAVE_CTX:
 		case PLTSQL_STMT_RESTORE_CTX_FULL:
 		case PLTSQL_STMT_RESTORE_CTX_PARTIAL:
+		case PLTSQL_STMT_ALTER_DB:
 			{
 				CodegenContext *codegen_ctx = (CodegenContext *) ctx->extra_ctx;
 

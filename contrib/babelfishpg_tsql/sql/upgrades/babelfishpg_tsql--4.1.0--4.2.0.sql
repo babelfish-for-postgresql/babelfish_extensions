@@ -612,6 +612,124 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 $$
 LANGUAGE plpgsql STABLE;
 
+
+CREATE OR REPLACE PROCEDURE sys.sp_renamedb(
+	IN "@objname" sys.SYSNAME,
+	IN "@newname" sys.SYSNAME
+)
+AS 'babelfishpg_tsql', 'sp_renamedb_internal'
+LANGUAGE C;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename(
+	IN "@objname" sys.nvarchar(776) = NULL,
+	IN "@newname" sys.SYSNAME = NULL,
+	IN "@objtype" sys.varchar(13) DEFAULT NULL
+)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET @objtype = TRIM(@objtype);
+	If @objtype IS NULL
+		BEGIN
+			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
+		END
+	ELSE IF @objtype = 'INDEX'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
+		END
+	ELSE IF @objtype = 'STATISTICS'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
+		END
+	ELSE IF @objtype = 'DATABASE'
+		BEGIN
+			exec sys.sp_renamedb @objname, @newname;
+		END
+	ELSE
+		BEGIN
+			DECLARE @subname sys.nvarchar(776);
+			DECLARE @schemaname sys.nvarchar(776);
+			DECLARE @dbname sys.nvarchar(776);
+			DECLARE @curr_relname sys.nvarchar(776);
+			
+			EXEC sys.babelfish_sp_rename_word_parse @objname, @objtype, @subname OUT, @curr_relname OUT, @schemaname OUT, @dbname OUT;
+			DECLARE @currtype char(2);
+			IF @objtype = 'COLUMN'
+				BEGIN
+					DECLARE @col_count INT;
+					SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @curr_relname and COLUMN_NAME = @subname;
+					IF @col_count < 0
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SET @currtype = 'CO';
+				END
+			ELSE IF @objtype = 'USERDATATYPE'
+				BEGIN
+					DECLARE @alias_count INT;
+					SELECT @alias_count = COUNT(*) FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+					WHERE s1.name = @schemaname AND t1.name = @subname;
+					IF @alias_count > 1
+						BEGIN
+							THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+						END
+					IF @alias_count < 1
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SET @currtype = 'AL';				
+				END
+			ELSE IF @objtype = 'OBJECT'
+				BEGIN
+					DECLARE @count INT;
+					SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+					WHERE s1.name = @schemaname AND o1.name = @subname;
+					SELECT @count = COUNT(*) FROM #tempTable;
+					IF @count > 1
+						BEGIN
+							THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+						END
+					IF @count < 1
+						BEGIN
+							-- TABLE TYPE: check if there is a match in sys.table_types (if we cannot alter sys.objects table_type naming)
+							SELECT @count = COUNT(*) FROM sys.table_types tt1 INNER JOIN sys.schemas s1 ON tt1.schema_id = s1.schema_id 
+							WHERE s1.name = @schemaname AND tt1.name = @subname;
+							IF @count > 1
+								BEGIN
+									THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+								END
+							ELSE IF @count < 1
+								BEGIN
+									THROW 33557097, N'There is no object with the given @objname.', 1;
+								END
+							ELSE
+								BEGIN
+									SET @currtype = 'TT'
+								END
+						END
+					IF @currtype IS NULL
+						BEGIN
+							SELECT @currtype = type from #tempTable;
+						END
+					IF @currtype = 'TR' OR @currtype = 'TA'
+						BEGIN
+							DECLARE @physical_schema_name sys.nvarchar(776) = '';
+							SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = sys.db_id() AND orig_name = @schemaname;
+							SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
+							WHERE tr.tgname = @subname AND n.nspname = @physical_schema_name;
+						END
+				END
+			ELSE
+				BEGIN
+					THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+				END
+			EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname;
+			PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
+		END
+END;
+$$;
+GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
+
 -- login_token
 CREATE OR REPLACE VIEW sys.login_token
 AS SELECT
