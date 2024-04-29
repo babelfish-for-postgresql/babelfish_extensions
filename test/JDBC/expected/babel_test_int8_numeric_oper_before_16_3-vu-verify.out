@@ -47,7 +47,7 @@ Query Text: EXEC test_int8_numeric_p2
   Query Text: select count(*) from test_int8_numeric_vu where a <> 5.0
   ->  Aggregate
         ->  Seq Scan on test_int8_numeric_vu
-              Filter: ((a)::numeric <> 5.0)
+              Filter: (a <> 5.0)
 ~~END~~
 
 exec test_int8_numeric_p3;
@@ -58,7 +58,7 @@ Query Text: EXEC test_int8_numeric_p3
   Query Text: select count(*) from test_int8_numeric_vu where 5.0 <> a
   ->  Aggregate
         ->  Seq Scan on test_int8_numeric_vu
-              Filter: (5.0 <> (a)::numeric)
+              Filter: (5.0 <> a)
 ~~END~~
 
 exec test_int8_numeric_p4;
@@ -68,8 +68,8 @@ text
 Query Text: EXEC test_int8_numeric_p4
   Query Text: select count(*) from test_int8_numeric_vu where a < 5.0
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: ((a)::numeric < 5.0)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < 5.0)
 ~~END~~
 
 exec test_int8_numeric_p5;
@@ -79,8 +79,8 @@ text
 Query Text: EXEC test_int8_numeric_p5
   Query Text: select count(*) from test_int8_numeric_vu where 5.0 > a
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: (5.0 > (a)::numeric)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < 5.0)
 ~~END~~
 
 exec test_int8_numeric_p6;
@@ -90,8 +90,8 @@ text
 Query Text: EXEC test_int8_numeric_p6
   Query Text: select count(*) from test_int8_numeric_vu where a < -9223372036854775808.0
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: ((a)::numeric < '-9223372036854775808.0'::numeric)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < '-9223372036854775808.0'::numeric)
 ~~END~~
 
 exec test_int8_numeric_p7;
@@ -101,8 +101,8 @@ text
 Query Text: EXEC test_int8_numeric_p7
   Query Text: select count(*) from test_int8_numeric_vu where -9223372036854775808.0 > a
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: ('-9223372036854775808.0'::numeric > (a)::numeric)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < '-9223372036854775808.0'::numeric)
 ~~END~~
 
 exec test_int8_numeric_p8;
@@ -112,8 +112,8 @@ text
 Query Text: EXEC test_int8_numeric_p8
   Query Text: select count(*) from test_int8_numeric_vu where a <= 5.0
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: ((a)::numeric <= 5.0)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a <= 5.0)
 ~~END~~
 
 exec test_int8_numeric_p9;
@@ -123,8 +123,8 @@ text
 Query Text: EXEC test_int8_numeric_p9
   Query Text: select count(*) from test_int8_numeric_vu where 5.0 >= a
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: (5.0 >= (a)::numeric)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a <= 5.0)
 ~~END~~
 
 exec test_int8_numeric_p10;
@@ -134,8 +134,8 @@ text
 Query Text: EXEC test_int8_numeric_p10
   Query Text: select count(*) from test_int8_numeric_vu where a > 999995.0
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: ((a)::numeric > 999995.0)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > 999995.0)
 ~~END~~
 
 exec test_int8_numeric_p11;
@@ -145,8 +145,8 @@ text
 Query Text: EXEC test_int8_numeric_p11
   Query Text: select count(*) from test_int8_numeric_vu where 999995.0 < a
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: (999995.0 < (a)::numeric)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > 999995.0)
 ~~END~~
 
 exec test_int8_numeric_p12;
@@ -156,8 +156,8 @@ text
 Query Text: EXEC test_int8_numeric_p12
   Query Text: select count(*) from test_int8_numeric_vu where a >= 999995.0
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: ((a)::numeric >= 999995.0)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a >= 999995.0)
 ~~END~~
 
 exec test_int8_numeric_p13;
@@ -167,8 +167,8 @@ text
 Query Text: EXEC test_int8_numeric_p13
   Query Text: select count(*) from test_int8_numeric_vu where 999995.0 <= a
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: (999995.0 <= (a)::numeric)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a >= 999995.0)
 ~~END~~
 
 exec test_int8_numeric_p14;
@@ -178,8 +178,8 @@ text
 Query Text: EXEC test_int8_numeric_p14
   Query Text: select count(*) from test_int8_numeric_vu where a > 9223372036854775807.0
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: ((a)::numeric > 9223372036854775807.0)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > 9223372036854775807.0)
 ~~END~~
 
 exec test_int8_numeric_p15;
@@ -189,8 +189,8 @@ text
 Query Text: EXEC test_int8_numeric_p15
   Query Text: select count(*) from test_int8_numeric_vu where 9223372036854775807.0 < a
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: (9223372036854775807.0 < (a)::numeric)
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > 9223372036854775807.0)
 ~~END~~
 
 exec test_int8_numeric_p16;
@@ -201,7 +201,7 @@ Query Text: EXEC test_int8_numeric_p16
   Query Text: select count(*) from test_int8_numeric_vu where a > 5.0
   ->  Aggregate
         ->  Seq Scan on test_int8_numeric_vu
-              Filter: ((a)::numeric > 5.0)
+              Filter: (a > 5.0)
 ~~END~~
 
 exec test_int8_numeric_p17;
@@ -212,7 +212,7 @@ Query Text: EXEC test_int8_numeric_p17
   Query Text: select count(*) from test_int8_numeric_vu where 5.0 < a
   ->  Aggregate
         ->  Seq Scan on test_int8_numeric_vu
-              Filter: (5.0 < (a)::numeric)
+              Filter: (5.0 < a)
 ~~END~~
 
 exec test_int8_numeric_p18;
@@ -222,8 +222,8 @@ text
 Query Text: EXEC test_int8_numeric_p18
   Query Text: select count(*) from test_int8_numeric_vu where a between 5.0 and 10.0
   ->  Aggregate
-        ->  Seq Scan on test_int8_numeric_vu
-              Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 10.0))
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: ((a >= 5.0) AND (a <= 10.0))
 ~~END~~
 
 exec test_int8_numeric_p19;
@@ -234,7 +234,7 @@ Query Text: EXEC test_int8_numeric_p19
   Query Text: select count(*) from test_int8_numeric_vu where a between 5.0 and 999999.0
   ->  Aggregate
         ->  Seq Scan on test_int8_numeric_vu
-              Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 999999.0))
+              Filter: ((a >= 5.0) AND (a <= 999999.0))
 ~~END~~
 
 exec test_int8_numeric_p20;
@@ -245,8 +245,7 @@ Query Text: EXEC test_int8_numeric_p20
   Query Text: select count(*) from test_int8_numeric_vu where (a between 5.0 and 999999.0) and a = 10
   ->  Aggregate
         ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
-              Index Cond: (a = 10)
-              Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 999999.0))
+              Index Cond: ((a >= 5.0) AND (a <= 999999.0) AND (a = 10))
 ~~END~~
 
 exec test_int8_numeric_p21;
@@ -257,8 +256,7 @@ Query Text: EXEC test_int8_numeric_p21
   Query Text: select count(*) from test_int8_numeric_vu where a > 5.0 and a < 7
   ->  Aggregate
         ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
-              Index Cond: (a < 7)
-              Filter: ((a)::numeric > 5.0)
+              Index Cond: ((a > 5.0) AND (a < 7))
 ~~END~~
 
 exec test_int8_numeric_p22;
@@ -269,8 +267,7 @@ Query Text: EXEC test_int8_numeric_p22
   Query Text: select count(*) from test_int8_numeric_vu where 5.0 < a and 7 > a
   ->  Aggregate
         ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
-              Index Cond: (a < 7)
-              Filter: (5.0 < (a)::numeric)
+              Index Cond: ((a > 5.0) AND (a < 7))
 ~~END~~
 
 exec test_int8_numeric_p23;
@@ -391,35 +388,35 @@ exec test_int8_numeric_p1;
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 exec test_int8_numeric_p2;
 GO
 ~~START~~
 int
-999999
+1000001
 ~~END~~
 
 exec test_int8_numeric_p3;
 GO
 ~~START~~
 int
-999999
+1000001
 ~~END~~
 
 exec test_int8_numeric_p4;
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 exec test_int8_numeric_p5;
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 exec test_int8_numeric_p6;
@@ -440,42 +437,42 @@ exec test_int8_numeric_p8;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 exec test_int8_numeric_p9;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 exec test_int8_numeric_p10;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 exec test_int8_numeric_p11;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 exec test_int8_numeric_p12;
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 exec test_int8_numeric_p13;
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 exec test_int8_numeric_p14;
@@ -496,14 +493,14 @@ exec test_int8_numeric_p16;
 GO
 ~~START~~
 int
-999995
+999996
 ~~END~~
 
 exec test_int8_numeric_p17;
 GO
 ~~START~~
 int
-999995
+999996
 ~~END~~
 
 exec test_int8_numeric_p18;
@@ -545,14 +542,14 @@ exec test_int8_numeric_p23;
 GO
 ~~START~~
 int
-999999
+1000001
 ~~END~~
 
 exec test_int8_numeric_p24;
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 exec test_int8_numeric_p25;
@@ -566,21 +563,21 @@ exec test_int8_numeric_p26;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 exec test_int8_numeric_p27;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 exec test_int8_numeric_p28;
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 exec test_int8_numeric_p29;
@@ -594,7 +591,7 @@ exec test_int8_numeric_p30;
 GO
 ~~START~~
 int
-999995
+999996
 ~~END~~
 
 exec test_int8_numeric_p31;
@@ -1003,35 +1000,35 @@ select * from test_int8_numeric_v1;
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 select * from test_int8_numeric_v2;
 GO
 ~~START~~
 int
-999999
+1000001
 ~~END~~
 
 select * from test_int8_numeric_v3;
 GO
 ~~START~~
 int
-999999
+1000001
 ~~END~~
 
 select * from test_int8_numeric_v4;
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 select * from test_int8_numeric_v5;
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 select * from test_int8_numeric_v6;
@@ -1052,42 +1049,42 @@ select * from test_int8_numeric_v8;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select * from test_int8_numeric_v9;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select * from test_int8_numeric_v10;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select * from test_int8_numeric_v11;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select * from test_int8_numeric_v12;
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 select * from test_int8_numeric_v13;
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 select * from test_int8_numeric_v14;
@@ -1108,14 +1105,14 @@ select * from test_int8_numeric_v16;
 GO
 ~~START~~
 int
-999995
+999996
 ~~END~~
 
 select * from test_int8_numeric_v17;
 GO
 ~~START~~
 int
-999995
+999996
 ~~END~~
 
 select * from test_int8_numeric_v18;
@@ -1157,14 +1154,14 @@ select * from test_int8_numeric_v23;
 GO
 ~~START~~
 int
-999999
+1000001
 ~~END~~
 
 select * from test_int8_numeric_v24;
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 select * from test_int8_numeric_v25;
@@ -1178,21 +1175,21 @@ select * from test_int8_numeric_v26;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select * from test_int8_numeric_v27;
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select * from test_int8_numeric_v28;
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 select * from test_int8_numeric_v29;
@@ -1206,7 +1203,7 @@ select * from test_int8_numeric_v30;
 GO
 ~~START~~
 int
-999995
+999996
 ~~END~~
 
 select * from test_int8_numeric_v31;
@@ -1288,35 +1285,35 @@ select test_int8_numeric_f1();
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 select test_int8_numeric_f2();
 GO
 ~~START~~
 int
-999999
+1000001
 ~~END~~
 
 select test_int8_numeric_f3();
 GO
 ~~START~~
 int
-999999
+1000001
 ~~END~~
 
 select test_int8_numeric_f4();
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 select test_int8_numeric_f5();
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 select test_int8_numeric_f6();
@@ -1337,42 +1334,42 @@ select test_int8_numeric_f8();
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select test_int8_numeric_f9();
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select test_int8_numeric_f10();
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select test_int8_numeric_f11();
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select test_int8_numeric_f12();
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 select test_int8_numeric_f13();
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 select test_int8_numeric_f14();
@@ -1393,14 +1390,14 @@ select test_int8_numeric_f16();
 GO
 ~~START~~
 int
-999995
+999996
 ~~END~~
 
 select test_int8_numeric_f17();
 GO
 ~~START~~
 int
-999995
+999996
 ~~END~~
 
 select test_int8_numeric_f18();
@@ -1442,14 +1439,14 @@ select test_int8_numeric_f23();
 GO
 ~~START~~
 int
-999999
+1000001
 ~~END~~
 
 select test_int8_numeric_f24();
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 select test_int8_numeric_f25();
@@ -1463,21 +1460,21 @@ select test_int8_numeric_f26();
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select test_int8_numeric_f27();
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 select test_int8_numeric_f28();
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 select test_int8_numeric_f29();
@@ -1491,7 +1488,7 @@ select test_int8_numeric_f30();
 GO
 ~~START~~
 int
-999995
+999996
 ~~END~~
 
 select test_int8_numeric_f31();
