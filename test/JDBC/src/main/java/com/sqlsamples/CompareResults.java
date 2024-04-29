@@ -260,6 +260,8 @@ public class CompareResults {
     static int remapSQLTypeForJTDS(int type) {
         switch (type) {
             case NCHAR: return CHAR;
+            case NVARCHAR: return VARCHAR;
+            case LONGNVARCHAR: return LONGVARCHAR;
             default: return type;
         }
     }

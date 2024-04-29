@@ -11,6 +11,9 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -145,8 +148,12 @@ public class JDBCPreparedStatement {
                     pstmt = ssPstmt;
                 } else if (parameter[0].equalsIgnoreCase("text")
                         || parameter[0].equalsIgnoreCase("ntext")) {
-                    Reader r = new FileReader(parameter[2]);
-                    pstmt.setCharacterStream(j - 1, r);
+                    Path path = Paths.get(parameter[2]);
+                    byte[] bytes = Files.readAllBytes(path);
+                    String text = new String(bytes, StandardCharsets.UTF_8);
+                    Reader reader = new StringReader(text);
+                    // jTDS only suports older version of setCharacterStream() that requires int length
+                    pstmt.setCharacterStream(j - 1, reader, text.length());
                 } else if (parameter[0].equalsIgnoreCase("image")) {
                     File file = new File(parameter[2]);
                     BufferedImage bImage = ImageIO.read(file);

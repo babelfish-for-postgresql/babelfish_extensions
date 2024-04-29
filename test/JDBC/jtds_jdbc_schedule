@@ -48,7 +48,9 @@ TestSmallDatetime
 # TestDatetimeoffset-vu-cleanup
 # java.lang.StringIndexOutOfBoundsException: offset 0, count -17238, length 255
 # TestVarChar
-# Failures: stmt.setCharacterStream() is not supported in jTDS
+# Failure:
+# ERROR:  The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect.
+# Parameter 3 (""): Data type 0x63 has an invalid data length or metadata length.
 # TestText
 TestChar
 TestBinary
