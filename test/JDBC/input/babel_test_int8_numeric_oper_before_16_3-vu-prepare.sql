@@ -1,5 +1,5 @@
 -- tsql
-create table test_int8_numeric_vu(a int);
+create table test_int8_numeric_vu(a bigint);
 GO
 
 -- insert 1M rows of data
