@@ -262,9 +262,9 @@ END IF;
 END $$;
 
 -- Opartor class for integer_ops to incorporate various operator between int and numeric for Index scan
-DO $$
-BEGIN
-IF NOT EXISTS(select 1 from pg_opclass opc join pg_opfamily opf on opc.opcfamily = opf.oid where opc.opcname = 'int_numeric' and opc.opcnamespace = 'sys'::regnamespace and opf.opfname = 'integer_ops') THEN
+-- DO $$
+-- BEGIN
+-- IF NOT EXISTS(select 1 from pg_opclass opc join pg_opfamily opf on opc.opcfamily = opf.oid where opc.opcname = 'int_numeric' and opc.opcnamespace = 'sys'::regnamespace and opf.opfname = 'integer_ops') THEN
 CREATE OPERATOR CLASS sys.int_numeric FOR TYPE int4
   USING btree FAMILY integer_ops AS
    OPERATOR 1 sys.< (int, numeric),
@@ -273,13 +273,13 @@ CREATE OPERATOR CLASS sys.int_numeric FOR TYPE int4
    OPERATOR 4 sys.>= (int, numeric),
    OPERATOR 5 sys.> (int, numeric),
    FUNCTION 1 sys.int4_numeric_cmp(int, numeric);
-END IF;
-END $$;
+-- END IF;
+-- END $$;
 
 -- Opartor class for integer_ops to incorporate various operator between int and numeric for Index scan
-DO $$
-BEGIN
-IF NOT EXISTS(select 1 from pg_opclass opc join pg_opfamily opf on opc.opcfamily = opf.oid where opc.opcname = 'numeric_int' and opc.opcnamespace = 'sys'::regnamespace and opf.opfname = 'integer_ops') THEN
+-- DO $$
+-- BEGIN
+-- IF NOT EXISTS(select 1 from pg_opclass opc join pg_opfamily opf on opc.opcfamily = opf.oid where opc.opcname = 'numeric_int' and opc.opcnamespace = 'sys'::regnamespace and opf.opfname = 'integer_ops') THEN
 CREATE OPERATOR CLASS sys.numeric_int FOR TYPE int4
   USING btree FAMILY integer_ops AS
    OPERATOR 1 sys.< (numeric, int),
@@ -288,8 +288,8 @@ CREATE OPERATOR CLASS sys.numeric_int FOR TYPE int4
    OPERATOR 4 sys.>= (numeric, int),
    OPERATOR 5 sys.> (numeric, int),
    FUNCTION 1 sys.numeric_int4_cmp(numeric, int);
-END IF;
-END $$;
+-- END IF;
+-- END $$;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
