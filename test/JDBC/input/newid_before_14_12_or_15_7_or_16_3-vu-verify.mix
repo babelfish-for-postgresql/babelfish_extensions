@@ -1,0 +1,48 @@
+-- tsql
+
+-- should show 5 unique instead of 1 prior to upgrade
+EXEC babel_4923_newid_proc
+GO
+
+-- should succeed after upgrade
+ALTER TABLE babel_4923_newid_tab2 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY;
+GO
+
+-- to verify success, this should return 3
+SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab2
+GO
+
+ALTER TABLE babel_4923_newid_tab3 DROP COLUMN uuid
+GO
+
+-- should succeed after upgrade
+ALTER TABLE babel_4923_newid_tab3 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID() PRIMARY KEY;
+GO
+
+-- to verify success, this should return 3
+SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab2
+GO
+
+-- psql
+ANALYZE master_dbo.babel_4923_newid_tab3
+GO
+
+ANALYZE master_dbo.babel_4923_newid_tab4
+GO
+
+-- tsql
+
+-- should show index scan before 14.12, 15.7, 16.3
+-- but it should show seqscan after upgrade because volatile function cant be use during index scan.
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+SELECT * FROM babel_4923_newid_tab3 WHERE uuid=NEWID()
+GO
+
+SELECT * FROM babel_4923_newid_tab4 WHERE uuid=NEWSEQUENTIALID()
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO

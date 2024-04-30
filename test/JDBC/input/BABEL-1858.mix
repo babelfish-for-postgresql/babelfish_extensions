@@ -3,7 +3,6 @@
 USE master;
 GO
 
-
 -- test volatility of function in batch
 -- should see different id values with each iteration
 DECLARE @i INT = 1
@@ -14,28 +13,13 @@ BEGIN
     INSERT INTO newid_volatile VALUES (NEWID())
     SET @i = @i + 1
 END
+
 -- should be equal to @num_iter
 select count(distinct u) from newid_volatile
 go
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int
-5
-~~END~~
-
 
 TRUNCATE TABLE newid_volatile
 GO
-
 
 DECLARE @i INT = 1
 DECLARE @num_iter INT = 5
@@ -44,24 +28,10 @@ BEGIN
     INSERT INTO newid_volatile VALUES (NEWSEQUENTIALID())
     SET @i = @i + 1
 END
+
 -- should be equal to @num_iter
 select count(distinct u) from newid_volatile
 go
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int
-5
-~~END~~
-
 
 -- test volatility of function in procedure
 -- should see different id values with each iteration
@@ -76,34 +46,14 @@ BEGIN
 END
 go
 
-
 EXEC p_newid
+
 -- should be equal to @num_iter
 select count(distinct u) from newid_volatile_proc
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int
-5
-~~END~~
-
 
 select count(distinct v) from newid_volatile_proc
 GO
-~~START~~
-int
-5
-~~END~~
-
 
 DROP TABLE newid_volatile
 DROP TABLE newid_volatile_proc
@@ -121,12 +71,6 @@ insert into TestNewId values(1, 'aaa')
 insert into TestNewId values(2, 'bbb')
 insert into TestNewId values(3, 'ccc')
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 -- should be successful
 ALTER TABLE TestNewId ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY;
@@ -134,17 +78,10 @@ GO
 
 INSERT INTO TestNewId SELECT generate_series(1, 1000, 1), 'hello', NEWID()
 GO
-~~ROW COUNT: 1000~~
-
 
 -- should be 1000+3
 SELECT COUNT(DISTINCT uuid) FROM TestNewId
 GO
-~~START~~
-int
-1003
-~~END~~
-
 
 -- psql
 ANALYZE master_dbo.TestNewId
@@ -154,23 +91,11 @@ GO
 
 select set_config('babelfishpg_tsql.explain_costs', 'off', false);
 GO
-~~START~~
-text
-off
-~~END~~
-
 
 -- cannot use indexscan with volatile anymore
 SET BABELFISH_SHOWPLAN_ALL ON
 SELECT * FROM TestNewId WHERE uuid=NEWID()
 GO
-~~START~~
-text
-Query Text: SELECT * FROM TestNewId WHERE uuid=NEWID()
-Seq Scan on testnewid
-  Filter: (uuid = newid())
-~~END~~
-
 
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
@@ -190,23 +115,11 @@ GO
 -- tsql
 select set_config('babelfishpg_tsql.explain_costs', 'off', false);
 GO
-~~START~~
-text
-off
-~~END~~
-
 
 -- cannot use indexscan with volatile anymore
 SET BABELFISH_SHOWPLAN_ALL ON
 SELECT * FROM TestNewId WHERE uuid=NEWID()
 GO
-~~START~~
-text
-Query Text: SELECT * FROM TestNewId WHERE uuid=NEWID()
-Seq Scan on testnewid
-  Filter: (uuid = newid())
-~~END~~
-
 
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
@@ -214,11 +127,6 @@ GO
 -- should still be 1003
 SELECT COUNT(DISTINCT uuid) FROM TestNewId
 GO
-~~START~~
-int
-1003
-~~END~~
-
 
 DROP TABLE TestNewId
 GO

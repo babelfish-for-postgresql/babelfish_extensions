@@ -276,3 +276,11 @@ ignore#!#Test_sp_rename_database-vu-cleanup
 ignore#!#Test_sp_renamedb-vu-prepare
 ignore#!#Test_sp_renamedb-vu-verify
 ignore#!#Test_sp_renamedb-vu-cleanup
+
+ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-prepare
+ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-verify
+ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-cleanup
+ignore#!#newid_before_14_7_or_15_2-vu-prepare
+ignore#!#newid_before_14_7_or_15_2-vu-verify
+ignore#!#newid_before_14_7_or_15_2-vu-cleanup
+
