@@ -21,6 +21,10 @@ create procedure test_int_numeric_p0 as
 select count(*) from test_int_numeric_vu where a = 1.0;
 GO
 
+create procedure test_int_numeric_p00 as
+select count(*) from test_int_numeric_vu where 1.0 = a;
+GO
+
 create procedure test_int_numeric_p1 as
 select count(*) from test_int_numeric_vu where a IS NULL;
 GO
