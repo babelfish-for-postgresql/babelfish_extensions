@@ -395,28 +395,28 @@ exec test_int2_numeric_p2;
 GO
 ~~START~~
 int
-999971
+32768
 ~~END~~
 
 exec test_int2_numeric_p3;
 GO
 ~~START~~
 int
-999971
+32768
 ~~END~~
 
 exec test_int2_numeric_p4;
 GO
 ~~START~~
 int
-155
+5
 ~~END~~
 
 exec test_int2_numeric_p5;
 GO
 ~~START~~
 int
-155
+5
 ~~END~~
 
 exec test_int2_numeric_p6;
@@ -437,42 +437,42 @@ exec test_int2_numeric_p8;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 exec test_int2_numeric_p9;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 exec test_int2_numeric_p10;
 GO
 ~~START~~
 int
-91
+5
 ~~END~~
 
 exec test_int2_numeric_p11;
 GO
 ~~START~~
 int
-91
+5
 ~~END~~
 
 exec test_int2_numeric_p12;
 GO
 ~~START~~
 int
-121
+6
 ~~END~~
 
 exec test_int2_numeric_p13;
 GO
 ~~START~~
 int
-121
+6
 ~~END~~
 
 exec test_int2_numeric_p14;
@@ -493,63 +493,63 @@ exec test_int2_numeric_p16;
 GO
 ~~START~~
 int
-999816
+32763
 ~~END~~
 
 exec test_int2_numeric_p17;
 GO
 ~~START~~
 int
-999816
+32763
 ~~END~~
 
 exec test_int2_numeric_p18;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 exec test_int2_numeric_p19;
 GO
 ~~START~~
 int
-999847
+32764
 ~~END~~
 
 exec test_int2_numeric_p20;
 GO
 ~~START~~
 int
-31
+1
 ~~END~~
 
 exec test_int2_numeric_p21;
 GO
 ~~START~~
 int
-31
+1
 ~~END~~
 
 exec test_int2_numeric_p22;
 GO
 ~~START~~
 int
-31
+1
 ~~END~~
 
 exec test_int2_numeric_p23;
 GO
 ~~START~~
 int
-999971
+32768
 ~~END~~
 
 exec test_int2_numeric_p24;
 GO
 ~~START~~
 int
-155
+5
 ~~END~~
 
 exec test_int2_numeric_p25;
@@ -563,21 +563,21 @@ exec test_int2_numeric_p26;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 exec test_int2_numeric_p27;
 GO
 ~~START~~
 int
-91
+5
 ~~END~~
 
 exec test_int2_numeric_p28;
 GO
 ~~START~~
 int
-121
+6
 ~~END~~
 
 exec test_int2_numeric_p29;
@@ -591,21 +591,21 @@ exec test_int2_numeric_p30;
 GO
 ~~START~~
 int
-999816
+32763
 ~~END~~
 
 exec test_int2_numeric_p31;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 exec test_int2_numeric_p32;
 GO
 ~~START~~
 int
-999756
+32759
 ~~END~~
 
 
@@ -1004,28 +1004,28 @@ select * from test_int2_numeric_v2;
 GO
 ~~START~~
 int
-999971
+32768
 ~~END~~
 
 select * from test_int2_numeric_v3;
 GO
 ~~START~~
 int
-999971
+32768
 ~~END~~
 
 select * from test_int2_numeric_v4;
 GO
 ~~START~~
 int
-155
+5
 ~~END~~
 
 select * from test_int2_numeric_v5;
 GO
 ~~START~~
 int
-155
+5
 ~~END~~
 
 select * from test_int2_numeric_v6;
@@ -1046,42 +1046,42 @@ select * from test_int2_numeric_v8;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select * from test_int2_numeric_v9;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select * from test_int2_numeric_v10;
 GO
 ~~START~~
 int
-91
+5
 ~~END~~
 
 select * from test_int2_numeric_v11;
 GO
 ~~START~~
 int
-91
+5
 ~~END~~
 
 select * from test_int2_numeric_v12;
 GO
 ~~START~~
 int
-121
+6
 ~~END~~
 
 select * from test_int2_numeric_v13;
 GO
 ~~START~~
 int
-121
+6
 ~~END~~
 
 select * from test_int2_numeric_v14;
@@ -1102,63 +1102,63 @@ select * from test_int2_numeric_v16;
 GO
 ~~START~~
 int
-999816
+32763
 ~~END~~
 
 select * from test_int2_numeric_v17;
 GO
 ~~START~~
 int
-999816
+32763
 ~~END~~
 
 select * from test_int2_numeric_v18;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select * from test_int2_numeric_v19;
 GO
 ~~START~~
 int
-999756
+32759
 ~~END~~
 
 select * from test_int2_numeric_v20;
 GO
 ~~START~~
 int
-31
+1
 ~~END~~
 
 select * from test_int2_numeric_v21;
 GO
 ~~START~~
 int
-31
+1
 ~~END~~
 
 select * from test_int2_numeric_v22;
 GO
 ~~START~~
 int
-31
+1
 ~~END~~
 
 select * from test_int2_numeric_v23;
 GO
 ~~START~~
 int
-999971
+32768
 ~~END~~
 
 select * from test_int2_numeric_v24;
 GO
 ~~START~~
 int
-155
+5
 ~~END~~
 
 select * from test_int2_numeric_v25;
@@ -1172,21 +1172,21 @@ select * from test_int2_numeric_v26;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select * from test_int2_numeric_v27;
 GO
 ~~START~~
 int
-91
+5
 ~~END~~
 
 select * from test_int2_numeric_v28;
 GO
 ~~START~~
 int
-121
+6
 ~~END~~
 
 select * from test_int2_numeric_v29;
@@ -1200,21 +1200,21 @@ select * from test_int2_numeric_v30;
 GO
 ~~START~~
 int
-999816
+32763
 ~~END~~
 
 select * from test_int2_numeric_v31;
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select * from test_int2_numeric_v32;
 GO
 ~~START~~
 int
-999756
+32759
 ~~END~~
 
 
@@ -1289,28 +1289,28 @@ select test_int2_numeric_f2();
 GO
 ~~START~~
 int
-999971
+32768
 ~~END~~
 
 select test_int2_numeric_f3();
 GO
 ~~START~~
 int
-999971
+32768
 ~~END~~
 
 select test_int2_numeric_f4();
 GO
 ~~START~~
 int
-155
+5
 ~~END~~
 
 select test_int2_numeric_f5();
 GO
 ~~START~~
 int
-155
+5
 ~~END~~
 
 select test_int2_numeric_f6();
@@ -1331,42 +1331,42 @@ select test_int2_numeric_f8();
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select test_int2_numeric_f9();
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select test_int2_numeric_f10();
 GO
 ~~START~~
 int
-91
+5
 ~~END~~
 
 select test_int2_numeric_f11();
 GO
 ~~START~~
 int
-91
+5
 ~~END~~
 
 select test_int2_numeric_f12();
 GO
 ~~START~~
 int
-121
+6
 ~~END~~
 
 select test_int2_numeric_f13();
 GO
 ~~START~~
 int
-121
+6
 ~~END~~
 
 select test_int2_numeric_f14();
@@ -1387,63 +1387,63 @@ select test_int2_numeric_f16();
 GO
 ~~START~~
 int
-999816
+32763
 ~~END~~
 
 select test_int2_numeric_f17();
 GO
 ~~START~~
 int
-999816
+32763
 ~~END~~
 
 select test_int2_numeric_f18();
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select test_int2_numeric_f19();
 GO
 ~~START~~
 int
-999756
+32759
 ~~END~~
 
 select test_int2_numeric_f20();
 GO
 ~~START~~
 int
-31
+1
 ~~END~~
 
 select test_int2_numeric_f21();
 GO
 ~~START~~
 int
-31
+1
 ~~END~~
 
 select test_int2_numeric_f22();
 GO
 ~~START~~
 int
-31
+1
 ~~END~~
 
 select test_int2_numeric_f23();
 GO
 ~~START~~
 int
-999971
+32768
 ~~END~~
 
 select test_int2_numeric_f24();
 GO
 ~~START~~
 int
-155
+5
 ~~END~~
 
 select test_int2_numeric_f25();
@@ -1457,21 +1457,21 @@ select test_int2_numeric_f26();
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select test_int2_numeric_f27();
 GO
 ~~START~~
 int
-91
+5
 ~~END~~
 
 select test_int2_numeric_f28();
 GO
 ~~START~~
 int
-121
+6
 ~~END~~
 
 select test_int2_numeric_f29();
@@ -1485,21 +1485,21 @@ select test_int2_numeric_f30();
 GO
 ~~START~~
 int
-999816
+32763
 ~~END~~
 
 select test_int2_numeric_f31();
 GO
 ~~START~~
 int
-186
+6
 ~~END~~
 
 select test_int2_numeric_f32();
 GO
 ~~START~~
 int
-999756
+32759
 ~~END~~
 
 

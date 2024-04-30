@@ -3,7 +3,7 @@ create table test_int2_numeric_vu(a smallint);
 GO
 
 -- insert 1M rows of data
-INSERT INTO test_int2_numeric_vu (a) SELECT generate_series(1, 1000000) % 32767;
+INSERT INTO test_int2_numeric_vu (a) SELECT generate_series(1, 32767);
 GO
 
 INSERT INTO test_int2_numeric_vu VALUES (NULL), (-32768), (32767);
