@@ -16,6 +16,10 @@ GO
 GO
 
 -- tsql
+create procedure test_int8_numeric_p0 as
+select count(*) from test_int8_numeric_vu where a = 1.0;
+GO
+
 create procedure test_int8_numeric_p1 as
 select count(*) from test_int8_numeric_vu where a IS NULL;
 GO
@@ -161,6 +165,10 @@ GO
 GO
 
 -- tsql
+create view test_int8_numeric_v0 as
+select count(*) from test_int8_numeric_vu where a = 1.0;
+GO
+
 create view test_int8_numeric_v1 as
 select count(*) from test_int8_numeric_vu where a IS NULL;
 GO
@@ -306,6 +314,10 @@ GO
 GO
 
 -- tsql
+create function test_int8_numeric_f0() returns int as
+begin return (select count(*) from test_int8_numeric_vu where a = 1.0) end;
+GO
+
 create function test_int8_numeric_f1() returns int as
 begin return (select count(*) from test_int8_numeric_vu where a IS NULL) end;
 GO

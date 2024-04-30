@@ -467,7 +467,7 @@ create table test_int2_numeric_t1(
     c smallint,
     d smallint,
     e smallint,
-    f smallint,
+    f numeric,
     check (a = f),
     check (b < f),
     check (c <= f),
