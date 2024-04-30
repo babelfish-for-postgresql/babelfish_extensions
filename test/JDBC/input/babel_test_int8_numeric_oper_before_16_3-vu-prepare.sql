@@ -170,6 +170,10 @@ create view test_int8_numeric_v0 as
 select count(*) from test_int8_numeric_vu where a = 1.0;
 GO
 
+create view test_int8_numeric_v00 as
+select count(*) from test_int8_numeric_vu where 1.0 = a;
+GO
+
 create view test_int8_numeric_v1 as
 select count(*) from test_int8_numeric_vu where a IS NULL;
 GO
@@ -317,6 +321,10 @@ GO
 -- tsql
 create function test_int8_numeric_f0() returns int as
 begin return (select count(*) from test_int8_numeric_vu where a = 1.0) end;
+GO
+
+create function test_int8_numeric_f00() returns int as
+begin return (select count(*) from test_int8_numeric_vu where 1.0 = a) end;
 GO
 
 create function test_int8_numeric_f1() returns int as

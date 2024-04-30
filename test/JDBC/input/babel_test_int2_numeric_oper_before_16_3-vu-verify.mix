@@ -154,6 +154,7 @@ GO
 exec test_int2_numeric_p32;
 GO
 
+drop procedure test_int2_numeric_p0;
 drop procedure test_int2_numeric_p00;
 drop procedure test_int2_numeric_p1;
 drop procedure test_int2_numeric_p2;
@@ -201,6 +202,8 @@ SET BABELFISH_SHOWPLAN_ALL on
 GO
 
 select * from test_int2_numeric_v0;
+GO
+select * from test_int2_numeric_v00;
 GO
 select * from test_int2_numeric_v1;
 GO
@@ -271,6 +274,8 @@ SET BABELFISH_SHOWPLAN_ALL off
 GO
 
 select * from test_int2_numeric_v0;
+GO
+select * from test_int2_numeric_v00;
 GO
 select * from test_int2_numeric_v1;
 GO
@@ -338,6 +343,7 @@ select * from test_int2_numeric_v32;
 GO
 
 drop view test_int2_numeric_v0;
+drop view test_int2_numeric_v00;
 drop view test_int2_numeric_v1;
 drop view test_int2_numeric_v2;
 drop view test_int2_numeric_v3;
@@ -384,6 +390,8 @@ SET BABELFISH_SHOWPLAN_ALL off
 GO
 
 select test_int2_numeric_f0();
+GO
+select test_int2_numeric_f00();
 GO
 select test_int2_numeric_f1();
 GO
@@ -451,6 +459,7 @@ select test_int2_numeric_f32();
 GO
 
 drop function test_int2_numeric_f0();
+drop function test_int2_numeric_f00();
 drop function test_int2_numeric_f1();
 drop function test_int2_numeric_f2();
 drop function test_int2_numeric_f3();

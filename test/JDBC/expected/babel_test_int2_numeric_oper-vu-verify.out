@@ -39,6 +39,17 @@ Query Text: EXEC test_int2_numeric_p0
               Index Cond: (a = 1.0)
 ~~END~~
 
+exec test_int2_numeric_p00;
+GO
+~~START~~
+text
+Query Text: EXEC test_int2_numeric_p00
+  Query Text: select count(*) from test_int2_numeric_vu where 1.0 = a
+  ->  Aggregate
+        ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+              Index Cond: (a = 1.0)
+~~END~~
+
 exec test_int2_numeric_p1;
 GO
 ~~START~~
@@ -401,6 +412,13 @@ int
 1
 ~~END~~
 
+exec test_int2_numeric_p00;
+GO
+~~START~~
+int
+1
+~~END~~
+
 exec test_int2_numeric_p1;
 GO
 ~~START~~
@@ -627,6 +645,7 @@ int
 
 
 drop procedure test_int2_numeric_p0;
+drop procedure test_int2_numeric_p00;
 drop procedure test_int2_numeric_p1;
 drop procedure test_int2_numeric_p2;
 drop procedure test_int2_numeric_p3;
@@ -692,6 +711,16 @@ GO
 ~~START~~
 text
 Query Text: select * from test_int2_numeric_v0
+Aggregate
+  ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
+        Index Cond: (a = 1.0)
+~~END~~
+
+select * from test_int2_numeric_v00;
+GO
+~~START~~
+text
+Query Text: select * from test_int2_numeric_v00
 Aggregate
   ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
         Index Cond: (a = 1.0)
@@ -1028,6 +1057,13 @@ int
 1
 ~~END~~
 
+select * from test_int2_numeric_v00;
+GO
+~~START~~
+int
+1
+~~END~~
+
 select * from test_int2_numeric_v1;
 GO
 ~~START~~
@@ -1254,6 +1290,7 @@ int
 
 
 drop view test_int2_numeric_v0;
+drop view test_int2_numeric_v00;
 drop view test_int2_numeric_v1;
 drop view test_int2_numeric_v2;
 drop view test_int2_numeric_v3;
@@ -1315,6 +1352,13 @@ SET BABELFISH_SHOWPLAN_ALL off
 GO
 
 select test_int2_numeric_f0();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select test_int2_numeric_f00();
 GO
 ~~START~~
 int
@@ -1547,6 +1591,7 @@ int
 
 
 drop function test_int2_numeric_f0();
+drop function test_int2_numeric_f00();
 drop function test_int2_numeric_f1();
 drop function test_int2_numeric_f2();
 drop function test_int2_numeric_f3();
