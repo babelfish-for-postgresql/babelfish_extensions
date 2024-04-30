@@ -257,6 +257,16 @@ ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-cleanup
 ignore#!#BABEL-4279-vu-prepare
 ignore#!#BABEL-4279-vu-verify
 ignore#!#BABEL-4279-vu-cleanup
+
+ignore#!#babel_test_int4_numeric_oper_before_16_3-vu-prepare
+ignore#!#babel_test_int4_numeric_oper_before_16_3-vu-verify
+
+ignore#!#babel_test_int8_numeric_oper_before_16_3-vu-prepare
+ignore#!#babel_test_int8_numeric_oper_before_16_3-vu-verify
+
+ignore#!#babel_test_int2_numeric_oper_before_16_3-vu-prepare
+ignore#!#babel_test_int2_numeric_oper_before_16_3-vu-verify
+
 ignore#!#Test_alter_db_rename-vu-prepare
 ignore#!#Test_alter_db_rename-vu-verify
 ignore#!#Test_alter_db_rename-vu-cleanup
