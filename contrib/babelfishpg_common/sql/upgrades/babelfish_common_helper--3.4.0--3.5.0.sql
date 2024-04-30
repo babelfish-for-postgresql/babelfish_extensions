@@ -7,6 +7,9 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+ALTER FUNCTION sys.newid() VOLATILE;
+ALTER FUNCTION sys.NEWSEQUENTIALID() VOLATILE;
+
 -- Operators between int4 and numeric 
 -- create support function for int4 and numeric comparison
 CREATE OR REPLACE FUNCTION sys.int4_numeric_cmp (int4, numeric)
