@@ -167,8 +167,10 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM TestNewId WHERE uuid=NEWID()
-Seq Scan on testnewid
-  Filter: (uuid = newid())
+Gather
+  Workers Planned: 2
+  ->  Parallel Seq Scan on testnewid
+        Filter: (uuid = newid())
 ~~END~~
 
 
@@ -203,8 +205,10 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM TestNewId WHERE uuid=NEWID()
-Seq Scan on testnewid
-  Filter: (uuid = newid())
+Gather
+  Workers Planned: 2
+  ->  Parallel Seq Scan on testnewid
+        Filter: (uuid = newid())
 ~~END~~
 
 
