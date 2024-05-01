@@ -29,6 +29,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_default_acl.h"
+#include "catalog/pg_shdepend.h"
 #include "commands/createas.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
@@ -138,7 +139,7 @@ static void call_prev_ProcessUtility(PlannedStmt *pstmt,
 						 QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc);
-static void pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl acl);
+static void pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -2383,7 +2384,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (!isSameProc) /* i.e. different signature */
 						RemoveFunctionById(oldoid);
 					address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
-					pg_proc_update_oid_acl(address, oldoid, *proacl);
+					pg_proc_update_oid_acl(address, oldoid, proacl);
 					/* Update function/procedure related metadata in babelfish catalog */
 					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
 					if (!isSameProc) {
@@ -2396,6 +2397,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					/* Clean up table entries for the create function statement */
 					deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
 					deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
+					deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
 					CommitTransactionCommand();
 				}
 				PG_FINALLY();
@@ -3972,6 +3974,8 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 	bool				isnull;
 	Oid					schemaOid, funcOid;
 
+	MemoryContext oldMemoryContext = CurrentMemoryContext;
+
 	/* Look up the proc */
 	schemaOid = QualifiedNameGetCreationNamespace(stmt->func->objname, &funcname);
 
@@ -3993,7 +3997,9 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 
 	/* exactly one existing procedure with the given name found, retrieve its oid and acl */
 	*oid = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
-	*acl = DatumGetAclPCopy(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 2, &isnull));
+
+	MemoryContextSwitchTo(oldMemoryContext);
+	*acl = aclcopy(DatumGetAclP(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 2, &isnull)));
 
 	if ((spi_rc = SPI_finish()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed in pltsql_proc_get_oid_proname_proacl with return code %d", spi_rc);
@@ -4010,7 +4016,7 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
  * Update the oid and acl of a pg_proc entry given its address
  */
 static void
-pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl acl)
+pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
 {
 	Relation		rel;
 	HeapTuple		proctup;
@@ -4049,6 +4055,8 @@ pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl acl)
 	memset(replaces, 0, sizeof(replaces));
 	values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(oid);
 	replaces[Anum_pg_proc_oid - 1] = true;
+	values[Anum_pg_proc_proacl - 1] = PointerGetDatum(acl);
+	replaces[Anum_pg_proc_proacl - 1] = true;
 
 	newtup = heap_modify_tuple(proctup, RelationGetDescr(rel), values, nulls, replaces);
 	CatalogTupleUpdate(rel, &newtup->t_self, newtup);

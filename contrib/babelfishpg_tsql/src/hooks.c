@@ -3261,7 +3261,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 				proctup,
 				oldtup;
 	Form_pg_proc form_proctup;
-	NameData   *schema_name_NameData;
+	NameData   *schema_name_NameData, *objname_data;
 	char	   *physical_schemaname;
 	char	   *func_signature;
 	char	   *original_name = NULL;
@@ -3271,6 +3271,8 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	uint64		flag_values = 0,
 				flag_validity = 0;
 	char	   *original_query = get_original_query_string();
+	ScanKeyData		key[2];
+	TableScanDesc	tblscan;
 
 	/* Disallow extended catalog lookup during restore */
 	if (babelfish_dump_restore)
@@ -3405,7 +3407,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	new_record[Anum_bbf_function_ext_flag_validity - 1] = UInt64GetDatum(flag_validity);
 	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
-		new_record_replaces[Anum_bbf_function_ext_create_date - 1] = false; // never overwrite create date
+	new_record_replaces[Anum_bbf_function_ext_create_date - 1] = false; // never overwrite create date
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 
 	/*
@@ -3417,7 +3419,22 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		new_record_nulls[Anum_bbf_function_ext_definition - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
-	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
+	ScanKeyInit(&key[0],
+				Anum_bbf_function_ext_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(schema_name_NameData));
+	objname_data = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(objname_data->data, NAMEDATALEN, "%s", NameStr(form_proctup->proname));
+	ScanKeyInit(&key[1],
+				Anum_bbf_function_ext_funcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(objname_data));
+	
+	// scan
+	tblscan = table_beginscan_catalog(bbf_function_ext_rel, 2, key);
+
+	// get the scan result -> original tuple
+	oldtup = heap_getnext(tblscan, ForwardScanDirection);
 
 	if (HeapTupleIsValid(oldtup))
 	{
@@ -3425,8 +3442,6 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 								  new_record, new_record_nulls,
 								  new_record_replaces);
 		CatalogTupleUpdate(bbf_function_ext_rel, &tuple->t_self, tuple);
-
-		ReleaseSysCache(oldtup);
 	}
 	else
 	{

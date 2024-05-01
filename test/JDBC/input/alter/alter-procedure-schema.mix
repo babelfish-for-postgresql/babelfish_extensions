@@ -1,5 +1,35 @@
+-- psql currentSchema=master_dbo,public
+-- Test showing error in case we define multiple procs with same name in psql,
+-- then alter in tsql
+create procedure psql_proc_p1()
+LANGUAGE SQL
+as $$
+    select 1
+$$;
+go
+
+create procedure psql_proc_p1(a integer)
+LANGUAGE SQL
+as $$
+    select a
+$$;
+go
+
 -- tsql
--- First test demonstrating how to alter a function on a schema via login with sysadmin
+alter procedure psql_proc_p1
+as
+    select 5
+go
+
+-- psql currentSchema=master_dbo,public
+drop procedure psql_proc_p1()
+go
+
+drop procedure psql_proc_p1(a integer)
+go
+
+-- tsql
+-- Test demonstrating how to alter a function on a schema via login with sysadmin
 create login alter_proc_l1 with password = '12345678'
 go
 
@@ -64,7 +94,7 @@ go
 drop login alter_proc_l1;
 go
 
--- second test demonstrating how grant alter is not supported yet which is why we need the sysadmin workaround
+-- Test demonstrating how grant alter is not supported yet which is why we need the sysadmin workaround
 create schema alter_proc_schema2
 go
 
@@ -118,4 +148,162 @@ go
 
 -- tsql 
 drop login alter_proc_l2;
+go
+
+-- Test creating two different procedures on same schema
+-- tsql
+create login alter_proc_l3 with password = '12345678'
+go
+
+ALTER ROLE sysadmin ADD MEMBER alter_proc_l3
+GO
+
+-- tsql user=alter_proc_l3 password=12345678
+create database alter_proc_db2
+go
+
+use alter_proc_db2
+go
+
+create schema alter_proc_schema3
+go
+
+create proc alter_proc_schema3.p1 @l int as select (@l * 100);
+go
+
+create proc alter_proc_schema3.p2 as select 5;
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_proc_schema3' collate sys.database_default order by object_name;
+go
+
+-- tsql user=alter_proc_l3 password=12345678
+exec alter_proc_schema3.p1 @l = 1
+go
+
+alter procedure alter_proc_schema3.p1 @l int as select (@l + 2);
+go
+
+alter procedure alter_proc_schema3.p2 @param int as select @param
+go
+
+exec alter_proc_schema3.p1 @l = 1
+go
+
+exec alter_proc_schema3.p2 @param = 200
+go
+
+drop proc alter_proc_schema3.p1
+go
+
+drop proc alter_proc_schema3.p2
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_proc_schema3' collate sys.database_default order by object_name;
+go
+
+-- tsql user=alter_proc_l3 password=12345678
+drop schema alter_proc_schema3;
+go
+
+use master
+go
+
+drop database alter_proc_db2
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'alter_proc_l3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql 
+drop login alter_proc_l3;
+go
+
+-- Test creating two of the same procedures on different schemas
+-- tsql
+create login alter_proc_l4 with password = '12345678'
+go
+
+ALTER ROLE sysadmin ADD MEMBER alter_proc_l4
+GO
+
+-- tsql user=alter_proc_l4 password=12345678
+create database alter_proc_db3
+go
+
+use alter_proc_db3
+go
+
+create schema alter_proc_schema4
+go
+
+create schema alter_proc_schema5
+go
+
+create proc alter_proc_schema4.p1 @l int as select @l;
+go
+
+create proc alter_proc_schema5.p1 @l int as select @l;
+go
+
+-- tsql user=alter_proc_l4 password=12345678
+
+exec alter_proc_schema4.p1 @l = 10
+go
+
+exec alter_proc_schema5.p1 @l = 10
+go
+
+alter proc alter_proc_schema4.p1 @z nvarchar(10) as select @z
+go
+
+alter proc alter_proc_schema5.p1 @z nvarchar(10) as select @z
+go
+
+exec alter_proc_schema4.p1 @z = 'test'
+go
+
+exec alter_proc_schema5.p1 @z = 'test'
+go
+
+drop proc alter_proc_schema4.p1
+go
+
+drop proc alter_proc_schema5.p1
+go
+
+-- tsql user=alter_proc_l4 password=12345678
+drop schema alter_proc_schema4;
+go
+
+drop schema alter_proc_schema5;
+go
+
+use master
+go
+
+drop database alter_proc_db3
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'alter_proc_l4' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql 
+drop login alter_proc_l4;
 go

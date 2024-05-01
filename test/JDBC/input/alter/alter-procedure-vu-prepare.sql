@@ -10,13 +10,18 @@ AS
     select * from alter_proc_users
 GO
 
--- Expect error for procedure with same name
-CREATE PROCEDURE alter_proc_p1 @param1 int
-AS
-    select * from alter_proc_orders
-GO
-
 create procedure alter_proc_p2
 AS
     exec alter_proc_p1
+go
+
+create procedure alter_proc_p3 as select 1
+go
+
+create function alter_proc_f1() 
+returns int
+AS BEGIN
+    return 1
+END
+
 go
