@@ -153,6 +153,7 @@ insteadof_nested_trigger_inside_proc
 insteadof_nested_trigger_with_dml
 nested_trigger_inside_proc
 nested_trigger_with_dml
+newid_before_14_12_or_15_7_or_16_3
 triggers_with_transaction
 Test-sp_addrole
 Test-sp_addrolemember

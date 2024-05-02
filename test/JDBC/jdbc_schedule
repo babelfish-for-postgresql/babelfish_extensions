@@ -163,3 +163,11 @@ ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-cleanup
 ignore#!#BABEL-4279-vu-prepare
 ignore#!#BABEL-4279-vu-verify
 ignore#!#BABEL-4279-vu-cleanup
+
+ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-prepare
+ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-verify
+ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-cleanup
+ignore#!#newid_before_14_7_or_15_2-vu-prepare
+ignore#!#newid_before_14_7_or_15_2-vu-verify
+ignore#!#newid_before_14_7_or_15_2-vu-cleanup
+
