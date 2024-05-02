@@ -96,6 +96,35 @@ INSERT INTO test_like_for_AI_prepare_t13_2_ci VALUES
   (null);
 GO
 
+-- TESTS FOR COLUMN LEVEL CONSTRAINTS
+-- Create the employee table with the computed column and check constraint
+CREATE TABLE test_like_for_AI_prepare_employee_CI_AI (
+    id INT PRIMARY KEY,
+    name NVARCHAR(MAX) COLLATE Latin1_General_CI_AI,
+    CONSTRAINT check_name_starts_with_a 
+        CHECK (name COLLATE Latin1_General_CI_AI LIKE 'A%')
+);
+GO
+
+-- Test the constraint
+-- This insert will succeed
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (1, 'Adam');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (2, 'ådAm');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (3, 'ädam');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (4, 'adam');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (5, 'ædam');
+GO
+
+-- This insert will fail due to the check constraint
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (6, 'Bob');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (7, 'ôob');
+GO
+
 ------------------- CS_AI ----------------------
 CREATE TABLE test_like_for_AI_prepare_t1_cs (
     col NVARCHAR(50) COLLATE Latin1_General_CS_AI,
@@ -235,6 +264,39 @@ VALUES
 ,('My[valid]String')
 ,(null);
 
+GO
+
+-- TESTS FOR COLUMN LEVEL CONSTRAINTS
+-- Create the employee table with the computed column and check constraint
+CREATE TABLE test_like_for_AI_prepare_employee_CS_AI (
+    id INT PRIMARY KEY,
+    name NVARCHAR(MAX) COLLATE Latin1_General_CS_AI,
+    CONSTRAINT check_name_starts_with_a 
+        CHECK (name COLLATE Latin1_General_CS_AI LIKE 'A%')
+);
+GO
+
+-- Test the constraint
+-- This insert will succeed
+INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (1, 'Adam');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (10, 'Ądam');
+GO
+
+-- these will fail - CS_AI
+INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (2, 'ådAm');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (3, 'ädam');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (4, 'adam');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (5, 'ædam');
+GO
+
+-- This insert will fail due to the check constraint
+INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (6, 'Bob');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (7, 'ôob');
 GO
 
 

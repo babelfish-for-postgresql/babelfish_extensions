@@ -2256,6 +2256,19 @@ TEññiȘ#!#No Match
 ~~END~~
 
 
+-- CASE 21: COLUMN LEVEL CONSTRAINT
+SELECT * FROM test_like_for_AI_prepare_employee_CI_AI;
+GO
+~~START~~
+int#!#nvarchar
+1#!#Adam
+2#!#ådAm
+3#!#ädam
+4#!#adam
+5#!#ædam
+~~END~~
+
+
 
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -4405,6 +4418,16 @@ película#!#Match
 canapé#!#No Match
 chaptéR#!#No Match
 TEññiȘ#!#No Match
+~~END~~
+
+
+-- CASE 21: COLUMN LEVEL CONSTRAINT
+SELECT * FROM test_like_for_AI_prepare_employee_CS_AI;
+GO
+~~START~~
+int#!#nvarchar
+1#!#Adam
+10#!#Ądam
 ~~END~~
 
 
