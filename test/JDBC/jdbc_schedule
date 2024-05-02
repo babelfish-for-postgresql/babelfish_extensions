@@ -240,8 +240,20 @@ ignore#!#BABEL-3147-before-16_3-or-15_7-or-14_12-vu-cleanup
 ignore#!#BABEL-4863-before-16_3-or-15_7-or-14_12-vu-prepare
 ignore#!#BABEL-4863-before-16_3-or-15_7-or-14_12-vu-verify
 ignore#!#BABEL-4863-before-16_3-or-15_7-or-14_12-vu-cleanup
+ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-prepare
+ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-verify
+ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-cleanup
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
 ignore#!#BABEL-4279-vu-verify
 ignore#!#BABEL-4279-vu-cleanup
+
+ignore#!#babel_test_int4_numeric_oper_before_16_3_or_15_7-vu-prepare
+ignore#!#babel_test_int4_numeric_oper_before_16_3_or_15_7-vu-verify
+
+ignore#!#babel_test_int8_numeric_oper_before_16_3_or_15_7-vu-prepare
+ignore#!#babel_test_int8_numeric_oper_before_16_3_or_15_7-vu-verify
+
+ignore#!#babel_test_int2_numeric_oper_before_16_3_or_15_7-vu-prepare
+ignore#!#babel_test_int2_numeric_oper_before_16_3_or_15_7-vu-verify
