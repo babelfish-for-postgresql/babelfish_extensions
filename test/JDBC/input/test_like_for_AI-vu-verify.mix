@@ -794,6 +794,10 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 
+-- CASE 21: COLUMN LEVEL CONSTRAINT
+SELECT * FROM test_like_for_AI_prepare_employee_CI_AI;
+GO
+
 
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -1585,6 +1589,10 @@ SELECT col,
            ELSE 'No Match' 
        END AS extracted_substring
 FROM test_like_for_AI_prepare_t1_ci;
+GO
+
+-- CASE 21: COLUMN LEVEL CONSTRAINT
+SELECT * FROM test_like_for_AI_prepare_employee_CS_AI;
 GO
 
 --- ADDITIONAL CORNER CASE TESTING ---
