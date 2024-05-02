@@ -1,3 +1,8 @@
+-- enable FULLTEXT
+-- tsql user=jdbc_user password=12345678
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+
 DROP FULLTEXT INDEX ON [fts.test].[table.test];
 GO
 
@@ -86,4 +91,8 @@ USE master;
 GO
 
 DROP DATABASE IF EXISTS "fts_test .db";
+GO
+
+-- disable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
