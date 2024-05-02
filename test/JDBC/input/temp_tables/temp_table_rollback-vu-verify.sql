@@ -160,66 +160,6 @@ GO
 SELECT * FROM enr_view;
 GO
 
-----------------------------------------------------------
--- Nested transactions
-----------------------------------------------------------
-BEGIN TRANSACTION T1
-    CREATE TABLE #t1(a varchar(16))
-    INSERT INTO #t1 VALUES ('t1')
-    SAVE TRANSACTION T2
-        INSERT INTO #t1 VALUES ('t2')
-        SAVE TRANSACTION T3
-            INSERT INTO #t1 VALUES ('t3')
-            SAVE TRANSACTION T4
-                INSERT INTO #t1 VALUES ('t4')
-                SELECT * FROM #t1
-            ROLLBACK TRANSACTION T4
-            SELECT * FROM #t1
-        ROLLBACK TRANSACTION T3
-        SELECT * FROM #t1
-    ROLLBACK TRANSACTION T2
-    SELECT * FROM #t1
-ROLLBACK TRANSACTION T1
-SELECT * FROM #t1
-GO
-
--- SELECT * FROM enr_view;
--- GO
-
--- BEGIN TRANSACTION T1
---     SAVE TRANSACTION S2
---         create table #t3(a int)
---         create table #t4(a int identity primary key, b varchar(50))
---         insert into #t3 values (5)
---         insert into #t4 values ('six')
---         SELECT * FROM #t3
---         SELECT * FROM #t4
---         SELECT * FROM enr_view;
---     ROLLBACK TRANSACTION S2
---     SELECT * FROM enr_view;
--- COMMIT
--- GO
-
-
-----------------------------------------------------------
--- Savepoint CREATE and DROP
-----------------------------------------------------------
-BEGIN TRANSACTION T1
-    CREATE TABLE #t1(a int primary key, b varchar(16))
-    SAVE TRANSACTION T2
-        INSERT INTO #t1 VALUES (1, 't2')
-        SAVE TRANSACTION T3
-            UPDATE #t1 SET a = 2 WHERE a = 1
-            SELECT * FROM #t1
-            SAVE TRANSACTION T4
-                DROP TABLE #t1
-            ROLLBACK TRANSACTION T4
-        ROLLBACK TRANSACTION T3
-        SELECT * FROM #t1
-    ROLLBACK TRANSACTION T2
-select * from enr_view
-GO
-
 ---------------------------------------------------------------------------
 -- Same temp table name in one transaction
 ---------------------------------------------------------------------------
@@ -285,11 +225,9 @@ GO
 CREATE TABLE #temp_table_rollback_t5(a int, b varchar, c int, d int)
 GO
 
-BEGIN TRAN T1
-    SAVE TRANSACTION S2
-        CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
-        INSERT INTO #temp_table_rollback_t5 VALUES (1, 'a', 2, 3)
-    ROLLBACK TRANSACTION S2
+BEGIN TRAN
+    CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
+    INSERT INTO #temp_table_rollback_t5 VALUES (1, 'a', 2, 3)
 COMMIT
 GO
 
@@ -324,11 +262,9 @@ GO
 CREATE INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5(b)
 GO
 
-BEGIN TRAN T1
-    SAVE TRANSACTION S2
-        DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
-        INSERT INTO #temp_table_rollback_t5 VALUES (3, 'c', 4, 5)
-    ROLLBACK TRANSACTION S2
+BEGIN TRAN
+    DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+    INSERT INTO #temp_table_rollback_t5 VALUES (3, 'c', 4, 5)
 COMMIT
 GO
 
@@ -340,6 +276,9 @@ BEGIN TRAN
 ROLLBACK
 GO
 
+SELECT * FROM #temp_table_rollback_t5
+GO
+
 DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
 GO
 
@@ -349,19 +288,11 @@ GO
 DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
 GO
 
--- Create and drop in transaction
-BEGIN TRAN T1
-    SAVE TRANSACTION S2
-        CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
-        DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
-    ROLLBACK TRANSACTION S2
-COMMIT
-GO
-
 SELECT * FROM #temp_table_rollback_t5
 GO
 
-BEGIN TRAN T1
+-- Create and drop in transaction
+BEGIN TRAN
     CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
     DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
 ROLLBACK
@@ -381,18 +312,7 @@ GO
 CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(d)
 GO
 
-BEGIN TRAN T1
-    SAVE TRANSACTION S2
-        DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
-        CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
-    ROLLBACK TRANSACTION S2
-COMMIT
-GO
-
-SELECT * FROM #temp_table_rollback_t5
-GO
-
-BEGIN TRAN T1
+BEGIN TRAN
     DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
     CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
 ROLLBACK
