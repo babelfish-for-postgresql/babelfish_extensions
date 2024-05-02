@@ -53,9 +53,9 @@ BABELFISH
 -- Expect an error
 INSERT INTO dbo.test_table1 (test_id, test_col1) VALUES (2, 10);
 go
-~~ERROR (Code: 156008580)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot insert into column "test_id")~~
+~~ERROR (Message: cannot insert a non-DEFAULT value into column "test_id")~~
 
 
 SET IDENTITY_INSERT dbo.test_table1 ON;
@@ -109,9 +109,9 @@ int#!#int
 -- Expect an error. Verify IDENTITY_INSERT set off
 INSERT INTO dbo.test_table1 (test_id, test_col1) VALUES (2, 10);
 go
-~~ERROR (Code: 156008580)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot insert into column "test_id")~~
+~~ERROR (Message: cannot insert a non-DEFAULT value into column "test_id")~~
 
 
 -- Set to table then drop it. Should implicitly turn IDENTITY_INSERT off
@@ -127,29 +127,29 @@ go
 -- Try to insert. Expect an error. Same name but different OID
 INSERT INTO dbo.test_table1 (test_id, test_col1) VALUES (2, 10);
 go
-~~ERROR (Code: 156008580)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot insert into column "test_id")~~
+~~ERROR (Message: cannot insert a non-DEFAULT value into column "test_id")~~
 
 
 -- Expect errors
 SET IDENTITY_INSERT test_table2 ON;
 go
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "test_table2" does not exist)~~
 
 SET IDENTITY_INSERT fake_schema.test_table1 ON;
 go
-~~ERROR (Code: 1411)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "fake_schema" does not exist)~~
+~~ERROR (Message: schema "master_fake_schema" does not exist)~~
 
 SET IDENTITY_INSERT fake_db.dbo.test_table1 ON;
 go
-~~ERROR (Code: 1088)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cross-database references are not implemented: "fake_db.dbo.test_table1")~~
+~~ERROR (Message: cross-database references are not implemented: "fake_db.master_dbo.test_table1")~~
 
 
 CREATE TABLE dbo.test_table2 (test_id INT IDENTITY(7,2), test_col1 INT);
@@ -160,9 +160,9 @@ SET IDENTITY_INSERT dbo.test_table1 ON;
 go
 SET IDENTITY_INSERT dbo.test_table2 ON;
 go
-~~ERROR (Code: 16777410)~~
+~~ERROR (Code: 8107)~~
 
-~~ERROR (Message: IDENTITY_INSERT is already ON for table 'jdbc_testdb.dbo.test_table1')~~
+~~ERROR (Message: IDENTITY_INSERT is already ON for table 'jdbc_testdb.master_dbo.test_table1')~~
 
 SET IDENTITY_INSERT dbo.test_table1 OFF;
 go
@@ -204,9 +204,9 @@ go
 
 SET IDENTITY_INSERT dbo.test_table3 ON;
 go
-~~ERROR (Code: 50360452)~~
+~~ERROR (Code: 8106)~~
 
-~~ERROR (Message: Table 'dbo.test_table3' does not have the identity property. Cannot perform SET operation.)~~
+~~ERROR (Message: Table 'master_dbo.test_table3' does not have the identity property. Cannot perform SET operation.)~~
 
 
 -- Test INSERT with default target list that omits identity columns
@@ -256,14 +256,14 @@ numeric
 -- Expect Errors. Cannot insert without explicit identity column value
 INSERT INTO employees VALUES (N'Michael', N'Collins', 11236.9898);
 go
-~~ERROR (Code: 50360452)~~
+~~ERROR (Code: 545)~~
 
 ~~ERROR (Message: Explicit value must be specified for identity column in table 'employees' when IDENTITY_INSERT is set to ON)~~
 
 
 INSERT INTO employees (firstname, lastname, salary) VALUES (N'Michael', N'Collins', 11236.9898);
 go
-~~ERROR (Code: 50360452)~~
+~~ERROR (Code: 545)~~
 
 ~~ERROR (Message: Explicit value must be specified for identity column in table 'employees' when IDENTITY_INSERT is set to ON)~~
 
@@ -323,7 +323,7 @@ go
 -- Expect error. Insert restriction
 EXEC insert_test_table_c_default 30;
 go
-~~ERROR (Code: 50360452)~~
+~~ERROR (Code: 545)~~
 
 ~~ERROR (Message: Explicit value must be specified for identity column in table 'test_table1' when IDENTITY_INSERT is set to ON)~~
 
@@ -758,7 +758,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE id = scope_identity()
 Index Scan using test_id_index_pkey on test_id_index
-  Index Cond: (id = babelfish_get_last_identity())
+  Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -768,7 +768,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE scope_identity() = id
 Index Scan using test_id_index_pkey on test_id_index
-  Index Cond: (id = babelfish_get_last_identity())
+  Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -778,7 +778,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE id = @@identity
 Index Scan using test_id_index_pkey on test_id_index
-  Index Cond: (id = babelfish_get_last_identity())
+  Index Cond: (id = ((babelfish_get_last_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -788,7 +788,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE dbo.test_id_index.id = scope_identity()
 Index Scan using test_id_index_pkey on test_id_index
-  Index Cond: (id = babelfish_get_last_identity())
+  Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -798,9 +798,9 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE id > scope_identity()
 Bitmap Heap Scan on test_id_index
-  Recheck Cond: (id > babelfish_get_last_identity())
+  Recheck Cond: (id > ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
   ->  Bitmap Index Scan on test_id_index_pkey
-        Index Cond: (id > babelfish_get_last_identity())
+        Index Cond: (id > ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -810,7 +810,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE id != scope_identity()
 Seq Scan on test_id_index
-  Filter: (id <> babelfish_get_last_identity())
+  Filter: (id <> ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -820,9 +820,9 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE @@identity < id
 Bitmap Heap Scan on test_id_index
-  Filter: (babelfish_get_last_identity() < id)
+  Filter: (((babelfish_get_last_identity())::numeric(38,0))::numeric < id)
   ->  Bitmap Index Scan on test_id_index_pkey
-        Index Cond: (id > babelfish_get_last_identity())
+        Index Cond: (id > ((babelfish_get_last_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -832,7 +832,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE mycol = 10 AND id = scope_identity()
 Index Scan using test_id_index_pkey on test_id_index
-  Index Cond: (id = babelfish_get_last_identity())
+  Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
   Filter: (mycol = 10)
 ~~END~~
 
@@ -843,7 +843,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE id <= scope_identity() OR mycol = 11
 Seq Scan on test_id_index
-  Filter: ((id <= babelfish_get_last_identity()) OR (mycol = 11))
+  Filter: ((id <= ((babelfish_get_scope_identity())::numeric(38,0))::numeric) OR (mycol = 11))
 ~~END~~
 
 
@@ -853,7 +853,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index_tinyint WHERE id = scope_identity()
 Index Scan using test_id_index_tinyint_pkey on test_id_index_tinyint
-  Index Cond: (id = babelfish_get_last_identity())
+  Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -863,7 +863,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index_smallint WHERE id = scope_identity()
 Index Scan using test_id_index_smallint_pkey on test_id_index_smallint
-  Index Cond: (id = babelfish_get_last_identity())
+  Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -873,7 +873,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index_bigint WHERE id = scope_identity()
 Index Scan using test_id_index_bigint_pkey on test_id_index_bigint
-  Index Cond: (id = babelfish_get_last_identity())
+  Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -883,7 +883,7 @@ go
 text
 Query Text: SELECT id, mycol FROM dbo.test_id_index_numeric WHERE id = scope_identity()
 Index Scan using test_id_index_numeric_pkey on test_id_index_numeric
-  Index Cond: (id = babelfish_get_last_identity())
+  Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 
@@ -934,3 +934,221 @@ dbo.test_id_index_bigint,
 dbo.test_id_index_numeric,
 dbo.test_numeric_index_no_id
 go
+
+-- testing BABEL-3384 and BABEL-4876
+CREATE TABLE babel_4476_1 (  
+   Z_id  INT IDENTITY(1,1)PRIMARY KEY,  
+   Z_name VARCHAR(20) NOT NULL);
+GO
+  
+INSERT babel_4476_1  
+   VALUES ('Lisa'),('Mike'),('Carla');  
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT * FROM babel_4476_1;
+GO
+~~START~~
+int#!#varchar
+1#!#Lisa
+2#!#Mike
+3#!#Carla
+~~END~~
+
+
+SELECT SCOPE_IDENTITY(); 
+GO
+~~START~~
+numeric
+3
+~~END~~
+
+SELECT @@IDENTITY
+GO
+~~START~~
+numeric
+3
+~~END~~
+
+
+CREATE TABLE babel_4476_2 (  
+   Y_id  INT IDENTITY(100,5)PRIMARY KEY,  
+   Y_name VARCHAR(20) NULL);  
+GO
+
+INSERT babel_4476_2 (Y_name)  
+   VALUES ('boathouse'), ('rocks'), ('elevator'); 
+GO
+~~ROW COUNT: 3~~
+
+  
+SELECT * FROM babel_4476_2; 
+GO
+~~START~~
+int#!#varchar
+100#!#boathouse
+105#!#rocks
+110#!#elevator
+~~END~~
+
+SELECT SCOPE_IDENTITY(); 
+GO
+~~START~~
+numeric
+110
+~~END~~
+
+SELECT @@IDENTITY
+GO
+~~START~~
+numeric
+110
+~~END~~
+
+
+CREATE TRIGGER babel_4476_1_trig 
+ON babel_4476_1 
+FOR INSERT AS   
+   BEGIN 
+   INSERT babel_4476_2 VALUES ('') 
+   END;
+GO
+
+INSERT babel_4476_1 VALUES ('Rosalie'); 
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT SCOPE_IDENTITY(); 
+GO
+~~START~~
+numeric
+4
+~~END~~
+
+SELECT @@IDENTITY
+GO
+~~START~~
+numeric
+115
+~~END~~
+
+
+select * from babel_4476_1 where Z_id = SCOPE_IDENTITY();
+GO
+~~START~~
+int#!#varchar
+4#!#Rosalie
+~~END~~
+
+select * from babel_4476_2 where Y_id = SCOPE_IDENTITY();
+GO
+~~START~~
+int#!#varchar
+~~END~~
+
+select * from babel_4476_2 where Y_id = @@IDENTITY;
+GO
+~~START~~
+int#!#varchar
+115#!#
+~~END~~
+
+
+DROP TRIGGER babel_4476_1_trig;
+GO
+DROP TABLE babel_4476_1;
+GO
+DROP TABLE babel_4476_2;
+GO
+
+CREATE TABLE babel_3384_test (id INT IDENTITY PRIMARY KEY, mycol int)   
+GO
+
+INSERT INTO babel_3384_test (mycol) SELECT generate_series(1, 100000);
+GO
+~~ROW COUNT: 100000~~
+
+
+select scope_identity();
+GO
+~~START~~
+numeric
+100000
+~~END~~
+
+select  @@IDENTITY
+GO
+~~START~~
+numeric
+100000
+~~END~~
+
+
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+select id from babel_3384_test WHERE id = scope_identity()
+GO
+~~START~~
+text
+Query Text: select id from babel_3384_test WHERE id = scope_identity()
+Index Only Scan using babel_3384_test_pkey on babel_3384_test
+  Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
+~~END~~
+
+select id from babel_3384_test WHERE id = @@IDENTITY
+GO
+~~START~~
+text
+Query Text: select id from babel_3384_test WHERE id = @@IDENTITY
+Index Only Scan using babel_3384_test_pkey on babel_3384_test
+  Index Cond: (id = ((babelfish_get_last_identity())::numeric(38,0))::numeric)
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select id from babel_3384_test WHERE id = scope_identity()
+GO
+~~START~~
+int
+100000
+~~END~~
+
+select id from babel_3384_test WHERE id = @@IDENTITY
+GO
+~~START~~
+int
+100000
+~~END~~
+
+
+DROP TABLE babel_3384_test
+GO

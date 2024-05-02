@@ -456,3 +456,104 @@ dbo.test_id_index_bigint,
 dbo.test_id_index_numeric,
 dbo.test_numeric_index_no_id
 go
+
+-- testing BABEL-3384 and BABEL-4876
+CREATE TABLE babel_4476_1 (  
+   Z_id  INT IDENTITY(1,1)PRIMARY KEY,  
+   Z_name VARCHAR(20) NOT NULL);
+GO
+  
+INSERT babel_4476_1  
+   VALUES ('Lisa'),('Mike'),('Carla');  
+GO
+
+SELECT * FROM babel_4476_1;
+GO
+
+SELECT SCOPE_IDENTITY(); 
+GO
+SELECT @@IDENTITY
+GO
+
+CREATE TABLE babel_4476_2 (  
+   Y_id  INT IDENTITY(100,5)PRIMARY KEY,  
+   Y_name VARCHAR(20) NULL);  
+GO
+
+INSERT babel_4476_2 (Y_name)  
+   VALUES ('boathouse'), ('rocks'), ('elevator'); 
+GO
+  
+SELECT * FROM babel_4476_2; 
+GO
+SELECT SCOPE_IDENTITY(); 
+GO
+SELECT @@IDENTITY
+GO
+
+CREATE TRIGGER babel_4476_1_trig 
+ON babel_4476_1 
+FOR INSERT AS   
+   BEGIN 
+   INSERT babel_4476_2 VALUES ('') 
+   END;
+GO
+
+INSERT babel_4476_1 VALUES ('Rosalie'); 
+GO
+
+SELECT SCOPE_IDENTITY(); 
+GO
+SELECT @@IDENTITY
+GO
+
+select * from babel_4476_1 where Z_id = SCOPE_IDENTITY();
+GO
+select * from babel_4476_2 where Y_id = SCOPE_IDENTITY();
+GO
+select * from babel_4476_2 where Y_id = @@IDENTITY;
+GO
+
+DROP TRIGGER babel_4476_1_trig;
+GO
+DROP TABLE babel_4476_1;
+GO
+DROP TABLE babel_4476_2;
+GO
+
+CREATE TABLE babel_3384_test (id INT IDENTITY PRIMARY KEY, mycol int)   
+GO
+
+INSERT INTO babel_3384_test (mycol) SELECT generate_series(1, 100000);
+GO
+
+select scope_identity();
+GO
+select  @@IDENTITY
+GO
+
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+select id from babel_3384_test WHERE id = scope_identity()
+GO
+select id from babel_3384_test WHERE id = @@IDENTITY
+GO
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select id from babel_3384_test WHERE id = scope_identity()
+GO
+select id from babel_3384_test WHERE id = @@IDENTITY
+GO
+
+DROP TABLE babel_3384_test
+GO
