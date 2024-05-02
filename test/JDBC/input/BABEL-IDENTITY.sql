@@ -534,7 +534,7 @@ GO
 
 select set_config('max_parallel_workers_per_gather', '0', false);
 GO
-SELECT set_config('debug_parallel_query', '0', false);
+SELECT set_config('force_parallel_mode', '0', false);
 GO
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 GO
