@@ -168,11 +168,83 @@ GO
 SELECT current_setting('search_path');
 GO
 
+-- Statement terminating error
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+EXEC babel_4877_s.babel_4877_p
+GO
+SELECT 'after error search_path  ----> ', current_setting('search_path');
+GO
+COMMIT
+GO
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+SELECT babel_4877_s.babel_4877_f2();
+GO
+SELECT 'after error search_path  ----> ', current_setting('search_path');
+GO
+COMMIT
+GO
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+
+
+SELECT @@trancount
+GO
+
+
+-- txn aborting error
+CREATE FUNCTION babel_4877_s.babel_4877_f3() RETURNS INT
+AS
+BEGIN
+    RETURN (CAST('a' as INT));
+END
+GO
+
+CREATE PROC babel_4877_s.babel_4877_p2 AS
+    SELECT babel_4877_s.babel_4877_f3()
+GO
+
+-- TXN aborting error
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+EXEC babel_4877_s.babel_4877_p2
+GO
+COMMIT
+GO
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+SELECT babel_4877_s.babel_4877_f3();
+GO
+COMMIT
+GO
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+
+
+SELECT @@trancount
+GO
+
+
 DROP TABLE babel_4877_s.babel_4877_t
 GO
-DROP PROCEDURE babel_4877_s.babel_4877_p
+DROP PROCEDURE babel_4877_s.babel_4877_p, babel_4877_s.babel_4877_p2
 GO
-DROP FUNCTION babel_4877_s.babel_4877_f2
+DROP FUNCTION babel_4877_s.babel_4877_f2, babel_4877_s.babel_4877_f3
 GO
 DROP SCHEMA babel_4877_s
 GO

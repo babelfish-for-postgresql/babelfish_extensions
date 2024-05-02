@@ -294,11 +294,175 @@ master_dbo, "$user", sys, pg_catalog
 ~~END~~
 
 
+-- Statement terminating error
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+EXEC babel_4877_s.babel_4877_p
+GO
+~~START~~
+varchar
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+SELECT 'after error search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after error search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+COMMIT
+GO
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT babel_4877_s.babel_4877_f2();
+GO
+~~START~~
+varchar
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+SELECT 'after error search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after error search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+COMMIT
+GO
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+
+SELECT @@trancount
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- txn aborting error
+CREATE FUNCTION babel_4877_s.babel_4877_f3() RETURNS INT
+AS
+BEGIN
+    RETURN (CAST('a' as INT));
+END
+GO
+
+CREATE PROC babel_4877_s.babel_4877_p2 AS
+    SELECT babel_4877_s.babel_4877_f3()
+GO
+
+-- TXN aborting error
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+EXEC babel_4877_s.babel_4877_p2
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "a")~~
+
+COMMIT
+GO
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT babel_4877_s.babel_4877_f3();
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "a")~~
+
+COMMIT
+GO
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+
+SELECT @@trancount
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
 DROP TABLE babel_4877_s.babel_4877_t
 GO
-DROP PROCEDURE babel_4877_s.babel_4877_p
+DROP PROCEDURE babel_4877_s.babel_4877_p, babel_4877_s.babel_4877_p2
 GO
-DROP FUNCTION babel_4877_s.babel_4877_f2
+DROP FUNCTION babel_4877_s.babel_4877_f2, babel_4877_s.babel_4877_f3
 GO
 DROP SCHEMA babel_4877_s
 GO
