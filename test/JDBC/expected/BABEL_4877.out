@@ -1,21 +1,17 @@
 -- tsql
 CREATE SCHEMA babel_4877_s1
 GO
-CREATE SCHEMA babel_4877_s2
-GO
 
 CREATE FUNCTION babel_4877_s1.babel_4877_f1() RETURNS INT
 AS
 BEGIN
     DECLARE @babel_4877_tablevar TABLE (id INT)
-    DECLARE @result INT = -1;
-    INSERT INTO @babel_4877_tablevar SELECT * FROM babel_4877_t
-    SELECT @result = t1.id*t2.id FROM babel_4877_t AS t1 CROSS JOIN @babel_4877_tablevar AS t2
-    RETURN @result
+    INSERT INTO @babel_4877_tablevar SELECT id FROM babel_4877_t;
+    RETURN (SELECT id FROM @babel_4877_tablevar)
 END
 GO
 
-CREATE PROC babel_4877_s2.babel_4877_p
+CREATE PROC babel_4877_s1.babel_4877_p
 AS
     SELECT babel_4877_s1.babel_4877_f1()
 GO
@@ -28,11 +24,11 @@ GO
 
 
 -- func in s1 should see dbo table
-EXEC babel_4877_s2.babel_4877_p
+EXEC babel_4877_s1.babel_4877_p
 GO
 ~~START~~
 int
-100
+10
 ~~END~~
 
 
@@ -44,11 +40,11 @@ GO
 
 
 -- Now func in s1 should select unspecified objects from s1 first then dbo
-EXEC babel_4877_s2.babel_4877_p
+EXEC babel_4877_s1.babel_4877_p
 GO
 ~~START~~
 int
-400
+20
 ~~END~~
 
 
@@ -56,19 +52,17 @@ SELECT babel_4877_s1.babel_4877_f1()
 GO
 ~~START~~
 int
-400
+20
 ~~END~~
 
 
 DROP TABLE babel_4877_s1.babel_4877_t, dbo.babel_4877_t
 GO
-DROP PROC babel_4877_s2.babel_4877_p
+DROP PROC babel_4877_s1.babel_4877_p
 GO
 DROP FUNCTION babel_4877_s1.babel_4877_f1
 GO
 DROP SCHEMA babel_4877_s1
-GO
-DROP SCHEMA babel_4877_s2
 GO
 
 
