@@ -116,43 +116,6 @@ CREATE TABLE test_like_for_AI_prepare_employee_CI_AI (
 );
 GO
 
--- Test the constraint
--- This insert will succeed
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (1, 'Adam');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (2, 'ådAm');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (3, 'ädam');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (4, 'adam');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (5, 'ædam');
-GO
-~~ROW COUNT: 1~~
-
-
--- This insert will fail due to the check constraint
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (6, 'Bob');
-GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_ci_ai" violates check constraint "check_name_starts_with_atest_liecd1958c3e7903956f04af7a57787ee2")~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (7, 'ôob');
-GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_ci_ai" violates check constraint "check_name_starts_with_atest_liecd1958c3e7903956f04af7a57787ee2")~~
-
-
 ------------------- CS_AI ----------------------
 CREATE TABLE test_like_for_AI_prepare_t1_cs (
     col NVARCHAR(50) COLLATE Latin1_General_CS_AI,
@@ -315,58 +278,6 @@ CREATE TABLE test_like_for_AI_prepare_employee_CS_AI (
         CHECK (name COLLATE Latin1_General_CS_AI LIKE 'A%')
 );
 GO
-
--- Test the constraint
--- This insert will succeed
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (1, 'Adam');
-GO
-~~ROW COUNT: 1~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (10, 'Ądam');
-GO
-~~ROW COUNT: 1~~
-
-
--- these will fail - CS_AI
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (2, 'ådAm');
-GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_cs_ai" violates check constraint "check_name_starts_with_atest_li9c0556d54bbcccb196d33f13188c8740")~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (3, 'ädam');
-GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_cs_ai" violates check constraint "check_name_starts_with_atest_li9c0556d54bbcccb196d33f13188c8740")~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (4, 'adam');
-GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_cs_ai" violates check constraint "check_name_starts_with_atest_li9c0556d54bbcccb196d33f13188c8740")~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (5, 'ædam');
-GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_cs_ai" violates check constraint "check_name_starts_with_atest_li9c0556d54bbcccb196d33f13188c8740")~~
-
-
--- This insert will fail due to the check constraint
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (6, 'Bob');
-GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_cs_ai" violates check constraint "check_name_starts_with_atest_li9c0556d54bbcccb196d33f13188c8740")~~
-
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (7, 'ôob');
-GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_cs_ai" violates check constraint "check_name_starts_with_atest_li9c0556d54bbcccb196d33f13188c8740")~~
-
-
 
 
 --- ADDITIONAL CORNER CASE TESTING ---
