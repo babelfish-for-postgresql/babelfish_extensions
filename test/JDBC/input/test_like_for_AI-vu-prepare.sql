@@ -98,13 +98,13 @@ GO
 
 -- TESTS FOR COLUMN LEVEL CONSTRAINTS
 -- Create the employee table with the computed column and check constraint
--- CREATE TABLE test_like_for_AI_prepare_employee_CI_AI (
---     id INT PRIMARY KEY,
---     name NVARCHAR(MAX) COLLATE Latin1_General_CI_AI,
---     CONSTRAINT check_name_starts_with_a 
---         CHECK (name COLLATE Latin1_General_CI_AI LIKE 'A%')
--- );
--- GO
+CREATE TABLE test_like_for_AI_prepare_employee_CI_AI (
+    id INT PRIMARY KEY,
+    name NVARCHAR(MAX) COLLATE Latin1_General_CI_AI,
+    CONSTRAINT check_name_starts_with_a 
+        CHECK (name COLLATE Latin1_General_CI_AI LIKE 'A%')
+);
+GO
 
 ------------------- CS_AI ----------------------
 CREATE TABLE test_like_for_AI_prepare_t1_cs (

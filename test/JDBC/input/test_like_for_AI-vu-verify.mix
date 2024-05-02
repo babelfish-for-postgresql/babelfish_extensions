@@ -793,28 +793,28 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 
--- -- CASE 21: COLUMN LEVEL CONSTRAINT
--- -- Test the constraint
--- -- This insert will succeed
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (1, 'Adam');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (2, 'ådAm');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (3, 'ädam');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (4, 'adam');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (5, 'ædam');
--- GO
+-- CASE 21: COLUMN LEVEL CONSTRAINT
+-- Test the constraint
+-- This insert will succeed
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (1, 'Adam');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (2, 'ådAm');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (3, 'ädam');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (4, 'adam');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (5, 'ædam');
+GO
 
--- -- This insert will fail due to the check constraint
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (6, 'Bob');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (7, 'ôob');
--- GO
+-- This insert will fail due to the check constraint
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (6, 'Bob');
+GO
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (7, 'ôob');
+GO
 
--- SELECT * FROM test_like_for_AI_prepare_employee_CI_AI;
--- GO
+SELECT * FROM test_like_for_AI_prepare_employee_CI_AI;
+GO
 
 
 ------------------- CS_AI ----------------------

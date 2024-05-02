@@ -2256,30 +2256,57 @@ TEññiȘ#!#No Match
 ~~END~~
 
 
+-- CASE 21: COLUMN LEVEL CONSTRAINT
+-- Test the constraint
+-- This insert will succeed
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (1, 'Adam');
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (2, 'ådAm');
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (3, 'ädam');
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (4, 'adam');
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (5, 'ædam');
+GO
+~~ROW COUNT: 1~~
+
+
+-- This insert will fail due to the check constraint
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (6, 'Bob');
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_ci_ai" violates check constraint "check_name_starts_with_atest_liecd1958c3e7903956f04af7a57787ee2")~~
+
+INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (7, 'ôob');
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_like_for_ai_prepare_employee_ci_ai" violates check constraint "check_name_starts_with_atest_liecd1958c3e7903956f04af7a57787ee2")~~
+
+
+SELECT * FROM test_like_for_AI_prepare_employee_CI_AI;
+GO
+~~START~~
+int#!#nvarchar
+1#!#Adam
+2#!#ådAm
+3#!#ädam
+4#!#adam
+5#!#ædam
+~~END~~
 
 
 
-
--- -- CASE 21: COLUMN LEVEL CONSTRAINT
--- -- Test the constraint
--- -- This insert will succeed
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (1, 'Adam');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (2, 'ådAm');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (3, 'ädam');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (4, 'adam');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (5, 'ædam');
--- GO
--- -- This insert will fail due to the check constraint
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (6, 'Bob');
--- GO
--- INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (7, 'ôob');
--- GO
--- SELECT * FROM test_like_for_AI_prepare_employee_CI_AI;
--- GO
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
 select 1 where 'cantáis' like 'cá%' collate Latin1_General_CS_AI;
