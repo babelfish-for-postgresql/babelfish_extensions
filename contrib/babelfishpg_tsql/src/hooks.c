@@ -3466,6 +3466,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	pfree(func_signature);
 	ReleaseSysCache(proctup);
 	heap_freetuple(tuple);
+	heap_endscan(tblscan);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 
