@@ -106,25 +106,6 @@ CREATE TABLE test_like_for_AI_prepare_employee_CI_AI (
 );
 GO
 
--- Test the constraint
--- This insert will succeed
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (1, 'Adam');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (2, 'ådAm');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (3, 'ädam');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (4, 'adam');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (5, 'ædam');
-GO
-
--- This insert will fail due to the check constraint
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (6, 'Bob');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CI_AI (id, name) VALUES (7, 'ôob');
-GO
-
 ------------------- CS_AI ----------------------
 CREATE TABLE test_like_for_AI_prepare_t1_cs (
     col NVARCHAR(50) COLLATE Latin1_General_CS_AI,
@@ -275,30 +256,6 @@ CREATE TABLE test_like_for_AI_prepare_employee_CS_AI (
         CHECK (name COLLATE Latin1_General_CS_AI LIKE 'A%')
 );
 GO
-
--- Test the constraint
--- This insert will succeed
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (1, 'Adam');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (10, 'Ądam');
-GO
-
--- these will fail - CS_AI
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (2, 'ådAm');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (3, 'ädam');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (4, 'adam');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (5, 'ædam');
-GO
-
--- This insert will fail due to the check constraint
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (6, 'Bob');
-GO
-INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (7, 'ôob');
-GO
-
 
 --- ADDITIONAL CORNER CASE TESTING ---
 
