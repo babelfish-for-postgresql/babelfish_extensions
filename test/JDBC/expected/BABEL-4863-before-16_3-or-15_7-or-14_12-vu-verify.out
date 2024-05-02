@@ -1,0 +1,35 @@
+select babel_4863_func();
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+select * from babel_4863_func1();
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_4863_proc 1;
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+exec babel_4863_proc 2;
+GO
+~~START~~
+int#!#int#!#int
+0#!#0#!#0
+~~END~~
+
+SELECT * FROM babel_4863_view;
+GO
+~~START~~
+int
+1
+~~END~~
+

@@ -134,8 +134,9 @@ static List* replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaul
 static Node* optimize_explicit_cast(ParseState *pstate, Node *node);
 
 static ResTarget* make_restarget_from_cstr_list(List * l);
+static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
+													SortByDir ordering);
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
-
 /*****************************************
  * 			Commands Hooks
  *****************************************/
@@ -188,6 +189,7 @@ extern Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
+static void pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr);
 
 /*****************************************
  * 			Replication Hooks
@@ -254,10 +256,13 @@ static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_sat
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
+static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
+static pass_pivot_data_to_fcinfo_hook_type pre_pass_pivot_data_to_fcinfo_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
+static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_constraint_nulls_ordering_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -424,8 +429,13 @@ InstallExtendedHooks(void)
 	prev_bbf_get_sysadmin_oid_hook = bbf_get_sysadmin_oid_hook;
 	bbf_get_sysadmin_oid_hook = get_sysadmin_oid;
 
+	get_bbf_admin_oid_hook = get_bbf_role_admin_oid;
+
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
+
+	pre_pass_pivot_data_to_fcinfo_hook = pass_pivot_data_to_fcinfo_hook;
+	pass_pivot_data_to_fcinfo_hook = pass_pivot_data_to_fcinfo;
 
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
@@ -441,6 +451,9 @@ InstallExtendedHooks(void)
 
 	prev_pltsql_pgstat_end_function_usage_hook = pltsql_pgstat_end_function_usage_hook;
 	pltsql_pgstat_end_function_usage_hook = is_function_pg_stat_valid;
+
+	prev_pltsql_unique_constraint_nulls_ordering_hook = pltsql_unique_constraint_nulls_ordering_hook;
+	pltsql_unique_constraint_nulls_ordering_hook = unique_constraint_nulls_ordering;
 }
 
 void
@@ -498,10 +511,12 @@ UninstallExtendedHooks(void)
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
 	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
+	get_bbf_admin_oid_hook = prev_get_bbf_admin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
+	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -2338,6 +2353,10 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+			if (pg_trigger_physical_schema == NULL)
+			{
+				return InvalidOid;
+			}
 			if (strcasecmp(pg_trigger_physical_schema, cur_physical_schema) == 0)
 			{
 				trigger_rel_oid = reloid;
@@ -4708,28 +4727,25 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	List		*src_sql_groupbylist;
 	List		*src_sql_sortbylist;
 	List		*src_sql_fromClause_copy;
+	List 		*pivot_context_list;
 	char		*pivot_colstr;
 	char		*value_colstr;
 	String		*funcName;
 	ColumnRef	*value_col;
 	TargetEntry	*aggfunc_te;
-	RangeFunction	*pivot_from_function;
+	RangeFunction	*wrapperSelect_RangeFunction;
 	SelectStmt 		*pivot_src_sql;
 	RawStmt			*s_sql;
 	RawStmt			*c_sql;
-	tsql_pivot_fields	*pivot_fields;
-	MemoryContext 		oldContext;
-	MemoryContext 		tsql_outmost_context;
-	PLtsql_execstate 	*tsql_outmost_estat;
-	int					nestlevel;
+	FuncCall 		*pivot_func;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	new_src_sql_targetist = NULL;
-	new_pivot_aliaslist = NULL;
-	src_sql_groupbylist = NULL;
-	src_sql_sortbylist = NULL;
+	new_src_sql_targetist = NIL;
+	new_pivot_aliaslist = NIL;
+	src_sql_groupbylist = NIL;
+	src_sql_sortbylist = NIL;
 
 	pivot_src_sql =  makeNode(SelectStmt);
 	pivot_src_sql->fromClause = copyObject(stmt->srcSql->fromClause);
@@ -4744,7 +4760,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	pivot_colstr = ((String *) llast(((ColumnRef *)stmt->pivotCol)->fields))->sval;
 	value_col = list_nth_node(ColumnRef, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->args, 0);
 	funcName = list_nth_node(String, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->funcname, 0);
-	value_colstr = list_nth_node(String, value_col->fields, 0)->sval;
+	value_colstr = list_nth_node(String, value_col->fields, ((List *)value_col->fields)->length - 1)->sval;
 
 	/* Get the targetList of the src table */
 	for (int i = 0; i < temp_src_targetlist->length; i++)
@@ -4760,10 +4776,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 		/* prepare src_sql's targetList */
 		tempResTarget = make_restarget_from_cstr_list(list_make1(makeString(colName)));
 
-		if (new_src_sql_targetist == NULL)
-			new_src_sql_targetist = list_make1(tempResTarget);
-		else
-			new_src_sql_targetist = lappend(new_src_sql_targetist, tempResTarget);
+		new_src_sql_targetist = lappend(new_src_sql_targetist, tempResTarget);
 		
 		/* prepare pivot sql's alias_clause */
 		tempColDef = makeColumnDef(colName,
@@ -4771,11 +4784,8 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 								((Var *)tempEntry->expr)->vartypmod,
 								((Var *)tempEntry->expr)->varcollid
 								);
-
-		if (new_pivot_aliaslist == NULL)
-			new_pivot_aliaslist = list_make1(tempColDef);
-		else
-			new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
+		
+		new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
 	}
 	/* source_sql: non-pivot column + pivot colunm+ agg(value_col) */
 	/* complete src_sql's targetList*/	
@@ -4798,16 +4808,8 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 		tempSortby->useOp = NIL;
 		tempSortby->location = -1;
 
-		if (src_sql_groupbylist == NULL)
-		{
-			src_sql_groupbylist = list_make1(tempAConst);
-			src_sql_sortbylist = list_make1(tempSortby);
-		}
-		else
-		{
-			src_sql_groupbylist = lappend(src_sql_groupbylist, tempAConst);
-			src_sql_sortbylist = lappend(src_sql_sortbylist, tempSortby);
-		}
+		src_sql_groupbylist = lappend(src_sql_groupbylist, tempAConst);
+		src_sql_sortbylist = lappend(src_sql_sortbylist, tempSortby);
 	}
 	((SelectStmt *)stmt->srcSql)->groupClause = src_sql_groupbylist;
 	((SelectStmt *)stmt->srcSql)->sortClause = src_sql_sortbylist;
@@ -4830,7 +4832,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	aggfunc_te = list_nth_node(TargetEntry, temp_src_targetlist, temp_src_targetlist->length - 1);
 
 	/* Rewrite the fromClause in the outer select to have correct alias column name and datatype */
-	pivot_from_function = list_nth_node(RangeFunction, stmt->fromClause, 0);
+	wrapperSelect_RangeFunction = list_nth_node(RangeFunction, stmt->fromClause, 0);
 	for(int i = 0; i < stmt->value_col_strlist->length; i++)
 	{
 		ColumnDef	*tempColDef;
@@ -4840,21 +4842,11 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 									((Aggref *)aggfunc_te->expr)->aggcollid
 									);
 
-		if (new_pivot_aliaslist == NULL)
-			new_pivot_aliaslist = list_make1(tempColDef);
-		else
-			new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
+		new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
 	}
 
-	pivot_from_function->coldeflist = new_pivot_aliaslist;
+	wrapperSelect_RangeFunction->coldeflist = new_pivot_aliaslist;
 
-	/* put the correct src_sql raw parse tree into the memory context for later use */
-	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
-	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
-	if (!tsql_outmost_context)
-		ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("pivot outer context not found")));
 
 	s_sql = makeNode(RawStmt);
 	c_sql = makeNode(RawStmt);
@@ -4866,16 +4858,41 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	c_sql->stmt_location = 0;
 	c_sql->stmt_len = 0;
 
-	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
-	/* save rewrited sqls to global variable for later retrive */
-	pivot_fields = (tsql_pivot_fields *) palloc(sizeof(tsql_pivot_fields));
-	pivot_fields->s_sql = copyObject(s_sql);
-	pivot_fields->c_sql = copyObject(c_sql);
-	pivot_fields->sourcetext = pstrdup(pstate->p_sourcetext);
-	pivot_fields->funcName = pstrdup(funcName->sval);
-	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, pivot_fields);
-	tsql_outmost_estat->pivot_number++;	
-	MemoryContextSwitchTo(oldContext);
+	pivot_context_list = list_make3(list_make1(makeString("bbf_pivot_func")),
+									list_make2((Node *) copyObject(s_sql),
+												(Node *) copyObject(c_sql)
+												),
+									list_make2(makeString(pstrdup(pstate->p_sourcetext)),
+												makeString(pstrdup(funcName->sval))
+												)
+									);
+
+	/* Store pivot information in FuncCall to live through parser analyzer */
+	pivot_func = makeFuncCall(list_make2(makeString("sys"), makeString("bbf_pivot")), NIL, COERCE_EXPLICIT_CALL, -1);
+	pivot_func->context = (Node *) pivot_context_list;
+	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
+}
+
+static void
+pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr)
+{
+	/* if current FuncExpr is a bbf_pivot function, we set the fcinfo context to pivot data */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	if (IsA(expr, FuncExpr) 
+		&& ((FuncExpr*) expr)->context != NULL
+		&& (IsA(((FuncExpr*) expr)->context, List)))
+	{
+		Node *node;	
+		node = list_nth((List *)((FuncExpr*) expr)->context, 0);
+		if (IsA(node, List) 
+				&& IsA(list_nth((List *)node, 0), String) 
+				&& strcmp(((String *)list_nth((List *)node, 0))->sval, "bbf_pivot_func") == 0)
+		{
+			fcinfo->context = ((FuncExpr*) expr)->context;
+		}
+	}
 }
 
 static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
@@ -4960,4 +4977,24 @@ is_function_pg_stat_valid(FunctionCallInfo fcinfo, PgStat_FunctionCallUsage *fcu
 	}
 
 	pgstat_end_function_usage(fcu, finalize);
+}
+
+static SortByNulls
+unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
+{
+	if (constraint_type == CONSTR_UNIQUE)
+	{
+		switch (ordering)
+		{
+			case SORTBY_ASC:
+			case SORTBY_DEFAULT:
+				return SORTBY_NULLS_FIRST;
+			case SORTBY_DESC:
+				return SORTBY_NULLS_LAST;
+			default:
+				return SORTBY_NULLS_DEFAULT;
+		}
+	}
+
+	return SORTBY_NULLS_DEFAULT;
 }

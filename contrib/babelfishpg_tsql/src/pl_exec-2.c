@@ -3742,7 +3742,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		Oid	role_oid;
 		bool	is_public = 0 == strcmp(grantee_name, PUBLIC_ROLE_NAME);
 		if (!is_public)
-			rolname	= get_physical_user_name(dbname, grantee_name);
+			rolname	= get_physical_user_name(dbname, grantee_name, false);
 		else
 			rolname = pstrdup(PUBLIC_ROLE_NAME);
 		role_oid = get_role_oid(rolname, true);
@@ -3876,6 +3876,21 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 					
 	/* All validations done, perform the actual update */
 	update_db_owner(stmt->new_owner_name, stmt->db_name);	
+	return PLTSQL_RC_OK;
+}
+
+static int
+exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
+{
+	/* Alter database is not allowed inside a transaction. */
+	PreventInTransactionBlock(true, "ALTER DATABASE");
+
+	/*
+	 * Currently Babelfish only support rename, when we extend
+	 * the support at that time we can add a boolean to the stmt
+	 * to identify for rename and conditionally call rename_tsql_db
+	 */
+	rename_tsql_db(stmt->old_db_name, stmt->new_db_name);
 	return PLTSQL_RC_OK;
 }
 

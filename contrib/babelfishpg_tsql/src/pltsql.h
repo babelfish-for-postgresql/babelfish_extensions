@@ -196,6 +196,7 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_GRANTDB,
 	PLTSQL_STMT_CHANGE_DBOWNER,
 	PLTSQL_STMT_DBCC,
+	PLTSQL_STMT_ALTER_DB,
 	PLTSQL_STMT_FULLTEXTINDEX,
 	PLTSQL_STMT_GRANTSCHEMA
 } PLtsql_stmt_type;
@@ -1054,6 +1055,14 @@ typedef struct PLtsql_stmt_change_dbowner
 	char	   *new_owner_name;  /* Login name for new owner */
 } PLtsql_stmt_change_dbowner;
 
+typedef struct PLtsql_stmt_alter_db
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *old_db_name;
+	char	   *new_db_name;
+} PLtsql_stmt_alter_db;
+
 /*
  *	Fulltext Index stmt
  */
@@ -1494,9 +1503,6 @@ typedef struct PLtsql_execstate
 	 */
 	bool		insert_exec;
 
-	int		    pivot_number;
-	List	   *pivot_parsetree_list;
-
 	List	   *explain_infos;
 	char	   *schema_name;
 	const char *db_name;
@@ -1652,6 +1658,7 @@ typedef struct PLtsql_protocol_plugin
 	void		(*set_guc_stat_var) (const char *guc, bool boolVal, const char *strVal, int intVal);
 	void		(*set_at_at_stat_var) (TdsAtAtVarType at_at_var, int intVal, uint64 bigintVal);
 	void		(*set_db_stat_var) (int16 db_id);
+	bool		(*get_tds_database_backend_count) (int16 db_id, bool ignore_current_connection);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
 	char	       *(*get_host_name) (void);
@@ -1819,14 +1826,6 @@ typedef struct tsql_identity_insert_fields
 	Oid			rel_oid;
 	Oid			schema_oid;
 } tsql_identity_insert_fields;
-
-typedef struct tsql_pivot_fields
-{
-	RawStmt	*s_sql;
-	RawStmt	*c_sql;
-	char 	*sourcetext;
-	char	*funcName;
-}tsql_pivot_fields;
 
 extern tsql_identity_insert_fields tsql_identity_insert;
 extern check_lang_as_clause_hook_type check_lang_as_clause_hook;

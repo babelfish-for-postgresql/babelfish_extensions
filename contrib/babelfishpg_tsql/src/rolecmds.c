@@ -76,6 +76,8 @@ static bool has_user_in_db(const char *login, char **db_name);
 static void validateNetBIOS(char *netbios);
 static void validateFQDN(char *fqdn);
 
+static Oid bbf_admin_oid = InvalidOid;
+
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 {
@@ -608,7 +610,9 @@ gen_droplogin_subcmds(const char *login)
 Oid
 get_bbf_role_admin_oid(void)
 {
-	return get_role_oid("bbf_role_admin", false);
+	if (!OidIsValid(bbf_admin_oid))
+		bbf_admin_oid = get_role_oid("bbf_role_admin", false);
+	return bbf_admin_oid;
 }
 
 /*
@@ -755,7 +759,7 @@ user_id(PG_FUNCTION_ARGS)
 	if (!db_name)
 		PG_RETURN_NULL();
 
-        user_name = get_physical_user_name(db_name, user_input);
+        user_name = get_physical_user_name(db_name, user_input, false);
 
         if (!user_name)
             PG_RETURN_NULL();
@@ -1443,7 +1447,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	/* update user name */
 	if (new_user_name)
 	{
-		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name);
+		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name, false);
 		new_record_user_ext[USER_EXT_ROLNAME] = CStringGetDatum(physical_name);
 		new_record_repl_user_ext[USER_EXT_ROLNAME] = true;
 		new_record_user_ext[USER_EXT_ORIG_USERNAME] = CStringGetTextDatum(new_user_name);
@@ -1789,7 +1793,7 @@ role_id(PG_FUNCTION_ARGS)
 	if (!get_cur_db_name())
 		PG_RETURN_NULL();
 
-	role_name = get_physical_user_name(get_cur_db_name(), user_input);
+	role_name = get_physical_user_name(get_cur_db_name(), user_input, false);
 
 	result = get_role_oid(role_name, true);
 
@@ -1830,7 +1834,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	while (idx > 0 && isspace((unsigned char) role[idx - 1]))
 		role[--idx] = '\0';
 	dc_role = downcase_identifier(role, strlen(role), false, false);
-	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role);
+	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role, false);
 	role_oid = get_role_oid(physical_role_name, true);
 
 	/* If principal name is NULL, take current user instead */
@@ -1845,7 +1849,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 		while (idx > 0 && isspace((unsigned char) principal[idx - 1]))
 			principal[--idx] = '\0';
 		dc_principal = downcase_identifier(principal, strlen(principal), false, false);
-		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal);
+		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal, false);
 		principal_oid = get_role_oid(physical_principal_name, true);
 	}
 

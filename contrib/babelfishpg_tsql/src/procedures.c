@@ -78,6 +78,7 @@ PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 PG_FUNCTION_INFO_V1(sp_execute_postgresql);
 PG_FUNCTION_INFO_V1(sp_enum_oledb_providers_internal);
+PG_FUNCTION_INFO_V1(sp_renamedb_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -2078,7 +2079,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 							errmsg("'%s' is not a valid name because it contains invalid characters.", rolname)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the user, group or role already exists */
@@ -2221,7 +2222,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists */
@@ -2371,7 +2372,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot make a role a member of itself.")));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername);
+		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false);
 		member_oid = get_role_oid(physical_member_name, true);
 
 		/*
@@ -2384,7 +2385,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("User or role '%s' does not exist in this database.", membername)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists and given role name is an role */
@@ -2536,7 +2537,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
 		role_oid = get_role_oid(physical_name, true);
 
 		/* Throw an error id the given role name doesn't exist or isn't a role */
@@ -2546,7 +2547,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername);
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false);
 		role_oid = get_role_oid(physical_name, true);
 
 		/*
@@ -3493,6 +3494,110 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 }
 
 extern bool pltsql_quoted_identifier;
+
+Datum
+sp_renamedb_internal(PG_FUNCTION_ARGS)
+{
+	char		*old_db_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*new_db_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	  **splited_object_name;
+	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
+	int len;
+
+	/* sp_rename is not allowed inside a transaction. */
+	PreventInTransactionBlock(true, "SP_RENAME/SP_RENAMEDB");
+
+	if (!old_db_name)
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			errmsg("The database '(null)' does not exist. Supply a valid database name. To see available databases, use sys.databases.")));
+	if(!new_db_name)
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			errmsg("The value for the @newname parameter contains invalid characters or violates a basic restriction ((null)).")));
+
+	len = strlen(old_db_name);
+	/* Truncate Trailing white spaces. */
+	while (len > 0 && isspace((unsigned char) old_db_name[len - 1]))
+		old_db_name[--len] = '\0';
+	len = strlen(new_db_name);
+	/* Truncate Trailing white spaces. */
+	while (len > 0 && isspace((unsigned char) new_db_name[len - 1]))
+		new_db_name[--len] = '\0';
+
+	/* Sanity checks. */
+	splited_object_name = split_object_name(old_db_name);
+
+	/* First 3 parts should be empty strings while object name should not be. */
+	if (strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], "")
+			|| strcmp(splited_object_name[2], "") || strcmp(splited_object_name[3], "") == 0)
+		ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("The value for the @objname parameter contains invalid characters or violates a basic restriction ((%s)).", old_db_name)));
+
+	pfree(old_db_name);
+	old_db_name = !pltsql_case_insensitive_identifiers ?
+					pstrdup(splited_object_name[3]) :
+					downcase_identifier(splited_object_name[3], strlen(splited_object_name[3]), false, false);
+
+	for (int j = 0; j < 4; j++)
+		pfree(splited_object_name[j]);
+	pfree(splited_object_name);
+
+	splited_object_name = split_object_name(new_db_name);
+
+	/* First 3 parts should be empty strings while object name should not be. */
+	if (strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], "")
+			|| strcmp(splited_object_name[2], "") || strcmp(splited_object_name[3], "") == 0)
+		ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("The value for the @newname parameter contains invalid characters or violates a basic restriction ((%s)).", new_db_name)));
+
+	pfree(new_db_name);
+	new_db_name = !pltsql_case_insensitive_identifiers ?
+					pstrdup(splited_object_name[3]) :
+					downcase_identifier(splited_object_name[3], strlen(splited_object_name[3]), false, false);
+
+	for (int j = 0; j < 4; j++)
+		pfree(splited_object_name[j]);
+	pfree(splited_object_name);
+
+	/* length should be restricted to 4000 */
+	if (strlen(old_db_name) > 4000 || strlen(new_db_name) > 4000)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				 errmsg("Value is too long for database name")));
+
+	/* Truncate the database name if needed. */
+	truncate_tsql_identifier(old_db_name);
+	truncate_tsql_identifier(new_db_name);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+								GUC_CONTEXT_CONFIG,
+								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		rename_tsql_db(old_db_name, new_db_name);
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+					GUC_CONTEXT_CONFIG,
+					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+					GUC_CONTEXT_CONFIG,
+					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	if (old_db_name)
+		pfree(old_db_name);
+	if (new_db_name)
+		pfree(new_db_name);
+
+	PG_RETURN_VOID();
+}
 
 Datum
 sp_rename_internal(PG_FUNCTION_ARGS)

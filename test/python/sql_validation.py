@@ -287,7 +287,9 @@ def find_tests(fname, logger):
     inst_scripts = list_files(inpPath, "*.sql")
 
     # removing scripts having helper functions and redundant script
-    for i in inst_scripts:
+    # create a copy of list inst_scripts for iterating to safely remove the items from list
+
+    for i in inst_scripts[:]:
         if re.search("sys_function_helpers.sql", str(i)):
             inst_scripts.remove(Path(inpPath).joinpath("sys_function_helpers.sql"))
         if re.search("babelfishpg_tsql--1.0.0.sql", str(i)):

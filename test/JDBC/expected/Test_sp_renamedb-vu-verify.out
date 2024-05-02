@@ -1,0 +1,359 @@
+-- tsql
+-- sanity checks for metadata stored in babelfish catalog
+select owner, name from sys.babelfish_sysdatabases where name = 'sp_renamedb_database1' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%' order by rolname;
+go
+~~START~~
+varchar#!#text
+jdbc_user#!#sp_renamedb_database1
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+sp_renamedb_database1_dbo#!#dbo
+sp_renamedb_database1_guest#!#guest
+sp_renamedb_database1_sp_renamedb_schema1#!#sp_renamedb_schema1
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+sp_renamedb_database1_db_owner#!##!#db_owner#!#sp_renamedb_database1
+sp_renamedb_database1_dbo#!##!#dbo#!#sp_renamedb_database1
+sp_renamedb_database1_guest#!##!#guest#!#sp_renamedb_database1
+sp_renamedb_database1_sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_database1
+sp_renamedb_database1_sp_renamedb_role1#!##!#sp_renamedb_role1#!#sp_renamedb_database1
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+sp_renamedb_login1#!#sp_renamedb_database1
+~~END~~
+
+
+-- sanity check
+use sp_renamedb_database1;
+go
+-- Renaming the current database is also allowed
+exec sp_renamedb 'sp_renamedb_database1' , 'sp_renamedb_database2';
+go
+select db_name()
+go
+~~START~~
+nvarchar
+sp_renamedb_database2
+~~END~~
+
+use sp_renamedb_database1;
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "sp_renamedb_database1" does not exist)~~
+
+use sp_renamedb_database2;
+go
+exec sp_renamedb 'sp_renamedb_database2', 'sp_renamedb_database1';
+go
+
+use master
+go
+exec sp_renamedb 'sp_renamedb_database1', 'sp_renamedb_database2';
+go
+-- should return updated rows
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_renamedb_database%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_database%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_database%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_database%' order by rolname;
+go
+~~START~~
+varchar#!#text
+jdbc_user#!#sp_renamedb_database2
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+sp_renamedb_database2_dbo#!#dbo
+sp_renamedb_database2_guest#!#guest
+sp_renamedb_database2_sp_renamedb_schema1#!#sp_renamedb_schema1
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+sp_renamedb_database2_db_owner#!##!#db_owner#!#sp_renamedb_database2
+sp_renamedb_database2_dbo#!##!#dbo#!#sp_renamedb_database2
+sp_renamedb_database2_guest#!##!#guest#!#sp_renamedb_database2
+sp_renamedb_database2_sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_database2
+sp_renamedb_database2_sp_renamedb_role1#!##!#sp_renamedb_role1#!#sp_renamedb_database2
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+sp_renamedb_login1#!#sp_renamedb_database2
+~~END~~
+
+
+-- sanity check to use db
+use sp_renamedb_database1;
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "sp_renamedb_database1" does not exist)~~
+
+use sp_renamedb_database2;
+go
+
+use master
+go
+
+-- rollback changes
+exec sp_renamedb 'sp_renamedb_database2', 'sp_renamedb_database1'
+go
+
+-- sp_renamedb inside transaction is allowed
+Begin Transaction;
+go
+exec sp_renamedb 'sp_renamedb_database2', 'sp_renamedb_database1'
+go
+~~ERROR (Code: 574)~~
+
+~~ERROR (Message: SP_RENAME/SP_RENAMEDB cannot run inside a transaction block)~~
+
+-- does not rollback transaction
+select @@trancount
+go
+~~START~~
+int
+1
+~~END~~
+
+commit
+go
+
+-- exec sp_renamedb inside a function/procedure should pass
+create function sp_renamedb_function(@a text, @b text) returns int Begin exec sp_renamedb @a, @b END
+go
+create procedure sp_renamedb_procedure(@a text, @b text) as exec sp_renamedb @a, @b
+go
+
+select sp_renamedb_function('sp_renamedb_database1', 'sp_renamedb_database2');
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
+exec sp_renamedb_procedure @a = 'sp_renamedb_database1', @b = 'sp_renamedb_database1'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "sp_renamedb_database1_dbo" already exists)~~
+
+
+-- Renaming system databases is prohibited
+exec sp_renamedb 'master', 'master1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot change the name of the system database master.)~~
+
+exec sp_renamedb 'tempdb', 'tempdb1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot change the name of the system database tempdb.)~~
+
+exec sp_renamedb 'msdb', 'msdb1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot change the name of the system database msdb.)~~
+
+
+-- Rename a case sensitive and len>64 database name
+exec sp_renamedb '[sp_renamedb_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]',
+ '[sp_renamedb_ThisNewDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]'
+go
+
+-- should return updated rows
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'sp_renamedb_this%' order by name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname LIKE 'sp_renamedb_this%' order by nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where rolname LIKE 'sp_renamedb_this%' order by rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'sp_renamedb_this%' order by rolname;
+go
+~~START~~
+varchar#!#text
+jdbc_user#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+sp_renamedb_thisnewdatabasename115699cc11f7805d9b9b640d6455580c#!#dbo
+sp_renamedb_thisnewdatabasenamedeb7cafbbedd23f312d90e7c10a60901#!#guest
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+sp_renamedb_thisnewdatabasename115699cc11f7805d9b9b640d6455580c#!##!#dbo#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
+sp_renamedb_thisnewdatabasenameb0dffbb56deab7ad4e684df689419c65#!##!#db_owner#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
+sp_renamedb_thisnewdatabasenamedeb7cafbbedd23f312d90e7c10a60901#!##!#guest#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+~~END~~
+
+
+-- sanity check to use db
+use [sp_renamedb_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb];
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "sp_renamedb_thisolddatabasenamefe795a102eba19ee201b1eff90c69b35" does not exist)~~
+
+use [sp_renamedb_ThisNewDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]
+go
+
+use master
+go
+
+-- tsql user=sp_renamedb_login1 password=1234
+use sp_renamedb_database1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "sp_renamedb_login1" is not able to access the database "sp_renamedb_database1" under the current security context)~~
+
+-- user that does not have access to db, cannot modify name
+exec sp_renamedb 'sp_renamedb_database1', 'sp_renamedb_database2';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to rename the database 'sp_renamedb_database1', the database does not exist, or the database is not in a state that allows access checks.)~~
+
+
+-- tsql
+-- give sp_renamedb_login1 permission to the db
+alter server role sysadmin add member sp_renamedb_login1
+go
+
+-- tsql user=sp_renamedb_login1 password=1234
+-- should work now
+exec sp_renamedb 'sp_renamedb_database1', 'sp_renamedb_database2';
+go
+-- connect to the database to test concurrencies
+use sp_renamedb_database2
+go
+
+-- tsql
+-- should throw error since there is an active session using sp_renamedb_database2
+exec sp_renamedb 'sp_renamedb_database2', 'sp_renamedb_database1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database could not be exclusively locked to perform the operation.)~~
+
+
+-- tsql user=sp_renamedb_login1 password=1234
+-- now disconnect from that database in the 2nd connection and test alter again
+select db_name()
+go
+~~START~~
+nvarchar
+sp_renamedb_database2
+~~END~~
+
+use master
+go
+
+-- tsql
+exec sp_renamedb 'sp_renamedb_database2', 'sp_renamedb_database1';
+go
+
+drop function sp_renamedb_function
+drop procedure sp_renamedb_procedure
+go
+
+-- testing invalid args for sp_renamedb
+create database sp_renamedb_db1_temp;
+go
+-- NULL old_db_name
+exec sp_renamedb NULL, 'sp_renamedb_db1_temp';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database '(null)' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
+-- NULL new_db_name
+exec sp_renamedb 'sp_renamedb_db1_temp  ', NULL;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @newname parameter contains invalid characters or violates a basic restriction ((null)).)~~
+
+-- both NULL
+exec sp_renamedb NULL, NULL;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database '(null)' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
+-- empty string old_db_name
+exec sp_renamedb '', '     sp_renamedb_db1_temp';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction (()).)~~
+
+-- empty string new_db_name
+exec sp_renamedb '    sp_renamedb_db1_temp', '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @newname parameter contains invalid characters or violates a basic restriction (()).)~~
+
+-- both empty string
+exec sp_renamedb '    ', ' '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction (()).)~~
+
+-- 3 part names
+exec sp_renamedb ' sp_renamedb_db1_temp.sch1.t1', 'db2      '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction (( sp_renamedb_db1_temp.sch1.t1)).)~~
+
+-- 3 part names
+exec sp_renamedb 'sp_renamedb_db1_temp', 'db2.sch2.t2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @newname parameter contains invalid characters or violates a basic restriction ((db2.sch2.t2)).)~~
+
+-- 3 part names
+exec sp_renamedb 'db1.sch1.t1', 'db2.sch2.t2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value for the @objname parameter contains invalid characters or violates a basic restriction ((db1.sch1.t1)).)~~
+
+-- valid input, should get db does not exist
+exec sp_renamedb '[db1.sch1.t1]', 'sp_renamedb_db1_temp      '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database db1.sch1.t1 does not exist. Make sure that the name is entered correctly.)~~
+
+-- valid input, should get db does not exist
+exec sp_renamedb 'sp_renamedb_db1_temp', '[db2.sch2.t2]     '
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ".")~~
+
+drop database sp_renamedb_db1_temp
+go

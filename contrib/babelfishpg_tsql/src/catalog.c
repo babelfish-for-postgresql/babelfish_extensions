@@ -7,6 +7,7 @@
 #include "access/stratnum.h"
 #include "access/table.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_authid.h"
@@ -14,6 +15,8 @@
 #include "catalog/pg_foreign_server.h"
 #include "catalog/namespace.h"
 #include "commands/extension.h"
+#include "commands/schemacmds.h"
+#include "commands/user.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
 #include "tcop/utility.h"
@@ -107,6 +110,14 @@ Oid			bbf_extended_properties_idx_oid = InvalidOid;
 /*****************************************
  * 			Catalog General
  *****************************************/
+
+static Oid bbf_assemblies_oid = InvalidOid;
+static Oid bbf_configurations_oid = InvalidOid;
+static Oid bbf_helpcollation_oid = InvalidOid;
+static Oid bbf_syslanguages_oid = InvalidOid;
+static Oid bbf_service_settings_oid = InvalidOid;
+static Oid spt_datatype_info_table_oid = InvalidOid;
+static Oid bbf_versions_oid = InvalidOid;
 
 static bool tsql_syscache_inited = false;
 extern bool babelfish_dump_restore;
@@ -206,6 +217,19 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_extended_properties_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_TABLE_NAME, sys_schema_oid);
 	bbf_extended_properties_idx_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_IDX_NAME, sys_schema_oid);
 
+	/* bbf_domain_mapping */
+	bbf_domain_mapping_oid = get_relname_relid(BBF_DOMAIN_MAPPING_TABLE_NAME, sys_schema_oid);
+	bbf_domain_mapping_idx_oid = get_relname_relid(BBF_DOMAIN_MAPPING_IDX_NAME, sys_schema_oid);
+
+	/* general catalog */
+	bbf_assemblies_oid = get_relname_relid(BBF_ASSEMBLIES_TABLE_NAME, sys_schema_oid);
+	bbf_configurations_oid = get_relname_relid(BBF_CONFIGURATIONS_TABLE_NAME, sys_schema_oid);
+	bbf_helpcollation_oid = get_relname_relid(BBF_HELPCOLLATION_TABLE_NAME, sys_schema_oid);
+	bbf_syslanguages_oid = get_relname_relid(BBF_SYSLANGUAGES_TABLE_NAME, sys_schema_oid);
+	bbf_service_settings_oid = get_relname_relid(BBF_SERVICE_SETTINGS_TABLE_NAME, sys_schema_oid);
+	spt_datatype_info_table_oid = get_relname_relid(SPT_DATATYPE_INFO_TABLE_NAME, sys_schema_oid);
+	bbf_versions_oid = get_relname_relid(BBF_VERSIONS_TABLE_NAME, sys_schema_oid);
+
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();
 
@@ -227,11 +251,23 @@ initTsqlSyscache()
 /*****************************************
  * 			Catalog Hooks
  *****************************************/
-
+/*
+ * The assumption of parent function is that it should not perform any
+ * catalog accesses.
+ */
 bool
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
-	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid)
+	/* Skip during Babelfish restore */
+	if (!babelfish_dump_restore && (relationId == sysdatabases_oid ||
+		relationId == bbf_function_ext_oid || relationId == namespace_ext_oid ||
+		relationId == bbf_authid_login_ext_oid || relationId == bbf_authid_user_ext_oid ||
+		relationId == bbf_view_def_oid || relationId == bbf_servers_def_oid ||
+		relationId == bbf_schema_perms_oid || relationId == bbf_domain_mapping_oid ||
+		relationId == bbf_extended_properties_oid || relationId == bbf_assemblies_oid ||
+		relationId == bbf_configurations_oid || relationId == bbf_helpcollation_oid ||
+		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
+		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid))
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -1297,18 +1333,11 @@ get_timeout_from_server_name(char *servername, int attnum)
 void
 clean_up_bbf_server_def()
 {
-	char 			*query_str;
-	StringInfoData 	query;
-
-	initStringInfo(&query);
-
-	appendStringInfo(&query, "TRUNCATE TABLE sys.babelfish_server_options CASCADE");
-
-	query_str = query.data;
-
-	exec_utility_cmd_helper(query_str);
-
-	pfree(query.data);
+	/* Fetch the relation */
+	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
+	/* Truncate the relation */
+	heap_truncate_one_rel(bbf_servers_def_rel);
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
 }
 
 /*****************************************
@@ -3040,7 +3069,6 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	int16	dbid = get_cur_db_id();
-	char	*user = GetUserNameFromId(GetUserId(), false);
 
 	/* Immediately return, if grantee is NULL or PUBLIC. */
 	if ((grantee == NULL) || (strcmp(grantee, PUBLIC_ROLE_NAME) == 0))
@@ -3065,7 +3093,7 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 		new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(func_args);
 	else
 		new_record_nulls_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = true;
-	new_record_bbf_schema[Anum_bbf_schema_perms_grantor - 1] = CStringGetTextDatum(pstrdup(user));
+	new_record_nulls_bbf_schema[Anum_bbf_schema_perms_grantor - 1] = true;
 
 	tuple_bbf_schema = heap_form_tuple(bbf_schema_dsc,
 									new_record_bbf_schema,
@@ -3531,6 +3559,42 @@ clean_up_bbf_schema_permissions(const char *schema_name,
 }
 
 /*
+ * Clean up babelfish_schema_permissions table for a given database
+ * when database is dropped.
+ */
+void
+drop_bbf_schema_permission_entries(int16 dbid)
+{
+	Relation	bbf_schema_rel;
+	HeapTuple	tuple_bbf_schema;
+	ScanKeyData scanKey[1];
+	SysScanDesc scan;
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(), RowExclusiveLock);
+
+	/* Search and drop the entries */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	scan = systable_beginscan(bbf_schema_rel,
+							  get_bbf_schema_perms_idx_oid(),
+							  true, NULL, 1, scanKey);
+
+	while ((tuple_bbf_schema = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(tuple_bbf_schema))
+			CatalogTupleDelete(bbf_schema_rel,
+							   &tuple_bbf_schema->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
+}
+
+/*
  * For all objects belonging to a schema which has OBJECT level permission,
  * It grants the permission explicitly when REVOKE has been executed on that
  * specific schema.
@@ -3890,4 +3954,493 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	heap_freetuple(tuple);
 	table_endscan(tblscan);	
 	table_close(sysdatabases_rel, RowExclusiveLock);	
+}
+
+/*
+ * Update the name of a database in the sysdatabases catalog.
+ */
+void
+update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name)
+{
+	volatile 		Relation sysdatabases_rel;
+	TupleDesc		sysdatabases_rel_descr;
+	ScanKeyData		key;
+	HeapTuple		tuple, db_found;
+	TableScanDesc	tblscan;
+		
+	Datum		values[SYSDATABASES_NUM_COLS];
+	bool		nulls[SYSDATABASES_NUM_COLS];
+	bool		replaces[SYSDATABASES_NUM_COLS];
+
+	sysdatabases_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+	sysdatabases_rel_descr = RelationGetDescr(sysdatabases_rel);	
+
+	ScanKeyInit(&key,
+				Anum_sysdatabases_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(old_db_name));
+				
+	tblscan = table_beginscan_catalog(sysdatabases_rel, 1, &key);
+	
+	db_found = heap_getnext(tblscan, ForwardScanDirection);
+
+	if (!db_found)
+	{
+		/* Database should have been verified to exist, but if not, exit politely. */
+		table_close(sysdatabases_rel, RowExclusiveLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", old_db_name)));
+	}
+	
+	/* Build a tuple */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+		
+	/* Set up the new database. */
+	values[Anum_sysdatabases_name - 1]   = CStringGetTextDatum(new_db_name);
+	replaces[Anum_sysdatabases_name - 1] = true;	
+								  
+	tuple = heap_modify_tuple(db_found,
+							  sysdatabases_rel_descr,
+							  values,
+							  nulls,
+							  replaces);							  
+
+	/* Perform the actual catalog update. */
+	CatalogTupleUpdate(sysdatabases_rel, &tuple->t_self, tuple);
+	
+	/* Cleanup. */
+	heap_freetuple(tuple);
+	table_endscan(tblscan);	
+	table_close(sysdatabases_rel, RowExclusiveLock);	
+}
+
+/*
+ * Update the physical schema name in the babelfish_namespace_ext catalog.
+ * It returns the List of Original schema names which can be used to
+ * produce the new schema name after rename db.
+ */
+static List*
+update_babelfish_namespace_ext_rename_db(int16 db_id, char *new_db_name)
+{
+	volatile		Relation namespace_rel;
+	TupleDesc		namespace_rel_descr;
+	ScanKeyData		key;
+	HeapTuple		old_tuple, new_tuple;
+	SysScanDesc		tblscan;
+	List			*list_of_schemas_to_rename = NIL;
+	Datum			values[NAMESPACE_EXT_NUM_COLS];
+	bool			nulls[NAMESPACE_EXT_NUM_COLS];
+	bool			replaces[NAMESPACE_EXT_NUM_COLS];
+
+	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
+	namespace_rel_descr = RelationGetDescr(namespace_rel);
+
+	ScanKeyInit(&key,
+				Anum_namespace_ext_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(db_id));
+
+	tblscan = systable_beginscan(namespace_rel, namespace_ext_oid, false,
+							  NULL, 1, &key);
+
+	/* Build a tuple only once and reuse it throughout. */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	while (HeapTupleIsValid(old_tuple = systable_getnext(tblscan)))
+	{
+		bool		isNull;
+		char		*schema_name = TextDatumGetCString(heap_getattr(old_tuple, Anum_namespace_ext_orig_name, namespace_rel_descr, &isNull));
+
+		list_of_schemas_to_rename = lappend(list_of_schemas_to_rename, pstrdup(schema_name));
+
+		/* Update the Physical Db Name. */
+		values[Anum_namespace_ext_namespace - 1] = CStringGetDatum(get_physical_schema_name(new_db_name, schema_name));
+		replaces[Anum_namespace_ext_namespace - 1] = true;	
+
+		new_tuple = heap_modify_tuple(old_tuple,
+								namespace_rel_descr,
+								values,
+								nulls,
+								replaces);
+
+		/* Perform the actual catalog update. */
+		CatalogTupleUpdate(namespace_rel, &new_tuple->t_self, new_tuple);
+		heap_freetuple(new_tuple);
+		if (schema_name)
+			pfree(schema_name);
+	}
+
+	/* Cleanup. */
+	systable_endscan(tblscan);
+	table_close(namespace_rel, RowExclusiveLock);
+
+	return list_of_schemas_to_rename;
+}
+
+/*
+ * Update the fields relevant to database name in babelfish_authid_user_ext.
+ * It returns the List of Original role names which can be used to
+ * produce the new role name after rename db.
+ */
+static List*
+update_babelfish_authid_user_ext_rename_db(
+	const char *old_db_name,
+	const char *new_db_name)
+{
+	volatile 		Relation bbf_authid_user_ext_rel;
+	TupleDesc		bbf_authid_user_ext_dsc;
+	ScanKeyData		key;
+	HeapTuple		new_tuple, old_tuple;
+	SysScanDesc		tblscan;
+	List *list_of_roles_to_rename = NIL;
+		
+	Datum		values[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		nulls[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		replaces[BBF_AUTHID_USER_EXT_NUM_COLS];
+
+	/* Fetch the relation. */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(), RowExclusiveLock);
+	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);	
+
+	/* Search and obtain the tuple on the database name. */
+	ScanKeyInit(&key,
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(old_db_name));
+
+	tblscan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_authid_user_ext_oid(),
+							  false, NULL, 1, &key);
+
+	/* Build a tuple only once and reuse it throughout. */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	while (HeapTupleIsValid(old_tuple = systable_getnext(tblscan)))
+	{
+		bool isNull;
+		char *role_name = TextDatumGetCString(heap_getattr(old_tuple,
+							Anum_bbf_authid_user_ext_orig_username, bbf_authid_user_ext_dsc, &isNull));
+		
+		list_of_roles_to_rename = lappend(list_of_roles_to_rename, pstrdup(role_name));
+
+		/* update rolname */
+		values[USER_EXT_ROLNAME] 
+						= CStringGetDatum(get_physical_user_name((char *)new_db_name, role_name, true));
+		replaces[USER_EXT_ROLNAME] = true;
+
+		/* update database name */
+		values[USER_EXT_DATABASE_NAME]   = CStringGetTextDatum(new_db_name);
+		replaces[USER_EXT_DATABASE_NAME] = true;
+
+		/* update the modify date */
+		values[USER_EXT_MODIFY_DATE]   = TimestampTzGetDatum(GetCurrentStatementStartTimestamp());
+		replaces[USER_EXT_MODIFY_DATE] = true;
+
+		new_tuple = heap_modify_tuple(old_tuple,
+									bbf_authid_user_ext_dsc,
+									values,
+									nulls,
+									replaces);
+
+		CatalogTupleUpdate(bbf_authid_user_ext_rel, &new_tuple->t_self, new_tuple);
+		heap_freetuple(new_tuple);
+		if (role_name)
+			pfree(role_name);
+	}
+
+	/* Cleanup. */
+	systable_endscan(tblscan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	return list_of_roles_to_rename;
+}
+
+/*
+ * Update the name of the default database
+ * in the babelfish_authid_login_ext catalog.
+ */
+static void
+update_babelfish_authid_login_ext_rename_db(
+	const char *old_db_name,
+	const char *new_db_name)
+{
+	Relation	bbf_authid_login_ext_rel;
+	TupleDesc	bbf_authid_login_ext_dsc;
+	HeapTuple	new_tuple, old_tuple;
+	Datum		values[BBF_AUTHID_LOGIN_EXT_NUM_COLS];
+	bool		nulls[BBF_AUTHID_LOGIN_EXT_NUM_COLS];
+	bool		replaces[BBF_AUTHID_LOGIN_EXT_NUM_COLS];
+	ScanKeyData scanKey;
+	SysScanDesc scan;
+
+	/* Fetch the relation. */
+	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(),
+										  RowExclusiveLock);
+	bbf_authid_login_ext_dsc = RelationGetDescr(bbf_authid_login_ext_rel);
+
+
+	/* Search and obtain the tuple on the default database name. */
+	ScanKeyInit(&scanKey,
+				LOGIN_EXT_DEFAULT_DATABASE_NAME + 1,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(old_db_name));
+
+	scan = systable_beginscan(bbf_authid_login_ext_rel,
+							  get_authid_login_ext_oid(),
+							  false, NULL, 1, &scanKey);
+
+	/* Build a tuple to insert. */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	while (HeapTupleIsValid(old_tuple = systable_getnext(scan)))
+	{
+		/* update modify_date */
+		values[LOGIN_EXT_MODIFY_DATE] = TimestampTzGetDatum(GetCurrentStatementStartTimestamp());
+		replaces[LOGIN_EXT_MODIFY_DATE] = true;
+
+		/* update default_database field */
+		values[LOGIN_EXT_DEFAULT_DATABASE_NAME] = CStringGetTextDatum(new_db_name);
+		replaces[LOGIN_EXT_DEFAULT_DATABASE_NAME] = true;
+
+		new_tuple = heap_modify_tuple(old_tuple,
+									bbf_authid_login_ext_dsc,
+									values,
+									nulls,
+									replaces);
+
+		CatalogTupleUpdate(bbf_authid_login_ext_rel, &old_tuple->t_self, new_tuple);
+		heap_freetuple(new_tuple);
+	}
+	systable_endscan(scan);
+
+	/* Close bbf_authid_login_ext, but keep lock till commit. */
+	table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
+}
+
+static char
+*gen_rename_schema_or_role_cmds(char *old_name, char *new_name, bool is_schema)
+{
+	StringInfoData query;
+	initStringInfo(&query);
+	/*
+	 * We prepare the following query to Rename a schema or a ROLE.
+	 *
+	 * ALTER SCHEMA/ROLE <name>
+	 *
+	 */
+	appendStringInfo(&query, is_schema ? "ALTER SCHEMA " : "ALTER ROLE ");
+
+	appendStringInfo(&query, "%s RENAME TO %s", old_name, new_name);
+	return query.data;
+}
+
+/*
+ * We use processUtility to execute the renaming of schemas and roles
+ * instead of directly calling the individual APIs to rename them in
+ * order to adhere to the common high level code flow on which a lot of
+ * features depend.
+ */
+static void
+exec_rename_db_util(char *old_db_name, char *new_db_name, bool is_schema)
+{
+	char *query_str = gen_rename_schema_or_role_cmds(old_db_name, new_db_name, is_schema);
+	List		*res;
+	Node	   	*res_stmt;
+	PlannedStmt *wrapper;
+
+	/*
+	 * The above query will be
+	 * executed using ProcessUtility()
+	 */
+	res = raw_parser(query_str, RAW_PARSE_DEFAULT);
+	res_stmt = ((RawStmt *) linitial(res))->stmt;
+
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = res_stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 0;
+
+	ProcessUtility(wrapper,
+				is_schema ? "(RENAME SCHEMA )" : "(RENAME ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+	pfree(query_str);
+}
+
+void
+rename_tsql_db(char *old_db_name, char *new_db_name)
+{
+	int xactStarted = IsTransactionOrTransactionBlock();
+	Oid save_userid = InvalidOid;
+	int save_sec_context = 0;
+	int dbid = get_db_id(old_db_name);
+	int tries;
+	Oid     	prev_current_user = InvalidOid;
+
+	/*
+	 * Check that db_name is not "master", "tempdb", or "msdb",
+	 * IDs 1-4 are reserved for these native system databases.
+	 */
+	if (dbid == 0)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Database %s does not exist. Make sure that the name is entered correctly.", old_db_name)));
+	if (dbid && dbid <= 4)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Cannot change the name of the system database %s.", old_db_name)));
+
+	Assert (*pltsql_protocol_plugin_ptr);
+	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
+	for (tries = 0; tries < 50; tries++)
+	{
+		if ((*pltsql_protocol_plugin_ptr)->get_tds_database_backend_count &&
+			!(*pltsql_protocol_plugin_ptr)->get_tds_database_backend_count(dbid, dbid == get_cur_db_id()))
+			break;
+
+		/* sleep, then try again */
+		pg_usleep(100 * 1000L); /* 100ms */
+		if ((*pltsql_protocol_plugin_ptr)->invalidate_stat_view)
+			(*pltsql_protocol_plugin_ptr)->invalidate_stat_view();
+		/* timed out, still conflicts */
+	}
+
+	if (tries == 50)
+		ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_IN_USE),
+				errmsg("The database could not be exclusively locked to perform the operation.")));
+
+	/* Check permission on the given database. */
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+		ereport(ERROR,
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("User does not have permission to rename the database \'%s\', the database does not exist, or the database is not in a state that allows access checks.",
+					old_db_name)));
+
+	/*
+	 * Get an exclusive lock on the logical database we are trying to rename.
+	 */
+	if (!TryLockLogicalDatabaseForSession(dbid, ExclusiveLock))
+		ereport(ERROR,
+			(errcode(ERRCODE_CHECK_VIOLATION),
+				errmsg("The database could not be exclusively locked to perform the operation.")));
+
+	if (!xactStarted)
+		StartTransactionCommand();
+	
+	PG_TRY();
+	{
+		List *list_of_schemas_to_rename;
+		List *list_of_roles_to_rename;
+		ListCell *lc;
+		char message[128];
+
+		prev_current_user = GetUserId();
+
+		/*
+		 * We have checked for all permissions.
+		 * Now change context to admin to perform the renames.
+		 */
+		SetCurrentRoleId(get_bbf_role_admin_oid(), true);
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+		/*
+		 * Update the database name in sys.babelfish_sysdatabases.
+		 * This should happen irrespective of the migration mode.
+		 */
+		update_sysdatabases_db_name(old_db_name, new_db_name);
+
+		/*
+		 * There is no need to rename schemas for single-db mode.
+		 * Therefore, no updates required Babelfish catalog as well.
+		 */
+		if (MULTI_DB == get_migration_mode())
+		{
+			/*
+			 * Rename the physical schema and update them in
+			 * sys.babelfish_namespace_ext.
+			 * This includes system default and user created schemas in that db.
+			 */
+			list_of_schemas_to_rename = update_babelfish_namespace_ext_rename_db(dbid, new_db_name);
+			foreach (lc, list_of_schemas_to_rename)
+			{
+				char *sch = (char *) lfirst(lc);
+				char *old_schema_name = get_physical_schema_name(old_db_name, sch);
+				char *new_schema_name = get_physical_schema_name(new_db_name, sch);
+
+				exec_rename_db_util(old_schema_name, new_schema_name, true);
+			}
+		}
+
+		/*
+		 * Rename the physical roles and update the metadata in
+		 * sys.babelfish_authid_user_ext.
+		 * This includes system default and user created roles in that db.
+		 */
+		list_of_roles_to_rename = update_babelfish_authid_user_ext_rename_db(old_db_name, new_db_name);
+		foreach (lc, list_of_roles_to_rename)
+		{
+			char *role = (char *) lfirst(lc);
+			char *old_role_name;
+			char *new_role_name;
+
+			if (SINGLE_DB == get_migration_mode() &&
+				((strlen(role) == 3 && strncmp(role, "dbo", 3) == 0) ||
+				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0)))
+				continue;
+
+			old_role_name = get_physical_user_name(old_db_name, role, true);
+			new_role_name = get_physical_user_name(new_db_name, role, true);
+			exec_rename_db_util(old_role_name, new_role_name, false);
+		}
+
+		/* Update the default_database field in babelfish_authid_login_ext. */
+		update_babelfish_authid_login_ext_rename_db(old_db_name, new_db_name);
+
+		if (dbid == get_cur_db_id())
+			snprintf(message, sizeof(message), "Changed database context to '%s'.\nThe database name '%s' has been set.", new_db_name, new_db_name);
+		else
+			snprintf(message, sizeof(message), "The database name '%s' has been set.", new_db_name);
+		/* send env change token to user */
+
+		/* Send env change token if User is renaming current database. */
+		if (dbid == get_cur_db_id() && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
+			((*pltsql_protocol_plugin_ptr)->send_env_change) (1, new_db_name, old_db_name);
+		/* Send message to User. */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+	
+	}
+	PG_CATCH();
+	{
+		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		SetCurrentRoleId(prev_current_user, true);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
+	SetUserIdAndSecContext(save_userid, save_sec_context);
+	SetCurrentRoleId(prev_current_user, true);
+
+	if (!xactStarted)
+		CommitTransactionCommand();
 }

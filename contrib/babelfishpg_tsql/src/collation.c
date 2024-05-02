@@ -13,9 +13,12 @@
 #include "catalog/namespace.h"
 #include "tsearch/ts_locale.h"
 #include "parser/parser.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodes.h"
+#include <unicode/utrans.h>
 
 #include "pltsql.h"
 #include "src/collation.h"
@@ -23,9 +26,24 @@
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
 
+/* 
+ * Rule applied to transliterate Latin and general category Nd character 
+ * then convert the Latin (source) char to ASCII (destination) representation
+ */
+#define TRANSFORMATION_RULE "[[:Latin:][:Nd:]]; Latin-ASCII"
+
+/*
+ * The maximum number of bytes per character is 4 according 
+ * to RFC3629 which limited the character table to U+10FFFF
+ * Ref: https://www.rfc-editor.org/rfc/rfc3629#section-3
+ */
+#define MAX_BYTES_PER_CHAR 4
+
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
+static Oid remove_accents_internal_oid;
+static UTransliterator *cached_transliterator = NULL;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
@@ -274,6 +292,405 @@ transform_funcexpr(Node *node)
  * Case 3: if the pattern doesn't have a constant prefix
  *		 col LIKE PATTERN -> col ILIKE PATTERN
  */
+
+static Node *
+transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+{
+	Node	   *leftop = (Node *) linitial(op->args);
+	Node	   *rightop = (Node *) lsecond(op->args);
+	Oid			ltypeId = exprType(leftop);
+	Oid			rtypeId = exprType(rightop);
+	char	   *op_str;
+	Node	   *ret;
+	Const	   *patt;
+	Const	   *prefix;
+	Operator	optup;
+	Pattern_Prefix_Status pstatus;
+	int			collidx_of_cs_as;
+
+	tsql_get_server_collation_oid_internal(true);
+
+	if (!OidIsValid(server_collation_oid))
+		return node;
+
+
+	/*
+	 * Find the CS_AS collation corresponding to the CI_AS collation
+	 * Change the collation of the ILIKE op to the CS_AS collation
+	 */
+	collidx_of_cs_as =
+		tsql_find_cs_as_collation_internal(
+											tsql_find_collation_internal(coll_info_of_inputcollid.collname));
+
+
+	/*
+	 * A CS_AS collation should always exist unless a Babelfish CS_AS
+	 * collation was dropped or the lookup tables were not defined in
+	 * lexicographic order.  Program defensively here and just do no
+	 * transformation in this case, which will generate a
+	 * 'nondeterministic collation not supported' error.
+	 */
+
+	if (NOT_FOUND == collidx_of_cs_as)
+	{
+		elog(DEBUG2, "No corresponding CS_AS collation found for collation \"%s\"", coll_info_of_inputcollid.collname);
+		return node;
+	}
+
+	/* Change the opno and oprfuncid to ILIKE */
+	op->opno = like_entry.ilike_oid;
+	op->opfuncid = like_entry.ilike_opfuncid;
+
+	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
+	/* 
+	 * This is needed to process CI_AI for Const nodes
+	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
+	 * we obtain a Relabel node which won't help us to perform optimization
+	 * for constant prefix. Hence, we process that here
+	 */
+	if (IsA(rightop, RelabelType))
+	{
+		RelabelType		*relabel = (RelabelType *) rightop;
+		if (IsA(relabel->arg, Const))
+		{
+			lsecond(op->args) = relabel->arg;
+			rightop = (Node *) lsecond(op->args);
+		}
+	}
+
+	/* no constant prefix found in pattern, or pattern is not constant */
+	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
+		((Const *) rightop)->constisnull)
+	{
+		return node;
+	}
+
+	patt = (Const *) rightop;
+
+	/* extract pattern */
+	pstatus = pattern_fixed_prefix_wrapper(patt, 1, server_collation_oid,
+											&prefix, NULL);
+
+	/* If there is no constant prefix then there's nothing more to do */
+	if (pstatus == Pattern_Prefix_None)
+	{
+		return node;
+	}
+
+	/*
+	 * If we found an exact-match pattern, generate an "=" indexqual.
+	 */
+	if (pstatus == Pattern_Prefix_Exact)
+	{
+		op_str = like_entry.is_not_match ? "<>" : "=";
+		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
+								true, -1);
+		if (optup == (Operator) NULL)
+			return node;
+
+		ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
+											(Expr *) leftop, (Expr *) prefix,
+											InvalidOid, server_collation_oid, oprfuncid(optup)));
+
+		ReleaseSysCache(optup);
+	}
+	else
+	{
+		Expr	   *greater_equal,
+					*less_equal,
+					*concat_expr;
+		Node	   *constant_suffix;
+		Const	   *highest_sort_key;
+
+		/* construct leftop >= pattern */
+		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
+								true, -1);
+		if (optup == (Operator) NULL)
+			return node;
+		greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
+											(Expr *) leftop, (Expr *) prefix,
+											InvalidOid, server_collation_oid, oprfuncid(optup));
+		ReleaseSysCache(optup);
+		/* construct pattern||E'\uFFFF' */
+		highest_sort_key = makeConst(TEXTOID, -1, server_collation_oid, -1,
+										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
+
+		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
+								true, -1);
+		if (optup == (Operator) NULL)
+			return node;
+		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
+										(Expr *) prefix, (Expr *) highest_sort_key,
+										InvalidOid, server_collation_oid, oprfuncid(optup));
+		ReleaseSysCache(optup);
+		/* construct leftop < pattern */
+		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
+								true, -1);
+		if (optup == (Operator) NULL)
+			return node;
+
+		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
+										(Expr *) leftop, (Expr *) concat_expr,
+										InvalidOid, server_collation_oid, oprfuncid(optup));
+		constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
+		if (like_entry.is_not_match)
+		{
+			constant_suffix = (Node *) make_notclause((Expr *) constant_suffix);
+			ret = make_or_qual(node, constant_suffix);
+		}
+		else
+		{
+			constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
+			ret = make_and_qual(node, constant_suffix);
+		}
+		ReleaseSysCache(optup);
+	}
+	return ret;
+}
+
+static void
+get_remove_accents_internal_oid()
+{
+	const Oid funcargtypes[1] = {TEXTOID};
+	if (OidIsValid(remove_accents_internal_oid))
+		return;
+
+	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
+}
+
+/*
+ * Function responsible for obtaining unaccented version of input
+ * string with the help of ICU provided APIs. 
+ * We use a transformation rule to transliterate the string
+ */
+
+PG_FUNCTION_INFO_V1(remove_accents_internal);
+Datum remove_accents_internal(PG_FUNCTION_ARGS)
+{
+	char *input_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	UChar *utf16_input;
+	int32_t len_uinput, limit, capacity, len_result;
+	char *result;
+	UErrorCode status = U_ZERO_ERROR;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+#ifdef USE_ICU
+	// Check if transliterator is not yet cached
+	if (!cached_transliterator)
+	{
+		MemoryContext oldcontext;
+		UChar *rules;
+		int32_t len_uchar;
+
+		// Switch to TopMemoryContext for allocating cached transliterator
+		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+
+		// Load transliterator rules
+		len_uchar = icu_to_uchar(&rules, TRANSFORMATION_RULE, strlen(TRANSFORMATION_RULE));
+
+		// Open transliterator
+		cached_transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
+		if (U_FAILURE(status))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+						errmsg("Error opening transliterator: %s", u_errorName(status))));
+		}
+
+		// Switch back to original memory context
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
+	pfree(input_str);
+
+	limit = len_uinput;
+	/* 
+	 * set the capacity to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
+	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can 
+	 * have maximum INT32_MAX value
+	 */
+	capacity = (limit < (PG_INT32_MAX / MAX_BYTES_PER_CHAR)) ? (limit * MAX_BYTES_PER_CHAR) : PG_INT32_MAX;
+
+	utrans_transUChars(cached_transliterator,
+						utf16_input,
+						&len_uinput,
+						capacity,
+						0,
+						&limit,
+						&status);
+
+	if (U_FAILURE(status))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("Error normalising the input string: %s", u_errorName(status)),
+					errdetail("The input string may have caused buffer overflow")));
+	}
+
+	len_result = icu_from_uchar(&result, utf16_input, len_uinput);
+
+	// Return result as NVARCHAR
+	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result + 1));
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("This function requires ICU library, which is not available")));
+	PG_RETURN_NULL();
+#endif
+}
+
+static Node *
+convert_node_to_funcexpr_for_like(Node *node)
+{
+	FuncExpr *newFuncExpr = makeNode(FuncExpr);
+	Node *new_node;
+	newFuncExpr->funcid = remove_accents_internal_oid;
+	newFuncExpr->funcresulttype = get_sys_varcharoid();
+
+	if (node == NULL)
+		return node;
+
+	switch (nodeTag(node))
+	{
+		case T_Const:
+			{
+				Const *con;
+				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+				if (unlikely(new_node == NULL))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+				}
+
+				if (IsA(new_node, Const))
+				{
+					con = (Const *) new_node;
+					if (con->constisnull)
+						return new_node;
+					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+					return (Node *) con;
+				}
+				else
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("Could not convert Const node to desired node type")));
+				}
+				return new_node;
+			}
+		case T_FuncExpr:
+		case T_Var:
+		case T_Param:
+		case T_CaseExpr:
+		case T_RelabelType:
+		case T_CollateExpr:
+			{
+				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+				if (unlikely(new_node == NULL))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+				}
+				newFuncExpr->args = list_make1(new_node);
+				break;
+			}
+		default:
+			{
+				ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("unrecognized node type: %d", (int) nodeTag(node))));
+			}
+	}
+	return (Node *) newFuncExpr;
+}
+
+
+static Node *
+transform_likenode_for_AI(Node *node, OpExpr *op)
+{
+	Node		*leftop = (Node *) linitial(op->args);
+	Node		*rightop = (Node *) lsecond(op->args);
+
+	linitial(op->args) = coerce_to_target_type(NULL,
+												convert_node_to_funcexpr_for_like(leftop),
+												get_sys_varcharoid(),
+												exprType(leftop), -1,
+												COERCION_EXPLICIT,
+												COERCE_EXPLICIT_CAST,
+												-1);
+	lsecond(op->args) = coerce_to_target_type(NULL,
+												convert_node_to_funcexpr_for_like(rightop),
+												get_sys_varcharoid(),
+												exprType(rightop), -1,
+												COERCION_EXPLICIT,
+												COERCE_EXPLICIT_CAST,
+												-1);
+	return node;
+}
+
+/*
+ * To handle CS_AI collation for LIKE, we simply find the corresponding CS_AS collation
+ * and modify the nodes by removing accents from them
+ */
+
+static Node *
+transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+{
+	int			collidx_of_cs_as;
+
+	tsql_get_server_collation_oid_internal(true);
+
+	if (!OidIsValid(server_collation_oid))
+		return node;
+
+	/*
+	 * Find the CS_AS collation corresponding to the CS_AI collation
+	 */
+	collidx_of_cs_as =
+		tsql_find_cs_as_collation_internal(
+											tsql_find_collation_internal(coll_info_of_inputcollid.collname));
+
+
+	/*
+	 * A CS_AS collation should always exist unless a Babelfish CS_AS
+	 * collation was dropped or the lookup tables were not defined in
+	 * lexicographic order.  Program defensively here and just do no
+	 * transformation in this case, which will generate a
+	 * 'nondeterministic collation not supported' error.
+	 */
+	if (NOT_FOUND == collidx_of_cs_as)
+	{
+		elog(DEBUG2, "No corresponding CS_AS collation found for collation \"%s\"", coll_info_of_inputcollid.collname);
+		return node;
+	}
+
+	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
+	return transform_likenode_for_AI(node, op);	
+}
+
+static bool
+supported_AI_collation_for_like(int32_t code_page)
+{
+	if (code_page == 1250 || code_page == 1252 || code_page == 1257)
+		return true;
+	return false;
+}
+
 static Node *
 transform_likenode(Node *node)
 {
@@ -282,6 +699,8 @@ transform_likenode(Node *node)
 		OpExpr	   *op = (OpExpr *) node;
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
+
+		get_remove_accents_internal_oid();
 
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where
@@ -317,141 +736,36 @@ transform_likenode(Node *node)
 			}
 		}
 
+		if (OidIsValid(like_entry.like_oid) &&
+			OidIsValid(coll_info_of_inputcollid.oid) &&
+			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
+		{
+			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
+				return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
+			else
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("LIKE operator is not supported for \"%s\"", coll_info_of_inputcollid.collname)));
+		}
+
+		if (OidIsValid(like_entry.like_oid) &&
+			OidIsValid(coll_info_of_inputcollid.oid) &&
+			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
+		{
+			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
+				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
+			else
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("LIKE operator is not supported for \"%s\"", coll_info_of_inputcollid.collname)));
+		}
+
 		/* check if this is LIKE expr, and collation is CI_AS */
 		if (OidIsValid(like_entry.like_oid) &&
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
 		{
-			Node	   *leftop = (Node *) linitial(op->args);
-			Node	   *rightop = (Node *) lsecond(op->args);
-			Oid			ltypeId = exprType(leftop);
-			Oid			rtypeId = exprType(rightop);
-			char	   *op_str;
-			Node	   *ret;
-			Const	   *patt;
-			Const	   *prefix;
-			Operator	optup;
-			Pattern_Prefix_Status pstatus;
-			int			collidx_of_cs_as;
-
-			tsql_get_server_collation_oid_internal(true);
-
-			if (!OidIsValid(server_collation_oid))
-				return node;
-
-			/*
-			 * Find the CS_AS collation corresponding to the CI_AS collation
-			 * Change the collation of the ILIKE op to the CS_AS collation
-			 */
-			collidx_of_cs_as =
-				tsql_find_cs_as_collation_internal(
-												   tsql_find_collation_internal(coll_info_of_inputcollid.collname));
-
-
-			/*
-			 * A CS_AS collation should always exist unless a Babelfish CS_AS
-			 * collation was dropped or the lookup tables were not defined in
-			 * lexicographic order.  Program defensively here and just do no
-			 * transformation in this case, which will generate a
-			 * 'nondeterministic collation not supported' error.
-			 */
-			if (NOT_FOUND == collidx_of_cs_as)
-				return node;
-			/* Change the opno and oprfuncid to ILIKE */
-			op->opno = like_entry.ilike_oid;
-			op->opfuncid = like_entry.ilike_opfuncid;
-
-			op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-
-			/* no constant prefix found in pattern, or pattern is not constant */
-			if (IsA(leftop, Const) || !IsA(rightop, Const) ||
-				((Const *) rightop)->constisnull)
-			{
-				return node;
-			}
-
-			patt = (Const *) rightop;
-
-			/* extract pattern */
-			pstatus = pattern_fixed_prefix_wrapper(patt, 1, server_collation_oid,
-												   &prefix, NULL);
-
-			/* If there is no constant prefix then there's nothing more to do */
-			if (pstatus == Pattern_Prefix_None)
-			{
-				return node;
-			}
-
-			/*
-			 * If we found an exact-match pattern, generate an "=" indexqual.
-			 */
-			if (pstatus == Pattern_Prefix_Exact)
-			{
-				op_str = like_entry.is_not_match ? "<>" : "=";
-				optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
-										true, -1);
-				if (optup == (Operator) NULL)
-					return node;
-
-				ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
-												  (Expr *) leftop, (Expr *) prefix,
-												  InvalidOid, server_collation_oid, oprfuncid(optup)));
-
-				ReleaseSysCache(optup);
-				return ret;
-			}
-			else
-			{
-				Expr	   *greater_equal,
-						   *less_equal,
-						   *concat_expr;
-				Node	   *constant_suffix;
-				Const	   *highest_sort_key;
-
-				/* construct leftop >= pattern */
-				optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
-										true, -1);
-				if (optup == (Operator) NULL)
-					return node;
-				greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-												  (Expr *) leftop, (Expr *) prefix,
-												  InvalidOid, server_collation_oid, oprfuncid(optup));
-				ReleaseSysCache(optup);
-				/* construct pattern||E'\uFFFF' */
-				highest_sort_key = makeConst(TEXTOID, -1, server_collation_oid, -1,
-											 PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
-
-				optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
-										true, -1);
-				if (optup == (Operator) NULL)
-					return node;
-				concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
-												(Expr *) prefix, (Expr *) highest_sort_key,
-												InvalidOid, server_collation_oid, oprfuncid(optup));
-				ReleaseSysCache(optup);
-				/* construct leftop < pattern */
-				optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
-										true, -1);
-				if (optup == (Operator) NULL)
-					return node;
-
-				less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-											   (Expr *) leftop, (Expr *) concat_expr,
-											   InvalidOid, server_collation_oid, oprfuncid(optup));
-				constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
-				if (like_entry.is_not_match)
-				{
-					constant_suffix = (Node *) make_notclause((Expr *) constant_suffix);
-					ret = make_or_qual(node, constant_suffix);
-				}
-				else
-				{
-					constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
-					ret = make_and_qual(node, constant_suffix);
-				}
-				ReleaseSysCache(optup);
-				return ret;
-			}
+			return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 		}
 	}
 	return node;

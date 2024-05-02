@@ -1,0 +1,145 @@
+-- tsql
+create login set_reset_login with password='12345678';
+GO
+
+create user set_reset_user for login set_reset_login;
+GO
+
+-- psql
+CREATE PROCEDURE master_dbo.set_role_proc()
+AS
+$$
+BEGIN
+  SET ROLE master_set_reset_user;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE master_dbo.reset_role_proc()
+AS
+$$
+BEGIN
+  RESET ROLE;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE FUNCTION master_dbo.set_role_func() RETURNS int AS $$
+BEGIN
+  EXECUTE 'SET ROLE master_set_reset_user';
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE FUNCTION master_dbo.reset_role_func() RETURNS int AS $$
+BEGIN
+  EXECUTE 'RESET ROLE';
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE PROCEDURE master_dbo.set_session_auth_proc()
+AS
+$$
+BEGIN
+  SET SESSION AUTHORIZATION master_set_reset_user;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE master_dbo.reset_session_auth_proc()
+AS
+$$
+BEGIN
+  RESET SESSION AUTHORIZATION;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE FUNCTION master_dbo.set_session_auth_func() RETURNS int AS $$
+BEGIN
+  EXECUTE 'SET SESSION AUTHORIZATION master_set_reset_user';
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE FUNCTION master_dbo.reset_session_auth_func() RETURNS int AS $$
+BEGIN
+  EXECUTE 'RESET SESSION AUTHORIZATION';
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+-- tsql
+select current_user;
+GO
+
+exec set_role_proc;
+GO
+
+exec reset_role_proc;
+GO
+
+select set_role_func();
+GO
+
+select reset_role_func();
+GO
+
+select current_user;
+GO
+
+select suser_name();
+GO
+
+exec set_session_auth_proc;
+GO
+
+exec reset_session_auth_proc;
+GO
+
+select set_session_auth_func();
+GO
+
+select reset_session_auth_func();
+GO
+
+select suser_name();
+GO
+
+-- cleanup
+-- tsql
+drop user set_reset_user;
+GO
+
+drop login set_reset_login;
+GO
+
+-- psql
+drop procedure master_dbo.set_role_proc;
+GO
+
+drop procedure master_dbo.reset_role_proc;
+GO
+
+drop function master_dbo.set_role_func();
+GO
+
+drop function master_dbo.reset_role_func();
+GO
+
+drop procedure master_dbo.set_session_auth_proc;
+GO
+
+drop procedure master_dbo.reset_session_auth_proc;
+GO
+
+drop function master_dbo.set_session_auth_func();
+GO
+
+drop function master_dbo.reset_session_auth_func();
+GO

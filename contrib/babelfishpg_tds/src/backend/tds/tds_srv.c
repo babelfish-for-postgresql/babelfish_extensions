@@ -193,6 +193,7 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->set_guc_stat_var = &TdsSetGucStatVariable;
 	pltsql_plugin_handler_ptr->set_at_at_stat_var = &TdsSetAtAtStatVariable;
 	pltsql_plugin_handler_ptr->set_db_stat_var = &TdsSetDatabaseStatVariable;
+	pltsql_plugin_handler_ptr->get_tds_database_backend_count = &get_tds_database_backend_count;
 	pltsql_plugin_handler_ptr->get_stat_values = &tds_stat_get_activity;
 	pltsql_plugin_handler_ptr->invalidate_stat_view = &invalidate_stat_table;
 	pltsql_plugin_handler_ptr->get_host_name = &get_tds_host_name;

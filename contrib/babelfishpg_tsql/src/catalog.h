@@ -13,6 +13,13 @@
  *****************************************/
 extern Datum init_catalog(PG_FUNCTION_ARGS);
 extern void rename_update_bbf_catalog(RenameStmt *stmt);
+#define BBF_ASSEMBLIES_TABLE_NAME "assemblies"
+#define BBF_CONFIGURATIONS_TABLE_NAME "babelfish_configurations"
+#define BBF_HELPCOLLATION_TABLE_NAME "babelfish_helpcollation"
+#define BBF_SYSLANGUAGES_TABLE_NAME "babelfish_syslanguages"
+#define BBF_SERVICE_SETTINGS_TABLE_NAME "service_settings"
+#define SPT_DATATYPE_INFO_TABLE_NAME "spt_datatype_info_table"
+#define BBF_VERSIONS_TABLE_NAME "versions"
 
 /*****************************************
  * 			Catalog Hooks
@@ -150,6 +157,10 @@ extern char *get_user_for_database(const char *db_name);
 extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name);
 extern bool guest_role_exists_for_db(const char *dbname);
 extern void update_db_owner(const char *new_owner_name, const char *db_name);
+extern void update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name);
+extern List *update_babelfish_namespace_ext_nsp_name(int16 db_id, char *new_db_name);
+extern List *update_babelfish_authid_user_ext_db_name(const char *old_db_name, const char *new_db_name);
+extern void rename_tsql_db(char *old_db_name, char *new_db_name);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext
@@ -196,6 +207,7 @@ extern HeapTuple search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid,
 									 const char *logical_schema_name, const char *view_name);
 extern bool check_is_tsql_view(Oid relid);
 extern void clean_up_bbf_view_def(int16 dbid);
+extern void drop_bbf_schema_permission_entries(int16 dbid);
 
 typedef struct FormData_bbf_view_def
 {

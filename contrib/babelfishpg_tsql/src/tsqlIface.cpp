@@ -196,6 +196,7 @@ static bool in_execute_body_batch_parameter = false;
 static const std::string fragment_SELECT_prefix = "SELECT "; // fragment prefix for expressions
 static const std::string fragment_EXEC_prefix   = "EXEC ";   // fragment prefix for execute_body_batch
 static PLtsql_stmt *makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx);
+static PLtsql_stmt *makeAlterDatabaseStatement(TSqlParser::Alter_databaseContext *ctx);
 static void handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx); 
 static void handleTableConstraintWithoutComma(TSqlParser::Column_def_table_constraintsContext *ctx);
 static void handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx);
@@ -1797,6 +1798,10 @@ public:
 		{
 			stmt = makeChangeDbOwnerStatement(ctx->alter_authorization());
 		}
+		else if (ctx->alter_database())
+		{
+			stmt = makeAlterDatabaseStatement(ctx->alter_database());
+		}
 		else if (ctx->create_fulltext_index())
 		{
 			stmt = makeCreateFulltextIndexStmt(ctx->create_fulltext_index());
@@ -1820,7 +1825,10 @@ public:
 			// Exit in case of Change DB owner
 			return;
 		}
-		
+		if (ctx->alter_database())
+		{
+			return;
+		}
 		if (ctx->create_fulltext_index())
 		{
 			clear_rewritten_query_fragment();
@@ -3121,15 +3129,13 @@ static void process_query_specification(
 			auto column_alias_as = elem->expression_elem()->as_column_alias();
 			if (!column_alias_as->AS())
 			{
-				std::string orig_text = ::getFullText(column_alias_as->column_alias());
-				std::string repl_text = std::string("AS ");
-
 				if (is_quotation_needed_for_column_alias(column_alias_as->column_alias()))
-					repl_text += std::string("\"") + orig_text + "\"";
+				{
+					mutator->add(column_alias_as->start->getStartIndex(), "", " AS \"");
+					mutator->add(column_alias_as->stop->getStopIndex() + 1, "", "\"");
+				}
 				else
-					repl_text += orig_text;
-
-				mutator->add(column_alias_as->start->getStartIndex(), "", "AS ");
+					mutator->add(column_alias_as->start->getStartIndex(), "", " AS ");
 			}
 		}
 	}
@@ -5632,6 +5638,12 @@ makeFetchCursorStatement(TSqlParser::Fetch_cursorContext *ctx)
 	auto targetText = ::getFullText(ctx->cursor_name());
 	result->curvar = lookup_cursor_variable(targetText.c_str())->dno;
 
+	/* FETCH CURSOR without destination should be blocked inside a function. */
+
+	if (is_compiling_create_function() && !ctx->INTO())
+	{
+		throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "SELECT statements included within a function cannot return data to a client.", getLineAndPos(ctx));
+	}
 	/* fetch option */
 	if (ctx->NEXT()) {
 		result->direction = FETCH_FORWARD;
@@ -6791,6 +6803,8 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 static void
 post_process_column_constraint(TSqlParser::Column_constraintContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
+	if (ctx->UNIQUE())
+		rewritten_query_fragment.emplace(std::make_pair(ctx->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
 	if (ctx && ctx->clustered() && ctx->clustered()->CLUSTERED())
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->CLUSTERED(), baseCtx);
 	if (ctx && ctx->clustered() && ctx->clustered()->NONCLUSTERED())
@@ -6882,6 +6896,8 @@ post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql
 static void
 post_process_table_constraint(TSqlParser::Table_constraintContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
+	if (ctx->UNIQUE())
+		rewritten_query_fragment.emplace(std::make_pair(ctx->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
 	if (ctx->clustered() && ctx->clustered()->CLUSTERED())
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->CLUSTERED(), baseCtx);
 	if (ctx->clustered() && ctx->clustered()->NONCLUSTERED())
@@ -8460,6 +8476,23 @@ makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
 	// Login name for the new owner
 	std::string new_owner_name_str = stripQuoteFromId(ctx->authorization_grantee()->id());
 	result->new_owner_name = pstrdup(downcase_truncate_identifier(new_owner_name_str.c_str(), new_owner_name_str.length(), true));
+
+	return (PLtsql_stmt *) result;
+}
+
+static PLtsql_stmt *
+makeAlterDatabaseStatement(TSqlParser::Alter_databaseContext *ctx)
+{
+	PLtsql_stmt_alter_db *result = (PLtsql_stmt_alter_db *) palloc0(sizeof(*result));
+
+	result->cmd_type = PLTSQL_STMT_ALTER_DB;
+	result->lineno = getLineNo(ctx);
+
+	std::string old_db_name_str = stripQuoteFromId(ctx->database);
+	std::string new_old_name_str = stripQuoteFromId(ctx->new_name);
+
+	result->old_db_name = pstrdup(downcase_truncate_identifier(old_db_name_str.c_str(), old_db_name_str.length(), true));
+	result->new_db_name = pstrdup(downcase_truncate_identifier(new_old_name_str.c_str(), new_old_name_str.length(), true));
 
 	return (PLtsql_stmt *) result;
 }

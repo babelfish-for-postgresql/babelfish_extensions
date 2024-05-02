@@ -90,8 +90,6 @@ protected:
 		int count = 0; /* record count to skip unnecessary visiting */
 		bool is_inside_trigger = false;
 		bool is_inside_view = false;
-		bool is_inside_with = false;
-		bool is_inside_join = false;
 
 		/* handler */
 		void handle(PgTsqlInstrMetricType tm_type, antlr4::tree::TerminalNode *node, escape_hatch_t* eh);
@@ -228,6 +226,7 @@ protected:
 		antlrcpp::Any visitData_type(TSqlParser::Data_typeContext *ctx) override;
 
 		antlrcpp::Any visitSnapshot_option(TSqlParser::Snapshot_optionContext *ctx) override;
+		antlrcpp::Any visitTable_type_definition(TSqlParser::Table_type_definitionContext* ctx) override;
 
 	/* helpers */
 	void handle_storage_partition(TSqlParser::Storage_partition_clauseContext *ctx);
@@ -639,6 +638,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_definition(TSqlPars
 	if (ctx->ROWGUIDCOL())
 		handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_ROWGUIDCOL, ctx->ROWGUIDCOL(), &st_escape_hatch_rowguidcol_column);
 
+	if (ctx->inline_index())
+		handle(INSTR_UNSUPPORTED_TSQL_INLINE_INDEX, "INLINE INDEX", getLineAndPos(ctx->inline_index()));
+
 	return visitChildren(ctx);
 }
 
@@ -745,15 +747,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_table(TSqlParser::C
 
 	// ctx->column_definition() will be handled by visitColumn_definition(). do nothing here.
 
-	for (auto ictx : ctx->inline_index())
-	{
-		if (ictx->ON())
-			if (ictx->storage_partition_clause().size() > 0)
-			    handle_storage_partition(ictx->storage_partition_clause()[0]);
+	if (!ctx->inline_index().empty())
+		handle(INSTR_UNSUPPORTED_TSQL_INLINE_INDEX, "INLINE INDEX", getLineAndPos(ctx->inline_index()[0]));
 
-		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
-			handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_CLUSTERED, ictx->clustered()->CLUSTERED(), &st_escape_hatch_index_clustering);
-	}
 	for (auto ictx : ctx->table_constraint())
 	{
 		if (ictx->ON())
@@ -912,7 +908,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_database(TSqlParser::Alter_databaseContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_ALTER_DATABASE, "ALTER DATABASE", getLineAndPos(ctx));
+	if (!(ctx->MODIFY() && ctx->NAME() && ctx->EQUAL()))
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_DATABASE, "ALTER DATABASE", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
@@ -938,6 +935,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_type(TSqlParser::Cr
 {
 	if (ctx->table_options() && ctx->table_options()->WITH())
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_TYPE_TABLE_OPTION, "table option in CREATE TYPE", getLineAndPos(ctx->table_options()->WITH()));
+	if (!ctx->inline_index().empty())
+		handle(INSTR_UNSUPPORTED_TSQL_INLINE_INDEX, "INLINE INDEX", getLineAndPos(ctx->inline_index()[0]));
 	return visitChildren(ctx);
 }
 
@@ -1372,7 +1371,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlP
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
-{
+{	
 	if (ctx->PIVOT())
 	{
 		if (is_inside_view)
@@ -1380,30 +1379,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlPars
 			is_inside_view = false;
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Create view on stmt with PIVOT operator is not currently supported.", 0, 0);
 		}
-			
-
-		if (is_inside_with)
-		{
-			is_inside_with = false;
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "WITH CTE stmt with usage of PIVOT operator is not currently supported", 0, 0);
-		}
-
-		if (is_inside_join)
-		{
-			is_inside_join = false;
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "JOIN with PIVOT statement is not currently supported", 0, 0);
-		}
-	}
-	if (ctx->JOIN())
-	{
-		is_inside_join = true;
 	}
 	if (ctx->UNPIVOT())
 		handle(INSTR_UNSUPPORTED_TSQL_UNPIVOT, ctx->UNPIVOT());
 
 	auto ret = visitChildren(ctx);
 
-	is_inside_join = false;
 	return ret;
 }
 
@@ -1454,11 +1435,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_expression(TSqlParser
 	if (ctx->XMLNAMESPACES())
 		handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES", getLineAndPos(ctx));
 
-	is_inside_with = true;
-	auto ret = visitChildren(ctx);
-	is_inside_with = false;
-
-	return ret;
+	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunction_call(TSqlParser::Function_callContext *ctx)
@@ -1668,7 +1645,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_procoption",
 	"sp_recompile",
 	"sp_refreshview",
-	"sp_renamedb",
 	"sp_resetstatus",
 	"sp_sequence_get_range",
 	"sp_setnetname",
@@ -1818,6 +1794,8 @@ void TsqlUnsupportedFeatureHandlerImpl::visitSqlClauses(TSqlParser::Sql_clausesC
 {
 	if(option->another_statement() && option->another_statement()->use_statement())
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "a USE database statement is not allowed in a procedure, function or trigger.", getLineAndPos(option));
+	if(option->ddl_statement() && option->ddl_statement()->alter_database())
+		throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "An ALTER database statement is not allowed in a procedure, function or trigger.", getLineAndPos(option));
 
 	if(option->cfl_statement())
 	{
@@ -1907,4 +1885,15 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 
 	if (revoke->AS())
 		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE AS", getLineAndPos(revoke->AS()));
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_type_definition(TSqlParser::Table_type_definitionContext* ctx)
+{
+	for (auto tctx : ctx->table_type_indices())
+	{
+		if (tctx->inline_index())
+			handle(INSTR_UNSUPPORTED_TSQL_INLINE_INDEX, "INLINE INDEX", getLineAndPos(tctx->inline_index()));
+	}
+
+	return visitChildren(ctx);
 }

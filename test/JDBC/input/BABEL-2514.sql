@@ -1,4 +1,3 @@
--- parallel_query_expected
 USE master;
 go
 
@@ -123,7 +122,7 @@ create view babel_2514_complex_view as (
 	select (select a = 1) col1, * from (select b = 2 union all select b = 3) t
 );
 go
-select * from babel_2514_complex_view;
+select * from babel_2514_complex_view order by b;
 go
 drop view if exists babel_2514_complex_view;
 go
