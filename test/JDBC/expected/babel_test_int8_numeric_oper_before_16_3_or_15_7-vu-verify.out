@@ -1,0 +1,1750 @@
+-- psql
+analyse master_dbo.test_int8_numeric_vu;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('force_parallel_mode', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+exec test_int8_numeric_p0;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p0
+  Query Text: select count(*) from test_int8_numeric_vu where a = 1.0
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a = 1.0)
+~~END~~
+
+exec test_int8_numeric_p0;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p0
+  Query Text: select count(*) from test_int8_numeric_vu where a = 1.0
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a = 1.0)
+~~END~~
+
+exec test_int8_numeric_p1;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p1
+  Query Text: select count(*) from test_int8_numeric_vu where a IS NULL
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a IS NULL)
+~~END~~
+
+exec test_int8_numeric_p2;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p2
+  Query Text: select count(*) from test_int8_numeric_vu where a <> 5.0
+  ->  Aggregate
+        ->  Seq Scan on test_int8_numeric_vu
+              Filter: (a <> 5.0)
+~~END~~
+
+exec test_int8_numeric_p3;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p3
+  Query Text: select count(*) from test_int8_numeric_vu where 5.0 <> a
+  ->  Aggregate
+        ->  Seq Scan on test_int8_numeric_vu
+              Filter: (5.0 <> a)
+~~END~~
+
+exec test_int8_numeric_p4;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p4
+  Query Text: select count(*) from test_int8_numeric_vu where a < 5.0
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < 5.0)
+~~END~~
+
+exec test_int8_numeric_p5;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p5
+  Query Text: select count(*) from test_int8_numeric_vu where 5.0 > a
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < 5.0)
+~~END~~
+
+exec test_int8_numeric_p6;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p6
+  Query Text: select count(*) from test_int8_numeric_vu where a < -9223372036854775808.0
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < '-9223372036854775808.0'::numeric)
+~~END~~
+
+exec test_int8_numeric_p7;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p7
+  Query Text: select count(*) from test_int8_numeric_vu where -9223372036854775808.0 > a
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < '-9223372036854775808.0'::numeric)
+~~END~~
+
+exec test_int8_numeric_p8;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p8
+  Query Text: select count(*) from test_int8_numeric_vu where a <= 5.0
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a <= 5.0)
+~~END~~
+
+exec test_int8_numeric_p9;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p9
+  Query Text: select count(*) from test_int8_numeric_vu where 5.0 >= a
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a <= 5.0)
+~~END~~
+
+exec test_int8_numeric_p10;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p10
+  Query Text: select count(*) from test_int8_numeric_vu where a > 999995.0
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > 999995.0)
+~~END~~
+
+exec test_int8_numeric_p11;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p11
+  Query Text: select count(*) from test_int8_numeric_vu where 999995.0 < a
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > 999995.0)
+~~END~~
+
+exec test_int8_numeric_p12;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p12
+  Query Text: select count(*) from test_int8_numeric_vu where a >= 999995.0
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a >= 999995.0)
+~~END~~
+
+exec test_int8_numeric_p13;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p13
+  Query Text: select count(*) from test_int8_numeric_vu where 999995.0 <= a
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a >= 999995.0)
+~~END~~
+
+exec test_int8_numeric_p14;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p14
+  Query Text: select count(*) from test_int8_numeric_vu where a > 9223372036854775807.0
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > 9223372036854775807.0)
+~~END~~
+
+exec test_int8_numeric_p15;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p15
+  Query Text: select count(*) from test_int8_numeric_vu where 9223372036854775807.0 < a
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > 9223372036854775807.0)
+~~END~~
+
+exec test_int8_numeric_p16;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p16
+  Query Text: select count(*) from test_int8_numeric_vu where a > 5.0
+  ->  Aggregate
+        ->  Seq Scan on test_int8_numeric_vu
+              Filter: (a > 5.0)
+~~END~~
+
+exec test_int8_numeric_p17;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p17
+  Query Text: select count(*) from test_int8_numeric_vu where 5.0 < a
+  ->  Aggregate
+        ->  Seq Scan on test_int8_numeric_vu
+              Filter: (5.0 < a)
+~~END~~
+
+exec test_int8_numeric_p18;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p18
+  Query Text: select count(*) from test_int8_numeric_vu where a between 5.0 and 10.0
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: ((a >= 5.0) AND (a <= 10.0))
+~~END~~
+
+exec test_int8_numeric_p19;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p19
+  Query Text: select count(*) from test_int8_numeric_vu where a between 5.0 and 999999.0
+  ->  Aggregate
+        ->  Seq Scan on test_int8_numeric_vu
+              Filter: ((a >= 5.0) AND (a <= 999999.0))
+~~END~~
+
+exec test_int8_numeric_p20;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p20
+  Query Text: select count(*) from test_int8_numeric_vu where (a between 5.0 and 999999.0) and a = 10
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: ((a >= 5.0) AND (a <= 999999.0) AND (a = 10))
+~~END~~
+
+exec test_int8_numeric_p21;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p21
+  Query Text: select count(*) from test_int8_numeric_vu where a > 5.0 and a < 7
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: ((a > 5.0) AND (a < 7))
+~~END~~
+
+exec test_int8_numeric_p22;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p22
+  Query Text: select count(*) from test_int8_numeric_vu where 5.0 < a and 7 > a
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: ((a > 5.0) AND (a < 7))
+~~END~~
+
+exec test_int8_numeric_p23;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p23
+  Query Text: select count(*) from test_int8_numeric_vu where a <> 5
+  ->  Aggregate
+        ->  Seq Scan on test_int8_numeric_vu
+              Filter: (a <> 5)
+~~END~~
+
+exec test_int8_numeric_p24;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p24
+  Query Text: select count(*) from test_int8_numeric_vu where a < 5
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < 5)
+~~END~~
+
+exec test_int8_numeric_p25;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p25
+  Query Text: select count(*) from test_int8_numeric_vu where a < -9223372036854775808
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a < '-9223372036854775808'::bigint)
+~~END~~
+
+exec test_int8_numeric_p26;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p26
+  Query Text: select count(*) from test_int8_numeric_vu where a <= 5
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a <= 5)
+~~END~~
+
+exec test_int8_numeric_p27;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p27
+  Query Text: select count(*) from test_int8_numeric_vu where a > 999995
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > 999995)
+~~END~~
+
+exec test_int8_numeric_p28;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p28
+  Query Text: select count(*) from test_int8_numeric_vu where a >= 999995
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a >= 999995)
+~~END~~
+
+exec test_int8_numeric_p29;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p29
+  Query Text: select count(*) from test_int8_numeric_vu where a > 9223372036854775807
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: (a > '9223372036854775807'::bigint)
+~~END~~
+
+exec test_int8_numeric_p30;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p30
+  Query Text: select count(*) from test_int8_numeric_vu where a > 5
+  ->  Aggregate
+        ->  Seq Scan on test_int8_numeric_vu
+              Filter: (a > 5)
+~~END~~
+
+exec test_int8_numeric_p31;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p31
+  Query Text: select count(*) from test_int8_numeric_vu where a between 5 and 10
+  ->  Aggregate
+        ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+              Index Cond: ((a >= 5) AND (a <= 10))
+~~END~~
+
+exec test_int8_numeric_p32;
+GO
+~~START~~
+text
+Query Text: EXEC test_int8_numeric_p32
+  Query Text: select count(*) from test_int8_numeric_vu where a between 5 and 999999
+  ->  Aggregate
+        ->  Seq Scan on test_int8_numeric_vu
+              Filter: ((a >= 5) AND (a <= 999999))
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+exec test_int8_numeric_p0;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int8_numeric_p0;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int8_numeric_p1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int8_numeric_p2;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+exec test_int8_numeric_p3;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+exec test_int8_numeric_p4;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec test_int8_numeric_p5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec test_int8_numeric_p6;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int8_numeric_p7;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int8_numeric_p8;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int8_numeric_p9;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int8_numeric_p10;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int8_numeric_p11;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int8_numeric_p12;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec test_int8_numeric_p13;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec test_int8_numeric_p14;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int8_numeric_p15;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int8_numeric_p16;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+exec test_int8_numeric_p17;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+exec test_int8_numeric_p18;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int8_numeric_p19;
+GO
+~~START~~
+int
+999995
+~~END~~
+
+exec test_int8_numeric_p20;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int8_numeric_p21;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int8_numeric_p22;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int8_numeric_p23;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+exec test_int8_numeric_p24;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec test_int8_numeric_p25;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int8_numeric_p26;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int8_numeric_p27;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int8_numeric_p28;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec test_int8_numeric_p29;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int8_numeric_p30;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+exec test_int8_numeric_p31;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int8_numeric_p32;
+GO
+~~START~~
+int
+999995
+~~END~~
+
+
+drop procedure test_int8_numeric_p0;
+drop procedure test_int8_numeric_p00;
+drop procedure test_int8_numeric_p1;
+drop procedure test_int8_numeric_p2;
+drop procedure test_int8_numeric_p3;
+drop procedure test_int8_numeric_p4;
+drop procedure test_int8_numeric_p5;
+drop procedure test_int8_numeric_p6;
+drop procedure test_int8_numeric_p7;
+drop procedure test_int8_numeric_p8;
+drop procedure test_int8_numeric_p9;
+drop procedure test_int8_numeric_p10;
+drop procedure test_int8_numeric_p11;
+drop procedure test_int8_numeric_p12;
+drop procedure test_int8_numeric_p13;
+drop procedure test_int8_numeric_p14;
+drop procedure test_int8_numeric_p15;
+drop procedure test_int8_numeric_p16;
+drop procedure test_int8_numeric_p17;
+drop procedure test_int8_numeric_p18;
+drop procedure test_int8_numeric_p19;
+drop procedure test_int8_numeric_p20;
+drop procedure test_int8_numeric_p21;
+drop procedure test_int8_numeric_p22;
+drop procedure test_int8_numeric_p23;
+drop procedure test_int8_numeric_p24;
+drop procedure test_int8_numeric_p25;
+drop procedure test_int8_numeric_p26;
+drop procedure test_int8_numeric_p27;
+drop procedure test_int8_numeric_p28;
+drop procedure test_int8_numeric_p29;
+drop procedure test_int8_numeric_p30;
+drop procedure test_int8_numeric_p31;
+drop procedure test_int8_numeric_p32;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('force_parallel_mode', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+select * from test_int8_numeric_v0;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v0
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a)::numeric = 1.0)
+~~END~~
+
+select * from test_int8_numeric_v00;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v00
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (1.0 = (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v1;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v1
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a IS NULL)
+~~END~~
+
+select * from test_int8_numeric_v2;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v2
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a)::numeric <> 5.0)
+~~END~~
+
+select * from test_int8_numeric_v3;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v3
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (5.0 <> (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v4;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v4
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a)::numeric < 5.0)
+~~END~~
+
+select * from test_int8_numeric_v5;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v5
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (5.0 > (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v6;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v6
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a)::numeric < '-9223372036854775808.0'::numeric)
+~~END~~
+
+select * from test_int8_numeric_v7;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v7
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ('-9223372036854775808.0'::numeric > (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v8;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v8
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a)::numeric <= 5.0)
+~~END~~
+
+select * from test_int8_numeric_v9;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v9
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (5.0 >= (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v10;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v10
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a)::numeric > 999995.0)
+~~END~~
+
+select * from test_int8_numeric_v11;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v11
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (999995.0 < (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v12;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v12
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a)::numeric >= 999995.0)
+~~END~~
+
+select * from test_int8_numeric_v13;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v13
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (999995.0 <= (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v14;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v14
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a)::numeric > 9223372036854775807.0)
+~~END~~
+
+select * from test_int8_numeric_v15;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v15
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (9223372036854775807.0 < (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v16;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v16
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a)::numeric > 5.0)
+~~END~~
+
+select * from test_int8_numeric_v17;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v17
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (5.0 < (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v18;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v18
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 10.0))
+~~END~~
+
+select * from test_int8_numeric_v19;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v19
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 999999.0))
+~~END~~
+
+select * from test_int8_numeric_v20;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v20
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a = 10)
+        Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 999999.0))
+~~END~~
+
+select * from test_int8_numeric_v21;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v21
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a < 7)
+        Filter: ((a)::numeric > 5.0)
+~~END~~
+
+select * from test_int8_numeric_v22;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v22
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a < 7)
+        Filter: (5.0 < (a)::numeric)
+~~END~~
+
+select * from test_int8_numeric_v23;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v23
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (a <> 5)
+~~END~~
+
+select * from test_int8_numeric_v24;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v24
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a < 5)
+~~END~~
+
+select * from test_int8_numeric_v25;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v25
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a < '-9223372036854775808'::bigint)
+~~END~~
+
+select * from test_int8_numeric_v26;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v26
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a <= 5)
+~~END~~
+
+select * from test_int8_numeric_v27;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v27
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a > 999995)
+~~END~~
+
+select * from test_int8_numeric_v28;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v28
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a >= 999995)
+~~END~~
+
+select * from test_int8_numeric_v29;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v29
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: (a > '9223372036854775807'::bigint)
+~~END~~
+
+select * from test_int8_numeric_v30;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v30
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: (a > 5)
+~~END~~
+
+select * from test_int8_numeric_v31;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v31
+Aggregate
+  ->  Index Only Scan using test_int8_numeric_vu_idxtest_in83c0e81d028b7737cdad4e0181d1e760 on test_int8_numeric_vu
+        Index Cond: ((a >= 5) AND (a <= 10))
+~~END~~
+
+select * from test_int8_numeric_v32;
+GO
+~~START~~
+text
+Query Text: select * from test_int8_numeric_v32
+Aggregate
+  ->  Seq Scan on test_int8_numeric_vu
+        Filter: ((a >= 5) AND (a <= 999999))
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select * from test_int8_numeric_v0;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from test_int8_numeric_v00;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from test_int8_numeric_v1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from test_int8_numeric_v2;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+select * from test_int8_numeric_v3;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+select * from test_int8_numeric_v4;
+GO
+~~START~~
+int
+5
+~~END~~
+
+select * from test_int8_numeric_v5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+select * from test_int8_numeric_v6;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from test_int8_numeric_v7;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from test_int8_numeric_v8;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from test_int8_numeric_v9;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from test_int8_numeric_v10;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from test_int8_numeric_v11;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from test_int8_numeric_v12;
+GO
+~~START~~
+int
+7
+~~END~~
+
+select * from test_int8_numeric_v13;
+GO
+~~START~~
+int
+7
+~~END~~
+
+select * from test_int8_numeric_v14;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from test_int8_numeric_v15;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from test_int8_numeric_v16;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+select * from test_int8_numeric_v17;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+select * from test_int8_numeric_v18;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from test_int8_numeric_v19;
+GO
+~~START~~
+int
+999995
+~~END~~
+
+select * from test_int8_numeric_v20;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from test_int8_numeric_v21;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from test_int8_numeric_v22;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from test_int8_numeric_v23;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+select * from test_int8_numeric_v24;
+GO
+~~START~~
+int
+5
+~~END~~
+
+select * from test_int8_numeric_v25;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from test_int8_numeric_v26;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from test_int8_numeric_v27;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from test_int8_numeric_v28;
+GO
+~~START~~
+int
+7
+~~END~~
+
+select * from test_int8_numeric_v29;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from test_int8_numeric_v30;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+select * from test_int8_numeric_v31;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from test_int8_numeric_v32;
+GO
+~~START~~
+int
+999995
+~~END~~
+
+
+drop view test_int8_numeric_v0;
+drop view test_int8_numeric_v00;
+drop view test_int8_numeric_v1;
+drop view test_int8_numeric_v2;
+drop view test_int8_numeric_v3;
+drop view test_int8_numeric_v4;
+drop view test_int8_numeric_v5;
+drop view test_int8_numeric_v6;
+drop view test_int8_numeric_v7;
+drop view test_int8_numeric_v8;
+drop view test_int8_numeric_v9;
+drop view test_int8_numeric_v10;
+drop view test_int8_numeric_v11;
+drop view test_int8_numeric_v12;
+drop view test_int8_numeric_v13;
+drop view test_int8_numeric_v14;
+drop view test_int8_numeric_v15;
+drop view test_int8_numeric_v16;
+drop view test_int8_numeric_v17;
+drop view test_int8_numeric_v18;
+drop view test_int8_numeric_v19;
+drop view test_int8_numeric_v20;
+drop view test_int8_numeric_v21;
+drop view test_int8_numeric_v22;
+drop view test_int8_numeric_v23;
+drop view test_int8_numeric_v24;
+drop view test_int8_numeric_v25;
+drop view test_int8_numeric_v26;
+drop view test_int8_numeric_v27;
+drop view test_int8_numeric_v28;
+drop view test_int8_numeric_v29;
+drop view test_int8_numeric_v30;
+drop view test_int8_numeric_v31;
+drop view test_int8_numeric_v32;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('force_parallel_mode', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select test_int8_numeric_f0();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select test_int8_numeric_f00();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select test_int8_numeric_f1();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select test_int8_numeric_f2();
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+select test_int8_numeric_f3();
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+select test_int8_numeric_f4();
+GO
+~~START~~
+int
+5
+~~END~~
+
+select test_int8_numeric_f5();
+GO
+~~START~~
+int
+5
+~~END~~
+
+select test_int8_numeric_f6();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select test_int8_numeric_f7();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select test_int8_numeric_f8();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select test_int8_numeric_f9();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select test_int8_numeric_f10();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select test_int8_numeric_f11();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select test_int8_numeric_f12();
+GO
+~~START~~
+int
+7
+~~END~~
+
+select test_int8_numeric_f13();
+GO
+~~START~~
+int
+7
+~~END~~
+
+select test_int8_numeric_f14();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select test_int8_numeric_f15();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select test_int8_numeric_f16();
+GO
+~~START~~
+int
+999996
+~~END~~
+
+select test_int8_numeric_f17();
+GO
+~~START~~
+int
+999996
+~~END~~
+
+select test_int8_numeric_f18();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select test_int8_numeric_f19();
+GO
+~~START~~
+int
+999995
+~~END~~
+
+select test_int8_numeric_f20();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select test_int8_numeric_f21();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select test_int8_numeric_f22();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select test_int8_numeric_f23();
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+select test_int8_numeric_f24();
+GO
+~~START~~
+int
+5
+~~END~~
+
+select test_int8_numeric_f25();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select test_int8_numeric_f26();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select test_int8_numeric_f27();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select test_int8_numeric_f28();
+GO
+~~START~~
+int
+7
+~~END~~
+
+select test_int8_numeric_f29();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select test_int8_numeric_f30();
+GO
+~~START~~
+int
+999996
+~~END~~
+
+select test_int8_numeric_f31();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select test_int8_numeric_f32();
+GO
+~~START~~
+int
+999995
+~~END~~
+
+
+drop function test_int8_numeric_f0();
+drop function test_int8_numeric_f00();
+drop function test_int8_numeric_f1();
+drop function test_int8_numeric_f2();
+drop function test_int8_numeric_f3();
+drop function test_int8_numeric_f4();
+drop function test_int8_numeric_f5();
+drop function test_int8_numeric_f6();
+drop function test_int8_numeric_f7();
+drop function test_int8_numeric_f8();
+drop function test_int8_numeric_f9();
+drop function test_int8_numeric_f10();
+drop function test_int8_numeric_f11();
+drop function test_int8_numeric_f12();
+drop function test_int8_numeric_f13();
+drop function test_int8_numeric_f14();
+drop function test_int8_numeric_f15();
+drop function test_int8_numeric_f16();
+drop function test_int8_numeric_f17();
+drop function test_int8_numeric_f18();
+drop function test_int8_numeric_f19();
+drop function test_int8_numeric_f20();
+drop function test_int8_numeric_f21();
+drop function test_int8_numeric_f22();
+drop function test_int8_numeric_f23();
+drop function test_int8_numeric_f24();
+drop function test_int8_numeric_f25();
+drop function test_int8_numeric_f26();
+drop function test_int8_numeric_f27();
+drop function test_int8_numeric_f28();
+drop function test_int8_numeric_f29();
+drop function test_int8_numeric_f30();
+drop function test_int8_numeric_f31();
+drop function test_int8_numeric_f32();
+GO
+
+
+-- check constraint testing
+insert into test_int8_numeric_t1 values (5, 4, 5, 6, 5, 5.0);
+GO
+~~ROW COUNT: 1~~
+
+
+insert into test_int8_numeric_t1 values (4, 4, 5, 6, 5, 5.0);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t1" violates check constraint "test_int8_numeric_t1_check")~~
+
+
+insert into test_int8_numeric_t1 values (5, 6, 5, 6, 5, 5.0);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t1" violates check constraint "test_int8_numeric_t1_check1")~~
+
+
+insert into test_int8_numeric_t1 values (5, 4, 7, 6, 5, 5.0);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t1" violates check constraint "test_int8_numeric_t1_check2")~~
+
+
+insert into test_int8_numeric_t1 values (5, 4, 5, 4, 5, 5.0);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t1" violates check constraint "test_int8_numeric_t1_check3")~~
+
+
+insert into test_int8_numeric_t1 values (5, 4, 5, 6, 4, 5.0);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t1" violates check constraint "test_int8_numeric_t1_check4")~~
+
+
+SELECT conname, pg_get_constraintdef(c.oid) 
+FROM   pg_constraint c JOIN   pg_namespace n ON n.oid = c.connamespace WHERE  contype = 'c' AND conrelid = sys.object_id('dbo.test_int8_numeric_t1')
+ORDER  BY conname;
+GO
+~~START~~
+varchar#!#text
+test_int8_numeric_t1_check#!#CHECK (((a)::numeric = f))
+test_int8_numeric_t1_check1#!#CHECK (((b)::numeric < f))
+test_int8_numeric_t1_check2#!#CHECK (((c)::numeric <= f))
+test_int8_numeric_t1_check3#!#CHECK (((d)::numeric > f))
+test_int8_numeric_t1_check4#!#CHECK (((e)::numeric >= f))
+~~END~~
+
+
+insert into test_int8_numeric_t2 values (5.0, 4.0, 5.0, 6.0, 5.0, 5);
+GO
+~~ROW COUNT: 1~~
+
+
+insert into test_int8_numeric_t2 values (4.0, 4.0, 5.0, 6.0, 5.0, 5);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t2" violates check constraint "test_int8_numeric_t2_check")~~
+
+
+insert into test_int8_numeric_t2 values (5.0, 6.0, 5.0, 6.0, 5.0, 5);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t2" violates check constraint "test_int8_numeric_t2_check1")~~
+
+
+insert into test_int8_numeric_t2 values (5.0, 4.0, 7.0, 6.0, 5.0, 5);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t2" violates check constraint "test_int8_numeric_t2_check2")~~
+
+
+insert into test_int8_numeric_t2 values (5.0, 4.0, 5.0, 4.0, 5.0, 5);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t2" violates check constraint "test_int8_numeric_t2_check3")~~
+
+
+insert into test_int8_numeric_t2 values (5.0, 4.0, 5.0, 6.0, 4.0, 5);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "test_int8_numeric_t2" violates check constraint "test_int8_numeric_t2_check4")~~
+
+
+SELECT conname, pg_get_constraintdef(c.oid) 
+FROM   pg_constraint c JOIN   pg_namespace n ON n.oid = c.connamespace WHERE  contype = 'c' AND conrelid = sys.object_id('dbo.test_int8_numeric_t2')
+ORDER  BY conname;
+GO
+~~START~~
+varchar#!#text
+test_int8_numeric_t2_check#!#CHECK ((a = (f)::numeric))
+test_int8_numeric_t2_check1#!#CHECK ((b < (f)::numeric))
+test_int8_numeric_t2_check2#!#CHECK ((c <= (f)::numeric))
+test_int8_numeric_t2_check3#!#CHECK ((d > (f)::numeric))
+test_int8_numeric_t2_check4#!#CHECK ((e >= (f)::numeric))
+~~END~~
+
+
+drop table test_int8_numeric_t1;
+GO
+
+drop table test_int8_numeric_t2;
+GO
+
+drop table test_int8_numeric_vu;
+GO
