@@ -39,6 +39,3 @@ GO
 
 CALL sys.bbf_remove_createrole_from_logins();
 GO
-
-DROP PROCEDURE sys.bbf_remove_createrole_from_logins();
-GO
