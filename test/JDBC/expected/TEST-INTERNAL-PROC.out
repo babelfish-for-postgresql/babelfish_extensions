@@ -64,6 +64,3 @@ GO
 ~~ERROR (Message: ERROR: remove_createrole_from_logins() can only be called from an SQL script executed by CREATE/ALTER EXTENSION
     Server SQLState: 0A000)~~
 
-
-DROP PROCEDURE sys.bbf_remove_createrole_from_logins();
-GO
