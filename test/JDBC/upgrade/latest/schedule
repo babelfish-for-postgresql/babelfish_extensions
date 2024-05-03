@@ -246,6 +246,7 @@ msdb-dbo-syspolicy_configuration
 msdb-dbo-syspolicy_system_health_state
 nested_trigger_inside_proc
 nested_trigger_with_dml
+newid
 objectpropertyex
 openjson
 openquery_upgrd_before_15_4
