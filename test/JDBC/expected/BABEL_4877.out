@@ -363,6 +363,29 @@ after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
 ~~END~~
 
 
+BEGIN TRAN
+SELECT 'before search_path  ----> ', current_setting('search_path');
+SELECT babel_4877_s.babel_4877_f2();
+SELECT 'after error search_path  ----> ', current_setting('search_path');
+COMMIT
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+~~START~~
+varchar
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+~~START~~
+varchar#!#text
+after error search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
 
 SELECT @@trancount
 GO

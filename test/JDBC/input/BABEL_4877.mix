@@ -195,6 +195,13 @@ GO
 SELECT 'after tran search_path  ----> ', current_setting('search_path');
 GO
 
+BEGIN TRAN
+SELECT 'before search_path  ----> ', current_setting('search_path');
+SELECT babel_4877_s.babel_4877_f2();
+SELECT 'after error search_path  ----> ', current_setting('search_path');
+COMMIT
+GO
+
 
 SELECT @@trancount
 GO
