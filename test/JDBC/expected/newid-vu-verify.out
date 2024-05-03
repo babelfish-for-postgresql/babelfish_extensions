@@ -1,0 +1,98 @@
+-- tsql
+-- should still show 5
+EXEC babel_4923_newid_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+5
+~~END~~
+
+
+-- should fail because primary key already exists before upgrade
+ALTER TABLE babel_4923_newid_tab2 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "uuid" of relation "babel_4923_newid_tab2" already exists)~~
+
+
+ALTER TABLE babel_4923_newid_tab2 DROP COLUMN uuid
+GO
+
+ALTER TABLE babel_4923_newid_tab2 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY;
+GO
+
+SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab2
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+ALTER TABLE babel_4923_newid_tab2 DROP COLUMN uuid
+GO
+
+ALTER TABLE babel_4923_newid_tab2 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID() PRIMARY KEY;
+GO
+
+SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab2
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- psql
+ANALYZE master_dbo.babel_4923_newid_tab3
+GO
+
+ANALYZE master_dbo.babel_4923_newid_tab4
+GO
+
+-- tsql
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+SET BABELFISH_SHOWPLAN_ALL ON
+-- should still show seqscan after upgrade otherwise something changed
+SELECT * FROM babel_4923_newid_tab3 WHERE uuid=NEWID()
+GO
+~~START~~
+text
+Query Text: SELECT * FROM babel_4923_newid_tab3 WHERE uuid=NEWID()
+Seq Scan on babel_4923_newid_tab3
+  Filter: (uuid = newid())
+~~END~~
+
+
+SELECT * FROM babel_4923_newid_tab4 WHERE uuid=NEWID()
+GO
+~~START~~
+text
+Query Text: SELECT * FROM babel_4923_newid_tab4 WHERE uuid=NEWID()
+Seq Scan on babel_4923_newid_tab4
+  Filter: (uuid = newid())
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO

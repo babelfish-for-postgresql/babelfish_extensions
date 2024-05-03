@@ -257,3 +257,10 @@ ignore#!#babel_test_int8_numeric_oper_before_16_3_or_15_7-vu-verify
 
 ignore#!#babel_test_int2_numeric_oper_before_16_3_or_15_7-vu-prepare
 ignore#!#babel_test_int2_numeric_oper_before_16_3_or_15_7-vu-verify
+ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-prepare
+ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-verify
+ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-cleanup
+ignore#!#newid-vu-prepare
+ignore#!#newid-vu-verify
+ignore#!#newid-vu-cleanup
+
