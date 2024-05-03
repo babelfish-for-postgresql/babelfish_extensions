@@ -1,25 +1,21 @@
--- Deleting one entry from pg_proc pg catalog so that metadata inconsistency fails during check against babelfish_function_ext babelfish catalog
+-- Updating one entry from pg_proc pg catalog so that metadata inconsistency fails during check against babelfish_function_ext babelfish catalog
 -- psql
-WITH r1 AS (
-    SELECT * FROM pg_catalog.pg_proc WHERE proname = 'check_for_inconsistent_metadata_vu_prepare_func'
-)
+UPDATE pg_catalog.pg_proc SET proname = 'check_for_inconsistent_metadata_vu_prepare_func_wrong' WHERE proname = 'check_for_inconsistent_metadata_vu_prepare_func';
 
-SELECT proname, prosrc FROM r1;
-
-DELETE FROM pg_catalog.pg_proc WHERE proname = 'check_for_inconsistent_metadata_vu_prepare_func';
-
-SELECT proname, prosrc FROM pg_catalog.pg_proc WHERE proname = 'check_for_inconsistent_metadata_vu_prepare_func';
+SELECT proname, prosrc FROM pg_catalog.pg_proc WHERE proname = 'check_for_inconsistent_metadata_vu_prepare_func_wrong';
 
 SELECT nspname, funcname FROM sys.babelfish_function_ext WHERE funcname = 'check_for_inconsistent_metadata_vu_prepare_func';
-GO
 
+-- should return true because of inconsistency
 SELECT sys.check_for_inconsistent_metadata();
-GO
 
-SELECT sys.babelfish_inconsistent_metadata()
+-- should return the inconsistent row data
+SELECT sys.babelfish_inconsistent_metadata();
+
+UPDATE pg_catalog.pg_proc SET proname = 'check_for_inconsistent_metadata_vu_prepare_func' WHERE proname = 'check_for_inconsistent_metadata_vu_prepare_func_wrong';
 GO
 
 -- tsql
--- should fail since the function is removed from the catalog
+-- since data is consistent now, this should return 0
 SELECT check_for_inconsistent_metadata_vu_prepare_func()
 GO
