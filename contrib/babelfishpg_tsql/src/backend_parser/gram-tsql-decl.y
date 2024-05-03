@@ -14,6 +14,7 @@
 
 %type <node> tsql_stmt
 
+%type <node> tsql_AlterFunctionStmt
 %type <node> tsql_CreateFunctionStmt tsql_VariableSetStmt tsql_CreateTrigStmt tsql_TransactionStmt tsql_UpdateStmt tsql_DeleteStmt tsql_IndexStmt
 %type <node> tsql_DropIndexStmt tsql_InsertStmt
 %type <str> tsql_DropIndexStmtSchema
@@ -119,7 +120,7 @@
 	TSQL_MUST_CHANGE TSQL_CHECK_EXPIRATION TSQL_CHECK_POLICY TSQL_CREDENTIAL TSQL_SID TSQL_OLD_PASSWORD
 	TSQL_UNLOCK TSQL_VALUES
 	TSQL_NVARCHAR
-	TSQL_CROSS TSQL_OUTER TSQL_APPLY TSQL_PIVOT TSQL_LOG TSQL_LOG10
+	TSQL_CROSS TSQL_OUTER TSQL_APPLY TSQL_PIVOT TSQL_LOG TSQL_LOG10 TSQL_ALTER
 	TSQL_CONTAINS TSQL_FREETEXT
 
 /*

@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "access/genam.h"
+#include "access/heapam.h"
 #include "access/htup.h"
 #include "access/table.h"
 #include "access/transam.h"
@@ -2870,6 +2871,30 @@ gen_func_arg_list(Oid objectId)
 	return arg_list.data;
 }
 
+char * 
+gen_func_arg_list_from_params(List* parameters)
+{
+	int	nargs = list_length(parameters);
+	int i = 0;
+	ListCell *l;
+	StringInfoData arg_list;
+
+	initStringInfo(&arg_list);
+
+
+	foreach (l, parameters)
+	{
+		FunctionParameter	*fp = lfirst(l);
+		TypeName 	*tn = fp->argType;
+
+		appendStringInfoString(&arg_list, TypeNameToString(tn));
+		if (i < nargs - 1)
+			appendStringInfoString(&arg_list, ", ");
+		i++;
+	}
+	return arg_list.data;
+}
+
 /*
 * This function adds column names to the insert target relation in rewritten
 * CTE for OUTPUT INTO clause.
@@ -3222,6 +3247,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 
 /*
  * Stores argument positions of default values of a PL/tsql function to bbf_function_ext catalog
+ * Updates the existing catalog entry if it already exists.
  */
 void
 pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location)
@@ -3235,7 +3261,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 				proctup,
 				oldtup;
 	Form_pg_proc form_proctup;
-	NameData   *schema_name_NameData;
+	NameData   *schema_name_NameData, *objname_data;
 	char	   *physical_schemaname;
 	char	   *func_signature;
 	char	   *original_name = NULL;
@@ -3245,6 +3271,8 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	uint64		flag_values = 0,
 				flag_validity = 0;
 	char	   *original_query = get_original_query_string();
+	ScanKeyData		key[2];
+	TableScanDesc	tblscan;
 
 	/* Disallow extended catalog lookup during restore */
 	if (babelfish_dump_restore)
@@ -3309,7 +3337,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
 
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
+	MemSet(new_record_replaces, true, sizeof(new_record_replaces)); // if the entry already exists, we need to update it.
 
 	if (origname_location != -1 && queryString)
 	{
@@ -3379,6 +3407,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	new_record[Anum_bbf_function_ext_flag_validity - 1] = UInt64GetDatum(flag_validity);
 	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	new_record_replaces[Anum_bbf_function_ext_create_date - 1] = false; // never overwrite create date
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 
 	/*
@@ -3390,7 +3419,22 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		new_record_nulls[Anum_bbf_function_ext_definition - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
-	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
+	ScanKeyInit(&key[0],
+				Anum_bbf_function_ext_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(schema_name_NameData));
+	objname_data = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(objname_data->data, NAMEDATALEN, "%s", NameStr(form_proctup->proname));
+	ScanKeyInit(&key[1],
+				Anum_bbf_function_ext_funcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(objname_data));
+	
+	// scan
+	tblscan = table_beginscan_catalog(bbf_function_ext_rel, 2, key);
+
+	// get the scan result -> original tuple
+	oldtup = heap_getnext(tblscan, ForwardScanDirection);
 
 	if (HeapTupleIsValid(oldtup))
 	{
@@ -3398,8 +3442,6 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 								  new_record, new_record_nulls,
 								  new_record_replaces);
 		CatalogTupleUpdate(bbf_function_ext_rel, &tuple->t_self, tuple);
-
-		ReleaseSysCache(oldtup);
 	}
 	else
 	{
@@ -3424,7 +3466,117 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	pfree(func_signature);
 	ReleaseSysCache(proctup);
 	heap_freetuple(tuple);
+	heap_endscan(tblscan);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
+
+/*
+ * Update 'function_args' in 'sys.babelfish_schema_permissions' 
+ */
+void
+alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int objtypeInt, Oid oid)
+{
+	Relation	bbf_schema_rel;
+	TupleDesc	bbf_schema_dsc;
+	ScanKeyData key[4];
+	HeapTuple	tuple_bbf_schema;
+	HeapTuple	new_tuple;
+	SysScanDesc scan;
+	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {0};
+	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
+	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
+	char		*logical_schema_name = NULL;
+	char		*physical_schema_name = NULL;
+	char		*object_name = NULL;
+	const char	*object_type = NULL;
+	const char *func_args = NULL;
+	int16		dbid = get_cur_db_id();
+
+	/* open the catalog table */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(), RowExclusiveLock);
+	/* get the description of the table */
+	bbf_schema_dsc = RelationGetDescr(bbf_schema_rel);
+
+	// Only procedures and functions supported for now
+	if (objtypeInt == OBJECT_PROCEDURE)
+		object_type = OBJ_PROCEDURE;
+	else if (objtypeInt == OBJECT_FUNCTION)
+		object_type = OBJ_FUNCTION;
+	DeconstructQualifiedName(owa->objname, &physical_schema_name, &object_name);
+	if(physical_schema_name != NULL) {
+		logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, false);
+		
+		/* search for the row for update => build the key */
+		ScanKeyInit(&key[0],
+					Anum_bbf_schema_perms_dbid,
+					BTEqualStrategyNumber, F_INT2EQ,
+					Int16GetDatum(dbid));
+		ScanKeyEntryInitialize(&key[1], 0,
+					Anum_bbf_schema_perms_schema_name,
+					BTEqualStrategyNumber, InvalidOid,
+					tsql_get_server_collation_oid_internal(false),
+					F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
+		ScanKeyEntryInitialize(&key[2], 0,
+					Anum_bbf_schema_perms_object_name,
+					BTEqualStrategyNumber, InvalidOid,
+					tsql_get_server_collation_oid_internal(false),
+					F_TEXTEQ, CStringGetTextDatum(object_name));
+		ScanKeyEntryInitialize(&key[3], 0,
+					Anum_bbf_schema_perms_object_type,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_type));
+
+		/* scan */
+		scan = systable_beginscan(bbf_schema_rel,
+				get_bbf_schema_perms_oid(),
+				false, NULL, 4, key);
+
+		/* get the scan result -> original tuple */
+		tuple_bbf_schema = systable_getnext(scan);
+
+		/* Build updated parameter list */ 
+		func_args = gen_func_arg_list_from_params(parameters);
+
+		/*
+		* If a permission on the same object is granted to multiple grantees,
+		* there can be multiple rows in the catalog corresponding to each grantee name.
+		* All such rows need to be updated with the new parameters.
+		*
+		* It is OK to not throw an error if an entry is not found in 'babelfish_schema_permissions'.
+		* Explaination: An entry is added to 'babelfish_schema_permissions' only if an object has an explicit GRANT on it.
+		* It is not necessary that each RENAME on an object has a GRANT of that object too.
+		* Hence, there can be missing entries.
+		*/
+		while (HeapTupleIsValid(tuple_bbf_schema))
+		{
+			/* create new tuple to substitute */
+			new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(func_args);
+			new_record_repl_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = true;
+
+			new_tuple = heap_modify_tuple(tuple_bbf_schema,
+										bbf_schema_dsc,
+										new_record_bbf_schema,
+										new_record_nulls_bbf_schema,
+										new_record_repl_bbf_schema);
+
+			CatalogTupleUpdate(bbf_schema_rel, &new_tuple->t_self, new_tuple);
+
+			heap_freetuple(new_tuple);
+			tuple_bbf_schema = systable_getnext(scan);
+		}
+		if (physical_schema_name != NULL)
+			pfree(physical_schema_name);
+		if (logical_schema_name != NULL)
+			pfree(logical_schema_name);
+		if (object_name != NULL)
+			pfree(object_name);
+
+		systable_endscan(scan);
+	}
+	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
 /*
