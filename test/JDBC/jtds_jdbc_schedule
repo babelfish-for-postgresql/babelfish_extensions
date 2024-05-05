@@ -22,8 +22,7 @@
 # datatypes
 TestInt
 TestSmallInt
-# Failure: Message: Data truncation
-# TestTinyInt
+TestTinyInt
 TestBigInt
 TestBIT
 # Failure: discrepancy in jTDS behaviour between MSSQL and Babelfish

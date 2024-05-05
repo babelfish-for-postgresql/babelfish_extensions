@@ -3665,9 +3665,9 @@ begin tran
 GO
 DECLARE @a tinyint = 1000;
 GO
-~~ERROR (Code: 0)~~
+~~ERROR (Code: 220)~~
 
-~~ERROR (Message: Data truncation)~~
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 declare @err int = @@error; if @err = 0 select 0 else select 1;
 GO
@@ -3727,9 +3727,9 @@ begin tran
 GO
 DECLARE @a tinyint = 1000;
 GO
-~~ERROR (Code: 0)~~
+~~ERROR (Code: 220)~~
 
-~~ERROR (Message: Data truncation)~~
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 declare @err int = @@error; if @err = 0 select 0 else select 1;
 GO
@@ -3794,9 +3794,9 @@ end
 GO
 exec simpleErrorProc2
 GO
-~~ERROR (Code: 0)~~
+~~ERROR (Code: 220)~~
 
-~~ERROR (Message: Data truncation)~~
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 ~~ROW COUNT: 1~~
 
@@ -3858,9 +3858,9 @@ GO
 ~~START~~
 int
 1
-~~ERROR (Code: 0)~~
+~~ERROR (Code: 220)~~
 
-~~ERROR (Message: Data truncation)~~
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 declare @err int = @@error; if @err = 0 select 0 else select 1;
 GO
@@ -3913,9 +3913,9 @@ end
 GO
 exec simpleErrorProc2
 GO
-~~ERROR (Code: 0)~~
+~~ERROR (Code: 220)~~
 
-~~ERROR (Message: Data truncation)~~
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 ~~ROW COUNT: 1~~
 
@@ -3977,9 +3977,9 @@ end
 GO
 exec simpleErrorProc2
 GO
-~~ERROR (Code: 0)~~
+~~ERROR (Code: 220)~~
 
-~~ERROR (Message: Data truncation)~~
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 ~~ROW COUNT: 1~~
 
@@ -4026,9 +4026,9 @@ INSERT INTO simpleErrorTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '
 DECLARE @a tinyint = 1000;
 INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5);
 GO
-~~ERROR (Code: 0)~~
+~~ERROR (Code: 220)~~
 
-~~ERROR (Message: Data truncation)~~
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 ~~ROW COUNT: 1~~
 
