@@ -29,7 +29,7 @@ GO
 CALL sys.babel_add_existing_users_to_catalog();
 GO
 
-DROP PROCEDURE sys.babel_create_guest_schemas();
+DROP PROCEDURE sys.babel_add_existing_users_to_catalog();
 GO
 
 CREATE OR REPLACE PROCEDURE sys.bbf_remove_createrole_from_logins()

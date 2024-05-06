@@ -44,13 +44,8 @@ GO
     Server SQLState: 0A000)~~
 
 
-DROP PROCEDURE sys.babel_create_guest_schemas();
+DROP PROCEDURE sys.babel_add_existing_users_to_catalog();
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: procedure sys.babel_create_guest_schemas() does not exist
-    Server SQLState: 42883)~~
-
 
 CREATE OR REPLACE PROCEDURE sys.bbf_remove_createrole_from_logins()
 LANGUAGE C
