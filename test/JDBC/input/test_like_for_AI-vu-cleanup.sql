@@ -11,6 +11,9 @@ GO
 DROP TABLE test_like_for_AI_prepare_t13_2_ci;
 GO
 
+DROP TABLE test_like_for_AI_prepare_employee_CI_AI;
+GO
+
 ------------------- CS_AI ----------------------
 DROP TABLE test_like_for_AI_prepare_t1_cs;
 GO
@@ -27,6 +30,8 @@ GO
 DROP TABLE test_like_for_AI_prepare_t13_2_cs;
 GO
 
+DROP TABLE test_like_for_AI_prepare_employee_CS_AI;
+GO
 
 -- GENERIC --
 DROP TABLE test_like_for_AI_prepare_escape;

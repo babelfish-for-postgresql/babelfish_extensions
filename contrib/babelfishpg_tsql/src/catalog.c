@@ -1484,7 +1484,7 @@ clean_up_bbf_function_ext(int16 dbid)
  *			SCHEMA
  *****************************************/
 
-static Oid
+Oid
 get_bbf_schema_perms_oid()
 {
 	if (!OidIsValid(bbf_schema_perms_oid))
