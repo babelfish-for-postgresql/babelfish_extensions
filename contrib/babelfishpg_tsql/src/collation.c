@@ -415,9 +415,6 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		/* construct pattern||E'\uFFFF' */
 		highest_sort_key = makeConst(TEXTOID, -1, coll_info_of_inputcollid.oid, -1,
 										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
-		
-		/* Set the collation explicitly for the Const node */
-		highest_sort_key->constcollid = coll_info_of_inputcollid.oid;
 
 		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
 								true, -1);
