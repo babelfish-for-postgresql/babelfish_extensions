@@ -329,6 +329,27 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 $$
 LANGUAGE plpgsql STABLE;
 
+CREATE OR REPLACE FUNCTION sys.check_for_inconsistent_metadata()
+RETURNS BOOLEAN AS $$
+DECLARE
+    has_inconsistent_metadata BOOLEAN;
+    num_rows INT;
+BEGIN
+    has_inconsistent_metadata := FALSE;
+
+    -- Count the number of inconsistent metadata rows from Babelfish catalogs
+    SELECT COUNT(*) INTO num_rows
+    FROM sys.babelfish_inconsistent_metadata();
+
+    has_inconsistent_metadata := num_rows > 0;
+
+    -- Additional checks can be added here to update has_inconsistent_metadata accordingly
+
+    RETURN has_inconsistent_metadata;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

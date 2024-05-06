@@ -10,6 +10,7 @@
 BABEL-3613
 
 babelfish_cast_floor
+check_for_inconsistent_metadata
 babel_try_parse
 TestBigInt
 TestBinary
