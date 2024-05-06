@@ -107,6 +107,7 @@ char	   *sp_describe_first_result_set_view_name = NULL;
 
 bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
+static bool		isSupported = true;
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -602,9 +603,8 @@ handle_bool_expr_rec(BoolExpr *expr, List *list)
 
 				if (nodeTag(xpr->rexpr) != T_ColumnRef)
 				{
-					ereport(WARNING,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+					isSupported = false;
+					return list;
 				}
 				ref = (ColumnRef *) xpr->rexpr;
 				list = list_concat(list, ref->fields);
@@ -634,15 +634,14 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 	char	   *name;
 	int			attrno;
 
-	if (nodeTag(w_clause) == T_A_Expr)
+	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr	   *where_clause = (A_Expr *) w_clause;
 
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+			isSupported = false;
+			return target_attnums;
 		}
 		ref = (ColumnRef *) where_clause->lexpr;
 		field = linitial(ref->fields);
@@ -659,7 +658,7 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 
 		return lappend_int(target_attnums, attrno);
 	}
-	else if (nodeTag(w_clause) == T_BoolExpr)
+	else if (w_clause && nodeTag(w_clause) == T_BoolExpr)
 	{
 		BoolExpr   *where_clause = (BoolExpr *) w_clause;
 		ListCell   *lc;
@@ -677,9 +676,8 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 
 						if (nodeTag(xpr->lexpr) != T_ColumnRef)
 						{
-							ereport(WARNING,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+							isSupported = false;
+							return target_attnums;
 						}
 						ref = (ColumnRef *) xpr->lexpr;
 						field = linitial(ref->fields);
@@ -707,9 +705,7 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 	}
 	else
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		isSupported = false;
 	}
 	return target_attnums;
 }
@@ -729,16 +725,15 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 	char	   *name;
 	int			attrno;
 
-	if (nodeTag(w_clause) == T_A_Expr)
+	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr	   *where_clause = (A_Expr *) w_clause;
 		ResTarget  *res;
 
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+			isSupported = false;
+			return extra_restargets;
 		}
 		ref = (ColumnRef *) where_clause->lexpr;
 		field = linitial(ref->fields);
@@ -761,7 +756,7 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 
 		return lappend(extra_restargets, res);
 	}
-	else if (nodeTag(w_clause) == T_BoolExpr)
+	else if (w_clause && nodeTag(w_clause) == T_BoolExpr)
 	{
 		BoolExpr   *where_clause = (BoolExpr *) w_clause;
 		ListCell   *lc;
@@ -780,9 +775,8 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 
 						if (nodeTag(xpr->lexpr) != T_ColumnRef)
 						{
-							ereport(WARNING,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+							isSupported = false;
+							return extra_restargets;
 						}
 						ref = (ColumnRef *) xpr->lexpr;
 						field = linitial(ref->fields);
@@ -818,9 +812,7 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 	}
 	else
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		isSupported = false;
 	}
 	return extra_restargets;
 }
@@ -839,15 +831,14 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 	String	   *field;
 	ResTarget  *res;
 
-	if (nodeTag(w_clause) == T_A_Expr)
+	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr	   *where_clause = (A_Expr *) w_clause;
 
 		if (nodeTag(where_clause->rexpr) != T_ColumnRef)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+			isSupported = false;
+			return extra_restargets;
 		}
 		ref = (ColumnRef *) where_clause->rexpr;
 		field = linitial(ref->fields);
@@ -860,7 +851,7 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 
 		return lappend(extra_restargets, res);
 	}
-	else if (nodeTag(w_clause) == T_BoolExpr)
+	else if (w_clause && nodeTag(w_clause) == T_BoolExpr)
 	{
 		BoolExpr   *where_clause = (BoolExpr *) w_clause;
 		ListCell   *lc;
@@ -878,9 +869,8 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 
 						if (nodeTag(xpr->rexpr) != T_ColumnRef)
 						{
-							ereport(WARNING,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+							isSupported = false;
+							return extra_restargets;
 						}
 						ref = (ColumnRef *) xpr->rexpr;
 						field = linitial(ref->fields);
@@ -906,9 +896,7 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 	}
 	else
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		isSupported = false;
 	}
 	return extra_restargets;
 }
@@ -965,6 +953,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		List	   *cols;
 		int			target_attnum_i;
 		int			target_attnums_len;
+		NodeTag		node_type;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -980,7 +969,14 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		params = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 		/* First, pass the batch to the ANTLR parser */
-		result = antlr_parser_cpp(batch);
+		if (batch)
+			result = antlr_parser_cpp(batch);
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Procedure expects parameter '@tsql' of type 'nvarchar(max)'")));
+		}
 
 		if (!result.success)
 			report_antlr_error(result);
@@ -994,34 +990,45 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			list_length(pltsql_parse_result->body) != 2 ||
 			((PLtsql_stmt *) lsecond(pltsql_parse_result->body))->cmd_type != PLTSQL_STMT_EXECSQL)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+			isSupported = false;
 		}
-		parsedbatch = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt->query;
-
-		args = create_args(0);
-		if (params)
-			read_param_def(args, params);
-
-		/* Next, pass the ANTLR-parsed batch to the backend parser */
-		sql_dialect_value_old = sql_dialect;
-		sql_dialect = SQL_DIALECT_TSQL;
-		raw_parsetree_list = pg_parse_query(parsedbatch);
-		if (list_length(raw_parsetree_list) != 1)
+		else
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+			parsedbatch = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt->query;
+
+			args = create_args(0);
+			if (params)
+				read_param_def(args, params);
+
+			/* Next, pass the ANTLR-parsed batch to the backend parser */
+			sql_dialect_value_old = sql_dialect;
+			sql_dialect = SQL_DIALECT_TSQL;
+			raw_parsetree_list = pg_parse_query(parsedbatch);
 		}
-		list_item = list_head(raw_parsetree_list);
-		parsetree = lfirst_node(RawStmt, list_item);
+
+		if (isSupported)
+		{
+			if (list_length(raw_parsetree_list) != 1)
+			{
+				isSupported = false;
+			}
+			else
+			{
+				list_item = list_head(raw_parsetree_list);
+				parsetree = lfirst_node(RawStmt, list_item);
+			}
+		}
 
 		/*
 		 * Analyze the parsed statement to suggest types for undeclared
 		 * parameters
 		 */
-		switch (nodeTag(parsetree->stmt))
+		if (isSupported)
+			node_type = nodeTag(parsetree->stmt);
+		else
+			node_type = T_Invalid; 
+
+		switch (node_type)
 		{
 			case T_InsertStmt:
 				rewrite_object_refs(parsetree->stmt);
@@ -1107,171 +1114,174 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				cols = list_concat_copy(cols, extra_restargets);
 				break;
 			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+				isSupported = false;
 				break;
 		}
 
-		undeclaredparams->tablename = (char *) palloc(NAMEDATALEN);
-		relname_len = strlen(relation->relname);
-		strncpy(undeclaredparams->tablename, relation->relname, NAMEDATALEN);
-		undeclaredparams->tablename[relname_len] = '\0';
-		undeclaredparams->schemaoid = RelationGetNamespace(r);
-		undeclaredparams->reloid = RelationGetRelid(r);
-		undeclaredparams->targetattnums = (int *) palloc(sizeof(int) * list_length(target_attnums));
-		undeclaredparams->targetcolnames = (char **) palloc(sizeof(char *) * list_length(target_attnums));
-
-		/* Record attnums and column names of the target table */
-		target_attnum_i = 0;
-		target_attnums_len = list_length(target_attnums);
-		while (target_attnum_i < target_attnums_len)
+		if (isSupported)
 		{
-			ListCell   *lc1;
-			ResTarget  *col;
-			int			colname_len;
+			undeclaredparams->tablename = (char *) palloc(NAMEDATALEN);
+			relname_len = strlen(relation->relname);
+			strncpy(undeclaredparams->tablename, relation->relname, NAMEDATALEN);
+			undeclaredparams->tablename[relname_len] = '\0';
+			undeclaredparams->schemaoid = RelationGetNamespace(r);
+			undeclaredparams->reloid = RelationGetRelid(r);
 
-			lc1 = list_nth_cell(target_attnums, target_attnum_i);
-			undeclaredparams->targetattnums[num_target_attnums] = lfirst_int(lc1);
+			undeclaredparams->targetattnums = (int *) palloc(sizeof(int) * list_length(target_attnums));
+			undeclaredparams->targetcolnames = (char **) palloc(sizeof(char *) * list_length(target_attnums));
+		
 
-			col = (ResTarget *) list_nth(cols, target_attnum_i);
-			colname_len = strlen(col->name);
-			undeclaredparams->targetcolnames[num_target_attnums] = (char *) palloc(NAMEDATALEN);
-			strncpy(undeclaredparams->targetcolnames[num_target_attnums], col->name, NAMEDATALEN);
-			undeclaredparams->targetcolnames[num_target_attnums][colname_len] = '\0';
-
-			target_attnum_i += 1;
-			num_target_attnums += 1;
-		}
-
-		relation_close(r, AccessShareLock);
-		pfree(pstate);
-
-		/*
-		 * Parse the list of parameters, and determine which and how many are
-		 * undeclared.
-		 */
-		switch (nodeTag(parsetree->stmt))
-		{
-			case T_InsertStmt:
-				select_stmt = (SelectStmt *) insert_stmt->selectStmt;
-				values_list = select_stmt->valuesLists;
-				break;
-			case T_UpdateStmt:
-
-				/*
-				 * In an UPDATE statement, we could have both SET and WHERE
-				 * with undeclared parameters. That's targetList (SET ...) and
-				 * whereClause (WHERE ...)
-				 */
-				values_list = list_make1(handle_where_clause_restargets_right(pstate, update_stmt->whereClause, update_stmt->targetList));
-				break;
-			case T_DeleteStmt:
-				values_list = list_make1(handle_where_clause_restargets_right(pstate, delete_stmt->whereClause, NIL));
-				break;
-			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-				break;
-		}
-
-		if (list_length(values_list) > 1)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-		}
-		foreach(lc, values_list)
-		{
-			List	   *sublist = lfirst(lc);
-			ListCell   *sublc;
-			int			numvalues = 0;
-			int			numtotalvalues = list_length(sublist);
-
-			undeclaredparams->paramnames = (char **) palloc(sizeof(char *) * numtotalvalues);
-			undeclaredparams->paramindexes = (int *) palloc(sizeof(int) * numtotalvalues);
-			if (list_length(sublist) != num_target_attnums)
+			/* Record attnums and column names of the target table */
+			target_attnum_i = 0;
+			target_attnums_len = list_length(target_attnums);
+			while (target_attnum_i < target_attnums_len)
 			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Column name or number of supplied values does not match table definition.")));
+				ListCell   *lc1;
+				ResTarget  *col;
+				int			colname_len;
+
+				lc1 = list_nth_cell(target_attnums, target_attnum_i);
+				undeclaredparams->targetattnums[num_target_attnums] = lfirst_int(lc1);
+
+				col = (ResTarget *) list_nth(cols, target_attnum_i);
+				colname_len = strlen(col->name);
+				undeclaredparams->targetcolnames[num_target_attnums] = (char *) palloc(NAMEDATALEN);
+				strncpy(undeclaredparams->targetcolnames[num_target_attnums], col->name, NAMEDATALEN);
+				undeclaredparams->targetcolnames[num_target_attnums][colname_len] = '\0';
+
+				target_attnum_i += 1;
+				num_target_attnums += 1;
 			}
-			foreach(sublc, sublist)
+
+			relation_close(r, AccessShareLock);
+			pfree(pstate);
+
+			/*
+			* Parse the list of parameters, and determine which and how many are
+			* undeclared.
+			*/
+			switch (nodeTag(parsetree->stmt))
 			{
-				ColumnRef  *columnref = NULL;
-				ResTarget  *res;
-				List	   *fields;
-				ListCell   *fieldcell;
+				case T_InsertStmt:
+					select_stmt = (SelectStmt *) insert_stmt->selectStmt;
+					values_list = select_stmt->valuesLists;
+					break;
+				case T_UpdateStmt:
 
-				/*
-				 * Tack on WHERE clause for the same as above, for UPDATE and
-				 * DELETE statements.
-				 */
-				switch (nodeTag(parsetree->stmt))
-				{
-					case T_InsertStmt:
-						columnref = lfirst(sublc);
-						break;
-					case T_UpdateStmt:
-					case T_DeleteStmt:
-						res = lfirst(sublc);
-						if (nodeTag(res->val) != T_ColumnRef)
-						{
-							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-						}
-						columnref = (ColumnRef *) res->val;
-						break;
-					default:
-						break;
-				}
-				fields = columnref->fields;
-				if (nodeTag(columnref) != T_ColumnRef && nodeTag(parsetree->stmt) != T_DeleteStmt)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-				}
+					/*
+					* In an UPDATE statement, we could have both SET and WHERE
+					* with undeclared parameters. That's targetList (SET ...) and
+					* whereClause (WHERE ...)
+					*/
+					values_list = list_make1(handle_where_clause_restargets_right(pstate, update_stmt->whereClause, update_stmt->targetList));
+					break;
+				case T_DeleteStmt:
+					values_list = list_make1(handle_where_clause_restargets_right(pstate, delete_stmt->whereClause, NIL));
+					break;
+				default:
+					isSupported = false;
+					break;
+			}
 
-				foreach(fieldcell, fields)
+			if (!(list_length(values_list) > 1) && isSupported)
+			{
+				foreach(lc, values_list)
 				{
-					String	   *field = lfirst(fieldcell);
+					List	   *sublist = lfirst(lc);
+					ListCell   *sublc;
+					int			numvalues = 0;
+					int			numtotalvalues = list_length(sublist);
 
-					/* Make sure it's a parameter reference */
-					if (field->sval && field->sval[0] == '@')
+					undeclaredparams->paramnames = (char **) palloc(sizeof(char *) * numtotalvalues);
+					undeclaredparams->paramindexes = (int *) palloc(sizeof(int) * numtotalvalues);
+					if (list_length(sublist) != num_target_attnums)
 					{
-						int			i;
-						bool		undeclared = true;
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("Column name or number of supplied values does not match table definition.")));
+					}
+					foreach(sublc, sublist)
+					{
+						ColumnRef  *columnref = NULL;
+						ResTarget  *res;
+						List	   *fields;
+						ListCell   *fieldcell;
 
-						/* Make sure it is not declared in @params */
-						for (i = 0; i < args->numargs; ++i)
+						if (!isSupported)
+							break;
+
+						/*
+						* Tack on WHERE clause for the same as above, for UPDATE and
+						* DELETE statements.
+						*/
+						switch (nodeTag(parsetree->stmt))
 						{
-							if (args->argnames && args->argnames[i] &&
-								(strcmp(args->argnames[i], field->sval) == 0))
-							{
-								undeclared = false;
+							case T_InsertStmt:
+								columnref = lfirst(sublc);
 								break;
+							case T_UpdateStmt:
+							case T_DeleteStmt:
+								res = lfirst(sublc);
+								if (nodeTag(res->val) != T_ColumnRef)
+								{
+									isSupported = false;
+									break;
+								}
+								columnref = (ColumnRef *) res->val;
+								break;
+							default:
+								break;
+						}
+						fields = columnref->fields;
+						if (!(nodeTag(columnref) != T_ColumnRef && nodeTag(parsetree->stmt) != T_DeleteStmt))
+						{
+							foreach(fieldcell, fields)
+							{
+								String	   *field = lfirst(fieldcell);
+
+								/* Make sure it's a parameter reference */
+								if (field->sval && field->sval[0] == '@')
+								{
+									int			i;
+									bool		undeclared = true;
+
+									/* Make sure it is not declared in @params */
+									for (i = 0; i < args->numargs; ++i)
+									{
+										if (args->argnames && args->argnames[i] &&
+											(strcmp(args->argnames[i], field->sval) == 0))
+										{
+											undeclared = false;
+											break;
+										}
+									}
+									if (undeclared)
+									{
+										int			paramname_len = strlen(field->sval);
+
+										undeclaredparams->paramnames[numresults] = (char *) palloc(NAMEDATALEN);
+										strncpy(undeclaredparams->paramnames[numresults], field->sval, NAMEDATALEN);
+										undeclaredparams->paramnames[numresults][paramname_len] = '\0';
+										undeclaredparams->paramindexes[numresults] = numvalues;
+										numresults += 1;
+									}
+								}
 							}
 						}
-						if (undeclared)
+						else
 						{
-							int			paramname_len = strlen(field->sval);
-
-							undeclaredparams->paramnames[numresults] = (char *) palloc(NAMEDATALEN);
-							strncpy(undeclaredparams->paramnames[numresults], field->sval, NAMEDATALEN);
-							undeclaredparams->paramnames[numresults][paramname_len] = '\0';
-							undeclaredparams->paramindexes[numresults] = numvalues;
-							numresults += 1;
+							isSupported = false;
+							break;
 						}
+						numvalues += 1;
 					}
 				}
-				numvalues += 1;
 			}
+			else
+				isSupported = false;
 		}
 
-		funcctx->max_calls = numresults;
+		funcctx->max_calls = isSupported ? numresults: 0;
 		MemoryContextSwitchTo(oldcontext);
 	}
 
@@ -1620,6 +1630,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		isSupported = true;
 		SRF_RETURN_DONE(funcctx);
 	}
 }
