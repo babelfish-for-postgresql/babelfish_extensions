@@ -1,0 +1,41 @@
+-- psql
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
+GO
+
+CALL sys.babelfish_update_user_catalog_for_guest();
+GO
+
+DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
+GO
+
+CREATE OR REPLACE PROCEDURE sys.babel_create_guest_schemas()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'create_guest_schema_for_all_dbs';
+GO
+
+CALL sys.babel_create_guest_schemas();
+GO
+
+DROP PROCEDURE sys.babel_create_guest_schemas();
+GO
+
+CREATE OR REPLACE PROCEDURE sys.babel_add_existing_users_to_catalog()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'add_existing_users_to_catalog';
+GO
+
+CALL sys.babel_add_existing_users_to_catalog();
+GO
+
+DROP PROCEDURE sys.babel_add_existing_users_to_catalog();
+GO
+
+CREATE OR REPLACE PROCEDURE sys.bbf_remove_createrole_from_logins()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'remove_createrole_from_logins';
+GO
+
+CALL sys.bbf_remove_createrole_from_logins();
+GO
