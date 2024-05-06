@@ -1151,6 +1151,13 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 	const char *dbname;
 	bool		creating_extension_backup = creating_extension;
 
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"create_guest_schema_for_all_dbs()")));
+
 	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	PG_TRY();
