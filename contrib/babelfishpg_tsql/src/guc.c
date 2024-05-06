@@ -1234,7 +1234,7 @@ int			escape_hatch_login_password_must_change = EH_STRICT;
 int			escape_hatch_login_password_unlock = EH_STRICT;
 int			escape_hatch_login_misc_options = EH_STRICT;
 int			escape_hatch_compatibility_level = EH_IGNORE;
-int			escape_hatch_fulltext = EH_IGNORE;
+int			escape_hatch_fulltext = EH_STRICT;
 int			escape_hatch_schemabinding_function = EH_IGNORE;
 int			escape_hatch_schemabinding_trigger = EH_IGNORE;
 int			escape_hatch_schemabinding_procedure = EH_IGNORE;
@@ -1383,7 +1383,7 @@ define_escape_hatch_variables(void)
 							 gettext_noop("escape hatch for fulltext search"),
 							 NULL,
 							 &escape_hatch_fulltext,
-							 EH_IGNORE,
+							 EH_STRICT,
 							 escape_hatch_options,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,

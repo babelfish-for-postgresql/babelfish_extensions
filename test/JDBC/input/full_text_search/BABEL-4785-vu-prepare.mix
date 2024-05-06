@@ -1,3 +1,8 @@
+-- enable FULLTEXT
+-- tsql user=jdbc_user password=12345678
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+
 -- Tests for database, schema and object name containing spaces and dots
 CREATE SCHEMA [fts.test]
 GO
@@ -108,4 +113,8 @@ CREATE TABLE "fts_test .db".[fts_test  .schema with / {} special characters #$%]
 GO
 
 CREATE FULLTEXT INDEX ON "fts_test .db".[fts_test  .schema with / {} special characters #$%]."fts test table with / {} special [] characters"(name) KEY INDEX fti_schema_test11;
+GO
+
+-- disable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
