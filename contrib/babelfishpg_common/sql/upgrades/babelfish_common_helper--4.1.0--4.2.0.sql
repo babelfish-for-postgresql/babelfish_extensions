@@ -79,6 +79,9 @@ RETURNS boolean
 AS 'babelfishpg_common', 'numeric_int4_gte'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+ALTER FUNCTION sys.newid() VOLATILE;
+ALTER FUNCTION sys.NEWSEQUENTIALID() VOLATILE;
+
 -- Operators between int and numeric
 DO $$
 BEGIN
