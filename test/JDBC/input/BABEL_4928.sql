@@ -76,6 +76,27 @@ GO
 DROP TABLE #babel_4928_temp_table
 GO
 
+-- test table type with uniqe constraint
+CREATE TYPE babel_4928_table_type AS TABLE(id INT UNIQUE)
+GO
+CREATE TYPE babel_4928_table_type_2 AS TABLE(id INT, UNIQUE(id))
+GO
+DECLARE @babel_4928 babel_4928_table_type;
+INSERT INTO @babel_4928 VALUES (NULL);
+INSERT INTO @babel_4928 VALUES (NULL);
+GO
+
+-- multiple column constraint on table variable
+DECLARE @babel_4928 babel_4928_table_type_2;
+INSERT INTO @babel_4928 VALUES (NULL);
+INSERT INTO @babel_4928 VALUES (NULL);
+GO
+
+DROP TYPE babel_4928_table_type
+GO
+DROP TYPE babel_4928_table_type_2
+GO
+
 -- SAME TESTS AS ABOVE BUT WITH TIMESTAMP TYPE SINCE WE HAVE DIFFERENT GRAMMER RULE FOR TIMESTAMP
 sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion','ignore'
 GO
@@ -191,4 +212,23 @@ INSERT INTO #babel_4928_temp_table VALUES (NULL);
 INSERT INTO #babel_4928_temp_table VALUES (NULL);
 GO
 DROP TABLE #babel_4928_temp_table
+GO
+
+-- test table type with PRIMARY KEY
+CREATE TYPE babel_4928_table_type AS TABLE(id INT PRIMARY KEY)
+GO
+CREATE TYPE babel_4928_table_type_2 AS TABLE(id INT, PRIMARY KEY(id))
+GO
+DECLARE @babel_4928 babel_4928_table_type;
+INSERT INTO @babel_4928 VALUES (NULL);
+GO
+
+-- column constraint on table variable
+DECLARE @babel_4928 babel_4928_table_type_2;
+INSERT INTO @babel_4928 VALUES (NULL);
+GO
+
+DROP TYPE babel_4928_table_type
+GO
+DROP TYPE babel_4928_table_type_2
 GO
