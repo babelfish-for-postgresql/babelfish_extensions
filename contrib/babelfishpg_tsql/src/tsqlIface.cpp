@@ -3514,6 +3514,25 @@ rewriteBatchLevelStatement(
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 			}
+
+			if (cctx->table_type_definition() && cctx->table_type_definition()->column_def_table_constraints())
+			{
+				for (auto cdtctx : cctx->table_type_definition()->column_def_table_constraints()->column_def_table_constraint())
+				{
+					if (cdtctx->table_constraint() && cdtctx->table_constraint()->UNIQUE())
+						rewritten_query_fragment.emplace(std::make_pair(cdtctx->table_constraint()->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
+
+					if (cdtctx->column_definition() && !cdtctx->column_definition()->column_constraint().empty())
+					{
+						for (auto actx: cdtctx->column_definition()->column_constraint())
+						{
+							if (actx->UNIQUE())
+								rewritten_query_fragment.emplace(std::make_pair(actx->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
+						}
+					}
+
+				}
+			}
 		}
 		else if (ctx->create_or_alter_function()->func_body_returns_scalar()) /* CREATE FUNCTON ... RETURNS INT RETURN ... */
 		{
@@ -7221,6 +7240,19 @@ post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::T
 				std::string rewritten_text = "timestamp " + ::getFullText(tctx);
 				rewritten_query_fragment.emplace(std::make_pair(tctx->getSymbol()->getStartIndex(), std::make_pair(::getFullText(tctx), rewritten_text)));
 			}
+
+			if (cdtctx->table_constraint() && cdtctx->table_constraint()->UNIQUE())
+				rewritten_query_fragment.emplace(std::make_pair(cdtctx->table_constraint()->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
+
+			if (cdtctx->column_definition() && !cdtctx->column_definition()->column_constraint().empty())
+			{
+				for (auto actx: cdtctx->column_definition()->column_constraint())
+				{
+					if (actx->UNIQUE())
+						rewritten_query_fragment.emplace(std::make_pair(actx->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
+				}
+			}
+
 		}
 
 		/*
