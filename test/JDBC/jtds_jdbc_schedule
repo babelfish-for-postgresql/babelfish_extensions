@@ -52,7 +52,8 @@ TestSmallDatetime
 # Parameter 3 (""): Data type 0x63 has an invalid data length or metadata length.
 # TestText
 TestChar
-TestBinary
+# Image column type is returned for varbinary(max) on both MSSQL and Babelfish
+jtds-TestBinary
 TestImage-vu-prepare
 TestImage-vu-verify
 TestImage-vu-cleanup

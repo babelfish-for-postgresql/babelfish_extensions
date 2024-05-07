@@ -316,6 +316,7 @@ ignore#!#jtds-TestTableType-vu-verify
 ignore#!#jtds-TestTableType-vu-cleanup
 ignore#!#jtds-TestDate
 ignore#!#jtds-TestDatetime
+ignore#!#jtds-TestBinary
 ignore#!#jtds-TestSimpleErrors
 ignore#!#jtds-TestErrorsWithTryCatch
 ignore#!#jtds-TestSQLQueries

@@ -2775,9 +2775,18 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 								 * store given string in given encoding. */
 				maxLen;			/* max size of given column in bytes */
 	char	   *destBuf,
-			   *buf = OutputFunctionCall(finfo, value);
+			   *buf;
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
+	/*
+	* If client being connected is using TDS version lower than or equal to
+	* 7.1 then TSQL treats varchar(max) as Text.
+	*/
+	if (GetClientTDSVersion() <= TDS_VERSION_7_1_1 && 
+			col->metaEntry.type3.tdsTypeId == TDS_TYPE_TEXT)
+		return TdsSendTypeText(finfo, value, vMetaData);
+
+	buf = OutputFunctionCall(finfo, value);
 	len = strlen(buf);
 
 	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
@@ -2835,11 +2844,21 @@ TdsSendTypeVarbinary(FmgrInfo *finfo, Datum value, void *vMetaData)
 	int			rc = EOF,
 				len = 0,
 				maxlen = 0;
-	bytea	   *vlena = DatumGetByteaPCopy(value);
-	char	   *buf = VARDATA_ANY(vlena);
+	bytea	   *vlena;
+	char	   *buf;
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
+	/*
+	* If client being connected is using TDS version lower than or equal to
+	* 7.1 then TSQL treats varbinary(max) as Image.
+	*/
+	if (GetClientTDSVersion() <= TDS_VERSION_7_1_1 && 
+			col->metaEntry.type8.tdsTypeId == TDS_TYPE_IMAGE)
+		return TdsSendTypeImage(finfo, value, vMetaData);
+
 	maxlen = col->metaEntry.type7.maxSize;
+	vlena = DatumGetByteaPCopy(value);
+	buf = VARDATA_ANY(vlena);
 	len = VARSIZE_ANY_EXHDR(vlena);
 
 	if (maxlen != 0xffff)
@@ -2957,10 +2976,19 @@ TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	int			rc,
 				maxlen;
-	char	   *out = OutputFunctionCall(finfo, value);
+	char	   *out;
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 	StringInfoData buf;
 
+	/*
+	* If client being connected is using TDS version lower than or equal to
+	* 7.1 then TSQL treats nvarchar(max) as NText.
+	*/
+	if (GetClientTDSVersion() <= TDS_VERSION_7_1_1 &&
+			col->metaEntry.type3.tdsTypeId == TDS_TYPE_NTEXT)
+		return TdsSendTypeNText(finfo, value, vMetaData);
+
+	out = OutputFunctionCall(finfo, value);
 	initStringInfo(&buf);
 	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
 	maxlen = col->metaEntry.type2.maxSize;
