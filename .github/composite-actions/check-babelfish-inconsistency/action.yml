@@ -6,6 +6,6 @@ runs:
     - name: Check Babelfish metadata inconsistency
       id: check-babelfish-inconsistency
       run: |
-        output=$(sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT sys.check_for_inconsistent_metadata() GO" | tail -n +2)
-        echo "check_result=$output" >> "$GITHUB_OUTPUT"
+        output=$(sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT 'check_result=',sys.check_for_inconsistent_metadata() GO" | grep 'check_result' | sed 's/[[:blank:]]//g')
+        echo "$output" >> "$GITHUB_OUTPUT"
       shell: bash
