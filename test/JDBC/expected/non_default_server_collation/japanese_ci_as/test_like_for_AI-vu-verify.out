@@ -127,7 +127,6 @@ select 1 where CAST('shaEpüD' AS char) collate Latin1_General_CI_AI like '%Æ%�
 GO
 ~~START~~
 int
-1
 ~~END~~
 
 
@@ -4665,11 +4664,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jones'
-Gather  (cost=0.13..12.23 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text COLLATE "default")
+Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text COLLATE "default")
 ~~END~~
 
 
@@ -4678,11 +4674,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'Jon%'
-Gather  (cost=0.13..12.28 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-        Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
+Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
 ~~END~~
 
 
@@ -4691,11 +4684,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jone_'
-Gather  (cost=0.13..12.28 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-        Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
+Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
 ~~END~~
 
 
@@ -4704,11 +4694,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE '_one_'
-Gather  (cost=0.13..12.23 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text COLLATE "default")
+Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text COLLATE "default")
 ~~END~~
 
 
@@ -4717,11 +4704,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE '%on%s'
-Gather  (cost=0.13..12.23 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text COLLATE "default")
+Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text COLLATE "default")
 ~~END~~
 
 
@@ -4731,11 +4715,8 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'jones'
-Gather  (cost=0.13..12.23 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jones'::text)
+Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jones'::text)
 ~~END~~
 
 
@@ -4744,11 +4725,8 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'Jon%'
-Gather  (cost=0.13..12.23 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c2)::text))::text ~~ 'Jon%'::text)
+Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c2)::text))::text ~~ 'Jon%'::text)
 ~~END~~
 
 
@@ -4757,11 +4735,8 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'jone_'
-Gather  (cost=0.13..12.23 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jone_'::text)
+Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jone_'::text)
 ~~END~~
 
 
@@ -4770,11 +4745,8 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE '_one_'
-Gather  (cost=0.13..12.23 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c2)::text))::text ~~ '_one_'::text)
+Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c2)::text))::text ~~ '_one_'::text)
 ~~END~~
 
 
@@ -4783,11 +4755,8 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE '%on%s'
-Gather  (cost=0.13..12.23 rows=1 width=6)
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c2)::text))::text ~~ '%on%s'::text)
+Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c2)::text))::text ~~ '%on%s'::text)
 ~~END~~
 
 
