@@ -25,7 +25,10 @@ TestSmallInt
 TestTinyInt
 TestBigInt
 TestBIT
-# Failure: discrepancy in jTDS behaviour between MSSQL and Babelfish
+# Failure: when 123.456 is inserted into decimal(5,2) column, Babelfish inserts
+# 123.46 with MSJDBC and 123.456 with jTDS, root cause is currently unclear,
+# received numeric data looks exactly the same with both MSJDBC and jTDS, parameter
+# set RPC calls look different though.
 # TestDecimal
 TestNumeric
 TestMoney
