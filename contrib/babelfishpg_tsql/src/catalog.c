@@ -1516,10 +1516,6 @@ is_created_with_recompile(Oid objectId)
 												&isnull);		
 		Assert(isnull == false);									
 
-		printf("flag_validity  x=%lu\n", DatumGetUInt64(flag_validity));				
-		printf("flag_values    x=%lu\n", DatumGetUInt64(flag_values));	
-		printf("recomp         x=%lu\n", (DatumGetUInt64(flag_values) & FLAG_CREATED_WITH_RECOMPILE));																						
-														
 		/* Get the RECOMPILE bit */
 		if ((DatumGetUInt64(flag_values) & DatumGetUInt64(flag_validity)) & FLAG_CREATED_WITH_RECOMPILE) 
 			recompile = true;
