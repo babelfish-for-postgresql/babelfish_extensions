@@ -1,3 +1,7 @@
+-- parallel_query_expected
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+
 /*
  * These tests validate the T-SQL RECOMPILE behaviour for stored procedures.
  * The approach is to demonstrate the recompilation by disabling index scans, 
