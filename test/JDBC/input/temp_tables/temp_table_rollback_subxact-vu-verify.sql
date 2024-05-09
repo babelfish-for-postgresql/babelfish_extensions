@@ -38,6 +38,66 @@ BEGIN TRANSACTION T1
 COMMIT
 GO
 
+BEGIN TRANSACTION T1
+    CREATE TABLE #t1(a int)
+    SAVE TRANSACTION S1
+        DROP TABLE #t1
+        CREATE TABLE #t2(a int)
+        SAVE TRANSACTION S2
+            DROP TABLE #t2
+            CREATE TABLE #t3(a int)
+            SAVE TRANSACTION S3
+            DROP TABLE #t3
+    ROLLBACK TRANSACTION S1
+COMMIT
+GO
+
+-- Should be just #t1. 
+SELECT * FROM enr_view;
+GO
+
+DROP TABLE #t1
+GO
+
+BEGIN TRANSACTION T1
+    CREATE TABLE #t1(a int)
+    SAVE TRANSACTION S1
+        DROP TABLE #t1
+        CREATE TABLE #t2(a int)
+        SAVE TRANSACTION S2
+            DROP TABLE #t2
+            CREATE TABLE #t3(a int)
+            SAVE TRANSACTION S3
+            DROP TABLE #t3
+    ROLLBACK TRANSACTION S1
+ROLLBACK
+GO
+
+-- Should be empty. 
+SELECT * FROM enr_view;
+GO
+
+CREATE TABLE #t1(a int)
+GO
+BEGIN TRANSACTION T1
+    SAVE TRANSACTION s1
+        DROP TABLE #t1
+        CREATE TABLE #t1(a int identity primary key)  
+        SAVE TRANSACTION s2
+            DROP TABLE #t1
+            CREATE TABLE #t1(a varchar(1000))
+            SAVE TRANSACTION S3
+                DROP TABLE #t1
+    ROLLBACK TRANSACTION s1
+COMMIT
+GO
+
+SELECT * FROM #t1
+GO
+
+DROP TABLE #t1
+GO
+
 ----------------------------------------------------------
 -- General Subtransaction tests
 ----------------------------------------------------------

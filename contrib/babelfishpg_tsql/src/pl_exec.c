@@ -9693,14 +9693,10 @@ pltsql_xact_cb(XactEvent event, void *arg)
 	 */
 	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_PREPARE)
 	{
-		if (temp_table_xact_support)
-			ENRCommitChanges(currentQueryEnv);
 		txn_clean_estate(true);
 	}
 	else if (event == XACT_EVENT_ABORT)
 	{
-		if (temp_table_xact_support)
-			ENRRollbackChanges(currentQueryEnv);
 		simple_econtext_stack = NULL;
 		shared_simple_eval_estate = NULL;
 	}
@@ -9723,9 +9719,6 @@ pltsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 {
 	if (event == SUBXACT_EVENT_COMMIT_SUB || event == SUBXACT_EVENT_ABORT_SUB)
 	{
-		if (temp_table_xact_support && event == SUBXACT_EVENT_ABORT_SUB)
-			ENRRollbackSubtransaction(mySubid, currentQueryEnv);
-
 		while (simple_econtext_stack != NULL &&
 			   simple_econtext_stack->xact_subxid == mySubid)
 		{
