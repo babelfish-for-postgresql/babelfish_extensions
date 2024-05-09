@@ -196,6 +196,14 @@ varbinaryin(PG_FUNCTION_ARGS)
 		 */
 		int			bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
 
+		if (typmod >= (int32) VARHDRSZ && bc > typmod)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+					 errmsg("String or binary data would be truncated.\n"
+							"The statement has been terminated.")));
+		}
+
 		result = palloc(bc);
 		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, VARDATA(result));
 		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
