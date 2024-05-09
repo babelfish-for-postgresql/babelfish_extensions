@@ -6,6 +6,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include <regex.h>
 #include "postgres.h"
 
 #include "fmgr.h"
@@ -36,6 +37,225 @@ static void AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod);
 static Datum datetime2_in_str(char *str, int32 typmod, Node *escontext);
 void		CheckDatetime2Range(const Timestamp time, Node *escontext);
 
+static char*
+clean_input_str(char *str, bool *contains_extra_spaces)
+{
+	char *result = (char *) palloc(MAXDATELEN);
+	int i = 0, j = 0;
+	int last_non_space = -1;
+
+	while (str[i] != '\0')
+	{
+		/*
+		 * Remove leading spaces
+		 */
+		while (str[i] != '\0' && isspace(str[i]))
+		{
+			if (i != 0)
+				*contains_extra_spaces = true;
+			i++;
+		}
+
+		if (str[i] == '\0')
+			break;
+
+		if (isalpha(str[i]))
+		{
+			if (!isdigit(str[last_non_space]) && !isalpha(str[last_non_space]))
+			{
+				result[j] = str[i];
+				j++;
+			}
+			else if (isdigit(str[last_non_space]))
+			{
+				result[j] = ' ';
+				result[j+1] = str[i];
+				j+=2;
+			}
+			else if (last_non_space == i-1)
+			{
+				result[j] = str[i];
+				j++;
+			}
+			else
+			{
+				result[j] = ' ';
+				result[j+1] = str[i];
+				j+=2;
+			}
+		}
+		
+		else if (isdigit(str[i]))
+		{
+			
+			if (!isdigit(str[last_non_space]) && !isalpha(str[last_non_space]))
+			{
+				result[j] = str[i];
+				j++;
+			}
+			else if (isalpha(str[last_non_space]))
+			{
+				result[j] = ' ';
+				result[j+1] = str[i];
+				j+=2;
+			}
+			else if (last_non_space == i-1)
+			{
+				result[j] = str[i];
+				j++;
+			}
+			else
+			{
+				result[j] = ' ';
+				result[j+1] = str[i];
+				j+=2;
+			}
+		}
+		else
+		{
+			result[j] = str[i];
+			j++;
+		}
+
+		last_non_space = i;
+		i++;
+	}
+
+	result[j] = '\0';
+
+	return result;
+	
+}
+
+static void
+tsql_decode_datetime2_fields(char *str, char **field, int nf, int ftype[], 
+				bool contains_extra_spaces, struct pg_tm *tm,
+				bool *is_year_set)
+{
+	int i, num_colons = 0, time_idx = nf;
+	/*
+	 * Modify time field to accept ':' as separator for
+	 * seconds and milliseconds.
+	 * Also, throw error if '.' is used as separator for
+	 * any other combination.
+	 */
+	for (i = 0; i < nf; i++)
+	{
+		char	*cp;
+		if (ftype[i] != DTK_TIME)
+		{
+			continue;
+		}
+		time_idx = i;
+		cp = field[i];
+		strtoi64(cp, &cp, 10);
+		while (*cp == ':')
+		{
+			num_colons++;
+			if(num_colons == 3)
+			{
+				*cp = '.';
+				break;
+			}
+			cp++;
+			strtoi64(cp, &cp, 10);
+		}
+
+		if (num_colons < 2 && cp != NULL && *cp == '.')
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+		}
+
+		break;
+	}
+
+	/*
+	 * Number of DATE fields can not be more than 3 in any case.
+	 */
+	if (time_idx > 3)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+
+	/*
+	 * If there is a text month in the input str, move it to the 
+	 * beginning of the DATE field.
+	 * Also, if it is in ISO 8601 format, we need to check whether
+	 * input str is matching 'YYYY-MM-DDThh:mm:ss[.mmm]' format.
+	 */
+	for (i = 0; i < time_idx; i++)
+	{
+		if (ftype[i] == DTK_STRING)
+		{
+			int j = i-1, temp_int;
+			char *temp;
+
+			ftype[i] = DecodeSpecial(i, field[i], &temp_int);
+
+			if (ftype[i] == ISOTIME && (contains_extra_spaces || num_colons != 2))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+
+			if(ftype[i] != MONTH)
+			{
+				ftype[i] = DTK_STRING;
+				continue;
+			}
+
+			if(!check_regex_for_text_month(str, DATE_TIME_2))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+
+			tm->tm_mon = temp_int;
+
+			while (j>=0)
+			{
+				/* Swap ftype entries */
+				temp_int = ftype[j];
+				ftype[j] = ftype[j+1];
+				ftype[j+1] = temp_int;
+
+				/* Swap field entries */
+				temp = field[j];
+				field[j] = field[j+1];
+				field[j+1] = temp;
+
+				j--;
+			}
+		}
+		else if (ftype[i] == DTK_NUMBER)
+		{
+			int field_len = strlen(field[i]);
+			if (time_idx > 2)
+				continue;
+
+			if (field_len == 4)
+			{
+				tm->tm_year = atoi(field[i]);
+				*is_year_set = true;
+			}
+			else if (field_len == 2 && time_idx == 2)
+			{
+				int temp = atoi(field[i]);
+				tm->tm_year = (temp < 50) ? (2000 + temp) : (1900 + temp);
+				*is_year_set = true;
+			}
+			else if (time_idx != 1 || (field_len != 8 && field_len != 6))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+		}
+		else if (ftype[i] == DTK_DATE && strlen(field[i]) > 10)
+			ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+	}
+}
+
 /* datetime2_in_str()
  * Convert a string to internal form.
  * Most parts of this functions is same as timestamp_in(),
@@ -55,7 +275,13 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+	bool		contains_extra_spaces = false;
+	bool		is_year_set = false;
 	DateTimeErrorExtra extra;
+
+	tm->tm_year = 0;
+	tm->tm_mon = 0;
+	tm->tm_mday = 0;
 
 	/* Set input to default '1900-01-01 00:00:00.* if empty string encountered */
 	if (*str == '\0')
@@ -66,8 +292,14 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 		PG_RETURN_TIMESTAMP(result);
 	}
 
+	str = clean_input_str(str, &contains_extra_spaces);
+
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
+
+	tsql_decode_datetime2_fields(str, field, nf, ftype, 
+								contains_extra_spaces, tm, &is_year_set);
+
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, 
 							   &dtype, tm, &fsec, &tz, &extra);
@@ -76,11 +308,14 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 	 * dterr == 1 means that input is TIME format(e.g 12:34:59.123) initialize
 	 * other necessary date parts and accept input format
 	 */
-	if (dterr == 1)
+	if (dterr == 1 || is_year_set)
 	{
-		tm->tm_year = 1900;
-		tm->tm_mon = 1;
-		tm->tm_mday = 1;
+		if (!is_year_set)
+			tm->tm_year = 1900;
+		if (!tm->tm_mon)
+			tm->tm_mon = 1;
+		if (is_year_set || !tm->tm_mday)
+			tm->tm_mday = 1;
 		dterr = 0;
 	}
 
