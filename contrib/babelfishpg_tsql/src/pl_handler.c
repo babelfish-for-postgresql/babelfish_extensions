@@ -2379,7 +2379,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
 					pg_proc_update_oid_acl(address, oldoid, proacl);
 					/* Update function/procedure related metadata in babelfish catalog */
-					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
+					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, false);
 					if (!isSameProc) {
 						/*
 						 * When the signatures differ we need to manually update the 'function_args' column in 

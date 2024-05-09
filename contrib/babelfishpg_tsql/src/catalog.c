@@ -1481,6 +1481,56 @@ clean_up_bbf_function_ext(int16 dbid)
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 
+bool
+is_created_with_recompile(Oid objectId) 
+{
+	HeapTuple	proctuple,
+				bbffunctuple;
+	bool recompile = false;
+
+	proctuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(objectId));
+	if (!HeapTupleIsValid(proctuple))
+	{
+		ReleaseSysCache(proctuple);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot find the object \"%d\", because it does not exist or you do not have permission.", objectId)));
+	}
+
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctuple);
+
+	if (HeapTupleIsValid(bbffunctuple))
+	{
+		bool isnull = false;
+		Datum flag_validity;
+		Datum flag_values;
+		flag_validity = SysCacheGetAttr(PROCNSPSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_flag_validity,
+												&isnull);	
+		Assert(isnull == false);				
+																
+		flag_values   = SysCacheGetAttr(PROCNSPSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_flag_values,
+												&isnull);		
+		Assert(isnull == false);									
+
+		printf("flag_validity  x=%lu\n", DatumGetUInt64(flag_validity));				
+		printf("flag_values    x=%lu\n", DatumGetUInt64(flag_values));	
+		printf("recomp         x=%lu\n", (DatumGetUInt64(flag_values) & FLAG_CREATED_WITH_RECOMPILE));																						
+														
+		/* Get the RECOMPILE bit */
+		if ((DatumGetUInt64(flag_values) & DatumGetUInt64(flag_validity)) & FLAG_CREATED_WITH_RECOMPILE) 
+			recompile = true;
+
+		ReleaseSysCache(bbffunctuple);
+	}
+
+	ReleaseSysCache(proctuple);
+	
+	return recompile;
+}
 
 /*****************************************
  *			SCHEMA

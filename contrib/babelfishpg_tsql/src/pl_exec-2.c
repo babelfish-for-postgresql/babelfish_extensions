@@ -828,6 +828,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	/* fetch current search_path */
 	char	   *old_search_path = NULL;
 	char	   *new_search_path;
+	
+	/* keep previous plan mode */
+	const char *old_plan_mode = NULL;
+	
+	/* whether procedure was created WITH RECOMPILE */
+	bool created_with_recompile = false;		
 
 	estate->db_name = NULL;
 	if (stmt->proc_name == NULL)
@@ -1012,6 +1018,16 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			get_param_mode(stmt->params, stmt->paramno, &parammodes);
 
 			ReleaseSysCache(func_tuple);
+			
+			/* handle RECOMPILE */
+			created_with_recompile = is_created_with_recompile(funcexpr->funcid);		
+			if (stmt->exec_with_recompile || created_with_recompile)
+			{
+				old_plan_mode = GetConfigOption("plan_cache_mode", true, true);
+				(void) set_config_option("plan_cache_mode", "force_custom_plan",
+								  GUC_CONTEXT_CONFIG,
+								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);			
+			}			
 
 			/*
 			 * Begin constructing row Datum
@@ -1275,6 +1291,16 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			SetCurrentRoleId(current_user_id, false);
 
 		/*
+		 * old_plan_mode may be NULL when an exception occurred before capturing the old mode 
+		 */
+		if ((stmt->exec_with_recompile || created_with_recompile) && !old_plan_mode)
+		{
+			(void) set_config_option("plan_cache_mode", old_plan_mode,
+							  GUC_CONTEXT_CONFIG,
+							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);									  		
+		}
+		
+		/*
 		 * If we aren't saving the plan, unset the pointer.  Note that it
 		 * could have been unset already, in case of a recursive call.
 		 */
@@ -1299,6 +1325,16 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 								 GUC_ACTION_SAVE, true, 0, false);
 		SetCurrentRoleId(current_user_id, false);
 	}
+	
+	/*
+	 * Restore plan_cache_mode
+	 */
+	if ((stmt->exec_with_recompile || created_with_recompile) && !old_plan_mode)
+	{
+		(void) set_config_option("plan_cache_mode", old_plan_mode,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);		
+	}	
 
 	if (expr->plan && !expr->plan->saved)
 	{
