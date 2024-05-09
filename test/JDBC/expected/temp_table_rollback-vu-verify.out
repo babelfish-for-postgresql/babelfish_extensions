@@ -211,17 +211,20 @@ GO
 -- Transaction will error out
 BEGIN TRAN
 drop table #temp_table_rollback_t2
-insert into #temp_table_rollback_t1 values (1, 1, 1) -- Wrong should error out 
+insert into #temp_table_rollback_t1 values (1, 1, 1, 1) -- Too many columns, should error out
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT has more expressions than target columns)~~
 
 
 -- Table + data should still exist, due to implicit rollback. 
 SELECT * FROM #temp_table_rollback_t2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#temp_table_rollback_t2" does not exist)~~
+~~START~~
+int
+1
+~~END~~
 
 
 -- Duplicate key doesn't cause implicit rollback, so the drop will succeed here. 
