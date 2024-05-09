@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- check if primary key index is used for query with order by clause
 SET NOCOUNT ON
 GO
