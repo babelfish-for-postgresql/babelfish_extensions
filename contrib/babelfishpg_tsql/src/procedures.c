@@ -107,7 +107,7 @@ char	   *sp_describe_first_result_set_view_name = NULL;
 
 bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
-static bool		isSupported = true;
+static bool		is_supported_case_sp_describe_undeclared_parameters = true;
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -603,7 +603,7 @@ handle_bool_expr_rec(BoolExpr *expr, List *list)
 
 				if (nodeTag(xpr->rexpr) != T_ColumnRef)
 				{
-					isSupported = false;
+					is_supported_case_sp_describe_undeclared_parameters = false;
 					return list;
 				}
 				ref = (ColumnRef *) xpr->rexpr;
@@ -640,7 +640,7 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
-			isSupported = false;
+			is_supported_case_sp_describe_undeclared_parameters = false;
 			return target_attnums;
 		}
 		ref = (ColumnRef *) where_clause->lexpr;
@@ -676,7 +676,7 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 
 						if (nodeTag(xpr->lexpr) != T_ColumnRef)
 						{
-							isSupported = false;
+							is_supported_case_sp_describe_undeclared_parameters = false;
 							return target_attnums;
 						}
 						ref = (ColumnRef *) xpr->lexpr;
@@ -705,7 +705,7 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 	}
 	else
 	{
-		isSupported = false;
+		is_supported_case_sp_describe_undeclared_parameters = false;
 	}
 	return target_attnums;
 }
@@ -732,7 +732,7 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
-			isSupported = false;
+			is_supported_case_sp_describe_undeclared_parameters = false;
 			return extra_restargets;
 		}
 		ref = (ColumnRef *) where_clause->lexpr;
@@ -775,7 +775,7 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 
 						if (nodeTag(xpr->lexpr) != T_ColumnRef)
 						{
-							isSupported = false;
+							is_supported_case_sp_describe_undeclared_parameters = false;
 							return extra_restargets;
 						}
 						ref = (ColumnRef *) xpr->lexpr;
@@ -812,7 +812,7 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 	}
 	else
 	{
-		isSupported = false;
+		is_supported_case_sp_describe_undeclared_parameters = false;
 	}
 	return extra_restargets;
 }
@@ -837,7 +837,7 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 
 		if (nodeTag(where_clause->rexpr) != T_ColumnRef)
 		{
-			isSupported = false;
+			is_supported_case_sp_describe_undeclared_parameters = false;
 			return extra_restargets;
 		}
 		ref = (ColumnRef *) where_clause->rexpr;
@@ -869,7 +869,7 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 
 						if (nodeTag(xpr->rexpr) != T_ColumnRef)
 						{
-							isSupported = false;
+							is_supported_case_sp_describe_undeclared_parameters = false;
 							return extra_restargets;
 						}
 						ref = (ColumnRef *) xpr->rexpr;
@@ -896,7 +896,7 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 	}
 	else
 	{
-		isSupported = false;
+		is_supported_case_sp_describe_undeclared_parameters = false;
 	}
 	return extra_restargets;
 }
@@ -990,7 +990,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			list_length(pltsql_parse_result->body) != 2 ||
 			((PLtsql_stmt *) lsecond(pltsql_parse_result->body))->cmd_type != PLTSQL_STMT_EXECSQL)
 		{
-			isSupported = false;
+			is_supported_case_sp_describe_undeclared_parameters = false;
 		}
 		else
 		{
@@ -1006,11 +1006,11 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			raw_parsetree_list = pg_parse_query(parsedbatch);
 		}
 
-		if (isSupported)
+		if (is_supported_case_sp_describe_undeclared_parameters)
 		{
 			if (list_length(raw_parsetree_list) != 1)
 			{
-				isSupported = false;
+				is_supported_case_sp_describe_undeclared_parameters = false;
 			}
 			else
 			{
@@ -1023,7 +1023,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		 * Analyze the parsed statement to suggest types for undeclared
 		 * parameters
 		 */
-		if (isSupported)
+		if (is_supported_case_sp_describe_undeclared_parameters)
 			node_type = nodeTag(parsetree->stmt);
 		else
 			node_type = T_Invalid; 
@@ -1114,11 +1114,11 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				cols = list_concat_copy(cols, extra_restargets);
 				break;
 			default:
-				isSupported = false;
+				is_supported_case_sp_describe_undeclared_parameters = false;
 				break;
 		}
 
-		if (isSupported)
+		if (is_supported_case_sp_describe_undeclared_parameters)
 		{
 			undeclaredparams->tablename = (char *) palloc(NAMEDATALEN);
 			relname_len = strlen(relation->relname);
@@ -1179,11 +1179,11 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 					values_list = list_make1(handle_where_clause_restargets_right(pstate, delete_stmt->whereClause, NIL));
 					break;
 				default:
-					isSupported = false;
+					is_supported_case_sp_describe_undeclared_parameters = false;
 					break;
 			}
 
-			if (!(list_length(values_list) > 1) && isSupported)
+			if (!(list_length(values_list) > 1) && is_supported_case_sp_describe_undeclared_parameters)
 			{
 				foreach(lc, values_list)
 				{
@@ -1207,7 +1207,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						List	   *fields;
 						ListCell   *fieldcell;
 
-						if (!isSupported)
+						if (!is_supported_case_sp_describe_undeclared_parameters)
 							break;
 
 						/*
@@ -1224,7 +1224,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 								res = lfirst(sublc);
 								if (nodeTag(res->val) != T_ColumnRef)
 								{
-									isSupported = false;
+									is_supported_case_sp_describe_undeclared_parameters = false;
 									break;
 								}
 								columnref = (ColumnRef *) res->val;
@@ -1270,7 +1270,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						}
 						else
 						{
-							isSupported = false;
+							is_supported_case_sp_describe_undeclared_parameters = false;
 							break;
 						}
 						numvalues += 1;
@@ -1278,10 +1278,10 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				}
 			}
 			else
-				isSupported = false;
+				is_supported_case_sp_describe_undeclared_parameters = false;
 		}
 
-		funcctx->max_calls = isSupported ? numresults: 0;
+		funcctx->max_calls = is_supported_case_sp_describe_undeclared_parameters ? numresults: 0;
 		MemoryContextSwitchTo(oldcontext);
 	}
 
@@ -1630,7 +1630,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		isSupported = true;
+		is_supported_case_sp_describe_undeclared_parameters = true;
 		SRF_RETURN_DONE(funcctx);
 	}
 }
