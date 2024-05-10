@@ -935,7 +935,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		int			sql_dialect_value_old;
 
 		SelectStmt *select_stmt;
-		List	   *values_list;
+		List	   *values_list = NIL;
 		ListCell   *lc;
 		int			numresults = 0;
 		int			num_target_attnums = 0;
