@@ -195,6 +195,7 @@ typedef struct TdsColumnMetaData
 								 * an expression column */
 	AttrNumber	attrNum;		/* attribute number in the relation */
 	TdsRelationMetaDataInfo relinfo;
+	int32		atttypmod;		/* type-specific data supplied at table creation time */
 	bool		attNotNull;		/* true if the column has not null constraint */
 	bool		attidentity;	/* true if it is an identity column */
 	bool		attgenerated;	/* true if it is a computed column */

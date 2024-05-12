@@ -1785,6 +1785,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		}
 
 		SetAttributesForColmetada(col);
+		col->atttypmod = atttypmod;
 
 		switch (finfo->sendFuncId)
 		{
@@ -2082,10 +2083,10 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 					/*
 					 * If client being connected is using TDS version lower
 					 * than 7.3A then TSQL treats DATETIMEOFFSET as NVARCHAR.
-					 * Max len here would be 64('YYYY-MM-DD hh:mm:ss[.nnnnnnn]
+					 * Max len here would be 68('YYYY-MM-DD hh:mm:ss[.nnnnnnn]
 					 * [+|-]hh:mm'). and Making use of default collation Oid.
 					 */
-					SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 64);
+					SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 68);
 				else
 				{
 					if (atttypmod == -1)

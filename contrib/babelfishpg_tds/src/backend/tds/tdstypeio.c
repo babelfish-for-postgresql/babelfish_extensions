@@ -28,6 +28,7 @@
 #include "miscadmin.h"
 #include "parser/scansup.h"
 #include "utils/cash.h"
+#include "utils/datetime.h"
 #include "utils/hsearch.h"
 #include "utils/builtins.h"		/* for format_type_be() */
 #include "utils/guc.h"
@@ -3337,6 +3338,120 @@ TdsSendTypeUniqueIdentifier(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
+static char*
+append_fsec1(char *cp, fsec_t fsec, int scale)
+{
+	int		value,
+				oldval,
+				remainder,
+				idx,
+				sidx;
+  char	*res,
+				*orig;
+	char	buf[MAX_TIMESTAMP_PRECISION + 1];
+
+	res = cp;
+	orig = cp;
+	(void) orig;
+
+	if (scale > 0)
+	{
+		*cp++ = '.';
+		res++;
+		value = abs(fsec);
+
+		for (idx = 0; idx < sizeof(buf) && value > 0; idx++)
+		{
+			oldval = value;
+			value /= 10;
+			remainder = oldval - value * 10;
+			buf[idx] = '0' + remainder;
+		}
+
+		// todo: fix leading zeros
+
+		for (sidx = 0; sidx < scale && sidx < idx; sidx++)
+		{
+			cp[sidx] = buf[idx - sidx - 1];
+			res++;
+		}
+
+/*
+		tmpval = value;
+		shift = scale;
+		while (tmpval > 0 && shift > 0)
+		{
+			tmpval /= 10;
+			shift--;
+		}
+
+		while (scale-- && value > 0)
+		{
+			oldval = value;
+			value /= 10;
+			remainder = oldval - value * 10;
+			cp[scale - shift] = '0' + remainder;
+			res++;
+		}
+*/
+
+		while(scale-- > idx)
+			*res++ = '0';
+	}
+
+	return res;
+}
+
+static char*
+time_out1(TimeADT time, int scale)
+{
+	struct pg_tm tt,
+			   *tm = &tt;
+	fsec_t		fsec;
+	char		*out,
+				*cp;
+
+	if (scale < 0)
+		scale = MAX_TIMESTAMP_PRECISION;
+
+	time2tm(time, tm, &fsec);
+
+	out = palloc0(16 + 1);
+	cp = out;
+
+	cp = pg_ultostr_zeropad(cp, tm->tm_hour, 2);
+	*cp++ = ':';
+	cp = pg_ultostr_zeropad(cp, tm->tm_min, 2);
+	*cp++ = ':';
+	cp = pg_ultostr_zeropad(cp, tm->tm_sec, 2);
+	cp = append_fsec1(cp, fsec, scale);
+
+	return out;
+}
+
+static int
+TdsSendTimeAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc,
+				scale;
+	char	   *out;
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	StringInfoData buf;
+
+	scale = (int) col->atttypmod;
+	out = time_out1((TimeADT) value, scale);
+
+	initStringInfo(&buf);
+	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
+	pfree(out);
+
+	if ((rc = TdsPutInt16LE(buf.len)) == 0)
+		TdsPutbytes(buf.data, buf.len);
+
+	pfree(buf.data);
+	return rc;
+}
+
 int
 TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
@@ -3353,7 +3468,7 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * If client being connected is using TDS version lower than 7.3A then
 		 * TSQL treats TIME as NVARCHAR.
 		 */
-		return TdsSendTypeNVarchar(finfo, value, vMetaData);
+		return TdsSendTimeAsNVarcharHelper(finfo, value, vMetaData);
 
 	scale = col->metaEntry.type6.scale;
 
@@ -3383,6 +3498,67 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
+static char*
+timestamp_out1(Timestamp timestamp, int scale)
+{
+	struct pg_tm tt,
+			   *tm = &tt;
+	fsec_t		fsec;
+	char		*out,
+				*cp;
+				
+	out = palloc0(27 + 1);
+	cp = out;
+
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		EncodeSpecialTimestamp(timestamp, out);
+	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
+	{
+		cp = pg_ultostr_zeropad(cp,
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+		*cp++ = '-';
+		cp = pg_ultostr_zeropad(cp, tm->tm_mon, 2);
+		*cp++ = '-';
+		cp = pg_ultostr_zeropad(cp, tm->tm_mday, 2);
+		*cp++ = ' ';
+		cp = pg_ultostr_zeropad(cp, tm->tm_hour, 2);
+		*cp++ = ':';
+		cp = pg_ultostr_zeropad(cp, tm->tm_min, 2);
+		*cp++ = ':';
+		cp = pg_ultostr_zeropad(cp, tm->tm_sec, 2);
+		cp = append_fsec1(cp, fsec, scale);
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	return out;
+}
+
+static int
+TdsSendDatetime2AsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc,
+				scale;
+	char	   *out;
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	StringInfoData buf;
+
+	scale = (int) col->atttypmod;
+	out = timestamp_out1((Timestamp) value, scale);
+
+	initStringInfo(&buf);
+	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
+	pfree(out);
+
+	if ((rc = TdsPutInt16LE(buf.len)) == 0)
+		TdsPutbytes(buf.data, buf.len);
+
+	pfree(buf.data);
+	return rc;
+}
+
 int
 TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
@@ -3399,7 +3575,7 @@ TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * If client being connected is using TDS version lower than 7.3A then
 		 * TSQL treats DATETIME2 as NVARCHAR.
 		 */
-		return TdsSendTypeNVarchar(finfo, value, vMetaData);
+		return TdsSendDatetime2AsNVarcharHelper(finfo, value, vMetaData);
 
 	scale = col->metaEntry.type6.scale;
 
@@ -4183,6 +4359,98 @@ TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken token)
 	return result;
 }
 
+/* EncodeTimezone()
+ *		Copies representation of a numeric timezone offset to str.
+ *
+ * Returns a pointer to the new end of string.  No NUL terminator is put
+ * there; callers are responsible for NUL terminating str themselves.
+ */
+static char *
+EncodeTimezone(char *str, int tz, int style)
+{
+	int			hour,
+				min;
+
+	min = abs(tz);
+	hour = min / MINS_PER_HOUR;
+	min -= hour * MINS_PER_HOUR;
+
+	/* TZ is negated compared to sign we wish to display ... */
+	*str++ = (tz <= 0 ? '+' : '-');
+
+	str = pg_ultostr_zeropad(str, hour, 2);
+	*str++ = ':';
+	str = pg_ultostr_zeropad(str, min, 2);
+
+	return str;
+}
+
+static char*
+datetimeoffset_out1(tsql_datetimeoffset *df, int scale)
+{
+	struct pg_tm tt,
+			   *tm = &tt;
+	fsec_t		fsec;
+	Timestamp	timestamp;
+	char		*out,
+				*cp;
+				
+	if (scale < 0)
+		scale = MAX_TIMESTAMP_PRECISION + 1;
+
+	out = palloc0(34 + 1);
+	cp = out;
+
+	timestamp = df->tsql_ts;
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
+	{
+		cp = pg_ultostr_zeropad(cp,
+									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
+		*cp++ = '-';
+		cp = pg_ultostr_zeropad(cp, tm->tm_mon, 2);
+		*cp++ = '-';
+		cp = pg_ultostr_zeropad(cp, tm->tm_mday, 2);
+		*cp++ = ' ';
+		cp = pg_ultostr_zeropad(cp, tm->tm_hour, 2);
+		*cp++ = ':';
+		cp = pg_ultostr_zeropad(cp, tm->tm_min, 2);
+		*cp++ = ':';
+		cp = pg_ultostr_zeropad(cp, tm->tm_sec, 2);
+		cp = append_fsec1(cp, fsec, scale);
+		*cp++ = ' ';
+		cp = EncodeTimezone(cp, df->tsql_tz, DateStyle);
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("datetimeoffset out of range")));
+
+	return out;
+}
+
+static int
+TdsSendDatetimeoffsetAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc,
+				scale;
+	char	   *out;
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	StringInfoData buf;
+
+	scale = (int) col->atttypmod;
+	out = datetimeoffset_out1((tsql_datetimeoffset *) value, scale);
+
+	initStringInfo(&buf);
+	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
+	pfree(out);
+
+	if ((rc = TdsPutInt16LE(buf.len)) == 0)
+		TdsPutbytes(buf.data, buf.len);
+
+	pfree(buf.data);
+	return rc;
+}
+
 int
 TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
@@ -4203,7 +4471,7 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * If client being connected is using TDS version lower than 7.3A then
 		 * TSQL treats DATETIMEOFFSET as NVARCHAR.
 		 */
-		return TdsSendTypeNVarchar(finfo, value, vMetaData);
+		return TdsSendDatetimeoffsetAsNVarcharHelper(finfo, value, vMetaData);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_DATETIME_OFFSET);
 
