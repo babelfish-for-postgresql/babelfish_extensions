@@ -6343,7 +6343,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		 * When displaying the query plan, indicate that EXECUTE ... WITH RECOMPILE was specified.
 		 * This may be relevant for understanding the plan.
 		 */
-		ss << " /*EXECUTE WITH RECOMPILE*/";
+		ss << " /* EXECUTE WITH RECOMPILE */";
 	}
 		
 	std::string expr_query = ss.str();
