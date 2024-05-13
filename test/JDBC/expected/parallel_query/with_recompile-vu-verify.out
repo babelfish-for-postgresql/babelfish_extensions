@@ -231,7 +231,7 @@ execute p_recomp_11 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_11 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_11 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_11 where c11 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -252,7 +252,7 @@ exec    p_recomp_12 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_12 where c12 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -317,7 +317,7 @@ exec    p_recomp_11 1 with recompile, result sets none
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_11 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_11 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_11 where c11 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -338,7 +338,7 @@ exec    p_recomp_11 1 with result sets none, recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_11 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_11 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_11 where c11 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -394,7 +394,7 @@ exec    p_recomp_13 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_13 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_13 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_13 where c13 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -509,7 +509,7 @@ execute p_recomp_11 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_11 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_11 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_11 where c11 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -528,7 +528,7 @@ exec    p_recomp_12 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_12 where c12 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -590,7 +590,7 @@ execute p_recomp_13 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_13 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_13 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_13 where c13 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -646,7 +646,7 @@ exec    p_recomp_13 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_13 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_13 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_13 where c13 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -861,7 +861,7 @@ execute p_recomp_21 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_21 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_21 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_21 where c21 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -882,7 +882,7 @@ exec    p_recomp_22 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_22 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_22 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_22 where c22 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -969,7 +969,7 @@ exec    p_recomp_23 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_23 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_23 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_23 where c23 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1084,7 +1084,7 @@ execute p_recomp_21 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_21 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_21 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_21 where c21 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1103,7 +1103,7 @@ exec    p_recomp_22 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_22 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_22 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_22 where c22 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1165,7 +1165,7 @@ execute p_recomp_23 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_23 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_23 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_23 where c23 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1221,7 +1221,7 @@ exec    p_recomp_23 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_23 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_23 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_23 where c23 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1437,7 +1437,7 @@ execute p_recomp_31 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_31 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_31 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_31 where c31 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1458,7 +1458,7 @@ exec    p_recomp_32 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_32 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_32 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_32 where c32 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1547,7 +1547,7 @@ exec    p_recomp_33 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_33 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_33 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_33 where c33 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1662,7 +1662,7 @@ execute p_recomp_31 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_31 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_31 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_31 where c31 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1681,7 +1681,7 @@ exec    p_recomp_32 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_32 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_32 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_32 where c32 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1743,7 +1743,7 @@ execute p_recomp_33 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_33 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_33 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_33 where c33 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -1797,7 +1797,7 @@ exec    p_recomp_33 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_33 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_33 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_33 where c33 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -2098,7 +2098,7 @@ exec    p_recomp_61 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_41 where c41 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -2113,7 +2113,7 @@ Query Text: EXEC    p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
         Single Copy: true
         ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
               Index Cond: (c41 = 1)
-Query Text: EXEC    p_recomp_61 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_61 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_61 where c61 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -2215,7 +2215,7 @@ exec    p_recomp_61 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_41 where c41 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -2228,7 +2228,7 @@ Query Text: EXEC    p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
         Single Copy: true
         ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
               Index Cond: (c41 = 1)
-Query Text: EXEC    p_recomp_61 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_61 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_61 where c61 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -2666,7 +2666,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2679,7 +2679,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2705,7 +2705,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2718,7 +2718,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2797,7 +2797,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2812,7 +2812,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2842,7 +2842,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2857,7 +2857,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2890,7 +2890,7 @@ exec    p_recomp_51 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_51 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_51 where c51 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -2918,7 +2918,7 @@ Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2933,7 +2933,7 @@ Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2963,7 +2963,7 @@ Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -2978,7 +2978,7 @@ Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -3060,7 +3060,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -3073,7 +3073,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -3099,7 +3099,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -3112,7 +3112,7 @@ Query Text: EXEC    p_recomp_51 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -3144,7 +3144,7 @@ exec    p_recomp_51 1 with recompile
 go
 ~~START~~
 text
-Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
+Query Text: EXEC    p_recomp_51 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_51 where c51 = "@p"
   ->  Gather
         Workers Planned: 1
@@ -3170,7 +3170,7 @@ Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -3183,7 +3183,7 @@ Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
                 Index Cond: (c12 = 1)
-  Query Text: EXEC p_recomp_12 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -3209,7 +3209,7 @@ Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
@@ -3222,7 +3222,7 @@ Query Text: EXEC    p_recomp_51 1 /*EXECUTE WITH RECOMPILE*/
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 1)
-  Query Text: EXEC p_recomp_41 1 /*EXECUTE WITH RECOMPILE*/
+  Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
     ->  Gather
           Workers Planned: 1
