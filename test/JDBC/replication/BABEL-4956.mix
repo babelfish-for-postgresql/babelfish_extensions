@@ -1,0 +1,159 @@
+-- Test typmod for BINARY datatype
+-- tsql
+CREATE TABLE babel_4956_t1 (
+    c1  INT  NOT NULL PRIMARY KEY
+    , c2     BINARY(4) NOT NULL)
+GO
+
+-- tsql port=8199
+-- typmod of binary column is kept less in this table
+-- compared to source table to test typmod compatibility.
+CREATE TABLE babel_4956_t1 (
+    c1  INT  NOT NULL PRIMARY KEY
+    , c2     BINARY(3) NOT NULL)
+GO
+
+-- Add table to publication
+-- psql
+ALTER PUBLICATION my_pub ADD TABLE master_dbo.babel_4956_t1;
+GO
+
+-- Refresh the subscription
+-- psql port=5433
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- Insert a 4 byte binary value with last trailing byte as 0 in the
+-- source table so that it fits into 3 byte in target table's column.
+-- tsql
+INSERT INTO babel_4956_t1(c1, c2) VALUES(1, 0x11223300);
+GO
+
+SELECT * FROM babel_4956_t1;
+GO
+
+-- Wait for data to get replicated
+-- psql
+select pg_sleep(2);
+GO
+
+-- data should have replicated to target table
+-- tsql port=8199
+SELECT * FROM babel_4956_t1;
+GO
+
+-- Now insert a 4 byte binary value with no trailing zero bytes in the
+-- source table so that it does not fit into 3 byte in target table's column.
+-- tsql
+INSERT INTO babel_4956_t1(c1, c2) VALUES(2, 0x11223344);
+GO
+
+SELECT * FROM babel_4956_t1;
+GO
+
+-- Wait for data to get replicated
+-- psql
+select pg_sleep(2);
+GO
+
+-- we should not see the new row in target table
+-- tsql port=8199
+SELECT * FROM babel_4956_t1;
+GO
+
+-- Cleanup
+-- psql
+ALTER PUBLICATION my_pub DROP TABLE master_dbo.babel_4956_t1;
+GO
+
+-- psql port=5433
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- tsql
+DROP TABLE babel_4956_t1;
+GO
+
+-- tsql port=8199
+DROP TABLE babel_4956_t1;
+GO
+
+-- Test typmod for VARBINARY datatype
+-- tsql
+CREATE TABLE babel_4956_t1 (
+    c1  INT  NOT NULL PRIMARY KEY
+    , c2     VARBINARY(4) NOT NULL)
+GO
+
+-- tsql port=8199
+-- typmod of varbinary columns is kept less in this table
+-- compared to source table to test typmod compatibility.
+CREATE TABLE babel_4956_t1 (
+    c1  INT  NOT NULL PRIMARY KEY
+    , c2     VARBINARY(3) NOT NULL)
+GO
+
+-- Add table to publication
+-- psql
+ALTER PUBLICATION my_pub ADD TABLE master_dbo.babel_4956_t1;
+GO
+
+-- Refresh the subscription
+-- psql port=5433
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- Insert a 4 byte varbinary value with last trailing byte as 0 in the
+-- source table so that it fits into 3 byte in target table's column.
+-- tsql
+INSERT INTO babel_4956_t1(c1, c2) VALUES(1, 0x11223300);
+GO
+
+SELECT * FROM babel_4956_t1;
+GO
+
+-- Wait for data to get replicated
+-- psql
+select pg_sleep(2);
+GO
+
+-- data should have replicated to target table
+-- tsql port=8199
+SELECT * FROM babel_4956_t1;
+GO
+
+-- Now insert a 4 byte varbinary value with no trailing zero bytes in the
+-- source table so that it does not fit into 3 byte in target table's column.
+-- tsql
+INSERT INTO babel_4956_t1(c1, c2) VALUES(2, 0x11223344);
+GO
+
+SELECT * FROM babel_4956_t1;
+GO
+
+-- Wait for data to get replicated
+-- psql
+select pg_sleep(2);
+GO
+
+-- we should not see the new row in target table
+-- tsql port=8199
+SELECT * FROM babel_4956_t1;
+GO
+
+-- Cleanup
+-- psql
+ALTER PUBLICATION my_pub DROP TABLE master_dbo.babel_4956_t1;
+GO
+
+-- psql port=5433
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- tsql
+DROP TABLE babel_4956_t1;
+GO
+
+-- tsql port=8199
+DROP TABLE babel_4956_t1;
+GO
