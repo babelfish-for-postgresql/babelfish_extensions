@@ -3416,9 +3416,23 @@ LANGUAGE C STABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
 $$
-	SELECT sys.is_rolemember_internal(role, NULL);
+BEGIN
+    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role)
+    THEN
+        IF EXISTS (SELECT name FROM sys.login_token WHERE name = role)
+        THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
+        ELSIF NOT EXISTS (SELECT type FROM sys.login_token WHERE type IN ('WINDOWS LOGIN', 'WINDOWS GROUP')) THEN -- session is not a windows auth session
+            IF (CHARINDEX('\', role) != 0)
+            THEN RETURN NULL;  -- argument is a windows group
+            ELSE RETURN sys.is_rolemember_internal(role, NULL); -- argument is not a windows group
+            END IF;
+        ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
+        END IF;
+    ELSE RETURN NULL; -- Return NULL if login does not exist
+    END IF;
+END;
 $$
-LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
+LANGUAGE plpgsql STRICT STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.is_rolemember(IN role sys.SYSNAME)
 RETURNS INT AS
