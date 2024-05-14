@@ -198,10 +198,24 @@ varbinaryin(PG_FUNCTION_ARGS)
 
 		if (typmod >= (int32) VARHDRSZ && bc > typmod)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-					 errmsg("String or binary data would be truncated.\n"
-							"The statement has been terminated.")));
+			/* Verify that extra bytes are zeros, and clip them off */
+			char	*temp_result;
+			size_t	i;
+
+			temp_result = palloc0(bc);
+			bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, temp_result);
+
+			for (i = (typmod - VARHDRSZ); i < bc; i++)
+			{
+				if (temp_result[i] != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+							errmsg("String or binary data would be truncated.\n"
+									"The statement has been terminated.")));
+			}
+			pfree(temp_result);
+			bc = typmod;
+			len = (typmod - VARHDRSZ) * 2 + 2;
 		}
 
 		result = palloc(bc);
