@@ -1750,7 +1750,7 @@ exec_utility_cmd_helper(char *query_str)
 	ProcessUtility(wrapper,
 				   query_str,
 				   false,
-				   PROCESS_UTILITY_SUBCOMMAND,
+				   PROCESS_UTILITY_QUERY,
 				   NULL,
 				   NULL,
 				   None_Receiver,

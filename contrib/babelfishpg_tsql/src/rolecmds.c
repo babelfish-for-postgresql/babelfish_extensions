@@ -31,6 +31,7 @@
 #include "catalog/pg_namespace.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
+#include "commands/extension.h"
 #include "commands/seclabel.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
@@ -1229,6 +1230,13 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 	const char *prev_current_user;
 	int			saved_dialect = sql_dialect;
 
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"add_existing_users_to_catalog()")));
+
 	db_rel = table_open(sysdatabases_oid, AccessShareLock);
 	scan = table_beginscan_catalog(db_rel, 0, NULL);
 	tuple = heap_getnext(scan, ForwardScanDirection);
@@ -2377,6 +2385,13 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 	Relation	rel;
 	TableScanDesc scan;
 	HeapTuple	tuple;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"remove_createrole_from_logins()")));
 
 	rel = table_open(get_authid_login_ext_oid(), AccessShareLock);
 	scan = table_beginscan_catalog(rel, 0, NULL);

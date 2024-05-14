@@ -1,0 +1,491 @@
+-- tsql
+CREATE SCHEMA babel_4877_s1
+GO
+
+CREATE FUNCTION babel_4877_s1.babel_4877_f1() RETURNS INT
+AS
+BEGIN
+    DECLARE @babel_4877_tablevar TABLE (id INT)
+    INSERT INTO @babel_4877_tablevar SELECT id FROM babel_4877_t;
+    RETURN (SELECT id FROM @babel_4877_tablevar)
+END
+GO
+
+CREATE PROC babel_4877_s1.babel_4877_p
+AS
+    SELECT babel_4877_s1.babel_4877_f1()
+GO
+
+CREATE TABLE dbo.babel_4877_t (id INT)
+GO
+INSERT INTO dbo.babel_4877_t VALUES (10)
+GO
+~~ROW COUNT: 1~~
+
+
+-- func in s1 should see dbo table
+EXEC babel_4877_s1.babel_4877_p
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+CREATE TABLE babel_4877_s1.babel_4877_t (id INT)
+GO
+INSERT INTO babel_4877_s1.babel_4877_t VALUES (20)
+GO
+~~ROW COUNT: 1~~
+
+
+-- Now func in s1 should select unspecified objects from s1 first then dbo
+EXEC babel_4877_s1.babel_4877_p
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+SELECT babel_4877_s1.babel_4877_f1()
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+DROP TABLE babel_4877_s1.babel_4877_t, dbo.babel_4877_t
+GO
+DROP PROC babel_4877_s1.babel_4877_p
+GO
+DROP FUNCTION babel_4877_s1.babel_4877_f1
+GO
+DROP SCHEMA babel_4877_s1
+GO
+
+
+-- psql
+CREATE PROCEDURE master_dbo.babel_4877_reset_search_path() AS
+$$ BEGIN
+RESET search_path;
+END $$
+LANGUAGE plpgsql;
+GO
+
+-- tsql
+CREATE SCHEMA babel_4877_s1
+GO
+CREATE FUNCTION babel_4877_s1.babel_4877_f1() RETURNS VARCHAR(100)
+AS
+BEGIN
+    RETURN (SELECT set_config('search_path','master_babel_4877_s1, sys, pg_catalog', false));
+END
+GO
+CREATE TABLE babel_4877_t1 (id INT);
+GO
+INSERT INTO babel_4877_t1 VALUES (generate_series(1,10));
+GO
+~~ROW COUNT: 10~~
+
+
+-- user set commands should persists even after the function call ends
+CREATE PROC babel_4877_s1.babel_4877_p1 AS
+    SELECT 'before search path ====> ', current_setting('search_path');
+    SELECT babel_4877_s1.babel_4877_f1() FROM babel_4877_t1;
+    SELECT 'after search path ====> ', current_setting('search_path');
+GO
+
+EXEC babel_4877_s1.babel_4877_p1
+GO
+~~START~~
+varchar#!#text
+before search path ====> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+~~START~~
+varchar
+master_babel_4877_s1, sys, pg_catalog
+master_babel_4877_s1, sys, pg_catalog
+master_babel_4877_s1, sys, pg_catalog
+master_babel_4877_s1, sys, pg_catalog
+master_babel_4877_s1, sys, pg_catalog
+master_babel_4877_s1, sys, pg_catalog
+master_babel_4877_s1, sys, pg_catalog
+master_babel_4877_s1, sys, pg_catalog
+master_babel_4877_s1, sys, pg_catalog
+master_babel_4877_s1, sys, pg_catalog
+~~END~~
+
+~~START~~
+varchar#!#text
+after search path ====> #!#master_babel_4877_s1, sys, pg_catalog
+~~END~~
+
+
+DROP FUNCTION babel_4877_s1.babel_4877_f1
+GO
+
+EXEC dbo.babel_4877_reset_search_path
+GO
+
+
+-- now search path = reset val 
+CREATE FUNCTION babel_4877_s1.babel_4877_f1() RETURNS VARCHAR(100)
+AS
+BEGIN
+    RETURN (SELECT current_setting('search_path'));
+END
+GO
+
+-- internal temp  override of serach path should not exists after function ends
+EXEC babel_4877_s1.babel_4877_p1
+GO
+~~START~~
+varchar#!#text
+before search path ====> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+~~START~~
+varchar
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+~~START~~
+varchar#!#text
+after search path ====> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+DROP FUNCTION babel_4877_s1.babel_4877_f1
+GO
+DROP PROC babel_4877_s1.babel_4877_p1, dbo.babel_4877_reset_search_path
+GO
+DROP TABLE babel_4877_t1
+GO
+DROP SCHEMA babel_4877_s1
+GO
+
+-- check if check hook for search path is pltsql_called
+CREATE SCHEMA babel_4877_s
+GO
+CREATE FUNCTION babel_4877_s.babel_4877_f1() RETURNS VARCHAR(100)
+AS
+BEGIN
+    RETURN (1);
+END
+GO
+CREATE PROC babel_4877_p AS SELECT babel_4877_s.babel_4877_f1(); select set_config('search_path','sys master_dbo',false);
+GO
+CREATE PROC babel_4877_s.babel_4877_p AS SELECT babel_4877_s.babel_4877_f1(); select set_config('search_path','sys master_dbo',false);
+GO
+EXEC babel_4877_p
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid value for parameter "search_path": "sys master_dbo")~~
+
+EXEC babel_4877_s.babel_4877_p
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid value for parameter "search_path": "sys master_dbo")~~
+
+DROP PROC babel_4877_s.babel_4877_p, babel_4877_p
+GO
+CREATE FUNCTION babel_4877_s.babel_4877_f2() RETURNS VARCHAR(100)
+AS
+BEGIN
+    RETURN (select set_config('search_path','sys master_dbo',false));
+END
+GO
+SELECT babel_4877_s.babel_4877_f2();
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid value for parameter "search_path": "sys master_dbo")~~
+
+DROP FUNCTION babel_4877_s.babel_4877_f2, babel_4877_s.babel_4877_f1
+GO
+
+-- test error case
+CREATE TABLE babel_4877_s.babel_4877_t (id BIGINT)
+GO
+INSERT INTO babel_4877_s.babel_4877_t VALUES (99999999999999999)
+GO
+~~ROW COUNT: 1~~
+
+CREATE FUNCTION babel_4877_s.babel_4877_f2() RETURNS VARCHAR(100)
+AS
+BEGIN
+    RETURN (SELECT CAST(id AS INT) FROM babel_4877_t);
+END
+GO
+
+CREATE PROC babel_4877_s.babel_4877_p AS
+    SELECT babel_4877_s.babel_4877_f2()
+GO
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+SELECT babel_4877_s.babel_4877_f2();
+GO
+~~START~~
+varchar
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+EXEC babel_4877_s.babel_4877_p
+GO
+~~START~~
+varchar
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+-- Statement terminating error
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+EXEC babel_4877_s.babel_4877_p
+GO
+~~START~~
+varchar
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+SELECT 'after error search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after error search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+COMMIT
+GO
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT babel_4877_s.babel_4877_f2();
+GO
+~~START~~
+varchar
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+SELECT 'after error search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after error search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+COMMIT
+GO
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+BEGIN TRAN
+SELECT 'before search_path  ----> ', current_setting('search_path');
+SELECT babel_4877_s.babel_4877_f2();
+SELECT 'after error search_path  ----> ', current_setting('search_path');
+COMMIT
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+~~START~~
+varchar
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+~~START~~
+varchar#!#text
+after error search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+
+SELECT @@trancount
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- txn aborting error
+CREATE FUNCTION babel_4877_s.babel_4877_f3() RETURNS INT
+AS
+BEGIN
+    RETURN (CAST('a' as INT));
+END
+GO
+
+CREATE PROC babel_4877_s.babel_4877_p2 AS
+    SELECT babel_4877_s.babel_4877_f3()
+GO
+
+-- TXN aborting error
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+EXEC babel_4877_s.babel_4877_p2
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "a")~~
+
+COMMIT
+GO
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+BEGIN TRAN
+GO
+SELECT 'before search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT babel_4877_s.babel_4877_f3();
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "a")~~
+
+COMMIT
+GO
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
+SELECT 'after tran search_path  ----> ', current_setting('search_path');
+GO
+~~START~~
+varchar#!#text
+after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+
+SELECT @@trancount
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+DROP TABLE babel_4877_s.babel_4877_t
+GO
+DROP PROCEDURE babel_4877_s.babel_4877_p, babel_4877_s.babel_4877_p2
+GO
+DROP FUNCTION babel_4877_s.babel_4877_f2, babel_4877_s.babel_4877_f3
+GO
+DROP SCHEMA babel_4877_s
+GO
