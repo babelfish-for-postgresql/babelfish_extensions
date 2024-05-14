@@ -953,7 +953,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		List	   *cols;
 		int			target_attnum_i;
 		int			target_attnums_len;
-		NodeTag		node_type;
+		NodeTag		node_type = T_Invalid;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -1005,9 +1005,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			sql_dialect = SQL_DIALECT_TSQL;
 			raw_parsetree_list = pg_parse_query(parsedbatch);
 			is_supported_case_sp_describe_undeclared_parameters = list_length(raw_parsetree_list) != 1 ? false: true;
-			if (!is_supported_case_sp_describe_undeclared_parameters)
-				node_type = T_Invalid;
-			else
+			if (is_supported_case_sp_describe_undeclared_parameters)
 			{
 				list_item = list_head(raw_parsetree_list);
 				parsetree = lfirst_node(RawStmt, list_item);
