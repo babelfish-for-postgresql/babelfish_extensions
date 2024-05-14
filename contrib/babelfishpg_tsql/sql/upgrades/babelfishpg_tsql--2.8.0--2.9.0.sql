@@ -862,7 +862,7 @@ BEGIN
         v_minutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'MINUTES'), '0');
         v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
         v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
-        
+
         -- v_offhours and v_offminutes will be already set for W3C_XML datetime string format
         v_sign := coalesce(v_sign, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFSIGN'), '+');
         v_offhours := coalesce(v_offhours, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFHOURS'), '0');
@@ -906,8 +906,13 @@ BEGIN
         v_fseconds := lpad(v_fseconds, 3, '0');
     END IF;
 
-    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
-    v_seconds := concat_ws('.', v_seconds, v_fseconds);
+    IF (v_scale = 0) THEN
+        v_seconds := concat_ws('.', v_seconds, v_fseconds);
+        v_seconds := round(v_seconds::NUMERIC, 0)::TEXT;
+    ELSE
+        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+        v_seconds := concat_ws('.', v_seconds, v_fseconds);
+    END IF;
 
     v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,
                                         v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);
@@ -1690,6 +1695,57 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_get_microsecs_from_fractsecs(IN p_fractsecs TEXT,
+                                                                          IN p_scale NUMERIC DEFAULT 7)
+RETURNS VARCHAR
+AS
+$BODY$
+DECLARE
+    v_scale SMALLINT;
+    v_decplaces INTEGER;
+    v_fractsecs VARCHAR COLLATE "C";
+    v_pureplaces VARCHAR COLLATE "C";
+    v_rnd_fractsecs INTEGER;
+    v_fractsecs_len INTEGER;
+    v_pureplaces_len INTEGER;
+    v_err_message VARCHAR COLLATE "C";
+BEGIN
+    v_fractsecs := trim(p_fractsecs);
+    v_fractsecs_len := char_length(v_fractsecs);
+    v_scale := floor(p_scale)::SMALLINT;
+
+    IF (v_fractsecs_len < 7) THEN
+        v_fractsecs := rpad(v_fractsecs, 7, '0');
+        v_fractsecs_len := char_length(v_fractsecs);
+    END IF;
+
+    v_pureplaces := trim(leading '0' from v_fractsecs);
+    v_pureplaces_len := char_length(v_pureplaces);
+
+    v_decplaces := v_fractsecs_len - v_pureplaces_len;
+
+    v_rnd_fractsecs := round(v_fractsecs::INTEGER, (v_pureplaces_len - (v_scale - (v_fractsecs_len - v_pureplaces_len))) * (-1));
+
+    v_fractsecs := concat(pg_catalog.replace(rpad('', v_decplaces), ' ', '0'), v_rnd_fractsecs);
+
+    RETURN substring(v_fractsecs, 1, CASE
+                                        WHEN (v_scale >= 7) THEN 7
+                                        ELSE v_scale
+                                     END);
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_get_timeunit_from_string(IN p_timepart TEXT,
                                                                       IN p_timeunit TEXT)
 RETURNS VARCHAR
@@ -1815,17 +1871,16 @@ LANGUAGE plpgsql
 IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
--- DROP function babelfish_try_conv_string_to_date
--- DROP function babelfish_try_conv_string_to_time
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetime2(IN p_datestring TEXT,
-                                                                     IN p_style NUMERIC DEFAULT 0)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetime2(IN p_datatype TEXT,
+                                                                    IN p_datetimestring TEXT,
+                                                                    IN p_style NUMERIC DEFAULT 0)
 RETURNS TIMESTAMP WITHOUT TIME ZONE
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_string_to_datetime2(p_datestring,
-                                                 p_style);
+    RETURN sys.babelfish_conv_string_to_datetime2(p_datatype,
+                                                    p_datetimestring,
+                                                    p_style);
 EXCEPTION
     WHEN OTHERS THEN
         RETURN NULL;
@@ -1925,6 +1980,22 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_date(IN arg anyelement)
+RETURNS DATE
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS DATE);
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to date is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
                                                         IN arg TEXT,
                                                         IN try BOOL,
@@ -2003,6 +2074,22 @@ BEGIN
     END IF;
 
     RETURN restime;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_time(IN arg anyelement)
+RETURNS TIME
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS TIME);
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to time is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
+        WHEN OTHERS THEN
+            RETURN NULL;
 END;
 $BODY$
 LANGUAGE plpgsql
@@ -2098,6 +2185,22 @@ $BODY$
 BEGIN
     RETURN CAST(arg AS sys.DATETIME);
     EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement)
+RETURNS sys.DATETIME
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS sys.DATETIME);
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetime is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
         WHEN OTHERS THEN
             RETURN NULL;
 END;
@@ -2203,6 +2306,22 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime2(IN arg anyelement)
+RETURNS sys.DATETIME2
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS sys.DATETIME2);
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetime2 is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
 -- convertion to datetimeoffset
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
                                                             IN arg TEXT,
@@ -2301,6 +2420,22 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetimeoffset(IN arg anyelement)
+RETURNS sys.DATETIMEOFFSET
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS sys.DATETIMEOFFSET);
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetimeoffset is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
 -- convertion to smalldatetime
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
                                                             IN arg TEXT,
@@ -2392,6 +2527,22 @@ $BODY$
 BEGIN
     RETURN CAST(arg AS sys.SMALLDATETIME);
     EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_smalldatetime(IN arg anyelement)
+RETURNS sys.SMALLDATETIME
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS sys.SMALLDATETIME);
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to smalldatetime is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
         WHEN OTHERS THEN
             RETURN NULL;
 END;

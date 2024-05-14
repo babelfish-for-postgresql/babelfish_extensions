@@ -1303,7 +1303,7 @@ BEGIN
         v_minutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'MINUTES'), '0');
         v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
         v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
-        
+
         -- v_offhours and v_offminutes will be already set for W3C_XML datetime string format
         v_sign := coalesce(v_sign, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFSIGN'), '+');
         v_offhours := coalesce(v_offhours, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFHOURS'), '0');
@@ -1347,8 +1347,13 @@ BEGIN
         v_fseconds := lpad(v_fseconds, 3, '0');
     END IF;
 
-    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
-    v_seconds := concat_ws('.', v_seconds, v_fseconds);
+    IF (v_scale = 0) THEN
+        v_seconds := concat_ws('.', v_seconds, v_fseconds);
+        v_seconds := round(v_seconds::NUMERIC, 0)::TEXT;
+    ELSE
+        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+        v_seconds := concat_ws('.', v_seconds, v_fseconds);
+    END IF;
 
     v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,
                                         v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);
@@ -2596,7 +2601,7 @@ BEGIN
     v_fractsecs := concat(pg_catalog.replace(rpad('', v_decplaces), ' ', '0'), v_rnd_fractsecs);
 
     RETURN substring(v_fractsecs, 1, CASE
-                                        WHEN (v_scale >= 7) THEN 6
+                                        WHEN (v_scale >= 7) THEN 7
                                         ELSE v_scale
                                      END);
 EXCEPTION
@@ -9675,14 +9680,16 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetime2(IN p_datestring TEXT,
-                                                                     IN p_style NUMERIC DEFAULT 0)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetime2(IN p_datatype TEXT,
+                                                                    IN p_datetimestring TEXT,
+                                                                    IN p_style NUMERIC DEFAULT 0)
 RETURNS TIMESTAMP WITHOUT TIME ZONE
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_string_to_datetime2(p_datestring,
-                                                 p_style);
+    RETURN sys.babelfish_conv_string_to_datetime2(p_datatype,
+                                                    p_datetimestring,
+                                                    p_style);
 EXCEPTION
     WHEN OTHERS THEN
         RETURN NULL;
@@ -9830,6 +9837,8 @@ $BODY$
 BEGIN
     RETURN CAST(arg AS DATE);
     EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to date is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
         WHEN OTHERS THEN
             RETURN NULL;
 END;
@@ -9928,6 +9937,8 @@ $BODY$
 BEGIN
     RETURN CAST(arg AS TIME);
     EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to time is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
         WHEN OTHERS THEN
             RETURN NULL;
 END;
@@ -10026,6 +10037,8 @@ $BODY$
 BEGIN
     RETURN CAST(arg AS sys.DATETIME);
     EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetime is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
         WHEN OTHERS THEN
             RETURN NULL;
 END;
@@ -10124,6 +10137,8 @@ $BODY$
 BEGIN
     RETURN CAST(arg AS sys.DATETIME2);
     EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetime2 is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
         WHEN OTHERS THEN
             RETURN NULL;
 END;
@@ -10222,6 +10237,8 @@ $BODY$
 BEGIN
     RETURN CAST(arg AS sys.DATETIMEOFFSET);
     EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetimeoffset is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
         WHEN OTHERS THEN
             RETURN NULL;
 END;
@@ -10320,6 +10337,8 @@ $BODY$
 BEGIN
     RETURN CAST(arg AS sys.SMALLDATETIME);
     EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to smalldatetime is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
         WHEN OTHERS THEN
             RETURN NULL;
 END;
