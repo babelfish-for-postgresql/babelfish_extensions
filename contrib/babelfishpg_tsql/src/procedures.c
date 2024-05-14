@@ -107,7 +107,7 @@ char	   *sp_describe_first_result_set_view_name = NULL;
 
 bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
-static bool		is_supported_case_sp_describe_undeclared_parameters = true;
+static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -974,7 +974,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		else
 		{
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("Procedure expects parameter '@tsql' of type 'nvarchar(max)'")));
 		}
 
@@ -1004,18 +1004,14 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			sql_dialect_value_old = sql_dialect;
 			sql_dialect = SQL_DIALECT_TSQL;
 			raw_parsetree_list = pg_parse_query(parsedbatch);
-		}
-
-		if (is_supported_case_sp_describe_undeclared_parameters)
-		{
-			if (list_length(raw_parsetree_list) != 1)
-			{
-				is_supported_case_sp_describe_undeclared_parameters = false;
-			}
+			is_supported_case_sp_describe_undeclared_parameters = list_length(raw_parsetree_list) != 1 ? false: true;
+			if (!is_supported_case_sp_describe_undeclared_parameters)
+				node_type = T_Invalid;
 			else
 			{
 				list_item = list_head(raw_parsetree_list);
 				parsetree = lfirst_node(RawStmt, list_item);
+				node_type = nodeTag(parsetree->stmt);
 			}
 		}
 
@@ -1023,11 +1019,6 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		 * Analyze the parsed statement to suggest types for undeclared
 		 * parameters
 		 */
-		if (is_supported_case_sp_describe_undeclared_parameters)
-			node_type = nodeTag(parsetree->stmt);
-		else
-			node_type = T_Invalid; 
-
 		switch (node_type)
 		{
 			case T_InsertStmt:

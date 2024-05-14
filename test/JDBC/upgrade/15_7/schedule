@@ -515,3 +515,4 @@ babel_test_int4_numeric_oper
 babel_test_int8_numeric_oper
 babel_test_int2_numeric_oper
 BABEL_3571
+BABEL-4869
