@@ -98,10 +98,10 @@ static void rename_extended_property(ObjectType objtype,
 									 const char *var_major_name,
 									 const char *old_name, const char *new_name);
 
-List	   *handle_bool_expr_rec(BoolExpr *expr, List *list);
-List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
-List	   *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets);
-List	   *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets);
+List	   *handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_parameters);
+List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums, bool is_sp_describe_undeclared_parameters);
+List	   *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters);
+List	   *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters);
 
 char	   *sp_describe_first_result_set_view_name = NULL;
 
@@ -585,7 +585,7 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
  * to the list.
  */
 List *
-handle_bool_expr_rec(BoolExpr *expr, List *list)
+handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_parameters)
 {
 	List	   *args = expr->args;
 	ListCell   *lc;
@@ -603,14 +603,17 @@ handle_bool_expr_rec(BoolExpr *expr, List *list)
 
 				if (nodeTag(xpr->rexpr) != T_ColumnRef)
 				{
-					is_supported_case_sp_describe_undeclared_parameters = false;
-					return list;
+					if (is_sp_describe_undeclared_parameters)
+					{
+						is_supported_case_sp_describe_undeclared_parameters = false;
+						return list;
+					}
 				}
 				ref = (ColumnRef *) xpr->rexpr;
 				list = list_concat(list, ref->fields);
 				break;
 			case T_BoolExpr:
-				list = handle_bool_expr_rec((BoolExpr *) arg, list);
+				list = handle_bool_expr_rec((BoolExpr *) arg, list, is_sp_describe_undeclared_parameters);
 				break;
 			default:
 				break;
@@ -624,7 +627,7 @@ handle_bool_expr_rec(BoolExpr *expr, List *list)
  * the column names given on the left hand side of the assignments
  */
 List *
-handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums)
+handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums, bool is_sp_describe_undeclared_parameters)
 {
 	/*
 	 * Append attnos from WHERE clause into target_attnums
@@ -640,8 +643,11 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
-			is_supported_case_sp_describe_undeclared_parameters = false;
-			return target_attnums;
+			if (is_sp_describe_undeclared_parameters)
+			{
+				is_supported_case_sp_describe_undeclared_parameters = false;
+				return target_attnums;
+			}
 		}
 		ref = (ColumnRef *) where_clause->lexpr;
 		field = linitial(ref->fields);
@@ -676,8 +682,11 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 
 						if (nodeTag(xpr->lexpr) != T_ColumnRef)
 						{
-							is_supported_case_sp_describe_undeclared_parameters = false;
-							return target_attnums;
+							if (is_sp_describe_undeclared_parameters)
+							{
+								is_supported_case_sp_describe_undeclared_parameters = false;
+								return target_attnums;
+							}
 						}
 						ref = (ColumnRef *) xpr->lexpr;
 						field = linitial(ref->fields);
@@ -695,7 +704,7 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 						break;
 					}
 				case T_BoolExpr:
-					target_attnums = handle_where_clause_attnums(pstate, (Node *) arg, target_attnums);
+					target_attnums = handle_where_clause_attnums(pstate, (Node *) arg, target_attnums, is_sp_describe_undeclared_parameters);
 					break;
 				default:
 					break;
@@ -705,7 +714,8 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 	}
 	else
 	{
-		is_supported_case_sp_describe_undeclared_parameters = false;
+		if (is_sp_describe_undeclared_parameters)
+			is_supported_case_sp_describe_undeclared_parameters = false;
 	}
 	return target_attnums;
 }
@@ -715,7 +725,7 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
  * the left hand side of the assignment (assumed to be intended as column names).
  */
 List *
-handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets)
+handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters)
 {
 	/*
 	 * Construct a ResTarget and append it to the list.
@@ -732,8 +742,11 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
-			is_supported_case_sp_describe_undeclared_parameters = false;
-			return extra_restargets;
+			if (is_sp_describe_undeclared_parameters)
+			{
+				is_supported_case_sp_describe_undeclared_parameters = false;
+				return extra_restargets;
+			}
 		}
 		ref = (ColumnRef *) where_clause->lexpr;
 		field = linitial(ref->fields);
@@ -775,8 +788,11 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 
 						if (nodeTag(xpr->lexpr) != T_ColumnRef)
 						{
-							is_supported_case_sp_describe_undeclared_parameters = false;
-							return extra_restargets;
+							if (is_sp_describe_undeclared_parameters)
+							{
+								is_supported_case_sp_describe_undeclared_parameters = false;
+								return extra_restargets;
+							}
 						}
 						ref = (ColumnRef *) xpr->lexpr;
 						field = linitial(ref->fields);
@@ -802,7 +818,7 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 						break;
 					}
 				case T_BoolExpr:
-					extra_restargets = handle_where_clause_restargets_left(pstate, (Node *) arg, extra_restargets);
+					extra_restargets = handle_where_clause_restargets_left(pstate, (Node *) arg, extra_restargets, is_sp_describe_undeclared_parameters);
 					break;
 				default:
 					break;
@@ -812,7 +828,8 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 	}
 	else
 	{
-		is_supported_case_sp_describe_undeclared_parameters = false;
+		if (is_sp_describe_undeclared_parameters)
+			is_supported_case_sp_describe_undeclared_parameters = false;
 	}
 	return extra_restargets;
 }
@@ -822,7 +839,7 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
  * the right hand side of the assignment (assumed to be values/parameters).
  */
 List *
-handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets)
+handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters)
 {
 	/*
 	 * Construct a ResTarget and append it to the list.
@@ -837,8 +854,11 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 
 		if (nodeTag(where_clause->rexpr) != T_ColumnRef)
 		{
-			is_supported_case_sp_describe_undeclared_parameters = false;
-			return extra_restargets;
+			if (is_sp_describe_undeclared_parameters)
+			{
+				is_supported_case_sp_describe_undeclared_parameters = false;
+				return extra_restargets;
+			}
 		}
 		ref = (ColumnRef *) where_clause->rexpr;
 		field = linitial(ref->fields);
@@ -869,8 +889,11 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 
 						if (nodeTag(xpr->rexpr) != T_ColumnRef)
 						{
-							is_supported_case_sp_describe_undeclared_parameters = false;
-							return extra_restargets;
+							if (is_sp_describe_undeclared_parameters)
+							{
+								is_supported_case_sp_describe_undeclared_parameters = false;
+								return extra_restargets;
+							}
 						}
 						ref = (ColumnRef *) xpr->rexpr;
 						field = linitial(ref->fields);
@@ -886,7 +909,7 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 						break;
 					}
 				case T_BoolExpr:
-					extra_restargets = handle_where_clause_restargets_right(pstate, (Node *) arg, extra_restargets);
+					extra_restargets = handle_where_clause_restargets_right(pstate, (Node *) arg, extra_restargets, is_sp_describe_undeclared_parameters);
 					break;
 				default:
 					break;
@@ -896,7 +919,8 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 	}
 	else
 	{
-		is_supported_case_sp_describe_undeclared_parameters = false;
+		if (is_sp_describe_undeclared_parameters)
+			is_supported_case_sp_describe_undeclared_parameters = false;
 	}
 	return extra_restargets;
 }
@@ -954,6 +978,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		int			target_attnum_i;
 		int			target_attnums_len;
 		NodeTag		node_type = T_Invalid;
+
+		/* Set the value for any new call */
+		is_supported_case_sp_describe_undeclared_parameters = true;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -1061,8 +1088,8 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 					}
 					target_attnums = lappend_int(target_attnums, attrno);
 				}
-				target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums);
-				extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets);
+				target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums, true);
+				extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets, true);
 
 				cols = list_concat_copy(cols, extra_restargets);
 				break;
@@ -1097,8 +1124,8 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 					}
 					target_attnums = lappend_int(target_attnums, attrno);
 				}
-				target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums);
-				extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets);
+				target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums, true);
+				extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets, true);
 
 				cols = list_concat_copy(cols, extra_restargets);
 				break;
@@ -1162,10 +1189,10 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 					* with undeclared parameters. That's targetList (SET ...) and
 					* whereClause (WHERE ...)
 					*/
-					values_list = list_make1(handle_where_clause_restargets_right(pstate, update_stmt->whereClause, update_stmt->targetList));
+					values_list = list_make1(handle_where_clause_restargets_right(pstate, update_stmt->whereClause, update_stmt->targetList, true));
 					break;
 				case T_DeleteStmt:
-					values_list = list_make1(handle_where_clause_restargets_right(pstate, delete_stmt->whereClause, NIL));
+					values_list = list_make1(handle_where_clause_restargets_right(pstate, delete_stmt->whereClause, NIL, true));
 					break;
 				default:
 					is_supported_case_sp_describe_undeclared_parameters = false;
@@ -1619,6 +1646,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		/* Set the value again so that it is not left as false (maybe redundant, but extra check) */
 		is_supported_case_sp_describe_undeclared_parameters = true;
 		SRF_RETURN_DONE(funcctx);
 	}
