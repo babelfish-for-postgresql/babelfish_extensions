@@ -493,8 +493,7 @@ ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = sys.DB_NAME()
-AND Ext.rolname = CURRENT_USER
-AND Ext.type in ('S','U')
+AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR (Ext.type = 'R' AND pg_has_role(session_user, Ext.rolname, 'MEMBER')))
 UNION ALL
 SELECT
 CAST(-1 AS INT) AS principal_id,
