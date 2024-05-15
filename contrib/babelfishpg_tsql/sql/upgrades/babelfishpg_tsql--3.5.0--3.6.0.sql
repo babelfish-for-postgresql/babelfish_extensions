@@ -417,7 +417,7 @@ $$
 BEGIN
     -- remote trailing spaces
     IF (CHARINDEX('\', role) = 0)
-        THEN role := RTRIM(role, '');
+        THEN role := RTRIM(role);
     END IF;
 
     IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role)
