@@ -1,3 +1,4 @@
+-- tsql
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
 ~~START~~
@@ -89,11 +90,11 @@ go
 text
 Query Text: EXEC    p_recomp_11 1
   Query Text: select * from tb_recomp_11 where c11 = "@p"
-  ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
-        Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
   Query Text: select * from tb_recomp_11 where c11 = 1
-  ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
-        Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -173,11 +174,11 @@ go
 text
 Query Text: EXEC    p_recomp_12 1
   Query Text: select * from tb_recomp_12 where c12 = "@p"
-  ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-        Index Cond: (c12 = $1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = $1)
   Query Text: select * from tb_recomp_12 where c12 = 1
-  ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-        Index Cond: (c12 = 1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -221,13 +222,11 @@ go
 text
 Query Text: EXEC    p_recomp_11 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_11 where c11 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_11
-        Recheck Cond: (c11 = 1)
-        ->  Bitmap Index Scan on tb_recomp_11_pkey
-              Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
   Query Text: select * from tb_recomp_11 where c11 = 1
-  ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
-        Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
 ~~END~~
 
 exec    p_recomp_12 1 with recompile
@@ -236,13 +235,11 @@ go
 text
 Query Text: EXEC    p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_12 where c12 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_12
-        Recheck Cond: (c12 = 1)
-        ->  Bitmap Index Scan on tb_recomp_12_pkey
-              Index Cond: (c12 = 1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = 1)
   Query Text: select * from tb_recomp_12 where c12 = 1
-  ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-        Index Cond: (c12 = 1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -263,11 +260,11 @@ go
 text
 Query Text: EXEC    p_recomp_12 1
   Query Text: select * from tb_recomp_12 where c12 = "@p"
-  ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-        Index Cond: (c12 = $1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = $1)
   Query Text: select * from tb_recomp_12 where c12 = 1
-  ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-        Index Cond: (c12 = 1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -289,13 +286,11 @@ go
 text
 Query Text: EXEC    p_recomp_11 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_11 where c11 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_11
-        Recheck Cond: (c11 = 1)
-        ->  Bitmap Index Scan on tb_recomp_11_pkey
-              Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
   Query Text: select * from tb_recomp_11 where c11 = 1
-  ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
-        Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
 ~~END~~
 
 exec    p_recomp_11 1 with result sets none, recompile
@@ -304,13 +299,11 @@ go
 text
 Query Text: EXEC    p_recomp_11 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_11 where c11 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_11
-        Recheck Cond: (c11 = 1)
-        ->  Bitmap Index Scan on tb_recomp_11_pkey
-              Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
   Query Text: select * from tb_recomp_11 where c11 = 1
-  ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
-        Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -331,15 +324,11 @@ go
 text
 Query Text: EXEC    p_recomp_13 1
   Query Text: select * from tb_recomp_13 where c13 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_13
-        Recheck Cond: (c13 = 1)
-        ->  Bitmap Index Scan on tb_recomp_13_pkey
-              Index Cond: (c13 = 1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = 1)
   Query Text: select * from tb_recomp_13 where c13 = 1
-  ->  Bitmap Heap Scan on tb_recomp_13
-        Recheck Cond: (c13 = 1)
-        ->  Bitmap Index Scan on tb_recomp_13_pkey
-              Index Cond: (c13 = 1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = 1)
 ~~END~~
 
 exec    p_recomp_13 1 with recompile
@@ -348,15 +337,11 @@ go
 text
 Query Text: EXEC    p_recomp_13 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_13 where c13 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_13
-        Recheck Cond: (c13 = 1)
-        ->  Bitmap Index Scan on tb_recomp_13_pkey
-              Index Cond: (c13 = 1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = 1)
   Query Text: select * from tb_recomp_13 where c13 = 1
-  ->  Bitmap Heap Scan on tb_recomp_13
-        Recheck Cond: (c13 = 1)
-        ->  Bitmap Index Scan on tb_recomp_13_pkey
-              Index Cond: (c13 = 1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -457,11 +442,11 @@ go
 text
 Query Text: EXEC    p_recomp_11 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_11 where c11 = "@p"
-  ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
-        Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
   Query Text: select * from tb_recomp_11 where c11 = 1
-  ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
-        Index Cond: (c11 = 1)
+  ->  Seq Scan on tb_recomp_11
+        Filter: (c11 = 1)
 ~~END~~
 
 exec    p_recomp_12 1 with recompile 
@@ -470,11 +455,11 @@ go
 text
 Query Text: EXEC    p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_12 where c12 = "@p"
-  ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-        Index Cond: (c12 = 1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = 1)
   Query Text: select * from tb_recomp_12 where c12 = 1
-  ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-        Index Cond: (c12 = 1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -495,11 +480,11 @@ go
 text
 Query Text: EXEC    p_recomp_12 1
   Query Text: select * from tb_recomp_12 where c12 = "@p"
-  ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-        Index Cond: (c12 = $1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = $1)
   Query Text: select * from tb_recomp_12 where c12 = 1
-  ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-        Index Cond: (c12 = 1)
+  ->  Seq Scan on tb_recomp_12
+        Filter: (c12 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -520,13 +505,11 @@ go
 text
 Query Text: EXEC    p_recomp_13 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_13 where c13 = "@p"
-  ->  Index Scan using tb_recomp_13_pkey on tb_recomp_13
-        Index Cond: (c13 = 1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = 1)
   Query Text: select * from tb_recomp_13 where c13 = 1
-  ->  Bitmap Heap Scan on tb_recomp_13
-        Recheck Cond: (c13 = 1)
-        ->  Bitmap Index Scan on tb_recomp_13_pkey
-              Index Cond: (c13 = 1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -547,15 +530,11 @@ go
 text
 Query Text: EXEC    p_recomp_13 1
   Query Text: select * from tb_recomp_13 where c13 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_13
-        Recheck Cond: (c13 = $1)
-        ->  Bitmap Index Scan on tb_recomp_13_pkey
-              Index Cond: (c13 = $1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = $1)
   Query Text: select * from tb_recomp_13 where c13 = 1
-  ->  Bitmap Heap Scan on tb_recomp_13
-        Recheck Cond: (c13 = 1)
-        ->  Bitmap Index Scan on tb_recomp_13_pkey
-              Index Cond: (c13 = 1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = 1)
 ~~END~~
 
 exec    p_recomp_13 1 with recompile
@@ -564,13 +543,11 @@ go
 text
 Query Text: EXEC    p_recomp_13 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_13 where c13 = "@p"
-  ->  Index Scan using tb_recomp_13_pkey on tb_recomp_13
-        Index Cond: (c13 = 1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = 1)
   Query Text: select * from tb_recomp_13 where c13 = 1
-  ->  Bitmap Heap Scan on tb_recomp_13
-        Recheck Cond: (c13 = 1)
-        ->  Bitmap Index Scan on tb_recomp_13_pkey
-              Index Cond: (c13 = 1)
+  ->  Seq Scan on tb_recomp_13
+        Filter: (c13 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -629,11 +606,11 @@ go
 text
 Query Text: EXEC    p_recomp_21 1
   Query Text: select * from tb_recomp_21 where c21 = "@p"
-  ->  Index Scan using tb_recomp_21_pkey on tb_recomp_21
-        Index Cond: (c21 = $1)
+  ->  Seq Scan on tb_recomp_21
+        Filter: (c21 = $1)
   Query Text: select * from tb_recomp_21 where c21 = 1
-  ->  Index Scan using tb_recomp_21_pkey on tb_recomp_21
-        Index Cond: (c21 = 1)
+  ->  Seq Scan on tb_recomp_21
+        Filter: (c21 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -713,11 +690,11 @@ go
 text
 Query Text: EXEC    p_recomp_22 1
   Query Text: select * from tb_recomp_22 where c22 = "@p"
-  ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-        Index Cond: (c22 = $1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = $1)
   Query Text: select * from tb_recomp_22 where c22 = 1
-  ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-        Index Cond: (c22 = 1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -761,13 +738,11 @@ go
 text
 Query Text: EXEC    p_recomp_21 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_21 where c21 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_21
-        Recheck Cond: (c21 = 1)
-        ->  Bitmap Index Scan on tb_recomp_21_pkey
-              Index Cond: (c21 = 1)
+  ->  Seq Scan on tb_recomp_21
+        Filter: (c21 = 1)
   Query Text: select * from tb_recomp_21 where c21 = 1
-  ->  Index Scan using tb_recomp_21_pkey on tb_recomp_21
-        Index Cond: (c21 = 1)
+  ->  Seq Scan on tb_recomp_21
+        Filter: (c21 = 1)
 ~~END~~
 
 exec    p_recomp_22 1 with recompile
@@ -776,13 +751,11 @@ go
 text
 Query Text: EXEC    p_recomp_22 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_22 where c22 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_22
-        Recheck Cond: (c22 = 1)
-        ->  Bitmap Index Scan on tb_recomp_22_pkey
-              Index Cond: (c22 = 1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = 1)
   Query Text: select * from tb_recomp_22 where c22 = 1
-  ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-        Index Cond: (c22 = 1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -803,11 +776,11 @@ go
 text
 Query Text: EXEC    p_recomp_22 1
   Query Text: select * from tb_recomp_22 where c22 = "@p"
-  ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-        Index Cond: (c22 = $1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = $1)
   Query Text: select * from tb_recomp_22 where c22 = 1
-  ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-        Index Cond: (c22 = 1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -828,15 +801,11 @@ go
 text
 Query Text: EXEC    p_recomp_23 1
   Query Text: select * from tb_recomp_23 where c23 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_23
-        Recheck Cond: (c23 = $1)
-        ->  Bitmap Index Scan on tb_recomp_23_pkey
-              Index Cond: (c23 = $1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = $1)
   Query Text: select * from tb_recomp_23 where c23 = 1
-  ->  Bitmap Heap Scan on tb_recomp_23
-        Recheck Cond: (c23 = 1)
-        ->  Bitmap Index Scan on tb_recomp_23_pkey
-              Index Cond: (c23 = 1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = 1)
 ~~END~~
 
 exec    p_recomp_23 1 with recompile
@@ -845,15 +814,11 @@ go
 text
 Query Text: EXEC    p_recomp_23 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_23 where c23 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_23
-        Recheck Cond: (c23 = 1)
-        ->  Bitmap Index Scan on tb_recomp_23_pkey
-              Index Cond: (c23 = 1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = 1)
   Query Text: select * from tb_recomp_23 where c23 = 1
-  ->  Bitmap Heap Scan on tb_recomp_23
-        Recheck Cond: (c23 = 1)
-        ->  Bitmap Index Scan on tb_recomp_23_pkey
-              Index Cond: (c23 = 1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -954,11 +919,11 @@ go
 text
 Query Text: EXEC    p_recomp_21 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_21 where c21 = "@p"
-  ->  Index Scan using tb_recomp_21_pkey on tb_recomp_21
-        Index Cond: (c21 = 1)
+  ->  Seq Scan on tb_recomp_21
+        Filter: (c21 = 1)
   Query Text: select * from tb_recomp_21 where c21 = 1
-  ->  Index Scan using tb_recomp_21_pkey on tb_recomp_21
-        Index Cond: (c21 = 1)
+  ->  Seq Scan on tb_recomp_21
+        Filter: (c21 = 1)
 ~~END~~
 
 exec    p_recomp_22 1 with recompile 
@@ -967,11 +932,11 @@ go
 text
 Query Text: EXEC    p_recomp_22 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_22 where c22 = "@p"
-  ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-        Index Cond: (c22 = 1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = 1)
   Query Text: select * from tb_recomp_22 where c22 = 1
-  ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-        Index Cond: (c22 = 1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -992,11 +957,11 @@ go
 text
 Query Text: EXEC    p_recomp_22 1
   Query Text: select * from tb_recomp_22 where c22 = "@p"
-  ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-        Index Cond: (c22 = $1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = $1)
   Query Text: select * from tb_recomp_22 where c22 = 1
-  ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-        Index Cond: (c22 = 1)
+  ->  Seq Scan on tb_recomp_22
+        Filter: (c22 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1017,13 +982,11 @@ go
 text
 Query Text: EXEC    p_recomp_23 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_23 where c23 = "@p"
-  ->  Index Scan using tb_recomp_23_pkey on tb_recomp_23
-        Index Cond: (c23 = 1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = 1)
   Query Text: select * from tb_recomp_23 where c23 = 1
-  ->  Bitmap Heap Scan on tb_recomp_23
-        Recheck Cond: (c23 = 1)
-        ->  Bitmap Index Scan on tb_recomp_23_pkey
-              Index Cond: (c23 = 1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1044,15 +1007,11 @@ go
 text
 Query Text: EXEC    p_recomp_23 1
   Query Text: select * from tb_recomp_23 where c23 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_23
-        Recheck Cond: (c23 = $1)
-        ->  Bitmap Index Scan on tb_recomp_23_pkey
-              Index Cond: (c23 = $1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = $1)
   Query Text: select * from tb_recomp_23 where c23 = 1
-  ->  Bitmap Heap Scan on tb_recomp_23
-        Recheck Cond: (c23 = 1)
-        ->  Bitmap Index Scan on tb_recomp_23_pkey
-              Index Cond: (c23 = 1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = 1)
 ~~END~~
 
 exec    p_recomp_23 1 with recompile
@@ -1061,13 +1020,11 @@ go
 text
 Query Text: EXEC    p_recomp_23 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_23 where c23 = "@p"
-  ->  Index Scan using tb_recomp_23_pkey on tb_recomp_23
-        Index Cond: (c23 = 1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = 1)
   Query Text: select * from tb_recomp_23 where c23 = 1
-  ->  Bitmap Heap Scan on tb_recomp_23
-        Recheck Cond: (c23 = 1)
-        ->  Bitmap Index Scan on tb_recomp_23_pkey
-              Index Cond: (c23 = 1)
+  ->  Seq Scan on tb_recomp_23
+        Filter: (c23 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1127,11 +1084,11 @@ go
 text
 Query Text: EXEC    p_recomp_31 1
   Query Text: select * from tb_recomp_31 where c31 = "@p"
-  ->  Index Scan using tb_recomp_31_pkey on tb_recomp_31
-        Index Cond: (c31 = 1)
+  ->  Seq Scan on tb_recomp_31
+        Filter: (c31 = 1)
   Query Text: select * from tb_recomp_31 where c31 = 1
-  ->  Index Scan using tb_recomp_31_pkey on tb_recomp_31
-        Index Cond: (c31 = 1)
+  ->  Seq Scan on tb_recomp_31
+        Filter: (c31 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1211,11 +1168,11 @@ go
 text
 Query Text: EXEC    p_recomp_32 1
   Query Text: select * from tb_recomp_32 where c32 = "@p"
-  ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-        Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
   Query Text: select * from tb_recomp_32 where c32 = 1
-  ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-        Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1259,13 +1216,11 @@ go
 text
 Query Text: EXEC    p_recomp_31 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_31 where c31 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_31
-        Recheck Cond: (c31 = 1)
-        ->  Bitmap Index Scan on tb_recomp_31_pkey
-              Index Cond: (c31 = 1)
+  ->  Seq Scan on tb_recomp_31
+        Filter: (c31 = 1)
   Query Text: select * from tb_recomp_31 where c31 = 1
-  ->  Index Scan using tb_recomp_31_pkey on tb_recomp_31
-        Index Cond: (c31 = 1)
+  ->  Seq Scan on tb_recomp_31
+        Filter: (c31 = 1)
 ~~END~~
 
 exec    p_recomp_32 1 with recompile
@@ -1274,13 +1229,11 @@ go
 text
 Query Text: EXEC    p_recomp_32 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_32 where c32 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_32
-        Recheck Cond: (c32 = 1)
-        ->  Bitmap Index Scan on tb_recomp_32_pkey
-              Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
   Query Text: select * from tb_recomp_32 where c32 = 1
-  ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-        Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1301,13 +1254,11 @@ go
 text
 Query Text: EXEC    p_recomp_32 1
   Query Text: select * from tb_recomp_32 where c32 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_32
-        Recheck Cond: (c32 = 1)
-        ->  Bitmap Index Scan on tb_recomp_32_pkey
-              Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
   Query Text: select * from tb_recomp_32 where c32 = 1
-  ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-        Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1328,15 +1279,11 @@ go
 text
 Query Text: EXEC    p_recomp_33 1
   Query Text: select * from tb_recomp_33 where c33 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_33
-        Recheck Cond: (c33 = 1)
-        ->  Bitmap Index Scan on tb_recomp_33_pkey
-              Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
   Query Text: select * from tb_recomp_33 where c33 = 1
-  ->  Bitmap Heap Scan on tb_recomp_33
-        Recheck Cond: (c33 = 1)
-        ->  Bitmap Index Scan on tb_recomp_33_pkey
-              Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
 ~~END~~
 
 exec    p_recomp_33 1 with recompile
@@ -1345,15 +1292,11 @@ go
 text
 Query Text: EXEC    p_recomp_33 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_33 where c33 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_33
-        Recheck Cond: (c33 = 1)
-        ->  Bitmap Index Scan on tb_recomp_33_pkey
-              Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
   Query Text: select * from tb_recomp_33 where c33 = 1
-  ->  Bitmap Heap Scan on tb_recomp_33
-        Recheck Cond: (c33 = 1)
-        ->  Bitmap Index Scan on tb_recomp_33_pkey
-              Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1454,11 +1397,11 @@ go
 text
 Query Text: EXEC    p_recomp_31 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_31 where c31 = "@p"
-  ->  Index Scan using tb_recomp_31_pkey on tb_recomp_31
-        Index Cond: (c31 = 1)
+  ->  Seq Scan on tb_recomp_31
+        Filter: (c31 = 1)
   Query Text: select * from tb_recomp_31 where c31 = 1
-  ->  Index Scan using tb_recomp_31_pkey on tb_recomp_31
-        Index Cond: (c31 = 1)
+  ->  Seq Scan on tb_recomp_31
+        Filter: (c31 = 1)
 ~~END~~
 
 exec    p_recomp_32 1 with recompile 
@@ -1467,11 +1410,11 @@ go
 text
 Query Text: EXEC    p_recomp_32 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_32 where c32 = "@p"
-  ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-        Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
   Query Text: select * from tb_recomp_32 where c32 = 1
-  ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-        Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1492,11 +1435,11 @@ go
 text
 Query Text: EXEC    p_recomp_32 1
   Query Text: select * from tb_recomp_32 where c32 = "@p"
-  ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-        Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
   Query Text: select * from tb_recomp_32 where c32 = 1
-  ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-        Index Cond: (c32 = 1)
+  ->  Seq Scan on tb_recomp_32
+        Filter: (c32 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1517,13 +1460,11 @@ go
 text
 Query Text: EXEC    p_recomp_33 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_33 where c33 = "@p"
-  ->  Index Scan using tb_recomp_33_pkey on tb_recomp_33
-        Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
   Query Text: select * from tb_recomp_33 where c33 = 1
-  ->  Bitmap Heap Scan on tb_recomp_33
-        Recheck Cond: (c33 = 1)
-        ->  Bitmap Index Scan on tb_recomp_33_pkey
-              Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1544,13 +1485,11 @@ go
 text
 Query Text: EXEC    p_recomp_33 1
   Query Text: select * from tb_recomp_33 where c33 = "@p"
-  ->  Index Scan using tb_recomp_33_pkey on tb_recomp_33
-        Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
   Query Text: select * from tb_recomp_33 where c33 = 1
-  ->  Bitmap Heap Scan on tb_recomp_33
-        Recheck Cond: (c33 = 1)
-        ->  Bitmap Index Scan on tb_recomp_33_pkey
-              Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
 ~~END~~
 
 exec    p_recomp_33 1 with recompile
@@ -1559,13 +1498,11 @@ go
 text
 Query Text: EXEC    p_recomp_33 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_33 where c33 = "@p"
-  ->  Index Scan using tb_recomp_33_pkey on tb_recomp_33
-        Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
   Query Text: select * from tb_recomp_33 where c33 = 1
-  ->  Bitmap Heap Scan on tb_recomp_33
-        Recheck Cond: (c33 = 1)
-        ->  Bitmap Index Scan on tb_recomp_33_pkey
-              Index Cond: (c33 = 1)
+  ->  Seq Scan on tb_recomp_33
+        Filter: (c33 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1737,18 +1674,18 @@ go
 text
 Query Text: EXEC    p_recomp_41 1
   Query Text: select * from tb_recomp_41 where c41 = "@p"
-  ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-        Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
   Query Text: select * from tb_recomp_41 where c41 = 1
-  ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-        Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
 Query Text: EXEC    p_recomp_61 1
   Query Text: select * from tb_recomp_61 where c61 = "@p"
-  ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-        Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
   Query Text: select * from tb_recomp_61 where c61 = 1
-  ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-        Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1793,22 +1730,18 @@ go
 text
 Query Text: EXEC    p_recomp_41 1
   Query Text: select * from tb_recomp_41 where c41 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_41
-        Recheck Cond: (c41 = 1)
-        ->  Bitmap Index Scan on tb_recomp_41_pkey
-              Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
   Query Text: select * from tb_recomp_41 where c41 = 1
-  ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-        Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
 Query Text: EXEC    p_recomp_61 1
   Query Text: select * from tb_recomp_61 where c61 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_61
-        Recheck Cond: (c61 = 1)
-        ->  Bitmap Index Scan on tb_recomp_61_pkey
-              Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
   Query Text: select * from tb_recomp_61 where c61 = 1
-  ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-        Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1830,22 +1763,18 @@ go
 text
 Query Text: EXEC    p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_41 where c41 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_41
-        Recheck Cond: (c41 = 1)
-        ->  Bitmap Index Scan on tb_recomp_41_pkey
-              Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
   Query Text: select * from tb_recomp_41 where c41 = 1
-  ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-        Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
 Query Text: EXEC    p_recomp_61 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_61 where c61 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_61
-        Recheck Cond: (c61 = 1)
-        ->  Bitmap Index Scan on tb_recomp_61_pkey
-              Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
   Query Text: select * from tb_recomp_61 where c61 = 1
-  ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-        Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1890,18 +1819,18 @@ go
 text
 Query Text: EXEC    p_recomp_41 1
   Query Text: select * from tb_recomp_41 where c41 = "@p"
-  ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-        Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
   Query Text: select * from tb_recomp_41 where c41 = 1
-  ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-        Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
 Query Text: EXEC    p_recomp_61 1
   Query Text: select * from tb_recomp_61 where c61 = "@p"
-  ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-        Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
   Query Text: select * from tb_recomp_61 where c61 = 1
-  ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-        Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1923,18 +1852,18 @@ go
 text
 Query Text: EXEC    p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_41 where c41 = "@p"
-  ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-        Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
   Query Text: select * from tb_recomp_41 where c41 = 1
-  ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-        Index Cond: (c41 = 1)
+  ->  Seq Scan on tb_recomp_41
+        Filter: (c41 = 1)
 Query Text: EXEC    p_recomp_61 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_61 where c61 = "@p"
-  ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-        Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
   Query Text: select * from tb_recomp_61 where c61 = 1
-  ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-        Index Cond: (c61 = 1)
+  ->  Seq Scan on tb_recomp_61
+        Filter: (c61 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2336,53 +2265,53 @@ go
 text
 Query Text: EXEC    p_recomp_51 1
   Query Text: select * from tb_recomp_51 where c51 = "@p"
-  ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-        Index Cond: (c51 = $1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = $1)
   Query Text: select * from tb_recomp_51 where c51 = 1
-  ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-        Index Cond: (c51 = 1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = 1)
   Query Text: EXEC p_recomp_12 1
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = $1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_41 1
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2425,63 +2354,53 @@ go
 text
 Query Text: EXEC    p_recomp_51 1
   Query Text: select * from tb_recomp_51 where c51 = "@p"
-  ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-        Index Cond: (c51 = $1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = $1)
   Query Text: select * from tb_recomp_51 where c51 = 1
-  ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-        Index Cond: (c51 = 1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = 1)
   Query Text: EXEC p_recomp_12 1
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = $1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_12
-          Recheck Cond: (c12 = 1)
-          ->  Bitmap Index Scan on tb_recomp_12_pkey
-                Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_12
-          Recheck Cond: (c12 = 1)
-          ->  Bitmap Index Scan on tb_recomp_12_pkey
-                Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_41 1
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_41
-          Recheck Cond: (c41 = 1)
-          ->  Bitmap Index Scan on tb_recomp_41_pkey
-                Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_41
-          Recheck Cond: (c41 = 1)
-          ->  Bitmap Index Scan on tb_recomp_41_pkey
-                Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_41
-          Recheck Cond: (c41 = 1)
-          ->  Bitmap Index Scan on tb_recomp_41_pkey
-                Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2502,65 +2421,53 @@ go
 text
 Query Text: EXEC    p_recomp_51 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_51 where c51 = "@p"
-  ->  Bitmap Heap Scan on tb_recomp_51
-        Recheck Cond: (c51 = 1)
-        ->  Bitmap Index Scan on tb_recomp_51_pkey
-              Index Cond: (c51 = 1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = 1)
   Query Text: select * from tb_recomp_51 where c51 = 1
-  ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-        Index Cond: (c51 = 1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = 1)
   Query Text: EXEC p_recomp_12 1
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = $1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_12
-          Recheck Cond: (c12 = 1)
-          ->  Bitmap Index Scan on tb_recomp_12_pkey
-                Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_12
-          Recheck Cond: (c12 = 1)
-          ->  Bitmap Index Scan on tb_recomp_12_pkey
-                Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_41 1
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_41
-          Recheck Cond: (c41 = 1)
-          ->  Bitmap Index Scan on tb_recomp_41_pkey
-                Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_41
-          Recheck Cond: (c41 = 1)
-          ->  Bitmap Index Scan on tb_recomp_41_pkey
-                Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Bitmap Heap Scan on tb_recomp_41
-          Recheck Cond: (c41 = 1)
-          ->  Bitmap Index Scan on tb_recomp_41_pkey
-                Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2604,53 +2511,53 @@ go
 text
 Query Text: EXEC    p_recomp_51 1
   Query Text: select * from tb_recomp_51 where c51 = "@p"
-  ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-        Index Cond: (c51 = $1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = $1)
   Query Text: select * from tb_recomp_51 where c51 = 1
-  ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-        Index Cond: (c51 = 1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = 1)
   Query Text: EXEC p_recomp_12 1
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = $1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_41 1
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2672,53 +2579,53 @@ go
 text
 Query Text: EXEC    p_recomp_51 1 /* EXECUTE WITH RECOMPILE */
   Query Text: select * from tb_recomp_51 where c51 = "@p"
-  ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-        Index Cond: (c51 = 1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = 1)
   Query Text: select * from tb_recomp_51 where c51 = 1
-  ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-        Index Cond: (c51 = 1)
+  ->  Seq Scan on tb_recomp_51
+        Filter: (c51 = 1)
   Query Text: EXEC p_recomp_12 1
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = $1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_12 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_12 where c12 = "@p"
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
     Query Text: select * from tb_recomp_12 where c12 = 1
-    ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-          Index Cond: (c12 = 1)
+    ->  Seq Scan on tb_recomp_12
+          Filter: (c12 = 1)
   Query Text: EXEC p_recomp_41 1
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
   Query Text: EXEC p_recomp_41 1 /* EXECUTE WITH RECOMPILE */
     Query Text: select * from tb_recomp_41 where c41 = "@p"
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
     Query Text: select * from tb_recomp_41 where c41 = 1
-    ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-          Index Cond: (c41 = 1)
+    ->  Seq Scan on tb_recomp_41
+          Filter: (c41 = 1)
 ~~END~~
 
 set babelfish_showplan_all off

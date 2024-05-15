@@ -1,3 +1,4 @@
+-- tsql 
 create table tb_recomp_11(c11 int primary key, x int)
 go
 create procedure p_recomp_11 @p int as
@@ -105,4 +106,30 @@ with recompile, execute as caller
 as
 select * from tb_recomp_61 where c61 = @p  -- parametrized
 select * from tb_recomp_61 where c61 = 1   -- non-parametrized
+go
+
+-- psql
+analyze master_dbo.tb_recomp_11
+go
+analyze master_dbo.tb_recomp_12
+go
+analyze master_dbo.tb_recomp_13
+go
+analyze master_dbo.tb_recomp_21
+go
+analyze master_dbo.tb_recomp_22
+go
+analyze master_dbo.tb_recomp_23
+go
+analyze master_dbo.tb_recomp_31
+go
+analyze master_dbo.tb_recomp_32
+go
+analyze master_dbo.tb_recomp_33
+go
+analyze master_dbo.tb_recomp_41
+go
+analyze master_dbo.tb_recomp_51
+go
+analyze master_dbo.tb_recomp_61
 go
