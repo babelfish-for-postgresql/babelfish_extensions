@@ -1,4 +1,3 @@
--- tsql
 drop procedure if exists p_recomp_11
 go
 drop table if exists tb_recomp_11

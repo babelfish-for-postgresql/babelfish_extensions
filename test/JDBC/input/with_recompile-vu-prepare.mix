@@ -1,4 +1,3 @@
--- tsql 
 create table tb_recomp_11(c11 int primary key, x int)
 go
 create procedure p_recomp_11 @p int as

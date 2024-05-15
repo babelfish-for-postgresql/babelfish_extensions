@@ -1,4 +1,3 @@
--- tsql
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
 ~~START~~
