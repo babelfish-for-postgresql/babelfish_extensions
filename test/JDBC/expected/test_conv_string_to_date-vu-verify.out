@@ -3786,3 +3786,116 @@ date
 1900-01-01
 ~~END~~
 
+
+SELECT * FROM test_conv_string_to_date_v4
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+EXEC test_conv_string_to_date_p4
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+SELECT test_conv_string_to_date_f4()
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_date_v5
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+EXEC test_conv_string_to_date_p5
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+SELECT test_conv_string_to_date_f5()
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_date_v6
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+EXEC test_conv_string_to_date_p6
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+SELECT test_conv_string_to_date_f6()
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_date_v7
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+EXEC test_conv_string_to_date_p7
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+SELECT test_conv_string_to_date_f7()
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_date_v8
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to date is not allowed.)~~
+
+EXEC test_conv_string_to_date_p8
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to date is not allowed.)~~
+
+SELECT test_conv_string_to_date_f8()
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to date is not allowed.)~~
+

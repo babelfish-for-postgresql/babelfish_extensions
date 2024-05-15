@@ -18,3 +18,38 @@ DROP PROCEDURE test_conv_string_to_time_p3
 GO
 DROP FUNCTION test_conv_string_to_time_f3()
 GO
+
+DROP VIEW test_conv_string_to_time_v4
+GO
+DROP PROCEDURE test_conv_string_to_time_p4
+GO
+DROP FUNCTION test_conv_string_to_time_f4()
+GO
+
+DROP VIEW test_conv_string_to_time_v5
+GO
+DROP PROCEDURE test_conv_string_to_time_p5
+GO
+DROP FUNCTION test_conv_string_to_time_f5()
+GO
+
+DROP VIEW test_conv_string_to_time_v6
+GO
+DROP PROCEDURE test_conv_string_to_time_p6
+GO
+DROP FUNCTION test_conv_string_to_time_f6()
+GO
+
+DROP VIEW test_conv_string_to_time_v7
+GO
+DROP PROCEDURE test_conv_string_to_time_p7
+GO
+DROP FUNCTION test_conv_string_to_time_f7()
+GO
+
+DROP VIEW test_conv_string_to_time_v8
+GO
+DROP PROCEDURE test_conv_string_to_time_p8
+GO
+DROP FUNCTION test_conv_string_to_time_f8()
+GO

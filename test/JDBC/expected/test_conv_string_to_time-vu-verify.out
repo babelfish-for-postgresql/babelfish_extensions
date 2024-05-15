@@ -2336,3 +2336,116 @@ time
 01:01:01.0000000
 ~~END~~
 
+
+SELECT * FROM test_conv_string_to_time_v4
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p4
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f4()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v5
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p5
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f5()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v6
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p6
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f6()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v7
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p7
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f7()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v8
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
+
+EXEC test_conv_string_to_time_p8
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
+
+SELECT test_conv_string_to_time_f8()
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
+

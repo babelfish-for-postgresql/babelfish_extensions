@@ -2086,3 +2086,113 @@ datetime
 1753-01-01 00:01:59.0
 ~~END~~
 
+
+SELECT * FROM test_conv_string_to_datetime_v4
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+EXEC test_conv_string_to_datetime_p4
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+SELECT test_conv_string_to_datetime_f4()
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime_v5
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+EXEC test_conv_string_to_datetime_p5
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+SELECT test_conv_string_to_datetime_f5()
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime_v6
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+EXEC test_conv_string_to_datetime_p6
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+SELECT test_conv_string_to_datetime_f6()
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime_v7
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+EXEC test_conv_string_to_datetime_p7
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+SELECT test_conv_string_to_datetime_f7()
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime_v8
+GO
+~~START~~
+datetime
+1905-07-11 00:00:00.0
+~~END~~
+
+EXEC test_conv_string_to_datetime_p8
+GO
+~~START~~
+datetime
+1905-07-11 00:00:00.0
+~~END~~
+
+SELECT test_conv_string_to_datetime_f8()
+GO
+~~START~~
+datetime
+1905-07-11 00:00:00.0
+~~END~~
+

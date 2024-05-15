@@ -1,3 +1,4 @@
+-- sla 70000
 -- Only DATE string
 -- Empty string, should return default values
 SELECT CONVERT(DATE, '')
@@ -1436,4 +1437,39 @@ GO
 EXEC test_conv_string_to_date_p3
 GO
 SELECT test_conv_string_to_date_f3()
+GO
+
+SELECT * FROM test_conv_string_to_date_v4
+GO
+EXEC test_conv_string_to_date_p4
+GO
+SELECT test_conv_string_to_date_f4()
+GO
+
+SELECT * FROM test_conv_string_to_date_v5
+GO
+EXEC test_conv_string_to_date_p5
+GO
+SELECT test_conv_string_to_date_f5()
+GO
+
+SELECT * FROM test_conv_string_to_date_v6
+GO
+EXEC test_conv_string_to_date_p6
+GO
+SELECT test_conv_string_to_date_f6()
+GO
+
+SELECT * FROM test_conv_string_to_date_v7
+GO
+EXEC test_conv_string_to_date_p7
+GO
+SELECT test_conv_string_to_date_f7()
+GO
+
+SELECT * FROM test_conv_string_to_date_v8
+GO
+EXEC test_conv_string_to_date_p8
+GO
+SELECT test_conv_string_to_date_f8()
 GO

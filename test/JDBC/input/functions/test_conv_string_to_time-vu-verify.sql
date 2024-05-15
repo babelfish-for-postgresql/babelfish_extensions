@@ -842,3 +842,38 @@ EXEC test_conv_string_to_time_p3
 GO
 SELECT test_conv_string_to_time_f3()
 GO
+
+SELECT * FROM test_conv_string_to_time_v4
+GO
+EXEC test_conv_string_to_time_p4
+GO
+SELECT test_conv_string_to_time_f4()
+GO
+
+SELECT * FROM test_conv_string_to_time_v5
+GO
+EXEC test_conv_string_to_time_p5
+GO
+SELECT test_conv_string_to_time_f5()
+GO
+
+SELECT * FROM test_conv_string_to_time_v6
+GO
+EXEC test_conv_string_to_time_p6
+GO
+SELECT test_conv_string_to_time_f6()
+GO
+
+SELECT * FROM test_conv_string_to_time_v7
+GO
+EXEC test_conv_string_to_time_p7
+GO
+SELECT test_conv_string_to_time_f7()
+GO
+
+SELECT * FROM test_conv_string_to_time_v8
+GO
+EXEC test_conv_string_to_time_p8
+GO
+SELECT test_conv_string_to_time_f8()
+GO

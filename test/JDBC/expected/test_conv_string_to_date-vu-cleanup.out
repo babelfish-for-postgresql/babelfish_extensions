@@ -18,3 +18,38 @@ DROP PROCEDURE test_conv_string_to_date_p3
 GO
 DROP FUNCTION test_conv_string_to_date_f3()
 GO
+
+DROP VIEW test_conv_string_to_date_v4
+GO
+DROP PROCEDURE test_conv_string_to_date_p4
+GO
+DROP FUNCTION test_conv_string_to_date_f4()
+GO
+
+DROP VIEW test_conv_string_to_date_v5
+GO
+DROP PROCEDURE test_conv_string_to_date_p5
+GO
+DROP FUNCTION test_conv_string_to_date_f5()
+GO
+
+DROP VIEW test_conv_string_to_date_v6
+GO
+DROP PROCEDURE test_conv_string_to_date_p6
+GO
+DROP FUNCTION test_conv_string_to_date_f6()
+GO
+
+DROP VIEW test_conv_string_to_date_v7
+GO
+DROP PROCEDURE test_conv_string_to_date_p7
+GO
+DROP FUNCTION test_conv_string_to_date_f7()
+GO
+
+DROP VIEW test_conv_string_to_date_v8
+GO
+DROP PROCEDURE test_conv_string_to_date_p8
+GO
+DROP FUNCTION test_conv_string_to_date_f8()
+GO

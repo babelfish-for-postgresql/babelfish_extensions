@@ -681,3 +681,38 @@ EXEC test_conv_string_to_datetimeoffset_p2
 GO
 SELECT test_conv_string_to_datetimeoffset_f2()
 GO
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v3
+GO
+EXEC test_conv_string_to_datetimeoffset_p3
+GO
+SELECT test_conv_string_to_datetimeoffset_f3()
+GO
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v4
+GO
+EXEC test_conv_string_to_datetimeoffset_p4
+GO
+SELECT test_conv_string_to_datetimeoffset_f4()
+GO
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v5
+GO
+EXEC test_conv_string_to_datetimeoffset_p5
+GO
+SELECT test_conv_string_to_datetimeoffset_f5()
+GO
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v6
+GO
+EXEC test_conv_string_to_datetimeoffset_p6
+GO
+SELECT test_conv_string_to_datetimeoffset_f6()
+GO
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v7
+GO
+EXEC test_conv_string_to_datetimeoffset_p7
+GO
+SELECT test_conv_string_to_datetimeoffset_f7()
+GO

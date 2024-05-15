@@ -23,3 +23,38 @@ DROP PROCEDURE test_conv_string_to_datetime2_p3
 GO
 DROP FUNCTION test_conv_string_to_datetime2_f3()
 GO
+
+DROP VIEW test_conv_string_to_datetime2_v4
+GO
+DROP PROCEDURE test_conv_string_to_datetime2_p4
+GO
+DROP FUNCTION test_conv_string_to_datetime2_f4()
+GO
+
+DROP VIEW test_conv_string_to_datetime2_v5
+GO
+DROP PROCEDURE test_conv_string_to_datetime2_p5
+GO
+DROP FUNCTION test_conv_string_to_datetime2_f5()
+GO
+
+DROP VIEW test_conv_string_to_datetime2_v6
+GO
+DROP PROCEDURE test_conv_string_to_datetime2_p6
+GO
+DROP FUNCTION test_conv_string_to_datetime2_f6()
+GO
+
+DROP VIEW test_conv_string_to_datetime2_v7
+GO
+DROP PROCEDURE test_conv_string_to_datetime2_p7
+GO
+DROP FUNCTION test_conv_string_to_datetime2_f7()
+GO
+
+DROP VIEW test_conv_string_to_datetime2_v8
+GO
+DROP PROCEDURE test_conv_string_to_datetime2_p8
+GO
+DROP FUNCTION test_conv_string_to_datetime2_f8()
+GO

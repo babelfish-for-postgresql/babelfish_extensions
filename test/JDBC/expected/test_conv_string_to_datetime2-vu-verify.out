@@ -1690,3 +1690,116 @@ datetime2
 2017-08-25 13:01:59.1234600
 ~~END~~
 
+
+SELECT * FROM test_conv_string_to_datetime2_v4
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p4
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f4()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v5
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p5
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f5()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v6
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p6
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f6()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v7
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p7
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f7()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v8
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to datetime2 is not allowed.)~~
+
+EXEC test_conv_string_to_datetime2_p8
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to datetime2 is not allowed.)~~
+
+SELECT test_conv_string_to_datetime2_f8()
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to datetime2 is not allowed.)~~
+

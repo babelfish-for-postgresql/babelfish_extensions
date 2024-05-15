@@ -358,6 +358,11 @@ BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_date(TEXT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_date_deprecated_4_2;
     CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_date_deprecated_4_2');
 
+    ALTER FUNCTION sys.babelfish_try_conv_string_to_date(TEXT, NUMERIC) RENAME TO babelfish_try_conv_string_to_date_deprecated_4_2;
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_date_deprecated_4_2');
+    
+    ALTER FUNCTION sys.babelfish_conv_string_to_date(TEXT, NUMERIC) RENAME TO babelfish_conv_string_to_date_deprecated_4_2;
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_date_deprecated_4_2');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -372,6 +377,8 @@ BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_date(ANYELEMENT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_date_1_deprecated_4_2;
     CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_date_1_deprecated_4_2');
 
+    ALTER FUNCTION sys.babelfish_try_conv_to_date(ANYELEMENT) RENAME TO babelfish_try_conv_to_date_deprecated_4_2;
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_date_deprecated_4_2');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -397,23 +404,14 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(ANYELEMENT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_datetime_1_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_datetime_1_deprecated_4_2');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_time(TEXT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_deprecated_4_2;
     CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_deprecated_4_2');
 
+    ALTER FUNCTION sys.babelfish_try_conv_string_to_time(TEXT, TEXT, NUMERIC) RENAME TO babelfish_try_conv_string_to_time_deprecated_4_2;
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_time_deprecated_4_2');
+
+    ALTER FUNCTION sys.babelfish_conv_string_to_time(TEXT, TEXT, NUMERIC) RENAME TO babelfish_conv_string_to_time_deprecated_4_2;
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_time_deprecated_4_2');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -428,20 +426,8 @@ BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_time(ANYELEMENT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_1_deprecated_4_2;
     CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_1_deprecated_4_2');
 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_conv_string_to_date(TEXT, NUMERIC) RENAME TO babelfish_conv_string_to_date_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_date_deprecated_4_2');
-
+    ALTER FUNCTION sys.babelfish_try_conv_to_time(ANYELEMENT) RENAME TO babelfish_try_conv_to_time_deprecated_4_2;
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_time_deprecated_4_2');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -467,79 +453,8 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_string_to_time(TEXT, TEXT, NUMERIC) RENAME TO babelfish_conv_string_to_time_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_time_deprecated_4_2');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_string_to_date(TEXT, NUMERIC) RENAME TO babelfish_try_conv_string_to_date_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_date_deprecated_4_2');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_string_to_time(TEXT, TEXT, NUMERIC) RENAME TO babelfish_try_conv_string_to_time_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_time_deprecated_4_2');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_to_date(ANYELEMENT) RENAME TO babelfish_try_conv_to_date_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_date_deprecated_4_2');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
     ALTER FUNCTION sys.babelfish_try_conv_to_datetime(ANYELEMENT) RENAME TO babelfish_try_conv_to_datetime_deprecated_4_2;
     CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_datetime_deprecated_4_2');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_to_time(ANYELEMENT) RENAME TO babelfish_try_conv_to_time_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_time_deprecated_4_2');
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS

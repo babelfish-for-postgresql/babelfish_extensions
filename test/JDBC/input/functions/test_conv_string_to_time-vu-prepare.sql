@@ -30,3 +30,58 @@ BEGIN
 RETURN (SELECT CONVERT(time, '1:1:1'));
 END
 GO
+
+CREATE VIEW test_conv_string_to_time_v4 as (SELECT CONVERT(time, CAST('13:01:59' AS TEXT)));
+GO
+CREATE PROCEDURE test_conv_string_to_time_p4 as (SELECT CONVERT(time, CAST('13:01:59' AS TEXT)));
+GO
+CREATE FUNCTION test_conv_string_to_time_f4()
+RETURNS time AS
+BEGIN
+RETURN (SELECT CONVERT(time, CAST('13:01:59' AS TEXT)));
+END
+GO
+
+CREATE VIEW test_conv_string_to_time_v5 as (SELECT CONVERT(time, CAST('13:01:59' AS CHAR(10))));
+GO
+CREATE PROCEDURE test_conv_string_to_time_p5 as (SELECT CONVERT(time, CAST('13:01:59' AS CHAR(10))));
+GO
+CREATE FUNCTION test_conv_string_to_time_f5()
+RETURNS time AS
+BEGIN
+RETURN (SELECT CONVERT(time, CAST('13:01:59' AS CHAR(10))));
+END
+GO
+
+CREATE VIEW test_conv_string_to_time_v6 as (SELECT CONVERT(time, CAST('13:01:59' AS NCHAR(10))));
+GO
+CREATE PROCEDURE test_conv_string_to_time_p6 as (SELECT CONVERT(time, CAST('13:01:59' AS NCHAR(10))));
+GO
+CREATE FUNCTION test_conv_string_to_time_f6()
+RETURNS time AS
+BEGIN
+RETURN (SELECT CONVERT(time, CAST('13:01:59' AS NCHAR(10))));
+END
+GO
+
+CREATE VIEW test_conv_string_to_time_v7 as (SELECT CONVERT(time, CAST('13:01:59' AS NVARCHAR(10))));
+GO
+CREATE PROCEDURE test_conv_string_to_time_p7 as (SELECT CONVERT(time, CAST('13:01:59' AS NVARCHAR(10))));
+GO
+CREATE FUNCTION test_conv_string_to_time_f7()
+RETURNS time AS
+BEGIN
+RETURN (SELECT CONVERT(time, CAST('13:01:59' AS NVARCHAR(10))));
+END
+GO
+
+CREATE VIEW test_conv_string_to_time_v8 as (SELECT CONVERT(time, CAST('13' AS INTEGER)));
+GO
+CREATE PROCEDURE test_conv_string_to_time_p8 as (SELECT CONVERT(time, CAST('13' AS INTEGER)));
+GO
+CREATE FUNCTION test_conv_string_to_time_f8()
+RETURNS time AS
+BEGIN
+RETURN (SELECT CONVERT(time, CAST('13' AS INTEGER)));
+END
+GO
