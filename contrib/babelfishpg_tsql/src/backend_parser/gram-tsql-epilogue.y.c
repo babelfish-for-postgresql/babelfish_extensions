@@ -249,7 +249,7 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
 	else if ((strcmp(typename_string, "varchar") == 0) || (strcmp(typename_string, "nvarchar") == 0) ||
-			(strcmp(typename_string, "bpchar") == 0) || (strcmp(typename_string, "nchar") == 0))
+				(strcmp(typename_string, "bpchar") == 0) || (strcmp(typename_string, "nchar") == 0))
 	{
 		Node	   *helperFuncCall;
 

@@ -2019,3 +2019,70 @@ datetime
 1900-01-01 17:24:07.177
 ~~END~~
 
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_datetime_v1
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+EXEC test_conv_string_to_datetime_p1
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+SELECT test_conv_string_to_datetime_f1()
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime_v2
+GO
+~~START~~
+datetime
+1900-01-01 13:01:59.0
+~~END~~
+
+EXEC test_conv_string_to_datetime_p2
+GO
+~~START~~
+datetime
+1900-01-01 13:01:59.0
+~~END~~
+
+SELECT test_conv_string_to_datetime_f2()
+GO
+~~START~~
+datetime
+1900-01-01 13:01:59.0
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime_v3
+GO
+~~START~~
+datetime
+1753-01-01 00:01:59.0
+~~END~~
+
+EXEC test_conv_string_to_datetime_p3
+GO
+~~START~~
+datetime
+1753-01-01 00:01:59.0
+~~END~~
+
+SELECT test_conv_string_to_datetime_f3()
+GO
+~~START~~
+datetime
+1753-01-01 00:01:59.0
+~~END~~
+

@@ -1993,3 +1993,48 @@ smalldatetime
 1900-01-01 17:24:00.0
 ~~END~~
 
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_smalldatetime_v1
+GO
+~~START~~
+smalldatetime
+2017-08-25 13:02:00.0
+~~END~~
+
+EXEC test_conv_string_to_smalldatetime_p1
+GO
+~~START~~
+smalldatetime
+2017-08-25 13:02:00.0
+~~END~~
+
+SELECT test_conv_string_to_smalldatetime_f1()
+GO
+~~START~~
+smalldatetime
+2017-08-25 13:02:00.0
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_smalldatetime_v2
+GO
+~~START~~
+smalldatetime
+1900-01-01 13:02:00.0
+~~END~~
+
+EXEC test_conv_string_to_smalldatetime_p2
+GO
+~~START~~
+smalldatetime
+1900-01-01 13:02:00.0
+~~END~~
+
+SELECT test_conv_string_to_smalldatetime_f2()
+GO
+~~START~~
+smalldatetime
+1900-01-01 13:02:00.0
+~~END~~
+

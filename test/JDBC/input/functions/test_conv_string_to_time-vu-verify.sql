@@ -820,3 +820,25 @@ GO
 DECLARE @TM_ICLO TIME = '17:24:07.1766670'
 SELECT CONVERT(TIME, @TM_ICLO)
 GO
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_time_v1
+GO
+EXEC test_conv_string_to_time_p1
+GO
+SELECT test_conv_string_to_time_f1()
+GO
+
+SELECT * FROM test_conv_string_to_time_v2
+GO
+EXEC test_conv_string_to_time_p2
+GO
+SELECT test_conv_string_to_time_f2()
+GO
+
+SELECT * FROM test_conv_string_to_time_v3
+GO
+EXEC test_conv_string_to_time_p3
+GO
+SELECT test_conv_string_to_time_f3()
+GO

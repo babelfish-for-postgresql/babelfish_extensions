@@ -1,0 +1,13 @@
+DROP VIEW test_conv_string_to_datetimeoffset_v1
+GO
+DROP PROCEDURE test_conv_string_to_datetimeoffset_p1
+GO
+DROP FUNCTION test_conv_string_to_datetimeoffset_f1()
+GO
+
+DROP VIEW test_conv_string_to_datetimeoffset_v2
+GO
+DROP PROCEDURE test_conv_string_to_datetimeoffset_p2
+GO
+DROP FUNCTION test_conv_string_to_datetimeoffset_f2()
+GO

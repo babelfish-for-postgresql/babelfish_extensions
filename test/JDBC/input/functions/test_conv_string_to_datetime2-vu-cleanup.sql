@@ -1,0 +1,25 @@
+DROP VIEW test_conv_string_to_datetime2_v1
+GO
+DROP PROCEDURE test_conv_string_to_datetime2_p1
+GO
+DROP FUNCTION test_conv_string_to_datetime2_f1()
+GO
+
+DROP VIEW test_conv_string_to_datetime2_v2
+GO
+DROP PROCEDURE test_conv_string_to_datetime2_p2
+GO
+DROP FUNCTION test_conv_string_to_datetime2_f2()
+GO
+
+DROP PROCEDURE test_conv_string_to_datetime2_p2_2
+GO
+DROP FUNCTION test_conv_string_to_datetime2_f2_2()
+GO
+
+DROP VIEW test_conv_string_to_datetime2_v3
+GO
+DROP PROCEDURE test_conv_string_to_datetime2_p3
+GO
+DROP FUNCTION test_conv_string_to_datetime2_f3()
+GO

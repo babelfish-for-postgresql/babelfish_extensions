@@ -389,6 +389,12 @@ BEGIN
     ELSE
         v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(v_datetimeval, 'US'), v_scale);
 
+        -- Following condition will handle for overflow of fractsecs
+        IF (v_fseconds::INTEGER < 0) THEN
+            v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
+            v_datetimeval := v_datetimeval + INTERVAL '1 second';
+        END IF;
+
         IF (v_scale = 7) THEN
             v_fseconds := concat(v_fseconds, '0');
         END IF;
@@ -801,7 +807,7 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
--- Following function can be used to convert string literal to DATE, TIME or DATETIME2.
+-- Following function can be used to convert string literal to DATE, TIME and DATETIME2.
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_datetime2(IN p_datatype TEXT,
                                                                         IN p_datetimestring TEXT,
                                                                         IN p_style NUMERIC DEFAULT 0)
@@ -928,7 +934,9 @@ BEGIN
     THEN
         RAISE interval_field_overflow;
     ELSIF (v_scale IS NULL) THEN
-        v_scale := 7;
+        -- currently datetime2, datetimeoffset and time only support factional seconds
+        -- upto 6 digits hence set v_scale to 6 to get consistent behaviour in datetime2(7) and datetime2
+        v_scale := 6;
     END IF;
 
     IF (scale(p_style) > 0) THEN
@@ -1352,11 +1360,24 @@ BEGIN
         v_seconds := round(v_seconds::NUMERIC, 0)::TEXT;
     ELSE
         v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+        
+        -- Following condition will handle for overflow of fractsecs
+        IF (v_fseconds::INTEGER < 0) THEN
+            v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
+            v_seconds := (v_seconds::INTEGER + 1)::TEXT;
+        END IF;
+
         v_seconds := concat_ws('.', v_seconds, v_fseconds);
     END IF;
 
     v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,
                                         v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);
+
+    IF (v_resdatetime > make_timestamp(9999, 12, 31, 23, 59, 59.999999)) THEN
+        -- if rounding of fractional seconds caused the datetime to go out of range 
+        -- then max datetime that can be stored for p_datatype will be used
+        v_resdatetime := make_timestamp(9999, 12, 31, 23, 59, concat_ws('.', '59', PG_CATALOG.repeat('9', LEAST(v_scale, 6)))::NUMERIC); 
+    END IF;
 
     RETURN v_resdatetime;
 EXCEPTION
@@ -1416,7 +1437,7 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
--- Following function can be used to convert string literal to DATETIME or SMALLDATETIME
+-- Following function can be used to convert string literal to DATETIME and SMALLDATETIME
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_datetime(IN p_datatype TEXT,
                                                                      IN p_datetimestring TEXT,
                                                                      IN p_style NUMERIC DEFAULT 0)
@@ -2225,6 +2246,12 @@ BEGIN
     v_hours := ltrim(to_char(p_timeval, 'HH12'), '0');
     v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(p_timeval, 'US'), v_scale);
 
+    -- Following condition will handle for overflow of fractsecs
+    IF (v_fseconds::INTEGER < 0) THEN
+        v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
+        p_timeval := p_timeval + INTERVAL '1 second';
+    END IF;
+
     IF (v_scale = 7) THEN
         v_fseconds := concat(v_fseconds, '0');
     END IF;
@@ -2567,6 +2594,10 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+/*
+ * Following function sys.babelfish_get_microsecs_from_fractsecs rounds off p_fractsecs to the given scale
+ * if result overflows then return -1
+ */
 CREATE OR REPLACE FUNCTION sys.babelfish_get_microsecs_from_fractsecs(IN p_fractsecs TEXT,
                                                                           IN p_scale NUMERIC DEFAULT 7)
 RETURNS VARCHAR
@@ -2596,12 +2627,16 @@ BEGIN
 
     v_decplaces := v_fractsecs_len - v_pureplaces_len;
 
-    v_rnd_fractsecs := round(v_fractsecs::INTEGER, (v_pureplaces_len - (v_scale - (v_fractsecs_len - v_pureplaces_len))) * (-1));
+    v_rnd_fractsecs := round(v_fractsecs::INTEGER, (v_pureplaces_len - (v_scale - v_decplaces)) * (-1));
 
-    v_fractsecs := concat(pg_catalog.replace(rpad('', v_decplaces), ' ', '0'), v_rnd_fractsecs);
+    IF (char_length(v_rnd_fractsecs::TEXT) > v_fractsecs_len) THEN
+        RETURN '-1';
+    END IF;
+
+    v_fractsecs := lpad(v_rnd_fractsecs::TEXT, v_fractsecs_len, '0');
 
     RETURN substring(v_fractsecs, 1, CASE
-                                        WHEN (v_scale >= 7) THEN 7
+                                        WHEN (v_scale >= 7) THEN 6
                                         ELSE v_scale
                                      END);
 EXCEPTION
@@ -4939,6 +4974,13 @@ BEGIN
             END IF;
         ELSE
             v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(rpad(v_fseconds, 9, '0'), v_scale);
+
+            -- Following condition will handle for overflow of fractsecs
+            IF (v_fseconds::INTEGER < 0) THEN
+                v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
+                v_seconds := (v_seconds::INTEGER + 1)::TEXT;
+            END IF;
+
             v_seconds := concat_ws('.', v_seconds, v_fseconds);
 
             v_res_datetime := make_timestamp(v_year, v_month::SMALLINT, v_day::SMALLINT,
@@ -5989,6 +6031,12 @@ BEGIN
     END IF;
 
     v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(rpad(v_fseconds, 9, '0'), v_scale);
+    -- Following condition will handle for overflow of fractsecs
+    IF (v_fseconds::INTEGER < 0) THEN
+        v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
+        v_seconds := (v_seconds::INTEGER + 1)::TEXT;
+    END IF;
+
     v_seconds := concat_ws('.', v_seconds, v_fseconds);
 
     v_res_time := make_time(v_hours, v_minutes, v_seconds::NUMERIC);
@@ -9802,6 +9850,32 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg sys.BPCHAR,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT 0)
+RETURNS DATE
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_date(arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg sys.NCHAR,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT 0)
+RETURNS DATE
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_date(arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg anyelement,
                                                         IN try BOOL,
 												        IN p_style NUMERIC DEFAULT 0)
@@ -9889,6 +9963,34 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
                                                         IN arg sys.NVARCHAR,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT 0)
+RETURNS TIME
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_time(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
+                                                        IN arg sys.BPCHAR,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT 0)
+RETURNS TIME
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_time(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
+                                                        IN arg sys.NCHAR,
                                                         IN try BOOL,
                                                         IN p_style NUMERIC DEFAULT 0)
 RETURNS TIME
@@ -10002,6 +10104,34 @@ LANGUAGE plpgsql
 STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
+                                                            IN arg sys.BPCHAR,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_datetime(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
+                                                            IN arg sys.NCHAR,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_datetime(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
                                                             IN arg anyelement,
                                                             IN try BOOL,
 													        IN p_style NUMERIC DEFAULT 0)
@@ -10089,6 +10219,34 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
                                                             IN arg sys.NVARCHAR,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME2
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_datetime2(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
+                                                            IN arg sys.BPCHAR,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME2
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_datetime2(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
+                                                            IN arg sys.NCHAR,
                                                             IN try BOOL,
 													        IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.DATETIME2
@@ -10202,6 +10360,34 @@ LANGUAGE plpgsql
 STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
+                                                            IN arg sys.BPCHAR,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIMEOFFSET
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_datetimeoffset(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
+                                                            IN arg sys.NCHAR,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIMEOFFSET
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_datetimeoffset(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
                                                             IN arg anyelement,
                                                             IN try BOOL,
 													        IN p_style NUMERIC DEFAULT 0)
@@ -10289,6 +10475,34 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
                                                             IN arg sys.NVARCHAR,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.SMALLDATETIME
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_smalldatetime(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
+                                                            IN arg sys.BPCHAR,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.SMALLDATETIME
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_helper_to_smalldatetime(typmod, arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
+                                                            IN arg sys.NCHAR,
                                                             IN try BOOL,
 													        IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.SMALLDATETIME

@@ -1415,3 +1415,25 @@ GO
 DECLARE @TM_ICLO TIME = '17:24:07.1766670'
 SELECT CONVERT(DATE, @TM_ICLO)
 GO
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_date_v1
+GO
+EXEC test_conv_string_to_date_p1
+GO
+SELECT test_conv_string_to_date_f1()
+GO
+
+SELECT * FROM test_conv_string_to_date_v2
+GO
+EXEC test_conv_string_to_date_p2
+GO
+SELECT test_conv_string_to_date_f2()
+GO
+
+SELECT * FROM test_conv_string_to_date_v3
+GO
+EXEC test_conv_string_to_date_p3
+GO
+SELECT test_conv_string_to_date_f3()
+GO

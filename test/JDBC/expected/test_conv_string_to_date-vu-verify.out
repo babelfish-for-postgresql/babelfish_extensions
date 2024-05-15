@@ -3719,3 +3719,70 @@ date
 
 ~~ERROR (Message: Explicit conversion from data type time without time zone to date is not allowed.)~~
 
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_date_v1
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+EXEC test_conv_string_to_date_p1
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+SELECT test_conv_string_to_date_f1()
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_date_v2
+GO
+~~START~~
+date
+9999-08-25
+~~END~~
+
+EXEC test_conv_string_to_date_p2
+GO
+~~START~~
+date
+9999-08-25
+~~END~~
+
+SELECT test_conv_string_to_date_f2()
+GO
+~~START~~
+date
+9999-08-25
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_date_v3
+GO
+~~START~~
+date
+1900-01-01
+~~END~~
+
+EXEC test_conv_string_to_date_p3
+GO
+~~START~~
+date
+1900-01-01
+~~END~~
+
+SELECT test_conv_string_to_date_f3()
+GO
+~~START~~
+date
+1900-01-01
+~~END~~
+

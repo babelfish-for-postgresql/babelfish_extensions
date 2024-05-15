@@ -2269,3 +2269,70 @@ time
 17:24:07.1766670
 ~~END~~
 
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_time_v1
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p1
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f1()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v2
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p2
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f2()
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v3
+GO
+~~START~~
+time
+01:01:01.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p3
+GO
+~~START~~
+time
+01:01:01.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f3()
+GO
+~~START~~
+time
+01:01:01.0000000
+~~END~~
+

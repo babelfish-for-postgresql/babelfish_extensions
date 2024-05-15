@@ -1818,3 +1818,48 @@ datetimeoffset
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_datetimeoffset_v1
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+EXEC test_conv_string_to_datetimeoffset_p1
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+SELECT test_conv_string_to_datetimeoffset_f1()
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v2
+GO
+~~START~~
+datetimeoffset
+1900-01-01 13:01:59.0000000 +12:15
+~~END~~
+
+EXEC test_conv_string_to_datetimeoffset_p2
+GO
+~~START~~
+datetimeoffset
+1900-01-01 13:01:59.0000000 +12:15
+~~END~~
+
+SELECT test_conv_string_to_datetimeoffset_f2()
+GO
+~~START~~
+datetimeoffset
+1900-01-01 13:01:59.0000000 +12:15
+~~END~~
+

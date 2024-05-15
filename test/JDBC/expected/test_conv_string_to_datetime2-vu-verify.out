@@ -1608,3 +1608,85 @@ datetime2
 1900-01-01 17:24:07.1766670
 ~~END~~
 
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_datetime2_v1
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.0
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p1
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.0
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f1()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v2
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p2
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f2()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+EXEC test_conv_string_to_datetime2_p2_2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 10 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
+
+SELECT test_conv_string_to_datetime2_f2_2()
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 10 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v3
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.12346
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p3
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.12346
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f3()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234600
+~~END~~
+

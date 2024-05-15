@@ -717,3 +717,18 @@ GO
 DECLARE @TM_ICLO TIME = '17:24:07.1766670'
 SELECT CONVERT(SMALLDATETIME, @TM_ICLO)
 GO
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_smalldatetime_v1
+GO
+EXEC test_conv_string_to_smalldatetime_p1
+GO
+SELECT test_conv_string_to_smalldatetime_f1()
+GO
+
+SELECT * FROM test_conv_string_to_smalldatetime_v2
+GO
+EXEC test_conv_string_to_smalldatetime_p2
+GO
+SELECT test_conv_string_to_smalldatetime_f2()
+GO

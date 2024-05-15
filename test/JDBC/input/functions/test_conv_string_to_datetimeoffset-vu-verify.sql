@@ -666,3 +666,18 @@ GO
 
 SELECT CONVERT(DATETIMEOFFSET, '2000-04-22 16:23:51.7668c0 -8:00')
 GO
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_datetimeoffset_v1
+GO
+EXEC test_conv_string_to_datetimeoffset_p1
+GO
+SELECT test_conv_string_to_datetimeoffset_f1()
+GO
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v2
+GO
+EXEC test_conv_string_to_datetimeoffset_p2
+GO
+SELECT test_conv_string_to_datetimeoffset_f2()
+GO
