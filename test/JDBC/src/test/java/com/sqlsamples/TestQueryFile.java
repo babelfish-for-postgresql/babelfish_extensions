@@ -278,17 +278,17 @@ public class TestQueryFile {
 
             if(status){
                 //extra spaces for right side padding
-                summaryLogger.info((testMethodName + ":" + "                                                     ").substring(0, maxlen+2) + "Passed! (" + exec_time + "/" + sla_val + "ms OK)" + testStats);
+                summaryLogger.info(testMethodName + ":" + " ".repeat(maxlen + 2 - (testMethodName.length()+1)) + "Passed! (" + exec_time + "/" + sla_val + "ms OK)" + testStats);
                 passed++;
             }
             else if(exec_time <= sla_val){
                 //extra spaces for right side padding
-                summaryLogger.info((testMethodName + ":" + "                                                     ").substring(0, maxlen+2) + "Failed! (" + exec_time + "/" + sla_val + "ms OK)" + testStats);
+                summaryLogger.info(testMethodName + ":" + " ".repeat(maxlen + 2 - (testMethodName.length()+1)) + "Failed! (" + exec_time + "/" + sla_val + "ms OK)" + testStats);
                 failed++;
             }
             else{
                 //extra spaces for right side padding
-                summaryLogger.info((testMethodName + ":" + "                                                     ").substring(0, maxlen+2) + "Failed! (" + exec_time + "/" + sla_val + "ms TIME OUT)" + testStats);
+                summaryLogger.info(testMethodName + ":" + " ".repeat(maxlen + 2 - (testMethodName.length()+1)) + "Failed! (" + exec_time + "/" + sla_val + "ms TIME OUT)" + testStats);
                 failed++;
             }
         }
