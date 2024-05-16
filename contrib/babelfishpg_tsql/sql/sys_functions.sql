@@ -3417,11 +3417,6 @@ CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
 $$
 BEGIN
-    -- remote trailing spaces
-    IF (CHARINDEX('\', role) = 0)
-        THEN role := RTRIM(role);
-    END IF;
-
     IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role)
     THEN
         IF EXISTS (SELECT name FROM sys.login_token WHERE name = role)
