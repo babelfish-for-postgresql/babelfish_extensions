@@ -6102,6 +6102,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	int lineno = getLineNo(ctx);
 	int return_code_dno = -1;	
 	std::string execKeywd = "EXEC"; // DO NOT CHANGE!
+	int name_length = 0;
 		
 	// Use a boolean vor convenience
 	bool execute_statement = string_matches(call_type.c_str(), "execute_statement") ? true : false;
@@ -6135,6 +6136,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	{
 		// Get the name of procedure being executed, and split up in parts
 		name = ::getFullText(ctx_name);
+		name_length = ctx_name->stop->getStopIndex() - ctx_name->start->getStartIndex();
 		Assert(!name.empty());
 		
 		// Original position of the name
@@ -6288,7 +6290,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	ssPos += spacesNeeded;
 			
 	ss << name;
-	ssPos += name.length();
+	ssPos += name_length;
 	
 	if (func_proc_args) 
 	{
