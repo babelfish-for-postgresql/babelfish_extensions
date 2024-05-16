@@ -356,13 +356,18 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_date(TEXT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_date_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_date_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_conv_helper_to_date_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_conv_helper_to_date_deprecated_4_2;
 
+    -- If above function have some dependent objects then we will not rename and drop below functions, as above function is dependent on below functions
     ALTER FUNCTION sys.babelfish_try_conv_string_to_date(TEXT, NUMERIC) RENAME TO babelfish_try_conv_string_to_date_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_date_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_try_conv_string_to_date_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_try_conv_string_to_date_deprecated_4_2;
     
+    -- If above function have some dependent objects then we will not rename and drop below functions, as above function is dependent on below functions
     ALTER FUNCTION sys.babelfish_conv_string_to_date(TEXT, NUMERIC) RENAME TO babelfish_conv_string_to_date_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_date_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_conv_string_to_date_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_conv_string_to_date_deprecated_4_2;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -375,10 +380,13 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_date(ANYELEMENT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_date_1_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_date_1_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_conv_helper_to_date_1_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_conv_helper_to_date_1_deprecated_4_2;
 
+    -- If above function have some dependent objects then we will not rename and drop below functions, as above function is dependent on below functions
     ALTER FUNCTION sys.babelfish_try_conv_to_date(ANYELEMENT) RENAME TO babelfish_try_conv_to_date_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_date_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_try_conv_to_date_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_try_conv_to_date_deprecated_4_2;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -405,13 +413,18 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_time(TEXT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_conv_helper_to_time_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_conv_helper_to_time_deprecated_4_2;
 
+    -- If above function have some dependent objects then we will not rename and drop below functions, as above function is dependent on below functions
     ALTER FUNCTION sys.babelfish_try_conv_string_to_time(TEXT, TEXT, NUMERIC) RENAME TO babelfish_try_conv_string_to_time_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_time_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_try_conv_string_to_time_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_try_conv_string_to_time_deprecated_4_2;
 
+    -- If above function have some dependent objects then we will not rename and drop below functions, as above function is dependent on below functions
     ALTER FUNCTION sys.babelfish_conv_string_to_time(TEXT, TEXT, NUMERIC) RENAME TO babelfish_conv_string_to_time_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_time_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_conv_string_to_time_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_conv_string_to_time_deprecated_4_2;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -424,10 +437,13 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_time(ANYELEMENT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_1_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_1_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_conv_helper_to_time_1_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_conv_helper_to_time_1_deprecated_4_2;
 
+    -- If above function have some dependent objects then we will not rename and drop below functions, as above function is dependent on below functions
     ALTER FUNCTION sys.babelfish_try_conv_to_time(ANYELEMENT) RENAME TO babelfish_try_conv_to_time_deprecated_4_2;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_time_deprecated_4_2');
+    ALTER EXTENSION babelfishpg_tsql DROP FUNCTION sys.babelfish_try_conv_to_time_deprecated_4_2;
+    DROP FUNCTION sys.babelfish_try_conv_to_time_deprecated_4_2;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -510,7 +526,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_time_to_string(TEXT, TEXT, TIMESTAMP(6) WITHOUT TIME ZONE, NUMERIC) RENAME TO babelfish_conv_time_to_string_deprecated_4_2;
+    ALTER FUNCTION sys.babelfish_conv_time_to_string(TEXT, TEXT, TIME(6) WITHOUT TIME ZONE, NUMERIC) RENAME TO babelfish_conv_time_to_string_deprecated_4_2;
     CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_time_to_string_deprecated_4_2');
 
 EXCEPTION WHEN OTHERS THEN
