@@ -24,3 +24,24 @@ GO
 
 DROP VIEW babel_3697_multi_function
 GO
+
+DROP FUNCTION [dbo].[o7getcodevaluedesc] 
+GO
+
+drop function babel_4793_schema.babel_4793_func
+GO
+
+drop table babel_4793;
+GO
+
+drop procedure babel_4793_pro1
+GO
+
+drop procedure babel_4793_pro2
+GO
+
+drop procedure babel_4793_pro3
+GO
+
+drop schema babel_4793_schema
+GO

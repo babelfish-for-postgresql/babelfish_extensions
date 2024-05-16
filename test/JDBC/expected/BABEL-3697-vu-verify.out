@@ -71,3 +71,45 @@ nvarchar#!#nvarchar
 {"name": "Mike", "skills": ["C#", "SQL", "Azure"], "surname": "Smith"}#!#{"Price": 49.99}
 ~~END~~
 
+
+select kk , dd, dbo.o7getcodevaluedesc() from (
+   select a as kk, count(b) as dd from babel_4793  group by a 
+) as drived
+GO
+~~START~~
+int#!#int#!#nvarchar
+~~END~~
+
+
+select dbo.o7getcodevaluedesc() , kk , dd from (
+   select a as kk, count(b) as dd from babel_4793  group by a 
+) as drived
+GO
+~~START~~
+nvarchar#!#int#!#int
+~~END~~
+
+
+select babel_4793_schema.babel_4793_func() , kk , dd from (
+   select a as kk, count(b) as dd from babel_4793  group by a 
+) as drived
+GO
+~~START~~
+int#!#int#!#int
+~~END~~
+
+
+EXEC babel_4793_pro1
+GO
+~~START~~
+int#!#int#!#nvarchar
+~~END~~
+
+
+EXEC babel_4793_pro2
+GO
+~~START~~
+nvarchar#!#int#!#int
+~~END~~
+
+
