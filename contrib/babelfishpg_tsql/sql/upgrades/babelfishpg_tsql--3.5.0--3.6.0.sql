@@ -417,6 +417,11 @@ CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
 $$
 BEGIN
+    -- Always return 1 for 'public'
+    IF (role = 'public')
+    THEN RETURN 1;
+    END IF;
+
     IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role)
     THEN
         IF EXISTS (SELECT name FROM sys.login_token WHERE name = role)
