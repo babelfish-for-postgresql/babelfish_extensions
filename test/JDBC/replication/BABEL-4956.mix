@@ -25,6 +25,13 @@ GO
 ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
 GO
 
+-- terminate-tsql-conn
+-- terminate-tsql-conn port=8199
+
+-- psql
+select pg_sleep(5);
+GO
+
 -- Insert a 4 byte binary value with last trailing byte as 0 in the
 -- source table so that it fits into 3 byte in target table's column.
 -- tsql
@@ -107,6 +114,13 @@ GO
 ALTER SUBSCRIPTION my_sub ADD PUBLICATION my_pub2;
 GO
 ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- terminate-tsql-conn
+-- terminate-tsql-conn port=8199
+
+-- psql
+select pg_sleep(5);
 GO
 
 -- Insert a 4 byte varbinary value with last trailing byte as 0 in the
