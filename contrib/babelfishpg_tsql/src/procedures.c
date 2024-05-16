@@ -1651,7 +1651,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 		}
 	}
-	PG_FINALLY();
+	PG_CATCH();
 	{
 		is_supported_case_sp_describe_undeclared_parameters = true;
 		PG_RE_THROW();
