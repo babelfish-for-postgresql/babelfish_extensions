@@ -629,7 +629,7 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 						}
 						ref = (ColumnRef *) xpr->lexpr;
 						field = linitial(ref->fields);
-						name = field->sval;
+						name = field->val.str;
 						attrno = attnameAttNum(pstate->p_target_relation, name, false);
 						if (attrno == InvalidAttrNumber)
 						{
@@ -749,7 +749,7 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 						}
 						ref = (ColumnRef *) xpr->lexpr;
 						field = linitial(ref->fields);
-						name = field->sval;
+						name = field->val.str;
 						attrno = attnameAttNum(pstate->p_target_relation, name, false);
 						if (attrno == InvalidAttrNumber)
 						{
@@ -761,7 +761,7 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 						}
 						res = (ResTarget *) palloc(sizeof(ResTarget));
 						res->type = ref->type;
-						res->name = field->sval;
+						res->name = field->val.str;
 						res->indirection = NIL; /* Unused for now */
 						res->val = (Node *) ref;	/* Store the ColumnRef
 													 * here if needed */
@@ -873,7 +873,7 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 						field = linitial(ref->fields);
 						res = (ResTarget *) palloc(sizeof(ResTarget));
 						res->type = ref->type;
-						res->name = field->sval;
+						res->name = field->val.str;
 						res->indirection = NIL; /* Unused for now */
 						res->val = (Node *) ref;	/* Store the ColumnRef
 													 * here if needed */
@@ -1238,10 +1238,10 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 							{
 								foreach(fieldcell, fields)
 								{
-									String	   *field = lfirst(fieldcell);
+									Value	   *field = lfirst(fieldcell);
 
 									/* Make sure it's a parameter reference */
-									if (field->sval && field->sval[0] == '@')
+									if (field->val.str && field->val.str[0] == '@')
 									{
 										int			i;
 										bool		undeclared = true;
@@ -1250,7 +1250,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 										for (i = 0; i < args->numargs; ++i)
 										{
 											if (args->argnames && args->argnames[i] &&
-												(strcmp(args->argnames[i], field->sval) == 0))
+												(strcmp(args->argnames[i], field->val.str) == 0))
 											{
 												undeclared = false;
 												break;
@@ -1258,10 +1258,10 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 										}
 										if (undeclared)
 										{
-											int			paramname_len = strlen(field->sval);
+											int			paramname_len = strlen(field->val.str);
 
 											undeclaredparams->paramnames[numresults] = (char *) palloc(NAMEDATALEN);
-											strncpy(undeclaredparams->paramnames[numresults], field->sval, NAMEDATALEN);
+											strncpy(undeclaredparams->paramnames[numresults], field->val.str, NAMEDATALEN);
 											undeclaredparams->paramnames[numresults][paramname_len] = '\0';
 											undeclaredparams->paramindexes[numresults] = numvalues;
 											numresults += 1;
@@ -1636,7 +1636,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 		}
 	}
-	PG_FINALLY();
+	PG_CATCH();
 	{
 		is_supported_case_sp_describe_undeclared_parameters = true;
 		PG_RE_THROW();
