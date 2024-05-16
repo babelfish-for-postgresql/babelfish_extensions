@@ -37,6 +37,12 @@ GO
 drop table StoreReceipt;
 GO
 
+drop table orders;
+GO
+
+drop table products;
+GO
+
 use master;
 GO
 

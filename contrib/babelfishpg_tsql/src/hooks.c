@@ -4890,6 +4890,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	RawStmt			*s_sql;
 	RawStmt			*c_sql;
 	FuncCall 		*pivot_func;
+	WithClause		*with_clause;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -4899,8 +4900,14 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	src_sql_groupbylist = NIL;
 	src_sql_sortbylist = NIL;
 
+	with_clause = copyObject(stmt->withClause);
 	pivot_src_sql =  makeNode(SelectStmt);
 	pivot_src_sql->fromClause = copyObject(stmt->srcSql->fromClause);
+	pivot_src_sql->withClause = copyObject(with_clause);
+
+	((SelectStmt *)stmt->srcSql)->withClause = copyObject(with_clause);
+	stmt->withClause = NULL;
+	
 	src_sql_fromClause_copy = copyObject(stmt->srcSql->fromClause);
 	/* transform temporary src_sql */
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
@@ -4971,6 +4978,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	/* use the copy of the orgininal fromClause to prevent double analyzing fromClause */
 	((SelectStmt *)stmt->srcSql)->fromClause = src_sql_fromClause_copy;
 	/* Transform the new src_sql & get the output type of that agg function*/
+	((SelectStmt *)stmt->srcSql)->withClause = with_clause;
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
 									false,
 									false);

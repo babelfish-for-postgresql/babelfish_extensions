@@ -1238,6 +1238,63 @@ Orange#!#17025.0000#!#8512.5000#!#77659.0000#!#38829.5000#!#4535.0000#!#23425.00
 DROP TABlE IF EXISTS #FruitSales
 GO
 
+-- PIVOT with CTE as source table
+WITH cte_table AS (
+    SELECT [p].productName, [o].[employeeName]
+    FROM orders [o] JOIN products AS [p] on (o.productId = p.productId)
+)
+SELECT CAST('COUNT' AS VARCHAR(10)), [mac],[ipad],[charger] FROM cte_table
+PIVOT (
+    COUNT(employeeName)
+    FOR productName IN (mac, [iphone], [ipad], [charger])
+) as pvt
+GO
+~~START~~
+varchar#!#int#!#int#!#int
+COUNT#!#7#!#4#!#1
+~~END~~
+
+
+-- string is not allowed in PIVOT column value list
+WITH cte_table AS (
+    SELECT o.[orderId], o.[productId], [p].productName,
+        [p].productPrice, [o].[employeeName], [o].employeeCode, [o].date
+    FROM orders [o] JOIN products AS [p] on (o.productId = p.productId)
+)
+SELECT * FROM cte_table
+PIVOT (
+    COUNT(orderId)
+    FOR productName IN ('mac', 'iphone', 'ipad', 'charger')
+) as p
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "'mac'")~~
+
+
+-- aggregate column in PIVOT column value list is not allowed
+WITH cte_table AS
+(
+  SELECT
+    CAST('COUNT' AS VARCHAR(10)) AS COUNT,
+    [mac], [ipad], [charger], [employeeName]
+  FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM orders [o] JOIN products AS [p] on ([o].productId = [p].productId)
+  ) AS dervied_table
+PIVOT
+  (
+      COUNT(employeeName)
+      FOR productName IN ([mac], [employeeName], [iphone], [ipad], [charger])
+  ) as pvt
+)
+SELECT * FROM cte_table
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The column name "employeename" specified in the PIVOT operator conflicts with the existing column name in the PIVOT argument.)~~
+
+
 -- Join stmts inside PIVOT statment (BABEL-4558)
 SELECT Oid, [1] AS TYPE1, [2] AS TYPE2, [3] AS TYPE3
 FROM (SELECT OSTable.Oid, STable.Scode, STable.Type
