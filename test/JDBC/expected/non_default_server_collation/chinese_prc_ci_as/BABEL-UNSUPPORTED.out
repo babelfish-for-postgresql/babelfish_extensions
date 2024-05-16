@@ -1673,7 +1673,7 @@ INSERT INTO t_unsupported_cac1 VALUES (0, 0);
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "t_unsupported_cac1" violates check constraint "chk1t_unsupported_cac1848ea8bb1121ee393ad72ae0d412d8d2")~~
+~~ERROR (Message: new row for relation "t_unsupported_cac1" violates check constraint "chk1t_unsupported_cac1")~~
 
 DROP TABLE t_unsupported_cac1
 GO
@@ -1700,7 +1700,7 @@ ALTER TABLE t_unsupported_cec1 ADD constraint chk1 check (a > 0)
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: check constraint "chk1t_unsupported_cec1848ea8bb1121ee393ad72ae0d412d8d2" of relation "t_unsupported_cec1" is violated by some row)~~
+~~ERROR (Message: check constraint "chk1" of relation "t_unsupported_cec1" is violated by some row)~~
 
 ALTER TABLE t_unsupported_cec1 CHECK constraint chk1
 GO
@@ -1729,7 +1729,7 @@ ALTER TABLE t_unsupported_cec1 ADD constraint chk1 check (a > 0)
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: check constraint "chk1t_unsupported_cec1848ea8bb1121ee393ad72ae0d412d8d2" of relation "t_unsupported_cec1" is violated by some row)~~
+~~ERROR (Message: check constraint "chk1" of relation "t_unsupported_cec1" is violated by some row)~~
 
 ALTER TABLE t_unsupported_cec1 CHECK constraint chk1
 GO

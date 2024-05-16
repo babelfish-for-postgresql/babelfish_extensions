@@ -58,7 +58,7 @@ jobs:
         if: steps.install-extensions.outcome == 'success' && steps.install-unix-odbc-driver.outcome=='success'
         run: |
           cd ~
-          wget https://ftp.postgresql.org/pub/odbc/versions/src/psqlodbc-16.00.0000.tar.gz
+          wget https://ftp.postgresql.org/pub/odbc/versions.old/src/psqlodbc-16.00.0000.tar.gz
           tar -zxvf psqlodbc-16.00.0000.tar.gz
           cd psqlodbc-16.00.0000
           ./configure

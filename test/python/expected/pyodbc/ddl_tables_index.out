@@ -34,7 +34,7 @@ CREATE TABLE [dbo].[babel_4817_t2](
 	[col6] [int] NULL,
 	[col7] [int] IDENTITY(1,1) NOT NULL,
 	[col8] [int] NOT NULL,
- CONSTRAINT [babel_4817_t2_pkbabel_4817_t2405f712bf0a4067d413068dcbaf9fc11] PRIMARY KEY NONCLUSTERED 
+ CONSTRAINT [babel_4817_t2_pk] PRIMARY KEY NONCLUSTERED 
 (
 	[col3] ASC,
 	[col7] ASC
@@ -185,8 +185,8 @@ CREATE TABLE [dbo].[test_null](
 	[b] [int] NULL
 ) ON [PRIMARY]
 
-ALTER TABLE [dbo].[test_null]  WITH CHECK ADD  CONSTRAINT [constraint1test_null987b8e55c77de33d095778885ecd84f4] CHECK  (((a > 10)))
-ALTER TABLE [dbo].[test_null] CHECK CONSTRAINT [constraint1test_null987b8e55c77de33d095778885ecd84f4]
+ALTER TABLE [dbo].[test_null]  WITH CHECK ADD  CONSTRAINT [constraint1] CHECK  (((a > 10)))
+ALTER TABLE [dbo].[test_null] CHECK CONSTRAINT [constraint1]
 ALTER TABLE [dbo].[test_null]  WITH CHECK ADD  CONSTRAINT [test_null_a_check] CHECK  (((a IS NOT NULL)))
 ALTER TABLE [dbo].[test_null] CHECK CONSTRAINT [test_null_a_check]
 GO
@@ -275,7 +275,7 @@ GO
 
 SET ANSI_PADDING ON
 
-ALTER TABLE [dbo].[babel_4817_t2] ADD  CONSTRAINT [babel_4817_t2_pkbabel_4817_t2405f712bf0a4067d413068dcbaf9fc11] PRIMARY KEY NONCLUSTERED 
+ALTER TABLE [dbo].[babel_4817_t2] ADD  CONSTRAINT [babel_4817_t2_pk] PRIMARY KEY NONCLUSTERED 
 (
 	[col3] ASC,
 	[col7] ASC
