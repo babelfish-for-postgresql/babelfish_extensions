@@ -522,3 +522,4 @@ BABEL-4863-before-16_3-or-15_7-or-14_12
 babel_test_int4_numeric_oper_before_16_3_or_15_7
 babel_test_int8_numeric_oper_before_16_3_or_15_7
 babel_test_int2_numeric_oper_before_16_3_or_15_7
+BABEL-4869
