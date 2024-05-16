@@ -69,15 +69,17 @@ static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype);
-List *handle_bool_expr_rec(BoolExpr *expr, List *list);
-List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
-List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets);
-List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets);
 
-char *sp_describe_first_result_set_view_name = NULL;
+List	   *handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_parameters);
+List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums, bool is_sp_describe_undeclared_parameters);
+List	   *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters);
+List	   *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters);
 
-bool sp_describe_first_result_set_inprogress = false;
-char *orig_proc_funcname = NULL;
+char	   *sp_describe_first_result_set_view_name = NULL;
+
+bool		sp_describe_first_result_set_inprogress = false;
+char	   *orig_proc_funcname = NULL;
+static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
@@ -524,7 +526,8 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
  * Recurse down the BoolExpr if needed, and append all relevant ColumnRef->fields
  * to the list.
  */
-List *handle_bool_expr_rec(BoolExpr *expr, List *list)
+List *
+handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_parameters)
 {
 	List *args = expr->args;
 	ListCell *lc;
@@ -540,15 +543,17 @@ List *handle_bool_expr_rec(BoolExpr *expr, List *list)
 
 				if (nodeTag(xpr->rexpr) != T_ColumnRef)
 				{
-					ereport(WARNING,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+					if (is_sp_describe_undeclared_parameters)
+					{
+						is_supported_case_sp_describe_undeclared_parameters = false;
+						return list;
+					}
 				}
 				ref = (ColumnRef *) xpr->rexpr;
 				list = list_concat(list, ref->fields);
 				break;
 			case T_BoolExpr:
-				list = handle_bool_expr_rec((BoolExpr *)arg, list);
+				list = handle_bool_expr_rec((BoolExpr *) arg, list, is_sp_describe_undeclared_parameters);
 				break;
 			default:
 				break;
@@ -561,24 +566,27 @@ List *handle_bool_expr_rec(BoolExpr *expr, List *list)
  * Returns a list of attnums constructed from the where clause provided, using
  * the column names given on the left hand side of the assignments
  */
-List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums)
+List *
+handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums, bool is_sp_describe_undeclared_parameters)
 {
 	/*
 	 * Append attnos from WHERE clause into target_attnums
 	 */
-	ColumnRef *ref;
-	Value *field;
-	char *name;
-	int attrno;
-	
-	if (nodeTag(w_clause) == T_A_Expr)
+	ColumnRef  *ref;
+	Value	   *field;
+	char	   *name;
+	int			attrno;
+
+	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr *where_clause = (A_Expr *)w_clause;
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+			if (is_sp_describe_undeclared_parameters)
+			{
+				is_supported_case_sp_describe_undeclared_parameters = false;
+				return target_attnums;
+			}
 		}
 		ref = (ColumnRef *) where_clause->lexpr;
 		field = linitial(ref->fields);
@@ -595,7 +603,7 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 
 		return lappend_int(target_attnums, attrno);
 	}
-	else if (nodeTag(w_clause) == T_BoolExpr)
+	else if (w_clause && nodeTag(w_clause) == T_BoolExpr)
 	{
 		BoolExpr *where_clause = (BoolExpr *)w_clause;
 		ListCell *lc;
@@ -609,9 +617,30 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 					xpr = (A_Expr *)arg;
 					if (nodeTag(xpr->lexpr) != T_ColumnRef)
 					{
-						ereport(WARNING,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+						xpr = (A_Expr *) arg;
+
+						if (nodeTag(xpr->lexpr) != T_ColumnRef)
+						{
+							if (is_sp_describe_undeclared_parameters)
+							{
+								is_supported_case_sp_describe_undeclared_parameters = false;
+								return target_attnums;
+							}
+						}
+						ref = (ColumnRef *) xpr->lexpr;
+						field = linitial(ref->fields);
+						name = field->sval;
+						attrno = attnameAttNum(pstate->p_target_relation, name, false);
+						if (attrno == InvalidAttrNumber)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_COLUMN),
+									 errmsg("column \"%s\" of relation \"%s\" does not exist",
+											name,
+											RelationGetRelationName(pstate->p_target_relation))));
+						}
+						target_attnums = lappend_int(target_attnums, attrno);
+						break;
 					}
 					ref = (ColumnRef *) xpr->lexpr;
 					field = linitial(ref->fields);
@@ -628,7 +657,7 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 					target_attnums = lappend_int(target_attnums, attrno);
 					break;
 				case T_BoolExpr:
-					target_attnums = handle_where_clause_attnums(pstate, (Node *) arg, target_attnums);
+					target_attnums = handle_where_clause_attnums(pstate, (Node *) arg, target_attnums, is_sp_describe_undeclared_parameters);
 					break;
 				default:
 					break;
@@ -638,9 +667,8 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 	}
 	else
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		if (is_sp_describe_undeclared_parameters)
+			is_supported_case_sp_describe_undeclared_parameters = false;
 	}
 	return target_attnums;
 }
@@ -649,24 +677,28 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
  * Returns a list of ResTargets constructed from the where clause provided, using
  * the left hand side of the assignment (assumed to be intended as column names).
  */
-List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets)
+List *
+handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters)
 {
 	/*
 	 * Construct a ResTarget and append it to the list.
 	 */
-	ColumnRef *ref;
-	Value *field;
-	char *name;
-	int attrno;
-	if (nodeTag(w_clause) == T_A_Expr)
+	ColumnRef  *ref;
+	Value	   *field;
+	char	   *name;
+	int			attrno;
+
+	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr *where_clause = (A_Expr *)w_clause;
 		ResTarget *res;
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+			if (is_sp_describe_undeclared_parameters)
+			{
+				is_supported_case_sp_describe_undeclared_parameters = false;
+				return extra_restargets;
+			}
 		}
 		ref = (ColumnRef *) where_clause->lexpr;
 		field = linitial(ref->fields);
@@ -689,7 +721,7 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 
 		return lappend(extra_restargets, res);
 	}
-	else if (nodeTag(w_clause) == T_BoolExpr)
+	else if (w_clause && nodeTag(w_clause) == T_BoolExpr)
 	{
 		BoolExpr *where_clause = (BoolExpr *)w_clause;
 		ListCell *lc;
@@ -705,9 +737,38 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 
 					if (nodeTag(xpr->lexpr) != T_ColumnRef)
 					{
-						ereport(WARNING,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+						xpr = (A_Expr *) arg;
+
+						if (nodeTag(xpr->lexpr) != T_ColumnRef)
+						{
+							if (is_sp_describe_undeclared_parameters)
+							{
+								is_supported_case_sp_describe_undeclared_parameters = false;
+								return extra_restargets;
+							}
+						}
+						ref = (ColumnRef *) xpr->lexpr;
+						field = linitial(ref->fields);
+						name = field->sval;
+						attrno = attnameAttNum(pstate->p_target_relation, name, false);
+						if (attrno == InvalidAttrNumber)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_COLUMN),
+									 errmsg("column \"%s\" of relation \"%s\" does not exist",
+											name,
+											RelationGetRelationName(pstate->p_target_relation))));
+						}
+						res = (ResTarget *) palloc(sizeof(ResTarget));
+						res->type = ref->type;
+						res->name = field->sval;
+						res->indirection = NIL; /* Unused for now */
+						res->val = (Node *) ref;	/* Store the ColumnRef
+													 * here if needed */
+						res->location = ref->location;
+
+						extra_restargets = lappend(extra_restargets, res);
+						break;
 					}
 					ref = (ColumnRef *) xpr->lexpr;
 					field = linitial(ref->fields);
@@ -731,7 +792,7 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 					extra_restargets = lappend(extra_restargets, res);
 					break;
 				case T_BoolExpr:
-					extra_restargets = handle_where_clause_restargets_left(pstate, (Node *) arg, extra_restargets);
+					extra_restargets = handle_where_clause_restargets_left(pstate, (Node *) arg, extra_restargets, is_sp_describe_undeclared_parameters);
 					break;
 				default:
 					break;
@@ -741,9 +802,8 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 	}
 	else
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		if (is_sp_describe_undeclared_parameters)
+			is_supported_case_sp_describe_undeclared_parameters = false;
 	}
 	return extra_restargets;
 }
@@ -752,22 +812,26 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
  * Returns a list of ResTargets constructed from the where clause provided, using
  * the right hand side of the assignment (assumed to be values/parameters).
  */
-List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets)
+List *
+handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters)
 {
 	/*
 	 * Construct a ResTarget and append it to the list.
 	 */
-	ColumnRef *ref;
-	Value *field;
-	ResTarget *res;
-	if (nodeTag(w_clause) == T_A_Expr)
+	ColumnRef  *ref;
+	Value	   *field;
+	ResTarget  *res;
+
+	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr *where_clause = (A_Expr *)w_clause;
 		if (nodeTag(where_clause->rexpr) != T_ColumnRef)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+			if (is_sp_describe_undeclared_parameters)
+			{
+				is_supported_case_sp_describe_undeclared_parameters = false;
+				return extra_restargets;
+			}
 		}
 		ref = (ColumnRef *) where_clause->rexpr;
 		field = linitial(ref->fields);
@@ -780,7 +844,7 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 
 		return lappend(extra_restargets, res);
 	}
-	else if (nodeTag(w_clause) == T_BoolExpr)
+	else if (w_clause && nodeTag(w_clause) == T_BoolExpr)
 	{
 		BoolExpr *where_clause = (BoolExpr *)w_clause;
 		ListCell *lc;
@@ -795,9 +859,28 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 
 					if (nodeTag(xpr->rexpr) != T_ColumnRef)
 					{
-						ereport(WARNING,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+						xpr = (A_Expr *) arg;
+
+						if (nodeTag(xpr->rexpr) != T_ColumnRef)
+						{
+							if (is_sp_describe_undeclared_parameters)
+							{
+								is_supported_case_sp_describe_undeclared_parameters = false;
+								return extra_restargets;
+							}
+						}
+						ref = (ColumnRef *) xpr->rexpr;
+						field = linitial(ref->fields);
+						res = (ResTarget *) palloc(sizeof(ResTarget));
+						res->type = ref->type;
+						res->name = field->sval;
+						res->indirection = NIL; /* Unused for now */
+						res->val = (Node *) ref;	/* Store the ColumnRef
+													 * here if needed */
+						res->location = ref->location;
+
+						extra_restargets = lappend(extra_restargets, res);
+						break;
 					}
 					ref = (ColumnRef *) xpr->rexpr;
 					field = linitial(ref->fields);
@@ -811,7 +894,7 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 					extra_restargets = lappend(extra_restargets, res);
 					break;
 				case T_BoolExpr:
-					extra_restargets = handle_where_clause_restargets_right(pstate, (Node *) arg, extra_restargets);
+					extra_restargets = handle_where_clause_restargets_right(pstate, (Node *) arg, extra_restargets, is_sp_describe_undeclared_parameters);
 					break;
 				default:
 					break;
@@ -821,9 +904,8 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 	}
 	else
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		if (is_sp_describe_undeclared_parameters)
+			is_supported_case_sp_describe_undeclared_parameters = false;
 	}
 	return extra_restargets;
 }
@@ -848,674 +930,718 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
   	InlineCodeBlockArgs *args;
 	UndeclaredParams *undeclaredparams;
 
-	if (SRF_IS_FIRSTCALL())
+	PG_TRY();
 	{
-		/*
-		 * In the first call of the SRF, we do all the processing, and store the
-		 * result and state information in a UndeclaredParams struct in
-		 * funcctx->user_fctx
-		 */
-		MemoryContext oldcontext;
-		char *batch;
-		char *parsedbatch;
-		char *params;
-		int sql_dialect_value_old;
-
-		SelectStmt *select_stmt;
-		List *values_list;
-		ListCell *lc;
-		int numresults = 0;
-		int num_target_attnums = 0;
-		RawStmt    *parsetree;
-		InsertStmt *insert_stmt = NULL;
-		UpdateStmt *update_stmt = NULL;
-		DeleteStmt *delete_stmt = NULL;
-		RangeVar *relation;
-		Oid relid;
-		Relation r;
-		List *target_attnums = NIL;
-		List *extra_restargets = NIL;
-		ParseState *pstate;
-		int relname_len;
-		List *cols;
-		int target_attnum_i;
-		int target_attnums_len;
-
-		funcctx = SRF_FIRSTCALL_INIT();
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
-		get_call_result_type(fcinfo, NULL, &tupdesc);
-		attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		funcctx->attinmeta = attinmeta;
-
-		undeclaredparams = (UndeclaredParams *) palloc0(sizeof(UndeclaredParams));
-		funcctx->user_fctx = (void *) undeclaredparams;
-
-		batch = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-		params = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
-
-		/* First, pass the batch to the ANTLR parser */
-		result = antlr_parser_cpp(batch);
-		if (!result.success)
-			report_antlr_error(result);
-		/*
-		 * For the currently supported use case, the parse result should contain
-		 * two statements, INIT and EXECSQL. The EXECSQL statement should be an
-		 * INSERT statement with VALUES clause.
-		 */
-		if (!pltsql_parse_result ||
-			list_length(pltsql_parse_result->body) != 2 ||
-			((PLtsql_stmt *)lsecond(pltsql_parse_result->body))->cmd_type != PLTSQL_STMT_EXECSQL)
+		if (SRF_IS_FIRSTCALL())
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-		}
-		parsedbatch = ((PLtsql_stmt_execsql *)lsecond(pltsql_parse_result->body))->sqlstmt->query;
+			/*
+			 * In the first call of the SRF, we do all the processing, and store
+			 * the result and state information in a UndeclaredParams struct in
+			 * funcctx->user_fctx
+			 */
+			MemoryContext oldcontext;
+			char	   *batch;
+			char	   *parsedbatch;
+			char	   *params;
+			int			sql_dialect_value_old;
 
-		args = create_args(0);
-		if (params)
-			read_param_def(args, params);
+			SelectStmt *select_stmt;
+			List	   *values_list = NIL;
+			ListCell   *lc;
+			int			numresults = 0;
+			int			num_target_attnums = 0;
+			RawStmt    *parsetree;
+			InsertStmt *insert_stmt = NULL;
+			UpdateStmt *update_stmt = NULL;
+			DeleteStmt *delete_stmt = NULL;
+			RangeVar   *relation;
+			Oid			relid;
+			Relation	r;
+			List	   *target_attnums = NIL;
+			List	   *extra_restargets = NIL;
+			ParseState *pstate;
+			int			relname_len;
+			List	   *cols;
+			int			target_attnum_i;
+			int			target_attnums_len;
+			NodeTag		node_type = T_Invalid;
 
-		/* Next, pass the ANTLR-parsed batch to the backend parser */
-		sql_dialect_value_old = sql_dialect;
-		sql_dialect = SQL_DIALECT_TSQL;
-		raw_parsetree_list = pg_parse_query(parsedbatch);
-		if (list_length(raw_parsetree_list) != 1)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-		}
-		list_item = list_head(raw_parsetree_list);
-		parsetree = lfirst_node(RawStmt, list_item);
 
-		/*
-		 * Analyze the parsed statement to suggest types for undeclared
-		 * parameters
-		 */
-		switch(nodeTag(parsetree->stmt))
-		{
-			case T_InsertStmt:
-				rewrite_object_refs(parsetree->stmt);
-				sql_dialect = sql_dialect_value_old;
-				insert_stmt = (InsertStmt *)parsetree->stmt;
-				relation = insert_stmt->relation;
-				relid = RangeVarGetRelid(relation, NoLock, false);
-				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc0(sizeof(ParseState));
-				pstate->p_target_relation = r;
-				cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
-				break;
-			case T_UpdateStmt:
-				rewrite_object_refs(parsetree->stmt);
-				sql_dialect = sql_dialect_value_old;
-				update_stmt = (UpdateStmt *)parsetree->stmt;
-				relation = update_stmt->relation;
-				relid = RangeVarGetRelid(relation, NoLock, false);
-				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc0(sizeof(ParseState));
-				pstate->p_target_relation = r;
-				cols = list_copy(update_stmt->targetList);
+			funcctx = SRF_FIRSTCALL_INIT();
+			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-				/*
-				 * Add attnums to cols based on targetList
-				 */
-				foreach(lc, cols)
-				{
-					ResTarget  *col = (ResTarget *) lfirst(lc);
-					char	   *name = col->name;
-					int			attrno;
+			get_call_result_type(fcinfo, NULL, &tupdesc);
+			attinmeta = TupleDescGetAttInMetadata(tupdesc);
+			funcctx->attinmeta = attinmeta;
 
-					attrno = attnameAttNum(pstate->p_target_relation, name, false);
-					if (attrno == InvalidAttrNumber)
-					{
-						ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" does not exist",
-								name,
-								RelationGetRelationName(pstate->p_target_relation))));
-					}
-					target_attnums = lappend_int(target_attnums, attrno);
-				}
-				target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums);
-				extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets);
+			undeclaredparams = (UndeclaredParams *) palloc0(sizeof(UndeclaredParams));
+			funcctx->user_fctx = (void *) undeclaredparams;
 
-				cols = list_concat_copy(cols, extra_restargets);
-				break;
-			case T_DeleteStmt:
-				rewrite_object_refs(parsetree->stmt);
-				sql_dialect = sql_dialect_value_old;
-				delete_stmt = (DeleteStmt *)parsetree->stmt;
-				relation = delete_stmt->relation;
-				relid = RangeVarGetRelid(relation, NoLock, false);
-				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc0(sizeof(ParseState));
-				pstate->p_target_relation = r;
-				cols = NIL;
+			batch = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+			params = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 
-				/*
-				 * Add attnums to cols based on targetList
-				 */
-				foreach(lc, cols)
-				{
-					ResTarget  *col = (ResTarget *) lfirst(lc);
-					char	   *name = col->name;
-					int			attrno;
-
-					attrno = attnameAttNum(pstate->p_target_relation, name, false);
-					if (attrno == InvalidAttrNumber)
-					{
-						ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" does not exist",
-								name,
-								RelationGetRelationName(pstate->p_target_relation))));
-					}
-					target_attnums = lappend_int(target_attnums, attrno);
-				}
-				target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums);
-				extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets);
-
-				cols = list_concat_copy(cols, extra_restargets);
-				break;
-			default:
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-				break;
-		}
-
-		undeclaredparams->tablename = (char *) palloc(NAMEDATALEN);
-		relname_len = strlen(relation->relname);
-		strncpy(undeclaredparams->tablename, relation->relname, NAMEDATALEN);
-		undeclaredparams->tablename[relname_len] = '\0';
-		undeclaredparams->schemaoid = RelationGetNamespace(r);
-		undeclaredparams->reloid = RelationGetRelid(r);
-		undeclaredparams->targetattnums = (int *) palloc(sizeof(int) * list_length(target_attnums));
-		undeclaredparams->targetcolnames = (char **) palloc(sizeof(char *) * list_length(target_attnums));
-
-		/* Record attnums and column names of the target table */
-		target_attnum_i = 0;
-		target_attnums_len = list_length(target_attnums);
-		while (target_attnum_i < target_attnums_len)
-		{
-			ListCell *lc;
-			ResTarget *col;
-			int colname_len;
-
-			lc = list_nth_cell(target_attnums, target_attnum_i);
-			undeclaredparams->targetattnums[num_target_attnums] = lfirst_int(lc);
-
-			col = (ResTarget *)list_nth(cols, target_attnum_i);
-			colname_len = strlen(col->name);
-			undeclaredparams->targetcolnames[num_target_attnums] = (char *) palloc(NAMEDATALEN);
-			strncpy(undeclaredparams->targetcolnames[num_target_attnums], col->name, NAMEDATALEN);
-			undeclaredparams->targetcolnames[num_target_attnums][colname_len] = '\0';
-
-			target_attnum_i += 1;
-			num_target_attnums += 1;
-		}
-
-		relation_close(r, AccessShareLock);
-		pfree(pstate);
-
-		/* Parse the list of parameters, and determine which and how many are undeclared. */
-		switch(nodeTag(parsetree->stmt))
-		{
-			case T_InsertStmt:
-				select_stmt = (SelectStmt *)insert_stmt->selectStmt;
-				values_list = select_stmt->valuesLists;
-				break;
-			case T_UpdateStmt:
-				/* 
-				 * In an UPDATE statement, we could have both SET and WHERE with undeclared parameters. 
-				 * That's targetList (SET ...) and whereClause (WHERE ...)
-				 */
-				values_list = list_make1(handle_where_clause_restargets_right(pstate, update_stmt->whereClause, update_stmt->targetList));
-				break;
-			case T_DeleteStmt:
-				values_list = list_make1(handle_where_clause_restargets_right(pstate, delete_stmt->whereClause, NIL));
-				break;
-			default:
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-				break;
-		}
-
-		if (list_length(values_list) > 1) {
-			ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-		}
-		foreach(lc, values_list)
-		{
-			List *sublist = lfirst(lc);
-			ListCell *sublc;
-			int numvalues = 0;
-			int numtotalvalues = list_length(sublist);
-			undeclaredparams->paramnames = (char **) palloc(sizeof(char *) * numtotalvalues);
-			undeclaredparams->paramindexes = (int *) palloc(sizeof(int) * numtotalvalues);
-			if (list_length(sublist) != num_target_attnums) {
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("Column name or number of supplied values does not match table definition.")));
-			}
-			foreach(sublc, sublist)
+			/* First, pass the batch to the ANTLR parser */
+			if (batch)
+				result = antlr_parser_cpp(batch);
+			else
 			{
-				ColumnRef *columnref = NULL;
-				ResTarget *res;
-				List *fields;
-				ListCell *fieldcell;
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("Procedure expects parameter '@tsql' of type 'nvarchar(max)'")));
+			}
+
+			if (!result.success)
+				report_antlr_error(result);
+
+			/*
+			 * For the currently supported use case, the parse result should
+			 * contain two statements, INIT and EXECSQL. The EXECSQL statement
+			 * should be an INSERT statement with VALUES clause.
+			 */
+			if (!pltsql_parse_result ||
+				list_length(pltsql_parse_result->body) != 2 ||
+				((PLtsql_stmt *) lsecond(pltsql_parse_result->body))->cmd_type != PLTSQL_STMT_EXECSQL)
+			{
+				is_supported_case_sp_describe_undeclared_parameters = false;
+			}
+			else
+			{
+				parsedbatch = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt->query;
+
+				args = create_args(0);
+				if (params)
+					read_param_def(args, params);
+
+				/* Next, pass the ANTLR-parsed batch to the backend parser */
+				sql_dialect_value_old = sql_dialect;
+				sql_dialect = SQL_DIALECT_TSQL;
+				raw_parsetree_list = pg_parse_query(parsedbatch);
+				is_supported_case_sp_describe_undeclared_parameters = list_length(raw_parsetree_list) != 1 ? false: true;
+				if (is_supported_case_sp_describe_undeclared_parameters)
+				{
+					list_item = list_head(raw_parsetree_list);
+					parsetree = lfirst_node(RawStmt, list_item);
+					node_type = nodeTag(parsetree->stmt);
+				}
+			}
+
+			/*
+			 * Analyze the parsed statement to suggest types for undeclared
+			 * parameters
+			 */
+			switch (node_type)
+			{
+				case T_InsertStmt:
+					rewrite_object_refs(parsetree->stmt);
+					sql_dialect = sql_dialect_value_old;
+					insert_stmt = (InsertStmt *) parsetree->stmt;
+					relation = insert_stmt->relation;
+					relid = RangeVarGetRelid(relation, NoLock, false);
+					r = relation_open(relid, AccessShareLock);
+					pstate = (ParseState *) palloc0(sizeof(ParseState));
+					pstate->p_target_relation = r;
+					cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
+					break;
+				case T_UpdateStmt:
+					rewrite_object_refs(parsetree->stmt);
+					sql_dialect = sql_dialect_value_old;
+					update_stmt = (UpdateStmt *) parsetree->stmt;
+					relation = update_stmt->relation;
+					relid = RangeVarGetRelid(relation, NoLock, false);
+					r = relation_open(relid, AccessShareLock);
+					pstate = (ParseState *) palloc0(sizeof(ParseState));
+					pstate->p_target_relation = r;
+					cols = list_copy(update_stmt->targetList);
+
+					/*
+					 * Add attnums to cols based on targetList
+					 */
+					foreach(lc, cols)
+					{
+						ResTarget  *col = (ResTarget *) lfirst(lc);
+						char	   *name = col->name;
+						int			attrno;
+
+						attrno = attnameAttNum(pstate->p_target_relation, name, false);
+						if (attrno == InvalidAttrNumber)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_COLUMN),
+									 errmsg("column \"%s\" of relation \"%s\" does not exist",
+											name,
+											RelationGetRelationName(pstate->p_target_relation))));
+						}
+						target_attnums = lappend_int(target_attnums, attrno);
+					}
+					target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums, true);
+					extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets, true);
+
+					cols = list_concat_copy(cols, extra_restargets);
+					break;
+				case T_DeleteStmt:
+					rewrite_object_refs(parsetree->stmt);
+					sql_dialect = sql_dialect_value_old;
+					delete_stmt = (DeleteStmt *) parsetree->stmt;
+					relation = delete_stmt->relation;
+					relid = RangeVarGetRelid(relation, NoLock, false);
+					r = relation_open(relid, AccessShareLock);
+					pstate = (ParseState *) palloc0(sizeof(ParseState));
+					pstate->p_target_relation = r;
+					cols = NIL;
+
+					/*
+					 * Add attnums to cols based on targetList
+					 */
+					foreach(lc, cols)
+					{
+						ResTarget  *col = (ResTarget *) lfirst(lc);
+						char	   *name = col->name;
+						int			attrno;
+
+						attrno = attnameAttNum(pstate->p_target_relation, name, false);
+						if (attrno == InvalidAttrNumber)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_COLUMN),
+									 errmsg("column \"%s\" of relation \"%s\" does not exist",
+											name,
+											RelationGetRelationName(pstate->p_target_relation))));
+						}
+						target_attnums = lappend_int(target_attnums, attrno);
+					}
+					target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums, true);
+					extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets, true);
+
+					cols = list_concat_copy(cols, extra_restargets);
+					break;
+				default:
+					is_supported_case_sp_describe_undeclared_parameters = false;
+					break;
+			}
+
+			if (is_supported_case_sp_describe_undeclared_parameters)
+			{
+				undeclaredparams->tablename = (char *) palloc(NAMEDATALEN);
+				relname_len = strlen(relation->relname);
+				strncpy(undeclaredparams->tablename, relation->relname, NAMEDATALEN);
+				undeclaredparams->tablename[relname_len] = '\0';
+				undeclaredparams->schemaoid = RelationGetNamespace(r);
+				undeclaredparams->reloid = RelationGetRelid(r);
+
+				undeclaredparams->targetattnums = (int *) palloc(sizeof(int) * list_length(target_attnums));
+				undeclaredparams->targetcolnames = (char **) palloc(sizeof(char *) * list_length(target_attnums));
+			
+
+				/* Record attnums and column names of the target table */
+				target_attnum_i = 0;
+				target_attnums_len = list_length(target_attnums);
+				while (target_attnum_i < target_attnums_len)
+				{
+					ListCell   *lc1;
+					ResTarget  *col;
+					int			colname_len;
+
+					lc1 = list_nth_cell(target_attnums, target_attnum_i);
+					undeclaredparams->targetattnums[num_target_attnums] = lfirst_int(lc1);
+
+					col = (ResTarget *) list_nth(cols, target_attnum_i);
+					colname_len = strlen(col->name);
+					undeclaredparams->targetcolnames[num_target_attnums] = (char *) palloc(NAMEDATALEN);
+					strncpy(undeclaredparams->targetcolnames[num_target_attnums], col->name, NAMEDATALEN);
+					undeclaredparams->targetcolnames[num_target_attnums][colname_len] = '\0';
+
+					target_attnum_i += 1;
+					num_target_attnums += 1;
+				}
+
+				relation_close(r, AccessShareLock);
+				pfree(pstate);
+
 				/*
-				 * Tack on WHERE clause for the same as above, for
-				 * UPDATE and DELETE statements.
+				 * Parse the list of parameters, and determine which and how many are
+				 * undeclared.
 				 */
 				switch(nodeTag(parsetree->stmt))
 				{
 					case T_InsertStmt:
-						columnref = lfirst(sublc);
+						select_stmt = (SelectStmt *) insert_stmt->selectStmt;
+						values_list = select_stmt->valuesLists;
 						break;
 					case T_UpdateStmt:
+
+						/*
+						 * In an UPDATE statement, we could have both SET and WHERE
+						 * with undeclared parameters. That's targetList (SET ...) and
+						 * whereClause (WHERE ...)
+						 */
+						values_list = list_make1(handle_where_clause_restargets_right(pstate, update_stmt->whereClause, update_stmt->targetList, true));
+						break;
 					case T_DeleteStmt:
-						res = lfirst(sublc);
-						if (nodeTag(res->val) != T_ColumnRef)
+						values_list = list_make1(handle_where_clause_restargets_right(pstate, delete_stmt->whereClause, NIL, true));
+						break;
+					default:
+						is_supported_case_sp_describe_undeclared_parameters = false;
+						break;
+				}
+
+				if (!(list_length(values_list) > 1) && is_supported_case_sp_describe_undeclared_parameters)
+				{
+					foreach(lc, values_list)
+					{
+						List	   *sublist = lfirst(lc);
+						ListCell   *sublc;
+						int			numvalues = 0;
+						int			numtotalvalues = list_length(sublist);
+
+						undeclaredparams->paramnames = (char **) palloc(sizeof(char *) * numtotalvalues);
+						undeclaredparams->paramindexes = (int *) palloc(sizeof(int) * numtotalvalues);
+						if (list_length(sublist) != num_target_attnums)
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+									errmsg("Column name or number of supplied values does not match table definition.")));
 						}
-						columnref = (ColumnRef *)res->val;
-						break;
-					default:
-						break;
-				}
-				fields = columnref->fields;
-				if (nodeTag(columnref) != T_ColumnRef && nodeTag(parsetree->stmt) != T_DeleteStmt)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-				}
-				
-				foreach(fieldcell, fields)
-				{
-					Value *field = lfirst(fieldcell);
-					/* Make sure it's a parameter reference */
-					if (field->val.str && field->val.str[0] == '@')
-					{
-						int i;
-						bool undeclared = true;
-						/* Make sure it is not declared in @params */
-						for (i = 0; i < args->numargs; ++i)
+						foreach(sublc, sublist)
 						{
-							if (args->argnames && args->argnames[i] &&
-								(strcmp(args->argnames[i], field->val.str) == 0))
+							ColumnRef  *columnref = NULL;
+							ResTarget  *res;
+							List	   *fields;
+							ListCell   *fieldcell;
+
+							if (!is_supported_case_sp_describe_undeclared_parameters)
+								break;
+
+							/*
+							 * Tack on WHERE clause for the same as above, for UPDATE and
+							 * DELETE statements.
+							 */
+							switch (nodeTag(parsetree->stmt))
 							{
-								undeclared = false;
+								case T_InsertStmt:
+									columnref = lfirst(sublc);
+									break;
+								case T_UpdateStmt:
+								case T_DeleteStmt:
+									res = lfirst(sublc);
+									if (nodeTag(res->val) != T_ColumnRef)
+									{
+										is_supported_case_sp_describe_undeclared_parameters = false;
+										break;
+									}
+									columnref = (ColumnRef *) res->val;
+									break;
+								default:
+									break;
+							}
+							fields = columnref->fields;
+							if (!(nodeTag(columnref) != T_ColumnRef && nodeTag(parsetree->stmt) != T_DeleteStmt))
+							{
+								foreach(fieldcell, fields)
+								{
+									String	   *field = lfirst(fieldcell);
+
+									/* Make sure it's a parameter reference */
+									if (field->sval && field->sval[0] == '@')
+									{
+										int			i;
+										bool		undeclared = true;
+
+										/* Make sure it is not declared in @params */
+										for (i = 0; i < args->numargs; ++i)
+										{
+											if (args->argnames && args->argnames[i] &&
+												(strcmp(args->argnames[i], field->sval) == 0))
+											{
+												undeclared = false;
+												break;
+											}
+										}
+										if (undeclared)
+										{
+											int			paramname_len = strlen(field->sval);
+
+											undeclaredparams->paramnames[numresults] = (char *) palloc(NAMEDATALEN);
+											strncpy(undeclaredparams->paramnames[numresults], field->sval, NAMEDATALEN);
+											undeclaredparams->paramnames[numresults][paramname_len] = '\0';
+											undeclaredparams->paramindexes[numresults] = numvalues;
+											numresults += 1;
+										}
+									}
+								}
+							}
+							else
+							{
+								is_supported_case_sp_describe_undeclared_parameters = false;
 								break;
 							}
-						}
-						if (undeclared)
-						{
-							int paramname_len = strlen(field->val.str);
-							undeclaredparams->paramnames[numresults] = (char *) palloc(NAMEDATALEN);
-							strncpy(undeclaredparams->paramnames[numresults], field->val.str, NAMEDATALEN);
-							undeclaredparams->paramnames[numresults][paramname_len] = '\0';
-							undeclaredparams->paramindexes[numresults] = numvalues;
-							numresults += 1;
+							numvalues += 1;
 						}
 					}
 				}
-				numvalues += 1;
+				else
+					is_supported_case_sp_describe_undeclared_parameters = false;
 			}
+
+			funcctx->max_calls = is_supported_case_sp_describe_undeclared_parameters ? numresults: 0;
+			MemoryContextSwitchTo(oldcontext);
 		}
 
-		funcctx->max_calls = numresults;
-		MemoryContextSwitchTo(oldcontext);
-	}
+		funcctx = SRF_PERCALL_SETUP();
+		call_cntr = funcctx->call_cntr;
+		max_calls = funcctx->max_calls;
+		attinmeta = funcctx->attinmeta;
+		undeclaredparams = funcctx->user_fctx;
 
-	funcctx = SRF_PERCALL_SETUP();
-	call_cntr = funcctx->call_cntr;
-	max_calls = funcctx->max_calls;
-	attinmeta = funcctx->attinmeta;
-	undeclaredparams = funcctx->user_fctx;
-
-	/* This is the main recursive work, to determine the appropriate parameter type for each parameter. */
-	if (call_cntr < max_calls)
-	{
-		char **values;
-		HeapTuple tuple;
-		Datum result;
-		int			col;
-		int			numresultcols = 24;
-		char	   *tempq =
-		"SELECT "
-		"CAST( 0 AS INT ) "		/* AS "parameter_ordinal"  -- Need to get
-								 * correct ordinal number in code. */
-		", CAST( NULL AS sysname ) "	/* AS "name"  -- Need to get correct
-										 * parameter name in code. */
-		", CASE T2.name COLLATE sys.database_default "
-		"WHEN \'bigint\' THEN 127 "
-		"WHEN \'binary\' THEN 173 "
-		"WHEN \'bit\' THEN 104 "
-		"WHEN \'char\' THEN 175 "
-		"WHEN \'date\' THEN 40 "
-		"WHEN \'datetime\' THEN 61 "
-		"WHEN \'datetime2\' THEN 42 "
-		"WHEN \'datetimeoffset\' THEN 43 "
-		"WHEN \'decimal\' THEN 106 "
-		"WHEN \'float\' THEN 62 "
-		"WHEN \'image\' THEN 34 "
-		"WHEN \'int\' THEN 56 "
-		"WHEN \'money\' THEN 60 "
-		"WHEN \'nchar\' THEN 239 "
-		"WHEN \'ntext\' THEN 99 "
-		"WHEN \'numeric\' THEN 108 "
-		"WHEN \'nvarchar\' THEN 231 "
-		"WHEN \'real\' THEN 59 "
-		"WHEN \'smalldatetime\' THEN 58 "
-		"WHEN \'smallint\' THEN 52 "
-		"WHEN \'smallmoney\' THEN 122 "
-		"WHEN \'text\' THEN 35 "
-		"WHEN \'time\' THEN 41 "
-		"WHEN \'tinyint\' THEN 48 "
-		"WHEN \'uniqueidentifier\' THEN 36 "
-		"WHEN \'varbinary\' THEN 165 "
-		"WHEN \'varchar\' THEN 167 "
-		"WHEN \'xml\' THEN 241 "
-		"ELSE CASE "
-			"WHEN t.typbasetype = 0 THEN "
-				"CAST(a.atttypid AS int) "
-			"ELSE "
-				"CAST(t.typbasetype AS int) "
-			"END " 
-		"END "					/* AS "suggested_system_type_id" */
-		", CASE T2.name COLLATE sys.database_default "
-		"WHEN \'decimal\' THEN \'decimal(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_precision_helper(T2.name, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_precision_helper(T2.name, t.typtypmod) "
-			"END  AS sys.VARCHAR(10) ) + \',\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
-				"ELSE "
-					"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-			"END  AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN \'numeric\' THEN \'numeric(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_precision_helper(T2.name, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_precision_helper(T2.name, t.typtypmod) "
-			"END  AS sys.VARCHAR(10) ) + \',\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
-				"ELSE "
-					"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-			"END  AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN \'char\' THEN \'char(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN \'nchar\' THEN \'nchar(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END /2 AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN \'binary\' THEN \'binary(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN \'datetime2\' THEN \'datetime2(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
-				"ELSE "
-					"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-			"END  AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN \'datetimeoffset\' THEN \'datetimeoffset(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
-				"ELSE "
-					"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-			"END  AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN \'time\' THEN \'time(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
-				"ELSE "
-					"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-			"END  AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN \'varchar\' THEN "
-		"CASE WHEN CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  = -1 THEN \'varchar(max)\' "
-		"ELSE \'varchar(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  AS sys.VARCHAR(10) ) + \')\' "
-		"END "
-		"WHEN \'nvarchar\' THEN "
-		"CASE WHEN CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  = -1 THEN \'nvarchar(max)\' "
-		"ELSE \'nvarchar(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END /2 AS sys.VARCHAR(10) ) + \')\' "
-		"END "
-		"WHEN \'varbinary\' THEN "
-		"CASE WHEN CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  = -1 THEN \'varbinary(max)\' "
-		"ELSE \'varbinary(\' + CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  AS sys.VARCHAR(10) ) + \')\' "
-		"END "
-		"ELSE T2.name "
-		"END "					/* AS "suggested_system_type_name" */
-		", CASE T2.name COLLATE sys.database_default "
-		"WHEN \'image\' THEN -1 "
-		"WHEN \'ntext\' THEN -1 "
-		"WHEN \'text\' THEN -1 "
-		"ELSE CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  "
-		"END  "					/* AS "suggested_max_length" */
-		", CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_precision_helper(T2.name, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_precision_helper(T2.name, t.typtypmod) "
-			"END "		/* AS "suggested_precision" */
-		", CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
-				"ELSE "
-					"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-			"END "			/* AS "suggested_scale" */
-		", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS INT ) ELSE T2.user_type_id END "	/* AS
-																											 * "suggested_user_type_id" */
-		", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) ELSE DB_NAME() END " /* AS
-																										 * "suggested_user_type_database" */
-		", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) ELSE SCHEMA_NAME( T2.schema_id ) END "	/* AS
-																															 * "suggested_user_type_schema" */
-		", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) ELSE T2.name END "	/* AS
-																										 * "suggested_user_type_name" */
-		", CAST( NULL AS NVARCHAR(4000) ) " /* AS
-											 * "suggested_assembly_qualified_type_name" */
-		", CAST( NULL AS INT )  "				/* AS "suggested_xml_collection_id" */
-		", CAST( NULL AS sysname ) "	/* AS
-										 * "suggested_xml_collection_database" */
-		", CAST( NULL AS sysname ) "	/* AS
-										 * "suggested_xml_collection_schema" */
-		", CAST( NULL AS sysname ) "	/* AS "suggested_xml_collection_name" */
-		", CAST(0 AS sys.bit) "	/* AS "suggested_is_xml_document" */
-		", CAST( 0 AS BIT ) "	/* AS "suggested_is_case_sensitive" */
-		", CAST( 0 AS BIT ) "	/* AS "suggested_is_fixed_length_clr_type" */
-		", CAST( 1 AS BIT ) "	/* AS "suggested_is_input" */
-		", CAST( 0 AS BIT ) "	/* AS "suggested_is_output" */
-		", CAST( NULL AS sysname ) "	/* AS "formal_parameter_name" */
-		", CASE T2.name COLLATE sys.database_default "
-		"WHEN \'tinyint\' THEN 38 "
-		"WHEN \'smallint\' THEN 38 "
-		"WHEN \'int\' THEN 38 "
-		"WHEN \'bigint\' THEN 38 "
-		"WHEN \'float\' THEN 109 " 
-		"WHEN \'real\' THEN 109 "
-		"WHEN \'smallmoney\' THEN 110 "
-		"WHEN \'money\' THEN 110 "
-		"WHEN \'smalldatetime\' THEN 111 "
-		"WHEN \'datetime\' THEN 111 "
-		"WHEN \'binary\' THEN 173 "
-		"WHEN \'bit\' THEN 104 "
-		"WHEN \'char\' THEN 175 "
-		"WHEN \'date\' THEN 40 "
-		"WHEN \'datetime2\' THEN 42 "
-		"WHEN \'datetimeoffset\' THEN 43 "
-		"WHEN \'decimal\' THEN 106 "
-		"WHEN \'image\' THEN 34 "
-		"WHEN \'nchar\' THEN 239 "
-		"WHEN \'ntext\' THEN 99 "
-		"WHEN \'numeric\' THEN 108 "
-		"WHEN \'nvarchar\' THEN 231 "
-		"WHEN \'text\' THEN 35 "
-		"WHEN \'time\' THEN 41 "
-		"WHEN \'uniqueidentifier\' THEN 36 "
-		"WHEN \'varbinary\' THEN 165 "
-		"WHEN \'varchar\' THEN 167 "
-		"WHEN \'xml\' THEN 241 "
-		"ELSE CASE "
-				"WHEN t.typbasetype = 0 THEN " 
+		/*
+		 * This is the main recursive work, to determine the appropriate parameter
+		 * type for each parameter.
+		 */
+		if (call_cntr < max_calls)
+		{
+			char	  **values;
+			HeapTuple	tuple;
+			Datum result;
+			int			col;
+			int			numresultcols = 24;
+			char	   *tempq =
+			"SELECT "
+			"CAST( 0 AS INT ) "		/* AS "parameter_ordinal"  -- Need to get
+									* correct ordinal number in code. */
+			", CAST( NULL AS sysname ) "	/* AS "name"  -- Need to get correct
+											* parameter name in code. */
+			", CASE T2.name COLLATE sys.database_default "
+			"WHEN \'bigint\' THEN 127 "
+			"WHEN \'binary\' THEN 173 "
+			"WHEN \'bit\' THEN 104 "
+			"WHEN \'char\' THEN 175 "
+			"WHEN \'date\' THEN 40 "
+			"WHEN \'datetime\' THEN 61 "
+			"WHEN \'datetime2\' THEN 42 "
+			"WHEN \'datetimeoffset\' THEN 43 "
+			"WHEN \'decimal\' THEN 106 "
+			"WHEN \'float\' THEN 62 "
+			"WHEN \'image\' THEN 34 "
+			"WHEN \'int\' THEN 56 "
+			"WHEN \'money\' THEN 60 "
+			"WHEN \'nchar\' THEN 239 "
+			"WHEN \'ntext\' THEN 99 "
+			"WHEN \'numeric\' THEN 108 "
+			"WHEN \'nvarchar\' THEN 231 "
+			"WHEN \'real\' THEN 59 "
+			"WHEN \'smalldatetime\' THEN 58 "
+			"WHEN \'smallint\' THEN 52 "
+			"WHEN \'smallmoney\' THEN 122 "
+			"WHEN \'text\' THEN 35 "
+			"WHEN \'time\' THEN 41 "
+			"WHEN \'tinyint\' THEN 48 "
+			"WHEN \'uniqueidentifier\' THEN 36 "
+			"WHEN \'varbinary\' THEN 165 "
+			"WHEN \'varchar\' THEN 167 "
+			"WHEN \'xml\' THEN 241 "
+			"ELSE CASE "
+				"WHEN t.typbasetype = 0 THEN "
 					"CAST(a.atttypid AS int) "
 				"ELSE "
 					"CAST(t.typbasetype AS int) "
-			"END " 
-		"END "					/* AS "suggested_tds_type_id" */
-		", CASE T2.name COLLATE sys.database_default "
-		"WHEN \'nvarchar\' THEN "
+				"END " 
+			"END "					/* AS "suggested_system_type_id" */
+			", CASE T2.name COLLATE sys.database_default "
+			"WHEN \'decimal\' THEN \'decimal(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_precision_helper(T2.name, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_precision_helper(T2.name, t.typtypmod) "
+				"END  AS sys.VARCHAR(10) ) + \',\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
+					"ELSE "
+						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
+				"END  AS sys.VARCHAR(10) ) + \')\' "
+			"WHEN \'numeric\' THEN \'numeric(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_precision_helper(T2.name, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_precision_helper(T2.name, t.typtypmod) "
+				"END  AS sys.VARCHAR(10) ) + \',\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
+					"ELSE "
+						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
+				"END  AS sys.VARCHAR(10) ) + \')\' "
+			"WHEN \'char\' THEN \'char(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  AS sys.VARCHAR(10) ) + \')\' "
+			"WHEN \'nchar\' THEN \'nchar(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END /2 AS sys.VARCHAR(10) ) + \')\' "
+			"WHEN \'binary\' THEN \'binary(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  AS sys.VARCHAR(10) ) + \')\' "
+			"WHEN \'datetime2\' THEN \'datetime2(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
+					"ELSE "
+						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
+				"END  AS sys.VARCHAR(10) ) + \')\' "
+			"WHEN \'datetimeoffset\' THEN \'datetimeoffset(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
+					"ELSE "
+						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
+				"END  AS sys.VARCHAR(10) ) + \')\' "
+			"WHEN \'time\' THEN \'time(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
+					"ELSE "
+						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
+				"END  AS sys.VARCHAR(10) ) + \')\' "
+			"WHEN \'varchar\' THEN "
 			"CASE WHEN CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  = -1 THEN 65535 "
-			"ELSE CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  = -1 THEN \'varchar(max)\' "
+			"ELSE \'varchar(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  AS sys.VARCHAR(10) ) + \')\' "
 			"END "
-		"WHEN \'varbinary\' THEN "
+			"WHEN \'nvarchar\' THEN "
 			"CASE WHEN CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  = -1 THEN 65535 "
-			"ELSE CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  = -1 THEN \'nvarchar(max)\' "
+			"ELSE \'nvarchar(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END /2 AS sys.VARCHAR(10) ) + \')\' "
 			"END "
-		"WHEN \'varchar\' THEN "
+			"WHEN \'varbinary\' THEN "
 			"CASE WHEN CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  = -1 THEN 65535 "
-			"ELSE CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  = -1 THEN \'varbinary(max)\' "
+			"ELSE \'varbinary(\' + CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  AS sys.VARCHAR(10) ) + \')\' "
 			"END "
-		"WHEN \'decimal\' THEN 17 "
-		"WHEN \'numeric\' THEN 17 "
-		"WHEN \'xml\' THEN 8100 "
-		"WHEN \'image\' THEN 2147483647 "
-		"WHEN \'text\' THEN 2147483647 "
-		"WHEN \'ntext\' THEN 2147483646 "
-		"ELSE CAST( CASE "
-				"WHEN a.atttypmod != -1 THEN "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
-				"ELSE "
-					"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-			"END  AS INT ) "
-		"END "					/* AS "suggested_tds_length" */
-		"FROM pg_attribute AS a "
-		"JOIN sys.types AS T2 ON a.atttypid = T2.user_type_id "
-		"JOIN pg_type AS t ON T2.user_type_id = t.oid "
-		", sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name "
-        "WHERE a.attrelid = %d "
-        "AND T2.system_type_id = T2.user_type_id "
-		"AND a.attname = \'%s\' COLLATE sys.database_default ";
+			"ELSE T2.name "
+			"END "					/* AS "suggested_system_type_name" */
+			", CASE T2.name COLLATE sys.database_default "
+			"WHEN \'image\' THEN -1 "
+			"WHEN \'ntext\' THEN -1 "
+			"WHEN \'text\' THEN -1 "
+			"ELSE CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  "
+			"END  "					/* AS "suggested_max_length" */
+			", CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_precision_helper(T2.name, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_precision_helper(T2.name, t.typtypmod) "
+				"END "		/* AS "suggested_precision" */
+			", CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
+					"ELSE "
+						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
+				"END "			/* AS "suggested_scale" */
+			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS INT ) ELSE T2.user_type_id END "	/* AS
+																												* "suggested_user_type_id" */
+			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) ELSE DB_NAME() END " /* AS
+																											* "suggested_user_type_database" */
+			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) ELSE SCHEMA_NAME( T2.schema_id ) END "	/* AS
+																																* "suggested_user_type_schema" */
+			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) ELSE T2.name END "	/* AS
+																											* "suggested_user_type_name" */
+			", CAST( NULL AS NVARCHAR(4000) ) " /* AS
+												* "suggested_assembly_qualified_type_name" */
+			", CAST( NULL AS INT )  "				/* AS "suggested_xml_collection_id", equivalent to sys.columns.xml_collection_id */
+			", CAST( NULL AS sysname ) "	/* AS
+											* "suggested_xml_collection_database" */
+			", CAST( NULL AS sysname ) "	/* AS
+											* "suggested_xml_collection_schema" */
+			", CAST( NULL AS sysname ) "	/* AS "suggested_xml_collection_name" */
+			", CAST(0 AS sys.bit) "	/* AS "suggested_is_xml_document", equivalent to sys.columns.is_xml_document */
+			", CAST( 0 AS BIT ) "	/* AS "suggested_is_case_sensitive" */
+			", CAST( 0 AS BIT ) "	/* AS "suggested_is_fixed_length_clr_type" */
+			", CAST( 1 AS BIT ) "	/* AS "suggested_is_input" */
+			", CAST( 0 AS BIT ) "	/* AS "suggested_is_output" */
+			", CAST( NULL AS sysname ) "	/* AS "formal_parameter_name" */
+			", CASE T2.name COLLATE sys.database_default "
+			"WHEN \'tinyint\' THEN 38 "
+			"WHEN \'smallint\' THEN 38 "
+			"WHEN \'int\' THEN 38 "
+			"WHEN \'bigint\' THEN 38 "
+			"WHEN \'float\' THEN 109 " 
+			"WHEN \'real\' THEN 109 "
+			"WHEN \'smallmoney\' THEN 110 "
+			"WHEN \'money\' THEN 110 "
+			"WHEN \'smalldatetime\' THEN 111 "
+			"WHEN \'datetime\' THEN 111 "
+			"WHEN \'binary\' THEN 173 "
+			"WHEN \'bit\' THEN 104 "
+			"WHEN \'char\' THEN 175 "
+			"WHEN \'date\' THEN 40 "
+			"WHEN \'datetime2\' THEN 42 "
+			"WHEN \'datetimeoffset\' THEN 43 "
+			"WHEN \'decimal\' THEN 106 "
+			"WHEN \'image\' THEN 34 "
+			"WHEN \'nchar\' THEN 239 "
+			"WHEN \'ntext\' THEN 99 "
+			"WHEN \'numeric\' THEN 108 "
+			"WHEN \'nvarchar\' THEN 231 "
+			"WHEN \'text\' THEN 35 "
+			"WHEN \'time\' THEN 41 "
+			"WHEN \'uniqueidentifier\' THEN 36 "
+			"WHEN \'varbinary\' THEN 165 "
+			"WHEN \'varchar\' THEN 167 "
+			"WHEN \'xml\' THEN 241 "
+			"ELSE CASE "
+					"WHEN t.typbasetype = 0 THEN " 
+						"CAST(a.atttypid AS int) "
+					"ELSE "
+						"CAST(t.typbasetype AS int) "
+				"END " 
+			"END "					/* AS "suggested_tds_type_id" */
+			", CASE T2.name COLLATE sys.database_default "
+			"WHEN \'nvarchar\' THEN "
+				"CASE WHEN CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  = -1 THEN 65535 "
+				"ELSE CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  "
+				"END "
+			"WHEN \'varbinary\' THEN "
+				"CASE WHEN CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  = -1 THEN 65535 "
+				"ELSE CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  "
+				"END "
+			"WHEN \'varchar\' THEN "
+				"CASE WHEN CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  = -1 THEN 65535 "
+				"ELSE CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  "
+				"END "
+			"WHEN \'decimal\' THEN 17 "
+			"WHEN \'numeric\' THEN 17 "
+			"WHEN \'xml\' THEN 8100 "
+			"WHEN \'image\' THEN 2147483647 "
+			"WHEN \'text\' THEN 2147483647 "
+			"WHEN \'ntext\' THEN 2147483646 "
+			"ELSE CAST( CASE "
+					"WHEN a.atttypmod != -1 THEN "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
+					"ELSE "
+						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
+				"END  AS INT ) "
+			"END "					/* AS "suggested_tds_length" */
+			"FROM pg_attribute AS a "
+			"JOIN sys.types AS T2 ON a.atttypid = T2.user_type_id "
+			"JOIN pg_type AS t ON T2.user_type_id = t.oid "
+			", sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name "
+			"WHERE a.attrelid = %d "
+			"AND T2.system_type_id = T2.user_type_id "
+			"AND a.attname = \'%s\' COLLATE sys.database_default ";
 
-        char       *query = psprintf(tempq,
-                                     undeclaredparams->reloid,
-                                     undeclaredparams->targetcolnames[undeclaredparams->paramindexes[call_cntr]]);
+			char       *query = psprintf(tempq,
+										undeclaredparams->reloid,
+										undeclaredparams->targetcolnames[undeclaredparams->paramindexes[call_cntr]]);
 
+			int			rc = SPI_execute(query, true, 1);
 
-		int rc = SPI_execute(query, true, 1);
-		if (rc != SPI_OK_SELECT)
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("SPI_execute failed: %s", SPI_result_code_string(rc))));
-		if (SPI_processed == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("SPI_execute returned no rows: %s", query)));
+			if (rc != SPI_OK_SELECT)
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("SPI_execute failed: %s", SPI_result_code_string(rc))));
+			if (SPI_processed == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("SPI_execute returned no rows: %s", query)));
 
-		values = (char **) palloc(numresultcols * sizeof(char *));
+			values = (char **) palloc(numresultcols * sizeof(char *));
 
-		/* This sets the parameter ordinal attribute correctly, since the above query can't infer that information */
-		values[0] = psprintf("%d", call_cntr + 1);
-		/* Then, pull the appropriate parameter name from the data type */
-		values[1] = undeclaredparams->paramnames[call_cntr];
-		for (col = 2; col < numresultcols; col++)
-		{
-			values[col] = SPI_getvalue(SPI_tuptable->vals[0],
-									   SPI_tuptable->tupdesc, col+1);
+			/*
+			 * This sets the parameter ordinal attribute correctly, since the
+			 * above query can't infer that information
+			 */
+			values[0] = psprintf("%d", call_cntr + 1);
+			/* Then, pull the appropriate parameter name from the data type */
+			values[1] = undeclaredparams->paramnames[call_cntr];
+			for (col = 2; col < numresultcols; col++)
+			{
+				values[col] = SPI_getvalue(SPI_tuptable->vals[0],
+										SPI_tuptable->tupdesc, col + 1);
+			}
+
+			tuple = BuildTupleFromCStrings(attinmeta, values);
+			result = HeapTupleGetDatum(tuple);
+
+			SPI_freetuptable(SPI_tuptable);
+			SRF_RETURN_NEXT(funcctx, result);
 		}
-
-		tuple = BuildTupleFromCStrings(attinmeta, values);
-		result = HeapTupleGetDatum(tuple);
-		SPI_freetuptable(SPI_tuptable);
-		SRF_RETURN_NEXT(funcctx, result);
+		else
+		{
+			/* Set the value again so that it is not left as false */
+			is_supported_case_sp_describe_undeclared_parameters = true;
+			SRF_RETURN_DONE(funcctx);
+		}
 	}
-	else
+	PG_FINALLY();
 	{
-		SRF_RETURN_DONE(funcctx);
+		is_supported_case_sp_describe_undeclared_parameters = true;
+		PG_RE_THROW();
 	}
+	PG_END_TRY();
 }
 
 /*
