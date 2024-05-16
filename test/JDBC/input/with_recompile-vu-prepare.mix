@@ -107,6 +107,44 @@ select * from tb_recomp_61 where c61 = @p  -- parametrized
 select * from tb_recomp_61 where c61 = 1   -- non-parametrized
 go
 
+insert tb_recomp_11 
+select *, 0 from generate_series(1,1000)
+go
+insert tb_recomp_12
+select * from tb_recomp_11
+go
+insert tb_recomp_13
+select * from tb_recomp_11
+go
+insert tb_recomp_21
+select * from tb_recomp_11
+go
+insert tb_recomp_22
+select * from tb_recomp_11
+go
+insert tb_recomp_23
+select * from tb_recomp_11
+go
+insert tb_recomp_31
+select * from tb_recomp_11
+go
+insert tb_recomp_32
+select * from tb_recomp_11
+go
+insert tb_recomp_33
+select * from tb_recomp_11
+go
+insert tb_recomp_41
+select * from tb_recomp_11
+go
+insert tb_recomp_51
+select * from tb_recomp_11
+go
+insert tb_recomp_61
+select * from tb_recomp_11
+go
+
+
 -- psql
 analyze master_dbo.tb_recomp_11
 go
