@@ -163,16 +163,18 @@ ignore#!#BABEL-621-before-14_13-vu-verify
 ignore#!#BABEL-621-before-14_13-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 14_12 or 15_7 or 16_3 release
-BABEL-3614-before-16_3-or-15_7-or-14_12-vu-prepare
-BABEL-3614-before-16_3-or-15_7-or-14_12-vu-verify
-test_conv_string_to_datetime2-before-16_3-or-15_7-or-14_12-vu-prepare
-test_conv_string_to_datetime2-before-16_3-or-15_7-or-14_12-vu-verify
-test_conv_string_to_datetime2-before-16_3-or-15_7-or-14_12-vu-cleanup
-test_conv_string_to_datetimeoffset-before-16_3-or-15_7-or-14_12-vu-prepare
-test_conv_string_to_datetimeoffset-before-16_3-or-15_7-or-14_12-vu-verify
-test_conv_string_to_datetimeoffset-before-16_3-or-15_7-or-14_12-vu-cleanup
-TestDatetime-numeric-dateaddfunction-before-16_3-or-15_7-or-14_12-vu-prepare
-TestDatetime-numeric-dateaddfunction-before-16_3-or-15_7-or-14_12-vu-verify
+ignore#!#BABEL-3614-before-16_3-vu-prepare
+ignore#!#BABEL-3614-before-16_3-vu-verify
+ignore#!#BABEL-3486-before-16_3-vu-prepare
+ignore#!#BABEL-3486-before-16_3-vu-verify
+ignore#!#test_conv_string_to_datetime2-before-16_3-vu-prepare
+ignore#!#test_conv_string_to_datetime2-before-16_3-vu-verify
+ignore#!#test_conv_string_to_datetime2-before-16_3-vu-cleanup
+ignore#!#test_conv_string_to_datetimeoffset-before-16_3-vu-prepare
+ignore#!#test_conv_string_to_datetimeoffset-before-16_3-vu-verify
+ignore#!#test_conv_string_to_datetimeoffset-before-16_3-vu-cleanup
+ignore#!#TestDatetime-numeric-dateaddfunction-before-16_3-vu-prepare
+ignore#!#TestDatetime-numeric-dateaddfunction-before-16_3-vu-verify
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
