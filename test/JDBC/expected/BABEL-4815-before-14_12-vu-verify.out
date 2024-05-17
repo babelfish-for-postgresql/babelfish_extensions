@@ -279,7 +279,7 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, g) > a)
+        Filter: ((sys.dateadd('day'::text COLLATE "default", '-5'::integer, g))::sql_variant > (a)::sql_variant)
 ~~END~~
 
 
@@ -292,7 +292,7 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, h) > a)
+        Filter: ((sys.dateadd('day'::text COLLATE "default", '-5'::integer, h))::sql_variant > (a)::sql_variant)
 ~~END~~
 
 
@@ -331,7 +331,7 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (datediff('day'::text COLLATE "default", c, (a)::datetime2) > 5)
+        Filter: (datediff('day'::text COLLATE "default", c, (a)::datetime2(6) without time zone) > 5)
 ~~END~~
 
 
