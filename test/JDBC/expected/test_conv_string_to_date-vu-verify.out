@@ -938,6 +938,72 @@ SET DATEFORMAT 'MDY'
 GO
 
 -- -- Boundary values
+SELECT CONVERT(DATE, '9999-12-30 23:59:59.9999999')
+GO
+~~START~~
+date
+9999-12-30
+~~END~~
+
+
+SELECT CONVERT(DATE, '9999-12-30 23:59:59.99999999')
+GO
+~~START~~
+date
+9999-12-30
+~~END~~
+
+
+SELECT CONVERT(DATE, '9999-12-30 23:59:59.999999999')
+GO
+~~START~~
+date
+9999-12-30
+~~END~~
+
+
+SELECT CONVERT(DATE, '9999-12-30 23:59:59.9999999999')
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATE, '9999-12-31 23:59:59.9999999')
+GO
+~~START~~
+date
+9999-12-31
+~~END~~
+
+
+SELECT CONVERT(DATE, '9999-12-31 23:59:59.99999999')
+GO
+~~START~~
+date
+9999-12-31
+~~END~~
+
+
+SELECT CONVERT(DATE, '9999-12-31 23:59:59.999999999')
+GO
+~~START~~
+date
+9999-12-31
+~~END~~
+
+
+SELECT CONVERT(DATE, '9999-12-31 23:59:59.9999999999')
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
 SELECT CONVERT(DATE,'2022-10-00')
 GO
 ~~START~~

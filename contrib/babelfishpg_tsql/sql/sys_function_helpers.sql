@@ -1370,12 +1370,20 @@ BEGIN
         v_seconds := concat_ws('.', v_seconds, v_fseconds);
     END IF;
 
-    v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,
-                                        v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);
+    IF (v_res_datatype = 'DATE')
+    THEN
+        v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,0,0,0);
+    ELSIF (v_res_datatype = 'TIME')
+    THEN
+        v_resdatetime := make_timestamp(9999, 12, 31, v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);        
+    ELSE
+        v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,
+                                            v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);
+    END IF;
 
     IF (v_resdatetime > make_timestamp(9999, 12, 31, 23, 59, 59.999999)) THEN
-        -- if rounding of fractional seconds caused the datetime to go out of range 
-        -- then max datetime that can be stored for p_datatype will be used
+        -- if rounding of fractional seconds caused the date and time to go out of range 
+        -- then max date and time that can be stored for p_datatype will be used
         v_resdatetime := make_timestamp(9999, 12, 31, 23, 59, concat_ws('.', '59', PG_CATALOG.repeat('9', LEAST(v_scale, 6)))::NUMERIC); 
     END IF;
 
@@ -1991,6 +1999,19 @@ BEGIN
                 RAISE invalid_character_value_for_cast;
             END IF;
         END IF;
+    END IF;
+
+    -- validate boundary condition for date and time
+    IF ((v_res_datatype = 'SMALLDATETIME' AND 
+         (v_year::SMALLINT = 2079 AND v_month::SMALLINT = 6 AND v_day::SMALLINT = 6 AND 
+            v_hours::SMALLINT = 23 AND v_minutes::SMALLINT = 59 AND 
+                (v_seconds::SMALLINT > 29 OR (v_seconds::SMALLINT = 29 AND v_fseconds::SMALLINT > 998)))) OR
+        (v_res_datatype = 'DATETIME' AND 
+         (v_year::SMALLINT = 9999 AND v_month::SMALLINT = 12 AND v_day::SMALLINT = 31 AND 
+            v_hours::SMALLINT = 23 AND v_minutes::SMALLINT = 59 AND v_seconds::SMALLINT = 59 AND v_fseconds::SMALLINT > 998))
+        )
+    THEN
+        RAISE invalid_character_value_for_cast;
     END IF;
 
     IF (v_timepart ~* PG_CATALOG.concat('^(', HHMMSSFS_DOT_PART_REGEXP, ')$')) THEN
@@ -4985,6 +5006,12 @@ BEGIN
 
             v_res_datetime := make_timestamp(v_year, v_month::SMALLINT, v_day::SMALLINT,
                                              v_hours, v_minutes, v_seconds::NUMERIC);
+
+            IF (v_res_datetime > make_timestamp(9999, 12, 31, 23, 59, 59.999999)) THEN
+                -- if rounding of fractional seconds caused the date and time to go out of range 
+                -- then max date and time that can be stored for p_datatype will be used
+                v_res_datetime := make_timestamp(9999, 12, 31, 23, 59, concat_ws('.', '59', PG_CATALOG.repeat('9', LEAST(v_scale, 6)))::NUMERIC); 
+            END IF;
         END IF;
     EXCEPTION
         WHEN OTHERS THEN
@@ -6040,6 +6067,12 @@ BEGIN
     v_seconds := concat_ws('.', v_seconds, v_fseconds);
 
     v_res_time := make_time(v_hours, v_minutes, v_seconds::NUMERIC);
+
+    IF (v_res_time > make_time(23, 59, 59.999999)) THEN
+        -- if rounding of fractional seconds caused the time to go out of range 
+        -- then max time that can be stored for time will be used
+        v_res_time := make_time(23, 59, concat_ws('.', '59', PG_CATALOG.repeat('9', LEAST(v_scale, 6)))::NUMERIC); 
+    END IF;
 
     RETURN v_res_time;
 EXCEPTION

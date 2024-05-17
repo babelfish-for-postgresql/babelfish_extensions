@@ -1269,6 +1269,73 @@ datetimeoffset
 ~~END~~
 
 
+-- -- Boundary values
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-30 23:59:59.9999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-30 23:59:59.99999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-30 23:59:59.999999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-30 23:59:59.9999999999')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-31 23:59:59.9999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.9999990 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-31 23:59:59.99999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.9999990 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-31 23:59:59.999999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.9999990 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-31 23:59:59.9999999999')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
 -- -- out of bound values
 SELECT CONVERT(DATETIMEOFFSET,'2022-10-00 23:59:59.990 -8:00')
 GO

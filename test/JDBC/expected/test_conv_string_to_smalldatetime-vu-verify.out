@@ -1475,6 +1475,24 @@ smalldatetime
 ~~ERROR (Message: Invalid attributes specified for type 'smalldatetime')~~
 
 
+-- boundary tests
+SELECT CONVERT(SMALLDATETIME, '2079-06-06 23:59:29.999')
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(SMALLDATETIME, '2079-06-06 23:59:29.998')
+GO
+~~START~~
+smalldatetime
+2079-06-06 23:59:00.0
+~~END~~
+
+
 -- -- out of bound values
 SELECT CONVERT(SMALLDATETIME,'2022-10-00 23:59:59.990')
 GO

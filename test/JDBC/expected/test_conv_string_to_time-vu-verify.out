@@ -348,6 +348,73 @@ time
 ~~END~~
 
 
+-- -- Boundary values
+SELECT CONVERT(TIME, '9999-12-30 23:59:59.9999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-30 23:59:59.99999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-30 23:59:59.999999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-30 23:59:59.9999999999')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '9999-12-31 23:59:59.9999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-31 23:59:59.99999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-31 23:59:59.999999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-31 23:59:59.9999999999')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
 SELECT CONVERT(TIME, '11:22:12.129')
 GO
 ~~START~~
@@ -2431,7 +2498,7 @@ GO
 time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
+~~ERROR (Message: cannot cast type integer to time without time zone)~~
 
 EXEC test_conv_string_to_time_p8
 GO

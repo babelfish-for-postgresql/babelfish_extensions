@@ -1502,6 +1502,24 @@ datetime
 ~~ERROR (Message: Invalid attributes specified for type 'datetime')~~
 
 
+-- boundary tests
+SELECT CONVERT(DATETIME, '9999-12-31 23:59:59.999')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, '9999-12-31 23:59:59.998')
+GO
+~~START~~
+datetime
+9999-12-31 23:59:59.997
+~~END~~
+
+
 -- -- out of bound values
 SELECT CONVERT(DATETIME,'2022-10-00 23:59:59.990')
 GO
