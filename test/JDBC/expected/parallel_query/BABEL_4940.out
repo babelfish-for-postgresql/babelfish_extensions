@@ -1,0 +1,427 @@
+-- check if primary key index is used for query with order by clause
+SET NOCOUNT ON
+GO
+-- column constraint
+CREATE TABLE babel_4940_t1(id INT PRIMARY KEY)
+GO
+INSERT INTO babel_4940_t1 VALUES(generate_series(1,100000))
+GO
+
+-- table constraint
+CREATE TABLE babel_4940_t2(id INT, PRIMARY KEY(id))
+GO
+INSERT INTO babel_4940_t2 VALUES(generate_series(1,100000))
+GO
+
+-- table constraint multiple column
+CREATE TABLE babel_4940_t3(id INT, id1 INT, PRIMARY KEY(id, id1))
+GO
+SET NOCOUNT ON
+DECLARE @i INT=0;
+WHILE (@i<1000)
+BEGIN
+    INSERT INTO babel_4940_t3 VALUES(@i,@i+1)
+    INSERT INTO babel_4940_t3 VALUES(@i,@i+2)
+    INSERT INTO babel_4940_t3 VALUES(@i,@i+3)
+    SET @i = @i + 1;
+END
+GO
+
+
+-- same test as above but create primary key using alter table add constraints
+-- column constraint
+CREATE TABLE babel_4940_t4(id INT PRIMARY KEY)
+GO
+ALTER TABLE babel_4940_t4 DROP COLUMN id
+GO
+ALTER TABLE babel_4940_t4 ADD id INT PRIMARY KEY
+GO
+INSERT INTO babel_4940_t4 VALUES(generate_series(1,100000))
+GO
+
+-- table constraint
+CREATE TABLE babel_4940_t5(id INT)
+GO
+ALTER TABLE babel_4940_t5 ADD CONSTRAINT c PRIMARY KEY (id)
+GO
+INSERT INTO babel_4940_t5 VALUES(generate_series(1,100000))
+GO
+
+-- table constraint multiple column
+CREATE TABLE babel_4940_t6(id INT, id1 INT)
+GO
+ALTER TABLE babel_4940_t6 ADD CONSTRAINT c PRIMARY KEY(id, id1 DESC)
+GO
+DECLARE @i INT=0;
+WHILE (@i<1000)
+BEGIN
+    INSERT INTO babel_4940_t6 VALUES(@i,@i+1)
+    INSERT INTO babel_4940_t6 VALUES(@i,@i+2)
+    INSERT INTO babel_4940_t6 VALUES(@i,@i+3)
+    SET @i = @i + 1;
+END
+GO
+
+-- All these queries should use primary key index
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+
+SELECT TOP 10 * FROM babel_4940_t1 ORDER BY id
+GO
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t1 ORDER BY id
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan using babel_4940_t1_pkey on babel_4940_t1 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t1 ORDER BY id DESC
+GO
+~~START~~
+int
+100000
+99999
+99998
+99997
+99996
+99995
+99994
+99993
+99992
+99991
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t1 ORDER BY id DESC
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan Backward using babel_4940_t1_pkey on babel_4940_t1 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t2 ORDER BY id 
+GO
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t2 ORDER BY id
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan using babel_4940_t2_pkey on babel_4940_t2 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t2 ORDER BY id DESC
+GO
+~~START~~
+int
+100000
+99999
+99998
+99997
+99996
+99995
+99994
+99993
+99992
+99991
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t2 ORDER BY id DESC
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan Backward using babel_4940_t2_pkey on babel_4940_t2 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t3 ORDER BY id, id1
+GO
+~~START~~
+int#!#int
+0#!#1
+0#!#2
+0#!#3
+1#!#2
+1#!#3
+1#!#4
+2#!#3
+2#!#4
+2#!#5
+3#!#4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t3 ORDER BY id, id1
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan using babel_4940_t3_pkey on babel_4940_t3 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t3 ORDER BY id DESC, id1 DESC
+GO
+~~START~~
+int#!#int
+999#!#1002
+999#!#1001
+999#!#1000
+998#!#1001
+998#!#1000
+998#!#999
+997#!#1000
+997#!#999
+997#!#998
+996#!#999
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t3 ORDER BY id DESC, id1 DESC
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan Backward using babel_4940_t3_pkey on babel_4940_t3 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t4 ORDER BY id
+GO
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t4 ORDER BY id
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan using babel_4940_t4_pkey on babel_4940_t4 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t4 ORDER BY id DESC
+GO
+~~START~~
+int
+100000
+99999
+99998
+99997
+99996
+99995
+99994
+99993
+99992
+99991
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t4 ORDER BY id DESC
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan Backward using babel_4940_t4_pkey on babel_4940_t4 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t5 ORDER BY id 
+GO
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t5 ORDER BY id
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan using cbabel_4940_t54a8a08f09d37b73795649038408b5f33 on babel_4940_t5 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t5 ORDER BY id DESC
+GO
+~~START~~
+int
+100000
+99999
+99998
+99997
+99996
+99995
+99994
+99993
+99992
+99991
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t5 ORDER BY id DESC
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan Backward using cbabel_4940_t54a8a08f09d37b73795649038408b5f33 on babel_4940_t5 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id, id1 DESC
+GO
+~~START~~
+int#!#int
+0#!#3
+0#!#2
+0#!#1
+1#!#4
+1#!#3
+1#!#2
+2#!#5
+2#!#4
+2#!#3
+3#!#6
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id, id1 DESC
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan using cbabel_4940_t64a8a08f09d37b73795649038408b5f33 on babel_4940_t6 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id DESC, id1 ASC
+GO
+~~START~~
+int#!#int
+999#!#1000
+999#!#1001
+999#!#1002
+998#!#999
+998#!#1000
+998#!#1001
+997#!#998
+997#!#999
+997#!#1000
+996#!#997
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id DESC, id1 ASC
+Gather (actual rows=10 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=10 loops=1)
+        ->  Index Only Scan Backward using cbabel_4940_t64a8a08f09d37b73795649038408b5f33 on babel_4940_t6 (actual rows=10 loops=1)
+              Heap Fetches: 10
+~~END~~
+
+
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+DROP TABLE babel_4940_t1, babel_4940_t2, babel_4940_t3, babel_4940_t4, babel_4940_t5, babel_4940_t6
+GO

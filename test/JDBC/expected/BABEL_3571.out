@@ -419,10 +419,10 @@ GO
 text
 CREATE UNIQUE INDEX babel_3571_1_id1_key ON master_dbo.babel_3571_1 USING btree (id1 NULLS FIRST) NULLS NOT DISTINCT
 CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree (id2 NULLS FIRST) NULLS NOT DISTINCT
-CREATE UNIQUE INDEX babel_3571_1_pkey ON master_dbo.babel_3571_1 USING btree (id3)
+CREATE UNIQUE INDEX babel_3571_1_pkey ON master_dbo.babel_3571_1 USING btree (id3 NULLS FIRST)
 CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1 NULLS FIRST, id2 DESC NULLS LAST) NULLS NOT DISTINCT
-CREATE UNIQUE INDEX babel_3571_2_pkey ON master_dbo.babel_3571_2 USING btree (id3)
-CREATE UNIQUE INDEX babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0 ON master_dbo.babel_3571_3 USING btree (id3)
+CREATE UNIQUE INDEX babel_3571_2_pkey ON master_dbo.babel_3571_2 USING btree (id3 NULLS FIRST)
+CREATE UNIQUE INDEX babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0 ON master_dbo.babel_3571_3 USING btree (id3 NULLS FIRST)
 CREATE UNIQUE INDEX babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce ON master_dbo.babel_3571_3 USING btree (id1 DESC NULLS LAST, id2 NULLS FIRST) NULLS NOT DISTINCT
 ~~END~~
 
@@ -549,10 +549,10 @@ GO
 text
 CREATE UNIQUE INDEX babel_3571_1_id1_key ON master_dbo.babel_3571_1 USING btree (id1 NULLS FIRST) NULLS NOT DISTINCT
 CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree (id2 NULLS FIRST) NULLS NOT DISTINCT
-CREATE UNIQUE INDEX babel_3571_1_pkey ON master_dbo.babel_3571_1 USING btree (id3)
+CREATE UNIQUE INDEX babel_3571_1_pkey ON master_dbo.babel_3571_1 USING btree (id3 NULLS FIRST)
 CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1 NULLS FIRST, id2 DESC NULLS LAST) NULLS NOT DISTINCT
-CREATE UNIQUE INDEX babel_3571_2_pkey ON master_dbo.babel_3571_2 USING btree (id3)
-CREATE UNIQUE INDEX babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0 ON master_dbo.babel_3571_3 USING btree (id3)
+CREATE UNIQUE INDEX babel_3571_2_pkey ON master_dbo.babel_3571_2 USING btree (id3 NULLS FIRST)
+CREATE UNIQUE INDEX babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0 ON master_dbo.babel_3571_3 USING btree (id3 NULLS FIRST)
 ~~END~~
 
 
