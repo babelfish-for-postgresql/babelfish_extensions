@@ -1,0 +1,300 @@
+Create table TestTime(a time(6)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+select * from TestTime
+~~START~~
+nvarchar
+12:45:37.000000
+12:45:37.000000
+12:45:37.000000
+12:45:37.000000
+12:45:37.000000
+12:45:37.000000
+12:45:37.000000
+<NULL>
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(5)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+select * from TestTime
+~~START~~
+nvarchar
+12:45:37.00000
+12:45:37.00000
+12:45:37.00000
+12:45:37.00000
+12:45:37.00000
+12:45:37.00000
+12:45:37.00000
+<NULL>
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(4)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+select * from TestTime
+~~START~~
+nvarchar
+12:45:37.0000
+12:45:37.0000
+12:45:37.0000
+12:45:37.0000
+12:45:37.0000
+12:45:37.0000
+12:45:37.0000
+<NULL>
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(3)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+select * from TestTime
+~~START~~
+nvarchar
+12:45:37.000
+12:45:37.000
+12:45:37.000
+12:45:37.000
+12:45:37.000
+12:45:37.000
+12:45:37.000
+<NULL>
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(2)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+select * from TestTime
+~~START~~
+nvarchar
+12:45:37.00
+12:45:37.00
+12:45:37.00
+12:45:37.00
+12:45:37.00
+12:45:37.00
+12:45:37.00
+<NULL>
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(1)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+select * from TestTime
+~~START~~
+nvarchar
+12:45:37.0
+12:45:37.0
+12:45:37.0
+12:45:37.0
+12:45:37.0
+12:45:37.0
+12:45:37.0
+<NULL>
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(0)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+select * from TestTime
+~~START~~
+nvarchar
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+<NULL>
+~~END~~
+
+
+Drop table TestTime

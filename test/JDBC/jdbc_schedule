@@ -319,6 +319,7 @@ ignore#!#jtds-TestDatetime
 ignore#!#jtds-TestBinary
 ignore#!#jtds-TestSimpleErrors
 ignore#!#jtds-TestErrorsWithTryCatch
+ignore#!#jtds-TestTime
 ignore#!#jtds-TestSQLQueries
 ignore#!#jtds-TestStoredProcedures
 ignore#!#jtds-TestTransactionSupportForProcedure

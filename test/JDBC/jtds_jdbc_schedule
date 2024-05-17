@@ -39,20 +39,22 @@ TestReal
 jtds-TestDatetime
 # jTDS date handling differs with mssql-jdbc, behavior on MSSQL and Babelfish is the same
 jtds-TestDate
-# Failure: jTDS behaviour differs from mssql-jdbc on both MSSQL and Babelfish in different way
+# Failure: when '2016-10-23 12:45:37.12' is inserted into datetime2(6) column, Babelfish inserts
+# '2016-10-23 12:45:37.119' instead, root cause is currently unclear.
 # TestDatetime2
 TestSmallDatetime
-# Failure: jTDS behaviour differs from mssql-jdbc on both MSSQL and Babelfish in different way
-# TestTime
-# Failure: FATAL:  UTF16 output of varchar/bpchar exceeds max length
+# Nvarchar column type is returned for time columns on both MSSQL and Babelfish
+jtds-TestTime
+# Failure: besides nvarchar column type, value output differs when datetimeoffet is being cast
+# to datetime2 or time
 # TestDatetimeoffset-vu-prepare
 # TestDatetimeoffset-vu-verify
 # TestDatetimeoffset-vu-cleanup
-# java.lang.StringIndexOutOfBoundsException: offset 0, count -17238, length 255
+# Failure: ERROR:  The incoming tabular data stream (TDS) remote procedure call (RPC) protocol
+# stream is incorrect. Parameter 2 (""): Data type 0x63 has an invalid data length or metadata length.
 # TestVarChar
-# Failure:
-# ERROR:  The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect.
-# Parameter 3 (""): Data type 0x63 has an invalid data length or metadata length.
+# Failure: ERROR:  The incoming tabular data stream (TDS) remote procedure call (RPC) protocol
+# stream is incorrect. Parameter 3 (""): Data type 0x63 has an invalid data length or metadata length.
 # TestText
 TestChar
 # Image column type is returned for varbinary(max) on both MSSQL and Babelfish

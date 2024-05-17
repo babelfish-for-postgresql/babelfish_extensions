@@ -3339,78 +3339,61 @@ TdsSendTypeUniqueIdentifier(FmgrInfo *finfo, Datum value, void *vMetaData)
 }
 
 static char*
-append_fsec1(char *cp, fsec_t fsec, int scale)
+AppendFractionalSeconds(char *cp, fsec_t fsec, int scale)
 {
 	int		value,
 				oldval,
 				remainder,
-				idx,
-				sidx;
-  char	*res,
-				*orig;
-	char	buf[MAX_TIMESTAMP_PRECISION + 1];
-
-	res = cp;
-	orig = cp;
-	(void) orig;
+				idx;
+	char	buf[MAX_TIMESTAMP_PRECISION];
 
 	if (scale > 0)
 	{
 		*cp++ = '.';
-		res++;
 		value = abs(fsec);
 
-		for (idx = 0; idx < sizeof(buf) && value > 0; idx++)
+		for (idx = sizeof(buf) - 1; idx >= 0; idx--)
 		{
-			oldval = value;
-			value /= 10;
-			remainder = oldval - value * 10;
-			buf[idx] = '0' + remainder;
+			if (value > 0)
+			{
+				oldval = value;
+				value /= 10;
+				remainder = oldval - value * 10;
+				buf[idx] = '0' + remainder;
+			}
+			else
+				buf[idx] = '0';
 		}
 
-		// todo: fix leading zeros
-
-		for (sidx = 0; sidx < scale && sidx < idx; sidx++)
+		for (idx = 0; idx < scale; idx++)
 		{
-			cp[sidx] = buf[idx - sidx - 1];
-			res++;
+			if (idx < sizeof(buf))
+				*cp++ = buf[idx]; 
+			else
+				*cp++ = '0'; 
 		}
-
-/*
-		tmpval = value;
-		shift = scale;
-		while (tmpval > 0 && shift > 0)
-		{
-			tmpval /= 10;
-			shift--;
-		}
-
-		while (scale-- && value > 0)
-		{
-			oldval = value;
-			value /= 10;
-			remainder = oldval - value * 10;
-			cp[scale - shift] = '0' + remainder;
-			res++;
-		}
-*/
-
-		while(scale-- > idx)
-			*res++ = '0';
 	}
 
-	return res;
+	return cp;
 }
 
-static char*
-time_out1(TimeADT time, int scale)
+static int
+TdsSendTimeAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
-	char		*out,
+	int			rc,
+				scale;
+	char	   *out,
 				*cp;
+	TdsColumnMetaData *col;
+	StringInfoData buf;
+	TimeADT time;
 
+	col = (TdsColumnMetaData *) vMetaData;
+	time = (TimeADT) value;
+	scale = (int) col->atttypmod;
 	if (scale < 0)
 		scale = MAX_TIMESTAMP_PRECISION;
 
@@ -3424,22 +3407,7 @@ time_out1(TimeADT time, int scale)
 	cp = pg_ultostr_zeropad(cp, tm->tm_min, 2);
 	*cp++ = ':';
 	cp = pg_ultostr_zeropad(cp, tm->tm_sec, 2);
-	cp = append_fsec1(cp, fsec, scale);
-
-	return out;
-}
-
-static int
-TdsSendTimeAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
-{
-	int			rc,
-				scale;
-	char	   *out;
-	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
-	StringInfoData buf;
-
-	scale = (int) col->atttypmod;
-	out = time_out1((TimeADT) value, scale);
+	cp = AppendFractionalSeconds(cp, fsec, scale);
 
 	initStringInfo(&buf);
 	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
@@ -3498,15 +3466,24 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
-static char*
-timestamp_out1(Timestamp timestamp, int scale)
+static int
+TdsSendDatetime2AsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
-	char		*out,
+	int			rc,
+				scale;
+	char	   *out,
 				*cp;
-				
+	TdsColumnMetaData *col;
+	StringInfoData buf;
+	Timestamp timestamp;
+
+	col = (TdsColumnMetaData *) vMetaData;
+	timestamp = (Timestamp) value;
+	scale = (int) col->atttypmod;
+
 	out = palloc0(27 + 1);
 	cp = out;
 
@@ -3526,27 +3503,12 @@ timestamp_out1(Timestamp timestamp, int scale)
 		cp = pg_ultostr_zeropad(cp, tm->tm_min, 2);
 		*cp++ = ':';
 		cp = pg_ultostr_zeropad(cp, tm->tm_sec, 2);
-		cp = append_fsec1(cp, fsec, scale);
+		cp = AppendFractionalSeconds(cp, fsec, scale);
 	}
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
-
-	return out;
-}
-
-static int
-TdsSendDatetime2AsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
-{
-	int			rc,
-				scale;
-	char	   *out;
-	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
-	StringInfoData buf;
-
-	scale = (int) col->atttypmod;
-	out = timestamp_out1((Timestamp) value, scale);
 
 	initStringInfo(&buf);
 	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
@@ -4385,24 +4347,30 @@ EncodeTimezone(char *str, int tz, int style)
 	return str;
 }
 
-static char*
-datetimeoffset_out1(tsql_datetimeoffset *df, int scale)
+static int
+TdsSendDatetimeoffsetAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
-	Timestamp	timestamp;
-	char		*out,
+	int			rc,
+				scale;
+	char	   *out,
 				*cp;
-				
+	TdsColumnMetaData *col;
+	StringInfoData buf;
+	tsql_datetimeoffset *df;
+
+	col = (TdsColumnMetaData *) vMetaData;
+	df = (tsql_datetimeoffset *) value;
+	scale = (int) col->atttypmod;
 	if (scale < 0)
 		scale = MAX_TIMESTAMP_PRECISION + 1;
 
 	out = palloc0(34 + 1);
 	cp = out;
 
-	timestamp = df->tsql_ts;
-	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
+	if (timestamp2tm(df->tsql_ts, NULL, tm, &fsec, NULL, NULL) == 0)
 	{
 		cp = pg_ultostr_zeropad(cp,
 									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
@@ -4416,7 +4384,7 @@ datetimeoffset_out1(tsql_datetimeoffset *df, int scale)
 		cp = pg_ultostr_zeropad(cp, tm->tm_min, 2);
 		*cp++ = ':';
 		cp = pg_ultostr_zeropad(cp, tm->tm_sec, 2);
-		cp = append_fsec1(cp, fsec, scale);
+		cp = AppendFractionalSeconds(cp, fsec, scale);
 		*cp++ = ' ';
 		cp = EncodeTimezone(cp, df->tsql_tz, DateStyle);
 	}
@@ -4424,21 +4392,6 @@ datetimeoffset_out1(tsql_datetimeoffset *df, int scale)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("datetimeoffset out of range")));
-
-	return out;
-}
-
-static int
-TdsSendDatetimeoffsetAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
-{
-	int			rc,
-				scale;
-	char	   *out;
-	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
-	StringInfoData buf;
-
-	scale = (int) col->atttypmod;
-	out = datetimeoffset_out1((tsql_datetimeoffset *) value, scale);
 
 	initStringInfo(&buf);
 	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
