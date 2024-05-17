@@ -494,9 +494,6 @@ GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_configure(
 ) TO PUBLIC;
 
 ALTER VIEW sys.all_sql_modules_internal RENAME TO all_sql_modules_internal_deprecated_3_6_0;
-ALTER VIEW sys.all_sql_modules RENAME TO all_sql_modules_deprecated_3_6_0;
-ALTER VIEW sys.system_sql_modules RENAME TO system_sql_modules_deprecated_3_6_0;
-ALTER VIEW sys.sql_modules RENAME TO sql_modules_deprecated_3_6_0;
 
 CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
@@ -538,6 +535,8 @@ AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature 
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
+ALTER VIEW sys.all_sql_modules RENAME TO all_sql_modules_deprecated_3_6_0;
+
 CREATE OR REPLACE VIEW sys.all_sql_modules AS
 SELECT
      CAST(t1.object_id as int)
@@ -552,6 +551,8 @@ SELECT
     ,CAST(t1.uses_native_compilation as sys.bit)
 FROM sys.all_sql_modules_internal t1;
 GRANT SELECT ON sys.all_sql_modules TO PUBLIC;
+
+ALTER VIEW sys.system_sql_modules RENAME TO system_sql_modules_deprecated_3_6_0;
 
 CREATE OR REPLACE VIEW sys.system_sql_modules AS
 SELECT
@@ -568,6 +569,8 @@ SELECT
 FROM sys.all_sql_modules_internal t1
 WHERE t1.is_ms_shipped = 1;
 GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
+
+ALTER VIEW sys.sql_modules RENAME TO sql_modules_deprecated_3_6_0;
 
 CREATE OR REPLACE VIEW sys.sql_modules AS
 SELECT
