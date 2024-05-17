@@ -42,7 +42,7 @@ GO
 
 DROP VIEW test_conv_string_to_datetimeoffset_v7
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: view "test_conv_string_to_datetimeoffset_v7" does not exist)~~
 

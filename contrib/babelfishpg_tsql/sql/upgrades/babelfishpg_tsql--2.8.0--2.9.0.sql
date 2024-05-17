@@ -3393,7 +3393,7 @@ RETURNS TIME
 AS
 $BODY$
 DECLARE
-    v_res_datatype VARCHAR COLLATE "C";
+    v_res_datatype TEXT;
 BEGIN
     IF (typmod = -1) THEN
         v_res_datatype := 'TIME';
@@ -3492,7 +3492,7 @@ RETURNS sys.DATETIME
 AS
 $BODY$
 DECLARE
-    v_res_datatype VARCHAR COLLATE "C";
+    v_res_datatype TEXT;
 BEGIN
     IF (typmod = -1) THEN
         v_res_datatype := 'DATETIME';
@@ -3591,7 +3591,7 @@ RETURNS sys.DATETIME2
 AS
 $BODY$
 DECLARE
-    v_res_datatype VARCHAR COLLATE "C";
+    v_res_datatype TEXT;
 BEGIN
     IF (typmod = -1) THEN
         v_res_datatype := 'DATETIME2';
@@ -3704,7 +3704,7 @@ RETURNS sys.DATETIMEOFFSET
 AS
 $BODY$
 DECLARE
-    v_res_datatype VARCHAR COLLATE "C";
+    v_res_datatype TEXT;
 BEGIN
     IF (typmod = -1) THEN
         v_res_datatype := 'DATETIMEOFFSET';
@@ -3817,7 +3817,7 @@ RETURNS sys.SMALLDATETIME
 AS
 $BODY$
 DECLARE
-    v_res_datatype VARCHAR COLLATE "C";
+    v_res_datatype TEXT;
 BEGIN
     IF (typmod = -1) THEN
         v_res_datatype := 'SMALLDATETIME';

@@ -167,6 +167,12 @@ ignore#!#BABEL-3614-before-16_3-vu-prepare
 ignore#!#BABEL-3614-before-16_3-vu-verify
 ignore#!#BABEL-3486-before-16_3-vu-prepare
 ignore#!#BABEL-3486-before-16_3-vu-verify
+ignore#!#test_conv_string_to_date-before-16_3-vu-prepare
+ignore#!#test_conv_string_to_date-before-16_3-vu-verify
+ignore#!#test_conv_string_to_date-before-16_3-vu-cleanup
+ignore#!#test_conv_string_to_time-before-16_3-vu-prepare
+ignore#!#test_conv_string_to_time-before-16_3-vu-verify
+ignore#!#test_conv_string_to_time-before-16_3-vu-cleanup
 ignore#!#test_conv_string_to_datetime2-before-16_3-vu-prepare
 ignore#!#test_conv_string_to_datetime2-before-16_3-vu-verify
 ignore#!#test_conv_string_to_datetime2-before-16_3-vu-cleanup
