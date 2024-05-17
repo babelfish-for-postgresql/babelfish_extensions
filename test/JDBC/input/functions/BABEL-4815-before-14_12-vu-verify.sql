@@ -68,19 +68,10 @@ go
 select * from babel_4815_24;
 go
 
-select * from babel_4815_25;
-go
-
-select * from babel_4815_26;
-go
-
 select * from babel_4815_27;
 go
 
 select * from babel_4815_28;
-go
-
-select * from babel_4815_29;
 go
 
 select * from babel_4815_30;

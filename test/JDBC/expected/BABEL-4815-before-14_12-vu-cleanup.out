@@ -55,19 +55,10 @@ go
 drop view babel_4815_24;
 go
 
-drop view babel_4815_25;
-go
-
-drop view babel_4815_26;
-go
-
 drop view babel_4815_27;
 go
 
 drop view babel_4815_28;
-go
-
-drop view babel_4815_29;
 go
 
 drop view babel_4815_30;

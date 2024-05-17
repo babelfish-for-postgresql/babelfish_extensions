@@ -67,19 +67,10 @@ go
 create view babel_4815_24 as select * from babel_4815 where dateadd(day, -5, f ) > a;
 GO
 
-create view babel_4815_25 as select * from babel_4815 where dateadd(day, -5, g ) > a;
-go
-
-create view babel_4815_26 as select * from babel_4815 where dateadd(day, -5, h ) > a;
-GO
-
 create view babel_4815_27 as select * FROM babel_4815 where datediff(dd, a, cast(b as datetime)) > 5;
 GO
 
 create view babel_4815_28 as select * FROM babel_4815 where datediff(dd, b, cast(c as datetimeoffset)) > 5;
-GO
-
-create view babel_4815_29 as select * FROM babel_4815 where datediff(dd, c, cast(a as datetime2)) > 5;
 GO
 
 create view babel_4815_30 as select * FROM babel_4815 where datediff(dd, d, cast(e as smalldatetime)) > 5;

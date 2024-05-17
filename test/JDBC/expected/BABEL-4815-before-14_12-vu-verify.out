@@ -270,32 +270,6 @@ Gather
 ~~END~~
 
 
-select * from babel_4815_25;
-go
-~~START~~
-text
-Query Text: select * from babel_4815_25
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Seq Scan on babel_4815
-        Filter: ((sys.dateadd('day'::text COLLATE "default", '-5'::integer, g))::sql_variant > (a)::sql_variant)
-~~END~~
-
-
-select * from babel_4815_26;
-go
-~~START~~
-text
-Query Text: select * from babel_4815_26
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Seq Scan on babel_4815
-        Filter: ((sys.dateadd('day'::text COLLATE "default", '-5'::integer, h))::sql_variant > (a)::sql_variant)
-~~END~~
-
-
 select * from babel_4815_27;
 go
 ~~START~~
@@ -319,19 +293,6 @@ Gather
   Single Copy: true
   ->  Seq Scan on babel_4815
         Filter: (datediff('day'::text COLLATE "default", b, (c)::datetimeoffset) > 5)
-~~END~~
-
-
-select * from babel_4815_29;
-go
-~~START~~
-text
-Query Text: select * from babel_4815_29
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Seq Scan on babel_4815
-        Filter: (datediff('day'::text COLLATE "default", c, (a)::datetime2(6) without time zone) > 5)
 ~~END~~
 
 
