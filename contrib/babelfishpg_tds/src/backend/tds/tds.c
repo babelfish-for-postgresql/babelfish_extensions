@@ -616,7 +616,7 @@ tdsstat_read_current_status(void)
 	 * Allocate storage for local copy of state data.
 	 */
 	localtable = (LocalTdsStatus *)
-		palloc(sizeof(LocalTdsStatus) * NumBackendStatSlots);
+		palloc0(sizeof(LocalTdsStatus) * NumBackendStatSlots);
 
 	localNumBackends = 0;
 
@@ -785,7 +785,8 @@ get_tds_database_backend_count(int16 db_id, bool ignore_current_connection)
 		 * i.e. increment count to 1 and return true
 		 * only when we find another connection using same database.
 		 */
-		if (tdsentry->client_pid != 0 && tdsentry->database_id == db_id)
+		if (tdsentry->st_procpid > 0 &&
+			tdsentry->client_pid != 0 && tdsentry->database_id == db_id)
 		{
 			if (ignore_current_connection && number_of_connections == 0)
 				number_of_connections++;
