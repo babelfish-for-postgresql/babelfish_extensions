@@ -6136,7 +6136,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	{
 		// Get the name of procedure being executed, and split up in parts
 		name = ::getFullText(ctx_name);
-		name_length = ctx_name->stop->getStopIndex() - ctx_name->start->getStartIndex();
+		name_length = ctx_name->stop->getStopIndex() - ctx_name->start->getStartIndex() + 1;
 		Assert(!name.empty());
 		
 		// Original position of the name
