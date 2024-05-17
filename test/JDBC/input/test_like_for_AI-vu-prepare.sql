@@ -96,6 +96,16 @@ INSERT INTO test_like_for_AI_prepare_t13_2_ci VALUES
   (null);
 GO
 
+-- TESTS FOR COLUMN LEVEL CONSTRAINTS
+-- Create the employee table with the computed column and check constraint
+CREATE TABLE test_like_for_AI_prepare_employee_CI_AI (
+    id INT PRIMARY KEY,
+    name NVARCHAR(MAX) COLLATE Latin1_General_CI_AI,
+    CONSTRAINT check_name_starts_with_a 
+        CHECK (name COLLATE Latin1_General_CI_AI LIKE 'A%')
+);
+GO
+
 ------------------- CS_AI ----------------------
 CREATE TABLE test_like_for_AI_prepare_t1_cs (
     col NVARCHAR(50) COLLATE Latin1_General_CS_AI,
@@ -237,6 +247,15 @@ VALUES
 
 GO
 
+-- TESTS FOR COLUMN LEVEL CONSTRAINTS
+-- Create the employee table with the computed column and check constraint
+CREATE TABLE test_like_for_AI_prepare_employee_CS_AI (
+    id INT PRIMARY KEY,
+    name NVARCHAR(MAX) COLLATE Latin1_General_CS_AI,
+    CONSTRAINT check_name_starts_with_a 
+        CHECK (name COLLATE Latin1_General_CS_AI LIKE 'A%')
+);
+GO
 
 --- ADDITIONAL CORNER CASE TESTING ---
 
