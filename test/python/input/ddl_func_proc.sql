@@ -182,7 +182,7 @@ RETURN
 END;
 GO
 
---DROP objects
+--DROP
 drop  procedure IF EXISTS routines_test_nvar;
 go
 drop  procedure IF EXISTS routines_test_num;
