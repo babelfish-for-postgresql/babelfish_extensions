@@ -6511,45 +6511,63 @@ STABLE
 RETURNS NULL ON NULL INPUT;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_date_deprecated_4_2');
-IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_date_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
-THEN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_date_deprecated_4_2');
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_date_deprecated_4_2');
-END IF;
+DO $$
+BEGIN
+    IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_date_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
+    THEN
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_date_deprecated_4_2');
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_date_deprecated_4_2');
+    END IF;
+END $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_deprecated_4_2');
-IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_time_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
-THEN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_time_deprecated_4_2');
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_time_deprecated_4_2');
-END IF;
+DO $$
+BEGIN
+    IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_time_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
+    THEN
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_time_deprecated_4_2');
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_time_deprecated_4_2');
+    END IF;
+END $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_datetime_deprecated_4_2');
-IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_datetime_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
-THEN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_datetime_deprecated_4_2');
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_datetime_deprecated_4_2');
-END IF;
+DO $$
+BEGIN
+    IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_datetime_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
+    THEN
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_datetime_deprecated_4_2');
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_datetime_deprecated_4_2');
+    END IF;
+END $$;
 
-IF (NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_date_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid) AND
-    NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_time_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid) AND
-    NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_datetime_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid))
-THEN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_get_microsecs_from_fractsecs_deprecated_4_2');
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_get_timeunit_from_string_deprecated_4_2');
-END IF;
+DO $$
+BEGIN
+    IF (NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_date_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid) AND
+        NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_time_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid) AND
+        NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_datetime_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid))
+    THEN
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_get_microsecs_from_fractsecs_deprecated_4_2');
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_get_timeunit_from_string_deprecated_4_2');
+    END IF;
+END $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_date_1_deprecated_4_2');
-IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_date_1_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
-THEN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_date_deprecated_4_2');
-END IF;
+DO $$
+BEGIN
+    IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_date_1_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
+    THEN
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_date_deprecated_4_2');
+    END IF;
+END $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_1_deprecated_4_2');
-IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_time_1_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
-THEN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_time_deprecated_4_2');
-END IF;
+DO $$
+BEGIN
+    IF NOT EXISTS(SELECT * FROM pg_proc WHERE proname = 'babelfish_conv_helper_to_time_1_deprecated_4_2' AND pronamespace = 'sys'::regnamespace::oid)
+    THEN
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_time_deprecated_4_2');
+    END IF;
+END $$;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

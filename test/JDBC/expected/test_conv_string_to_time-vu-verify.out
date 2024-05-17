@@ -2498,7 +2498,7 @@ GO
 time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type integer to time without time zone)~~
+~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
 
 EXEC test_conv_string_to_time_p8
 GO
