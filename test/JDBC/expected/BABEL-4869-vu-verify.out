@@ -1,0 +1,253 @@
+-- Basic Case: No parameters
+EXEC sp_describe_undeclared_parameters 'SELECT * FROM babel_4869_vu_prepare_t1'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Single Parameter Case: WHERE clause with a single parameter
+EXEC sp_describe_undeclared_parameters 'SELECT * FROM babel_4869_vu_prepare_t1 WHERE Column1 = @Param1'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Multiple Parameters Case: WHERE clause with multiple parameters
+EXEC sp_describe_undeclared_parameters 'SELECT * FROM babel_4869_vu_prepare_t1 WHERE Column1 = @Param1 AND Column2 = @Param2'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Nested Queries Case: Subquery in WHERE clause
+EXEC sp_describe_undeclared_parameters 'SELECT * FROM babel_4869_vu_prepare_t1 WHERE Column1 IN (SELECT Column3 FROM babel_4869_vu_prepare_t2 WHERE Column2 = @Param)'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Join Conditions Case: JOIN with a parameter in the condition
+EXEC sp_describe_undeclared_parameters 'SELECT * FROM babel_4869_vu_prepare_t1 JOIN babel_4869_vu_prepare_t2 ON babel_4869_vu_prepare_t1.Column2 = babel_4869_vu_prepare_t2.Column2 WHERE babel_4869_vu_prepare_t1.Column1 = @Param'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Error Handling Case: Syntax error
+EXEC sp_describe_undeclared_parameters 'SELECT * FROM babel_4869_vu_prepare_t1 WHERE Column1 = @Param AND'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '<EOF>' at line 1 and character position 65)~~
+
+
+-- Boundary Case: No rows returned
+EXEC sp_describe_undeclared_parameters 'SELECT * FROM babel_4869_vu_prepare_t1 WHERE 1 = 0'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Update Query with Parameters
+DECLARE @P0 INT = 100;
+DECLARE @P1 VARCHAR(50) = 'NewValue';
+EXEC sp_describe_undeclared_parameters 'UPDATE babel_4869_vu_prepare_t1 SET Column1 = @P1 WHERE Column2 = @P0'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@p1#!#167#!#varchar(50)#!#50#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#167#!#50
+2#!#@p0#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+~~END~~
+
+
+-- Delete Query with Parameters
+DECLARE @P0 INT = 100;
+EXEC sp_describe_undeclared_parameters 'DELETE FROM babel_4869_vu_prepare_t1 WHERE Column2 = @P0'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@p0#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+~~END~~
+
+
+-- Error Handling Case: Syntax error in the query
+DECLARE @P0 VARCHAR(64);
+SET @P0 = N'DELETE FROM babel_4869_vu_prepare_t1 WHERE Column1 = @Param AND';
+EXEC sp_describe_undeclared_parameters @P0;
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '<EOF>' at line 1 and character position 63)~~
+
+
+-- Empty Parameters Case: No parameters declared
+EXEC sp_describe_undeclared_parameters 'DELETE FROM babel_4869_vu_prepare_t1';
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Integer Parameter Case: Parameter declared as INT
+DECLARE @P0 INT;
+EXEC sp_describe_undeclared_parameters @P0;
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Procedure expects parameter '@tsql' of type 'nvarchar(max)')~~
+
+
+DECLARE @P0 FLOAT;
+EXEC sp_describe_undeclared_parameters @P0;
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Procedure expects parameter '@tsql' of type 'nvarchar(max)')~~
+
+
+DECLARE @P0 VARCHAR(11);
+EXEC sp_describe_undeclared_parameters @P0;
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Procedure expects parameter '@tsql' of type 'nvarchar(max)')~~
+
+
+DECLARE @P0 NVARCHAR(11);
+EXEC sp_describe_undeclared_parameters @P0;
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Procedure expects parameter '@tsql' of type 'nvarchar(max)')~~
+
+
+DECLARE @P0 CHAR(11);
+EXEC sp_describe_undeclared_parameters @P0;
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Procedure expects parameter '@tsql' of type 'nvarchar(max)')~~
+
+
+-- Update Query with Mixed Data Types
+DECLARE @Param1 INT = 100;
+DECLARE @Param2 VARCHAR(50) = 'NewValue';
+EXEC sp_describe_undeclared_parameters 'UPDATE babel_4869_vu_prepare_t1 SET Column1 = @Param2 WHERE Column2 = @Param1'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@param2#!#167#!#varchar(50)#!#50#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#167#!#50
+2#!#@param1#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+~~END~~
+
+
+-- Delete Query with Invalid Input
+DECLARE @P0 INT;
+EXEC sp_describe_undeclared_parameters 'DELETE FROM babel_4869_vu_prepare_t1 WHERE Column1 = @P0 AND Column2 = ''InvalidString'''
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Invalid Syntax Case: Missing WHERE clause
+DECLARE @P0 INT = 100;
+EXEC sp_describe_undeclared_parameters 'DELETE FROM babel_4869_vu_prepare_t1'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Empty Parameters Case: No parameters declared
+EXEC sp_describe_undeclared_parameters 'DELETE FROM babel_4869_vu_prepare_t1'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Numeric and String Parameters
+DECLARE @P0 INT = 100;
+DECLARE @P1 VARCHAR(50) = 'StringValue';
+EXEC sp_describe_undeclared_parameters 'DELETE FROM babel_4869_vu_prepare_t1 WHERE Column1 = @P1 AND Column2 = @P0'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@p1#!#167#!#varchar(50)#!#50#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#167#!#50
+2#!#@p0#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+~~END~~
+
+
+-- Date Parameter
+DECLARE @P0 DATE = '2022-05-15';
+EXEC sp_describe_undeclared_parameters 'DELETE FROM babel_4869_vu_prepare_t1 WHERE Column1 = @P0'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@p0#!#167#!#varchar(50)#!#50#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#167#!#50
+~~END~~
+
+
+-- Invalid Data Type Case: Using FLOAT parameter in WHERE clause
+DECLARE @P0 FLOAT = 10.5;
+EXEC sp_describe_undeclared_parameters 'DELETE FROM babel_4869_vu_prepare_t1 WHERE Column1 = @P0'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@p0#!#167#!#varchar(50)#!#50#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#167#!#50
+~~END~~
+
+
+-- Should return 0 rows
+DECLARE @P0 VARCHAR(64) 
+SET @P0 = N'DELETE FROM babel_4869_vu_prepare_t1' 
+exec sys.sp_describe_undeclared_parameters @P0 
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+DECLARE @P0 VARCHAR(64)
+SET @P0 = N'DELETE FROM babel_4869_vu_prepare_t1 WHERE id < 2 and id > 3'
+exec sys.sp_describe_undeclared_parameters @P0
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+EXEC sp_describe_undeclared_parameters @tsql = N'update babel_4869_vu_prepare_t3 set bitValue=0 where tenantId = 1 and stringValue = ''initial'''; 
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
+
+EXEC sp_describe_undeclared_parameters @tsql = N'SELECT bitValue FROM babel_4869_vu_prepare_t3 where tenantId = 1 and stringValue = ''initial'''; 
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~END~~
+
