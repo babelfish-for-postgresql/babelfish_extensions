@@ -1253,6 +1253,13 @@ GetSetColMetadataForTextType(ParameterToken temp, StringInfo message, uint8_t td
 							  (collation & 0xFFF00000) >> 20,
 							  sortId, temp->maxLen);
 
+	/*
+	 * Update max length to the max allowed text/ntext length from metadata
+	 * (that is currently hardcoded to 0x7fffffff) so it can pass the lenght
+	 * check.
+	 */
+	temp->maxLen = temp->paramMeta.metaEntry.type3.maxSize;
+
 	*mainOffset = offset;
 	return STATUS_OK;
 }

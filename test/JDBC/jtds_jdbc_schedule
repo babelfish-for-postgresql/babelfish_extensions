@@ -49,12 +49,10 @@ jtds-TestTime
 jtds-TestDatetimeoffset-vu-prepare
 jtds-TestDatetimeoffset-vu-verify
 jtds-TestDatetimeoffset-vu-cleanup
-# Failure: ERROR:  The incoming tabular data stream (TDS) remote procedure call (RPC) protocol
-# stream is incorrect. Parameter 2 (""): Data type 0x63 has an invalid data length or metadata length.
-# TestVarChar
-# Failure: ERROR:  The incoming tabular data stream (TDS) remote procedure call (RPC) protocol
-# stream is incorrect. Parameter 3 (""): Data type 0x63 has an invalid data length or metadata length.
-# TestText
+# Varchar(max) column type is reported as text and nvarchar(max) - as ntext,
+# this behaviour is consistent on both MSSQL and Babelfish.
+jtds-TestVarChar
+TestText
 TestChar
 # Image column type is returned for varbinary(max) on both MSSQL and Babelfish
 jtds-TestBinary
@@ -99,8 +97,3 @@ jtds-TestStoredProcedures
 # transactions
 TestTransactionsSQLBatch
 jtds-TestTransactionSupportForProcedure
-
-# temporary
-jtds-varchar-max-length-check
-jtds-nvarchar-max-length-check
-jtds-nvarchar-max-length-check2
