@@ -43,13 +43,12 @@ jtds-TestDate
 # '2016-10-23 12:45:37.119' instead, root cause is currently unclear.
 # TestDatetime2
 TestSmallDatetime
-# Nvarchar column type is returned for time columns on both MSSQL and Babelfish
+# Nvarchar column type is returned for time columns on both MSSQL and Babelfish.
 jtds-TestTime
-# Failure: besides nvarchar column type, value output differs when datetimeoffet is being cast
-# to datetime2 or time
-# TestDatetimeoffset-vu-prepare
-# TestDatetimeoffset-vu-verify
-# TestDatetimeoffset-vu-cleanup
+# Nvarchar column type is returned for datetimeoffset/time/datetime2 columns on both MSSQL and Babelfish.
+jtds-TestDatetimeoffset-vu-prepare
+jtds-TestDatetimeoffset-vu-verify
+jtds-TestDatetimeoffset-vu-cleanup
 # Failure: ERROR:  The incoming tabular data stream (TDS) remote procedure call (RPC) protocol
 # stream is incorrect. Parameter 2 (""): Data type 0x63 has an invalid data length or metadata length.
 # TestVarChar

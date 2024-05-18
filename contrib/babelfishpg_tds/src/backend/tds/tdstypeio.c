@@ -3395,7 +3395,7 @@ TdsSendTimeAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
 	time = (TimeADT) value;
 	scale = (int) col->atttypmod;
 	if (scale < 0)
-		scale = MAX_TIMESTAMP_PRECISION;
+		scale = MAX_TIMESTAMP_PRECISION + 1;
 
 	time2tm(time, tm, &fsec);
 
@@ -3483,6 +3483,8 @@ TdsSendDatetime2AsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
 	col = (TdsColumnMetaData *) vMetaData;
 	timestamp = (Timestamp) value;
 	scale = (int) col->atttypmod;
+	if (scale < 0)
+		scale = MAX_TIMESTAMP_PRECISION + 1;
 
 	out = palloc0(27 + 1);
 	cp = out;
