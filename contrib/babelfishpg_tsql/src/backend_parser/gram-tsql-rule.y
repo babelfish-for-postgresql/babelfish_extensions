@@ -1616,15 +1616,15 @@ simple_select:
 			| tsql_values_clause							{ $$ = $1; }
 			;
 
-tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P '(' columnList ')' ')'
+tsql_pivot_expr: TSQL_PIVOT '(' func_name '(' columnref ')' FOR columnref IN_P '(' columnList ')' ')'
 				{						
 					ColumnRef 		*a_star;
-					ColumnRef		*value_col;
+					ColumnRef		*agg_col;
 					ResTarget 		*a_star_restarget;
 					RangeSubselect 	*range_sub_select;
 					Alias 			*temptable_alias;
 					String 			*pivot_colstr;
-					String 			*value_colstr;
+					String 			*agg_colstr;
 					List    		*ret;
 					List 			*column_list;
 					List			*column_const_list;
@@ -1645,38 +1645,40 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P '(' columnLi
 					a_star_restarget->location = -1;
 
 					/* prepare aggregation function for pivot source sql */
+					agg_col = (ColumnRef *)$5;
 					restarget_aggfunc->name = NULL;
 					restarget_aggfunc->name_location = -1;
 					restarget_aggfunc->indirection = NIL;
-					restarget_aggfunc->val = (Node *) $3;
+					restarget_aggfunc->val = (Node *) makeFuncCall($3, list_make1(agg_col),
+																   COERCE_EXPLICIT_CALL,
+																   @3);
 					restarget_aggfunc->location = -1;
 
-					column_list = (List *)$8;
+					agg_colstr = list_nth_node(String, agg_col->fields, ((List *)agg_col->fields)->length - 1);
+					column_list = (List *)$11;
 					column_const_list = NIL;
-					value_col = list_nth_node(ColumnRef, ((FuncCall *) $3)->args, 0);
-					value_colstr = list_nth_node(String, value_col->fields, ((List *)value_col->fields)->length - 1);
 
 					foreach(lc ,column_list)
 					{
-						Node 	*conlumn_const;
+						Node 	*column_const;
 						String 	*column_str;
 
 						column_str = (String *)lfirst(lc);
 
-						if (column_str != NULL && strcmp(column_str->sval, value_colstr->sval) == 0)
+						if (column_str != NULL && strcmp(column_str->sval, agg_colstr->sval) == 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-										errmsg("The column name \"%s\" specified in the PIVOT operator conflicts with the existing column name in the PIVOT argument.", value_colstr->sval),
-										parser_errposition(@3)));
+										errmsg("The column name \"%s\" specified in the PIVOT operator conflicts with the existing column name in the PIVOT argument.", agg_colstr->sval),
+										parser_errposition(@5)));
 
-						conlumn_const = makeStringConst(pstrdup(column_str->sval), -1);
-						column_const_list = lappend(column_const_list, list_make1(conlumn_const));
+						column_const = makeStringConst(pstrdup(column_str->sval), -1);
+						column_const_list = lappend(column_const_list, list_make1(column_const));
 					}
 
 					temptable_alias = makeNode(Alias);
 					temptable_alias->aliasname = "pivotTempTable";
 					/* get the column name from the columnref*/
-					pivot_colstr = llast(((ColumnRef *)$5)->fields);
+					pivot_colstr = llast(((ColumnRef *)$8)->fields);
 					temptable_alias->colnames = list_make1(copyObject(pivot_colstr));
 					
 					valuelists_sql->valuesLists = column_const_list;
@@ -1688,7 +1690,7 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P '(' columnLi
 					category_sql->targetList = list_make1(a_star_restarget);
 					category_sql->fromClause = list_make1(range_sub_select);
 
-					ret = list_make4($5, restarget_aggfunc, category_sql, column_list);
+					ret = list_make4($8, restarget_aggfunc, category_sql, column_list);
 					$$ = (Node*) ret; 
 				} 
 			;

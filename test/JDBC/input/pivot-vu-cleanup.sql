@@ -43,6 +43,12 @@ GO
 drop table products;
 GO
 
+drop table pivot_schema.products_sch;
+GO
+
+drop schema pivot_schema;
+GO
+
 use master;
 GO
 

@@ -262,6 +262,24 @@ INSERT INTO orders VALUES
     (190, 1,'empD', 0x656D7044, '2024-05-01');
 GO
 
+create schema pivot_schema;
+GO
+
+CREATE TABLE pivot_schema.products_sch (
+    productId int PRIMARY KEY,
+    productName VARCHAR(30),
+    productPrice INT
+)
+GO
+
+INSERT INTO pivot_schema.products_sch VALUES
+    (1, 'mac', 250000),
+    (2, 'iphone', 80000),
+    (3, 'airpods', 20000),
+    (4, 'charger', 2900),
+    (5, 'ipad', 50000)
+GO
+
 create table pivot_insert_into(ManufactureID int, EmployeeID int, p1 int, p2 int, p3 int, p4 int, p5 int);
 GO
 

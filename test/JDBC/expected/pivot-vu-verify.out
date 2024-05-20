@@ -1124,7 +1124,6 @@ Orange#!#17025.0000#!#8512.5000#!#77659.0000#!#38829.5000
 ~~END~~
 
 
-
 -- CTE test 2
 WITH
 SalesTotal AS
@@ -1232,6 +1231,38 @@ GO
 varchar#!#money#!#money#!#money#!#money#!#money#!#money
 Banana#!#31201.0000#!#15600.5000#!#51381.0000#!#25690.5000#!#6547.0000#!#5636.0000
 Orange#!#17025.0000#!#8512.5000#!#77659.0000#!#38829.5000#!#4535.0000#!#23425.0000
+~~END~~
+
+
+-- Test stmt of CTE table and PIVOT stmt in different level 
+WITH
+SalesTotal AS
+(
+    SELECT FruitType,
+        [2023] AS [2023_Total],
+        [2024] AS [2024_Total]
+    FROM #FruitSales
+    PIVOT(SUM(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+)
+SELECT st.FruitType, st.[2023_Total], sa.[2023_Avg],
+  st.[2024_Total], sa.[2024_Avg]
+FROM SalesTotal AS st
+JOIN (
+    SELECT FruitType,
+        [2023] AS [2023_Avg],
+        [2024] AS [2024_Avg]
+    FROM #FruitSales
+    PIVOT(AVG(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+) sa ON st.FruitType = sa.FruitType;
+GO
+~~START~~
+varchar#!#money#!#money#!#money#!#money
+Banana#!#31201.0000#!#15600.5000#!#51381.0000#!#25690.5000
+Orange#!#17025.0000#!#8512.5000#!#77659.0000#!#38829.5000
 ~~END~~
 
 
@@ -1876,5 +1907,39 @@ varchar#!#varchar#!#varchar
 SEAT1#!#LEFT#!#RIGHT
 SEAT2#!#LEFT#!#<NULL>
 SEAT3#!#LEFT#!#RIGHT
+~~END~~
+
+
+-- test pivot with table in different schemas 1
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN products AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
+GO
+~~START~~
+varchar#!#int#!#int#!#int
+COUNT#!#7#!#4#!#1
+~~END~~
+
+
+-- test pivot with table in different schemas 2
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN pivot_schema.products_sch AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
+GO
+~~START~~
+varchar#!#int#!#int#!#int
+COUNT#!#7#!#4#!#1
 ~~END~~
 

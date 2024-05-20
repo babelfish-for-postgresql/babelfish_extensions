@@ -331,7 +331,6 @@ FROM SalesTotal AS st
 ORDER BY 1
 GO
 
-
 -- CTE test 2
 WITH
 SalesTotal AS
@@ -422,6 +421,32 @@ FROM SalesTotal AS st
   INNER JOIN SalesMin as sm
   ON sa.FruitType = sm.FruitType
 ORDER BY 1
+GO
+
+-- Test stmt of CTE table and PIVOT stmt in different level 
+WITH
+SalesTotal AS
+(
+    SELECT FruitType,
+        [2023] AS [2023_Total],
+        [2024] AS [2024_Total]
+    FROM #FruitSales
+    PIVOT(SUM(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+)
+SELECT st.FruitType, st.[2023_Total], sa.[2023_Avg],
+  st.[2024_Total], sa.[2024_Avg]
+FROM SalesTotal AS st
+JOIN (
+    SELECT FruitType,
+        [2023] AS [2023_Avg],
+        [2024] AS [2024_Avg]
+    FROM #FruitSales
+    PIVOT(AVG(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+) sa ON st.FruitType = sa.FruitType;
 GO
 
 DROP TABlE IF EXISTS #FruitSales
@@ -860,4 +885,28 @@ PIVOT (
     FOR left_right IN ([LEFT], [RIGHT]) 
 ) AS p2
 ORDER BY 1
+GO
+
+-- test pivot with table in different schemas 1
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN products AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
+GO
+
+-- test pivot with table in different schemas 2
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN pivot_schema.products_sch AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
 GO
