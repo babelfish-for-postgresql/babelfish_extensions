@@ -1905,6 +1905,15 @@ func_expr_common_subexpr:
 				{
 					$$ = TsqlFunctionTryCast($3, $5, @1);
 				}
+			| TSQL_COALESCE '(' expr_list ')'
+				{
+					CoalesceExpr *c = makeNode(CoalesceExpr);
+
+					c->args = $3;
+					c->location = @1;
+					c->tsql_is_coalesce = true;
+					$$ = (Node *) c;
+				}
 			| TSQL_CONVERT '(' Typename ',' a_expr ')'
 				{
 					$$ = TsqlFunctionConvert($3, $5, NULL, false, @1);
