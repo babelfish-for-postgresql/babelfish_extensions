@@ -862,5 +862,10 @@ CREATE OPERATOR CLASS sys.numeric_int8 FOR TYPE int8
 END IF;
 END $$;
 
+DROP CAST IF EXISTS(sys.BBF_VARBINARY AS sys.VARCHAR);
+
+CREATE CAST (sys.BBF_VARBINARY AS sys.VARCHAR)
+WITH FUNCTION sys.varbinarysysvarchar (sys.BBF_VARBINARY, integer, boolean) AS IMPLICIT;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
