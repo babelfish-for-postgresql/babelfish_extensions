@@ -31,7 +31,6 @@
 #include "commands/trigger.h"
 #include "commands/view.h"
 #include "common/logging.h"
-#include "common/pg_prng.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -715,7 +714,7 @@ pltsql_GetNewTempObjectId()
 	}
 
 	/*
-	 * Check for uninitialized temp OID, or wraparound of the temp OID buffer.
+	 * Check for wraparound of the temp OID buffer.
 	 */
 	if (nextTempOid >= (Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size) 
 			|| nextTempOid < BUFFER_START_TO_OID)
@@ -729,9 +728,8 @@ pltsql_GetNewTempObjectId()
 		Assert(BUFFER_START_TO_OID >= FirstNormalObjectId);
 		Assert(((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) > BUFFER_START_TO_OID);
 		Assert(BUFFER_START_TO_OID != ShmemVariableCache->nextOid);
-
-		/* quick hack for now - randomize the start temp oid to within the first 10% of the temp OID range */
-		nextTempOid = BUFFER_START_TO_OID + (pg_prng_uint64_range(&pg_global_prng_state, 0, (uint64) (temp_oid_buffer_size / 10)));
+	
+		nextTempOid = BUFFER_START_TO_OID;
 	}
 
 	result = nextTempOid;
