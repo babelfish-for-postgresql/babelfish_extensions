@@ -108,6 +108,17 @@ GO
 SELECT IS_ROLEMEMBER('public', 'test_user1')
 GO
 
+-- Return NULL for server roles other than public
+SELECT IS_MEMBER('sysadmin')
+GO
+
+-- Return NULL for SQL logins and users
+SELECT IS_MEMBER('test_login1')
+GO
+
+SELECT IS_MEMBER('test_user1')
+GO
+
 -- Should return 0
 SELECT IS_ROLEMEMBER('db_owner', 'test_role1')
 GO

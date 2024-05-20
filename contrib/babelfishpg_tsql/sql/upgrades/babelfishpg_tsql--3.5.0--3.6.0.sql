@@ -422,22 +422,22 @@ BEGIN
     THEN RETURN 1;
     END IF;
 
-    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role)
+    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role AND type != 'S') -- do not consider sql logins
     THEN
-        IF EXISTS (SELECT name FROM sys.login_token WHERE name = role)
+        IF EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type NOT IN ('SERVER ROLE', 'SQL LOGIN')) -- do not consider sql logins, server roles
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
-        ELSIF NOT EXISTS (SELECT type FROM sys.login_token WHERE type IN ('WINDOWS LOGIN', 'WINDOWS GROUP')) THEN -- session is not a windows auth session
+        ELSIF NOT EXISTS (SELECT 1 FROM pg_stat_gssapi WHERE pid = pg_backend_pid() AND gss_authenticated = true) THEN -- session is not a windows auth session
             IF (CHARINDEX('\', role) != 0)
             THEN RETURN NULL;  -- argument is a windows group
             ELSE RETURN sys.is_rolemember_internal(role, NULL); -- argument is not a windows group
             END IF;
         ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
         END IF;
-    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role)
+    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role AND type != 'S') -- do not consider sql users
     THEN
-        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role)
+        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role AND type != 'SQL USER') -- do not consider sql users
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
-        ELSIF NOT EXISTS (SELECT type FROM sys.user_token WHERE type IN ('WINDOWS LOGIN', 'WINDOWS GROUP')) THEN -- session is not a windows auth session
+        ELSIF NOT EXISTS (SELECT 1 FROM pg_stat_gssapi WHERE pid = pg_backend_pid() AND gss_authenticated = true) THEN -- session is not a windows auth session
             IF (CHARINDEX('\', role) != 0)
             THEN RETURN NULL;  -- argument is a windows group
             ELSE RETURN sys.is_rolemember_internal(role, NULL); -- argument is not a windows group

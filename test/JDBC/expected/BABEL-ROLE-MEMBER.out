@@ -204,6 +204,32 @@ int
 ~~END~~
 
 
+-- Return NULL for server roles other than public
+SELECT IS_MEMBER('sysadmin')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Return NULL for SQL logins and users
+SELECT IS_MEMBER('test_login1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT IS_MEMBER('test_user1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
 -- Should return 0
 SELECT IS_ROLEMEMBER('db_owner', 'test_role1')
 GO
@@ -372,7 +398,7 @@ SELECT IS_MEMBER('test_user1')
 GO
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 
@@ -449,7 +475,7 @@ SELECT IS_MEMBER('test_user2')
 GO
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 
@@ -547,7 +573,7 @@ SELECT IS_MEMBER('test_user3')
 GO
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 
