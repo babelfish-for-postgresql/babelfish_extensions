@@ -4008,6 +4008,14 @@ grant select on schema::s1 to u3;
 go
 grant execute on schema::s1 to u3;
 go
+-- check for inconsistent metadata
+select COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+go
+~~START~~
+int
+0
+~~END~~
+
 
 -- tsql user=l3 password=123
 -- u3 has select and execute privilege on s1 and s2
