@@ -3522,6 +3522,25 @@ rewriteBatchLevelStatement(
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 			}
+
+			if (cctx->table_type_definition() && cctx->table_type_definition()->column_def_table_constraints())
+			{
+				for (auto cdtctx : cctx->table_type_definition()->column_def_table_constraints()->column_def_table_constraint())
+				{
+					if (cdtctx->table_constraint() && cdtctx->table_constraint()->UNIQUE())
+						rewritten_query_fragment.emplace(std::make_pair(cdtctx->table_constraint()->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
+
+					if (cdtctx->column_definition() && !cdtctx->column_definition()->column_constraint().empty())
+					{
+						for (auto actx: cdtctx->column_definition()->column_constraint())
+						{
+							if (actx->UNIQUE())
+								rewritten_query_fragment.emplace(std::make_pair(actx->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
+						}
+					}
+
+				}
+			}
 		}
 		else if (ctx->create_or_alter_function()->func_body_returns_scalar()) /* CREATE FUNCTON ... RETURNS INT RETURN ... */
 		{
@@ -6102,6 +6121,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	int lineno = getLineNo(ctx);
 	int return_code_dno = -1;	
 	std::string execKeywd = "EXEC"; // DO NOT CHANGE!
+	int name_length = 0;
 		
 	// Use a boolean vor convenience
 	bool execute_statement = string_matches(call_type.c_str(), "execute_statement") ? true : false;
@@ -6135,6 +6155,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	{
 		// Get the name of procedure being executed, and split up in parts
 		name = ::getFullText(ctx_name);
+		name_length = ctx_name->stop->getStopIndex() - ctx_name->start->getStartIndex() + 1;
 		Assert(!name.empty());
 		
 		// Original position of the name
@@ -6288,7 +6309,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	ssPos += spacesNeeded;
 			
 	ss << name;
-	ssPos += name.length();
+	ssPos += name_length;
 	
 	if (func_proc_args) 
 	{
@@ -7243,6 +7264,19 @@ post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::T
 				std::string rewritten_text = "timestamp " + ::getFullText(tctx);
 				rewritten_query_fragment.emplace(std::make_pair(tctx->getSymbol()->getStartIndex(), std::make_pair(::getFullText(tctx), rewritten_text)));
 			}
+
+			if (cdtctx->table_constraint() && cdtctx->table_constraint()->UNIQUE())
+				rewritten_query_fragment.emplace(std::make_pair(cdtctx->table_constraint()->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
+
+			if (cdtctx->column_definition() && !cdtctx->column_definition()->column_constraint().empty())
+			{
+				for (auto actx: cdtctx->column_definition()->column_constraint())
+				{
+					if (actx->UNIQUE())
+						rewritten_query_fragment.emplace(std::make_pair(actx->UNIQUE()->getSymbol()->getStopIndex()+1 , std::make_pair("", " NULLS NOT DISTINCT")));
+				}
+			}
+
 		}
 
 		/*
