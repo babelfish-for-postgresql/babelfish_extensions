@@ -517,6 +517,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 
 		rowData->columnValues = palloc0(request->colCount * sizeof(Datum));
 		rowData->isNull = palloc0(request->colCount * sizeof(bool));
+		rowData->isAllocated = palloc0(request->colCount * sizeof(bool));
 
 		offset++;
 		request->currentBatchSize++;
@@ -594,6 +595,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 								break;
 							case TDS_TYPE_DATETIMEOFFSET:
 								rowData->columnValues[i] = TdsTypeDatetimeoffsetToDatum(temp, colmetadata[i].scale, temp->len);
+								rowData->isAllocated[i] = true;
 								break;
 							case TDS_TYPE_MONEYN:
 								if (colmetadata[i].maxLen == TDS_MAXLEN_SMALLMONEY)
@@ -603,6 +605,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 								break;
 							case TDS_TYPE_UNIQUEIDENTIFIER:
 								rowData->columnValues[i] = TdsTypeUIDToDatum(temp);
+								rowData->isAllocated[i] = true;
 								break;
 						}
 
@@ -647,6 +650,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						 * column.
 						 */
 						rowData->columnValues[i] = TdsTypeNumericToDatum(temp, colmetadata[i].scale);
+						rowData->isAllocated[i] = true;
 
 						offset += len;
 						request->currentBatchSize += len;
@@ -730,6 +734,12 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						}
 
 						/*
+						 * All three of Varchar, NChar and Varbinary conversions allocate
+						 * their results with palloc.
+						 */
+						rowData->isAllocated[i] = true;
+
+						/*
 						 * Free temp->data only if this was created as part of
 						 * PLP parsing. We do not free temp pointer since it
 						 * can be re-used for the next iteration.
@@ -804,6 +814,12 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 								break;
 						}
 
+						/*
+						 * All three of Varchar, NChar and Varbinary conversions allocate
+						 * their results with palloc.
+						 */
+						rowData->isAllocated[i] = true;
+
 						offset += len;
 						request->currentBatchSize += len;
 					}
@@ -830,6 +846,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						 * column.
 						 */
 						rowData->columnValues[i] = TdsTypeXMLToDatum(temp);
+						rowData->isAllocated[i] = true;
 
 						/*
 						 * We do not free temp pointer since it can be re-used
@@ -869,6 +886,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						 * column.
 						 */
 						rowData->columnValues[i] = TdsTypeSqlVariantToDatum(temp);
+						rowData->isAllocated[i] = true;
 
 						offset += len;
 						request->currentBatchSize += len;
@@ -919,7 +937,8 @@ ProcessBCPRequest(TDSRequest request)
 	{
 		int			nargs = 0;
 		Datum	   *values = NULL;
-		bool	   *nulls = NULL;
+		bool	   *nulls = NULL,
+					*valueAllocFlags = NULL;
 		int			count = 0;
 		ListCell   *lc;
 
@@ -958,13 +977,14 @@ ProcessBCPRequest(TDSRequest request)
 		if (req->rowCount == 0)
 		{
 			/* Using Same callback function to do the clean-up. */
-			pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL);
+			pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL, NULL);
 			break;
 		}
 
 		nargs = req->colCount * req->rowCount;
 		values = palloc0(nargs * sizeof(Datum));
 		nulls = palloc0(nargs * sizeof(bool));
+		valueAllocFlags = palloc0(nargs * sizeof(bool));
 
 		/* Flaten and create a 1-D array of Value & Datums */
 		foreach(lc, req->rowData)
@@ -976,7 +996,10 @@ ProcessBCPRequest(TDSRequest request)
 				if (row->isNull[currentColumn]) /* null */
 					nulls[count] = row->isNull[currentColumn];
 				else
+				{
 					values[count] = row->columnValues[currentColumn];
+					valueAllocFlags[count] = row->isAllocated[currentColumn];
+				}
 				count++;
 			}
 		}
@@ -986,7 +1009,7 @@ ProcessBCPRequest(TDSRequest request)
 			PG_TRY();
 			{
 				retValue += pltsql_plugin_handler_ptr->bulk_load_callback(req->colCount,
-																		  req->rowCount, values, nulls);
+																		  req->rowCount, values, nulls, valueAllocFlags);
 			}
 			PG_CATCH();
 			{
@@ -1007,7 +1030,7 @@ ProcessBCPRequest(TDSRequest request)
 				RESUME_CANCEL_INTERRUPTS();
 
 				/* Using Same callback function to do the clean-up. */
-				pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL);
+				pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL, NULL);
 
 				if (ret < 0)
 					TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
@@ -1023,12 +1046,21 @@ ProcessBCPRequest(TDSRequest request)
 			}
 			PG_END_TRY();
 			/* Free the List of Rows. */
+			foreach(lc, req->rowData)
+			{
+				BulkLoadRowData* row = (BulkLoadRowData *) lfirst(lc);
+				pfree(row->columnValues);
+				pfree(row->isNull);
+				pfree(row->isAllocated);
+			}
 			list_free_deep(req->rowData);
 			req->rowData = NIL;
 			if (values)
 				pfree(values);
 			if (nulls)
 				pfree(nulls);
+			if (valueAllocFlags)
+				pfree(valueAllocFlags);
 		}
 	}
 

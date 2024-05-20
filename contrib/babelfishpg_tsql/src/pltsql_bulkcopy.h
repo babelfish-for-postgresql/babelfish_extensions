@@ -51,6 +51,20 @@ typedef struct BulkCopyStateData
 	Oid			seqid;			/* oid of the sequence for an identity column */
 	int			rv_index;		/* index for a rowversion datatype column */
 
+	/*
+	 * Keep track of Datums, which are placed into slots, but not yet flushed
+	 * with table_multi_insert, to be able to free them after flush happens.
+	 * Incoming Values and ValueAllocFlags are appended to these 2 lists.
+	 * Lists are trimmed after the flush in CleanupBufferedValuesAfterFlush.
+	 * Max size of these lists is: 
+	 *     (MAX_BUFFERED_TUPLES + [last incoming batch size]) * colCount
+	 */
+	List	   *bufferedValues;			/* List of Values (as Datums) that need to be
+								 * cleaned up after the executor flush */
+	List	   *bufferedValueAllocFlags;			/* List of flags, set to true when
+								 * corresponding Datum in Values list was allocated on heap
+								 * with palloc */
+
 } BulkCopyStateData;
 
 /* ----------------------
@@ -74,11 +88,14 @@ typedef struct BulkCopyStmt
 								 * batch */
 	Datum	   *Values;			/* List of Values (as Datums) that need to be
 								 * inserted for the current batch */
-	bool	   *Nulls;			/* List of Nulls (as Datums) that need to be
-								 * inserted for the current batch */
+	bool	   *Nulls;			/* List of flags, set to true when corresponding
+								 * Datum in Values list is NULL */
+	bool	   *ValueAllocFlags;			/* List of flags, set to true when
+								 * corresponding Datum in Values list was allocated on heap
+								 * with palloc */
 	BulkCopyState cstate;		/* Contains all the state variables used
 								 * throughout a BULK COPY */
 } BulkCopyStmt;
 
 extern void BulkCopy(BulkCopyStmt *stmt, uint64 *processed);
-extern void EndBulkCopy(BulkCopyState cstate);
+extern void EndBulkCopy(BulkCopyState cstate, int colCount);
