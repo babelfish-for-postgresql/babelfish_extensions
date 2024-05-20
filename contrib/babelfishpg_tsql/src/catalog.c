@@ -2172,7 +2172,8 @@ get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc)
 {
 	bool		isNull;
 	Datum		grantee_datum = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
-	const char *grantee_name = pstrdup(TextDatumGetCString(grantee_datum));
+	char *grantee_name = pstrdup(TextDatumGetCString(grantee_datum));
+	truncate_identifier(grantee_name, strlen(grantee_name), false);
 
 	return CStringGetDatum(grantee_name);
 }
