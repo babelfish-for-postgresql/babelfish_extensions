@@ -384,6 +384,80 @@ extern Oid	bbf_extended_properties_idx_oid;
 extern Oid	get_bbf_extended_properties_oid(void);
 extern Oid	get_bbf_extended_properties_idx_oid(void);
 
+/*****************************************
+ *			PARTITION_FUNCTION
+ *****************************************/
+#define BBF_PARTITION_FUNCTION_TABLE_NAME "babelfish_partition_function"
+#define BBF_PARTITION_FUNCTION_IDX_NAME "babelfish_partition_function_pkey"
+#define BBF_PARTITION_FUNCTION_SEQ_NAME "babelfish_partition_function_seq"
+
+#define Anum_bbf_partition_function_dbid 1
+#define Anum_bbf_partition_function_id 2
+#define Anum_bbf_partition_function_name 3
+#define Anum_bbf_partition_function_input_type 4
+#define Anum_bbf_partition_function_partition_option 5
+#define Anum_bbf_partition_function_range_values 6
+
+#define BBF_PARTITION_FUNCTION_NUM_COLS 8
+
+extern Oid	bbf_partition_function_oid;
+extern Oid	bbf_partition_function_idx_oid;
+extern Oid	bbf_partition_function_seq_oid;
+
+extern Oid	get_bbf_partition_function_oid(void);
+extern Oid	get_bbf_partition_function_idx_oid(void);
+extern Oid	get_bbf_partition_function_seq_oid(void);
+extern void add_entry_to_bbf_partition_function(char *partition_function_name, char *typname, bool partition_option, ArrayType *values);
+extern void remove_entry_from_bbf_partition_function(char *partition_function_name);
+extern int32 get_partition_function_id(char *partition_function_name);
+extern int get_partition_count(char *partition_function_name);
+extern void clean_up_bbf_partition_metadata(int16 dbid);
+
+
+/*****************************************
+ *			PARTITION_SCHEME
+ *****************************************/
+#define BBF_PARTITION_SCHEME_TABLE_NAME "babelfish_partition_scheme"
+#define BBF_PARTITION_SCHEME_IDX_NAME "babelfish_partition_scheme_pkey"
+#define BBF_PARTITION_SCHEME_SEQ_NAME "babelfish_partition_scheme_seq"
+
+#define Anum_bbf_partition_scheme_dbid 1
+#define Anum_bbf_partition_scheme_id 2
+#define Anum_bbf_partition_scheme_name 3
+#define Anum_bbf_partition_scheme_func_id 4
+#define BBF_PARTITION_SCHEME_NUM_COLS 5
+
+extern Oid	bbf_partition_scheme_oid;
+extern Oid	bbf_partition_scheme_idx_oid;
+extern Oid	bbf_partition_scheme_seq_oid;
+
+extern Oid	get_bbf_partition_scheme_oid(void);
+extern Oid	get_bbf_partition_scheme_idx_oid(void);
+extern Oid	get_bbf_partition_scheme_seq_oid(void);
+extern void add_entry_to_bbf_partition_scheme(char *partition_scheme_name, int32 partition_func_id, bool next_used);
+extern void remove_entry_from_bbf_partition_scheme(char *partition_scheme_name);
+extern int32 get_partition_scheme_id(char *partition_scheme_name);
+extern int32 get_partition_function(char *partition_scheme_name);
+
+/*****************************************
+ *			PARTITION_DEPEND
+ *****************************************/
+#define BBF_PARTITION_DEPEND_TABLE_NAME "babelfish_partition_depend"
+#define BBF_PARTITION_DEPEND_IDX_NAME "babelfish_partition_depend_pkey"
+
+#define Anum_bbf_partition_depend_dbid 1
+#define Anum_bbf_partition_depend_scheme_id 2
+#define Anum_bbf_partition_depend_table_schema_name 3
+#define Anum_bbf_partition_depend_table_name 4
+#define BBF_PARTITION_DEPEND_NUM_COLS 4
+
+extern Oid	bbf_partition_depend_oid;
+extern Oid	bbf_partition_depend_idx_oid;
+
+extern Oid	get_bbf_partition_depend_oid(void);
+extern Oid	get_bbf_partition_depend_idx_oid(void);
+
+
 typedef struct FormData_bbf_extended_properties
 {
 	int16		dbid;

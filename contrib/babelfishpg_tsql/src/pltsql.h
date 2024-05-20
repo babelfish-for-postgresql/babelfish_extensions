@@ -198,7 +198,9 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_DBCC,
 	PLTSQL_STMT_ALTER_DB,
 	PLTSQL_STMT_FULLTEXTINDEX,
-	PLTSQL_STMT_GRANTSCHEMA
+	PLTSQL_STMT_GRANTSCHEMA,
+	PLTSQL_STMT_PARTITION_FUNCTION,
+	PLTSQL_STMT_PARTITION_SCHEME
 } PLtsql_stmt_type;
 
 /*
@@ -1092,6 +1094,34 @@ typedef struct PLtsql_stmt_grantschema
 	char		*schema_name;	/* schema name */
 } PLtsql_stmt_grantschema;
 
+
+/*
+ * Partition Function
+ */
+typedef struct PLtsql_stmt_partition_function
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char		*function_name;
+	bool		is_create;
+	bool		is_right;
+	PLtsql_type *datatype;
+	List		*args;			/* the arguments (list of exprs) */
+} PLtsql_stmt_partition_function;
+
+/*
+ * Partition Scheme
+ */
+typedef struct PLtsql_stmt_partition_scheme
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char		*scheme_name;
+	char		*function_name;
+	bool		is_create;
+	int			filegroups; /* filegroups count, -1 indicates ALL is specified */
+} PLtsql_stmt_partition_scheme;
+
 /*
  * ASSERT statement
  */
@@ -1826,7 +1856,16 @@ typedef struct tsql_identity_insert_fields
 	Oid			rel_oid;
 	Oid			schema_oid;
 } tsql_identity_insert_fields;
-
+/* 
+ * Used to provide extra arg during sort,
+ * it is modified version of compare_context.
+ */
+typedef struct tsql_compare_context
+{
+	Oid function_oid;
+	Oid colloid;
+	bool contains_duplicate;
+} tsql_compare_context;
 extern tsql_identity_insert_fields tsql_identity_insert;
 extern check_lang_as_clause_hook_type check_lang_as_clause_hook;
 extern write_stored_proc_probin_hook_type write_stored_proc_probin_hook;

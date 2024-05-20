@@ -1172,7 +1172,12 @@ alter_partition_scheme
     ;
 
 create_partition_scheme
-    : CREATE PARTITION SCHEME partition_scheme_name=id AS PARTITION partition_function_name=id ALL? TO LR_BRACKET id (COMMA id)* RR_BRACKET
+    : CREATE PARTITION SCHEME partition_scheme_name=id AS PARTITION partition_function_name=id ALL? TO LR_BRACKET filegroups (COMMA filegroups)* RR_BRACKET
+    ;
+
+filegroups
+    : PRIMARY_SQBRACKET
+    | id
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-remote-service-binding-transact-sql

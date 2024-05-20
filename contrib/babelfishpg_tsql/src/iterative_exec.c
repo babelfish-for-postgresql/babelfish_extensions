@@ -815,6 +815,24 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_GRANTSCHEMA:
 			exec_stmt_grantschema(estate, (PLtsql_stmt_grantschema *) stmt);
 			break;
+		case PLTSQL_STMT_PARTITION_FUNCTION:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Showing Estimated Execution Plan for PARTITION FUNCTION statment is not yet supported")));
+			}
+			exec_stmt_partition_function(estate, (PLtsql_stmt_partition_function *) stmt);
+			break;
+		case PLTSQL_STMT_PARTITION_SCHEME:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Showing Estimated Execution Plan for PARTITION SCHEME statment is not yet supported")));
+			}
+			exec_stmt_partition_scheme(estate, (PLtsql_stmt_partition_scheme *) stmt);
+			break;
 		case PLTSQL_STMT_FULLTEXTINDEX:
 			if (pltsql_explain_only)
 			{
