@@ -4265,10 +4265,10 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 
 	if(stmt->is_create)
 	{
-		char		*partition_func_name = stmt->function_name;;
 		int		partition_func_id;
 		bool		next_used = false;
 		int		filegroups = stmt->filegroups;
+		char		*partition_func_name = stmt->function_name;
 
 		/* check if given name is exceeding the allowed limit */
 		if(strlen(partition_scheme_name) > 128)
