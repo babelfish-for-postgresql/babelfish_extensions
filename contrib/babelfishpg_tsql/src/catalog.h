@@ -407,11 +407,11 @@ extern Oid	bbf_partition_function_seq_oid;
 extern Oid	get_bbf_partition_function_oid(void);
 extern Oid	get_bbf_partition_function_idx_oid(void);
 extern Oid	get_bbf_partition_function_seq_oid(void);
-extern void add_entry_to_bbf_partition_function(char *partition_function_name, char *typname, bool partition_option, ArrayType *values);
-extern void remove_entry_from_bbf_partition_function(char *partition_function_name);
-extern int32 get_partition_function_id(char *partition_function_name);
-extern int get_partition_count(char *partition_function_name);
-extern void clean_up_bbf_partition_metadata(int16 dbid);
+extern void	add_entry_to_bbf_partition_function(char *partition_function_name, char *typname, bool partition_option, ArrayType *values);
+extern void	remove_entry_from_bbf_partition_function(char *partition_function_name);
+extern int32	get_partition_function_id(char *partition_function_name);
+extern int	get_partition_count(char *partition_function_name);
+extern void	clean_up_bbf_partition_metadata(int16 dbid);
 
 
 /*****************************************
@@ -434,10 +434,10 @@ extern Oid	bbf_partition_scheme_seq_oid;
 extern Oid	get_bbf_partition_scheme_oid(void);
 extern Oid	get_bbf_partition_scheme_idx_oid(void);
 extern Oid	get_bbf_partition_scheme_seq_oid(void);
-extern void add_entry_to_bbf_partition_scheme(char *partition_scheme_name, int32 partition_func_id, bool next_used);
-extern void remove_entry_from_bbf_partition_scheme(char *partition_scheme_name);
-extern int32 get_partition_scheme_id(char *partition_scheme_name);
-extern int32 get_partition_function(char *partition_scheme_name);
+extern void	add_entry_to_bbf_partition_scheme(char *partition_scheme_name, int32 partition_func_id, bool next_used);
+extern void	remove_entry_from_bbf_partition_scheme(char *partition_scheme_name);
+extern int32	get_partition_scheme_id(char *partition_scheme_name);
+extern int32	get_partition_function(char *partition_scheme_name);
 
 /*****************************************
  *			PARTITION_DEPEND

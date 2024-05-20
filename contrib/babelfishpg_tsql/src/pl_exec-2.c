@@ -61,7 +61,7 @@ static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltex
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_function *stmt);
 static int	exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_scheme *stmt);
-static void perform_permission_check(char *name, bool is_create, bool is_partition_function);
+static void	perform_permission_check(char *name, bool is_create, bool is_partition_function);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -4062,7 +4062,7 @@ static void
 perform_permission_check(char *name, bool is_create, bool is_function)
 {
 	char		*dbname = get_cur_db_name();
-	Oid			session_user_id = GetSessionUserId();
+	Oid		session_user_id = GetSessionUserId();
 	char		*login = GetUserNameFromId(session_user_id, false);
 	bool		login_is_db_owner;
 
@@ -4104,13 +4104,12 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		char			*tsql_typename = NULL;
 		Datum			*values = NULL;
 		ArrayType		*arr_value = NULL;
-		ListCell		*lc;
 		Oid			sql_variant_oid;
 		tsql_compare_context 	cxt;
 		Operator		operator;
 		Oid			oprcode;
 		int 			nargs = list_length(arg);
-		MemoryContext cur_ctxt = CurrentMemoryContext;
+		MemoryContext		cur_ctxt = CurrentMemoryContext;
 		LOCAL_FCINFO(fcinfo, 1);
 
 		/* check if given name is exceeding the allowed limit */
@@ -4267,9 +4266,9 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 	if(stmt->is_create)
 	{
 		char		*partition_func_name = stmt->function_name;;
-		int		filegroups = stmt->filegroups;
-		bool		next_used = false;
 		int		partition_func_id;
+		bool		next_used = false;
+		int		filegroups = stmt->filegroups;
 
 		/* check if given name is exceeding the allowed limit */
 		if(strlen(partition_scheme_name) > 128)

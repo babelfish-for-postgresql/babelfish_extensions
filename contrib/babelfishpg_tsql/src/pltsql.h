@@ -1857,8 +1857,8 @@ typedef struct tsql_identity_insert_fields
 	Oid			schema_oid;
 } tsql_identity_insert_fields;
 /* 
- * Used to provide extra arg during sort,
- * it is modified version of compare_context.
+ * used to provide extra arg during sort,
+ * it is modified version of compare_context
  */
 typedef struct tsql_compare_context
 {
