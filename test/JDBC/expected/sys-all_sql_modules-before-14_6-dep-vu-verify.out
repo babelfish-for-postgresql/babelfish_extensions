@@ -1,0 +1,31 @@
+EXEC sys_all_sql_modules_dep_vu_prepare_p1;
+GO
+~~START~~
+bit#!#bit#!#nvarchar
+1#!#1#!#
+~~END~~
+
+
+EXEC sys_all_sql_modules_dep_vu_prepare_p2;
+GO
+~~START~~
+bit#!#bit#!#nvarchar
+1#!#1#!#
+~~END~~
+
+
+SELECT * FROM sys_all_sql_modules_dep_vu_prepare_f2();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM sys_all_sql_modules_dep_vu_prepare_v1;
+GO
+~~START~~
+int#!#bit#!#nvarchar
+<NULL>#!#0#!#
+~~END~~
+

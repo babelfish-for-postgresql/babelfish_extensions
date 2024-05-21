@@ -76,6 +76,12 @@ ignore#!#routines_definition_before-14_7-or-15_2-vu-verify
 ignore#!#sys-all_sql_modules_before-14_5-vu-prepare
 ignore#!#sys-all_sql_modules_before-14_5-vu-verify
 ignore#!#sys-all_sql_modules_before-14_5-vu-cleanup
+ignore#!#sys-sql_modules-before-14_6-dep-vu-prepare
+ignore#!#sys-sql_modules-before-14_6-dep-vu-verify
+ignore#!#sys-sql_modules-before-14_6-dep-vu-cleanup
+ignore#!#sys-all_sql_modules-before-14_6-dep-vu-prepare
+ignore#!#sys-all_sql_modules-before-14_6-dep-vu-verify
+ignore#!#sys-all_sql_modules-before-14_6-dep-vu-cleanup
 ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-prepare
 ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-verify
 ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-cleanup
