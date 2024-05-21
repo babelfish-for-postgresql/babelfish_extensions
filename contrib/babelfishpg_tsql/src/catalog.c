@@ -1599,7 +1599,6 @@ static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
-static Datum get_perms_schema_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_server_name(HeapTuple tuple, TupleDesc dsc);
 
@@ -1749,8 +1748,6 @@ Rule		must_match_rules_function[] =
 /* babelfish_schema_permissions */
 Rule		must_match_rules_schema_permission[] =
 {
-	{"<schema_name> in babelfish_schema_permissions must also exist in babelfish_namespace_ext",
-	"babelfish_namespace_ext", "nspname", NULL, get_perms_schema_name, NULL, check_exist, NULL},
 	{"<grantee> in babelfish_schema_permissions must also exist in pg_authid",
 	"pg_authid", "rolname", NULL, get_perms_grantee_name, NULL, check_exist, NULL}
 };
@@ -2195,6 +2192,7 @@ get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc)
 
 	return CStringGetDatum(grantee_name);
 }
+
 static Datum
 get_server_name(HeapTuple tuple, TupleDesc dsc)
 {
