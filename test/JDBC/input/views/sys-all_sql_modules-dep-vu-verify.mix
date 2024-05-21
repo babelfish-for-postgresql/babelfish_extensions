@@ -2,6 +2,9 @@
 EXEC sys_all_sql_modules_dep_vu_prepare_p1;
 GO
 
+EXEC sys_all_sql_modules_dep_vu_prepare_p2;
+GO
+
 SELECT * FROM sys_all_sql_modules_dep_vu_prepare_f2();
 GO
 
