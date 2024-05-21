@@ -1597,6 +1597,7 @@ static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_perms_schema_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_server_name(HeapTuple tuple, TupleDesc dsc);
 
@@ -1746,6 +1747,8 @@ Rule		must_match_rules_function[] =
 /* babelfish_schema_permissions */
 Rule		must_match_rules_schema_permission[] =
 {
+	{"<schema_name> in babelfish_schema_permissions must also exist in babelfish_namespace_ext",
+	"babelfish_namespace_ext", "nspname", NULL, get_perms_schema_name, NULL, check_exist, NULL},
 	{"<grantee> in babelfish_schema_permissions must also exist in pg_authid",
 	"pg_authid", "rolname", NULL, get_perms_grantee_name, NULL, check_exist, NULL}
 };
@@ -2165,6 +2168,19 @@ get_function_name(HeapTuple tuple, TupleDesc dsc)
 	Form_bbf_function_ext func = ((Form_bbf_function_ext) GETSTRUCT(tuple));
 
 	return NameGetDatum(&(func->funcname));
+}
+
+static Datum
+get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		isNull;
+	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &isNull);
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_schema_perms_dbid, dsc, &isNull);
+	char		*physical_schema_name;
+	/* get_physical_schema_name() itself handles truncation, no explicit truncation needed */
+	physical_schema_name = get_physical_schema_name(get_db_name(DatumGetInt16(dbid)), TextDatumGetCString(schema_name));
+
+	return CStringGetDatum(physical_schema_name);
 }
 
 static Datum
