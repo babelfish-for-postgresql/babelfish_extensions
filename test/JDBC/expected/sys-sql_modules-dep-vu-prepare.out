@@ -40,15 +40,6 @@ FROM sys.sql_modules
 WHERE object_id = OBJECT_ID('sys_sql_modules_dep_vu_prepare_f1')
 GO
 
-CREATE VIEW sys_sql_modules_dep_vu_prepare_v2 AS
-SELECT
-    execute_as_principal_id,
-    uses_native_compilation,
-    definition
-FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys_sql_modules_dep_more_than_4k')
-GO
-
 CREATE FUNCTION sys_sql_modules_dep_vu_prepare_f2()
 RETURNS INT
 AS
