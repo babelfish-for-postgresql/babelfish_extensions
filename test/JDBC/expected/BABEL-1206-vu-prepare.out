@@ -41,13 +41,10 @@ go
 
 CREATE TABLE babel_1206_vu_prepare_t4(
       [DistinctApplicationID] [bigint] IDENTITY(1,1) NOT NULL,
-      [Description] [nvarchar](1024) NOT NULL,
-      [DescriptionHash]  AS (hashbytes('MD5',[Description])) PERSISTED NOT NULL,
-  CONSTRAINT babel_1206_vu_prepare_t4_i3 UNIQUE NONCLUSTERED
- (
-      [DescriptionHash] ASC
- )
- ) ON [PRIMARY]
+      [Description] [nvarchar](1024) NOT NULL CONSTRAINT babel_1206_vu_prepare_t4_i3 UNIQUE NONCLUSTERED,
+      [DescriptionHash]  AS (hashbytes('MD5',[Description])) PERSISTED NOT NULL
+)
+ON [PRIMARY]
 go
 
 insert into babel_1206_vu_prepare_t4 values (0xaaa);
@@ -59,5 +56,5 @@ insert into babel_1206_vu_prepare_t4 values (0xaaa);
 go
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_1206_vu_prepare_t4_i3babeaa1c56a90ff7306469195c2b5d1e115d")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_1206_vu_prepare_t4_i3")~~
 
