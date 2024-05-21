@@ -3433,9 +3433,9 @@ BEGIN
             END IF;
         ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
         END IF;
-    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role AND type != 'S') -- do not consider sql users
+    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role)
     THEN
-        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role AND type != 'SQL USER') -- do not consider sql users
+        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role)
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
         ELSIF NOT EXISTS (SELECT 1 FROM pg_stat_gssapi WHERE pid = pg_backend_pid() AND gss_authenticated = true) THEN -- session is not a windows auth session
             IF (CHARINDEX('\', role) != 0)

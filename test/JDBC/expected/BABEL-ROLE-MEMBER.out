@@ -398,7 +398,7 @@ SELECT IS_MEMBER('test_user1')
 GO
 ~~START~~
 int
-<NULL>
+1
 ~~END~~
 
 
@@ -475,7 +475,7 @@ SELECT IS_MEMBER('test_user2')
 GO
 ~~START~~
 int
-<NULL>
+1
 ~~END~~
 
 
@@ -573,7 +573,7 @@ SELECT IS_MEMBER('test_user3')
 GO
 ~~START~~
 int
-<NULL>
+1
 ~~END~~
 
 
