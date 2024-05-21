@@ -3544,7 +3544,7 @@ execute_bulk_load_insert(int ncol, int nrow,
 		/* Cleanup all the pointers. */
 		if (cstmt)
 		{
-			EndBulkCopy(cstmt->cstate);
+			EndBulkCopy(cstmt->cstate, false);
 			if (cstmt->attlist)
 				list_free_deep(cstmt->attlist);
 			if (cstmt->relation)
@@ -3589,6 +3589,9 @@ execute_bulk_load_insert(int ncol, int nrow,
 		 * the cleanup.
 		 */
 		MemoryContext oldcontext;
+
+		/* Cleanup cstate. */
+		EndBulkCopy(cstmt->cstate, true);
 
 		if (ActiveSnapshotSet() && GetActiveSnapshot() == snap)
 			PopActiveSnapshot();

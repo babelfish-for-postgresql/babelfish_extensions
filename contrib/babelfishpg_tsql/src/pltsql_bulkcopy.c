@@ -839,6 +839,7 @@ BeginBulkCopy(Relation rel,
 
 	/* Assign range table. */
 	cstate->range_table = pstate->p_rtable;
+	cstate->rteperminfos = pstate->p_rteperminfos;
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	num_phys_attrs = tupDesc->natts;
@@ -924,7 +925,7 @@ BeginBulkCopy(Relation rel,
 	 * index-entry-making machinery.  (There used to be a huge amount of code
 	 * here that basically duplicated execUtils.c ...).
 	 */
-	ExecInitRangeTable(cstate->estate, cstate->range_table, cstate->estate->es_rteperminfos);
+	ExecInitRangeTable(cstate->estate, cstate->range_table, cstate->rteperminfos);
 	cstate->resultRelInfo = cstate->target_resultRelInfo = makeNode(ResultRelInfo);
 	ExecInitResultRelation(cstate->estate, cstate->resultRelInfo, 1);
 
@@ -943,12 +944,12 @@ BeginBulkCopy(Relation rel,
  * EndBulkCopy - Clean up storage and release resources for BULK COPY.
  */
 void
-EndBulkCopy(BulkCopyState cstate)
+EndBulkCopy(BulkCopyState cstate, bool aborted)
 {
 	if (cstate)
 	{
 		/* Flush any remaining bufferes out to the table. */
-		if (!CopyMultiInsertInfoIsEmpty(&cstate->multiInsertInfo))
+		if (!CopyMultiInsertInfoIsEmpty(&cstate->multiInsertInfo) && !aborted)
 			CopyMultiInsertInfoFlush(&cstate->multiInsertInfo, NULL);
 
 		if (cstate->bistate != NULL)
