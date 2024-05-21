@@ -6136,6 +6136,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	// Set up calltype-dependent values
 	if (execute_statement) 
 	{
+		/* Executes a procedure with EXEC[UTE] keyword */
 		TSqlParser::Execute_statementContext *ctxES = (TSqlParser::Execute_statementContext *) ctx;
 			
 		if (ctxES->EXECUTE()) execKeywd = "EXEC   ";  // same length as EXECUTE. DO NOT CHANGE!						
@@ -6148,6 +6149,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	}
 	else // execute_body_batch
 	{
+		/* Executes a procedure as first statement in the batch, without EXEC[UTE] keyword */
 		TSqlParser::Execute_body_batchContext *ctxEBB = (TSqlParser::Execute_body_batchContext *) ctx;
 		ctx_name       = ctxEBB->func_proc_name_server_database_schema();		
 		func_proc_args = ctxEBB->execute_statement_arg();
@@ -6159,6 +6161,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	{
 		if (opt->RECOMPILE())
 		{
+			/* RECOMPILE option was specified; not processing any other options for now */
 			exec_with_recompile = true;
 			break;
 		}

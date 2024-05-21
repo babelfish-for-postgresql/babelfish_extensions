@@ -19,10 +19,6 @@ drop procedure if exists p_recomp_22
 go
 drop table if exists tb_recomp_22
 go
-drop procedure if exists p_recomp_23
-go
-drop table if exists tb_recomp_23
-go
 
 drop procedure if exists p_recomp_31
 go

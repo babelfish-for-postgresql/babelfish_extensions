@@ -1301,7 +1301,6 @@ get_pltsql_function_signature_internal(const char *funcname,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();
-
 	return argbuf.data;			/* return palloc'd string buffer */
 }
 

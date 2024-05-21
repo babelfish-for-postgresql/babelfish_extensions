@@ -1,7 +1,4 @@
 -- parallel_query_expected
-SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
-go
-
 /*
  * These tests validate the T-SQL RECOMPILE behaviour for stored procedures.
  * The approach is to demonstrate the recompilation by disabling index scans, 
@@ -27,7 +24,34 @@ go
  
  */
 
-select '==== EXEC with RECOMPILE tests with plan_cache_mode=auto ======'  
+-- psql
+analyze master_dbo.tb_recomp_11
+go
+analyze master_dbo.tb_recomp_12
+go
+analyze master_dbo.tb_recomp_13
+go
+analyze master_dbo.tb_recomp_21
+go
+analyze master_dbo.tb_recomp_22
+go
+analyze master_dbo.tb_recomp_31
+go
+analyze master_dbo.tb_recomp_32
+go
+analyze master_dbo.tb_recomp_33
+go
+analyze master_dbo.tb_recomp_41
+go
+analyze master_dbo.tb_recomp_51
+go
+analyze master_dbo.tb_recomp_61
+go
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+go
+--==== EXEC with RECOMPILE tests with plan_cache_mode=auto ======
 go
 select set_config('plan_cache_mode', 'auto', false)
 go
@@ -38,25 +62,25 @@ go
 SELECT current_setting('enable_indexscan') as enable_indexscan_before
 go
 
-select '--- p_recomp_11: no generic plan generated first -----'
+--- p_recomp_11: no generic plan generated first -----
 go
-select '--- using index scan ----'
+--- using index scan ----
 go
 set babelfish_showplan_all on
 go
-execute p_recomp_11 1
+execute p_recomp_11 0
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_12: generate generic plan after repeated custom plans -----'
+--- tb_recomp_12: generate generic plan after repeated custom plans -----
 go
 
 -- tb_recomp_12: generate generic plan after repeated custom plans
 declare @i int = 6
 while @i > 0
 begin
-exec    p_recomp_12 1
+exec    p_recomp_12 0
 set @i -= 1
 end
 go
@@ -64,58 +88,61 @@ go
 
 set babelfish_showplan_all on
 go
-exec    p_recomp_12 1
+exec    p_recomp_12 0
 go
 set babelfish_showplan_all off
 go
 
-select '--- turning off index scan ----'
+--- turning off index scan ----
 go
 select set_config('enable_indexscan', 'off', false)
 go
 select current_setting('enable_indexscan') as indexscan_off
 go
 
-select '--- EXEC with RECOMPILE: recompiled plan: bitmap scan for parametrized stmt, index scan for non-parametrized ----'
+--- EXEC with RECOMPILE: recompiled plan: bitmap scan for parametrized stmt, index scan for non-parametrized ----
 go
 
 set babelfish_showplan_all on
 go
-execute p_recomp_11 1 with recompile
+execute p_recomp_11 0 with recompile
 go
-exec    p_recomp_12 1 with recompile
+exec    p_recomp_12 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
-select '--- EXEC without RECOMPILE: index scan (using cached plan) ----'
+--- EXEC without RECOMPILE: index scan (using cached plan) ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_12 1 
+-- test case without execute keyword
+p_recomp_12 0 
 go
 set babelfish_showplan_all off
 go
 
 
-select '--- RECOMPILE combined with other option ----'
+--- RECOMPILE combined with other option ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_11 1 with recompile, result sets none
+-- test case without execute keyword
+p_recomp_11 0 with recompile, result sets none
 go
-exec    p_recomp_11 1 with result sets none, recompile
+-- test case without execute keyword
+p_recomp_11 0 with result sets none, recompile
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_13: first execution: bitmap scan for both statements ----'
+--- tb_recomp_13: first execution: bitmap scans ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_13 1
+exec    p_recomp_13 0
 go
-exec    p_recomp_13 1 with recompile
+exec    p_recomp_13 0 with recompile
 go
 set babelfish_showplan_all off
 go
@@ -124,61 +151,61 @@ go
 declare @i int = 6
 while @i > 0
 begin
-exec    p_recomp_13 1
+exec    p_recomp_13 0
 set @i -= 1
 end
 go
 -- generic plan is now created for tb_recomp_13 --> no further replanning according to PG approach
 
-select '--- turning on index scan ----'
+--- turning on index scan ----
 go
 select set_config('enable_indexscan', 'on', false)
 go
 select current_setting('enable_indexscan') as indexscan_on
 go
 
-select '--- EXEC with RECOMPILE: recompiled plan: index scan ----'
+--- EXEC with RECOMPILE: recompiled plan: index scan ----
 go
 set babelfish_showplan_all on
 go
-execute p_recomp_11 1 with recompile 
+execute p_recomp_11 0 with recompile 
 go
-exec    p_recomp_12 1 with recompile 
+exec    p_recomp_12 0 with recompile 
 go
 set babelfish_showplan_all off
 go
 
-select '--- EXEC without RECOMPILE: index scan (using cached plan) ----'
+--- EXEC without RECOMPILE: index scan (using cached plan) ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_12 1 
+exec    p_recomp_12 0 
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_13: EXEC with RECOMPILE: recompiled plan: index scan for paramtrized stmt, bitmap scan for non-param stmt ----'
+--- tb_recomp_13: EXEC with RECOMPILE: recompiled plan: index scan for paramtrized stmt, bitmap scan for non-param stmt ----
 go
 set babelfish_showplan_all on
 go
-execute p_recomp_13 1 with recompile 
+execute p_recomp_13 0 with recompile 
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_13 without RECOMPILE: bitmap scan for both statements ----'
+--- tb_recomp_13 without RECOMPILE: bitmap scans ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_13 1
+exec    p_recomp_13 0
 go
-exec    p_recomp_13 1 with recompile
+exec    p_recomp_13 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
 
-select '==== EXEC with RECOMPILE tests with plan_cache_mode=force_generic_plan ======'  
+--==== EXEC with RECOMPILE tests with plan_cache_mode=force_generic_plan ======
 go
 select set_config('plan_cache_mode', 'force_generic_plan', false)
 go
@@ -188,135 +215,78 @@ SELECT current_setting('enable_indexscan') as enable_indexscan_after
 go
 
 
-select '--- p_recomp_21: no generic plan generated first ------'
+--- p_recomp_21: generic plan generated: index scans ------
 go
-select '--- using index scan ----'
+--- using index scan ----
 go
 set babelfish_showplan_all on
 go
-execute p_recomp_21 1
+execute p_recomp_21 0
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_22: generate generic plan after repeated custom plans ------'
-go
-
--- tb_recomp_22: generate generic plan after repeated custom plans
-declare @i int = 6
-while @i > 0
-begin
-exec    p_recomp_22 1
-set @i -= 1
-end
-go
--- generic plan is now created for tb_recomp_22 --> no further replanning according to PG approach
-
-set babelfish_showplan_all on
-go
-exec    p_recomp_22 1
-go
-set babelfish_showplan_all off
-go
-
-select '--- turning off index scan ----'
+--- turning off index scan ----
 go
 select set_config('enable_indexscan', 'off', false)
 go
 select current_setting('enable_indexscan') as indexscan_off
 go
 
-select '--- EXEC with RECOMPILE: recompiled plan: bitmap scan for parametrized stmt, index scan for non-parametrized ----'
+--- p_recomp_21: EXEC with RECOMPILE: bitmap scan for parametrized stmt, index scan for non-parametrized ----
 go
-
 set babelfish_showplan_all on
 go
-execute p_recomp_21 1 with recompile
+execute p_recomp_21 0 with recompile
 go
-exec    p_recomp_22 1 with recompile
+
+--- p_recomp_22: EXEC with RECOMPILE: first plan generated: bitmap scans ----
+go
+exec    p_recomp_22 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
-select '--- EXEC without RECOMPILE: index scan (using cached plan) ----'
+--- p_recomp_22: EXEC without RECOMPILE: bitmap scans ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_22 1 
+exec    p_recomp_22 0 
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_23: first execution: bitmap scan for both statements ----'
-go
-set babelfish_showplan_all on
-go
-exec    p_recomp_23 1
-go
-exec    p_recomp_23 1 with recompile
-go
-set babelfish_showplan_all off
-go
-
--- tb_recomp_23: generate generic plan after repeated custom plans
-declare @i int = 6
-while @i > 0
-begin
-exec    p_recomp_23 1
-set @i -= 1
-end
-go
--- generic plan is now created for tb_recomp_23 --> no further replanning according to PG approach
-
-select '--- turning on index scan ----'
+--- turning on index scan ----
 go
 select set_config('enable_indexscan', 'on', false)
 go
 select current_setting('enable_indexscan') as indexscan_on
 go
 
-select '--- EXEC with RECOMPILE: recompiled plan: index scan ----'
+--- p_recomp_21: EXEC with RECOMPILE: recompiled plan: index scans ----
 go
 set babelfish_showplan_all on
 go
-execute p_recomp_21 1 with recompile 
+execute p_recomp_21 0 with recompile 
 go
-exec    p_recomp_22 1 with recompile 
+
+--- p_recomp_22: EXEC with RECOMPILE: recompiled plan: index scan for parametrized, btmap scan for non-parametrized ----
+go
+exec    p_recomp_22 0 with recompile 
 go
 set babelfish_showplan_all off
 go
 
-select '--- EXEC without RECOMPILE: index scan (using cached plan) ----'
+--- p_recomp_22: EXEC without RECOMPILE: bitmap scans ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_22 1 
+exec    p_recomp_22 0 
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_23: EXEC with RECOMPILE: recompiled plan: index scan for paramtrized stmt, bitmap scan for non-param stmt ----'
-go
-set babelfish_showplan_all on
-go
-execute p_recomp_23 1 with recompile 
-go
-set babelfish_showplan_all off
-go
-
-select '--- tb_recomp_23 without RECOMPILE: bitmap scan for both statements ----'
-go
-set babelfish_showplan_all on
-go
-exec    p_recomp_23 1
-go
-exec    p_recomp_23 1 with recompile
-go
-set babelfish_showplan_all off
-go
-
-
-select '==== EXEC with RECOMPILE tests with plan_cache_mode=force_custom_plan ======'  
+--==== EXEC with RECOMPILE tests with plan_cache_mode=force_custom_plan ======
 go
 select set_config('plan_cache_mode', 'force_custom_plan', false)
 go
@@ -325,136 +295,113 @@ go
 SELECT current_setting('enable_indexscan') as enable_indexscan_after
 go
 
-
-
-select '--- p_recomp_31: no generic plan generated first ------'
+--- p_recomp_31: custom plan generated first: index scans ------
 go
-select '--- using index scan ----'
+--- using index scan ----
 go
 set babelfish_showplan_all on
 go
-execute p_recomp_31 1
+execute p_recomp_31 0
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_32: generate generic plan after repeated custom plans ------'
-go
-
--- tb_recomp_32: generate generic plan after repeated custom plans
-declare @i int = 6
-while @i > 0
-begin
-exec    p_recomp_32 1
-set @i -= 1
-end
-go
--- generic plan is now created for tb_recomp_32 --> no further replanning according to PG approach
-
-set babelfish_showplan_all on
-go
-exec    p_recomp_32 1
-go
-set babelfish_showplan_all off
-go
-
-select '--- turning off index scan ----'
+--- turning off index scan ----
 go
 select set_config('enable_indexscan', 'off', false)
 go
 select current_setting('enable_indexscan') as indexscan_off
 go
 
-select '--- EXEC with RECOMPILE: recompiled plan: bitmap scan for parametrized stmt, index scan for non-parametrized ----'
-go
 
 set babelfish_showplan_all on
 go
-execute p_recomp_31 1 with recompile
+--- p_recomp_31: EXEC with RECOMPILE: recompiled plan: bitmap scan for parametrized stmt, index scan for non-parametrized ----
 go
-exec    p_recomp_32 1 with recompile
+execute p_recomp_31 0 with recompile
+go
+
+--- p_recomp_32: EXEC with RECOMPILE: bitmap scans (due to force_custom_plan through RECOMPILE) ----
+go
+exec    p_recomp_32 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
-select '--- EXEC without RECOMPILE: bitmap scan (due to force_custom_plans ----'
+--- p_recomp_32: EXEC without RECOMPILE: bitmap scans (due to force_custom_plans) ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_32 1 
+exec    p_recomp_32 0 
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_33: first execution: bitmap scan for both statements ----'
-go
 set babelfish_showplan_all on
 go
-exec    p_recomp_33 1
+--- tb_recomp_33: first execution: bitmap scans ----
 go
-exec    p_recomp_33 1 with recompile
+exec    p_recomp_33 0
+go
+--- tb_recomp_33: with RECOMPILE: bitmap scans ----
+go
+exec    p_recomp_33 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
--- tb_recomp_33: generate generic plan after repeated custom plans
-declare @i int = 6
-while @i > 0
-begin
-exec    p_recomp_33 1
-set @i -= 1
-end
-go
--- generic plan is now created for tb_recomp_33 --> no further replanning according to PG approach
-
-select '--- turning on index scan ----'
+--- turning on index scan ----
 go
 select set_config('enable_indexscan', 'on', false)
 go
 select current_setting('enable_indexscan') as indexscan_on
 go
 
-select '--- EXEC with RECOMPILE: recompiled plan: index scan ----'
-go
 set babelfish_showplan_all on
 go
-execute p_recomp_31 1 with recompile 
+--- p_recomp_31: EXEC with RECOMPILE: recompiled plan: index scans ----
 go
-exec    p_recomp_32 1 with recompile 
+execute p_recomp_31 0 with recompile 
+go
+--- p_recomp_32: EXEC with RECOMPILE: recompiled plan: index scan for paramtrized, bitmap scan for non-parametrized ----
+go
+exec    p_recomp_32 0 with recompile 
 go
 set babelfish_showplan_all off
 go
 
-select '--- EXEC without RECOMPILE: index scan (using cached plan) ----'
-go
 set babelfish_showplan_all on
 go
-exec    p_recomp_32 1 
+--- p_recomp_32: EXEC without RECOMPILE: index scan for paramtrized, bitmap scan for non-parametrized ----
+go
+exec    p_recomp_32 0 
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_33: EXEC with RECOMPILE: recompiled plan: index scan for paramtrized stmt, bitmap scan for non-param stmt ----'
+--- tb_recomp_33: EXEC with RECOMPILE: recompiled plan: index scan for paramtrized stmt, bitmap scan for non-param stmt ----
 go
 set babelfish_showplan_all on
 go
-execute p_recomp_33 1 with recompile 
+execute p_recomp_33 0 with recompile 
 go
 set babelfish_showplan_all off
 go
 
-select '--- tb_recomp_33 without RECOMPILE: index scan for paramtrized stmt, bitmap scan for non-param stmt due to force_custom_plan ----'
-go
 set babelfish_showplan_all on
 go
-exec    p_recomp_33 1
+--- tb_recomp_33 without RECOMPILE: index scan for paramtrized stmt, bitmap scan for non-param stmt ----
 go
-exec    p_recomp_33 1 with recompile
+exec    p_recomp_33 0
+go
+--- tb_recomp_33 with RECOMPILE: index scan for paramtrized stmt, bitmap scan for non-param stmt  ----
+go
+exec    p_recomp_33 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
-select '==== CREATE with RECOMPILE tests with plan_cache_mode=auto ======'  
+--==== CREATE with RECOMPILE tests with plan_cache_mode=auto ======
 go
 select set_config('plan_cache_mode', 'auto', false)
 go
@@ -465,86 +412,86 @@ go
 SELECT current_setting('enable_indexscan') as enable_indexscan_before
 go
 
-select '--- tb_recomp_41/61 was created with RECOMPILE, so every execution uses RECOMPILE implicitly ------'
+--- tb_recomp_41/61 was created with RECOMPILE, so every execution uses RECOMPILE implicitly ------
 go
 
 -- tb_recomp_41/61: following the same logic as for creating a generic plan, even though every call creates a custom plan
 declare @i int = 6
 while @i > 0
 begin
-exec    p_recomp_41 1
-exec    p_recomp_61 1
+exec    p_recomp_41 0
+exec    p_recomp_61 0
 set @i -= 1
 end
 go
 
-select '--- index scan for both statements ---'
+--- index scans ---
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_41 1
-exec    p_recomp_61 1
+exec    p_recomp_41 0
+exec    p_recomp_61 0
 go
 set babelfish_showplan_all off
 go
 
-select '--- turning off index scan ----'
+--- turning off index scan ----
 go
 select set_config('enable_indexscan', 'off', false)
 go
 select current_setting('enable_indexscan') as indexscan_off
 go
 
-select '--- EXEC without RECOMPILE: still creating recompiled plan on every execution: bitmap scan for parametrized stmt, index scan for non-parametrized ----'
+--- EXEC without RECOMPILE: still creating recompiled plan on every execution: bitmap scan for parametrized stmt, index scan for non-parametrized ----
 go
 
 set babelfish_showplan_all on
 go
-exec    p_recomp_41 1 
-exec    p_recomp_61 1 
+exec    p_recomp_41 0 
+exec    p_recomp_61 0 
 go
 set babelfish_showplan_all off
 go
 
-select '--- EXEC with RECOMPILE: same as EXEC without RECOMPILE ----'
+--- EXEC with RECOMPILE: same as EXEC without RECOMPILE ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_41 1 with recompile
-exec    p_recomp_61 1 with recompile
+exec    p_recomp_41 0 with recompile
+exec    p_recomp_61 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
-select '--- turning on index scan ----'
+--- turning on index scan ----
 go
 select set_config('enable_indexscan', 'on', false)
 go
 select current_setting('enable_indexscan') as indexscan_on
 go
 
-select '--- EXEC without RECOMPILE: still creating recompiled plan on every execution: index scan for both statements ----'
+--- EXEC without RECOMPILE: still creating recompiled plan on every execution: index scans ----
 go
 
 set babelfish_showplan_all on
 go
-exec    p_recomp_41 1 
-exec    p_recomp_61 1 
+exec    p_recomp_41 0 
+exec    p_recomp_61 0 
 go
 set babelfish_showplan_all off
 go
 
-select '--- EXEC with RECOMPILE: same as EXEC without RECOMPILE ----'
+--- EXEC with RECOMPILE: same as EXEC without RECOMPILE ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_41 1 with recompile
-exec    p_recomp_61 1 with recompile
+exec    p_recomp_41 0 with recompile
+exec    p_recomp_61 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
-select '==== nested proc calls with plan_cache_mode=auto ======'  
+--==== nested proc calls with plan_cache_mode=auto ======
 go
 select set_config('plan_cache_mode', 'auto', false)
 go
@@ -559,73 +506,73 @@ go
 declare @i int = 6
 while @i > 0
 begin
-exec    p_recomp_51 1
+exec    p_recomp_51 0
 set @i -= 1
 end
 go
 
-select '--- index scan for all stmts ----'
+--- index scan for all stmts ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_51 1
+exec    p_recomp_51 0
 go
 set babelfish_showplan_all off
 go
 
-select '--- turning off index scan ----'
+--- turning off index scan ----
 go
 select set_config('enable_indexscan', 'off', false)
 go
 select current_setting('enable_indexscan') as indexscan_off
 go
 
-select '--- index scan for all stmts, bitmap scan for paramterized stmts in recompiled calls ----'
+--- index scan for all stmts, bitmap scan for paramterized stmts in recompiled calls ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_51 1
+exec    p_recomp_51 0
 go
 set babelfish_showplan_all off
 go
 
-select '--- bitmap scan for paramterized stmts in recompiled calls, index scan on all others ----'
+--- bitmap scan for paramterized stmts in recompiled calls, index scan on all others ----
 go
 set babelfish_showplan_all on
 go
-exec    p_recomp_51 1 with recompile
+exec    p_recomp_51 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
-select '--- turning on index scan ----'
+--- turning on index scan ----
 go
 select set_config('enable_indexscan', 'on', false)
 go
 select current_setting('enable_indexscan') as indexscan_on
 go
 
-select '--- index scan for all stmts ----'
+--- index scan for all stmts ----
 go
 
 set babelfish_showplan_all on
 go
-exec    p_recomp_51 1 
+exec    p_recomp_51 0 
 go
 set babelfish_showplan_all off
 go
 
-select '--- index scan for all stmts ----'
+--- index scan for all stmts ----
 go
 
 set babelfish_showplan_all on
 go
-exec    p_recomp_51 1 with recompile
+exec    p_recomp_51 0 with recompile
 go
 set babelfish_showplan_all off
 go
 
-select '==== end of tests ======'  
+--==== end of tests ======
 go
 select set_config('plan_cache_mode', 'auto', false)
 go
