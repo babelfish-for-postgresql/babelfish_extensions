@@ -8,6 +8,12 @@
 
 # These test should not get run in parallel query
 ignore#!#BABEL-1363
+ignore#!#BABEL-4815-vu-prepare
+ignore#!#BABEL-4815-vu-verify
+ignore#!#BABEL-4815-vu-cleanup
+ignore#!#BABEL-4815-before-14_13-vu-prepare
+ignore#!#BABEL-4815-before-14_13-vu-verify
+ignore#!#BABEL-4815-before-14_13-vu-cleanup
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify

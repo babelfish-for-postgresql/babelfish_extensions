@@ -4842,7 +4842,12 @@ is_function_pg_stat_valid(FunctionCallInfo fcinfo, PgStat_FunctionCallUsage *fcu
 static SortByNulls
 unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 {
-	if (constraint_type == CONSTR_UNIQUE)
+	/*
+	 * Ordering is only allowed when index has amcanorder = true (eg: btree)
+	 * PRIMARY KEY and UNIQUE constraints currently only use btree indexes
+	 * so we can be sure that setting nulls_order here is okay
+	 */
+	if (constraint_type == CONSTR_UNIQUE || constraint_type == CONSTR_PRIMARY)
 	{
 		switch (ordering)
 		{
