@@ -416,18 +416,23 @@ GRANT SELECT ON sys.user_token TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
 $$
+DECLARE
+    is_windows_auth integer = 0;
+    is_windows_grp boolean := (CHARINDEX('\', role) != 0);
 BEGIN
     -- Always return 1 for 'public'
     IF (role = 'public')
     THEN RETURN 1;
     END IF;
 
+    SELECT COUNT(*) FROM pg_stat_gssapi WHERE pid = pg_backend_pid() AND gss_authenticated = true INTO is_windows_auth;
+
     IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role AND type != 'S') -- do not consider sql logins
     THEN
         IF EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type NOT IN ('SERVER ROLE', 'SQL LOGIN')) -- do not consider sql logins, server roles
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
-        ELSIF NOT EXISTS (SELECT 1 FROM pg_stat_gssapi WHERE pid = pg_backend_pid() AND gss_authenticated = true) THEN -- session is not a windows auth session
-            IF (CHARINDEX('\', role) != 0)
+        ELSIF (is_windows_auth = 0) THEN -- session is not a windows auth session
+            IF (is_windows_grp)
             THEN RETURN NULL;  -- argument is a windows group
             ELSE RETURN sys.is_rolemember_internal(role, NULL); -- argument is not a windows group
             END IF;
@@ -437,8 +442,8 @@ BEGIN
     THEN
         IF EXISTS (SELECT name FROM sys.user_token WHERE name = role)
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
-        ELSIF NOT EXISTS (SELECT 1 FROM pg_stat_gssapi WHERE pid = pg_backend_pid() AND gss_authenticated = true) THEN -- session is not a windows auth session
-            IF (CHARINDEX('\', role) != 0)
+        ELSIF (is_windows_auth = 0) THEN -- session is not a windows auth session
+            IF (is_windows_grp)
             THEN RETURN NULL;  -- argument is a windows group
             ELSE RETURN sys.is_rolemember_internal(role, NULL); -- argument is not a windows group
             END IF;
