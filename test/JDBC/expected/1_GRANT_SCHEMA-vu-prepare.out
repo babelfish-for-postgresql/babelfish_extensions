@@ -116,3 +116,47 @@ dbo#!#babel_4768_t1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>#!#<NULL>
 dbo#!#babel_4768_v1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>#!#<NULL>
 ~~END~~
 
+
+-- tsql
+-- to test schema length truncation
+CREATE SCHEMA babel_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+go
+
+CREATE TABLE babel_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.t1 (a int)
+go
+
+GRANT SELECT ON babel_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.t1 TO babel_4768_u1
+go
+
+-- to test perms of multiple objects in same schema
+CREATE SCHEMA babel_4768_s2
+GO
+
+CREATE TABLE babel_4768_s2.t1 (a int)
+go
+
+create view babel_4768_s2.v1 as select 1;
+go
+
+create proc babel_4768_s2.p1 as select 1;
+go
+
+GRANT SELECT ON babel_4768_s2.t1 TO babel_4768_u1
+go
+
+GRANT SELECT ON babel_4768_s2.v1 TO babel_4768_u1
+go
+
+
+GRANT EXECUTE ON babel_4768_s2.p1 TO babel_4768_u1
+go
+
+
+-- check for inconsistent metadata before upgrade
+select COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+go
+~~START~~
+int
+0
+~~END~~
+

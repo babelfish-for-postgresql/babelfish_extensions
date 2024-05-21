@@ -2177,12 +2177,12 @@ get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
 {
 	bool		isNull;
 	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &isNull);
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_schema_perms_dbid, dsc, &isNull);
+	char		*physical_schema_name;
+	/* get_physical_schema_name() itself handles truncation, no explicit truncation needed */
+	physical_schema_name = get_physical_schema_name(get_db_name(DatumGetInt16(dbid)), TextDatumGetCString(schema_name));
 
-	if (isNull)
-		ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					errmsg("schema name should not be null.")));
-	return schema_name;
+	return CStringGetDatum(physical_schema_name);
 }
 
 static Datum
