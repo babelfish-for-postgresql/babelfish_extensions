@@ -550,7 +550,7 @@ int
 ~~END~~
 
 
-select * from babel_726_v1
+exec babel_726_vu_prepare_p1
 go
 ~~START~~
 nvarchar
@@ -558,15 +558,7 @@ x
 ~~END~~
 
 
-exec babel_726_p1
-go
-~~START~~
-nvarchar
-x
-~~END~~
-
-
-select babel_726_f1()
+select babel_726_vu_prepare_f1()
 go
 ~~START~~
 nvarchar

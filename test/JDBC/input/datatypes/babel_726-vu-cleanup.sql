@@ -4,11 +4,8 @@ go
 drop table babel_726_t2
 go
 
-drop view babel_726_v1
+drop procedure babel_726_vu_prepare_p1
 go
 
-drop procedure babel_726_p1
-go
-
-drop function babel_726_f1
+drop function babel_726_vu_prepare_f1
 go
