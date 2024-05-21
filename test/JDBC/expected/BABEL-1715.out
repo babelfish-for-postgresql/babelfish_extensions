@@ -14,7 +14,7 @@ INSERT INTO t1715 VALUES (2, 3);
 go
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "uk_at1715309394cc13ed0160c093d0a0f82cb1c0")~~
+~~ERROR (Message: duplicate key value violates unique constraint "uk_a")~~
 
 drop table t1715;
 go
@@ -33,7 +33,7 @@ INSERT INTO t1715_2 (a) VALUES (2);
 go
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "uk_at1715_2309394cc13ed0160c093d0a0f82cb1c0")~~
+~~ERROR (Message: duplicate key value violates unique constraint "uk_a")~~
 
 drop table t1715_2;
 go

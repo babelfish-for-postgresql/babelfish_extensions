@@ -1,3 +1,6 @@
+EXECUTE sp_babelfish_configure 'escape_hatch_unique_constraint', 'ignore'
+go
+
 create table babel_621_vu_prepare_table_1 (a int);
 go
 create table babel_621_vu_prepare_table_2 (a int);
@@ -13,6 +16,10 @@ alter table babel_621_vu_prepare_table_3 add constraint uniq unique (a);
 go
 create index uniq on babel_621_vu_prepare_table_3(a);
 go
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "uniqbabel_621_vu_prepare_table_d6716c55a366d04accd1036436eb2a86" already exists)~~
+
 
 create table babel_621_vu_prepare_table_4 (a int);
 go
@@ -20,8 +27,16 @@ create index uniq_table_4 on babel_621_vu_prepare_table_4(a);
 go
 alter table babel_621_vu_prepare_table_4 add constraint uniq_table_4 unique (a);
 go
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "uniq_table_4babel_621_vu_prepardeacd0a0f930dee973c93a41c32c3ffc" already exists)~~
+
 alter table babel_621_vu_prepare_table_4 drop constraint uniq_table_4;
 go
+~~ERROR (Code: 3728)~~
+
+~~ERROR (Message: constraint "uniq_table_4babel_621_vu_prepardeacd0a0f930dee973c93a41c32c3ffc" of relation "babel_621_vu_prepare_table_4" does not exist)~~
+
 
 -- Very long index name
 create table babel_621_vu_prepare_table_with_long_index_name (a int);
