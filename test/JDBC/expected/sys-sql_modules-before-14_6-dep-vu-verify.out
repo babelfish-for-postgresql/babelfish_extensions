@@ -3,6 +3,7 @@ GO
 ~~START~~
 bit#!#bit#!#nvarchar
 1#!#1#!#
+~~END~~
 
 
 EXEC sys_sql_modules_dep_vu_prepare_p2;
