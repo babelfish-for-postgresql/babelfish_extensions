@@ -8,6 +8,9 @@ CREATE VIEW enr_view AS
     FROM sys.babelfish_get_enr_list()
 GO
 
+CREATE TYPE temp_table_type FROM int
+GO
+
 CREATE PROCEDURE test_rollback_in_proc AS
 BEGIN
     CREATE TABLE #t1(a int)
