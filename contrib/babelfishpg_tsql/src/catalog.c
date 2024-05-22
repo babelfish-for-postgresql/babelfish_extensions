@@ -2173,10 +2173,20 @@ get_function_name(HeapTuple tuple, TupleDesc dsc)
 static Datum
 get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
 {
-	bool		isNull;
-	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &isNull);
-	Datum		dbid = heap_getattr(tuple, Anum_bbf_schema_perms_dbid, dsc, &isNull);
+	bool		schema_is_null, dbid_is_null;
+	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &schema_is_null);
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_schema_perms_dbid, dsc, &dbid_is_null);
 	char		*physical_schema_name;
+
+	if (dbid_is_null)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_schema_permissions catalog")));
+	if (schema_is_null)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("schema name should not be null in babelfish_schema_permissions catalog")));
+
 	/* get_physical_schema_name() itself handles truncation, no explicit truncation needed */
 	physical_schema_name = get_physical_schema_name(get_db_name(DatumGetInt16(dbid)), TextDatumGetCString(schema_name));
 
