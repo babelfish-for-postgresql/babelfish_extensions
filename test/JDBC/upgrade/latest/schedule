@@ -530,3 +530,4 @@ babel_test_int2_numeric_oper
 login_token-dep
 test_like_for_AI
 BABEL-4869
+BABEL-4792
