@@ -35,3 +35,12 @@ GO
 ~~START~~
 int#!#bit#!#nvarchar
 <NULL>#!#0#!#
+~~END~~
+
+
+SELECT * FROM sys_all_sql_modules_dep_vu_prepare_v2;
+GO
+~~START~~
+int#!#bit#!#nvarchar
+<NULL>#!#0#!#
+~~END~~
