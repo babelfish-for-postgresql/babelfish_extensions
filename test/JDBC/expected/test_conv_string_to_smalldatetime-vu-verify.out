@@ -1454,7 +1454,7 @@ GO
 smalldatetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid attributes specified for type 'smalldatetime')~~
+~~ERROR (Message: CAST or CONVERT: invalid attributes specified for type 'smalldatetime')~~
 
 
 SELECT CONVERT(SMALLDATETIME(2), '01/01/98 23:59:59.123')
@@ -1463,7 +1463,7 @@ GO
 smalldatetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid attributes specified for type 'smalldatetime')~~
+~~ERROR (Message: CAST or CONVERT: invalid attributes specified for type 'smalldatetime')~~
 
 
 SELECT CONVERT(SMALLDATETIME(3), '01/01/98 23:59:59.123')
@@ -1472,7 +1472,7 @@ GO
 smalldatetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid attributes specified for type 'smalldatetime')~~
+~~ERROR (Message: CAST or CONVERT: invalid attributes specified for type 'smalldatetime')~~
 
 
 -- boundary tests
@@ -1981,7 +1981,7 @@ SELECT CONVERT(SMALLDATETIME , CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +
 GO
 ~~START~~
 smalldatetime
-2021-01-01 00:00:00.0
+2020-12-31 12:00:00.0
 ~~END~~
 
 

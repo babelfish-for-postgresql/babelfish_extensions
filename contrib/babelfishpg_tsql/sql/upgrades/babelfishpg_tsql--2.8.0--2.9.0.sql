@@ -2976,7 +2976,7 @@ BEGIN
 
     -- DATETIME/SMALLDATETIME supports time part in either left or right side of date part, 
     -- but having time on both side of date part should throw error
-    IF (regexp_count(v_datetimestring, HHMMSSFS_PART_REGEXP) > 1)
+    IF ((SELECT COUNT(*) FROM regexp_matches(v_datetimestring, HHMMSSFS_PART_REGEXP)) > 1)
     THEN
         RAISE invalid_character_value_for_cast;
     END IF;
