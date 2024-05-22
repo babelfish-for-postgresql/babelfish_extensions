@@ -350,8 +350,6 @@ END;
 $$
 LANGUAGE plpgsql STABLE;
 
-
-
 DO $$
 DECLARE
     exception_message text;
