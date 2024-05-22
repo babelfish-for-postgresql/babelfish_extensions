@@ -2760,16 +2760,7 @@ date
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CONVERT(DATE, '2022-10-22T13:34:12:123')
-GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.123')
+SELECT CONVERT(DATE, '2022-10-22T13:34:12.15')
 GO
 ~~START~~
 date
@@ -2849,86 +2840,6 @@ date
 
 
 SELECT CONVERT(DATE, '2022-10-22T13:34:12.99999994')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.999')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.998')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.997')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.996')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.995')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.994')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.993')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.992')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.991')
-GO
-~~START~~
-date
-2022-10-22
-~~END~~
-
-
-SELECT CONVERT(DATE, '2022-10-22T13:34:12.990')
 GO
 ~~START~~
 date

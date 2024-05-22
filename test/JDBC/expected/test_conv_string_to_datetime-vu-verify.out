@@ -15,7 +15,10 @@ datetime
 ~~END~~
 
 
--- -- Numeric 
+-- -- Numeric: 
+-- 1 or 2 digit number in a given datetime string literal is considered as either 
+-- day, month or year based on session dateformat value.
+-- [m]m<seperator>[d]d<seperator>([y]y|yyyy)
 SELECT CONVERT(DATETIME, '3-2-4 14:30')
 GO
 ~~START~~
@@ -45,6 +48,14 @@ GO
 ~~START~~
 datetime
 2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '11-12-2024 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
 ~~END~~
 
 
@@ -88,6 +99,14 @@ datetime
 ~~END~~
 
 
+SELECT CONVERT(DATETIME, '11.12.2024 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
 SELECT CONVERT(DATETIME, '3     .        12 .           2024 14:30')
 GO
 ~~START~~
@@ -128,6 +147,14 @@ datetime
 ~~END~~
 
 
+SELECT CONVERT(DATETIME, '11/12/2024 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
 SELECT CONVERT(DATETIME, '3     /        12 /           2024 14:30')
 GO
 ~~START~~
@@ -136,19 +163,619 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '04-02-03 14:30')
+-- [m]m<seperator>([y]y|yyyy)<seperator>[d]d
+SELECT CONVERT(DATETIME, '3-4-2 14:30')
 GO
 ~~START~~
 datetime
-2003-04-02 14:30:00.0
+2002-03-04 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '3/12.2024')
+SELECT CONVERT(DATETIME, '3-4-12 14:30')
 GO
 ~~START~~
 datetime
-2024-03-12 00:00:00.0
+2012-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3-24-12 14:30')
+GO
+~~START~~
+datetime
+2012-03-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3-2024-12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '11-2024-12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3 -           2024     -        12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3.4.2 14:30')
+GO
+~~START~~
+datetime
+2002-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3.4.12 14:30')
+GO
+~~START~~
+datetime
+2012-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3.24.12 14:30')
+GO
+~~START~~
+datetime
+2012-03-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3.2024.12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '11.2024.12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3 .           2024     .        12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3/4/2 14:30')
+GO
+~~START~~
+datetime
+2002-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3/4/12 14:30')
+GO
+~~START~~
+datetime
+2012-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3/24/12 14:30')
+GO
+~~START~~
+datetime
+2012-03-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3/2024/12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '11/2024/12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '3 /           2024     /        12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+-- [d]d<seperator>[m]m<seperator>([y]y|yyyy)
+SELECT CONVERT(DATETIME, '2-3-4 14:30')
+GO
+~~START~~
+datetime
+2004-02-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12-3-4 14:30')
+GO
+~~START~~
+datetime
+2004-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12-3-24 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12-3-2024 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12-11-2024 14:30')
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 -           3     -        2024 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2.3.4 14:30')
+GO
+~~START~~
+datetime
+2004-02-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12.3.4 14:30')
+GO
+~~START~~
+datetime
+2004-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12.3.24 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12.3.2024 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12.11.2024 14:30')
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 .           3     .        2024 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2/3/4 14:30')
+GO
+~~START~~
+datetime
+2004-02-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12/3/4 14:30')
+GO
+~~START~~
+datetime
+2004-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12/3/24 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12/3/2024 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12/11/2024 14:30')
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 /           3     /        2024 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+-- [d]d<seperator>([y]y|yyyy)<seperator>[m]m
+SELECT CONVERT(DATETIME, '2-4-3 14:30')
+GO
+~~START~~
+datetime
+2003-02-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12-4-3 14:30')
+GO
+~~START~~
+datetime
+2003-12-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12-24-3 14:30')
+GO
+~~START~~
+datetime
+2003-12-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12-2024-3 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12-2024-11 14:30')
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12     -        2024 -           3 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2.4.3 14:30')
+GO
+~~START~~
+datetime
+2003-02-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12.4.3 14:30')
+GO
+~~START~~
+datetime
+2003-12-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12.24.3 14:30')
+GO
+~~START~~
+datetime
+2003-12-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12.2024.3 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12.2024.11 14:30')
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12     .        2024 .           3 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2/4/3 14:30')
+GO
+~~START~~
+datetime
+2003-02-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12/4/3 14:30')
+GO
+~~START~~
+datetime
+2003-12-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12/24/3 14:30')
+GO
+~~START~~
+datetime
+2003-12-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12/2024/3 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12/2024/11 14:30')
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12     /        2024 /           3 14:30')
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+-- ([y]y|yyyy)<seperator>[m]m<seperator>[d]d
+SELECT CONVERT(DATETIME, '4-3-2 14:30')
+GO
+~~START~~
+datetime
+2002-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '4-3-12 14:30')
+GO
+~~START~~
+datetime
+2012-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '24-3-12 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, '2024-3-12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024-11-12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024     -        3 -           12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '4.3.2 14:30')
+GO
+~~START~~
+datetime
+2002-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '4.3.12 14:30')
+GO
+~~START~~
+datetime
+2012-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '24.3.12 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, '2024.3.12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024.11.12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024     .        3 .           12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '4/3/2 14:30')
+GO
+~~START~~
+datetime
+2002-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '4/3/12 14:30')
+GO
+~~START~~
+datetime
+2012-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '24/3/12 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, '2024/3/12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024/11/12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024     /        3 /           12 14:30')
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+-- combination of different seperator also works for DATETIME
+SELECT CONVERT(DATETIME, '2024/11-12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024-11/12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024.11/12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024.11-12 14:30')
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
 ~~END~~
 
 
@@ -171,7 +798,151 @@ datetime
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
+-- cut off year
+SELECT CONVERT(DATETIME, '11-12-49')
+GO
+~~START~~
+datetime
+2049-11-12 00:00:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '11-12-50')
+GO
+~~START~~
+datetime
+1950-11-12 00:00:00.0
+~~END~~
+
+
+-- Babelfish currently doesn't support setting DATEFORMAT, 
+-- hence currently session language dateformat is used
+SET DATEFORMAT 'MDY'
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4')
+GO
+~~START~~
+datetime
+2004-02-03 00:00:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '03-22-2024')
+GO
+~~START~~
+datetime
+2024-03-22 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT 'DMY'
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4')
+GO
+~~START~~
+datetime
+2004-02-03 00:00:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '22-03-2024')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SET DATEFORMAT 'YMD'
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4')
+GO
+~~START~~
+datetime
+2004-02-03 00:00:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024-03-22')
+GO
+~~START~~
+datetime
+2024-03-22 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT 'MYD'
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4')
+GO
+~~START~~
+datetime
+2004-02-03 00:00:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '03-2024-22')
+GO
+~~START~~
+datetime
+2024-03-22 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT 'DYM'
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4')
+GO
+~~START~~
+datetime
+2004-02-03 00:00:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '22-2024-03')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SET DATEFORMAT 'YDM'
+GO
+
+-- YDM DATE format is not supported when converting from this 
+-- character string format to DATETIME, Hence following query should throw error
+SELECT CONVERT(DATETIME, '2-3-4')
+GO
+~~START~~
+datetime
+2004-02-03 00:00:00.0
+~~END~~
+
+
+-- For DATE as follows, it will always be treated as YMD DATEFORMAT as YDM is not supported.
+SELECT CONVERT(DATETIME, '2024-22-03')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+-- SET DATEFORMAT back to default
+SET DATEFORMAT 'MDY'
+GO
+
 -- Alphabetical
+--- mon [dd][,] yyyy
 SELECT CONVERT(DATETIME, 'Apr 12,2000 14:30')
 GO
 ~~START~~
@@ -188,6 +959,14 @@ datetime
 ~~END~~
 
 
+SELECT CONVERT(DATETIME, 'Apr 1,2000 14:30')
+GO
+~~START~~
+datetime
+2000-04-01 14:30:00.0
+~~END~~
+
+
 SELECT CONVERT(DATETIME, 'Apr 1 2000 14:30')
 GO
 ~~START~~
@@ -196,7 +975,7 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'Apr 1,2000 14:30')
+SELECT CONVERT(DATETIME, 'Apr,2000 14:30')
 GO
 ~~START~~
 datetime
@@ -212,15 +991,23 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'Apr 16, 2000 14:30')
+SELECT CONVERT(DATETIME, 'Apr12,2000 14:30')
 GO
 ~~START~~
 datetime
-2000-04-16 14:30:00.0
+2000-04-12 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'Apr 1, 2000 14:30')
+SELECT CONVERT(DATETIME, 'Apr12 2000 14:30')
+GO
+~~START~~
+datetime
+2000-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr1,2000 14:30')
 GO
 ~~START~~
 datetime
@@ -228,63 +1015,162 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'April 16, 2000 14:30')
+SELECT CONVERT(DATETIME, 'Apr1 2000 14:30')
 GO
 ~~START~~
 datetime
-2000-04-16 14:30:00.0
+2000-04-01 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'April 16  2000 14:30')
+SELECT CONVERT(DATETIME, 'Apr,2000 14:30')
 GO
 ~~START~~
 datetime
-2000-04-16 14:30:00.0
+2000-04-01 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'Apr 16, 24 14:30')
+SELECT CONVERT(DATETIME, 'Apr2000 14:30')
 GO
 ~~START~~
 datetime
-2024-04-16 14:30:00.0
+2000-04-01 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'Apr 16,4 14:30')
+-- For styles 130 and 131, the month name will be in hijri format
+-- this is only applicable for datetime and smalldatetime, for other datatypes error will be thrown
+SELECT CONVERT(DATETIME, N'محرم  12,2000  14:30', 130)
 GO
 ~~START~~
 datetime
-2004-04-16 14:30:00.0
+2562-01-18 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'Apr 1,4 14:30')
+SELECT CONVERT(DATETIME, N'محرم  12 2000  14:30', 130)
 GO
 ~~START~~
 datetime
-2004-04-01 14:30:00.0
+2562-01-18 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'Apr 16    24 14:30')
+SELECT CONVERT(DATETIME, N'محرم  1,2000  14:30', 130)
 GO
 ~~START~~
 datetime
-2024-04-16 14:30:00.0
+2562-01-07 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'Apr 16 4 14:30')
+SELECT CONVERT(DATETIME, N'محرم  1 2000  14:30', 130)
 GO
 ~~START~~
 datetime
-2004-04-16 14:30:00.0
+2562-01-07 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'April 16 14:30')
+SELECT CONVERT(DATETIME, N'محرم ,2000  14:30', 130)
+GO
+~~START~~
+datetime
+2562-01-07 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم  2000  14:30', 130)
+GO
+~~START~~
+datetime
+2562-01-07 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 12,2000  14:30', 130)
+GO
+~~START~~
+datetime
+2562-01-18 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 12 2000  14:30', 130)
+GO
+~~START~~
+datetime
+2562-01-18 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 1,2000  14:30', 130)
+GO
+~~START~~
+datetime
+2562-01-07 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 1 2000  14:30', 130)
+GO
+~~START~~
+datetime
+2562-01-07 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم ,2000  14:30', 130)
+GO
+~~START~~
+datetime
+2562-01-07 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 2000  14:30', 130)
+GO
+~~START~~
+datetime
+2562-01-07 14:30:00.0
+~~END~~
+
+
+--- mon [d]d[,] [yy]
+SELECT CONVERT(DATETIME, 'Apr 12, 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr 12 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr 12, 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr 12 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr 12, 14:30')
 GO
 ~~START~~
 datetime
@@ -293,7 +1179,16 @@ datetime
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CONVERT(DATETIME, 'Apr 2024 14:30')
+SELECT CONVERT(DATETIME, 'Apr 12 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, 'Apr 1, 24 14:30')
 GO
 ~~START~~
 datetime
@@ -301,6 +1196,367 @@ datetime
 ~~END~~
 
 
+SELECT CONVERT(DATETIME, 'Apr 1 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr 1, 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr 1 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr 1, 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, 'Apr 1 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, 'Apr12, 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr12 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr12, 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr12 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr12, 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, 'Apr12 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, 'Apr1, 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr1 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr1, 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr1 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr1, 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, 'Apr1 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- For styles 130 and 131, the month name will be in hijri format
+-- this is only applicable for datetime and smalldatetime, for other datatypes error will be thrown
+SELECT CONVERT(DATETIME, N'محرم 12, 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 12 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 12, 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 12 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 12,  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 12  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 1, 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 1 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 1, 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 1 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 1,  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 1  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم12, 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم12 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم12, 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم12 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم12,  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم12  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم1, 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم1 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم1, 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم1 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم1,  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'محرم1  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+--- mon yyyy [dd]
 SELECT CONVERT(DATETIME, 'Apr 2024 22 14:30')
 GO
 ~~START~~
@@ -317,6 +1573,89 @@ datetime
 ~~END~~
 
 
+SELECT CONVERT(DATETIME, 'Apr 2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr2024 22 14:30')
+GO
+~~START~~
+datetime
+2024-04-22 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr2024 2 14:30')
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+-- For styles 130 and 131, the month name will be in hijri format
+-- this is only applicable for datetime and smalldatetime, for other datatypes error will be thrown
+SELECT CONVERT(DATETIME, N'محرم 2024 22  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 2024 2  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-22 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-21 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم2024 22  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم2024 2  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-22 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-21 14:30:00.0
+~~END~~
+
+
+--- [dd] mon[,] yyyy
 SELECT CONVERT(DATETIME, '24 Apr, 2024 14:30')
 GO
 ~~START~~
@@ -325,11 +1664,27 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '3 Apr, 2024 14:30')
+SELECT CONVERT(DATETIME, '24 Apr 2024 14:30')
 GO
 ~~START~~
 datetime
-2024-04-03 14:30:00.0
+2024-04-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '4 Apr, 2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '4 Apr 2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-04 14:30:00.0
 ~~END~~
 
 
@@ -349,31 +1704,202 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '3 Apr 2024 14:30')
+SELECT CONVERT(DATETIME, '24Apr, 2024 14:30')
 GO
 ~~START~~
 datetime
-2024-04-03 14:30:00.0
+2024-04-24 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '3Apr2024 14:30')
+SELECT CONVERT(DATETIME, '24Apr2024 14:30')
 GO
 ~~START~~
 datetime
-2024-04-03 14:30:00.0
+2024-04-24 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '3Apr24 14:30')
+SELECT CONVERT(DATETIME, '4Apr, 2024 14:30')
 GO
 ~~START~~
 datetime
-2024-04-03 14:30:00.0
+2024-04-04 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, 'Apr24 14:30')
+SELECT CONVERT(DATETIME, '4Apr2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-04 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr, 2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, 'Apr2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+-- For styles 130 and 131, the month name will be in hijri format, 
+-- also these styles only support DATEFORMAT DMY, hence following queries should 
+SELECT CONVERT(DATETIME, N'24 محرم, 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-14 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'24 محرم 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-14 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'4 محرم, 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'4 محرم 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم, 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-21 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-21 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'24محرم, 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-14 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'24محرم2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-14 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'4محرم, 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'4محرم2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-24 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم, 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-21 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'محرم2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-21 14:30:00.0
+~~END~~
+
+
+--- dd mon[,][yy]yy
+SELECT CONVERT(DATETIME, '12 Apr, 2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 Apr 2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 Apr, 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 Apr 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 Apr, 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 Apr 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 Apr, 14:30')
 GO
 ~~START~~
 datetime
@@ -382,7 +1908,7 @@ datetime
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CONVERT(DATETIME, 'Apr,24 14:30')
+SELECT CONVERT(DATETIME, '12 Apr 14:30')
 GO
 ~~START~~
 datetime
@@ -391,13 +1917,221 @@ datetime
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CONVERT(DATETIME, '24 Apr 14:30')
+SELECT CONVERT(DATETIME, '12Apr, 2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12Apr2024 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12Apr, 24 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12Apr24 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12Apr, 4 14:30')
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12Apr4 14:30')
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12Apr, 14:30')
 GO
 ~~START~~
 datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, '12Apr 14:30')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- For styles 130 and 131, the month name will be in hijri format, 
+-- also these styles only support DATEFORMAT DMY, hence following queries should work
+SELECT CONVERT(DATETIME, N'12 محرم, 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'12 محرم 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'12 محرم, 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'12 محرم 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'12 محرم, 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'12 محرم 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'12 محرم,  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'12 محرم  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'12محرم, 2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'12محرم2024  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'12محرم, 24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'12محرم24  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'12محرم, 4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'12محرم4  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'12محرم,  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, N'12محرم  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+--- dd [yy]yy mon
+SELECT CONVERT(DATETIME, '12 2024 Apr 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
 
 
 SELECT CONVERT(DATETIME, '12 24 Apr 14:30')
@@ -408,11 +2142,72 @@ datetime
 ~~END~~
 
 
+SELECT CONVERT(DATETIME, '12 2024Apr 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '12 24Apr 14:30')
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+-- For styles 130 and 131, the month name will be in hijri format
+-- this is only applicable for datetime and smalldatetime, for other datatypes error will be thrown
+SELECT CONVERT(DATETIME, N'12 2024 محرم  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'12 24 محرم  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME, N'12 2024محرم  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'12 24محرم  14:30', 130)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+
+
+--- [dd] yyyy mon
 SELECT CONVERT(DATETIME, '12 2024 Apr 14:30')
 GO
 ~~START~~
 datetime
 2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2 2024 Apr 14:30')
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
 ~~END~~
 
 
@@ -424,7 +2219,7 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '2024 12 Apr 14:30')
+SELECT CONVERT(DATETIME, '12 2024Apr 14:30')
 GO
 ~~START~~
 datetime
@@ -432,14 +2227,73 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '2024 9 Apr 14:30')
+SELECT CONVERT(DATETIME, '2 2024Apr 14:30')
 GO
 ~~START~~
 datetime
-2024-04-09 14:30:00.0
+2024-04-02 14:30:00.0
 ~~END~~
 
 
+SELECT CONVERT(DATETIME, '2024Apr 14:30')
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+-- For styles 130 and 131, the month name will be in hijri format
+-- this is only applicable for datetime and smalldatetime, for other datatypes error will be thrown
+SELECT CONVERT(DATETIME, N'12 2024 محرم  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'2 2024 محرم  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-22 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'2024 محرم  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-21 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'12 2024محرم  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'2 2024محرم  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-22 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'2024محرم  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-21 14:30:00.0
+~~END~~
+
+
+--- yyyy mon [dd]
 SELECT CONVERT(DATETIME, '2024 Apr 12 14:30')
 GO
 ~~START~~
@@ -448,7 +2302,23 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '12, Apr, 2024 14:30')
+SELECT CONVERT(DATETIME, '2024 Apr 2 14:30')
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024 Apr 14:30')
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, '2024Apr12 14:30')
 GO
 ~~START~~
 datetime
@@ -456,295 +2326,33 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '12 Apr, 2024 14:30')
+SELECT CONVERT(DATETIME, '2024Apr2 14:30')
 GO
 ~~START~~
 datetime
-2024-04-12 14:30:00.0
+2024-04-02 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, '12, Apr 2024 14:30')
+SELECT CONVERT(DATETIME, '2024Apr 14:30')
 GO
 ~~START~~
 datetime
-2024-04-12 14:30:00.0
+2024-04-01 14:30:00.0
 ~~END~~
-
-
-SELECT CONVERT(DATETIME, '2024, Apr, 12 14:30')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '2024 Apr, 12 14:30')
-GO
-~~START~~
-datetime
-2024-04-12 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, '2024, Apr 12 14:30')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, 'Apr, 12, 2024 14:30')
-GO
-~~START~~
-datetime
-2024-04-12 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, 'Apr 12, 2024 14:30')
-GO
-~~START~~
-datetime
-2024-04-12 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, 'Apr, 12 2024 14:30')
-GO
-~~START~~
-datetime
-2024-04-12 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, 'Apr, 2024, 12 14:30')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, 'Apr 2024, 12 14:30')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, 'Apr, 2024 12 14:30')
-GO
-~~START~~
-datetime
-2024-04-12 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, '12, 2024, Apr 14:30')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '12 2024, Apr 14:30')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '12, 2024 Apr 14:30')
-GO
-~~START~~
-datetime
-2024-04-12 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, '2024, 12, Apr 14:30')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '2024 12, Apr 14:30')
-GO
-~~START~~
-datetime
-2024-04-12 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, '2024, 12 Apr 14:30')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 -- For styles 130 and 131, the month name will be in hijri format
 -- this is only applicable for datetime and smalldatetime, for other datatypes error will be thrown
-SELECT CONVERT(DATETIME, N'محرم 12,2000 14:30', 130)
+SELECT CONVERT(DATETIME, N'2024 محرم 12  14:30', 130)
 GO
 ~~START~~
 datetime
-2562-01-18 14:30:00.0
+2585-05-02 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'محرم 12 2000 14:30', 130)
-GO
-~~START~~
-datetime
-2562-01-18 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 1 2000 14:30', 130)
-GO
-~~START~~
-datetime
-2562-01-07 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 1,2000 14:30', 130)
-GO
-~~START~~
-datetime
-2562-01-07 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 2000 14:30', 130)
-GO
-~~START~~
-datetime
-2562-01-07 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 16, 2000 14:30', 130)
-GO
-~~START~~
-datetime
-2562-01-22 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 1, 2000 14:30', 130)
-GO
-~~START~~
-datetime
-2562-01-07 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 16, 2000 14:30', 130)
-GO
-~~START~~
-datetime
-2562-01-22 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 16  2000 14:30', 130)
-GO
-~~START~~
-datetime
-2562-01-22 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 16, 24 14:30', 130)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 16,4 14:30', 130)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 1,4 14:30', 130)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 16    24 14:30', 130)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 16 4 14:30', 130)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 16 14:30', 130)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 2024 14:30', 130)
-GO
-~~START~~
-datetime
-2585-04-21 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 2024 22 14:30', 130)
-GO
-~~START~~
-datetime
-2585-05-12 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم 2024 2 14:30', 130)
+SELECT CONVERT(DATETIME, N'2024 محرم 2  14:30', 130)
 GO
 ~~START~~
 datetime
@@ -752,23 +2360,7 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'24 محرم, 2024 14:30', 130)
-GO
-~~START~~
-datetime
-2585-05-14 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'3 محرم, 2024 14:30', 130)
-GO
-~~START~~
-datetime
-2585-04-23 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'محرم, 2024 14:30', 130)
+SELECT CONVERT(DATETIME, N'2024 محرم  14:30', 130)
 GO
 ~~START~~
 datetime
@@ -776,7 +2368,23 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'محرم 2024 14:30', 130)
+SELECT CONVERT(DATETIME, N'2024محرم12  14:30', 130)
+GO
+~~START~~
+datetime
+2585-05-02 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'2024محرم2  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-22 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'2024محرم  14:30', 130)
 GO
 ~~START~~
 datetime
@@ -784,68 +2392,58 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'3 محرم 2024 14:30', 130)
+--- yyyy [dd] mon
+SELECT CONVERT(DATETIME, '2024 12 Apr 14:30')
 GO
 ~~START~~
 datetime
-2585-04-23 14:30:00.0
+2024-04-12 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'3محرم2024 14:30', 130)
+SELECT CONVERT(DATETIME, '2024 2 Apr 14:30')
 GO
 ~~START~~
 datetime
-2585-04-23 14:30:00.0
+2024-04-02 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'3محرم24 14:30', 130)
+SELECT CONVERT(DATETIME, '2024 Apr 14:30')
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
+2024-04-01 14:30:00.0
+~~END~~
 
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
 
-
-SELECT CONVERT(DATETIME, N'محرم24 14:30', 130)
+SELECT CONVERT(DATETIME, '2024 12Apr 14:30')
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
+2024-04-12 14:30:00.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
-
-SELECT CONVERT(DATETIME, N'محرم,24 14:30', 130)
+SELECT CONVERT(DATETIME, '2024 2Apr 14:30')
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
+2024-04-02 14:30:00.0
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
-
-SELECT CONVERT(DATETIME, N'24 محرم 14:30', 130)
+SELECT CONVERT(DATETIME, '2024Apr 14:30')
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, N'12 24 محرم 14:30', 130)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+2024-04-01 14:30:00.0
+~~END~~
 
 
-SELECT CONVERT(DATETIME, N'12 2024 محرم 14:30', 130)
+-- For styles 130 and 131, the month name will be in hijri format,
+-- this is only applicable for datetime and smalldatetime, for other datatypes error will be thrown
+SELECT CONVERT(DATETIME, N'2024 12 محرم  14:30', 130)
 GO
 ~~START~~
 datetime
@@ -853,7 +2451,15 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'2024 محرم 14:30', 131)
+SELECT CONVERT(DATETIME, N'2024 2 محرم  14:30', 130)
+GO
+~~START~~
+datetime
+2585-04-22 14:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATETIME, N'2024 محرم  14:30', 130)
 GO
 ~~START~~
 datetime
@@ -861,7 +2467,7 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'2024 12 محرم 14:30', 131)
+SELECT CONVERT(DATETIME, N'2024 12محرم  14:30', 130)
 GO
 ~~START~~
 datetime
@@ -869,47 +2475,32 @@ datetime
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'2024 9 محرم 14:30', 131)
+SELECT CONVERT(DATETIME, N'2024 2محرم  14:30', 130)
 GO
 ~~START~~
 datetime
-2585-04-29 14:30:00.0
+2585-04-22 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'2024 محرم 12 14:30', 131)
+SELECT CONVERT(DATETIME, N'2024محرم  14:30', 130)
 GO
 ~~START~~
 datetime
-2585-05-02 14:30:00.0
+2585-04-21 14:30:00.0
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'12, محرم, 2024 14:30', 131)
+-- ISO 8601
+SELECT CONVERT(DATETIME, '2022-10-22T13:34:12.123')
 GO
 ~~START~~
 datetime
-2585-05-02 14:30:00.0
+2022-10-22 13:34:12.123
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'12 محرم, 2024 14:30', 131)
-GO
-~~START~~
-datetime
-2585-05-02 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'12, محرم 2024 14:30', 131)
-GO
-~~START~~
-datetime
-2585-05-02 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'2024, محرم, 12 14:30', 131)
+SELECT CONVERT(DATETIME, '2022-1-22T13:34:12.123')
 GO
 ~~START~~
 datetime
@@ -918,48 +2509,85 @@ datetime
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CONVERT(DATETIME, N'2024 محرم, 12 14:30', 131)
+SELECT CONVERT(DATETIME, '2022-10-2T13:34:12.123')
 GO
 ~~START~~
 datetime
-2585-05-02 14:30:00.0
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, '2022-10-22T3:34:12.123')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, '2022-10-22T13:4:12.123')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, '2022-10-22T13:34:1.123')
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, '2022-10-22T13:34:12.1')
+GO
+~~START~~
+datetime
+2022-10-22 13:34:12.1
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'2024, محرم 12 14:30', 131)
+SELECT CONVERT(DATETIME, '2022-10-22T13:34:12.12')
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, N'محرم, 12, 2024 14:30', 131)
-GO
-~~START~~
-datetime
-2585-05-02 14:30:00.0
+2022-10-22 13:34:12.12
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'محرم 12, 2024 14:30', 131)
+SELECT CONVERT(DATETIME, '2022-10-22T13:34:12.123')
 GO
 ~~START~~
 datetime
-2585-05-02 14:30:00.0
+2022-10-22 13:34:12.123
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'محرم, 12 2024 14:30', 131)
+SELECT CONVERT(DATETIME, '2022-10-22T13:34:12.1234')
 GO
 ~~START~~
 datetime
-2585-05-02 14:30:00.0
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME, '2022-10-22T13:34:12.15')
+GO
+~~START~~
+datetime
+2022-10-22 13:34:12.15
 ~~END~~
 
 
-SELECT CONVERT(DATETIME, N'محرم, 2024, 12 14:30', 131)
+-- -- spaces are not allowed between any two tokens for ISO 8601
+SELECT CONVERT(DATETIME, '2022-10-22T13 :34:12.123')
 GO
 ~~START~~
 datetime
@@ -968,7 +2596,7 @@ datetime
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CONVERT(DATETIME, N'محرم 2024, 12 14:30', 131)
+SELECT CONVERT(DATETIME, '2022-10 -22T13:34:12.123')
 GO
 ~~START~~
 datetime
@@ -977,146 +2605,7 @@ datetime
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CONVERT(DATETIME, N'محرم, 2024 12 14:30', 131)
-GO
-~~START~~
-datetime
-2585-05-02 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'12, 2024, محرم 14:30', 131)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, N'12 2024, محرم 14:30', 131)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, N'12, 2024 محرم 14:30', 131)
-GO
-~~START~~
-datetime
-2585-05-02 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'2024, 12, محرم 14:30', 131)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, N'2024 12, محرم 14:30', 131)
-GO
-~~START~~
-datetime
-2585-05-02 14:30:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, N'2024, 12 محرم 14:30', 131)
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
--- ISO 8601	
-SELECT CONVERT(DATETIME, '2023-11-27')
-GO
-~~START~~
-datetime
-2023-11-27 00:00:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, '2022-10-30T03:00:00')
-GO
-~~START~~
-datetime
-2022-10-30 03:00:00.0
-~~END~~
-
-
-SELECT CONVERT(DATETIME, '2022-10-30T03:00:00.123')
-GO
-~~START~~
-datetime
-2022-10-30 03:00:00.123
-~~END~~
-
-
-SELECT CONVERT(DATETIME, '2022-10-30T03:00:00.123-12:12')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '2022-10-30T03:00:00.123+12:12')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '2022-10-30T03:00')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '2022-10 -30T03: 00:00')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '2022-10-30T03:00:00.12345')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '2022-10-30T03:00:00:123')
-GO
-~~START~~
-datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CONVERT(DATETIME, '2022-10-30T03:00:00:12345')
+SELECT CONVERT(DATETIME, '2022-10-22 T 13:34:12.123')
 GO
 ~~START~~
 datetime

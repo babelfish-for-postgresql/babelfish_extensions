@@ -389,7 +389,7 @@ BEGIN
     ELSE
         v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(v_datetimeval, 'US'), v_scale);
 
-        -- Following condition will handle for overflow of fractsecs
+        -- Following condition will handle overflow of fractsecs
         IF (v_fseconds::INTEGER < 0) THEN
             v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
             v_datetimeval := v_datetimeval + INTERVAL '1 second';
@@ -1361,7 +1361,7 @@ BEGIN
     ELSE
         v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
         
-        -- Following condition will handle for overflow of fractsecs
+        -- Following condition will handle overflow of fractsecs
         IF (v_fseconds::INTEGER < 0) THEN
             v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
             v_seconds := (v_seconds::INTEGER + 1)::TEXT;
@@ -1410,7 +1410,7 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_indicator_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for type ''%s''', v_res_datatype),
+        RAISE USING MESSAGE := pg_catalog.format('CAST or CONVERT: invalid attributes specified for type ''%s''', v_res_datatype),
                     DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
                     HINT := 'Change data type scale component or select different data type and try again.';
 
@@ -2059,7 +2059,7 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_indicator_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for type ''%s''', PG_CATALOG.lower(v_res_datatype)),
+        RAISE USING MESSAGE := pg_catalog.format('CAST or CONVERT: invalid attributes specified for type ''%s''', PG_CATALOG.lower(v_res_datatype)),
                     DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
                     HINT := 'Change data type scale component or select different data type and try again.';
 
@@ -2267,7 +2267,7 @@ BEGIN
     v_hours := ltrim(to_char(p_timeval, 'HH12'), '0');
     v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(p_timeval, 'US'), v_scale);
 
-    -- Following condition will handle for overflow of fractsecs
+    -- Following condition will handle overflow of fractsecs
     IF (v_fseconds::INTEGER < 0) THEN
         v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
         p_timeval := p_timeval + INTERVAL '1 second';
@@ -4996,7 +4996,7 @@ BEGIN
         ELSE
             v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(rpad(v_fseconds, 9, '0'), v_scale);
 
-            -- Following condition will handle for overflow of fractsecs
+            -- Following condition will handle overflow of fractsecs
             IF (v_fseconds::INTEGER < 0) THEN
                 v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
                 v_seconds := (v_seconds::INTEGER + 1)::TEXT;
@@ -6058,7 +6058,7 @@ BEGIN
     END IF;
 
     v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(rpad(v_fseconds, 9, '0'), v_scale);
-    -- Following condition will handle for overflow of fractsecs
+    -- Following condition will handle overflow of fractsecs
     IF (v_fseconds::INTEGER < 0) THEN
         v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
         v_seconds := (v_seconds::INTEGER + 1)::TEXT;
