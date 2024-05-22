@@ -46,6 +46,8 @@ analyze master_dbo.tb_recomp_51
 go
 analyze master_dbo.tb_recomp_61
 go
+analyze master_dbo.tb_recomp_71
+go
 
 -- tsql
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
@@ -2121,6 +2123,209 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
 set babelfish_showplan_all off
 go
 
+--==== change plan_cache_mode inside procedure ====
+go
+select set_config('plan_cache_mode', 'auto', false)
+go
+~~START~~
+text
+auto
+~~END~~
+
+select set_config('enable_indexscan', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+SELECT current_setting('plan_cache_mode') as plan_mode_before
+go
+~~START~~
+text
+auto
+~~END~~
+
+SELECT current_setting('enable_indexscan') as enable_indexscan_before
+go
+~~START~~
+text
+on
+~~END~~
+
+
+set babelfish_showplan_all on
+go
+exec    p_recomp_71 0  -- sets plan_cache_mode=force_generic_plan
+go
+~~START~~
+text
+Query Text: EXEC    p_recomp_71 0
+  Query Text: select * from tb_recomp_71 where c71 = "@p"
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+  Query Text: select * from tb_recomp_71 where c71 = 0
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+  Query Text: select set_config('plan_cache_mode', 'force_generic_plan', false)
+  ->  Result
+  Query Text: select * from tb_recomp_71 where c71 = "@p"
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+  Query Text: select * from tb_recomp_71 where c71 = 0
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+~~END~~
+
+set babelfish_showplan_all off
+go
+SELECT current_setting('plan_cache_mode') as plan_mode_after_call
+go
+~~START~~
+text
+auto
+~~END~~
+
+
+select set_config('plan_cache_mode', 'auto', false)
+go
+~~START~~
+text
+auto
+~~END~~
+
+set babelfish_showplan_all on
+go
+exec    p_recomp_71 0 with recompile    -- sets plan_cache_mode=force_generic_plan
+go
+~~START~~
+text
+Query Text: EXEC    p_recomp_71 0 /* EXECUTE WITH RECOMPILE */
+  Query Text: select * from tb_recomp_71 where c71 = "@p"
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+  Query Text: select * from tb_recomp_71 where c71 = 0
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+  Query Text: select set_config('plan_cache_mode', 'force_generic_plan', false)
+  ->  Result
+  Query Text: select * from tb_recomp_71 where c71 = "@p"
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+  Query Text: select * from tb_recomp_71 where c71 = 0
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+~~END~~
+
+set babelfish_showplan_all off
+go
+SELECT current_setting('plan_cache_mode') as plan_mode_after_call
+go
+~~START~~
+text
+auto
+~~END~~
+
+
+--- turning off index scan ----
+go
+select set_config('enable_indexscan', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+select current_setting('enable_indexscan') as indexscan_off
+go
+~~START~~
+text
+off
+~~END~~
+
+
+set babelfish_showplan_all on
+go
+exec    p_recomp_71 0  -- sets plan_cache_mode=force_generic_plan
+go
+~~START~~
+text
+Query Text: EXEC    p_recomp_71 0
+  Query Text: select * from tb_recomp_71 where c71 = "@p"
+  ->  Bitmap Heap Scan on tb_recomp_71
+        Recheck Cond: (c71 = 0)
+        ->  Bitmap Index Scan on tb_recomp_71_pkey
+              Index Cond: (c71 = 0)
+  Query Text: select * from tb_recomp_71 where c71 = 0
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+  Query Text: select set_config('plan_cache_mode', 'force_generic_plan', false)
+  ->  Result
+  Query Text: select * from tb_recomp_71 where c71 = "@p"
+  ->  Bitmap Heap Scan on tb_recomp_71
+        Recheck Cond: (c71 = 0)
+        ->  Bitmap Index Scan on tb_recomp_71_pkey
+              Index Cond: (c71 = 0)
+  Query Text: select * from tb_recomp_71 where c71 = 0
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+~~END~~
+
+set babelfish_showplan_all off
+go
+SELECT current_setting('plan_cache_mode') as plan_mode_after_call
+go
+~~START~~
+text
+auto
+~~END~~
+
+
+select set_config('plan_cache_mode', 'auto', false)
+go
+~~START~~
+text
+auto
+~~END~~
+
+set babelfish_showplan_all on
+go
+exec    p_recomp_71 0 with recompile    -- sets plan_cache_mode=force_generic_plan
+go
+~~START~~
+text
+Query Text: EXEC    p_recomp_71 0 /* EXECUTE WITH RECOMPILE */
+  Query Text: select * from tb_recomp_71 where c71 = "@p"
+  ->  Bitmap Heap Scan on tb_recomp_71
+        Recheck Cond: (c71 = 0)
+        ->  Bitmap Index Scan on tb_recomp_71_pkey
+              Index Cond: (c71 = 0)
+  Query Text: select * from tb_recomp_71 where c71 = 0
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+  Query Text: select set_config('plan_cache_mode', 'force_generic_plan', false)
+  ->  Result
+  Query Text: select * from tb_recomp_71 where c71 = "@p"
+  ->  Bitmap Heap Scan on tb_recomp_71
+        Recheck Cond: (c71 = 0)
+        ->  Bitmap Index Scan on tb_recomp_71_pkey
+              Index Cond: (c71 = 0)
+  Query Text: select * from tb_recomp_71 where c71 = 0
+  ->  Index Scan using tb_recomp_71_pkey on tb_recomp_71
+        Index Cond: (c71 = 0)
+~~END~~
+
+set babelfish_showplan_all off
+go
+SELECT current_setting('plan_cache_mode') as plan_mode_after_call
+go
+~~START~~
+text
+auto
+~~END~~
+
+
+
 --==== end of tests ======
 go
 select set_config('plan_cache_mode', 'auto', false)
@@ -2141,6 +2346,6 @@ SELECT current_setting('enable_indexscan') as enable_indexscan_after
 go
 ~~START~~
 text
-on
+off
 ~~END~~
 
