@@ -29,15 +29,15 @@ runs:
       if: always() && steps.configure-python-environment.outcome == 'success'
       run: | 
         cd test/python
-        # compareWithFile=true \
-        #   driver=pyodbc \
-        #   runInParallel=false \
-        #   testName=all \
-        #   provider="ODBC Driver 17 for SQL Server" \
-        #   fileGenerator_URL=localhost \
-        #   fileGenerator_port=1433 \
-        #   fileGenerator_databaseName=master \
-        #   fileGenerator_user=jdbc_user \
-        #   fileGenerator_password=12345678 \
-        #   pytest -s --tb=long -q .
+        compareWithFile=true \
+          driver=pyodbc \
+          runInParallel=false \
+          testName=all \
+          provider="ODBC Driver 17 for SQL Server" \
+          fileGenerator_URL=localhost \
+          fileGenerator_port=1433 \
+          fileGenerator_databaseName=master \
+          fileGenerator_user=jdbc_user \
+          fileGenerator_password=12345678 \
+          pytest -s --tb=long -q .
       shell: bash

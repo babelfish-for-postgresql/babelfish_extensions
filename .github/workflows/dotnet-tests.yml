@@ -46,10 +46,6 @@ jobs:
         if: always() && steps.install-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-and-run-dotnet
 
-      - name: Check and upload coredumps
-        if: always()
-        uses: ./.github/composite-actions/upload-coredump
-
       - name: Generate Code Coverage
         id: generate-code-coverage
         if: always() && steps.run-dotnet-tests.outcome == 'success'
