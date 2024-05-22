@@ -58,6 +58,26 @@ go
 DROP SCHEMA babel_4768_s2
 GO
 
+DROP TABLE babel_4768ログインαιώνια.t1
+go
+
+
+DROP TABLE "babel_4768 😎$chem@ #123 🌍rder".t1
+go
+
+DROP TABLE [babel_4768유니코드스키마👻].t1
+go
+
+DROP SCHEMA babel_4768ログインαιώνια
+GO
+
+DROP SCHEMA [babel_4768 😎$chem@ #123 🌍rder]
+GO
+
+DROP SCHEMA [babel_4768유니코드스키마👻]
+GO
+
+
 
 drop user babel_4768_u1;
 go
