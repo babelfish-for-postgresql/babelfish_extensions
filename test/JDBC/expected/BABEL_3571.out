@@ -384,7 +384,7 @@ INSERT INTO babel_3571_3 VALUES (NULL, '', 0x9999)
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idx")~~
 
 
 INSERT INTO babel_3571_3 VALUES (9999, NULL, 0x9999)
@@ -408,7 +408,7 @@ INSERT INTO babel_3571_3 VALUES (8888, 'newsomething', 0x1234)
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_pkey")~~
 
 
 SELECT indexdef FROM pg_indexes 
@@ -422,8 +422,8 @@ CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree 
 CREATE UNIQUE INDEX babel_3571_1_pkey ON master_dbo.babel_3571_1 USING btree (id3 NULLS FIRST)
 CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1 NULLS FIRST, id2 DESC NULLS LAST) NULLS NOT DISTINCT
 CREATE UNIQUE INDEX babel_3571_2_pkey ON master_dbo.babel_3571_2 USING btree (id3 NULLS FIRST)
-CREATE UNIQUE INDEX babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0 ON master_dbo.babel_3571_3 USING btree (id3 NULLS FIRST)
-CREATE UNIQUE INDEX babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce ON master_dbo.babel_3571_3 USING btree (id1 DESC NULLS LAST, id2 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_3_pkey ON master_dbo.babel_3571_3 USING btree (id3 NULLS FIRST)
+CREATE UNIQUE INDEX babel_3571_3_unique_idx ON master_dbo.babel_3571_3 USING btree (id1 DESC NULLS LAST, id2 NULLS FIRST) NULLS NOT DISTINCT
 ~~END~~
 
 
@@ -502,7 +502,7 @@ int#!#varchar#!#varbinary
 ~~START~~
 text
 Query Text: SELECT * FROM babel_3571_3 ORDER BY id1
-Index Scan Backward using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=6 loops=1)
+Index Scan Backward using babel_3571_3_unique_idx on babel_3571_3 (actual rows=6 loops=1)
 ~~END~~
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -538,7 +538,7 @@ INSERT INTO babel_3571_3 VALUES (NULL, NULL, 0X0001)
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_pkey")~~
 
 
 SELECT indexdef FROM pg_indexes 
@@ -552,7 +552,7 @@ CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree 
 CREATE UNIQUE INDEX babel_3571_1_pkey ON master_dbo.babel_3571_1 USING btree (id3 NULLS FIRST)
 CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1 NULLS FIRST, id2 DESC NULLS LAST) NULLS NOT DISTINCT
 CREATE UNIQUE INDEX babel_3571_2_pkey ON master_dbo.babel_3571_2 USING btree (id3 NULLS FIRST)
-CREATE UNIQUE INDEX babel_3571_3_pkeybabel_3571_34773fbee6e7b68a5cb6b0b6273b17de0 ON master_dbo.babel_3571_3 USING btree (id3 NULLS FIRST)
+CREATE UNIQUE INDEX babel_3571_3_pkey ON master_dbo.babel_3571_3 USING btree (id3 NULLS FIRST)
 ~~END~~
 
 
@@ -830,7 +830,7 @@ ALTER TABLE babel_3571_1 ADD CONSTRAINT babel_3571_constraint UNIQUE (id)
 GO
 ~~ERROR (Code: 1505)~~
 
-~~ERROR (Message: could not create unique index "babel_3571_constraintbabel_3571c746e4b45548ea46bfc9090993bb46c3")~~
+~~ERROR (Message: could not create unique index "babel_3571_constraint")~~
 
 CREATE UNIQUE INDEX babel_3571_idx ON babel_3571_1(id)
 GO
@@ -852,7 +852,7 @@ INSERT INTO babel_3571_1 VALUES (NULL)
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_constraintbabel_3571c746e4b45548ea46bfc9090993bb46c3")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_constraint")~~
 
 DROP TABLE babel_3571_1
 GO

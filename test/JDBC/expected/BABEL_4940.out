@@ -52,6 +52,10 @@ CREATE TABLE babel_4940_t6(id INT, id1 INT)
 GO
 ALTER TABLE babel_4940_t6 ADD CONSTRAINT c PRIMARY KEY(id, id1 DESC)
 GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "c" already exists)~~
+
 DECLARE @i INT=0;
 WHILE (@i<1000)
 BEGIN
@@ -296,7 +300,7 @@ int
 text
 Query Text: SELECT TOP 10 * FROM babel_4940_t5 ORDER BY id
 Limit (actual rows=10 loops=1)
-  ->  Index Only Scan using cbabel_4940_t54a8a08f09d37b73795649038408b5f33 on babel_4940_t5 (actual rows=10 loops=1)
+  ->  Index Only Scan using c on babel_4940_t5 (actual rows=10 loops=1)
         Heap Fetches: 10
 ~~END~~
 
@@ -320,7 +324,7 @@ int
 text
 Query Text: SELECT TOP 10 * FROM babel_4940_t5 ORDER BY id DESC
 Limit (actual rows=10 loops=1)
-  ->  Index Only Scan Backward using cbabel_4940_t54a8a08f09d37b73795649038408b5f33 on babel_4940_t5 (actual rows=10 loops=1)
+  ->  Index Only Scan Backward using c on babel_4940_t5 (actual rows=10 loops=1)
         Heap Fetches: 10
 ~~END~~
 
@@ -344,8 +348,10 @@ int#!#int
 text
 Query Text: SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id, id1 DESC
 Limit (actual rows=10 loops=1)
-  ->  Index Only Scan using cbabel_4940_t64a8a08f09d37b73795649038408b5f33 on babel_4940_t6 (actual rows=10 loops=1)
-        Heap Fetches: 10
+  ->  Sort (actual rows=10 loops=1)
+        Sort Key: id NULLS FIRST, id1 DESC NULLS LAST
+        Sort Method: top-N heapsort  Memory: 25kB
+        ->  Seq Scan on babel_4940_t6 (actual rows=3000 loops=1)
 ~~END~~
 
 SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id DESC, id1 ASC
@@ -368,8 +374,10 @@ int#!#int
 text
 Query Text: SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id DESC, id1 ASC
 Limit (actual rows=10 loops=1)
-  ->  Index Only Scan Backward using cbabel_4940_t64a8a08f09d37b73795649038408b5f33 on babel_4940_t6 (actual rows=10 loops=1)
-        Heap Fetches: 10
+  ->  Sort (actual rows=10 loops=1)
+        Sort Key: id DESC NULLS LAST, id1 NULLS FIRST
+        Sort Method: top-N heapsort  Memory: 26kB
+        ->  Seq Scan on babel_4940_t6 (actual rows=3000 loops=1)
 ~~END~~
 
 
