@@ -6,7 +6,6 @@
  *-------------------------------------------------------------------------
  */
  
-#include <regex.h>
 #include "postgres.h"
 #include "varatt.h"
 #include "access/hash.h"
@@ -21,7 +20,6 @@
 #include "miscadmin.h"
 #include "datetimeoffset.h"
 #include "datetime.h"
-#include "datetime2.h"
  
 static void AdjustDatetimeoffsetForTypmod(Timestamp *time, int32 typmod);
 static void CheckDatetimeoffsetRange(const tsql_datetimeoffset *df, Node *escontext);
