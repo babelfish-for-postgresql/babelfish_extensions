@@ -350,6 +350,106 @@ END;
 $$
 LANGUAGE plpgsql STABLE;
 
+ALTER VIEW sys.all_sql_modules_internal RENAME TO all_sql_modules_internal_deprecated_in_2_9_0;
+
+CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
+SELECT
+  ao.object_id AS object_id
+  , CAST(
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF', 'TR') THEN COALESCE(f.definition, '')
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
+      ELSE NULL
+      END
+    AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(
+      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN
+        CASE WHEN p.proisstrict THEN 1
+        ELSE 0 
+        END
+      ELSE 0
+      END
+    AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
+   )
+LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
+WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
+GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
+
+ALTER VIEW sys.all_sql_modules RENAME TO all_sql_modules_deprecated_in_2_9_0;
+
+CREATE OR REPLACE VIEW sys.all_sql_modules AS
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar)
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1;
+GRANT SELECT ON sys.all_sql_modules TO PUBLIC;
+
+ALTER VIEW sys.system_sql_modules RENAME TO system_sql_modules_deprecated_in_2_9_0;
+
+CREATE OR REPLACE VIEW sys.system_sql_modules AS
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar)
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+WHERE t1.is_ms_shipped = 1;
+GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
+
+ALTER VIEW sys.sql_modules RENAME TO sql_modules_deprecated_in_2_9_0;
+
+CREATE OR REPLACE VIEW sys.sql_modules AS
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar)
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+WHERE t1.is_ms_shipped = 0;
+GRANT SELECT ON sys.sql_modules TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_sql_modules_internal_deprecated_in_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_sql_modules_deprecated_in_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_sql_modules_deprecated_in_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sql_modules_deprecated_in_2_9_0');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

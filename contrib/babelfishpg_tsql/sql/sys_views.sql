@@ -1947,7 +1947,6 @@ select
 from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
 
--- TODO: BABEL-3127
 CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
@@ -1956,7 +1955,7 @@ SELECT
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       ELSE NULL
       END
-    AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
+    AS sys.nvarchar) AS definition
   , CAST(1 as sys.bit)  AS uses_ansi_nulls
   , CAST(1 as sys.bit)  AS uses_quoted_identifier
   , CAST(0 as sys.bit)  AS is_schema_bound
@@ -1991,7 +1990,7 @@ GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 CREATE OR REPLACE VIEW sys.all_sql_modules AS
 SELECT
      CAST(t1.object_id as int)
-    ,CAST(t1.definition as sys.nvarchar(4000))
+    ,CAST(t1.definition as sys.nvarchar)
     ,CAST(t1.uses_ansi_nulls as sys.bit)
     ,CAST(t1.uses_quoted_identifier as sys.bit)
     ,CAST(t1.is_schema_bound as sys.bit)
@@ -2006,7 +2005,7 @@ GRANT SELECT ON sys.all_sql_modules TO PUBLIC;
 CREATE OR REPLACE VIEW sys.system_sql_modules AS
 SELECT
      CAST(t1.object_id as int)
-    ,CAST(t1.definition as sys.nvarchar(4000))
+    ,CAST(t1.definition as sys.nvarchar)
     ,CAST(t1.uses_ansi_nulls as sys.bit)
     ,CAST(t1.uses_quoted_identifier as sys.bit)
     ,CAST(t1.is_schema_bound as sys.bit)
@@ -2022,7 +2021,7 @@ GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
 CREATE OR REPLACE VIEW sys.sql_modules AS
 SELECT
      CAST(t1.object_id as int)
-    ,CAST(t1.definition as sys.nvarchar(4000))
+    ,CAST(t1.definition as sys.nvarchar)
     ,CAST(t1.uses_ansi_nulls as sys.bit)
     ,CAST(t1.uses_quoted_identifier as sys.bit)
     ,CAST(t1.is_schema_bound as sys.bit)
