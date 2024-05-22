@@ -51,7 +51,7 @@ GO
 -- table constraint multiple column
 CREATE TABLE babel_4940_t6(id INT, id1 INT)
 GO
-ALTER TABLE babel_4940_t6 ADD CONSTRAINT c PRIMARY KEY(id, id1 DESC)
+ALTER TABLE babel_4940_t6 ADD CONSTRAINT c1 PRIMARY KEY(id, id1 DESC)
 GO
 DECLARE @i INT=0;
 WHILE (@i<1000)
@@ -67,6 +67,8 @@ GO
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 

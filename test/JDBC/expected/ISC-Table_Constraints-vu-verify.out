@@ -240,7 +240,7 @@ SELECT * FROM isc_tbl_constraints_v1
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
-master#!#dbo#!#chk_1234tbl_fk6cf0677d00f904ff46edc8dbed867549#!#master#!#dbo#!#tbl_fk#!#CHECK#!#NO#!#NO
+master#!#dbo#!#chk_1234#!#master#!#dbo#!#tbl_fk#!#CHECK#!#NO#!#NO
 master#!#dbo#!#tbl_fk_a_fkey#!#master#!#dbo#!#tbl_fk#!#FOREIGN KEY#!#NO#!#NO
 master#!#sch1#!#tbl_fk_a_fkey#!#master#!#sch1#!#tbl_fk#!#FOREIGN KEY#!#NO#!#NO
 master#!#dbo#!#tbl_fk_pkey#!#master#!#dbo#!#tbl_fk#!#PRIMARY KEY#!#NO#!#NO
