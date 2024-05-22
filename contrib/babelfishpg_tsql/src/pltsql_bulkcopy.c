@@ -396,8 +396,7 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
  * The buffer must be flushed before cleanup.
  * Code is copied from src/backend/commands/copyfrom.c
  *
- * For TSQL, this can be called in abort phase to cleanup
- * remaining tuples.
+ * For TSQL, this can be called in abort phase to cleanup.
  */
 static inline void
 CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
@@ -468,7 +467,7 @@ CopyMultiInsertInfoFlush(CopyMultiInsertInfo *miinfo, ResultRelInfo *curr_rri)
 			buffer = (CopyMultiInsertBuffer *) linitial(miinfo->multiInsertBuffers);
 		}
 
-		CopyMultiInsertBufferCleanup(miinfo, buffer, false);
+		CopyMultiInsertBufferCleanup(miinfo, buffer);
 		miinfo->multiInsertBuffers = list_delete_first(miinfo->multiInsertBuffers);
 	}
 }
@@ -728,7 +727,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 		/*
 		 * If the target is a plain table, check the constraints of the tuple.
 		 */
-		if (cstate->resultRelInfo->ri_RelationDesc->rd_att->constr)
+		if (insert_bulk_check_constraints && cstate->resultRelInfo->ri_RelationDesc->rd_att->constr)
 			ExecConstraints(cstate->resultRelInfo, myslot, cstate->estate);
 
 		/*
@@ -958,7 +957,7 @@ EndBulkCopy(BulkCopyState cstate, bool aborted)
 		ExecResetTupleTable(cstate->estate->es_tupleTable, false);
 
 		/* Tear down the multi-insert buffer data. */
-		CopyMultiInsertInfoCleanup(&cstate->multiInsertInfo, aborted);
+		CopyMultiInsertInfoCleanup(&cstate->multiInsertInfo);
 
 		/* Close the result relations, */
 		ExecCloseResultRelations(cstate->estate);

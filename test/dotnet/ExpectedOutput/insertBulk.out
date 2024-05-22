@@ -416,7 +416,7 @@ hello#!#jello
 1001
 #Q#select count(*) from destinationTable
 #D#int
-0
+1001
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#Create table sourceTable (a int);
