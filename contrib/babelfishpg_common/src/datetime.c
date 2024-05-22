@@ -21,7 +21,6 @@
 #include "common/int.h"
 #include "miscadmin.h"
 #include "datetime.h"
-#include "datetime2.h"
 
 
 PG_FUNCTION_INFO_V1(datetime_in);
