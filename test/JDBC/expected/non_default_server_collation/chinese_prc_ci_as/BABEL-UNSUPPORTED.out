@@ -727,7 +727,7 @@ CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'DEFAULT_FULLTEXT_LANGUAGE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_fulltext to ignore)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 CREATE TABLE t_unsupported_ft (a text);
@@ -737,7 +737,7 @@ CREATE FULLTEXT INDEX ON t_unsupported_ft(a) KEY INDEX ix_unsupported_ft;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'CREATE FULLTEXT INDEX' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_fulltext to ignore)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 DROP TABLE t_unsupported_ft;
@@ -753,9 +753,17 @@ ignore
 
 CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
+
 
 DROP DATABASE db_unsupported_ft;
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db_unsupported_ft" does not exist)~~
+
 
 CREATE SCHEMA t_unsupported_s_ft;
 GO
@@ -768,9 +776,17 @@ GO
 
 CREATE FULLTEXT INDEX ON t_unsupported_s_ft.t_unsupported_ft1(a) KEY INDEX ix_unsupported_ft1;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
+
 
 DROP FULLTEXT INDEX ON t_unsupported_s_ft.t_unsupported_ft1;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
+
 
 DROP TABLE t_unsupported_s_ft.t_unsupported_ft1;
 GO
@@ -786,9 +802,17 @@ GO
 
 CREATE FULLTEXT INDEX ON t_unsupported_ft2(a) KEY INDEX ix_unsupported_ft2;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
+
 
 DROP FULLTEXT INDEX ON t_unsupported_ft2;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
+
 
 DROP TABLE t_unsupported_ft2;
 GO

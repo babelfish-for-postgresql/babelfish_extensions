@@ -16,7 +16,6 @@ SELECT * FROM fti_prepare_v1;
 GO
 ~~START~~
 varchar
-ft_indexfti_table_t114dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
@@ -24,7 +23,6 @@ EXEC fti_prepare_p1;
 GO
 ~~START~~
 varchar
-ft_indexfti_table_t214dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
@@ -32,7 +30,7 @@ SELECT fti_prepare_f1();
 GO
 ~~START~~
 nvarchar
-ft_indexfti_table_t314dc211cf58dcb9fe2047eb8aa8a5bc0
+<NULL>
 ~~END~~
 
 
@@ -40,7 +38,6 @@ SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t4' AND i
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t4#!#ft_indexfti_table_t414dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
@@ -48,7 +45,6 @@ SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t5' AND i
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t5#!#ft_indexfti_table_t514dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
@@ -56,7 +52,6 @@ SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t6' AND i
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t6#!#ft_indexfti_table_t614dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
@@ -64,7 +59,6 @@ SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t7' AND i
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t7#!#ft_indexfti_table_t714dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
@@ -72,8 +66,6 @@ SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t8' AND i
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t8#!#ft_indexfti_table_t814dc211cf58dcb9fe2047eb8aa8a5bc0
-fti_table_t8#!#ft_indexfti_table_t814dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
@@ -82,7 +74,7 @@ CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t8(b) KEY INDEX IX_s1_t8_a;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: A full-text index for table or indexed view "fti_table_t8" has already been created.)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- Creating index in a non existent table of a schema, should throw error
@@ -90,7 +82,7 @@ CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t9(a) KEY INDEX IX_s1_t9_a;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "fti_table_t9" does not exist)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- Creating index in a table of a non existent schema, should throw error
@@ -98,7 +90,7 @@ CREATE FULLTEXT INDEX ON fti_schema_s4.fti_table_t8(a) KEY INDEX IX_s2_t8_a;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "fti_schema_s4" does not exist)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- should throw unsupported error
@@ -106,7 +98,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a TYPE COLUMN a) KEY INDEX ix_uns
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'TYPE COLUMN' option is not currently supported in Babelfish)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- should throw unsupported error
@@ -114,7 +106,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a LANGUAGE 1033) KEY INDEX ix_uns
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'LANGUAGE' option is not currently supported in Babelfish)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- should throw unsupported error
@@ -122,7 +114,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a STATISTICAL_SEMANTICS) KEY INDE
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'STATISTICAL_SEMANTICS' option is not currently supported in Babelfish)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- should throw unsupported error
@@ -130,7 +122,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti O
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'CATALOG FILEGROUP OPTION' is not currently supported in Babelfish)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- should throw unsupported error
@@ -138,7 +130,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti W
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'WITH OPTION' is not currently supported in Babelfish)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- should throw unsupported error
@@ -146,7 +138,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti W
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'WITH OPTION' is not currently supported in Babelfish)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- should throw unsupported error
@@ -154,7 +146,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti W
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'WITH OPTION' is not currently supported in Babelfish)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 -- reset the login password

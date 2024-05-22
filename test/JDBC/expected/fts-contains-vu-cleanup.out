@@ -10,9 +10,17 @@ ignore
 
 DROP PROCEDURE fts_contains_vu_prepare_p1;
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "fts_contains_vu_prepare_p1")~~
+
 
 DROP FULLTEXT INDEX ON fts_contains_vu_t;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
+
 
 DROP TABLE fts_contains_vu_t;
 GO

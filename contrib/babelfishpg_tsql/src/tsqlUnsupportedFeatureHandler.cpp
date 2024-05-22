@@ -189,8 +189,8 @@ protected:
 			return visitChildren(ctx);
 		}
 		antlrcpp::Any visitTrigger_column_updated(TSqlParser::Trigger_column_updatedContext *ctx) override; // UPDATE() in trigger
+		antlrcpp::Any visitFreetext_predicate(TSqlParser::Freetext_predicateContext *ctx) override;
 		antlrcpp::Any visitFreetext_function(TSqlParser::Freetext_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "FREETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitFreetext_predicate(TSqlParser::Freetext_predicateContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "CONTAINS/FREETEXT predicate", &st_escape_hatch_fulltext, getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitOdbc_scalar_function(TSqlParser::Odbc_scalar_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_PARTITION_FUNCTION, "partition function", getLineAndPos(ctx)); return visitChildren(ctx); }
 
@@ -882,7 +882,15 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 					handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid", getLineAndPos(cdoctx));
 			}
 			if (cdoctx->DEFAULT_FULLTEXT_LANGUAGE())
+			{
+				if (!pltsql_allow_fulltext_parser)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("Full Text Search is not currently supported in Babelfish.")));
+				}
 				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_FULLTEXT_LANGUAGE, cdoctx->DEFAULT_FULLTEXT_LANGUAGE(), &st_escape_hatch_fulltext);
+			}
 			if (cdoctx->NESTED_TRIGGERS())
 				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_NESTED_TRIGGERS, cdoctx->NESTED_TRIGGERS());
 			if (cdoctx->TRANSFORM_NOISE_WORDS())
@@ -909,20 +917,50 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_database(TSqlParser:
 	return visitChildren(ctx);
 }
 
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFreetext_predicate(TSqlParser::Freetext_predicateContext *ctx)
+{
+	if (!pltsql_allow_fulltext_parser)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                errmsg("Full Text Search is not currently supported in Babelfish.")));
+    }
+	handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "CONTAINS/FREETEXT predicate", &st_escape_hatch_fulltext, getLineAndPos(ctx));
+	return visitChildren(ctx);
+}
+
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_fulltext_index(TSqlParser::Create_fulltext_indexContext *ctx)
 {
+	if (!pltsql_allow_fulltext_parser)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                errmsg("Full Text Search is not currently supported in Babelfish.")));
+    }
 	handle(INSTR_UNSUPPORTED_TSQL_CREATE_FULLTEXT_INDEX, "CREATE FULLTEXT INDEX", &st_escape_hatch_fulltext, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_fulltext_index(TSqlParser::Alter_fulltext_indexContext *ctx)
 {
+	if (!pltsql_allow_fulltext_parser)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                errmsg("Full Text Search is not currently supported in Babelfish.")));
+    }
 	handle(INSTR_UNSUPPORTED_TSQL_ALTER_FULLTEXT_INDEX, "ALTER FULLTEXT INDEX", &st_escape_hatch_fulltext, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDrop_fulltext_index(TSqlParser::Drop_fulltext_indexContext *ctx)
 {
+	if (!pltsql_allow_fulltext_parser)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                errmsg("Full Text Search is not currently supported in Babelfish.")));
+    }
 	handle(INSTR_UNSUPPORTED_TSQL_DROP_FULLTEXT_INDEX, "DROP FULLTEXT INDEX", &st_escape_hatch_fulltext, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }

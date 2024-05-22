@@ -29,7 +29,7 @@ babelfish_fts_rewrite(PG_FUNCTION_ARGS)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                errmsg("Full Text Search is not yet supported.")));
+                errmsg("Full Text Search is not currently supported in Babelfish.")));
     }
     
     PG_TRY();

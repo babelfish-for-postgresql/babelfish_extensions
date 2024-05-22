@@ -17,7 +17,7 @@ SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'run');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot use a CONTAINS or FREETEXT predicate on table or indexed view 'fts_contains_vu_t' because it is not full-text indexed.)~~
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
 
 
 CREATE UNIQUE INDEX fts_contains_vu_t_id_idx ON fts_contains_vu_t(id);
@@ -25,6 +25,10 @@ GO
 
 CREATE FULLTEXT INDEX ON fts_contains_vu_t(txt) KEY INDEX fts_contains_vu_t_id_idx;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
+
 
 -- Full text search @query_string using CONTAINS
 -- Optional parameter @top_n to filter top n rows of output
@@ -43,6 +47,10 @@ BEGIN
     END
 END
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full Text Search is not currently supported in Babelfish.)~~
+
 
 CREATE VIEW fts_contains_pgconfig_v1 AS
 (
