@@ -50,12 +50,8 @@ GO
 -- table constraint multiple column
 CREATE TABLE babel_4940_t6(id INT, id1 INT)
 GO
-ALTER TABLE babel_4940_t6 ADD CONSTRAINT c PRIMARY KEY(id, id1 DESC)
+ALTER TABLE babel_4940_t6 ADD CONSTRAINT c1 PRIMARY KEY(id, id1 DESC)
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "c" already exists)~~
-
 DECLARE @i INT=0;
 WHILE (@i<1000)
 BEGIN
@@ -70,8 +66,20 @@ GO
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
 ~~START~~
 text
 off
@@ -348,10 +356,8 @@ int#!#int
 text
 Query Text: SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id, id1 DESC
 Limit (actual rows=10 loops=1)
-  ->  Sort (actual rows=10 loops=1)
-        Sort Key: id NULLS FIRST, id1 DESC NULLS LAST
-        Sort Method: top-N heapsort  Memory: 25kB
-        ->  Seq Scan on babel_4940_t6 (actual rows=3000 loops=1)
+  ->  Index Only Scan using c1 on babel_4940_t6 (actual rows=10 loops=1)
+        Heap Fetches: 10
 ~~END~~
 
 SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id DESC, id1 ASC
@@ -374,10 +380,8 @@ int#!#int
 text
 Query Text: SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id DESC, id1 ASC
 Limit (actual rows=10 loops=1)
-  ->  Sort (actual rows=10 loops=1)
-        Sort Key: id DESC NULLS LAST, id1 NULLS FIRST
-        Sort Method: top-N heapsort  Memory: 26kB
-        ->  Seq Scan on babel_4940_t6 (actual rows=3000 loops=1)
+  ->  Index Only Scan Backward using c1 on babel_4940_t6 (actual rows=10 loops=1)
+        Heap Fetches: 10
 ~~END~~
 
 
