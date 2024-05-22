@@ -20,7 +20,6 @@
 #include "utils/fmgroids.h"
 #include "utils/catcache.h"
 #include "utils/acl.h"
-#include "utils/queryenvironment.h"
 #include "access/table.h"
 #include "access/genam.h"
 #include "catalog.h"
