@@ -60,7 +60,7 @@ GO
 CREATE PROCEDURE tv_base_rollback AS
 BEGIN
     DECLARE @tv TABLE (a int)
-    INSERT INTO mytab VALUES (1)
+    INSERT INTO temp_tab_rollback_mytab VALUES (1)
     INSERT INTO @tv VALUES (1)
 END
 GO

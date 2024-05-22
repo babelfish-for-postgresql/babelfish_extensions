@@ -452,19 +452,19 @@ BEGIN TRANSACTION
 ROLLBACK
 GO
 
-CREATE TABLE mytab(a int)
+CREATE TABLE temp_tab_rollback_mytab(a int)
 GO
 
 BEGIN TRAN
 CREATE TABLE #t1(a int)
 INSERT INTO #t1 VALUES (1)
 EXEC tv_base_rollback
-DROP TABLE mytab
+DROP TABLE temp_tab_rollback_mytab
 ROLLBACK
-SELECT * FROM mytab
+SELECT * FROM temp_tab_rollback_mytab
 GO
 
-DROP TABLE mytab
+DROP TABLE temp_tab_rollback_mytab
 GO
 
 -- Everything should be rolled back due to error
