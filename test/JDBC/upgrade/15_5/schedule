@@ -216,8 +216,6 @@ format-dep
 forxml
 forxml-subquery
 fulltextserviceproperty
-FULLTEXT_INDEX
-fts-contains
 get_tds_id
 HAS_DBACCESS
 identity_function

@@ -932,11 +932,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFreetext_predicate(TSqlPar
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_fulltext_index(TSqlParser::Create_fulltext_indexContext *ctx)
 {
 	if (!pltsql_allow_fulltext_parser)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                errmsg("Full Text Search is not currently supported in Babelfish.")));
-    }
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Full Text Search is not currently supported in Babelfish.")));
+	}
 	handle(INSTR_UNSUPPORTED_TSQL_CREATE_FULLTEXT_INDEX, "CREATE FULLTEXT INDEX", &st_escape_hatch_fulltext, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
@@ -944,11 +944,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_fulltext_index(TSql
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_fulltext_index(TSqlParser::Alter_fulltext_indexContext *ctx)
 {
 	if (!pltsql_allow_fulltext_parser)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                errmsg("Full Text Search is not currently supported in Babelfish.")));
-    }
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Full Text Search is not currently supported in Babelfish.")));
+	}
 	handle(INSTR_UNSUPPORTED_TSQL_ALTER_FULLTEXT_INDEX, "ALTER FULLTEXT INDEX", &st_escape_hatch_fulltext, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
@@ -956,11 +956,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_fulltext_index(TSqlP
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDrop_fulltext_index(TSqlParser::Drop_fulltext_indexContext *ctx)
 {
 	if (!pltsql_allow_fulltext_parser)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                errmsg("Full Text Search is not currently supported in Babelfish.")));
-    }
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Full Text Search is not currently supported in Babelfish.")));
+	}
 	handle(INSTR_UNSUPPORTED_TSQL_DROP_FULLTEXT_INDEX, "DROP FULLTEXT INDEX", &st_escape_hatch_fulltext, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
