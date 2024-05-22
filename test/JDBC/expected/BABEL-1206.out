@@ -92,7 +92,7 @@ insert into babel_1206_t3 values (0xaaa);
 go
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_1206_t3_i3babel_1206_t36b8d8d363edb759764e0add37a7a2ded")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_1206_t3_i3")~~
 
 
 drop table babel_1265_t1;
