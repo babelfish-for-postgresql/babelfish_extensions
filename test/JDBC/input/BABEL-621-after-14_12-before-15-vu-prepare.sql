@@ -1,3 +1,6 @@
+EXECUTE sp_babelfish_configure 'escape_hatch_unique_constraint', 'ignore'
+go
+
 create table babel_621_vu_prepare_table_1 (a int);
 go
 create table babel_621_vu_prepare_table_2 (a int);
@@ -83,10 +86,6 @@ go
 insert into babel_621_vu_prepare_table_8 values(1, 1);
 insert into babel_621_vu_prepare_table_8 values(2, 1);
 go
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 create table babel_621_vu_prepare_table_10
 (
@@ -101,11 +100,3 @@ insert into babel_621_vu_prepare_table_10 values(1, 1, 1);
 insert into babel_621_vu_prepare_table_10 values(1, 2, 1);
 insert into babel_621_vu_prepare_table_10 values(1, 2, 2);
 go
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "idxbabel_621_vu_prepare_table_147dc0d6e295169e8ba6e11ebeb1c6472")~~
-
