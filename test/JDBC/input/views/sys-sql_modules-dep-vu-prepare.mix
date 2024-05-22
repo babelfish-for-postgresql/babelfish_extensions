@@ -52,6 +52,9 @@ GO
 SELECT * FROM sys_sql_modules_dep_vu_prepare_v2;
 GO
 
+select vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like 'sys_sql_modules_dep_more_than_4k';
+go
+
 CREATE FUNCTION sys_sql_modules_dep_vu_prepare_f2()
 RETURNS INT
 AS
