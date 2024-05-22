@@ -403,6 +403,40 @@ GO
 
 SELECT * FROM enr_view
 GO
+
+-- DELETE, TRUNCATE
+
+CREATE TABLE #t1(a int identity primary key, b int)
+INSERT INTO #t1 VALUES (0)
+INSERT INTO #t1 VALUES (1)
+INSERT INTO #t1 VALUES (2)
+INSERT INTO #t1 VALUES (3)
+GO
+
+BEGIN TRAN
+    DELETE FROM #t1
+    SELECT * FROM #t1
+ROLLBACK
+GO
+
+SELECT * FROM #t1
+GO
+
+-- Truncate should reset IDENTITY. But it should be restored on ROLLBACK.
+BEGIN TRAN
+    TRUNCATE TABLE #t1
+    INSERT INTO #t1 VALUES (1)
+    SELECT * FROM #t1
+ROLLBACK
+GO
+
+INSERT INTO #t1 VALUES (4)
+GO
+
+SELECT * FROM #t1
+DROP TABLE #t1
+GO
+
 ---------------------------------------------------------------------------
 -- Procedures
 ---------------------------------------------------------------------------
@@ -416,6 +450,21 @@ BEGIN TRANSACTION
     exec implicit_rollback_in_proc
     select * from #outer_tab1
 ROLLBACK
+GO
+
+CREATE TABLE mytab(a int)
+GO
+
+BEGIN TRAN
+CREATE TABLE #t1(a int)
+INSERT INTO #t1 VALUES (1)
+EXEC tv_base_rollback
+DROP TABLE mytab
+ROLLBACK
+SELECT * FROM mytab
+GO
+
+DROP TABLE mytab
 GO
 
 -- Everything should be rolled back due to error
@@ -593,6 +642,9 @@ SELECT * FROM #t1
 COMMIT
 GO
 
+DROP TABLE #t1
+GO
+
 ---------------------------------------------------------------------------
 -- Cursor
 ---------------------------------------------------------------------------
@@ -635,4 +687,49 @@ SELECT * FROM #t2
 GO
 
 DROP TABLE perm_tab
+GO
+
+---------------------------------------------------------------------------
+-- Trigger (can't be created on temp tables)
+---------------------------------------------------------------------------
+
+CREATE TABLE basetab(a int, b int)
+GO
+
+CREATE TRIGGER basetrig_insert ON basetab 
+    FOR INSERT, UPDATE, DELETE
+AS
+    INSERT INTO #t1 VALUES (1)
+GO
+
+CREATE TABLE #t1(a int)
+GO
+
+BEGIN TRAN
+    INSERT INTO basetab VALUES (1, 2)
+    SELECT * FROM #t1
+ROLLBACK
+GO
+
+SELECT * FROM basetab
+SELECT * FROM #t1
+GO
+
+CREATE TRIGGER basetrig_rollback ON basetab
+    FOR INSERT, UPDATE, DELETE
+AS
+    INSERT INTO #t1 VALUES (2)
+    ROLLBACK
+GO
+
+INSERT INTO basetab VALUES (3, 4)
+GO
+
+SELECT * FROM #t1
+GO
+
+DROP TRIGGER basetrig_insert
+GO
+
+DROP TABLE basetab
 GO

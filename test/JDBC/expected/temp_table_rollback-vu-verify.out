@@ -703,6 +703,80 @@ text
 ~~END~~
 
 
+
+-- DELETE, TRUNCATE
+CREATE TABLE #t1(a int identity primary key, b int)
+INSERT INTO #t1 VALUES (0)
+INSERT INTO #t1 VALUES (1)
+INSERT INTO #t1 VALUES (2)
+INSERT INTO #t1 VALUES (3)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+BEGIN TRAN
+    DELETE FROM #t1
+    SELECT * FROM #t1
+ROLLBACK
+GO
+~~ROW COUNT: 4~~
+
+~~START~~
+int#!#int
+~~END~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#int
+1#!#0
+2#!#1
+3#!#2
+4#!#3
+~~END~~
+
+
+-- Truncate should reset IDENTITY. But it should be restored on ROLLBACK.
+BEGIN TRAN
+    TRUNCATE TABLE #t1
+    INSERT INTO #t1 VALUES (1)
+    SELECT * FROM #t1
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+INSERT INTO #t1 VALUES (4)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #t1
+DROP TABLE #t1
+GO
+~~START~~
+int#!#int
+1#!#0
+2#!#1
+3#!#2
+4#!#3
+5#!#4
+~~END~~
+
+
+
 ---------------------------------------------------------------------------
 -- Procedures
 ---------------------------------------------------------------------------
@@ -778,6 +852,31 @@ four#!#1
 
 ~~ERROR (Message: INSERT has more expressions than target columns)~~
 
+
+CREATE TABLE mytab(a int)
+GO
+
+BEGIN TRAN
+CREATE TABLE #t1(a int)
+INSERT INTO #t1 VALUES (1)
+EXEC tv_base_rollback
+DROP TABLE mytab
+ROLLBACK
+SELECT * FROM mytab
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+~~END~~
+
+
+DROP TABLE mytab
+GO
 
 -- Everything should be rolled back due to error
 -- Nothing from the proc should be here either
@@ -1072,6 +1171,9 @@ int
 ~~END~~
 
 
+DROP TABLE #t1
+GO
+
 
 
 
@@ -1155,4 +1257,78 @@ int
 
 
 DROP TABLE perm_tab
+GO
+
+
+---------------------------------------------------------------------------
+-- Trigger (can't be created on temp tables)
+---------------------------------------------------------------------------
+CREATE TABLE basetab(a int, b int)
+GO
+
+CREATE TRIGGER basetrig_insert ON basetab 
+    FOR INSERT, UPDATE, DELETE
+AS
+    INSERT INTO #t1 VALUES (1)
+GO
+
+CREATE TABLE #t1(a int)
+GO
+
+BEGIN TRAN
+    INSERT INTO basetab VALUES (1, 2)
+    SELECT * FROM #t1
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM basetab
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+
+CREATE TRIGGER basetrig_rollback ON basetab
+    FOR INSERT, UPDATE, DELETE
+AS
+    INSERT INTO #t1 VALUES (2)
+    ROLLBACK
+GO
+
+INSERT INTO basetab VALUES (3, 4)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 3609)~~
+
+~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int
+~~END~~
+
+
+DROP TRIGGER basetrig_insert
+GO
+
+DROP TABLE basetab
 GO

@@ -56,3 +56,11 @@ BEGIN
     SELECT * FROM #t2
 END
 GO
+
+CREATE PROCEDURE tv_base_rollback AS
+BEGIN
+    DECLARE @tv TABLE (a int)
+    INSERT INTO mytab VALUES (1)
+    INSERT INTO @tv VALUES (1)
+END
+GO
