@@ -114,6 +114,7 @@ Oid			bbf_extended_properties_idx_oid = InvalidOid;
  *****************************************/
 Oid	bbf_partition_function_oid = InvalidOid;
 Oid	bbf_partition_function_idx_oid = InvalidOid;
+Oid bbf_partition_function_id_idx_oid = InvalidOid;
 Oid	bbf_partition_function_seq_oid = InvalidOid;
 
 /*****************************************
@@ -121,6 +122,7 @@ Oid	bbf_partition_function_seq_oid = InvalidOid;
  *****************************************/
 Oid	bbf_partition_scheme_oid = InvalidOid;
 Oid	bbf_partition_scheme_idx_oid = InvalidOid;
+Oid bbf_partition_scheme_id_idx_oid = InvalidOid;
 Oid	bbf_partition_scheme_seq_oid = InvalidOid;
 
 /*****************************************
@@ -256,11 +258,13 @@ init_catalog(PG_FUNCTION_ARGS)
 	/* bbf_partition_function */
 	bbf_partition_function_oid = get_bbf_partition_function_oid();
 	bbf_partition_function_idx_oid = get_bbf_partition_function_idx_oid();
+	bbf_partition_function_id_idx_oid = get_bbf_partition_function_id_idx_oid();
 	bbf_partition_function_seq_oid = get_bbf_partition_function_seq_oid();
 
 	/* bbf_partition_scheme */
 	bbf_partition_scheme_oid = get_bbf_partition_scheme_oid();
 	bbf_partition_scheme_idx_oid = get_bbf_partition_scheme_idx_oid();
+	bbf_partition_scheme_id_idx_oid = get_bbf_partition_scheme_id_idx_oid();
 	bbf_partition_scheme_seq_oid = get_bbf_partition_scheme_seq_oid();
 
 	/* bbf_partition_depend */
@@ -1597,7 +1601,7 @@ get_bbf_partition_function_oid()
 {
 	if (!OidIsValid(bbf_partition_function_oid))
 		bbf_partition_function_oid = get_relname_relid(BBF_PARTITION_FUNCTION_TABLE_NAME,
-														get_namespace_oid("sys", false));
+									get_namespace_oid("sys", false));
 
 	return bbf_partition_function_oid;
 }
@@ -1608,7 +1612,7 @@ get_bbf_partition_function_seq_oid()
 	if (!OidIsValid(bbf_partition_function_seq_oid))
 	{
 		bbf_partition_function_seq_oid = get_relname_relid(BBF_PARTITION_FUNCTION_SEQ_NAME,
-															get_namespace_oid("sys", false));
+									get_namespace_oid("sys", false));
 	}
 
 	return bbf_partition_function_seq_oid;
@@ -1619,9 +1623,19 @@ get_bbf_partition_function_idx_oid()
 {
 	if (!OidIsValid(bbf_partition_function_idx_oid))
 		bbf_partition_function_idx_oid = get_relname_relid(BBF_PARTITION_FUNCTION_IDX_NAME,
-															get_namespace_oid("sys", false));
+									get_namespace_oid("sys", false));
 
 	return bbf_partition_function_idx_oid;
+}
+
+Oid
+get_bbf_partition_function_id_idx_oid()
+{
+	if (!OidIsValid(bbf_partition_function_id_idx_oid))
+		bbf_partition_function_id_idx_oid = get_relname_relid(BBF_PARTITION_FUNCTION_ID_IDX_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_partition_function_id_idx_oid;
 }
 
 /*****************************************
@@ -1632,7 +1646,7 @@ get_bbf_partition_scheme_oid()
 {
 	if (!OidIsValid(bbf_partition_scheme_oid))
 		bbf_partition_scheme_oid = get_relname_relid(BBF_PARTITION_SCHEME_TABLE_NAME,
-														get_namespace_oid("sys", false));
+									get_namespace_oid("sys", false));
 
 	return bbf_partition_scheme_oid;
 }
@@ -1642,9 +1656,19 @@ get_bbf_partition_scheme_idx_oid()
 {
 	if (!OidIsValid(bbf_partition_scheme_idx_oid))
 		bbf_partition_scheme_idx_oid = get_relname_relid(BBF_PARTITION_SCHEME_IDX_NAME,
-															get_namespace_oid("sys", false));
+									get_namespace_oid("sys", false));
 
 	return bbf_partition_scheme_idx_oid;
+}
+
+Oid
+get_bbf_partition_scheme_id_idx_oid()
+{
+	if (!OidIsValid(bbf_partition_scheme_id_idx_oid))
+		bbf_partition_scheme_id_idx_oid = get_relname_relid(BBF_PARTITION_SCHEME_ID_IDX_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_partition_scheme_id_idx_oid;
 }
 
 Oid
@@ -1653,7 +1677,7 @@ get_bbf_partition_scheme_seq_oid()
 	if (!OidIsValid(bbf_partition_scheme_seq_oid))
 	{
 		bbf_partition_scheme_seq_oid = get_relname_relid(BBF_PARTITION_SCHEME_SEQ_NAME,
-															get_namespace_oid("sys", false));
+									get_namespace_oid("sys", false));
 	}
 
 	return bbf_partition_scheme_seq_oid;
@@ -1668,7 +1692,7 @@ get_bbf_partition_depend_oid()
 {
 	if (!OidIsValid(bbf_partition_depend_oid))
 		bbf_partition_depend_oid = get_relname_relid(BBF_PARTITION_DEPEND_TABLE_NAME,
-														get_namespace_oid("sys", false));
+								get_namespace_oid("sys", false));
 
 	return bbf_partition_depend_oid;
 }
@@ -1678,7 +1702,7 @@ get_bbf_partition_depend_idx_oid()
 {
 	if (!OidIsValid(bbf_partition_depend_idx_oid))
 		bbf_partition_depend_idx_oid = get_relname_relid(BBF_PARTITION_DEPEND_IDX_NAME,
-															get_namespace_oid("sys", false));
+									get_namespace_oid("sys", false));
 
 	return bbf_partition_depend_idx_oid;
 }
@@ -4600,7 +4624,7 @@ partition_function_exists_with_id(int32 id)
 
 	/* scan using index */
 	scan = systable_beginscan(rel,
-			get_bbf_partition_function_idx_oid(),
+			get_bbf_partition_function_id_idx_oid(),
 			false, NULL, 1, &scanKey);
 	
 	tuple = systable_getnext(scan);
@@ -4674,7 +4698,7 @@ partition_scheme_exists_with_id(int32 id)
 
 	/* scan using index */
 	scan = systable_beginscan(rel,
-			get_bbf_partition_scheme_idx_oid(),
+			get_bbf_partition_scheme_id_idx_oid(),
 			false, NULL, 1, &scanKey);
 	
 	tuple = systable_getnext(scan);
@@ -4740,9 +4764,9 @@ is_partition_function_used(int32 partition_function_id)
 	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
 	
 	ScanKeyInit(&scanKey,
-					Anum_bbf_partition_scheme_func_id,
-					BTEqualStrategyNumber, F_INT2EQ,
-					Int32GetDatum(partition_function_id));
+			Anum_bbf_partition_scheme_func_id,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int32GetDatum(partition_function_id));
 
 	scan = systable_beginscan(rel,
 			get_bbf_partition_scheme_idx_oid(),
@@ -4971,10 +4995,10 @@ bool is_partition_scheme_used(int32 partition_scheme_id)
 
 	rel = table_open(get_bbf_partition_depend_oid(), AccessShareLock);
 	ScanKeyInit(&scanKey,
-					Anum_bbf_partition_depend_scheme_id,
-					BTEqualStrategyNumber, F_INT2EQ,
-					Int32GetDatum(partition_scheme_id));
-					
+			Anum_bbf_partition_depend_scheme_id,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int32GetDatum(partition_scheme_id));
+
 	scan = systable_beginscan(rel,
 			get_bbf_partition_depend_idx_oid(),
 			false, NULL, 1, &scanKey);
@@ -5084,8 +5108,8 @@ remove_entry_from_bbf_partition_scheme(char *partition_scheme_name)
 	if (!partition_scheme_id)
 	{
 		ereport(ERROR, 
-				(errcode(ERRCODE_UNDEFINED_OBJECT), 
-					errmsg("Cannot drop the partition scheme '%s', because it does not exist or you do not have permission.", partition_scheme_name)));
+			(errcode(ERRCODE_UNDEFINED_OBJECT), 
+				errmsg("Cannot drop the partition scheme '%s', because it does not exist or you do not have permission.", partition_scheme_name)));
 	}
 
 	/* raise error if there are dependent tables on it */
@@ -5199,9 +5223,9 @@ clean_up_bbf_partition_metadata(int16 dbid)
 	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
 
 	ScanKeyInit(&scanKey,
-				Anum_bbf_partition_function_dbid,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(dbid));
+			Anum_bbf_partition_function_dbid,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int16GetDatum(dbid));
 
 	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
 							  true, NULL, 1, &scanKey);
@@ -5220,9 +5244,9 @@ clean_up_bbf_partition_metadata(int16 dbid)
 	rel = table_open(get_bbf_partition_scheme_oid(), RowExclusiveLock);
 
 	ScanKeyInit(&scanKey,
-				Anum_bbf_partition_scheme_dbid,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(dbid));
+			Anum_bbf_partition_scheme_dbid,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int16GetDatum(dbid));
 
 	scan = systable_beginscan(rel, get_bbf_partition_scheme_idx_oid(),
 							  true, NULL, 1, &scanKey);
@@ -5230,8 +5254,7 @@ clean_up_bbf_partition_metadata(int16 dbid)
 	while ((tuple = systable_getnext(scan)) != NULL)
 	{
 		if (HeapTupleIsValid(tuple))
-			CatalogTupleDelete(rel,
-							   &tuple->t_self);
+			CatalogTupleDelete(rel, &tuple->t_self);
 	}
 
 	systable_endscan(scan);
@@ -5241,18 +5264,17 @@ clean_up_bbf_partition_metadata(int16 dbid)
 	rel = table_open(get_bbf_partition_function_oid(), RowExclusiveLock);
 
 	ScanKeyInit(&scanKey,
-				Anum_bbf_partition_function_dbid,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(dbid));
+			Anum_bbf_partition_function_dbid,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int16GetDatum(dbid));
 
 	scan = systable_beginscan(rel, get_bbf_partition_function_idx_oid(),
-							  true, NULL, 1, &scanKey);
+							true, NULL, 1, &scanKey);
 
 	while ((tuple = systable_getnext(scan)) != NULL)
 	{
 		if (HeapTupleIsValid(tuple))
-			CatalogTupleDelete(rel,
-							   &tuple->t_self);
+			CatalogTupleDelete(rel, &tuple->t_self);
 	}
 
 	systable_endscan(scan);

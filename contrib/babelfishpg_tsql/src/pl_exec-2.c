@@ -4035,8 +4035,8 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 static int
 tsql_compare_values(const void *a, const void *b, void *arg)
 {
-	Datum	   *da = (Datum *) a;
-	Datum	   *db = (Datum *) b;
+	Datum		*da = (Datum *) a;
+	Datum		*db = (Datum *) b;
 	Datum		r;
 
 	tsql_compare_context *cxt = (tsql_compare_context *) arg;

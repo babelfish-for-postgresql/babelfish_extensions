@@ -13,10 +13,10 @@ GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
 
 -- BBF_PARTITION_FUNCTION
 -- This catalog stores the metadata of partition funtions.
-CREATE TABLE sys.babelfish_partition_function
+CREATE TABLE sys.babelfish_partition_function1
 (
   dbid SMALLINT NOT NULL,
-  function_id INT NOT NULL,
+  function_id INT NOT NULL UNIQUE,
   partition_function_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
   input_type sys.sysname,
   partition_option sys.bit,
@@ -34,7 +34,7 @@ CREATE SEQUENCE sys.babelfish_partition_function_seq START 2 MAXVALUE 2147483647
 CREATE TABLE sys.babelfish_partition_scheme
 (
   dbid SMALLINT NOT NULL,
-  scheme_id INT NOT NULL,
+  scheme_id INT NOT NULL UNIQUE,
   partition_scheme_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
   function_id INT NOT NULL,
   next_used sys.bit,
