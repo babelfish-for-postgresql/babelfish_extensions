@@ -290,7 +290,7 @@ sys-syslanguages
 sys-sysobjects
 sys-system_objects
 sys-system_sql_modules
-sys-system_sql_modules-dep
+sys-system_sql_modules-before-14_6-dep
 sys-tables
 sys-tables-dep
 sys-table_types
