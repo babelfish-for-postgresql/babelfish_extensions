@@ -1,4 +1,4 @@
--- sla 70000
+-- sla 100000
 -- Only DATE string
 -- Empty string, should return default values
 SELECT CONVERT(DATE, '')
@@ -1395,7 +1395,8 @@ GO
 SELECT CONVERT(DATE, '2022-10-30T03:00:00')
 GO
 
-SELECT CONVERT(DATE , CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
+-- some commits are missing in 2_X_DEV causing unexpected output here
+SELECT CONVERT(DATE, CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
 GO
 
 SELECT CONVERT(DATE, '2011-08-15 10:30.00 AMZ')

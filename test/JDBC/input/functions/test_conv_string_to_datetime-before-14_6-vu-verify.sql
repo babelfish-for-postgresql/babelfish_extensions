@@ -1,4 +1,3 @@
--- sla 100000
 -- Empty string, should return default values
 SELECT CONVERT(DATETIME, '')
 GO

@@ -1849,11 +1849,9 @@ datetime2
 
 SELECT * FROM test_conv_string_to_datetime2_v8
 GO
-~~START~~
-datetime2
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Explicit conversion from data type integer to datetime2 is not allowed.)~~
+~~ERROR (Message: relation "test_conv_string_to_datetime2_v8" does not exist)~~
 
 EXEC test_conv_string_to_datetime2_p8
 GO

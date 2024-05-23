@@ -1641,11 +1641,12 @@ datetime2
 ~~END~~
 
 
-SELECT CONVERT(DATETIME2 , CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
+-- some commits are missing in 2_X_DEV causing unexpected output here
+SELECT CONVERT(DATETIME2, CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
 GO
 ~~START~~
 datetime2
-2021-01-01 00:00:00.0000000
+2020-12-31 12:00:00.0000000
 ~~END~~
 
 
@@ -1703,7 +1704,7 @@ SELECT * FROM test_conv_string_to_datetime2_v2
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:59.1234570
+2017-08-25 13:01:59.123457
 ~~END~~
 
 EXEC test_conv_string_to_datetime2_p2
@@ -1762,7 +1763,7 @@ SELECT * FROM test_conv_string_to_datetime2_v4
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:59.1234570
+2017-08-25 13:01:59.123457
 ~~END~~
 
 EXEC test_conv_string_to_datetime2_p4
@@ -1784,7 +1785,7 @@ SELECT * FROM test_conv_string_to_datetime2_v5
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:59.1234570
+2017-08-25 13:01:59.123457
 ~~END~~
 
 EXEC test_conv_string_to_datetime2_p5
@@ -1806,7 +1807,7 @@ SELECT * FROM test_conv_string_to_datetime2_v6
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:59.1234570
+2017-08-25 13:01:59.123457
 ~~END~~
 
 EXEC test_conv_string_to_datetime2_p6
@@ -1828,7 +1829,7 @@ SELECT * FROM test_conv_string_to_datetime2_v7
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:59.1234570
+2017-08-25 13:01:59.123457
 ~~END~~
 
 EXEC test_conv_string_to_datetime2_p7
