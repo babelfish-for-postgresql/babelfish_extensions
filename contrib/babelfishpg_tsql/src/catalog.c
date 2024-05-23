@@ -114,7 +114,7 @@ Oid			bbf_extended_properties_idx_oid = InvalidOid;
  *****************************************/
 Oid	bbf_partition_function_oid = InvalidOid;
 Oid	bbf_partition_function_idx_oid = InvalidOid;
-Oid bbf_partition_function_id_idx_oid = InvalidOid;
+Oid	bbf_partition_function_id_idx_oid = InvalidOid;
 Oid	bbf_partition_function_seq_oid = InvalidOid;
 
 /*****************************************
@@ -122,7 +122,7 @@ Oid	bbf_partition_function_seq_oid = InvalidOid;
  *****************************************/
 Oid	bbf_partition_scheme_oid = InvalidOid;
 Oid	bbf_partition_scheme_idx_oid = InvalidOid;
-Oid bbf_partition_scheme_id_idx_oid = InvalidOid;
+Oid	bbf_partition_scheme_id_idx_oid = InvalidOid;
 Oid	bbf_partition_scheme_seq_oid = InvalidOid;
 
 /*****************************************

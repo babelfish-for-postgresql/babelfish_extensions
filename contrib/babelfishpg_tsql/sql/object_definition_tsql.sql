@@ -13,7 +13,7 @@ GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
 
 -- BBF_PARTITION_FUNCTION
 -- This catalog stores the metadata of partition funtions.
-CREATE TABLE sys.babelfish_partition_function1
+CREATE TABLE sys.babelfish_partition_function
 (
   dbid SMALLINT NOT NULL,
   function_id INT NOT NULL UNIQUE,
