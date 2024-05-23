@@ -21,7 +21,7 @@ SELECT * FROM sys_system_sql_modules_dep_vu_prepare_v1
 GO
 ~~START~~
 bit#!#nvarchar
-1#!#
+1#!#<NULL>
 ~~END~~
 
 
