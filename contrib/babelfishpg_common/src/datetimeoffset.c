@@ -12,6 +12,7 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/guc.h"
 #include "libpq/pqformat.h"
 #include "utils/timestamp.h"
 #include "parser/scansup.h"
@@ -172,7 +173,7 @@ clean_input_str(char *str, bool *contains_extra_spaces)
 static void 
 tsql_decode_datetimeoffset_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 				bool contains_extra_spaces, struct pg_tm *tm,
-				bool *is_year_set)
+				bool *is_year_set, bool dump_restore)
 {
 	int i, num_colons = 0, time_idx = nf;
 	bool 		contains_iso_time = false;
@@ -300,7 +301,12 @@ tsql_decode_datetimeoffset_fields(char *orig_str, char *str, char **field, int n
 			if (cp != NULL && isalpha(*cp))
 				continue;
 
-			if (strlen(field[i]) > 10)
+			/*
+			 * In case of dump restore, we might have a case where
+			 * the datetimeoffset is overflown i.e., 10000-01-01,
+			 * Hence, allow this case only why dump restore
+			 */
+			if (strlen(field[i]) > 10 && !dump_restore)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", orig_str)));
@@ -382,9 +388,15 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	bool		contains_extra_spaces = false, is_year_set = false;
 	DateTimeErrorExtra extra;
 	char		*modified_str = str;
+	bool		dump_restore = false;
+	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 
 
 	datetimeoffset = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
+
+	if (babelfish_dump_restore &&
+		 strncmp(babelfish_dump_restore, "on", 2) == 0)
+		 dump_restore = true;
  
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -409,7 +421,7 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 						  field, ftype, MAXDATEFIELDS, &nf);
 
 	tsql_decode_datetimeoffset_fields(str, modified_str, field, nf, ftype, 
-								contains_extra_spaces, tm, &is_year_set);
+								contains_extra_spaces, tm, &is_year_set, dump_restore);
  
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, 
