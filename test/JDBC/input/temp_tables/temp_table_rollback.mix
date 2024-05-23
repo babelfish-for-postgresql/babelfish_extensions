@@ -1,0 +1,32 @@
+-- Session-local setting, so it will only apply to this test.
+-- psql 
+show babelfishpg_tsql.temp_table_xact_support;
+GO
+
+set babelfishpg_tsql.temp_table_xact_support = off;
+GO
+
+-- tsql 
+
+USE master;
+
+CREATE TABLE #temp_rollback_1(a int)
+GO
+
+INSERT INTO #temp_rollback_1 VALUES (1)
+GO
+
+BEGIN TRANSACTION
+DROP TABLE #temp_rollback_1
+ROLLBACK
+GO
+
+SELECT * FROM #temp_rollback_1
+GO
+
+-- psql
+set babelfishpg_tsql.temp_table_xact_support = on; 
+GO
+
+show babelfishpg_tsql.temp_table_xact_support;
+GO

@@ -7,7 +7,7 @@ CREATE TABLE [dbo].[routines_customers](
 	[city] [char](50) NULL,
 	[state] [char](25) NULL,
 	[zip_code] [char](10) NULL,
- CONSTRAINT [customers_pkroutines_customers248e85dd01b015e3396e8567c240879b] PRIMARY KEY NONCLUSTERED 
+ CONSTRAINT [customers_pk] PRIMARY KEY NONCLUSTERED 
 (
 	[customer_id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
@@ -206,7 +206,7 @@ CREATE TYPE [dbo].[@myrettable_routines_fc7] AS TABLE(
 )
 GO
 
-ALTER TABLE [dbo].[routines_customers] ADD  CONSTRAINT [customers_pkroutines_customers248e85dd01b015e3396e8567c240879b] PRIMARY KEY NONCLUSTERED 
+ALTER TABLE [dbo].[routines_customers] ADD  CONSTRAINT [customers_pk] PRIMARY KEY NONCLUSTERED 
 (
 	[customer_id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)

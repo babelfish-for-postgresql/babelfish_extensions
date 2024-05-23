@@ -50,7 +50,7 @@ GO
 -- table constraint multiple column
 CREATE TABLE babel_4940_t6(id INT, id1 INT)
 GO
-ALTER TABLE babel_4940_t6 ADD CONSTRAINT c PRIMARY KEY(id, id1 DESC)
+ALTER TABLE babel_4940_t6 ADD CONSTRAINT c1 PRIMARY KEY(id, id1 DESC)
 GO
 DECLARE @i INT=0;
 WHILE (@i<1000)
@@ -66,8 +66,20 @@ GO
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
 ~~START~~
 text
 off
@@ -332,7 +344,7 @@ Gather (actual rows=10 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Limit (actual rows=10 loops=1)
-        ->  Index Only Scan using cbabel_4940_t54a8a08f09d37b73795649038408b5f33 on babel_4940_t5 (actual rows=10 loops=1)
+        ->  Index Only Scan using c on babel_4940_t5 (actual rows=10 loops=1)
               Heap Fetches: 10
 ~~END~~
 
@@ -360,7 +372,7 @@ Gather (actual rows=10 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Limit (actual rows=10 loops=1)
-        ->  Index Only Scan Backward using cbabel_4940_t54a8a08f09d37b73795649038408b5f33 on babel_4940_t5 (actual rows=10 loops=1)
+        ->  Index Only Scan Backward using c on babel_4940_t5 (actual rows=10 loops=1)
               Heap Fetches: 10
 ~~END~~
 
@@ -388,7 +400,7 @@ Gather (actual rows=10 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Limit (actual rows=10 loops=1)
-        ->  Index Only Scan using cbabel_4940_t64a8a08f09d37b73795649038408b5f33 on babel_4940_t6 (actual rows=10 loops=1)
+        ->  Index Only Scan using c1 on babel_4940_t6 (actual rows=10 loops=1)
               Heap Fetches: 10
 ~~END~~
 
@@ -416,7 +428,7 @@ Gather (actual rows=10 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Limit (actual rows=10 loops=1)
-        ->  Index Only Scan Backward using cbabel_4940_t64a8a08f09d37b73795649038408b5f33 on babel_4940_t6 (actual rows=10 loops=1)
+        ->  Index Only Scan Backward using c1 on babel_4940_t6 (actual rows=10 loops=1)
               Heap Fetches: 10
 ~~END~~
 
