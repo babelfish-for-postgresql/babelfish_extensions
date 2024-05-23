@@ -4161,7 +4161,6 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		}
 
 		values = palloc0(nargs * sizeof(Datum));
-		sql_variant_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("sql_variant");
 
 		for (int i = 0; i < nargs; i++)
 		{
@@ -4221,6 +4220,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 					errmsg("Duplicate values are not allowed in partition function boundary values list.")));
 		}
 
+		sql_variant_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("sql_variant");
 		/* cast each value to sql_variant datatype */
 		for (int i=0; i < nargs; i++)
 		{

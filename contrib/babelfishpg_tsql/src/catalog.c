@@ -4614,8 +4614,7 @@ partition_function_exists_with_id(int32 id)
 	ScanKeyData	scanKey;
 	bool		partition_function_exists = false;
 	/* open the relation */
-	rel = table_open(get_bbf_partition_function_oid(),
-									AccessShareLock);
+	rel = table_open(get_bbf_partition_function_oid(), AccessShareLock);
 	
 	ScanKeyInit(&scanKey,
 					Anum_bbf_partition_function_id,
@@ -4688,13 +4687,12 @@ partition_scheme_exists_with_id(int32 id)
 	bool		partition_scheme_exists = false;
 
 	/* open the relation */
-	rel = table_open(get_bbf_partition_scheme_oid(),
-									AccessShareLock);
+	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
 	
 	ScanKeyInit(&scanKey,
-					Anum_bbf_partition_scheme_id,
-					BTEqualStrategyNumber, F_INT2EQ,
-					Int32GetDatum(id));
+			Anum_bbf_partition_scheme_id,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int32GetDatum(id));
 
 	/* scan using index */
 	scan = systable_beginscan(rel,
@@ -4857,13 +4855,14 @@ remove_entry_from_bbf_partition_function(char *partition_function_name)
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 	/* scan using index */
 	scan = systable_beginscan(rel, get_bbf_partition_function_idx_oid(),
-								false, NULL, 2, scanKey);
+					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
 	{	
 		bool isnull;
-		partition_function_id = DatumGetInt32(heap_getattr(tuple, Anum_bbf_partition_function_id, RelationGetDescr(rel), &isnull));
+		partition_function_id = DatumGetInt32(heap_getattr(tuple, Anum_bbf_partition_function_id,
+									RelationGetDescr(rel), &isnull));
 
 		/* remove the entry only if there is no dependent  partition scheme on it */
 		if (!is_partition_function_used(partition_function_id))
@@ -4923,13 +4922,14 @@ get_partition_function_id(char *partition_function_name)
 	
 	/* scan using index */
 	scan = systable_beginscan(rel, get_bbf_partition_function_idx_oid(),
-								false, NULL, 2, scanKey);
+					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
 	{
 		bool isnull;
-		partition_function_id = DatumGetInt32(heap_getattr(tuple, Anum_bbf_partition_function_id, RelationGetDescr(rel), &isnull));
+		partition_function_id = DatumGetInt32(heap_getattr(tuple, Anum_bbf_partition_function_id,
+									RelationGetDescr(rel), &isnull));
 	}
 
 	systable_endscan(scan);
@@ -4964,7 +4964,7 @@ get_partition_count(char *partition_function_name)
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 	/* scan using index */
 	scan = systable_beginscan(rel, get_bbf_partition_function_idx_oid(),
-								false, NULL, 2, scanKey);
+					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
@@ -5084,7 +5084,7 @@ remove_entry_from_bbf_partition_scheme(char *partition_scheme_name)
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 	/* scan using index */
 	scan = systable_beginscan(rel, get_bbf_partition_scheme_idx_oid(),
-								false, NULL, 2, scanKey);
+					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
@@ -5149,7 +5149,7 @@ get_partition_scheme_id(char *partition_scheme_name)
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_scheme_idx_oid(),
-								false, NULL, 2, scanKey);
+					false, NULL, 2, scanKey);
 
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
@@ -5190,7 +5190,7 @@ int32 get_partition_function(char *partition_scheme_name)
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_scheme_idx_oid(),
-								false, NULL, 2, scanKey);
+					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
@@ -5228,13 +5228,12 @@ clean_up_bbf_partition_metadata(int16 dbid)
 			Int16GetDatum(dbid));
 
 	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
-							  true, NULL, 1, &scanKey);
+					true, NULL, 1, &scanKey);
 
 	while ((tuple = systable_getnext(scan)) != NULL)
 	{
 		if (HeapTupleIsValid(tuple))
-			CatalogTupleDelete(rel,
-							   &tuple->t_self);
+			CatalogTupleDelete(rel, &tuple->t_self);
 	}
 
 	systable_endscan(scan);
@@ -5249,7 +5248,7 @@ clean_up_bbf_partition_metadata(int16 dbid)
 			Int16GetDatum(dbid));
 
 	scan = systable_beginscan(rel, get_bbf_partition_scheme_idx_oid(),
-							  true, NULL, 1, &scanKey);
+					true, NULL, 1, &scanKey);
 
 	while ((tuple = systable_getnext(scan)) != NULL)
 	{
@@ -5269,7 +5268,7 @@ clean_up_bbf_partition_metadata(int16 dbid)
 			Int16GetDatum(dbid));
 
 	scan = systable_beginscan(rel, get_bbf_partition_function_idx_oid(),
-							true, NULL, 1, &scanKey);
+					true, NULL, 1, &scanKey);
 
 	while ((tuple = systable_getnext(scan)) != NULL)
 	{
