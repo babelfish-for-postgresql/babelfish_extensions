@@ -1,4 +1,4 @@
-CREATE TABLE babel_tableoptions_vu_prepare_t1 (a INT, CONSTRAINT pk PRIMARY KEY CLUSTERED (a ASC)) WITH
+CREATE TABLE babel_tableoptions_vu_prepare_t1 (a INT, CONSTRAINT pk_99 PRIMARY KEY CLUSTERED (a ASC)) WITH
 									  (PAD_INDEX = OFF,
 									   STATISTICS_NORECOMPUTE = OFF,
 									   IGNORE_DUP_KEY = OFF,

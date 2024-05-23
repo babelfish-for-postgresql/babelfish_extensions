@@ -22,8 +22,8 @@ select * from information_schema.check_constraints order by "CONSTRAINT_NAME","C
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar
-isc_check_constraints_db1#!#dbo#!#constraint1test_null987b8e55c77de33d095778885ecd84f4#!#((a > 10))
-isc_check_constraints_db1#!#dbo#!#constraint2test_nullba039d416ebe51c75b9d6d571d9a6f74#!#(((a <= 20) AND (b > a) AND ((a >= 40) AND (a <= 50))))
+isc_check_constraints_db1#!#dbo#!#constraint1#!#((a > 10))
+isc_check_constraints_db1#!#dbo#!#constraint2#!#(((a <= 20) AND (b > a) AND ((a >= 40) AND (a <= 50))))
 isc_check_constraints_db1#!#dbo#!#test_datetime_c_date_check#!#((c_date < '2001-01-01'))
 isc_check_constraints_db1#!#dbo#!#test_datetime_c_datetime_check#!#((c_datetime < '2020-10-20 09:00:00'))
 isc_check_constraints_db1#!#dbo#!#test_datetime_c_datetime2_check#!#(((c_datetime2 < '2020-10-20 09:00:00') AND (c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6)))))

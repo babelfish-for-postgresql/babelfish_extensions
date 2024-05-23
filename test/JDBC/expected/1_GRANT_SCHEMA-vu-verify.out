@@ -1,3 +1,13 @@
+-- tsql
+-- check for inconsistent metadata after upgrade
+select COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+go
+~~START~~
+int
+0
+~~END~~
+
+
 -- psql
 select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default and grantee like '%babel_4768_u1' collate sys.database_default order by object_name;
 go
@@ -171,6 +181,28 @@ GO
 
 REVOKE EXECUTE ON babel_4768_s1.babel_4768_f2_new FROM babel_4768_u1
 GO
+
+REVOKE SELECT ON babel_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.t1 FROM babel_4768_u1
+go
+
+
+REVOKE SELECT ON babel_4768_s2.t1 FROM babel_4768_u1
+go
+
+REVOKE SELECT ON babel_4768_s2.v1 FROM babel_4768_u1
+go
+
+REVOKE EXECUTE ON babel_4768_s2.p1 FROM babel_4768_u1
+go
+
+REVOKE SELECT ON babel_4768ログインαιώνια.t1 FROM babel_4768_u1
+go
+
+REVOKE SELECT ON "babel_4768 😎$chem@ #123 🌍rder".t1 FROM babel_4768_u1
+go
+
+REVOKE SELECT ON [babel_4768유니코드스키마👻].t1 FROM babel_4768_u1
+go
 
 -- psql
 -- catalog should be empty now

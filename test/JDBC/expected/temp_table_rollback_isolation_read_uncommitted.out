@@ -1,0 +1,1416 @@
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+CREATE VIEW enr_view AS
+    SELECT
+        CASE
+            WHEN relname LIKE '#pg_toast%' AND relname LIKE '%index%' THEN '#pg_toast_#oid_masked#_index'
+            WHEN relname LIKE '#pg_toast%' THEN '#pg_toast_#oid_masked#'
+            ELSE relname
+        END AS relname
+    FROM sys.babelfish_get_enr_list()
+GO
+
+CREATE TYPE temp_table_type FROM int
+GO
+
+
+CREATE PROCEDURE test_rollback_in_proc AS
+BEGIN
+    CREATE TABLE #t1(a int)
+    INSERT INTO #t1 values (6)
+    BEGIN TRAN;
+        ALTER TABLE #t1 ADD b varchar(50)
+        TRUNCATE TABLE #t1
+        INSERT INTO #t1 VALUES (1, 'two')
+        select * from #t1
+        DROP TABLE #t1
+        CREATE TABLE #t1(a varchar(100))
+        INSERT INTO #t1 VALUES ('three')
+        select * from #t1
+        CREATE TABLE #t2(b varchar(50), a int identity primary key, )
+        INSERT INTO #t2 VALUES ('four')
+        SELECT * FROM #t2
+        DROP TABLE #t2
+    ROLLBACK;
+    SELECT * FROM #t1
+    SELECT * FROM #t2
+END
+GO
+
+
+
+CREATE PROCEDURE implicit_rollback_in_proc AS 
+BEGIN
+    CREATE TABLE #t1(a int)
+    ALTER TABLE #t1 ADD b varchar(50)
+    INSERT INTO #t1 VALUES (1, 'two')
+    select * from #t1
+    DROP TABLE #t1
+    CREATE TABLE #t1(a varchar(100))
+    INSERT INTO #t1 VALUES ('three')
+    select * from #t1
+    CREATE TABLE #t2(b varchar(50), a int identity primary key, )
+    INSERT INTO #t2 VALUES ('four')
+    SELECT * FROM #t2
+    DROP TABLE #t2
+    INSERT INTO #t1 values (1, 2, 3)
+    SELECT * FROM #t1
+    SELECT * FROM #t2
+END
+GO
+
+CREATE PROCEDURE tv_base_rollback AS
+BEGIN
+    DECLARE @tv TABLE (a int)
+    INSERT INTO temp_tab_rollback_mytab VALUES (1)
+    INSERT INTO @tv VALUES (1)
+END
+GO
+
+-- pg_class, pg_type, pg_depend, pg_attribute, pg_constraint, pg_index, pg_sequence are all covered by below tests. 
+-------------------------------
+-- Temp Table CREATE + ROLLBACK
+-------------------------------
+BEGIN TRAN
+CREATE TABLE #temp_table_rollback_t1(a int identity primary key, b int)
+select * from enr_view
+ROLLBACK
+GO
+~~START~~
+text
+#temp_table_rollback_t1_a_seq
+#temp_table_rollback_t1
+#temp_table_rollback_t1_pkey
+~~END~~
+
+
+-- Should be empty
+select * from enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+-- Should not exist
+SELECT * FROM #temp_table_rollback_t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temp_table_rollback_t1" does not exist)~~
+
+
+BEGIN TRAN
+CREATE TABLE #t1(a int)
+INSERT INTO #t1 VALUES (1)
+SELECT * FROM #t1
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+CREATE TABLE #t1(a int, b int)
+GO
+
+INSERT INTO #t1 VALUES (1, 1)
+INSERT INTO #t1 VALUES (2, 1)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+INSERT INTO #t1 VALUES (3, 1)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#1
+3#!#1
+~~END~~
+
+
+BEGIN TRAN
+UPDATE #t1 SET a = a + 1 WHERE b = 1
+SELECT * FROM #t1
+ROLLBACK
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#int
+2#!#1
+3#!#1
+4#!#1
+~~END~~
+
+
+
+SELECT * FROM #t1
+DROP TABLE #t1
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#1
+3#!#1
+~~END~~
+
+
+-----------------------------
+-- Temp Table DROP + ROLLBACK
+-----------------------------
+CREATE TABLE #temp_table_rollback_t1(a int identity primary key, b int)
+go
+
+INSERT INTO #temp_table_rollback_t1 VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+ROLLBACK
+go
+
+-- Should still exist
+select * from enr_view
+GO
+~~START~~
+text
+#temp_table_rollback_t1_pkey
+#temp_table_rollback_t1_a_seq
+#temp_table_rollback_t1
+~~END~~
+
+
+-- Should show results
+BEGIN TRAN
+select * from #temp_table_rollback_t1
+COMMIT
+go
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+-- Should not error
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+COMMIT
+GO
+
+----------------------------------------------------------
+-- ALTER TABLE (should fail due to BABEL-4912)
+----------------------------------------------------------
+CREATE TABLE #temp_table_rollback_t1 (a int, b int)
+GO
+
+BEGIN TRAN
+ALTER TABLE #temp_table_rollback_t1 DROP COLUMN b
+ROLLBACK
+GO
+~~ERROR (Code: 3726)~~
+
+~~ERROR (Message: cannot drop column b of table "#temp_table_rollback_t1" because other objects depend on it)~~
+
+
+BEGIN TRAN
+ALTER TABLE #temp_table_rollback_t1 ALTER COLUMN b VARCHAR
+ROLLBACK
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unexpected object depending on column: type "#temp_table_rollback_t1")~~
+
+
+BEGIN TRAN
+ALTER TABLE #temp_table_rollback_t1 DROP COLUMN b
+COMMIT
+GO
+~~ERROR (Code: 3726)~~
+
+~~ERROR (Message: cannot drop column b of table "#temp_table_rollback_t1" because other objects depend on it)~~
+
+
+BEGIN TRAN
+ALTER TABLE #temp_table_rollback_t1 ALTER COLUMN b VARCHAR
+COMMIT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unexpected object depending on column: type "#temp_table_rollback_t1")~~
+
+
+DROP TABLE #temp_table_rollback_t1
+GO
+
+----------------------------------------------------------
+-- Multiple tables in one transaction
+----------------------------------------------------------
+CREATE TABLE #temp_table_rollback_t1(a int identity primary key, b int, c varchar)
+GO
+
+create table #temp_table_rollback_t2(a varchar)
+GO
+
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+DROP TABLE #temp_table_rollback_t2
+ROLLBACK
+GO
+
+-- Tables are still visible and usable
+select * from enr_view
+GO
+~~START~~
+text
+#temp_table_rollback_t1_pkey
+#pg_toast_#oid_masked#_index
+#pg_toast_#oid_masked#
+#temp_table_rollback_t1_a_seq
+#temp_table_rollback_t1
+#pg_toast_#oid_masked#_index
+#pg_toast_#oid_masked#
+#temp_table_rollback_t2
+~~END~~
+
+
+INSERT INTO #temp_table_rollback_t1 values (1, 'b')
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO #temp_table_rollback_t2 values ('c')
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #temp_table_rollback_t1
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#1#!#b
+~~END~~
+
+
+SELECT * FROM #temp_table_rollback_t2
+GO
+~~START~~
+varchar
+c
+~~END~~
+
+
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+DROP TABLE #temp_table_rollback_t2
+COMMIT
+GO
+
+BEGIN TRAN
+    CREATE TABLE #t1(a int)
+    ROLLBACK
+GO
+
+SELECT * FROM enr_view
+go
+~~START~~
+text
+~~END~~
+
+
+CREATE TABLE #t1(a int, b int)
+GO
+
+CREATE TABLE #t2(c varchar(20), d int)
+GO
+
+INSERT INTO #t1 VALUES (1, 1)
+INSERT INTO #t1 VALUES (2, 1)
+INSERT INTO #t2 VALUES ('abc', 1)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+INSERT INTO #t1 VALUES (3, 1)
+INSERT INTO #t2 VALUES ('def', 1)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#1
+3#!#1
+~~END~~
+
+
+BEGIN TRAN
+UPDATE #t1 SET a = a + 1 WHERE b = 1
+UPDATE #t2 SET c = 'qed' WHERE d = 1
+SELECT * FROM #t1
+SELECT * FROM #t2
+ROLLBACK
+GO
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#int
+2#!#1
+3#!#1
+4#!#1
+~~END~~
+
+~~START~~
+varchar#!#int
+qed#!#1
+qed#!#1
+~~END~~
+
+
+SELECT * FROM #t1
+SELECT * FROM #t2
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#1
+3#!#1
+~~END~~
+
+~~START~~
+varchar#!#int
+abc#!#1
+def#!#1
+~~END~~
+
+
+DROP TABLE #t1
+DROP TABLE #t2
+GO
+
+----------------------------------------------------------
+-- Implicit rollback due to error
+----------------------------------------------------------
+CREATE TABLE #temp_table_rollback_t1(a int primary key, b int, c varchar)
+CREATE TABLE #temp_table_rollback_t2(a int)
+GO
+
+INSERT INTO #temp_table_rollback_t2 VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+
+-- Transaction will error out
+BEGIN TRAN
+drop table #temp_table_rollback_t2
+insert into #temp_table_rollback_t1 values (1, 1, 1, 1) -- Too many columns, should error out
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT has more expressions than target columns)~~
+
+
+-- Table + data should still exist, due to implicit rollback. 
+SELECT * FROM #temp_table_rollback_t2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Duplicate key doesn't cause implicit rollback, so the drop will succeed here. 
+BEGIN TRAN
+drop table #temp_table_rollback_t2
+insert into #temp_table_rollback_t1 values (1, 1, 'a')
+insert into #temp_table_rollback_t1 values (1, 1, 'a')
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "#temp_table_rollback_t1_pkey")~~
+
+
+SELECT * FROM #temp_table_rollback_t2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temp_table_rollback_t2" does not exist)~~
+
+
+BEGIN TRAN
+DROP TABLE #temp_table_rollback_t1
+DROP TABLE #temp_table_rollback_t2
+COMMIT
+GO
+
+SELECT * FROM enr_view;
+GO
+~~START~~
+text
+~~END~~
+
+
+
+---------------------------------------------------------------------------
+-- Same temp table name in one transaction
+---------------------------------------------------------------------------
+CREATE TABLE #temp_table_rollback_t3(c1 INT, c2 INT)
+GO
+
+BEGIN TRANSACTION
+    ALTER TABLE #temp_table_rollback_t3 ADD C3 INT;
+    INSERT INTO #temp_table_rollback_t3 VALUES (1, 2, 3)
+    DROP TABLE #temp_table_rollback_t3
+    CREATE TABLE #temp_table_rollback_t3(c1 INT, c2 INT)
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+
+DROP TABLE #temp_table_rollback_t3
+GO
+
+CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+GO
+
+
+
+BEGIN TRANSACTION
+    DROP TABLE #temp_table_rollback_t4
+    CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+    INSERT INTO #temp_table_rollback_t4 VALUES (1, 'one')
+    SELECT * FROM #temp_table_rollback_t4 -- should return 1, 'one'
+    DROP TABLE #temp_table_rollback_t4
+    INSERT INTO #temp_table_rollback_t4 VALUES (2, 'two')
+    SELECT * FROM #temp_table_rollback_t4
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#char
+1#!#one       
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temp_table_rollback_t4" does not exist)~~
+
+
+SELECT * FROM #temp_table_rollback_t4
+GO
+~~START~~
+int#!#char
+~~END~~
+
+
+DROP TABLE #temp_table_rollback_t4
+GO
+
+CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+GO
+
+
+
+BEGIN TRANSACTION T1
+ALTER TABLE #temp_table_rollback_t4 ADD C3 INT
+DROP TABLE #temp_table_rollback_t4
+CREATE TABLE #temp_table_rollback_t4(c1 INT, c2 CHAR(10))
+DROP  TABLE #temp_table_rollback_t4
+INSERT INTO #temp_table_rollback_t4 VALUES (2, 'two')
+COMMIT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#temp_table_rollback_t4" does not exist)~~
+
+
+DROP TABLE #temp_table_rollback_t4
+GO
+
+
+---------------------------------------------------------------------------
+-- Index creation
+---------------------------------------------------------------------------
+-- Created index in transaction
+CREATE TABLE #temp_table_rollback_t5(a int, b varchar, c int, d int)
+GO
+
+BEGIN TRAN
+    CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
+    INSERT INTO #temp_table_rollback_t5 VALUES (1, 'a', 2, 3)
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+~~END~~
+
+
+INSERT INTO #temp_table_rollback_t5 VALUES (2, 'b', 3, 4)
+GO
+~~ROW COUNT: 1~~
+
+
+BEGIN TRAN
+    CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
+    UPDATE #temp_table_rollback_t5 SET b = 'd' WHERE d = 4
+    SELECT * FROM #temp_table_rollback_t5
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+~~END~~
+
+
+BEGIN TRAN
+    UPDATE #temp_table_rollback_t5 SET b = 'e' WHERE d = 4
+    SELECT * FROM #temp_table_rollback_t5
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#e#!#3#!#4
+~~END~~
+
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+~~END~~
+
+
+DROP INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+~~END~~
+
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+#temp_table_rollback_t5
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+~~END~~
+
+
+
+-- Drop index in transaction
+CREATE INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5(b)
+GO
+
+BEGIN TRAN
+    DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+    INSERT INTO #temp_table_rollback_t5 VALUES (3, 'c', 4, 5)
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+3#!#c#!#4#!#5
+~~END~~
+
+
+BEGIN TRAN
+    DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+ROLLBACK
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: index "#temp_table_rollback_t5_idx2#te2a202739f4e4dbd1ebea8195fe760b6f" does not exist)~~
+
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+3#!#c#!#4#!#5
+~~END~~
+
+
+DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: index "#temp_table_rollback_t5_idx2#te2a202739f4e4dbd1ebea8195fe760b6f" does not exist)~~
+
+
+CREATE INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5(b)
+GO
+
+DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+3#!#c#!#4#!#5
+~~END~~
+
+
+-- Create and drop in transaction
+BEGIN TRAN
+    CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
+    DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
+ROLLBACK
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+3#!#c#!#4#!#5
+~~END~~
+
+
+CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
+DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+3#!#c#!#4#!#5
+~~END~~
+
+
+-- Drop - Create
+CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(d)
+GO
+
+BEGIN TRAN
+    DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
+    CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
+ROLLBACK
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+3#!#c#!#4#!#5
+~~END~~
+
+
+DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
+CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#d#!#3#!#4
+3#!#c#!#4#!#5
+~~END~~
+
+
+DROP TABLE #temp_table_rollback_t5
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+
+-- DELETE, TRUNCATE
+CREATE TABLE #t1(a int identity primary key, b int)
+INSERT INTO #t1 VALUES (0)
+INSERT INTO #t1 VALUES (1)
+INSERT INTO #t1 VALUES (2)
+INSERT INTO #t1 VALUES (3)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+BEGIN TRAN
+    DELETE FROM #t1
+    SELECT * FROM #t1
+ROLLBACK
+GO
+~~ROW COUNT: 4~~
+
+~~START~~
+int#!#int
+~~END~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#int
+1#!#0
+2#!#1
+3#!#2
+4#!#3
+~~END~~
+
+
+-- Truncate should reset IDENTITY. But it should be restored on ROLLBACK.
+BEGIN TRAN
+    TRUNCATE TABLE #t1
+    INSERT INTO #t1 VALUES (1)
+    SELECT * FROM #t1
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+INSERT INTO #t1 VALUES (4)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #t1
+DROP TABLE #t1
+GO
+~~START~~
+int#!#int
+1#!#0
+2#!#1
+3#!#2
+4#!#3
+5#!#4
+~~END~~
+
+
+
+---------------------------------------------------------------------------
+-- Procedures
+---------------------------------------------------------------------------
+exec test_rollback_in_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#two
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+three
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int
+four#!#1
+~~END~~
+
+~~START~~
+int
+6
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t2" does not exist)~~
+
+
+BEGIN TRANSACTION
+    CREATE TABLE #outer_tab1(a int)
+    SELECT * FROM enr_view
+    exec implicit_rollback_in_proc
+    select * from #outer_tab1
+ROLLBACK
+GO
+~~START~~
+text
+#outer_tab1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#two
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+three
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int
+four#!#1
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT has more expressions than target columns)~~
+
+
+CREATE TABLE temp_tab_rollback_mytab(a int)
+GO
+
+BEGIN TRAN
+CREATE TABLE #t1(a int)
+INSERT INTO #t1 VALUES (1)
+EXEC tv_base_rollback
+DROP TABLE temp_tab_rollback_mytab
+ROLLBACK
+SELECT * FROM temp_tab_rollback_mytab
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+~~END~~
+
+
+DROP TABLE temp_tab_rollback_mytab
+GO
+
+-- Everything should be rolled back due to error
+-- Nothing from the proc should be here either
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+---------------------------------------------------------------------------
+-- Mixed permanent, TV, temp tables in/out of ENR.
+---------------------------------------------------------------------------
+-- Mixed create rollback
+BEGIN TRAN
+    DECLARE @tv TABLE (a1 int)
+    CREATE TABLE #temp_table(a2 int)
+    CREATE TABLE #temp_table_nonenr(a3 temp_table_type)
+ROLLBACK
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+-- Mixed insert rollback
+DECLARE @tv TABLE (a1 int)
+CREATE TABLE perm_table(a2 int)
+CREATE TABLE #temp_table(a3 int)
+CREATE TABLE #temp_table_nonenr(a3 temp_table_type)
+BEGIN TRAN
+    INSERT INTO @tv VALUES (1)
+    INSERT INTO perm_table VALUES(2)
+    INSERT INTO #temp_table VALUES(3)
+    INSERT INTO #temp_table_nonenr VALUES (4)
+    SELECT * FROM @tv
+    SELECT * FROM perm_table
+    SELECT * FROM #temp_table
+    SELECT * FROM #temp_table_nonenr
+ROLLBACK
+-- Unaffected by rollback
+SELECT * FROM @tv
+-- Correctly rolled back
+SELECT * FROM perm_table
+-- Correctly rolled back
+SELECT * FROM #temp_table
+SELECT * FROM #temp_table_nonenr
+SELECT * FROM enr_view
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~START~~
+text
+@tv_0
+#temp_table
+~~END~~
+
+
+SELECT * FROM enr_view
+DROP TABLE #temp_table
+DROP TABLE #temp_table_nonenr
+DROP TABLE perm_table
+GO
+~~START~~
+text
+#temp_table
+~~END~~
+
+
+-- Mixed drop rollback
+CREATE TABLE #temp_table(a int)
+CREATE TABLE perm_table(a int)
+CREATE TABLE #temp_table_nonenr(a3 temp_table_type)
+GO
+
+BEGIN TRAN
+    DECLARE @tv TABLE(a int)
+    SELECT * FROM enr_view
+    DROP TABLE #temp_table
+    DROP TABLE perm_table
+    DROP TABLE #temp_table_nonenr
+    SELECT * FROM enr_view
+ROLLBACK
+GO
+~~START~~
+text
+#temp_table
+@tv_0
+~~END~~
+
+~~START~~
+text
+@tv_0
+~~END~~
+
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+#temp_table
+~~END~~
+
+
+DROP TABLE #temp_table
+DROP TABLE perm_table
+DROP TABLE #temp_table_nonenr
+GO
+
+
+---------------------------------------------------------------------------
+-- Multiple COMMIT/ROLLBACK
+---------------------------------------------------------------------------
+CREATE TABLE #t1(a int)
+GO
+
+
+
+BEGIN TRAN
+INSERT INTO #t1 VALUES (1)
+COMMIT
+BEGIN TRAN
+UPDATE #t1 SET a = 2 WHERE a = 1
+COMMIT
+BEGIN TRAN
+DROP TABLE #t1
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #t1
+DROP TABLE #t1
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+
+
+
+
+------------------------
+BEGIN TRAN
+CREATE TABLE #t1(a int)
+COMMIT
+BEGIN TRAN
+INSERT INTO #t1 VALUES (1)
+CREATE TABLE #t2(a int identity primary key, b varchar)
+COMMIT
+BEGIN TRAN
+DROP TABLE #t1
+CREATE INDEX #t2_idx ON #t2(b)
+INSERT INTO #t2 VALUES ('a')
+ROLLBACK
+BEGIN TRAN
+CREATE INDEX #t2_idx ON #t2(b)
+INSERT INTO #t2 VALUES ('b')
+SELECT * FROM #t1
+SELECT * FROM #t2
+DROP TABLE #t1
+DROP TABLE #t2
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int#!#varchar
+2#!#b
+~~END~~
+
+
+
+
+
+
+
+----------------------------
+BEGIN TRAN 
+CREATE TABLE #t1(a int)
+CREATE TABLE #t2(a int)
+ROLLBACK
+BEGIN TRAN
+CREATE TABLE #t1(a varchar)
+CREATE TABLE #t2(a varchar)
+COMMIT
+BEGIN TRAN
+DROP TABLE #t1
+DROP TABLE #t2
+COMMIT
+BEGIN TRAN
+CREATE TABLE #t1(a int)
+CREATE TABLE #t2(a int)
+INSERT INTO #t1 VALUES (1)
+ROLLBACK
+SELECT * FROM enr_view
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+~~END~~
+
+
+
+
+
+
+
+----------------------------
+BEGIN TRAN
+CREATE TABLE #t1 (a int)
+COMMIT
+BEGIN TRAN
+DROP TABLE #t1 
+ROLLBACK
+BEGIN TRAN
+DROP TABLE #t1
+ROLLBACK
+BEGIN TRAN
+DROP TABLE #t1
+ROLLBACK
+BEGIN TRAN
+INSERT INTO #t1 VALUES (1)
+SELECT * FROM #t1
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+DROP TABLE #t1
+GO
+
+
+
+
+---------------------------------------------------------------------------
+-- Cursor
+---------------------------------------------------------------------------
+-- Temp into permanent
+DECLARE @v int
+CREATE TABLE #t(a int)
+insert into #t values (1)
+insert into #t values (2)
+insert into #t values (3)
+CREATE TABLE perm_tab(a int)
+DECLARE cur CURSOR FOR (select a from #t)
+OPEN cur
+WHILE @@fetch_status = 0
+BEGIN
+    fetch cur into @v
+    insert into perm_tab values (@v)
+END
+CLOSE cur
+DEALLOCATE cur
+SELECT * FROM perm_tab
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+3
+<NULL>
+~~END~~
+
+
+
+-- Permanent into temp
+DECLARE @v int
+CREATE TABLE #t2(b int)
+DECLARE cur CURSOR FOR (select a from perm_tab)
+OPEN cur
+WHILE @@fetch_status = 0
+BEGIN
+    fetch cur into @v
+    insert into #t2 values (@v)
+END
+CLOSE cur
+DEALLOCATE cur
+SELECT * FROM #t2
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+3
+<NULL>
+<NULL>
+~~END~~
+
+
+DROP TABLE perm_tab
+GO
+
+
+---------------------------------------------------------------------------
+-- Trigger (can't be created on temp tables)
+---------------------------------------------------------------------------
+CREATE TABLE basetab(a int, b int)
+GO
+
+CREATE TRIGGER basetrig_insert ON basetab 
+    FOR INSERT, UPDATE, DELETE
+AS
+    INSERT INTO #t1 VALUES (1)
+GO
+
+CREATE TABLE #t1(a int)
+GO
+
+BEGIN TRAN
+    INSERT INTO basetab VALUES (1, 2)
+    SELECT * FROM #t1
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM basetab
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+
+CREATE TRIGGER basetrig_rollback ON basetab
+    FOR INSERT, UPDATE, DELETE
+AS
+    INSERT INTO #t1 VALUES (2)
+    ROLLBACK
+GO
+
+INSERT INTO basetab VALUES (3, 4)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 3609)~~
+
+~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int
+~~END~~
+
+
+DROP TRIGGER basetrig_insert
+GO
+
+DROP TABLE basetab
+GO
+DROP VIEW enr_view
+GO
+
+DROP TYPE temp_table_type
+GO
+
+DROP PROCEDURE test_rollback_in_proc
+GO
+
+DROP PROCEDURE implicit_rollback_in_proc
+GO
+
+DROP PROCEDURE tv_base_rollback
+GO

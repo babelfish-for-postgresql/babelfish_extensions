@@ -331,7 +331,6 @@ FROM SalesTotal AS st
 ORDER BY 1
 GO
 
-
 -- CTE test 2
 WITH
 SalesTotal AS
@@ -424,7 +423,77 @@ FROM SalesTotal AS st
 ORDER BY 1
 GO
 
+-- Test stmt of CTE table and PIVOT stmt in different level 
+WITH
+SalesTotal AS
+(
+    SELECT FruitType,
+        [2023] AS [2023_Total],
+        [2024] AS [2024_Total]
+    FROM #FruitSales
+    PIVOT(SUM(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+)
+SELECT st.FruitType, st.[2023_Total], sa.[2023_Avg],
+  st.[2024_Total], sa.[2024_Avg]
+FROM SalesTotal AS st
+JOIN (
+    SELECT FruitType,
+        [2023] AS [2023_Avg],
+        [2024] AS [2024_Avg]
+    FROM #FruitSales
+    PIVOT(AVG(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+) sa ON st.FruitType = sa.FruitType;
+GO
+
 DROP TABlE IF EXISTS #FruitSales
+GO
+
+-- PIVOT with CTE as source table
+WITH cte_table AS (
+    SELECT [p].productName, [o].[employeeName]
+    FROM orders [o] JOIN products AS [p] on (o.productId = p.productId)
+)
+SELECT CAST('COUNT' AS VARCHAR(10)), [mac],[ipad],[charger] FROM cte_table
+PIVOT (
+    COUNT(employeeName)
+    FOR productName IN (mac, [iphone], [ipad], [charger])
+) as pvt
+GO
+
+-- string is not allowed in PIVOT column value list
+WITH cte_table AS (
+    SELECT o.[orderId], o.[productId], [p].productName,
+        [p].productPrice, [o].[employeeName], [o].employeeCode, [o].date
+    FROM orders [o] JOIN products AS [p] on (o.productId = p.productId)
+)
+SELECT * FROM cte_table
+PIVOT (
+    COUNT(orderId)
+    FOR productName IN ('mac', 'iphone', 'ipad', 'charger')
+) as p
+GO
+
+-- aggregate column in PIVOT column value list is not allowed
+WITH cte_table AS
+(
+  SELECT
+    CAST('COUNT' AS VARCHAR(10)) AS COUNT,
+    [mac], [ipad], [charger], [employeeName]
+  FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM orders [o] JOIN products AS [p] on ([o].productId = [p].productId)
+  ) AS dervied_table
+PIVOT
+  (
+      COUNT(employeeName)
+      FOR productName IN ([mac], [employeeName], [iphone], [ipad], [charger])
+  ) as pvt
+)
+SELECT * FROM cte_table
 GO
 
 -- Join stmts inside PIVOT statment (BABEL-4558)
@@ -816,4 +885,28 @@ PIVOT (
     FOR left_right IN ([LEFT], [RIGHT]) 
 ) AS p2
 ORDER BY 1
+GO
+
+-- test pivot with table in different schemas 1
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN products AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
+GO
+
+-- test pivot with table in different schemas 2
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN pivot_schema.products_sch AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
 GO

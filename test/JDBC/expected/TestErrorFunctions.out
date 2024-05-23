@@ -223,7 +223,7 @@ INSERT INTO errorFuncTable VALUES (5, 2, 'one')
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "errorfunctable" violates check constraint "ck_a_gt_berrorfunctablee59e418278eefa47185bf50958adfcb4")~~
+~~ERROR (Message: new row for relation "errorfunctable" violates check constraint "ck_a_gt_b")~~
 
 
 BEGIN TRY
@@ -241,7 +241,7 @@ END CATCH
 go
 ~~START~~
 int#!#nvarchar#!#int#!#nvarchar#!#int#!#int
-2#!#new row for relation "errorfunctable" violates check constraint "ck_a_gt_berrorfunctablee59e418278eefa47185bf50958adfcb4"#!#547#!#<NULL>#!#16#!#1
+2#!#new row for relation "errorfunctable" violates check constraint "ck_a_gt_b"#!#547#!#<NULL>#!#16#!#1
 ~~END~~
 
 
