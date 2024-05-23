@@ -387,7 +387,7 @@ BEGIN
             v_fseconds := lpad(v_fseconds, 3, '0');
         END IF;
     ELSE
-        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(v_datetimeval, 'US'), v_scale);
+        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs_v2(to_char(v_datetimeval, 'US'), v_scale);
 
         -- Following condition will handle overflow of fractsecs
         IF (v_fseconds::INTEGER < 0) THEN
@@ -1307,15 +1307,15 @@ BEGIN
     END IF;
 
     BEGIN
-        v_hours := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'HOURS'), '0');
-        v_minutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'MINUTES'), '0');
-        v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
-        v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
+        v_hours := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'HOURS'), '0');
+        v_minutes := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'MINUTES'), '0');
+        v_seconds := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'SECONDS'), '0');
+        v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'FRACTSECONDS'), '0');
 
         -- v_offhours and v_offminutes will be already set for W3C_XML datetime string format
-        v_sign := coalesce(v_sign, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFSIGN'), '+');
-        v_offhours := coalesce(v_offhours, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFHOURS'), '0');
-        v_offminutes := coalesce(v_offminutes, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFMINUTES'), '0');
+        v_sign := coalesce(v_sign, sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFSIGN'), '+');
+        v_offhours := coalesce(v_offhours, sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFHOURS'), '0');
+        v_offminutes := coalesce(v_offminutes, sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFMINUTES'), '0');
     EXCEPTION
         WHEN OTHERS THEN
             RAISE invalid_character_value_for_cast;
@@ -1359,7 +1359,7 @@ BEGIN
         v_seconds := concat_ws('.', v_seconds, v_fseconds);
         v_seconds := round(v_seconds::NUMERIC, 0)::TEXT;
     ELSE
-        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs_v2(v_fseconds, v_scale);
         
         -- Following condition will handle overflow of fractsecs
         IF (v_fseconds::INTEGER < 0) THEN
@@ -1446,7 +1446,7 @@ STABLE
 RETURNS NULL ON NULL INPUT;
 
 -- Following function can be used to convert string literal to DATETIME and SMALLDATETIME
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_datetime(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_datetime_v2(IN p_datatype TEXT,
                                                                      IN p_datetimestring TEXT,
                                                                      IN p_style NUMERIC DEFAULT 0)
 RETURNS TIMESTAMP WITHOUT TIME ZONE
@@ -1963,10 +1963,10 @@ BEGIN
     END IF;
 
     BEGIN
-        v_hours := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'HOURS'), '0');
-        v_minutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'MINUTES'), '0');
-        v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
-        v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
+        v_hours := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'HOURS'), '0');
+        v_minutes := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'MINUTES'), '0');
+        v_seconds := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'SECONDS'), '0');
+        v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'FRACTSECONDS'), '0');
     EXCEPTION
         WHEN OTHERS THEN
             RAISE invalid_character_value_for_cast;
@@ -2155,9 +2155,9 @@ BEGIN
         END IF; 
     ELSE
         BEGIN
-            v_sign := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFSIGN'), '+');
-            v_offhours := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFHOURS'), '0');
-            v_offminutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFMINUTES'), '0');
+            v_sign := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFSIGN'), '+');
+            v_offhours := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFHOURS'), '0');
+            v_offminutes := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFMINUTES'), '0');
         EXCEPTION
             WHEN OTHERS THEN
                 RAISE invalid_character_value_for_cast;
@@ -2265,7 +2265,7 @@ BEGIN
     END IF;
 
     v_hours := ltrim(to_char(p_timeval, 'HH12'), '0');
-    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(p_timeval, 'US'), v_scale);
+    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs_v2(to_char(p_timeval, 'US'), v_scale);
 
     -- Following condition will handle overflow of fractsecs
     IF (v_fseconds::INTEGER < 0) THEN
@@ -2616,10 +2616,10 @@ LANGUAGE plpgsql
 STABLE;
 
 /*
- * Following function sys.babelfish_get_microsecs_from_fractsecs rounds off p_fractsecs to the given scale
+ * Following function sys.babelfish_get_microsecs_from_fractsecs_v2 rounds off p_fractsecs to the given scale
  * if result overflows then return -1
  */
-CREATE OR REPLACE FUNCTION sys.babelfish_get_microsecs_from_fractsecs(IN p_fractsecs TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_get_microsecs_from_fractsecs_v2(IN p_fractsecs TEXT,
                                                                           IN p_scale NUMERIC DEFAULT 7)
 RETURNS VARCHAR
 AS
@@ -2735,7 +2735,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_get_timeunit_from_string(IN p_timepart TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_get_timeunit_from_string_v2(IN p_timepart TEXT,
                                                                       IN p_timeunit TEXT)
 RETURNS VARCHAR
 AS
@@ -4994,7 +4994,7 @@ BEGIN
                 v_res_datetime := to_timestamp(to_char(v_res_datetime, 'DD.MM.YYYY.HH24.MI'), 'DD.MM.YYYY.HH24.MI');
             END IF;
         ELSE
-            v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(rpad(v_fseconds, 9, '0'), v_scale);
+            v_fseconds := sys.babelfish_get_microsecs_from_fractsecs_v2(rpad(v_fseconds, 9, '0'), v_scale);
 
             -- Following condition will handle overflow of fractsecs
             IF (v_fseconds::INTEGER < 0) THEN
@@ -6057,7 +6057,7 @@ BEGIN
         v_hours := 12;
     END IF;
 
-    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(rpad(v_fseconds, 9, '0'), v_scale);
+    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs_v2(rpad(v_fseconds, 9, '0'), v_scale);
     -- Following condition will handle overflow of fractsecs
     IF (v_fseconds::INTEGER < 0) THEN
         v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
@@ -9780,14 +9780,14 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetime(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetime_v2(IN p_datatype TEXT,
                                                                          IN p_datetimestring TEXT,
                                                                          IN p_style NUMERIC DEFAULT 0)
 RETURNS TIMESTAMP WITHOUT TIME ZONE
 AS
 $BODY$
 BEGIN
-    RETURN sys.babelfish_conv_string_to_datetime(p_datatype,
+    RETURN sys.babelfish_conv_string_to_datetime_v2(p_datatype,
                                                      p_datetimestring ,
                                                      p_style);
 EXCEPTION
@@ -9919,7 +9919,7 @@ DECLARE
     resdate DATE;
 BEGIN
     IF try THEN
-        resdate := sys.babelfish_try_conv_to_date(arg); 
+        resdate := sys.babelfish_try_conv_to_date_v2(arg); 
     ELSE
         BEGIN
             resdate := CAST(arg AS DATE);
@@ -9937,7 +9937,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_date(IN arg anyelement)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_date_v2(IN arg anyelement)
 RETURNS DATE
 AS
 $BODY$
@@ -10047,7 +10047,7 @@ DECLARE
     restime TIME;
 BEGIN
     IF try THEN
-        restime := sys.babelfish_try_conv_to_time(arg);
+        restime := sys.babelfish_try_conv_to_time_v2(arg);
     ELSE
         BEGIN
             restime := CAST(arg AS TIME);
@@ -10065,7 +10065,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_time(IN arg anyelement)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_time_v2(IN arg anyelement)
 RETURNS TIME
 AS
 $BODY$
@@ -10099,9 +10099,9 @@ BEGIN
     END IF;
 
     IF try THEN
-	    RETURN sys.babelfish_try_conv_string_to_datetime(v_res_datatype, arg, p_style);
+	    RETURN sys.babelfish_try_conv_string_to_datetime_v2(v_res_datatype, arg, p_style);
     ELSE
-        RETURN sys.babelfish_conv_string_to_datetime(v_res_datatype, arg, p_style);
+        RETURN sys.babelfish_conv_string_to_datetime_v2(v_res_datatype, arg, p_style);
     END IF;
 END;
 $BODY$
@@ -10483,9 +10483,9 @@ BEGIN
     END IF;
 
     IF try THEN
-	    RETURN sys.babelfish_try_conv_string_to_datetime(v_res_datatype, arg, p_style);
+	    RETURN sys.babelfish_try_conv_string_to_datetime_v2(v_res_datatype, arg, p_style);
     ELSE
-        RETURN sys.babelfish_conv_string_to_datetime(v_res_datatype, arg, p_style);
+        RETURN sys.babelfish_conv_string_to_datetime_v2(v_res_datatype, arg, p_style);
     END IF;
 END;
 $BODY$
