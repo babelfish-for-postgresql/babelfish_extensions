@@ -1,0 +1,66 @@
+CREATE VIEW enr_view AS
+    SELECT
+        CASE
+            WHEN relname LIKE '#pg_toast%' AND relname LIKE '%index%' THEN '#pg_toast_#oid_masked#_index'
+            WHEN relname LIKE '#pg_toast%' THEN '#pg_toast_#oid_masked#'
+            ELSE relname
+        END AS relname
+    FROM sys.babelfish_get_enr_list()
+GO
+
+CREATE TYPE temp_table_type FROM int
+GO
+
+CREATE PROCEDURE test_rollback_in_proc AS
+BEGIN
+    CREATE TABLE #t1(a int)
+    INSERT INTO #t1 values (6)
+    BEGIN TRAN;
+        ALTER TABLE #t1 ADD b varchar(50)
+        TRUNCATE TABLE #t1
+        INSERT INTO #t1 VALUES (1, 'two')
+        select * from #t1
+        DROP TABLE #t1
+        CREATE TABLE #t1(a varchar(100))
+        INSERT INTO #t1 VALUES ('three')
+        select * from #t1
+
+        CREATE TABLE #t2(b varchar(50), a int identity primary key, )
+        INSERT INTO #t2 VALUES ('four')
+        SELECT * FROM #t2
+        DROP TABLE #t2
+    ROLLBACK;
+    SELECT * FROM #t1
+    SELECT * FROM #t2
+END
+GO
+
+CREATE PROCEDURE implicit_rollback_in_proc AS 
+BEGIN
+    CREATE TABLE #t1(a int)
+    ALTER TABLE #t1 ADD b varchar(50)
+    INSERT INTO #t1 VALUES (1, 'two')
+    select * from #t1
+    DROP TABLE #t1
+    CREATE TABLE #t1(a varchar(100))
+    INSERT INTO #t1 VALUES ('three')
+    select * from #t1
+
+    CREATE TABLE #t2(b varchar(50), a int identity primary key, )
+    INSERT INTO #t2 VALUES ('four')
+    SELECT * FROM #t2
+    DROP TABLE #t2
+
+    INSERT INTO #t1 values (1, 2, 3)
+    SELECT * FROM #t1
+    SELECT * FROM #t2
+END
+GO
+
+CREATE PROCEDURE tv_base_rollback AS
+BEGIN
+    DECLARE @tv TABLE (a int)
+    INSERT INTO temp_tab_rollback_mytab VALUES (1)
+    INSERT INTO @tv VALUES (1)
+END
+GO
