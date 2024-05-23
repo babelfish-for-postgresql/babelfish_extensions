@@ -666,7 +666,7 @@ SELECT out_object_id as object_id
   , out_is_masked as is_masked
   , out_graph_type as graph_type
   , out_graph_type_desc as graph_type_desc
-  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar(4000)) AS definition
+  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar() AS definition
   , 1::sys.bit AS uses_database_collation
   , 0::sys.bit AS is_persisted
 FROM sys.columns_internal() sc
@@ -1652,7 +1652,7 @@ SELECT
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       ELSE NULL
       END
-    AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
+    AS sys.nvarchar) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
   , CAST(1 as sys.bit)  AS uses_ansi_nulls
   , CAST(1 as sys.bit)  AS uses_quoted_identifier
   , CAST(0 as sys.bit)  AS is_schema_bound
