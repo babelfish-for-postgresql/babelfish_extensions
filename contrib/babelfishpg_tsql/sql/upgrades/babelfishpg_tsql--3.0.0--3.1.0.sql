@@ -1644,6 +1644,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
+ALTER VIEW sys.all_sql_modules_internal RENAME TO all_sql_modules_internal_deprecated_3_1_0;
+
 CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
@@ -3200,6 +3202,8 @@ inner join sys.schemas sch on sch.schema_id = c.relnamespace
 where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.index_columns TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_sql_modules_internal_deprecated_3_1_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
