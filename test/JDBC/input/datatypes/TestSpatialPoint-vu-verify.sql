@@ -568,6 +568,22 @@ Select CAST(CAST ('POINT(1 2)' AS nvarchar) as geometry)
 GO
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS nvarchar)
 GO
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS varbinary)
+GO
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS bytea)
+GO
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS varbinary)
+GO
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS bytea)
+GO
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS varbinary) AS geometry)
+GO
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS bytea) AS geometry)
+GO
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS varbinary) AS geometry)
+GO
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS bytea) AS geometry)
+GO
 
 -- UnSupported CASTs to and from Geometry data type
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS datetime)
@@ -918,6 +934,13 @@ EXEC sp_executesql @sql;
 GO
 
 SELECT * FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX;
+GO
+
+SELECT * FROM geomTabWithoutSrid ORDER BY PrimaryKey;
+GO
+SELECT CAST(GeomColumn as bytea), CAST(GeomColumn as varbinary) FROM geomTabWithoutSrid ORDER BY GeomColumn.STX;
+GO
+SELECT PrimaryKey, CAST(ByteaColumn as geometry), CAST(ByteaColumn as varbinary) FROM geomTabWithoutSrid ORDER BY PrimaryKey;
 GO
 
 -- Here we are testing ambiguity scenario for func_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
