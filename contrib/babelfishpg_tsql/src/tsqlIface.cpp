@@ -5483,8 +5483,9 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 					stmt->keep_nulls = true;
 
 				else if (pg_strcasecmp("CHECK_CONSTRAINTS", ::getFullText(option_list[i]->id()).c_str()) == 0)
-					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option check_constraints is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
-
+				{
+					stmt->check_constraints = true;
+				}
 				else if (pg_strcasecmp("FIRE_TRIGGERS", ::getFullText(option_list[i]->id()).c_str()) == 0)
 					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option fire_triggers is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
 
