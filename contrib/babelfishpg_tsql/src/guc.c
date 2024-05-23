@@ -1163,7 +1163,7 @@ define_custom_variables(void)
 							gettext_noop("Temp oid buffer size"),
 							NULL,
 							&temp_oid_buffer_size,
-							65536, 0, 131072,
+							0, 0, 131072,
 							PGC_SUSET,
 							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							NULL, NULL, NULL);
