@@ -1307,19 +1307,30 @@ BEGIN
     END IF;
 
     BEGIN
-        v_hours := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'HOURS'), '0');
-        v_minutes := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'MINUTES'), '0');
-        v_seconds := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'SECONDS'), '0');
-        v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'FRACTSECONDS'), '0');
+        v_hours := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'HOURS'), '0');
+        v_minutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'MINUTES'), '0');
+        v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
+        v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
 
         -- v_offhours and v_offminutes will be already set for W3C_XML datetime string format
-        v_sign := coalesce(v_sign, sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFSIGN'), '+');
-        v_offhours := coalesce(v_offhours, sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFHOURS'), '0');
-        v_offminutes := coalesce(v_offminutes, sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFMINUTES'), '0');
+        v_sign := coalesce(v_sign, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFSIGN'), '+');
+        v_offhours := coalesce(v_offhours, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFHOURS'), '0');
+        v_offminutes := coalesce(v_offminutes, sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFMINUTES'), '0');
     EXCEPTION
         WHEN OTHERS THEN
             RAISE invalid_character_value_for_cast;
     END;
+
+    -- validate time and offset
+    IF ((v_hours::SMALLINT NOT BETWEEN 0 AND 23) OR
+        (v_minutes::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (v_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (v_offhours::SMALLINT NOT BETWEEN 0 AND 14) OR
+        (v_offminutes::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (v_offhours::SMALLINT = 14 AND v_offminutes::SMALLINT != 0))
+    THEN
+        RAISE invalid_character_value_for_cast;
+    END IF;
 
     -- validate date according to gregorian date format    
     IF ((v_year::SMALLINT NOT BETWEEN 1 AND 9999) OR
@@ -1963,15 +1974,23 @@ BEGIN
     END IF;
 
     BEGIN
-        v_hours := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'HOURS'), '0');
-        v_minutes := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'MINUTES'), '0');
-        v_seconds := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'SECONDS'), '0');
-        v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'FRACTSECONDS'), '0');
+        v_hours := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'HOURS'), '0');
+        v_minutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'MINUTES'), '0');
+        v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
+        v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
     EXCEPTION
         WHEN OTHERS THEN
             RAISE invalid_character_value_for_cast;
     END;
     
+    -- validate time
+    IF ((v_hours::SMALLINT NOT BETWEEN 0 AND 23) OR
+        (v_minutes::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (v_seconds::SMALLINT NOT BETWEEN 0 AND 59))
+    THEN
+        RAISE invalid_character_value_for_cast;
+    END IF;
+
     -- validate date according to gregorian date format    
     IF ((v_year::SMALLINT NOT BETWEEN 1 AND 9999) OR
         (v_month::SMALLINT NOT BETWEEN 1 AND 12) OR
@@ -2155,13 +2174,21 @@ BEGIN
         END IF; 
     ELSE
         BEGIN
-            v_sign := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFSIGN'), '+');
-            v_offhours := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFHOURS'), '0');
-            v_offminutes := coalesce(sys.babelfish_get_timeunit_from_string_v2(v_timepart, 'OFFMINUTES'), '0');
+            v_sign := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFSIGN'), '+');
+            v_offhours := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFHOURS'), '0');
+            v_offminutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'OFFMINUTES'), '0');
         EXCEPTION
             WHEN OTHERS THEN
                 RAISE invalid_character_value_for_cast;
         END;
+    END IF;
+
+    -- validate offset
+    IF ((v_offhours::SMALLINT NOT BETWEEN 0 AND 14) OR
+        (v_offminutes::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (v_offhours::SMALLINT = 14 AND v_offminutes::SMALLINT != 0))
+    THEN
+        RAISE invalid_character_value_for_cast;
     END IF;
 
     v_resdatetime_string := PG_CATALOG.concat(v_resdatetime::PG_CATALOG.TEXT,v_sign,v_offhours,':',v_offminutes);
@@ -2735,7 +2762,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_get_timeunit_from_string_v2(IN p_timepart TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_get_timeunit_from_string(IN p_timepart TEXT,
                                                                       IN p_timeunit TEXT)
 RETURNS VARCHAR
 AS
@@ -2803,13 +2830,6 @@ BEGIN
     v_offhours := coalesce(v_regmatch_groups[3], '0');
     v_offminutes := coalesce(v_regmatch_groups[4], '0');
 
-    IF ((v_offhours::SMALLINT NOT BETWEEN 0 AND 14) OR
-        (v_offminutes::SMALLINT NOT BETWEEN 0 AND 59) OR
-        (v_offhours::SMALLINT = 14 AND v_offminutes::SMALLINT != 0))
-    THEN
-        RAISE invalid_character_value_for_cast;
-    END IF;
-
     IF (v_timeunit = 'HOURS' AND v_daypart IS NOT NULL)
     THEN
         IF ((v_daypart = 'AM' AND v_hours::SMALLINT NOT BETWEEN 0 AND 12) OR
@@ -2821,11 +2841,6 @@ BEGIN
         ELSIF (v_daypart = 'AM' AND v_hours::SMALLINT = 12) THEN
             v_hours := (v_hours::SMALLINT - 12)::VARCHAR;
         END IF;
-    ELSIF ((v_timeunit = 'HOURS' AND v_hours::SMALLINT NOT BETWEEN 0 AND 23) OR
-        (v_timeunit = 'MINUTES' AND v_minutes::SMALLINT NOT BETWEEN 0 AND 59) OR
-        (v_timeunit = 'SECONDS' AND v_seconds::SMALLINT NOT BETWEEN 0 AND 59))
-    THEN
-        RAISE invalid_character_value_for_cast;
     END IF;
 
     RETURN CASE v_timeunit
@@ -2842,10 +2857,6 @@ EXCEPTION
         RAISE USING MESSAGE := 'Could not extract correct hour value due to it''s inconsistency with AM|PM day part mark.',
                     DETAIL := 'Extracted hour value doesn''t fall in correct day part mark range: 0..12 for "AM" or 1..23 for "PM".',
                     HINT := 'Correct a hour value in the source string or remove AM|PM day part mark out of it.';
-    WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := 'The conversion of a VARCHAR data type to a TIME data type resulted in an out-of-range value.',
-                    DETAIL := 'Use of incorrect pair of input parameter values during conversion process.',
-                    HINT := 'Check input parameter values, correct them if needed, and try again.';
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
@@ -9839,7 +9850,7 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
--- convertion to date
+-- conversion to date
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg TEXT,
                                                         IN try BOOL,
                                                         IN p_style NUMERIC DEFAULT 0)
@@ -9919,7 +9930,7 @@ DECLARE
     resdate DATE;
 BEGIN
     IF try THEN
-        resdate := sys.babelfish_try_conv_to_date_v2(arg); 
+        resdate := sys.babelfish_try_conv_to_date(arg); 
     ELSE
         BEGIN
             resdate := CAST(arg AS DATE);
@@ -9937,7 +9948,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_date_v2(IN arg anyelement)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_date(IN arg anyelement)
 RETURNS DATE
 AS
 $BODY$
@@ -9953,7 +9964,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
--- convertion to time
+-- conversion to time
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
                                                         IN arg TEXT,
                                                         IN try BOOL,
@@ -10047,7 +10058,7 @@ DECLARE
     restime TIME;
 BEGIN
     IF try THEN
-        restime := sys.babelfish_try_conv_to_time_v2(arg);
+        restime := sys.babelfish_try_conv_to_time(arg);
     ELSE
         BEGIN
             restime := CAST(arg AS TIME);
@@ -10065,7 +10076,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_time_v2(IN arg anyelement)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_time(IN arg anyelement)
 RETURNS TIME
 AS
 $BODY$
@@ -10081,7 +10092,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
--- convertion to datetime
+-- conversion to datetime
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
                                                             IN arg TEXT,
                                                             IN try BOOL,
@@ -10209,7 +10220,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
--- convertion to datetime2
+-- conversion to datetime2
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
                                                             IN arg TEXT,
                                                             IN try BOOL,
@@ -10337,7 +10348,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
--- convertion to datetimeoffset
+-- conversion to datetimeoffset
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
                                                             IN arg TEXT,
                                                             IN try BOOL,
@@ -10422,7 +10433,7 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
                                                             IN arg anyelement,
-                                                            IN try BOOL,
+                                                        IN try BOOL,
 													        IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.DATETIMEOFFSET
 AS
@@ -10465,7 +10476,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
--- convertion to smalldatetime
+-- conversion to smalldatetime
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
                                                             IN arg TEXT,
                                                             IN try BOOL,
@@ -10593,7 +10604,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
--- convertion to varchar
+-- conversion to varchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg TEXT,
                                                         IN try BOOL,
