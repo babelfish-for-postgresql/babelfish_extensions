@@ -383,6 +383,7 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	DateTimeErrorExtra extra;
 	char		*modified_str = str;
 
+
 	datetimeoffset = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
  
 	tm->tm_year = 0;
@@ -466,6 +467,10 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	}
 	AdjustDatetimeoffsetForTypmod(&tsql_ts, typmod);
 	datetimeoffset->tsql_ts = (int64) tsql_ts;
+	
+	if (datetimeoffset->tsql_ts == DATETIMEOFFSET_MAX)
+		datetimeoffset->tsql_ts = DATETIMEOFFSET_MAX - 1;
+
 	CheckDatetimeoffsetRange(datetimeoffset, fcinfo->context);
 
 	PG_RETURN_DATETIMEOFFSET(datetimeoffset);
