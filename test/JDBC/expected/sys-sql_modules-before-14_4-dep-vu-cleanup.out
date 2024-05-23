@@ -1,0 +1,19 @@
+DROP PROC IF EXISTS sys_sql_modules_dep_vu_prepare_p1;
+DROP PROC IF EXISTS sys_sql_modules_dep_vu_prepare_p2;
+DROP FUNCTION IF EXISTS sys_sql_modules_dep_vu_prepare_f2;
+DROP FUNCTION IF EXISTS sys_sql_modules_dep_vu_prepare_f3;
+DROP VIEW IF EXISTS sys_sql_modules_dep_vu_prepare_v1;
+DROP VIEW IF EXISTS sys_sql_modules_dep_vu_prepare_v2;
+DROP FUNCTION IF EXISTS sys_sql_modules_dep_vu_prepare_f1;
+DROP PROCEDURE IF EXISTS sys_sql_modules_dep_more_than_4k;
+GO
+
+DROP PROC IF EXISTS sys_sql_modules_dep_vu_prepare_p1;
+DROP PROC IF EXISTS sys_sql_modules_dep_vu_prepare_p2;
+DROP FUNCTION IF EXISTS sys_sql_modules_dep_vu_prepare_f2;
+DROP FUNCTION IF EXISTS sys_sql_modules_dep_vu_prepare_f3;
+DROP VIEW IF EXISTS sys_sql_modules_dep_vu_prepare_v1;
+DROP VIEW IF EXISTS sys_sql_modules_dep_vu_prepare_v2;
+DROP FUNCTION IF EXISTS sys_sql_modules_dep_vu_prepare_f1;
+DROP PROCEDURE IF EXISTS sys_sql_modules_dep_more_than_4k;
+GO
