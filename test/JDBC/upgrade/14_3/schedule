@@ -187,7 +187,6 @@ sys_all_objects
 sys_all_objects-dep
 sys-all_parameters
 sys-all_sql_modules_before-14_5
-sys-sql_modules-before-14_4-dep
 sys-assemblies
 sys-assembly_modules
 sys-change_tracking_databases
