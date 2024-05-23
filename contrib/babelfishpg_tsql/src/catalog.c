@@ -2175,26 +2175,35 @@ get_function_name(HeapTuple tuple, TupleDesc dsc)
 static Datum
 get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
 {
-	bool		isNull;
-	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &isNull);
+	bool		schema_is_null, dbid_is_null;
+	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &schema_is_null);
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_schema_perms_dbid, dsc, &dbid_is_null);
+	char		*physical_schema_name;
 
-	if (isNull)
+	if (dbid_is_null)
 		ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					errmsg("schema name should not be null.")));
-	return schema_name;
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_schema_permissions catalog")));
+	if (schema_is_null)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("schema name should not be null in babelfish_schema_permissions catalog")));
+
+	/* get_physical_schema_name() itself handles truncation, no explicit truncation needed */
+	physical_schema_name = get_physical_schema_name(get_db_name(DatumGetInt16(dbid)), TextDatumGetCString(schema_name));
+
+	return CStringGetDatum(physical_schema_name);
 }
 
 static Datum
 get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc)
 {
 	bool		isNull;
-	Datum		grantee_name = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
-	if (isNull)
-		ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					errmsg("grantee name should not be null.")));
-	return grantee_name;
+	Datum		grantee_datum = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
+	char *grantee_name = pstrdup(TextDatumGetCString(grantee_datum));
+	truncate_identifier(grantee_name, strlen(grantee_name), false);
+
+	return CStringGetDatum(grantee_name);
 }
 
 static Datum

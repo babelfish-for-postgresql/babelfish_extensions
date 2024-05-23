@@ -1124,7 +1124,6 @@ Orange#!#17025.0000#!#8512.5000#!#77659.0000#!#38829.5000
 ~~END~~
 
 
-
 -- CTE test 2
 WITH
 SalesTotal AS
@@ -1235,8 +1234,97 @@ Orange#!#17025.0000#!#8512.5000#!#77659.0000#!#38829.5000#!#4535.0000#!#23425.00
 ~~END~~
 
 
+-- Test stmt of CTE table and PIVOT stmt in different level 
+WITH
+SalesTotal AS
+(
+    SELECT FruitType,
+        [2023] AS [2023_Total],
+        [2024] AS [2024_Total]
+    FROM #FruitSales
+    PIVOT(SUM(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+)
+SELECT st.FruitType, st.[2023_Total], sa.[2023_Avg],
+  st.[2024_Total], sa.[2024_Avg]
+FROM SalesTotal AS st
+JOIN (
+    SELECT FruitType,
+        [2023] AS [2023_Avg],
+        [2024] AS [2024_Avg]
+    FROM #FruitSales
+    PIVOT(AVG(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+) sa ON st.FruitType = sa.FruitType;
+GO
+~~START~~
+varchar#!#money#!#money#!#money#!#money
+Banana#!#31201.0000#!#15600.5000#!#51381.0000#!#25690.5000
+Orange#!#17025.0000#!#8512.5000#!#77659.0000#!#38829.5000
+~~END~~
+
+
 DROP TABlE IF EXISTS #FruitSales
 GO
+
+-- PIVOT with CTE as source table
+WITH cte_table AS (
+    SELECT [p].productName, [o].[employeeName]
+    FROM orders [o] JOIN products AS [p] on (o.productId = p.productId)
+)
+SELECT CAST('COUNT' AS VARCHAR(10)), [mac],[ipad],[charger] FROM cte_table
+PIVOT (
+    COUNT(employeeName)
+    FOR productName IN (mac, [iphone], [ipad], [charger])
+) as pvt
+GO
+~~START~~
+varchar#!#int#!#int#!#int
+COUNT#!#7#!#4#!#1
+~~END~~
+
+
+-- string is not allowed in PIVOT column value list
+WITH cte_table AS (
+    SELECT o.[orderId], o.[productId], [p].productName,
+        [p].productPrice, [o].[employeeName], [o].employeeCode, [o].date
+    FROM orders [o] JOIN products AS [p] on (o.productId = p.productId)
+)
+SELECT * FROM cte_table
+PIVOT (
+    COUNT(orderId)
+    FOR productName IN ('mac', 'iphone', 'ipad', 'charger')
+) as p
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "'mac'")~~
+
+
+-- aggregate column in PIVOT column value list is not allowed
+WITH cte_table AS
+(
+  SELECT
+    CAST('COUNT' AS VARCHAR(10)) AS COUNT,
+    [mac], [ipad], [charger], [employeeName]
+  FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM orders [o] JOIN products AS [p] on ([o].productId = [p].productId)
+  ) AS dervied_table
+PIVOT
+  (
+      COUNT(employeeName)
+      FOR productName IN ([mac], [employeeName], [iphone], [ipad], [charger])
+  ) as pvt
+)
+SELECT * FROM cte_table
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The column name "employeename" specified in the PIVOT operator conflicts with the existing column name in the PIVOT argument.)~~
+
 
 -- Join stmts inside PIVOT statment (BABEL-4558)
 SELECT Oid, [1] AS TYPE1, [2] AS TYPE2, [3] AS TYPE3
@@ -1819,5 +1907,39 @@ varchar#!#varchar#!#varchar
 SEAT1#!#LEFT#!#RIGHT
 SEAT2#!#LEFT#!#<NULL>
 SEAT3#!#LEFT#!#RIGHT
+~~END~~
+
+
+-- test pivot with table in different schemas 1
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN products AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
+GO
+~~START~~
+varchar#!#int#!#int#!#int
+COUNT#!#7#!#4#!#1
+~~END~~
+
+
+-- test pivot with table in different schemas 2
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN pivot_schema.products_sch AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
+GO
+~~START~~
+varchar#!#int#!#int#!#int
+COUNT#!#7#!#4#!#1
 ~~END~~
 

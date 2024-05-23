@@ -21,6 +21,8 @@ int			pltsql_explain_format = EXPLAIN_FORMAT_TEXT;
 
 static ExplainInfo *get_last_explain_info();
 
+instr_time	antlr_parse_time;
+
 bool
 is_explain_analyze_mode()
 {
@@ -157,6 +159,7 @@ append_explain_info(QueryDesc *queryDesc, const char *queryString)
 		{
 			PLtsql_execstate *time_state = get_current_tsql_estate();
 
+			ExplainPropertyFloat("ANTLR Parsing Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(antlr_parse_time), 3, es);
 			ExplainPropertyFloat("Planning Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(time_state->planning_end), 3, es);
 			INSTR_TIME_SET_CURRENT(time_state->execution_end);
 			INSTR_TIME_SUBTRACT(time_state->execution_end, time_state->execution_start);

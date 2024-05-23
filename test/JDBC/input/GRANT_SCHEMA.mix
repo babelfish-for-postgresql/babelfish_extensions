@@ -12,6 +12,12 @@ go
 create user babel_4344_u1 for login babel_4344_l1;
 go
 
+create login abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz with password = '12345678'
+go
+
+create user abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz for login abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
+go
+
 create login αιώνια with password = '12345678'
 go
 
@@ -162,10 +168,20 @@ go
 create table abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz(a int);
 go
 
-grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
+grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
 go
 
-revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
+-- check for inconsistent metadata
+select COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+go
+
+revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
+go
+
+drop user abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
+go
+
+drop login abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
 go
 
 -- unsupported features
@@ -1974,6 +1990,9 @@ go
 grant select on schema::s1 to u3;
 go
 grant execute on schema::s1 to u3;
+go
+-- check for inconsistent metadata
+select COUNT(*) FROM sys.babelfish_inconsistent_metadata();
 go
 
 -- u3 has select and execute privilege on s1 and s2
