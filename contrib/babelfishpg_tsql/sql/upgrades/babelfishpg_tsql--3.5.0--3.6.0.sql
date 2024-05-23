@@ -197,7 +197,7 @@ SELECT out_object_id as object_id
   , out_is_masked as is_masked
   , out_graph_type as graph_type
   , out_graph_type_desc as graph_type_desc
-  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar(4000)) AS definition
+  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar) AS definition
   , 1::sys.bit AS uses_database_collation
   , 1::sys.bit AS is_persisted
 FROM sys.columns_internal() sc
@@ -748,6 +748,61 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE parallel safe;
 
+ALTER VIEW sys.default_constraints RENAME TO default_constraints_deprecated_3_6_0;
+
+create or replace view sys.default_constraints
+AS
+select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
+  , CAST(d.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(tab.schema_id as int) as schema_id
+  , CAST(d.adrelid as int) as parent_object_id
+  , CAST('D' as sys.bpchar(2)) as type
+  , CAST('DEFAULT_CONSTRAINT' as sys.nvarchar(60)) AS type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modified_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(d.adnum as int) as parent_column_id
+  , CAST(tsql_get_expr(d.adbin, d.adrelid) as sys.nvarchar) as definition
+  , CAST(1 as sys.bit) as is_system_named
+from pg_catalog.pg_attrdef as d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join sys.tables tab on d.adrelid = tab.object_id
+WHERE a.atthasdef = 't' and a.attgenerated = ''
+AND has_schema_privilege(tab.schema_id, 'USAGE')
+AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+GRANT SELECT ON sys.default_constraints TO PUBLIC;
+
+ALTER VIEW sys.check_constraints RENAME TO check_constraints_deprecated_3_6_0;
+
+CREATE or replace VIEW sys.check_constraints AS
+SELECT CAST(c.conname as sys.sysname) as name
+  , CAST(oid as integer) as object_id
+  , CAST(NULL as integer) as principal_id 
+  , CAST(c.connamespace as integer) as schema_id
+  , CAST(conrelid as integer) as parent_object_id
+  , CAST('C' as sys.bpchar(2)) as type
+  , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(0 as sys.bit) as is_disabled
+  , CAST(0 as sys.bit) as is_not_for_replication
+  , CAST(0 as sys.bit) as is_not_trusted
+  , CAST(c.conkey[1] as integer) AS parent_column_id
+  , CAST(tsql_get_constraintdef(c.oid) as sys.nvarchar) AS definition
+  , CAST(1 as sys.bit) as uses_database_collation
+  , CAST(0 as sys.bit) as is_system_named
+FROM pg_catalog.pg_constraint as c
+INNER JOIN sys.schemas s on c.connamespace = s.schema_id
+WHERE has_schema_privilege(s.schema_id, 'USAGE')
+AND c.contype = 'c' and c.conrelid != 0;
+GRANT SELECT ON sys.check_constraints TO PUBLIC;
+
 ALTER VIEW sys.computed_columns RENAME TO computed_columns_deprecated_3_6_0;
 
 CREATE OR REPLACE VIEW sys.computed_columns
@@ -852,72 +907,6 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.stats TO PUBLIC;
 
-ALTER VIEW sys.numbered_procedures RENAME TO numbered_procedures_deprecated_3_6_0;
-
-CREATE OR REPLACE VIEW sys.numbered_procedures
-AS
-SELECT 
-    CAST(0 as int) AS object_id
-  , CAST(0 as smallint) AS procedure_number
-  , CAST('' as sys.nvarchar) AS definition
-WHERE FALSE; -- This condition will ensure that the view is empty
-GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
-
-ALTER VIEW sys.default_constraints RENAME TO default_constraints_deprecated_3_6_0;
-
-create or replace view sys.default_constraints
-AS
-select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
-  , CAST(d.oid as int) as object_id
-  , CAST(null as int) as principal_id
-  , CAST(tab.schema_id as int) as schema_id
-  , CAST(d.adrelid as int) as parent_object_id
-  , CAST('D' as sys.bpchar(2)) as type
-  , CAST('DEFAULT_CONSTRAINT' as sys.nvarchar(60)) AS type_desc
-  , CAST(null as sys.datetime) as create_date
-  , CAST(null as sys.datetime) as modified_date
-  , CAST(0 as sys.bit) as is_ms_shipped
-  , CAST(0 as sys.bit) as is_published
-  , CAST(0 as sys.bit) as is_schema_published
-  , CAST(d.adnum as int) as parent_column_id
-  , CAST(tsql_get_expr(d.adbin, d.adrelid) as sys.nvarchar) as definition
-  , CAST(1 as sys.bit) as is_system_named
-from pg_catalog.pg_attrdef as d
-inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
-inner join sys.tables tab on d.adrelid = tab.object_id
-WHERE a.atthasdef = 't' and a.attgenerated = ''
-AND has_schema_privilege(tab.schema_id, 'USAGE')
-AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
-GRANT SELECT ON sys.default_constraints TO PUBLIC;
-
-ALTER VIEW sys.check_constraints RENAME TO check_constraints_deprecated_3_6_0;
-
-CREATE or replace VIEW sys.check_constraints AS
-SELECT CAST(c.conname as sys.sysname) as name
-  , CAST(oid as integer) as object_id
-  , CAST(NULL as integer) as principal_id 
-  , CAST(c.connamespace as integer) as schema_id
-  , CAST(conrelid as integer) as parent_object_id
-  , CAST('C' as sys.bpchar(2)) as type
-  , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
-  , CAST(null as sys.datetime) as create_date
-  , CAST(null as sys.datetime) as modify_date
-  , CAST(0 as sys.bit) as is_ms_shipped
-  , CAST(0 as sys.bit) as is_published
-  , CAST(0 as sys.bit) as is_schema_published
-  , CAST(0 as sys.bit) as is_disabled
-  , CAST(0 as sys.bit) as is_not_for_replication
-  , CAST(0 as sys.bit) as is_not_trusted
-  , CAST(c.conkey[1] as integer) AS parent_column_id
-  , CAST(tsql_get_constraintdef(c.oid) as sys.nvarchar) AS definition
-  , CAST(1 as sys.bit) as uses_database_collation
-  , CAST(0 as sys.bit) as is_system_named
-FROM pg_catalog.pg_constraint as c
-INNER JOIN sys.schemas s on c.connamespace = s.schema_id
-WHERE has_schema_privilege(s.schema_id, 'USAGE')
-AND c.contype = 'c' and c.conrelid != 0;
-GRANT SELECT ON sys.check_constraints TO PUBLIC;
-
 ALTER VIEW sys.plan_guides RENAME TO plan_guides_deprecated_3_6_0;
 
 CREATE OR REPLACE VIEW sys.plan_guides
@@ -938,13 +927,24 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.plan_guides TO PUBLIC;
 
+ALTER VIEW sys.numbered_procedures RENAME TO numbered_procedures_deprecated_3_6_0;
+
+CREATE OR REPLACE VIEW sys.numbered_procedures
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as smallint) AS procedure_number
+  , CAST('' as sys.nvarchar) AS definition
+WHERE FALSE; -- This condition will ensure that the view is empty
+GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_3_6_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_3_6_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'computed_columns_deprecated_3_6_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'xml_indexes_deprecated_3_6_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'stats_deprecated_3_6_0');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'numbered_procedures_deprecated_3_6_0');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_3_6_0');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_3_6_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'plan_guides_deprecated_3_6_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'numbered_procedures_deprecated_3_6_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
