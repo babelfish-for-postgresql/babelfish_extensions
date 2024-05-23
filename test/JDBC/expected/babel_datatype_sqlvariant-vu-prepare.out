@@ -31,7 +31,7 @@ insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('10000-10-
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetimeoffset)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "10000-10-05 09:00:00.123456-9:00")~~
 
 -- smalldatetime
 -- exceeding range error

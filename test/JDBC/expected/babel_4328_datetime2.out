@@ -427,7 +427,7 @@ select cast('12, Apr, 2024 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "12,Apr,2024 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "12, Apr, 2024 14:30")~~
 
 
 select cast('12 Apr, 2024 14:30' as datetime2)
@@ -442,35 +442,35 @@ select cast('12, Apr 2024 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "12,Apr 2024 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "12, Apr 2024 14:30")~~
 
 
 select cast('2024, Apr, 12 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2024,Apr,12 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2024, Apr, 12 14:30")~~
 
 
 select cast('2024 Apr, 12 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2024 Apr,12 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2024 Apr, 12 14:30")~~
 
 
 select cast('2024, Apr 12 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2024,Apr 12 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2024, Apr 12 14:30")~~
 
 
 select cast('Apr, 12, 2024 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "Apr,12,2024 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "Apr, 12, 2024 14:30")~~
 
 
 select cast('Apr 12, 2024 14:30' as datetime2)
@@ -485,70 +485,70 @@ select cast('Apr, 12 2024 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "Apr,12 2024 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "Apr, 12 2024 14:30")~~
 
 
 select cast('Apr, 2024, 12 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "Apr,2024,12 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "Apr, 2024, 12 14:30")~~
 
 
 select cast('Apr 2024, 12 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "Apr 2024,12 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "Apr 2024, 12 14:30")~~
 
 
 select cast('Apr, 2024 12 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "Apr,2024 12 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "Apr, 2024 12 14:30")~~
 
 
 select cast('12, 2024, Apr 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "12,2024,Apr 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "12, 2024, Apr 14:30")~~
 
 
 select cast('12 2024, Apr 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "12 2024,Apr 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "12 2024, Apr 14:30")~~
 
 
 select cast('12, 2024 Apr 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "12,2024 Apr 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "12, 2024 Apr 14:30")~~
 
 
 select cast('2024, 12, Apr 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2024,12,Apr 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2024, 12, Apr 14:30")~~
 
 
 select cast('2024 12, Apr 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2024 12,Apr 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2024 12, Apr 14:30")~~
 
 
 select cast('2024, 12 Apr 14:30' as datetime2)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2024,12 Apr 14:30")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2024, 12 Apr 14:30")~~
 
 
 -- ISO 8601	
@@ -596,14 +596,14 @@ SELECT cast('2022-10-30T03:00' as datetime2)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2022-10-30 T 03:00")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2022-10-30T03:00")~~
 
 
 SELECT cast('2022-10 -30T03: 00:00' as datetime2)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2022-10-30 T 03:00:00")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2022-10 -30T03: 00:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00.12345' as datetime2)
@@ -618,14 +618,14 @@ SELECT cast('2022-10-30T03:00:00:123' as datetime2)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2022-10-30 T 03:00:00:123")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2022-10-30T03:00:00:123")~~
 
 
 SELECT cast('2022-10-30T03:00:00:12345' as datetime2)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2022-10-30 T 03:00:00:12345")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2022-10-30T03:00:00:12345")~~
 
 
 -- Unseparated
@@ -927,7 +927,7 @@ SELECT cast('2011-08-15 14:30.00 -8:00' as datetime2)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime2: "2011-08-15 14:30.00-8:00")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "2011-08-15 14:30.00 -8:00")~~
 
 
 DECLARE @TM_ICLO TIME = '17:24:07.1766670'

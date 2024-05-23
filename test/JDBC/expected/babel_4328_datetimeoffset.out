@@ -132,21 +132,21 @@ select cast('3 12 2024 +8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "3 12 2024+8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "3 12 2024 +8:00")~~
 
 
 select cast('3#12#2024 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "3#12#2024-8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "3#12#2024 -8:00")~~
 
 
 select cast('3/12.2024 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "3/12.2024-8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "3/12.2024 -8:00")~~
 
 
 -- Alphabetical
@@ -425,7 +425,7 @@ select cast('12, Apr, 2024 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "12,Apr,2024 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "12, Apr, 2024 14:30 -8:00")~~
 
 
 select cast('12 Apr, 2024 14:30 -8:00' as datetimeoffset)
@@ -440,35 +440,35 @@ select cast('12, Apr 2024 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "12,Apr 2024 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "12, Apr 2024 14:30 -8:00")~~
 
 
 select cast('2024, Apr, 12 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024,Apr,12 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024, Apr, 12 14:30 -8:00")~~
 
 
 select cast('2024 Apr, 12 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024 Apr,12 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024 Apr, 12 14:30 -8:00")~~
 
 
 select cast('2024, Apr 12 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024,Apr 12 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024, Apr 12 14:30 -8:00")~~
 
 
 select cast('Apr, 12, 2024 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr,12,2024 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr, 12, 2024 14:30 -8:00")~~
 
 
 select cast('Apr 12, 2024 14:30 -8:00' as datetimeoffset)
@@ -483,70 +483,70 @@ select cast('Apr, 12 2024 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr,12 2024 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr, 12 2024 14:30 -8:00")~~
 
 
 select cast('Apr, 2024, 12 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr,2024,12 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr, 2024, 12 14:30 -8:00")~~
 
 
 select cast('Apr 2024, 12 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr 2024,12 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr 2024, 12 14:30 -8:00")~~
 
 
 select cast('Apr, 2024 12 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr,2024 12 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "Apr, 2024 12 14:30 -8:00")~~
 
 
 select cast('12, 2024, Apr 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "12,2024,Apr 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "12, 2024, Apr 14:30 -8:00")~~
 
 
 select cast('12 2024, Apr 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "12 2024,Apr 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "12 2024, Apr 14:30 -8:00")~~
 
 
 select cast('12, 2024 Apr 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "12,2024 Apr 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "12, 2024 Apr 14:30 -8:00")~~
 
 
 select cast('2024, 12, Apr 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024,12,Apr 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024, 12, Apr 14:30 -8:00")~~
 
 
 select cast('2024 12, Apr 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024 12,Apr 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024 12, Apr 14:30 -8:00")~~
 
 
 select cast('2024, 12 Apr 14:30 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024,12 Apr 14:30 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2024, 12 Apr 14:30 -8:00")~~
 
 
 -- ISO 8601	
@@ -561,14 +561,14 @@ SELECT cast('2022-10-30T03:00:00-8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00-8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00.123-8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00.123 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00.123-8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00.123-12:12' as datetimeoffset)
@@ -591,35 +591,35 @@ SELECT cast('2022-10-30T03:00-8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00-8:00")~~
 
 
 SELECT cast('2022-10 -30T03: 00:00-8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10 -30T03: 00:00-8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00.12345-8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00.12345 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00.12345-8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00:123-8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00:123 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00:123-8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00:12345-8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00:12345 -8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00:12345-8:00")~~
 
 
 select cast('2023-11-27+8:00' as datetimeoffset)
@@ -633,14 +633,14 @@ SELECT cast('2022-10-30T03:00:00+8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00 +8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00+8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00.123+8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00.123 +8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00.123+8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00.123-12:12' as datetimeoffset)
@@ -663,42 +663,42 @@ SELECT cast('2022-10-30T03:00+8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00 +8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00+8:00")~~
 
 
 SELECT cast('2022-10 -30T03: 00:00+8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00 +8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10 -30T03: 00:00+8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00.12345+8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00.12345 +8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00.12345+8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00:123+8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00:123 +8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00:123+8:00")~~
 
 
 SELECT cast('2022-10-30T03:00:00:12345+8:00' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00:12345 +8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00:12345+8:00")~~
 
 
 select cast('2023-11-27Z' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2023-11-27 Z")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2023-11-27Z")~~
 
 
 SELECT cast('2022-10-30T03:00:00Z' as datetimeoffset)
@@ -737,14 +737,14 @@ SELECT cast('2022-10-30T03:00Z' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00 Z")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00Z")~~
 
 
 SELECT cast('2022-10 -30T03: 00:00Z' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00 Z")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10 -30T03: 00:00Z")~~
 
 
 SELECT cast('2022-10-30T03:00:00.12345Z' as datetimeoffset)
@@ -759,14 +759,14 @@ SELECT cast('2022-10-30T03:00:00:123Z' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00:123 Z")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00:123Z")~~
 
 
 SELECT cast('2022-10-30T03:00:00:12345Z' as datetimeoffset)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30 T 03:00:00:12345 Z")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2022-10-30T03:00:00:12345Z")~~
 
 
 
@@ -775,14 +775,14 @@ select cast('20240129 +8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "20240129+8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "20240129 +8:00")~~
 
 
 select cast('20241329 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "20241329-8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "20241329 -8:00")~~
 
 
 select cast('240129 Z' as datetimeoffset)
@@ -796,21 +796,21 @@ select cast('241329 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "241329-8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "241329 -8:00")~~
 
 
 select cast('2001 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2001-8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "2001 -8:00")~~
 
 
 select cast('0001 -8:00' as datetimeoffset)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "0001-8:00")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "0001 -8:00")~~
 
 
 select cast('20240129 03:00:00 -8:00' as datetimeoffset)

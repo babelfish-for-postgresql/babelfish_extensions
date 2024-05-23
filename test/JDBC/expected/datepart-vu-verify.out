@@ -215,7 +215,7 @@ SELECT DATEPART(ss, '99999-12-31')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetimeoffset)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "99999-12-31")~~
 
 
 SELECT DATEPART(dd, '07-18-2022')
@@ -283,7 +283,7 @@ SELECT DATEPART(dd, '01-01-00000 12:44:45.034')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: date/time field value out of range: "01-01-00000 12:44:45.034")~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "01-01-00000 12:44:45.034")~~
 
 
 SELECT DATEPART(ss, 'Nov 1999 01 AM')
@@ -393,10 +393,9 @@ int
 -- invalid
 SELECT DATEPART(dd, '01-01-00091 12:44:33.1234567')
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "01-01-00091 12:44:33.1234567")~~
 
 
 SELECT DATEPART(wk, '07/18/2022 12:35:00.0000001')
@@ -464,7 +463,7 @@ SELECT DATEPART(dd, '01-01-12345 12:44:33.1234567 -14:01')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetimeoffset)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "01-01-12345 12:44:33.1234567 -14:01")~~
 
 
 SELECT DATEPART(wk, '07/18/2022 12:35:00.0000001 +4:56')

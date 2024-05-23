@@ -170,13 +170,14 @@ clean_input_str(char *str, bool *contains_extra_spaces)
 }
 
 static void 
-tsql_decode_datetimeoffset_fields(char *str, char **field, int nf, int ftype[], 
+tsql_decode_datetimeoffset_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 				bool contains_extra_spaces, struct pg_tm *tm,
 				bool *is_year_set)
 {
 	int i, num_colons = 0, time_idx = nf;
 	bool 		contains_iso_time = false;
 	bool		contains_text_month = false;
+	bool 		date_exists = false;
  
 	/*
 	 * Modify time field to accept ':' as separator for
@@ -185,6 +186,8 @@ tsql_decode_datetimeoffset_fields(char *str, char **field, int nf, int ftype[],
 	for (i = 0; i < nf; i++)
 	{
 		char	*cp;
+		if (ftype[i] == DTK_DATE)
+			date_exists = true;
 		if (ftype[i] != DTK_TIME)
 		{
 			continue;
@@ -208,14 +211,6 @@ tsql_decode_datetimeoffset_fields(char *str, char **field, int nf, int ftype[],
 	}
  
 	/*
-	 * Number of DATE fields can not be more than 3 in any case.
-	 */
-	if (time_idx > 3)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
- 
-	/*
 	 * If there is a text month in the input str, move it to the 
 	 * beginning of the DATE field.
 	 * Also, if it is in ISO 8601 format, we need to check whether
@@ -233,7 +228,7 @@ tsql_decode_datetimeoffset_fields(char *str, char **field, int nf, int ftype[],
 			if (ftype[i] == ISOTIME && (contains_extra_spaces || num_colons != 2))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", orig_str)));
 			else if (ftype[i] == ISOTIME)
 				contains_iso_time = true;
  
@@ -246,7 +241,7 @@ tsql_decode_datetimeoffset_fields(char *str, char **field, int nf, int ftype[],
 			if(!check_regex_for_text_month(str, DATE_TIME_OFFSET))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", orig_str)));
  
 			tm->tm_mon = temp_int;
 			contains_text_month = true;
@@ -266,7 +261,7 @@ tsql_decode_datetimeoffset_fields(char *str, char **field, int nf, int ftype[],
 				j--;
 			}
 		}
-		else if (ftype[i] == DTK_NUMBER)
+		else if (ftype[i] == DTK_NUMBER && !date_exists)
 		{
 			int field_len = strlen(field[i]);
 			if (time_idx > 2)
@@ -286,25 +281,43 @@ tsql_decode_datetimeoffset_fields(char *str, char **field, int nf, int ftype[],
 			else if (time_idx != 1 || (field_len != 8 && field_len != 6))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", orig_str)));
 		}
-		else if (ftype[i] == DTK_DATE && strlen(field[i]) > 10)
-			ereport(ERROR,
+		else if (ftype[i] == DTK_DATE)
+		{
+			/*
+			 * Check whether the field contains any alphabet.
+			 * If yes, it might contain text month. 
+			 * If no alphabet are found, we need to check whether the
+			 * length of the DATE field is less than 10. Throw error if it
+			 * exceeds.
+			 */
+			char *cp = field[i];
+
+			while (cp != NULL && *cp != '\0' && !isalpha(*cp))
+				cp++;
+			
+			if (cp != NULL && isalpha(*cp))
+				continue;
+
+			if (strlen(field[i]) > 10)
+				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", orig_str)));
+		}
 		/*
 		 * If there is a timezone field, there must be a time field.
 		 */
 		else if (ftype[i] == DTK_TZ && time_idx == nf)
 			ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", orig_str)));
 	}
  
 	if (time_idx == nf && !contains_text_month && nf > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+				errmsg("invalid input syntax for type datetimeoffset: \"%s\"", orig_str)));
  
 	/*
 	 * If the input is in ISO format, we need to check whether hours and minutes
@@ -323,7 +336,7 @@ tsql_decode_datetimeoffset_fields(char *str, char **field, int nf, int ftype[],
 			if (field[i][j] == ':' && curr_count != 2)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetimeoffset: \"%s\"", orig_str)));
 			else if (field[i][j] == ':')
 				curr_count = 0;
 			else if (isdigit(field[i][j]))
@@ -335,7 +348,7 @@ tsql_decode_datetimeoffset_fields(char *str, char **field, int nf, int ftype[],
 		if (curr_count != 2)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+					errmsg("invalid input syntax for type datetimeoffset: \"%s\"", orig_str)));
 	}
 }
  
@@ -368,6 +381,7 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 	bool		contains_extra_spaces = false, is_year_set = false;
 	DateTimeErrorExtra extra;
+	char		*modified_str = str;
 
 	datetimeoffset = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
  
@@ -388,12 +402,12 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 		PG_RETURN_DATETIMEOFFSET(datetimeoffset);
 	}
  
-	str = clean_input_str(str, &contains_extra_spaces);
+	modified_str = clean_input_str(modified_str, &contains_extra_spaces);
  
-	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 
-	tsql_decode_datetimeoffset_fields(str, field, nf, ftype, 
+	tsql_decode_datetimeoffset_fields(str, modified_str, field, nf, ftype, 
 								contains_extra_spaces, tm, &is_year_set);
  
 	if (dterr == 0)

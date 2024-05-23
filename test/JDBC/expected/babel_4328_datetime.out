@@ -356,7 +356,7 @@ select cast('Apr24' as datetime)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "Apr 24")~~
+~~ERROR (Message: invalid input syntax for type datetime: "Apr24")~~
 
 
 select cast('Apr,24' as datetime)
@@ -434,7 +434,7 @@ select cast('2023-2-29' as datetime)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: date/time field value out of range: "2023.2.29")~~
+~~ERROR (Message: date/time field value out of range: "2023-2-29")~~
 
 
 select cast('2022-10-30T03:00:00.123' as datetime)
@@ -449,7 +449,7 @@ select cast('2022-10-30T03:00:00.123-11:11' as datetime)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "2022.10.30 T 03:00:00.123.11:11")~~
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10-30T03:00:00.123-11:11")~~
 
 
 -- Unseparated
@@ -546,7 +546,7 @@ select cast('2000-04-22-05:12' as datetime)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "2000.04.22.05:12")~~
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22-05:12")~~
 
 
 select cast('2000-04-22+05:12' as datetime)
@@ -560,7 +560,7 @@ select cast('2000-04-22-14:00' as datetime)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "2000.04.22.14:00")~~
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22-14:00")~~
 
 
 select cast('2000-04-22+14:00' as datetime)
@@ -574,7 +574,7 @@ select cast('2000-04-22-14:10' as datetime)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "2000.04.22.14:10")~~
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22-14:10")~~
 
 
 select cast('2000-04-22+14:10' as datetime)
@@ -628,28 +628,28 @@ SELECT cast('2022-10-00' as datetime)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: date/time field value out of range: "2022.10.00")~~
+~~ERROR (Message: date/time field value out of range: "2022-10-00")~~
 
 
 SELECT cast('0000-10-01' as datetime)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: date/time field value out of range: "0000.10.01")~~
+~~ERROR (Message: date/time field value out of range: "0000-10-01")~~
 
 
 SELECT cast('2023-00-01' as datetime)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: date/time field value out of range: "2023.00.01")~~
+~~ERROR (Message: date/time field value out of range: "2023-00-01")~~
 
 
 SELECT cast('0000-00-00' as datetime)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: date/time field value out of range: "0000.00.00")~~
+~~ERROR (Message: date/time field value out of range: "0000-00-00")~~
 
 
 -- -- misc
@@ -673,14 +673,14 @@ SELECT cast('2000-04-22 16:23:51.7668c0' as datetime)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "2000.04.22 16:23:51.7668 c 0")~~
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22 16:23:51.7668c0")~~
 
 
 SELECT cast('2000-04-22 16:23:51.7668c0' as datetime)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "2000.04.22 16:23:51.7668 c 0")~~
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22 16:23:51.7668c0")~~
 
 
 SELECT cast('2001-04-022 16:23:51.766890 +12:00' as datetime)
@@ -704,14 +704,14 @@ SELECT cast('02001-04-22 16:23:51' as datetime)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "02001.04.22 16:23:51")~~
+~~ERROR (Message: invalid input syntax for type datetime: "02001-04-22 16:23:51")~~
 
 
 SELECT cast('1900-05-06 13:59:29.050 -8:00' as datetime)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type datetime: "1900.05.06 13:59:29.050.8:00")~~
+~~ERROR (Message: invalid input syntax for type datetime: "1900-05-06 13:59:29.050 -8:00")~~
 
 
 SELECT cast('2011-08-15 14:30.00' as datetime)

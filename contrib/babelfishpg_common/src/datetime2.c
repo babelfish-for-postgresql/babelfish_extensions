@@ -127,11 +127,12 @@ clean_input_str(char *str, bool *contains_extra_spaces)
 }
 
 static void
-tsql_decode_datetime2_fields(char *str, char **field, int nf, int ftype[], 
+tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 				bool contains_extra_spaces, struct pg_tm *tm,
 				bool *is_year_set)
 {
 	int i, num_colons = 0, time_idx = nf;
+	bool date_exists = false;
 	/*
 	 * Modify time field to accept ':' as separator for
 	 * seconds and milliseconds.
@@ -141,6 +142,9 @@ tsql_decode_datetime2_fields(char *str, char **field, int nf, int ftype[],
 	for (i = 0; i < nf; i++)
 	{
 		char	*cp;
+		if (ftype[i] == DTK_DATE)
+			date_exists = true;
+
 		if (ftype[i] != DTK_TIME)
 		{
 			continue;
@@ -164,7 +168,7 @@ tsql_decode_datetime2_fields(char *str, char **field, int nf, int ftype[],
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+				errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
 		}
 
 		break;
@@ -176,7 +180,7 @@ tsql_decode_datetime2_fields(char *str, char **field, int nf, int ftype[],
 	if (time_idx > 3)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+				errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
 
 	/*
 	 * If there is a text month in the input str, move it to the 
@@ -196,7 +200,7 @@ tsql_decode_datetime2_fields(char *str, char **field, int nf, int ftype[],
 			if (ftype[i] == ISOTIME && (contains_extra_spaces || num_colons != 2))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
 
 			if(ftype[i] != MONTH)
 			{
@@ -207,7 +211,7 @@ tsql_decode_datetime2_fields(char *str, char **field, int nf, int ftype[],
 			if(!check_regex_for_text_month(str, DATE_TIME_2))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
 
 			tm->tm_mon = temp_int;
 
@@ -226,7 +230,7 @@ tsql_decode_datetime2_fields(char *str, char **field, int nf, int ftype[],
 				j--;
 			}
 		}
-		else if (ftype[i] == DTK_NUMBER)
+		else if (ftype[i] == DTK_NUMBER && !date_exists)
 		{
 			int field_len = strlen(field[i]);
 			if (time_idx > 2)
@@ -246,12 +250,30 @@ tsql_decode_datetime2_fields(char *str, char **field, int nf, int ftype[],
 			else if (time_idx != 1 || (field_len != 8 && field_len != 6))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
 		}
-		else if (ftype[i] == DTK_DATE && strlen(field[i]) > 10)
-			ereport(ERROR,
+		else if (ftype[i] == DTK_DATE)
+		{
+			/*
+			 * Check whether the field contains any alphabet.
+			 * If yes, it might contain text month. 
+			 * If no alphabet are found, we need to check whether the
+			 * length of the DATE field is less than 10. Throw error if it
+			 * exceeds.
+			 */
+			char *cp = field[i];
+
+			while (cp != NULL && *cp != '\0' && !isalpha(*cp))
+				cp++;
+			
+			if (cp != NULL && isalpha(*cp))
+				continue;
+
+			if (strlen(field[i]) > 10)
+				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+						errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
+		}
 	}
 }
 
@@ -277,6 +299,7 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 	bool		contains_extra_spaces = false;
 	bool		is_year_set = false;
 	DateTimeErrorExtra extra;
+	char		*modified_str = str;
 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -291,12 +314,12 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 		PG_RETURN_TIMESTAMP(result);
 	}
 
-	str = clean_input_str(str, &contains_extra_spaces);
+	modified_str = clean_input_str(modified_str, &contains_extra_spaces);
 
-	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 
-	tsql_decode_datetime2_fields(str, field, nf, ftype, 
+	tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
 								contains_extra_spaces, tm, &is_year_set);
 
 	if (dterr == 0)
