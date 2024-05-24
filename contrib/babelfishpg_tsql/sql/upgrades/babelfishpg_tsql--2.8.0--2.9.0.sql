@@ -5417,10 +5417,10 @@ DECLARE
     exception_message text;
 BEGIN
     IF (NOT EXISTS(SELECT * FROM pg_proc
-                            WHERE proname = 'babelfish_conv_helper_to_time_deprecated_in_2_9_0_1' AND
+                            WHERE proname = 'babelfish_conv_string_to_datetime' AND
                             pronamespace = 'sys'::regnamespace::oid) AND
         NOT EXISTS(SELECT * FROM pg_proc
-                            WHERE proname = 'babelfish_conv_helper_to_datetime_deprecated_in_2_9_0' AND
+                            WHERE proname = 'babelfish_conv_string_to_time' AND
                             pronamespace = 'sys'::regnamespace::oid))
     THEN
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_get_microsecs_from_fractsecs');
