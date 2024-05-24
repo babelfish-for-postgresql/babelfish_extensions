@@ -241,8 +241,8 @@ sys-syscolumns-dep
 sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-before-dep
-sys-all_sql_modules-dep
-sys-sql_modules-dep
+sys-all_sql_modules-before-15_7-or-14_12-dep
+sys-sql_modules-before-15_7-or-14_12-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
