@@ -38,6 +38,9 @@ EXCEPTION
     when dependent_objects_still_exist then --if 'drop view' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
+    when undefined_function then --if object does not exists
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
 end
 $$
 LANGUAGE plpgsql;
@@ -355,10 +358,11 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_time(TEXT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_deprecated_in_2_9_0_1;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
+EXCEPTION
+    WHEN undefined_function THEN
+        GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+        RAISE WARNING '%', exception_message;
 END;
 $$;
 
@@ -367,10 +371,11 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_time(ANYELEMENT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_deprecated_in_2_9_0_2;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
+EXCEPTION
+    WHEN undefined_function THEN
+        GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+        RAISE WARNING '%', exception_message;
 END;
 $$;
 
@@ -379,10 +384,11 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(TEXT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_datetime_deprecated_in_2_9_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
+EXCEPTION
+    WHEN undefined_function THEN
+        GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+        RAISE WARNING '%', exception_message;
 END;
 $$;
 
@@ -5338,35 +5344,13 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_date');
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_date');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_date');
 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_deprecated_in_2_9_0_1');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_deprecated_in_2_9_0_2');
 DO $$
-DECLARE
-    exception_message text;
 BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_date');
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_deprecated_in_2_9_0_1');
     IF NOT EXISTS (SELECT * FROM pg_proc 
                             WHERE proname = 'babelfish_conv_helper_to_time_deprecated_in_2_9_0_1' AND
                             pronamespace = 'sys'::regnamespace::oid)
@@ -5374,30 +5358,12 @@ BEGIN
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_time');
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_time');
     END IF;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
 END;
 $$;
 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_datetime_deprecated_in_2_9_0');
 DO $$
-DECLARE
-    exception_message text;
 BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_deprecated_in_2_9_0_2');
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_datetime_deprecated_in_2_9_0');
     IF NOT EXISTS (SELECT * FROM pg_proc
                             WHERE proname like 'babelfish_conv_helper_to_datetime_deprecated_in_%' AND
                             pronamespace = 'sys'::regnamespace::oid)
@@ -5405,16 +5371,10 @@ BEGIN
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_datetime');
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_datetime');
     END IF;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
 END;
 $$;
 
 DO $$
-DECLARE
-    exception_message text;
 BEGIN
     IF (NOT EXISTS(SELECT * FROM pg_proc
                             WHERE proname = 'babelfish_conv_string_to_datetime' AND
@@ -5425,12 +5385,9 @@ BEGIN
     THEN
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_get_microsecs_from_fractsecs');
     END IF;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
 END;
 $$;
+
 ALTER VIEW sys.all_sql_modules_internal RENAME TO all_sql_modules_internal_deprecated_in_2_9_0;
 
 CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
