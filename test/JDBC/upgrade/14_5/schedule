@@ -222,8 +222,8 @@ sys-syscolumns-dep
 sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-dep
-sys-sql_modules-before-14_6-dep
-sys-all_sql_modules-before-14_6-dep
+sys-sql_modules-before-14_12-dep
+sys-all_sql_modules-before-14_12-dep
 sys-system_sql_modules
 sys-system_sql_modules-dep
 sys-sp_pkeys-dep
