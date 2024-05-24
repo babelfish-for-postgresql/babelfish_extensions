@@ -434,4 +434,3 @@ test_conv_string_to_datetime2-before-14_12
 test_conv_string_to_datetimeoffset-before-14_12
 test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-14_12
-BABEL-4869
