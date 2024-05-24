@@ -271,8 +271,8 @@ sys-syscolumns-dep
 sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-dep
-sys-sql_modules-before-14_7-dep
-sys-all_sql_modules-before-14_7-dep
+sys-sql_modules-before-14_12-dep
+sys-all_sql_modules-before-14_12-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
 sys-proc_param_helper-dep
