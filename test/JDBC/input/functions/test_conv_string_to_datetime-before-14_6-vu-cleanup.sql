@@ -53,3 +53,16 @@ DROP PROCEDURE test_conv_string_to_datetime_p8
 GO
 DROP FUNCTION test_conv_string_to_datetime_f8()
 GO
+
+DROP VIEW test_conv_string_to_datetime_v9
+GO
+DROP PROCEDURE test_conv_string_to_datetime_p9
+GO
+DROP FUNCTION test_conv_string_to_datetime_f9()
+GO
+
+DROP VIEW test_conv_string_to_datetime_v10
+GO
+
+DROP VIEW test_conv_string_to_datetime_v11
+GO

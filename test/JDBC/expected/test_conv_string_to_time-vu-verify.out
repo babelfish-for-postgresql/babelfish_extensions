@@ -2516,3 +2516,50 @@ time
 
 ~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
 
+
+SELECT * FROM test_conv_string_to_time_v9
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p9
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f9()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v10
+GO
+~~START~~
+time
+11:11:11.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v11
+GO
+~~START~~
+time
+11:11:11.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v12
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
+

@@ -1,4 +1,3 @@
--- sla 100000
 -- Empty string, should return default values
 SELECT CONVERT(DATETIME, '')
 GO
@@ -1393,4 +1392,17 @@ GO
 EXEC test_conv_string_to_datetime_p8
 GO
 SELECT test_conv_string_to_datetime_f8()
+GO
+
+SELECT * FROM test_conv_string_to_datetime_v9
+GO
+EXEC test_conv_string_to_datetime_p9
+GO
+SELECT test_conv_string_to_datetime_f9()
+GO
+
+SELECT * FROM test_conv_string_to_datetime_v10
+GO
+
+SELECT * FROM test_conv_string_to_datetime_v11
 GO

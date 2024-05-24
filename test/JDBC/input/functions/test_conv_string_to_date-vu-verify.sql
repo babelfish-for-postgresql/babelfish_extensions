@@ -1465,3 +1465,19 @@ EXEC test_conv_string_to_date_p8
 GO
 SELECT test_conv_string_to_date_f8()
 GO
+
+SELECT * FROM test_conv_string_to_date_v9
+GO
+EXEC test_conv_string_to_date_p9
+GO
+SELECT test_conv_string_to_date_f9()
+GO
+
+SELECT * FROM test_conv_string_to_date_v10
+GO
+
+SELECT * FROM test_conv_string_to_date_v11
+GO
+
+SELECT * FROM test_conv_string_to_date_v12
+GO

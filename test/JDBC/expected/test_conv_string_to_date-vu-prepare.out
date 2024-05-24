@@ -85,3 +85,23 @@ BEGIN
 RETURN (SELECT CONVERT(date, cast('2002' as INTEGER)));
 END
 GO
+
+CREATE VIEW test_conv_string_to_date_v9 as (SELECT CONVERT(date, cast('2017-08-25' as VARCHAR(10))));
+GO
+CREATE PROCEDURE test_conv_string_to_date_p9 as (SELECT CONVERT(date, cast('2017-08-25' as VARCHAR(10))));
+GO
+CREATE FUNCTION test_conv_string_to_date_f9()
+RETURNS date AS
+BEGIN
+RETURN (SELECT CONVERT(date, cast('2017-08-25' as VARCHAR(10))));
+END
+GO
+
+CREATE VIEW test_conv_string_to_date_v10 as (SELECT CONVERT(date, '02-03-2003 11:11:11 +11:11', 130));
+GO
+
+CREATE VIEW test_conv_string_to_date_v11 as (SELECT CONVERT(date, cast('02-03-2003 11:11:11 +11:11' as sys.varchar(100)), 130));
+GO
+
+CREATE VIEW test_conv_string_to_date_v12 as (SELECT CONVERT(date, CAST('20' as INTEGER)));
+GO

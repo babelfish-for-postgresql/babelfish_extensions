@@ -85,3 +85,20 @@ BEGIN
 RETURN (SELECT CONVERT(datetime, CAST('2017' AS INTEGER)));
 END
 GO
+
+CREATE VIEW test_conv_string_to_datetime_v9 as (SELECT CONVERT(datetime, CAST('2017-08-25 13:01:59' AS VARCHAR(20))));
+GO
+CREATE PROCEDURE test_conv_string_to_datetime_p9 as (SELECT CONVERT(datetime, CAST('2017-08-25 13:01:59' AS VARCHAR(20))));
+GO
+CREATE FUNCTION test_conv_string_to_datetime_f9()
+RETURNS datetime AS
+BEGIN
+RETURN (SELECT CONVERT(datetime, CAST('2017-08-25 13:01:59' AS VARCHAR(20))));
+END
+GO
+
+CREATE VIEW test_conv_string_to_datetime_v10 as (SELECT CONVERT(datetime, '20'));
+GO
+
+CREATE VIEW test_conv_string_to_datetime_v11 as (SELECT CONVERT(datetime, CAST('20' AS INTEGER)));
+GO

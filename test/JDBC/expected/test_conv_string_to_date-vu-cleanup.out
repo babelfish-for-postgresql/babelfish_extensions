@@ -53,3 +53,19 @@ DROP PROCEDURE test_conv_string_to_date_p8
 GO
 DROP FUNCTION test_conv_string_to_date_f8()
 GO
+
+DROP VIEW test_conv_string_to_date_v9
+GO
+DROP PROCEDURE test_conv_string_to_date_p9
+GO
+DROP FUNCTION test_conv_string_to_date_f9()
+GO
+
+DROP VIEW test_conv_string_to_date_v10
+GO
+
+DROP VIEW test_conv_string_to_date_v11
+GO
+
+DROP VIEW test_conv_string_to_date_v12
+GO

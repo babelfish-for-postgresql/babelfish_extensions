@@ -85,3 +85,23 @@ BEGIN
 RETURN (SELECT CONVERT(time, CAST('13' AS INTEGER)));
 END
 GO
+
+CREATE VIEW test_conv_string_to_time_v9 as (SELECT CONVERT(time, CAST('13:01:59' AS VARCHAR(10))));
+GO
+CREATE PROCEDURE test_conv_string_to_time_p9 as (SELECT CONVERT(time, CAST('13:01:59' AS VARCHAR(10))));
+GO
+CREATE FUNCTION test_conv_string_to_time_f9()
+RETURNS time AS
+BEGIN
+RETURN (SELECT CONVERT(time, CAST('13:01:59' AS VARCHAR(10))));
+END
+GO
+
+CREATE VIEW test_conv_string_to_time_v10 as (SELECT CONVERT(time, '02-03-2003 11:11:11 +11:11'));
+GO
+
+CREATE VIEW test_conv_string_to_time_v11 as (SELECT CONVERT(time, cast('02-03-2003 11:11:11 +11:11' as sys.varchar(100))));
+GO
+
+CREATE VIEW test_conv_string_to_time_v12 as (SELECT CONVERT(time, CAST('20' as INTEGER)));
+GO

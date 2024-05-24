@@ -53,3 +53,19 @@ DROP PROCEDURE test_conv_string_to_time_p8
 GO
 DROP FUNCTION test_conv_string_to_time_f8()
 GO
+
+DROP VIEW test_conv_string_to_time_v9
+GO
+DROP PROCEDURE test_conv_string_to_time_p9
+GO
+DROP FUNCTION test_conv_string_to_time_f9()
+GO
+
+DROP VIEW test_conv_string_to_time_v10
+GO
+
+DROP VIEW test_conv_string_to_time_v11
+GO
+
+DROP VIEW test_conv_string_to_time_v12
+GO

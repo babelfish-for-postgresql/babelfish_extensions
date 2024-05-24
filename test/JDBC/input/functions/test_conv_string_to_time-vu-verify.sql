@@ -903,3 +903,19 @@ EXEC test_conv_string_to_time_p8
 GO
 SELECT test_conv_string_to_time_f8()
 GO
+
+SELECT * FROM test_conv_string_to_time_v9
+GO
+EXEC test_conv_string_to_time_p9
+GO
+SELECT test_conv_string_to_time_f9()
+GO
+
+SELECT * FROM test_conv_string_to_time_v10
+GO
+
+SELECT * FROM test_conv_string_to_time_v11
+GO
+
+SELECT * FROM test_conv_string_to_time_v12
+GO

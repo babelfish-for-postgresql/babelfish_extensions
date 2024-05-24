@@ -374,7 +374,7 @@ BABEL-4863-before-16_3-or-15_7-or-14_12
 babel_726-before-14_12-or-15_7-or-16_3
 newid_before_14_7_or_15_2
 BABEL-4869
-test_conv_string_to_date
+test_conv_string_to_date-before-14_12
 test_conv_string_to_datetime-before-14_12
 test_conv_string_to_datetime2-before-14_12
 test_conv_string_to_datetimeoffset-before-14_12
