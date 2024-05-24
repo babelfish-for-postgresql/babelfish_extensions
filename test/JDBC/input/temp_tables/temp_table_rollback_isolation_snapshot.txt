@@ -1,0 +1,5 @@
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+
+include#!#input/temp_tables/temp_table_rollback-vu-prepare.sql
+include#!#input/temp_tables/temp_table_rollback-vu-verify.sql
+include#!#input/temp_tables/temp_table_rollback-vu-cleanup.sql

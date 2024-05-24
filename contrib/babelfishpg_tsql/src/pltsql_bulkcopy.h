@@ -50,7 +50,7 @@ typedef struct BulkCopyStateData
 	int			seq_index;		/* index for an identity column */
 	Oid			seqid;			/* oid of the sequence for an identity column */
 	int			rv_index;		/* index for a rowversion datatype column */
-
+	List	   *rteperminfos;	/* single element list of RTEPermissionInfo */
 } BulkCopyStateData;
 
 /* ----------------------
@@ -81,4 +81,4 @@ typedef struct BulkCopyStmt
 } BulkCopyStmt;
 
 extern void BulkCopy(BulkCopyStmt *stmt, uint64 *processed);
-extern void EndBulkCopy(BulkCopyState cstate);
+extern void EndBulkCopy(BulkCopyState cstate, bool aborted);
