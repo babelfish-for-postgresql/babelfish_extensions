@@ -4,8 +4,8 @@ GO
 EXEC sys_system_sql_modules_dep_vu_prepare_p1
 GO
 ~~START~~
-bit
-1
+bit#!#nvarchar
+1#!#
 ~~END~~
 
 
@@ -20,8 +20,8 @@ int
 SELECT * FROM sys_system_sql_modules_dep_vu_prepare_v1
 GO
 ~~START~~
-bit
-1
+bit#!#nvarchar
+1#!#
 ~~END~~
 
 
