@@ -1,0 +1,23 @@
+EXEC sys_all_sql_modules_dep_vu_prepare_p1;
+GO
+~~START~~
+bit#!#bit
+1#!#1
+~~END~~
+
+
+SELECT * FROM sys_all_sql_modules_dep_vu_prepare_f2();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM sys_all_sql_modules_dep_vu_prepare_v1;
+GO
+~~START~~
+int#!#bit
+<NULL>#!#0
+~~END~~
+
