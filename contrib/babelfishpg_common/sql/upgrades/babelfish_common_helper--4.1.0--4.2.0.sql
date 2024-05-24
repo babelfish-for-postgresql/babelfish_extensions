@@ -870,7 +870,7 @@ DECLARE
 BEGIN
     select oid INTO schema_oid from pg_namespace where nspname='sys';
     select oid into cast_source from pg_type where typname='bbf_varbinary' and typnamespace=schema_oid;
-    select oid into cast_target from pg_type where typname='varbinary' and typnamespace=schema_oid;
+    select oid into cast_target from pg_type where typname='varchar' and typnamespace=schema_oid;
     UPDATE pg_catalog.pg_cast SET castcontext='i' WHERE castsource=cast_source AND casttarget=cast_target;
 END $$;
 
