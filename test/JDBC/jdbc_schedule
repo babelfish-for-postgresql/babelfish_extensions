@@ -187,6 +187,9 @@ ignore#!#test_conv_string_to_smalldatetime-before-14_6-vu-cleanup
 ignore#!#test_conv_string_to_datetime-before-14_6-vu-prepare
 ignore#!#test_conv_string_to_datetime-before-14_6-vu-verify
 ignore#!#test_conv_string_to_datetime-before-14_6-vu-cleanup
+ignore#!#test_conv_string_to_datetime-before-14_12-vu-prepare
+ignore#!#test_conv_string_to_datetime-before-14_12-vu-verify
+ignore#!#test_conv_string_to_datetime-before-14_12-vu-cleanup
 ignore#!#test_conv_string_to_datetime2-before-14_5-vu-prepare
 ignore#!#test_conv_string_to_datetime2-before-14_5-vu-verify
 ignore#!#test_conv_string_to_datetime2-before-14_5-vu-cleanup
