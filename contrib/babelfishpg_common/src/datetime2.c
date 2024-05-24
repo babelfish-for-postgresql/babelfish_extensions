@@ -13,6 +13,7 @@
 #include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/timestamp.h"
+#include "utils/guc.h"
 #include "libpq/pqformat.h"
 
 #include "miscadmin.h"
@@ -36,103 +37,16 @@ static void AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod);
 static Datum datetime2_in_str(char *str, int32 typmod, Node *escontext);
 void		CheckDatetime2Range(const Timestamp time, Node *escontext);
 
-static char*
-clean_input_str(char *str, bool *contains_extra_spaces)
-{
-	char *result = (char *) palloc(MAXDATELEN);
-	int i = 0, j = 0;
-	int last_non_space = -1;
-
-	while (str[i] != '\0')
-	{
-		/*
-		 * Remove leading spaces
-		 */
-		while (str[i] != '\0' && isspace(str[i]))
-		{
-			if (i != 0)
-				*contains_extra_spaces = true;
-			i++;
-		}
-
-		if (str[i] == '\0')
-			break;
-
-		if (isalpha(str[i]))
-		{
-			if (!isdigit(str[last_non_space]) && !isalpha(str[last_non_space]))
-			{
-				result[j] = str[i];
-				j++;
-			}
-			else if (isdigit(str[last_non_space]))
-			{
-				result[j] = ' ';
-				result[j+1] = str[i];
-				j+=2;
-			}
-			else if (last_non_space == i-1)
-			{
-				result[j] = str[i];
-				j++;
-			}
-			else
-			{
-				result[j] = ' ';
-				result[j+1] = str[i];
-				j+=2;
-			}
-		}
-		
-		else if (isdigit(str[i]))
-		{
-			
-			if (!isdigit(str[last_non_space]) && !isalpha(str[last_non_space]))
-			{
-				result[j] = str[i];
-				j++;
-			}
-			else if (isalpha(str[last_non_space]))
-			{
-				result[j] = ' ';
-				result[j+1] = str[i];
-				j+=2;
-			}
-			else if (last_non_space == i-1)
-			{
-				result[j] = str[i];
-				j++;
-			}
-			else
-			{
-				result[j] = ' ';
-				result[j+1] = str[i];
-				j+=2;
-			}
-		}
-		else
-		{
-			result[j] = str[i];
-			j++;
-		}
-
-		last_non_space = i;
-		i++;
-	}
-
-	result[j] = '\0';
-
-	return result;
-	
-}
-
-static void
+void
 tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 				bool contains_extra_spaces, struct pg_tm *tm,
-				bool *is_year_set)
+				bool *is_year_set, bool dump_restore, int context)
 {
 	int i, num_colons = 0, time_idx = nf;
-	bool date_exists = false;
+	bool 		date_exists = false;
+	bool 		contains_iso_time = false;
+	bool		contains_text_month = false;
+	char 		*context_str = (context == DATE_TIME_2) ? "datetime2" : "datetimeoffset";
 	/*
 	 * Modify time field to accept ':' as separator for
 	 * seconds and milliseconds.
@@ -168,7 +82,7 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
+				errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
 		}
 
 		break;
@@ -177,10 +91,10 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 	/*
 	 * Number of DATE fields can not be more than 3 in any case.
 	 */
-	if (time_idx > 3)
+	if (context == DATE_TIME_2 && time_idx > 3)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
+				errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
 
 	/*
 	 * If there is a text month in the input str, move it to the 
@@ -200,7 +114,9 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 			if (ftype[i] == ISOTIME && (contains_extra_spaces || num_colons != 2))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
+						errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
+			else if (ftype[i] == ISOTIME)
+				contains_iso_time = true;
 
 			if(ftype[i] != MONTH)
 			{
@@ -208,12 +124,13 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 				continue;
 			}
 
-			if(!check_regex_for_text_month(str, DATE_TIME_2))
+			if(!check_regex_for_text_month(str, context))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
+						errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
 
 			tm->tm_mon = temp_int;
+			contains_text_month = true;
 
 			while (j>=0)
 			{
@@ -250,7 +167,7 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 			else if (time_idx != 1 || (field_len != 8 && field_len != 6))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
+						errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
 		}
 		else if (ftype[i] == DTK_DATE)
 		{
@@ -269,11 +186,58 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 			if (cp != NULL && isalpha(*cp))
 				continue;
 
-			if (strlen(field[i]) > 10)
+			if (strlen(field[i]) > 10 && !dump_restore)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime2: \"%s\"", orig_str)));
+						errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
 		}
+		/*
+		 * If there is a timezone field, there must be a time field.
+		 */
+		else if (context == DATE_TIME_OFFSET && ftype[i] == DTK_TZ && time_idx == nf)
+			ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
+	}
+
+	if (context == DATE_TIME_2)
+		return;
+
+	if (time_idx == nf && !contains_text_month && nf > 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
+ 
+	/*
+	 * If the input is in ISO format, we need to check whether hours and minutes
+	 * in the TZ field are of 2 digits, else throw an error.
+	 */
+ 
+	for (i = time_idx; contains_iso_time && i < nf; i++)
+	{
+		int j = 0, curr_count = 0;
+ 
+		if (ftype[i] != DTK_TZ)
+			continue;
+ 
+		while (field[i][j] != '\0')
+		{
+			if (field[i][j] == ':' && curr_count != 2)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
+			else if (field[i][j] == ':')
+				curr_count = 0;
+			else if (isdigit(field[i][j]))
+				curr_count++;
+			
+			j++;
+		}
+ 
+		if (curr_count != 2)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					errmsg("invalid input syntax for type %s: \"%s\"", context_str, orig_str)));
 	}
 }
 
@@ -300,6 +264,12 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 	bool		is_year_set = false;
 	DateTimeErrorExtra extra;
 	char		*modified_str = str;
+	bool		dump_restore = false;
+	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+
+	if (babelfish_dump_restore &&
+		 strncmp(babelfish_dump_restore, "on", 2) == 0)
+		 dump_restore = true;
 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -314,13 +284,13 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 		PG_RETURN_TIMESTAMP(result);
 	}
 
-	modified_str = clean_input_str(modified_str, &contains_extra_spaces);
+	modified_str = clean_input_str(modified_str, &contains_extra_spaces, DATE_TIME_2);
 
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 
 	tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
-								contains_extra_spaces, tm, &is_year_set);
+								contains_extra_spaces, tm, &is_year_set, dump_restore, DATE_TIME_2);
 
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, 

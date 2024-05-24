@@ -79,5 +79,6 @@ static const char *regex_time_set[] = {
 static const int num_time_regexes = sizeof(regex_time_set) / sizeof(regex_time_set[0]);
 
 extern int check_regex_for_text_month(char *str, int context);
+extern char* clean_input_str(char *str, bool *contains_extra_spaces, int context);
 
 #endif							/* PLTSQL_DATETIME_H */

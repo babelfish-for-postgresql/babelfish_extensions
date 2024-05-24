@@ -131,12 +131,13 @@ check_regex_for_text_month(char *str, int context)
 	return 0;
 }
 
-static char*
-clean_input_str(char *str, bool *contains_extra_spaces)
+char*
+clean_input_str(char *str, bool *contains_extra_spaces, int context)
 {
 	char *result = (char *) palloc(MAXDATELEN);
 	int i = 0, j = 0;
 	int last_non_space = -1;
+	int num_colons = 0;
 
 	while (str[i] != '\0')
 	{
@@ -152,11 +153,14 @@ clean_input_str(char *str, bool *contains_extra_spaces)
 
 		if (str[i] == '\0')
 			break;
+		
+		if (context == DATE_TIME_OFFSET && str[i] == ':')
+			num_colons++;
 
 		/*
 		 * Modify DATE delimiters to '.'
 		 */
-		if (str[i] == '/' || str[i] == '-' || str[i] == '.')
+		if (context == DATE_TIME && (str[i] == '/' || str[i] == '-' || str[i] == '.'))
 		{
 			result[j] = '.';
 			j++;
@@ -213,7 +217,13 @@ clean_input_str(char *str, bool *contains_extra_spaces)
 				j+=2;
 			}
 		}
-		else if (str[i] == ',' || str[i] == ':')
+		else if (num_colons > 0 && (str[i] == '-' || str[i] == '+'))
+		{
+			result[j] = ' ';
+			result[j+1] = str[i];
+			j+=2;
+		}
+		else if (context != DATE_TIME || (str[i] == ',' || str[i] == ':'))
 		{
 			result[j] = str[i];
 			j++;
@@ -433,7 +443,7 @@ datetime_in_str(char *str, Node *escontext)
 
 	strcpy(modified_str, str);
 
-	modified_str = clean_input_str(modified_str, &contains_extra_spaces);
+	modified_str = clean_input_str(modified_str, &contains_extra_spaces, DATE_TIME);
 
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
