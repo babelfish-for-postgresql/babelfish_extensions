@@ -1022,8 +1022,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 								{
 									Constraint *c = (Constraint *) element;
 
-									c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
-
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
 								}
@@ -1111,8 +1109,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 								{
 									Constraint *c = castNode(Constraint, cmd->def);
 
-									c->conname = construct_unique_index_name(c->conname, atstmt->relation->relname);
-
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
 								}
@@ -1191,9 +1187,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 													 errmsg("Defaults cannot be created on columns of data type timestamp.")));
 									}
 								}
-								break;
-							case AT_DropConstraint:
-								cmd->name = construct_unique_index_name(cmd->name, atstmt->relation->relname);
 								break;
 							default:
 								break;

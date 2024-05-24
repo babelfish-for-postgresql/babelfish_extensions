@@ -521,7 +521,6 @@ ignore
 #Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(tablock);
 #E#insert bulk option tablock is not yet supported in babelfish
 #Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(check_constraints);
-#E#insert bulk option check_constraints is not yet supported in babelfish
 #Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(fire_triggers);
 #E#insert bulk option fire_triggers is not yet supported in babelfish
 #Q#insert bulk dbo.ct_depreciacao_gerencial_valores ([r_e_c_n_o_] Int, [acumulado] Decimal(19,6), [centro_custo] VarChar(20) COLLATE SQL_Latin1_General_CP1_CI_AS, [data] VarChar(8) COLLATE SQL_Latin1_General_CP1_CI_AS, [diasdeprec] Decimal(19,6), [fator] Decimal(19,6), [grupo_bem] Int, [nlanc] Int, [percentual] Decimal(19,6), [recno_bem] Int, [taxa_grupo] Decimal(19,6), [valor] Decimal(19,6), [valorresidual] Decimal(19,6), [manual] VarChar(1) COLLATE SQL_Latin1_General_CP1_CI_AS, [credito_pis] Decimal(19,2), [credito_cofins] Decimal(19,2), [id] UniqueIdentifier) with (KEEP_NULLS, TABLOCK);

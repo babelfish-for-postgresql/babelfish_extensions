@@ -88,6 +88,9 @@ extern "C"
 	extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 
 	extern int escape_hatch_showplan_all;
+
+	/* To store the time spent in ANTLR parsing for the current batch */
+	extern instr_time antlr_parse_time;
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -3230,6 +3233,7 @@ antlr_parser_cpp(const char *sourceText)
 	instr_time	parseStart;
 	instr_time	parseEnd;
 	INSTR_TIME_SET_CURRENT(parseStart);
+	INSTR_TIME_SET_ZERO(antlr_parse_time);
 
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
@@ -3271,6 +3275,9 @@ antlr_parser_cpp(const char *sourceText)
 	INSTR_TIME_SET_CURRENT(parseEnd);
 	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
 	elog(DEBUG1, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
+
+	/* And store time spent in ANTLR parsing so that we can emit it for EXPLAIN info if required */
+	antlr_parse_time = parseEnd;
 
 	return result;
 }
@@ -5518,9 +5525,7 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 
 				else if (pg_strcasecmp("CHECK_CONSTRAINTS", ::getFullText(option_list[i]->id()).c_str()) == 0)
 				{
-					/* Throw Unsupported error only when escape hatch is set to strict. */
-					if (escape_hatch_insert_bulk_options == EH_STRICT)
-						throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option check_constraints is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+					stmt->check_constraints = true;
 				}
 				else if (pg_strcasecmp("FIRE_TRIGGERS", ::getFullText(option_list[i]->id()).c_str()) == 0)
 				{
@@ -6147,6 +6152,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	int lineno = getLineNo(ctx);
 	int return_code_dno = -1;	
 	std::string execKeywd = "EXEC"; // DO NOT CHANGE!
+	int name_length = 0;
 		
 	// Use a boolean vor convenience
 	bool execute_statement = string_matches(call_type.c_str(), "execute_statement") ? true : false;
@@ -6180,6 +6186,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	{
 		// Get the name of procedure being executed, and split up in parts
 		name = ::getFullText(ctx_name);
+		name_length = ctx_name->stop->getStopIndex() - ctx_name->start->getStartIndex() + 1;
 		Assert(!name.empty());
 		
 		// Original position of the name
@@ -6333,7 +6340,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	ssPos += spacesNeeded;
 			
 	ss << name;
-	ssPos += name.length();
+	ssPos += name_length;
 	
 	if (func_proc_args) 
 	{

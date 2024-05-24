@@ -218,6 +218,67 @@ insert into StoreReceipt (OrderID, ItemID, Price, EmployeeID, StoreID, Manufactu
 insert into StoreReceipt (OrderID, ItemID, Price, EmployeeID, StoreID, ManufactureID, PurchaseDate) values (200, 2084, 735.91, 223, 5, 1221, '2023-10-30');
 GO
 
+CREATE TABLE orders (
+    orderId INT PRIMARY KEY,
+    productId INT,
+    employeeName VARCHAR(4),
+    employeeCode VARBINARY(30),
+    date DATE);
+GO
+
+CREATE TABLE products (
+    productId int PRIMARY KEY,
+    productName VARCHAR(30),
+    productPrice INT
+)
+
+INSERT INTO products VALUES
+    (1, 'mac', 250000),
+    (2, 'iphone', 80000),
+    (3, 'airpods', 20000),
+    (4, 'charger', 2900),
+    (5, 'ipad', 50000)
+GO
+
+INSERT INTO orders VALUES
+    (101, 5,'empA', 0x656D7041, '2024-05-01'),
+    (102, 3,'empA', 0x656D7041, '2024-05-01'),
+    (103, 1,'empA', 0x656D7041, '2024-05-01'),
+    (104, 2,'empA', 0x656D7041, '2024-05-01'),
+    (105, 1,'empB', 0x656D7042, '2024-05-01'),
+    (106, 2,'empB', 0x656D7042, '2024-05-01'),
+    (110, 3,'empB', 0x656D7042, '2024-05-01'),
+    (109, 4,'empB', 0x656D7042, '2024-05-01'),
+    (108, 5,'empB', 0x656D7042, '2024-05-01'),
+    (107, 5,'empB', 0x656D7042, '2024-05-01'),
+    (111, 1,'empC', 0x656D7043, '2024-05-01'),
+    (113, 1,'empC', 0x656D7043, '2024-05-01'),
+    (115, 1,'empC', 0x656D7043, '2024-05-01'),
+    (119, 1,'empC', 0x656D7043, '2024-05-01'),
+    (201, 2,'empC', 0x656D7043, '2024-05-01'),
+    (223, 2,'empC', 0x656D7043, '2024-05-01'),
+    (224, 5,'empD', 0x656D7044, '2024-05-01'),
+    (202, 3,'empD', 0x656D7044, '2024-05-01'),
+    (190, 1,'empD', 0x656D7044, '2024-05-01');
+GO
+
+create schema pivot_schema;
+GO
+
+CREATE TABLE pivot_schema.products_sch (
+    productId int PRIMARY KEY,
+    productName VARCHAR(30),
+    productPrice INT
+)
+GO
+
+INSERT INTO pivot_schema.products_sch VALUES
+    (1, 'mac', 250000),
+    (2, 'iphone', 80000),
+    (3, 'airpods', 20000),
+    (4, 'charger', 2900),
+    (5, 'ipad', 50000)
+GO
 
 create table pivot_insert_into(ManufactureID int, EmployeeID int, p1 int, p2 int, p3 int, p4 int, p5 int);
 GO
