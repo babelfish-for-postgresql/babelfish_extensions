@@ -29,4 +29,3 @@ BEGIN
     RETURN (SELECT COUNT(*) FROM sys.all_sql_modules WHERE object_id = OBJECT_ID('sys_all_sql_modules_dep_vu_prepare_f1'))
 END
 GO
-

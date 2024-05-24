@@ -359,8 +359,8 @@ sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
 sys-sql_modules
-sys-all_sql_modules_before-14_7-or-15_2-dep
 sys-sql_modules-before-15_7-or-14_12-dep
+sys-all_sql_modules-before-15_7-or-14_12-dep
 sys-stats
 sys-suser_sid
 sys-suser_sname
