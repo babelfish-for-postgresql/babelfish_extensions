@@ -216,7 +216,7 @@ sys_all_objects
 sys_all_objects-dep
 sys-all_parameters
 sys-all_parameters-dep
-sys-sql_modules-before-14_6-dep
+sys-sql_modules-before-14_7-dep
 sys-all_views
 sys-assemblies
 sys-assembly_modules
@@ -307,7 +307,7 @@ sys-sp_statistics
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
-sys-all_sql_modules-before-14_6-dep
+sys-all_sql_modules-before-14_7-dep
 sys-stats
 sys-suser_sid
 sys-suser_sname
@@ -323,7 +323,7 @@ sys-syslanguages
 sys-sysobjects
 sys-system_objects
 sys-system_sql_modules
-sys-system_sql_modules-before-14_6-dep
+sys-system_sql_modules-before-14_7-dep
 sys-tables
 sys-tables-dep
 sys-table_types
