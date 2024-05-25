@@ -238,7 +238,7 @@ sys_all_objects-dep
 sys-all_parameters
 sys-all_parameters-dep
 sys-all_sql_modules
-sys-all_sql_modules-dep
+sys-all_sql_modules-before-15_7-or-16_2-dep
 sys-all_views
 sys-assemblies
 sys-assembly_modules
@@ -330,7 +330,7 @@ sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
 sys-sql_modules
-sys-sql_modules-dep
+sys-sql_modules-before-15_7-or-16_2-dep
 sys-stats
 sys-suser_sid
 sys-synonyms
