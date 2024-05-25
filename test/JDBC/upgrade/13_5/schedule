@@ -289,6 +289,6 @@ BABEL-4869
 test_conv_string_to_date-before-13_6
 test_conv_string_to_datetime-before-14_6
 test_conv_string_to_datetime2-before-14_5
-test_conv_string_to_datetimeoffset-before-14_12
+test_conv_string_to_datetimeoffset-before-15_7
 test_conv_string_to_smalldatetime-before-14_6
 test_conv_string_to_time-before-13_6

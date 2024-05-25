@@ -608,7 +608,6 @@ GO
 SELECT CONVERT(DATETIME2, '2022-10-30T03:00:00')
 GO
 
--- some commits are missing in 2_X_DEV causing unexpected output here
 SELECT CONVERT(DATETIME2, CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
 GO
 

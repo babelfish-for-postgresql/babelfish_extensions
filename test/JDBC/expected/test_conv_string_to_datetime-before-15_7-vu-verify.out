@@ -3492,12 +3492,11 @@ datetime
 ~~END~~
 
 
--- some commits are missing in 2_X_DEV causing unexpected output here
 SELECT CONVERT(DATETIME, CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
 GO
 ~~START~~
 datetime
-2020-12-31 12:00:00.0
+2021-01-01 00:00:00.0
 ~~END~~
 
 
@@ -3687,9 +3686,8 @@ SELECT * FROM test_conv_string_to_datetime_v8
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1905-07-11 00:00:00.0
+~~END~~
 
 EXEC test_conv_string_to_datetime_p8
 GO
@@ -3732,16 +3730,14 @@ SELECT * FROM test_conv_string_to_datetime_v10
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1900-01-21 00:00:00.0
+~~END~~
 
 
 SELECT * FROM test_conv_string_to_datetime_v11
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1900-01-21 00:00:00.0
+~~END~~
 

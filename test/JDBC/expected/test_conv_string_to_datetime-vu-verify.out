@@ -3492,12 +3492,11 @@ datetime
 ~~END~~
 
 
--- some commits are missing in 2_X_DEV causing unexpected output here
 SELECT CONVERT(DATETIME, CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
 GO
 ~~START~~
 datetime
-2020-12-31 12:00:00.0
+2021-01-01 00:00:00.0
 ~~END~~
 
 

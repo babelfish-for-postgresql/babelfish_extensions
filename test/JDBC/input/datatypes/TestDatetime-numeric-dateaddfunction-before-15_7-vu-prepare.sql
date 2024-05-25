@@ -48,372 +48,102 @@ GO
 -- Should all fail
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as DECIMAL))
 GO
-~~START~~
-smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
-
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as NUMERIC(30,8)))
 GO
-~~START~~
-smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
-
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as FLOAT))
 GO
-~~START~~
-smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
-
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as REAL))
 GO
-~~START~~
-smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
-
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as INT))
 GO
-~~START~~
-smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
-
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as BIGINT))
 GO
-~~START~~
-smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
-
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as SMALLINT))
 GO
-~~START~~
-smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
-
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as MONEY))
 GO
-~~START~~
-smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
-
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as SMALLMONEY))
 GO
-~~START~~
-smalldatetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type smalldatetime.)~~
-
 
 -- Should all fail
 SELECT CONVERT(DATETIME2, CAST(-2.5 as DECIMAL))
 GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type "decimal" to datetime2 is not allowed.)~~
-
 SELECT CONVERT(DATETIME2, CAST(-2.5 as NUMERIC(30,8)))
 GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type numeric to datetime2 is not allowed.)~~
-
 SELECT CONVERT(DATETIME2, CAST(-2.5 as FLOAT))
 GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type double precision to datetime2 is not allowed.)~~
-
 SELECT CONVERT(DATETIME2, CAST(-2.5 as REAL))
 GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type real to datetime2 is not allowed.)~~
-
 SELECT CONVERT(DATETIME2, CAST(-2.5 as INT))
 GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type integer to datetime2 is not allowed.)~~
-
 SELECT CONVERT(DATETIME2, CAST(-2.5 as BIGINT))
 GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type bigint to datetime2 is not allowed.)~~
-
 SELECT CONVERT(DATETIME2, CAST(-2.5 as SMALLINT))
 GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type smallint to datetime2 is not allowed.)~~
-
 SELECT CONVERT(DATETIME2, CAST(-2.5 as MONEY))
 GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type money to datetime2 is not allowed.)~~
-
 SELECT CONVERT(DATETIME2, CAST(-2.5 as SMALLMONEY))
 GO
-~~START~~
-datetime2
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type smallmoney to datetime2 is not allowed.)~~
-
 
 -- Should all fail
 SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as DECIMAL))
 GO
-~~START~~
-datetimeoffset
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type "decimal" to datetimeoffset is not allowed.)~~
-
 SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as NUMERIC(30,8)))
 GO
-~~START~~
-datetimeoffset
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type numeric to datetimeoffset is not allowed.)~~
-
 SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as FLOAT))
 GO
-~~START~~
-datetimeoffset
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type double precision to datetimeoffset is not allowed.)~~
-
 SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as REAL))
 GO
-~~START~~
-datetimeoffset
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type real to datetimeoffset is not allowed.)~~
-
 SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as INT))
 GO
-~~START~~
-datetimeoffset
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type integer to datetimeoffset is not allowed.)~~
-
 SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as BIGINT))
 GO
-~~START~~
-datetimeoffset
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type bigint to datetimeoffset is not allowed.)~~
-
 SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as SMALLINT))
 GO
-~~START~~
-datetimeoffset
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type smallint to datetimeoffset is not allowed.)~~
-
 SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as MONEY))
 GO
-~~START~~
-datetimeoffset
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type money to datetimeoffset is not allowed.)~~
-
 SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as SMALLMONEY))
 GO
-~~START~~
-datetimeoffset
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type smallmoney to datetimeoffset is not allowed.)~~
-
 
 -- Should all fail
 SELECT CONVERT(DATE, CAST(-2.5 as DECIMAL))
 GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type "decimal" to date is not allowed.)~~
-
 SELECT CONVERT(DATE, CAST(-2.5 as NUMERIC(30,8)))
 GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type numeric to date is not allowed.)~~
-
 SELECT CONVERT(DATE, CAST(-2.5 as FLOAT))
 GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type double precision to date is not allowed.)~~
-
 SELECT CONVERT(DATE, CAST(-2.5 as REAL))
 GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type real to date is not allowed.)~~
-
 SELECT CONVERT(DATE, CAST(-2.5 as INT))
 GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type integer to date is not allowed.)~~
-
 SELECT CONVERT(DATE, CAST(-2.5 as BIGINT))
 GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type bigint to date is not allowed.)~~
-
 SELECT CONVERT(DATE, CAST(-2.5 as SMALLINT))
 GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type smallint to date is not allowed.)~~
-
 SELECT CONVERT(DATE, CAST(-2.5 as MONEY))
 GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type money to date is not allowed.)~~
-
 SELECT CONVERT(DATE, CAST(-2.5 as SMALLMONEY))
 GO
-~~START~~
-date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type smallmoney to date is not allowed.)~~
-
 
 -- Should all fail
 SELECT CONVERT(TIME, CAST(-2.5 as DECIMAL))
 GO
-~~START~~
-time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type "decimal" to time is not allowed.)~~
-
 SELECT CONVERT(TIME, CAST(-2.5 as NUMERIC(30,8)))
 GO
-~~START~~
-time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type numeric to time is not allowed.)~~
-
 SELECT CONVERT(TIME, CAST(-2.5 as FLOAT))
 GO
-~~START~~
-time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type double precision to time is not allowed.)~~
-
 SELECT CONVERT(TIME, CAST(-2.5 as REAL))
 GO
-~~START~~
-time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type real to time is not allowed.)~~
-
 SELECT CONVERT(TIME, CAST(-2.5 as INT))
 GO
-~~START~~
-time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
-
 SELECT CONVERT(TIME, CAST(-2.5 as BIGINT))
 GO
-~~START~~
-time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type bigint to time is not allowed.)~~
-
 SELECT CONVERT(TIME, CAST(-2.5 as SMALLINT))
 GO
-~~START~~
-time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type smallint to time is not allowed.)~~
-
 SELECT CONVERT(TIME, CAST(-2.5 as MONEY))
 GO
-~~START~~
-time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type money to time is not allowed.)~~
-
 SELECT CONVERT(TIME, CAST(-2.5 as SMALLMONEY))
 GO
-~~START~~
-time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type smallmoney to time is not allowed.)~~
-
 
 CREATE VIEW Datetime_view5 as (
     SELECT 
