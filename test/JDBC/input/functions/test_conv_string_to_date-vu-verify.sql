@@ -1395,7 +1395,6 @@ GO
 SELECT CONVERT(DATE, '2022-10-30T03:00:00')
 GO
 
--- some commits are missing in 2_X_DEV causing unexpected output here
 SELECT CONVERT(DATE, CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
 GO
 
