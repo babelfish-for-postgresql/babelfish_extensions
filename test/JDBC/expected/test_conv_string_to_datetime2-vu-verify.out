@@ -1,0 +1,1873 @@
+-- Empty string, should return default values
+SELECT CONVERT(DATETIME2, '')
+GO
+~~START~~
+datetime2
+1900-01-01 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '', 130)
+GO
+~~START~~
+datetime2
+2464-12-29 00:00:00.0000000
+~~END~~
+
+
+-- -- Numeric
+SELECT CONVERT(DATETIME2, '3-2-4 14:30')
+GO
+~~START~~
+datetime2
+2004-03-02 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3-12-4 14:30')
+GO
+~~START~~
+datetime2
+2004-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3-12-24 14:30')
+GO
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3-12-2024 14:30')
+GO
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3     -        12 -           2024 14:30')
+GO
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3.2.4 14:30')
+GO
+~~START~~
+datetime2
+2004-03-02 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3.12.4 14:30')
+GO
+~~START~~
+datetime2
+2004-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3.12.24 14:30')
+GO
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3.12.2024 14:30')
+GO
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3     .        12 .           2024 14:30')
+GO
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3/2/4 14:30')
+GO
+~~START~~
+datetime2
+2004-03-02 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3/12/4 14:30')
+GO
+~~START~~
+datetime2
+2004-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3/12/24 14:30')
+GO
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3/12/2024 14:30')
+GO
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3     /        12 /           2024 14:30')
+GO
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '04-02-03 14:30')
+GO
+~~START~~
+datetime2
+2003-04-02 14:30:00.0000000
+~~END~~
+
+
+-- invalid syntax
+SELECT CONVERT(DATETIME2, '3 12 2024')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '3#12#2024')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '3/12.2024')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Alphabetical
+SELECT CONVERT(DATETIME2, 'Apr 12,2000 14:30')
+GO
+~~START~~
+datetime2
+2000-04-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 12 2000 14:30')
+GO
+~~START~~
+datetime2
+2000-04-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 1 2000 14:30')
+GO
+~~START~~
+datetime2
+2000-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 1,2000 14:30')
+GO
+~~START~~
+datetime2
+2000-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 2000 14:30')
+GO
+~~START~~
+datetime2
+2000-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 16, 2000 14:30')
+GO
+~~START~~
+datetime2
+2000-04-16 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 1, 2000 14:30')
+GO
+~~START~~
+datetime2
+2000-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'April 16, 2000 14:30')
+GO
+~~START~~
+datetime2
+2000-04-16 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'April 16  2000 14:30')
+GO
+~~START~~
+datetime2
+2000-04-16 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 16, 24 14:30')
+GO
+~~START~~
+datetime2
+2024-04-16 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 16,4 14:30')
+GO
+~~START~~
+datetime2
+2004-04-16 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 1,4 14:30')
+GO
+~~START~~
+datetime2
+2004-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 16    24 14:30')
+GO
+~~START~~
+datetime2
+2024-04-16 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 16 4 14:30')
+GO
+~~START~~
+datetime2
+2004-04-16 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'April 16 14:30')
+GO
+~~START~~
+datetime2
+2016-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 2024 14:30')
+GO
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 2024 22 14:30')
+GO
+~~START~~
+datetime2
+2024-04-22 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 2024 2 14:30')
+GO
+~~START~~
+datetime2
+2024-04-02 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '24 Apr, 2024 14:30')
+GO
+~~START~~
+datetime2
+2024-04-24 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3 Apr, 2024 14:30')
+GO
+~~START~~
+datetime2
+2024-04-03 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr, 2024 14:30')
+GO
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 2024 14:30')
+GO
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3 Apr 2024 14:30')
+GO
+~~START~~
+datetime2
+2024-04-03 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3Apr2024 14:30')
+GO
+~~START~~
+datetime2
+2024-04-03 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '3Apr24 14:30')
+GO
+~~START~~
+datetime2
+2024-04-03 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr24 14:30')
+GO
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr,24 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '24 Apr 14:30')
+GO
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12 24 Apr 14:30')
+GO
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12 2024 Apr 14:30')
+GO
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2024 Apr 14:30')
+GO
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2024 12 Apr 14:30')
+GO
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2024 9 Apr 14:30')
+GO
+~~START~~
+datetime2
+2024-04-09 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2024 Apr 12 14:30')
+GO
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12, Apr, 2024 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '12 Apr, 2024 14:30')
+GO
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12, Apr 2024 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2024, Apr, 12 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2024 Apr, 12 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2024, Apr 12 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr, 12, 2024 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 12, 2024 14:30')
+GO
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr, 12 2024 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr, 2024, 12 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 2024, 12 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr, 2024 12 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '12, 2024, Apr 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '12 2024, Apr 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '12, 2024 Apr 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2024, 12, Apr 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2024 12, Apr 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2024, 12 Apr 14:30')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- ISO 8601	
+SELECT CONVERT(DATETIME2, '2023-11-27')
+GO
+~~START~~
+datetime2
+2023-11-27 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10-30T03:00:00')
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10-30T03:00:00.123')
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10-30T03:00:00.123-12:12')
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10-30T03:00:00.123+12:12')
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10-30T03:00')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10 -30T03: 00:00')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10-30T03:00:00.12345')
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.1234500
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10-30T03:00:00:123')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10-30T03:00:00:12345')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Unseparated
+SELECT CONVERT(DATETIME2, '20240129')
+GO
+~~START~~
+datetime2
+2024-01-29 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '20241329')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime2 data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME2, '240129')
+GO
+~~START~~
+datetime2
+2024-01-29 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '241329')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime2 data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME2, '2001')
+GO
+~~START~~
+datetime2
+2001-01-01 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '0001')
+GO
+~~START~~
+datetime2
+0001-01-01 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '20240129 03:00:00')
+GO
+~~START~~
+datetime2
+2024-01-29 03:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '20241329 03:00:00')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime2 data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME2, '240129 03:00')
+GO
+~~START~~
+datetime2
+2024-01-29 03:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '241329 03:00')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime2 data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME2, '2001 03:00:00.123')
+GO
+~~START~~
+datetime2
+2001-01-01 03:00:00.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '0001 03:00:00.421')
+GO
+~~START~~
+datetime2
+0001-01-01 03:00:00.4210000
+~~END~~
+
+
+-- -- invalid syntax
+SELECT CONVERT(DATETIME2, '0')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '1')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '11')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '111')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '11111')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '1111111')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- should return default DATETIME2
+SELECT CONVERT(DATETIME2, '16:23:51')
+GO
+~~START~~
+datetime2
+1900-01-01 16:23:51.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '4:12:12:123')
+GO
+~~START~~
+datetime2
+1900-01-01 04:12:12.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '4:12:12:1234')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '4:12:12.1234')
+GO
+~~START~~
+datetime2
+1900-01-01 04:12:12.1234000
+~~END~~
+
+
+-- hijri
+SELECT CONVERT(DATETIME2, '20231229', 130)
+GO
+~~START~~
+datetime2
+2585-04-19 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '20231230', 130)
+GO
+~~START~~
+datetime2
+2585-04-20 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '20231129', 130)
+GO
+~~START~~
+datetime2
+2585-03-20 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '20231130', 130)
+GO
+~~START~~
+datetime2
+2585-03-21 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, N'22 محرم 1440 1:39:17.090', 130)
+GO
+~~START~~
+datetime2
+2018-10-02 01:39:17.0900000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, N'22 محرم 1440 1:39:17.090', 131)
+GO
+~~START~~
+datetime2
+2018-10-02 01:39:17.0900000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '22/12/1440 1:39:17.090PM', 130)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The input character string does not follow style 130, either change the input character string or use a different style.)~~
+
+
+SELECT CONVERT(DATETIME2, '22/12/1440 1:39:17.090PM', 131)
+GO
+~~START~~
+datetime2
+2019-08-23 13:39:17.0900000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, N'29 شوال 1445 11:46:25:347AM', 130)
+GO
+~~START~~
+datetime2
+2024-05-07 11:46:25.3470000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, N'29 شوال 1445 11:46:25:347AM', 131)
+GO
+~~START~~
+datetime2
+2024-05-07 11:46:25.3470000
+~~END~~
+
+
+-- -- hijri leap year
+SELECT CONVERT(DATETIME2, '20241230', 130)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime2 data type resulted in an out-of-range value.)~~
+
+
+-- rounding of DATETIME2
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345679')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345678')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345677')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345676')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345675')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345674')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345673')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345672')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345671')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '01/01/98 23:59:59.12345670')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234570
+~~END~~
+
+
+-- DATETIME2 with typmod
+SELECT CONVERT(DATETIME2(0), '01/01/98 23:59:56.501')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:57
+~~END~~
+
+
+SELECT CONVERT(DATETIME2(0), '01/01/98 23:59:56.500')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:57
+~~END~~
+
+
+SELECT CONVERT(DATETIME2(0), '01/01/98 23:59:56.499')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:56
+~~END~~
+
+
+SELECT CONVERT(DATETIME2(1), '01/01/98 23:59:59.123')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.1
+~~END~~
+
+
+SELECT CONVERT(DATETIME2(2), '01/01/98 23:59:59.123')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.12
+~~END~~
+
+
+SELECT CONVERT(DATETIME2(3), '01/01/98 23:59:59.123')
+GO
+~~START~~
+datetime2
+1998-01-01 23:59:59.123
+~~END~~
+
+
+-- -- Boundary values
+SELECT CONVERT(DATETIME2, '9999-12-30 23:59:59.9999999')
+GO
+~~START~~
+datetime2
+9999-12-31 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '9999-12-30 23:59:59.99999999')
+GO
+~~START~~
+datetime2
+9999-12-31 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '9999-12-30 23:59:59.999999999')
+GO
+~~START~~
+datetime2
+9999-12-31 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '9999-12-30 23:59:59.9999999999')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '9999-12-31 23:59:59.9999999')
+GO
+~~START~~
+datetime2
+9999-12-31 23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '9999-12-31 23:59:59.99999999')
+GO
+~~START~~
+datetime2
+9999-12-31 23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '9999-12-31 23:59:59.999999999')
+GO
+~~START~~
+datetime2
+9999-12-31 23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '9999-12-31 23:59:59.9999999999')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- -- out of bound values
+SELECT CONVERT(DATETIME2,'2022-10-00 23:59:59.990')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime2 data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME2,'0000-10-01 23:59:59.990')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime2 data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME2,'2023-00-01 23:59:59.990')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime2 data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIME2,'0000-00-00 23:59:59.990')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetime2 data type resulted in an out-of-range value.)~~
+
+
+-- Different DATETIME formats with their corresponding styles
+SELECT CONVERT(DATETIME2, 'Apr 10 2021 11:12AM', 0)
+GO
+~~START~~
+datetime2
+2021-04-10 11:12:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '02/12/21', 1)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '21.02.12', 2)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12/02/21', 3)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12.02.21', 4)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12-02-21', 5)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12 Apr 21', 6)
+GO
+~~START~~
+datetime2
+2021-04-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 12, 21', 7)
+GO
+~~START~~
+datetime2
+2021-04-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '10:13:14', 8)
+GO
+~~START~~
+datetime2
+1900-01-01 10:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '10:13:14', 24)
+GO
+~~START~~
+datetime2
+1900-01-01 10:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 12 2021 10:13:14:123AM', 9)
+GO
+~~START~~
+datetime2
+2021-04-12 10:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '02-12-21', 10)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '21/02/12', 11)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '210212', 12)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12 Apr 2021 15:13:14:123', 13)
+GO
+~~START~~
+datetime2
+2021-04-12 15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '15:13:14:123', 14)
+GO
+~~START~~
+datetime2
+1900-01-01 15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021-02-12 15:13:14', 20)
+GO
+~~START~~
+datetime2
+2021-02-12 15:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021-02-12 15:13:14.123', 21)
+GO
+~~START~~
+datetime2
+2021-02-12 15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '02/12/21 15:13:14 PM', 22)
+GO
+~~START~~
+datetime2
+2021-02-12 15:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021-02-12', 23)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021-02-12 15:13:14.123', 25)
+GO
+~~START~~
+datetime2
+2021-02-12 15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 10 2021 11:12AM', 100)
+GO
+~~START~~
+datetime2
+2021-04-10 11:12:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '02/12/2021', 101)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021.02.12', 102)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12/02/2021', 103)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12.02.2021', 104)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12-02-2021', 105)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12 Apr 2021', 106)
+GO
+~~START~~
+datetime2
+2021-04-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 12, 2021', 107)
+GO
+~~START~~
+datetime2
+2021-04-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '10:13:14', 108)
+GO
+~~START~~
+datetime2
+1900-01-01 10:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, 'Apr 12 2021 10:13:14:123AM', 109)
+GO
+~~START~~
+datetime2
+2021-04-12 10:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '02-12-2021', 110)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021/02/12', 111)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '20210212', 112)
+GO
+~~START~~
+datetime2
+2021-02-12 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12 Apr 2021 15:13:14:123', 113)
+GO
+~~START~~
+datetime2
+2021-04-12 15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '15:13:14:123', 114)
+GO
+~~START~~
+datetime2
+1900-01-01 15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021-02-12 15:13:14', 120)
+GO
+~~START~~
+datetime2
+2021-02-12 15:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021-02-12 15:13:14.123', 121)
+GO
+~~START~~
+datetime2
+2021-02-12 15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021-02-12T15:13:14.123', 126)
+GO
+~~START~~
+datetime2
+2021-02-12 15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2021-02-12T15:13:14.123', 127)
+GO
+~~START~~
+datetime2
+2021-02-12 15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, N'22 محرم 1440 1:39:17.090', 130)
+GO
+~~START~~
+datetime2
+2018-10-02 01:39:17.0900000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '12/02/2021 15:13:14:123 PM', 131)
+GO
+~~START~~
+datetime2
+2582-07-04 15:13:14.1230000
+~~END~~
+
+
+--- misc
+SELECT CONVERT(DATETIME2,'2022-10-29 20:01:00.000')
+GO
+~~START~~
+datetime2
+2022-10-29 20:01:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2020')
+GO
+~~START~~
+datetime2
+2020-01-01 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2000-04-22 16:23:51.7668c0')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2001-04-022 16:23:51.766890 +12:00')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+
+SELECT CONVERT(DATETIME2, '02001-04-22 16:23:51.766890 +12:00') 
+GO 
+SELECT CONVERT(DATETIME2, ' 2001- 04 - 22 16: 23: 51. 766890 +12:00')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '02001-04-22 16:23:51')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '1900-05-06 13:59:29.050 -8:00')
+GO
+~~START~~
+datetime2
+1900-05-06 13:59:29.0500000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2011-08-15 14:30.00')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2,'2022-10-29 20:01:00.000')
+GO
+~~START~~
+datetime2
+2022-10-29 20:01:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2020')
+GO
+~~START~~
+datetime2
+2020-01-01 00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2022-10-30T03:00:00')
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.0000000
+~~END~~
+
+
+-- some commits are missing in 2_X_DEV causing unexpected output here
+SELECT CONVERT(DATETIME2, CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
+GO
+~~START~~
+datetime2
+2020-12-31 12:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(DATETIME2, '2011-08-15 10:30.00 AMZ')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIME2, '2011-08-15 10:30.00 PMZ')
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DECLARE @TM_ICLO TIME = '17:24:07.1766670'
+SELECT CONVERT(DATETIME2, @TM_ICLO)
+GO
+~~START~~
+datetime2
+1900-01-01 17:24:07.1766670
+~~END~~
+
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_datetime2_v1
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.0
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p1
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.0
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f1()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v2
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p2
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f2()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+EXEC test_conv_string_to_datetime2_p2_2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 10 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
+
+SELECT test_conv_string_to_datetime2_f2_2()
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 10 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v3
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.12346
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p3
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.12346
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f3()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234600
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v4
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p4
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f4()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v5
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p5
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f5()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v6
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p6
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f6()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v7
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+EXEC test_conv_string_to_datetime2_p7
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+SELECT test_conv_string_to_datetime2_f7()
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.1234570
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime2_v8
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to datetime2 is not allowed.)~~
+
+EXEC test_conv_string_to_datetime2_p8
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to datetime2 is not allowed.)~~
+
+SELECT test_conv_string_to_datetime2_f8()
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to datetime2 is not allowed.)~~
+

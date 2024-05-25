@@ -335,3 +335,9 @@ babel-4517
 BABEL-4641-before-16_3-or-15_7-or-14_12
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
+test_conv_string_to_date-before-14_12
+test_conv_string_to_datetime-before-14_6
+test_conv_string_to_datetime2-before-14_5
+test_conv_string_to_datetimeoffset-before-14_12
+test_conv_string_to_smalldatetime-before-14_6
+test_conv_string_to_time-before-14_12
