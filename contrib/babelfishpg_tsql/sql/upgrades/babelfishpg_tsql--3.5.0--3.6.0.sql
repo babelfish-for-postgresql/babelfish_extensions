@@ -5487,6 +5487,218 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date ANYELEMENT, IN origin ANYELEMENT default NULL) RETURNS ANYELEMENT 
+AS 
+$body$
+DECLARE
+    required_bucket INT;
+    years_diff INT;
+    quarters_diff INT;
+    months_diff INT;
+    hours_diff INT;
+    minutes_diff INT;
+    seconds_diff INT;
+    milliseconds_diff INT;
+    timezone INT;
+    result_time time;
+    result_date timestamp;
+    offset_string PG_CATALOG.text;
+    date_difference_interval INTERVAL;
+    millisec_trunc_diff_interval INTERVAL;
+    date_arg_datatype regtype;
+    is_valid boolean;
+BEGIN
+    BEGIN
+        date_arg_datatype := pg_typeof(date);
+        is_valid := sys.date_bucket_internal_helper(datepart, number, true, true, date);
+
+        -- If optional argument origin's value is not provided by user then set it's default value of valid datatype.
+        IF origin IS NULL THEN
+                IF date_arg_datatype = 'sys.datetime'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetime);
+                ELSIF date_arg_datatype = 'sys.datetime2'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetime2);
+                ELSIF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetimeoffset);
+                ELSIF date_arg_datatype = 'sys.smalldatetime'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.smalldatetime);
+                ELSIF date_arg_datatype = 'date'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS pg_catalog.date);
+                ELSIF date_arg_datatype = 'time'::regtype THEN
+                    origin := CAST('00:00:00.000' AS pg_catalog.time);
+                END IF;
+        END IF;
+    END;
+
+    /* support of date_bucket() for different kinds of date datatype starts here */
+    -- support of date_bucket() when date is of 'time' datatype
+    IF date_arg_datatype = 'time'::regtype THEN
+        -- Find interval between date and origin and extract hour, minute, second, millisecond from the interval
+        date_difference_interval := date_trunc('millisecond', date) - date_trunc('millisecond', origin);
+        hours_diff := EXTRACT('hour' from date_difference_interval)::INT;
+        minutes_diff := EXTRACT('minute' from date_difference_interval)::INT;
+        seconds_diff := FLOOR(EXTRACT('second' from date_difference_interval))::INT;
+        milliseconds_diff := FLOOR(EXTRACT('millisecond' from date_difference_interval))::INT;
+        CASE datepart
+            WHEN 'hour' THEN
+                -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                -- For Ex. 'date_bucket(hour, 2, '01:00:00', '08:00:00')' hence check if the result_time is greater then date
+                -- For comparision we are trunceting the result_time to milliseconds
+                required_bucket := hours_diff/number;
+                result_time := origin + make_interval(hours => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(hours => number);
+                END IF;
+                RETURN result_time;
+
+            WHEN 'minute' THEN
+                required_bucket := (hours_diff * 60 + minutes_diff)/number;
+                result_time := origin + make_interval(mins => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(mins => number);
+                END IF;
+                RETURN result_time;
+
+            WHEN 'second' THEN
+                required_bucket := ((hours_diff * 60 + minutes_diff) * 60 + seconds_diff)/number;
+                result_time := origin + make_interval(secs => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(secs => number);
+                END IF;
+                RETURN result_time;
+
+            WHEN 'millisecond' THEN
+                required_bucket := (((hours_diff * 60 + minutes_diff) * 60) * 1000 + milliseconds_diff)/number;
+                result_time := origin + make_interval(secs => ((required_bucket * number)::numeric) * 0.001);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(secs => (number::numeric) * 0.001);
+                END IF;
+                RETURN result_time;
+        END CASE;
+
+    -- support of date_bucket() when date is of {'datetime2', 'datetimeoffset'} datatype
+    -- handling separately because both the datatypes have precision in milliseconds
+    ELSIF date_arg_datatype IN ('sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype) THEN
+        -- when datepart is {year, quarter, month} make use of AGE() function to find number of buckets
+        IF datepart IN ('year', 'quarter', 'month') THEN
+            date_difference_interval := AGE(date_trunc('day', date::timestamp), date_trunc('day', origin::timestamp));
+            years_diff := EXTRACT('Year' from date_difference_interval)::INT;
+            months_diff := EXTRACT('Month' from date_difference_interval)::INT;
+            CASE datepart
+                WHEN 'year' THEN
+                    -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                    -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                    -- For Ex. date_bucket(year, 2, '2010-01-01', '2019-01-01')) hence check if the result_time is greater then date.
+                    -- For comparision we are trunceting the result_time to milliseconds
+                    required_bucket := years_diff/number;
+                    result_date := origin::timestamp + make_interval(years => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(years => number);
+                    END IF;
+
+                WHEN 'month' THEN
+                    required_bucket := (12 * years_diff + months_diff)/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number);
+                    END IF;
+
+                WHEN 'quarter' THEN
+                    quarters_diff := (12 * years_diff + months_diff)/3;
+                    required_bucket := quarters_diff/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number * 3);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number*3);
+                    END IF;
+            END CASE;  
+        
+        -- when datepart is {week, day, hour, minute, second, millisecond} make use of built-in date_bin() postgresql function. 
+        ELSE
+            -- trunceting origin to millisecond before passing it to date_bin() function. 
+            -- store the difference between origin and trunceted origin to add it in the result of date_bin() function
+            date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
+            millisec_trunc_diff_interval := (origin::timestamp - date_trunc('millisecond', origin::timestamp))::interval;
+            result_date = date_bin(date_difference_interval, date::timestamp, date_trunc('millisecond', origin::timestamp)) + millisec_trunc_diff_interval;
+
+            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result.
+            IF result_date + date_difference_interval <= date::timestamp THEN
+                result_date = result_date + date_difference_interval;
+            END IF;
+        END IF;
+
+        -- All the above operations are performed by converting every date datatype into TIMESTAMPS. 
+        -- datetimeoffset is typecasted into TIMESTAMPS that changes the value. 
+        -- Ex. '2023-02-23 09:19:21.23 +10:12'::sys.datetimeoffset::timestamp => '2023-02-22 23:07:21.23'
+        -- The output of date_bucket() for datetimeoffset datatype will always be in the same time-zone as of provided date argument. 
+        -- Here, converting TIMESTAMP into datetimeoffset datatype with the same timezone as of date argument.
+        IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+            timezone = sys.babelfish_get_datetimeoffset_tzoffset(date)::INTEGER;
+            offset_string = right(date::PG_CATALOG.TEXT, 6);
+            result_date = result_date + make_interval(mins => timezone);
+            RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
+        ELSE
+            RETURN result_date;
+        END IF;
+
+    -- support of date_bucket() when date is of {'date', 'datetime', 'smalldatetime'} datatype
+    ELSE
+        -- Round datetime to fixed bins (e.g. .000, .003, .007)
+        IF date_arg_datatype = 'sys.datetime'::regtype THEN
+            date := sys.babelfish_conv_string_to_datetime_v2('DATETIME', date::TEXT)::sys.datetime;
+            origin := sys.babelfish_conv_string_to_datetime_v2('DATETIME', origin::TEXT)::sys.datetime;
+        END IF;
+        -- when datepart is {year, quarter, month} make use of AGE() function to find number of buckets
+        IF datepart IN ('year', 'quarter', 'month') THEN
+            date_difference_interval := AGE(date_trunc('day', date::timestamp), date_trunc('day', origin::timestamp));
+            years_diff := EXTRACT('Year' from date_difference_interval)::INT;
+            months_diff := EXTRACT('Month' from date_difference_interval)::INT;
+            CASE datepart
+                WHEN 'year' THEN
+                    -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                    -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                    -- For Example. date_bucket(year, 2, '2010-01-01', '2019-01-01') hence check if the result_time is greater then date.
+                    -- For comparision we are trunceting the result_time to milliseconds
+                    required_bucket := years_diff/number;
+                    result_date := origin::timestamp + make_interval(years => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(years => number);
+                    END IF;
+
+                WHEN 'month' THEN
+                    required_bucket := (12 * years_diff + months_diff)/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number);
+                    END IF;
+
+                WHEN 'quarter' THEN
+                    quarters_diff := (12 * years_diff + months_diff)/3;
+                    required_bucket := quarters_diff/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number * 3);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number * 3);
+                    END IF;
+            END CASE;
+            RETURN result_date;
+        
+        -- when datepart is {week, day, hour, minute, second, millisecond} make use of built-in date_bin() postgresql function.
+        ELSE
+            -- trunceting origin to millisecond before passing it to date_bin() function. 
+            -- store the difference between origin and trunceted origin to add it in the result of date_bin() function
+            date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
+            result_date = date_bin(date_difference_interval, date::TIMESTAMP, origin::TIMESTAMP);
+            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result. 
+            IF result_date + date_difference_interval <= date::TIMESTAMP THEN
+                result_date = result_date + date_difference_interval;
+            END IF;
+            RETURN result_date;
+        END IF;
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_date');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_date');
 
