@@ -80,6 +80,8 @@ DROP TABLE IF EXISTS TypeToGeog
 
 DROP TABLE IF EXISTS SPATIALPOINT_dt
 
+DROP TABLE IF EXISTS geomTabWithoutSrid
+
 drop procedure IF EXISTS geometry_proc_1;
 
 drop procedure IF EXISTS geography_proc_1;
