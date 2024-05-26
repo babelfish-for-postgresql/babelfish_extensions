@@ -173,8 +173,6 @@ ignore#!#BABEL-3614-before-14_12-vu-prepare
 ignore#!#BABEL-3614-before-14_12-vu-verify
 ignore#!#BABEL-3486-before-14_12-vu-prepare
 ignore#!#BABEL-3486-before-14_12-vu-verify
-ignore#!#TestDatetime-numeric-dateaddfunction-before-14_12-vu-prepare
-ignore#!#TestDatetime-numeric-dateaddfunction-before-14_12-vu-verify
 ignore#!#test_conv_string_to_date-before-14_12-vu-prepare
 ignore#!#test_conv_string_to_date-before-14_12-vu-verify
 ignore#!#test_conv_string_to_date-before-14_12-vu-cleanup
