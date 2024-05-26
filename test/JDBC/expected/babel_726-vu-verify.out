@@ -573,3 +573,11 @@ nvarchar
 x
 ~~END~~
 
+
+select * from babel_726_vu_prepare_v1
+go
+~~START~~
+nvarchar
+x
+~~END~~
+

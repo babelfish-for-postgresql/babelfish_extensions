@@ -223,3 +223,6 @@ go
 
 select coalesce(CAST('x'AS VARBINARY), CAST('x' AS NVARCHAR(4000)), 'x')
 go
+
+select * from babel_726_vu_prepare_v1
+go

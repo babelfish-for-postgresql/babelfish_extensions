@@ -88,3 +88,8 @@ GO
 CREATE PROCEDURE babel_726_vu_prepare_p1 AS 
 SELECT COALESCE(CAST('x'AS VARBINARY), CAST('x' AS NVARCHAR(4000)), 'x')
 GO
+
+-- dependency view for CAST of varbinary and nvarchar
+CREATE VIEW babel_726_vu_prepare_v1 AS
+SELECT CAST(CAST('x' as VARBINARY) AS NVARCHAR)
+GO

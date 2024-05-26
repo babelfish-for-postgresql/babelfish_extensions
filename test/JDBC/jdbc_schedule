@@ -8,18 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-sys-all_sql_modules-dep-vu-prepare
-sys-all_sql_modules-dep-vu-verify
-sys-all_sql_modules-dep-vu-cleanup
-sys-sql_modules-dep-vu-prepare
-sys-sql_modules-dep-vu-verify
-sys-sql_modules-dep-vu-cleanup
-sys-sql_modules-vu-prepare
-sys-sql_modules-vu-verify
-sys-sql_modules-vu-cleanup
-sys-all_sql_modules-vu-prepare
-sys-all_sql_modules-vu-verify
-sys-all_sql_modules-vu-cleanup
+all
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
