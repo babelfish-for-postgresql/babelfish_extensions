@@ -133,8 +133,19 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 
-	tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
-								contains_extra_spaces, tm, &is_year_set, dump_restore, DATE_TIME_OFFSET);
+	if (tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
+								contains_extra_spaces, tm, &is_year_set, dump_restore, DATE_TIME_OFFSET))
+	{
+		if (modified_str)
+			pfree(modified_str);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+	}
+
+	if (modified_str)
+		pfree(modified_str);
  
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, 

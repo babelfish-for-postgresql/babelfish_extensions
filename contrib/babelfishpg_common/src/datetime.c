@@ -229,9 +229,14 @@ clean_input_str(char *str, bool *contains_extra_spaces, int context)
 			j++;
 		}
 		else
+		{
+			if (result)
+				pfree(result);
+			
 			ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime: \"%s\"", str)));
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					errmsg("invalid input syntax for type datetime: \"%s\"", str)));
+		}
 
 		last_non_space = i;
 		i++;
@@ -243,7 +248,7 @@ clean_input_str(char *str, bool *contains_extra_spaces, int context)
 	
 }
 
-static void
+static int
 tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 						bool contains_extra_spaces, struct pg_tm *tm,
 						bool *is_year_set)
@@ -303,9 +308,7 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 	 * Number of DATE fields can not be more than 3 in any case.
 	 */
 	if (last_idx - start_idx > 3)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("invalid input syntax for type datetime: \"%s\"", orig_str)));
+		return 1;
 
 	/*
 	 * If there is a text month in the input str, move it to the 
@@ -323,9 +326,7 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 			ftype[i] = DecodeSpecial(i, field[i], &temp_int);
 
 			if (ftype[i] == ISOTIME && (contains_extra_spaces || num_colons < 2))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime: \"%s\"", orig_str)));
+				return 1;
 
 			if(ftype[i] != MONTH)
 			{
@@ -334,9 +335,7 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 			}
 
 			if(!check_regex_for_text_month(str, DATE_TIME))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime: \"%s\"", orig_str)));
+				return 1;
 
 			tm->tm_mon = temp_int;
 
@@ -373,9 +372,7 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 				*is_year_set = true;
 			}
 			else if (last_idx - start_idx != 1 || (field_len != 8 && field_len != 6))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime: \"%s\"", orig_str)));
+				return 1;
 
 
 		}
@@ -397,11 +394,11 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 				continue;
 
 			if (strlen(field[i]) > 10)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("invalid input syntax for type datetime: \"%s\"", orig_str)));
+				return 1;
 		}
 	}
+
+	return 0;
 }
 
 
@@ -448,12 +445,26 @@ datetime_in_str(char *str, Node *escontext)
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 
-	tsql_decode_datetime_fields(str, modified_str, field, nf, ftype, 
-								contains_extra_spaces, tm, &is_year_set);
+	/*
+	 * throw error if the return value is not zero.
+	 */
+	if(tsql_decode_datetime_fields(str, modified_str, field, nf, ftype, 
+					contains_extra_spaces, tm, &is_year_set))
+	{
+		if (modified_str)
+			pfree(modified_str);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				errmsg("invalid input syntax for type datetime: \"%s\"", str)));
+	}
+
+	if (modified_str)
+		pfree(modified_str);
 	
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, 
-							   &dtype, tm, &fsec, &tz, &extra);
+							&dtype, tm, &fsec, &tz, &extra);
 
 	/* dterr == 1 means that input is TIME format(e.g 12:34:59.123) */
 	if (dterr == 1 || is_year_set)

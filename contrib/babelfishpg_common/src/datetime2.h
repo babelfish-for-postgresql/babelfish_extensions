@@ -20,7 +20,7 @@
 /* Range-check a datetime */
 #define IS_VALID_DATETIME2(t)  (MIN_DATETIME2 <= (t) && (t) < END_DATETIME2)
 
-extern void tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
+extern int tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 				bool contains_extra_spaces, struct pg_tm *tm,
 				bool *is_year_set, bool dump_restore, int context);
 
