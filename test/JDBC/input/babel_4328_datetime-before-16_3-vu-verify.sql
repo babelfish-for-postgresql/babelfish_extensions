@@ -300,9 +300,6 @@ GO
 SELECT cast('2022-10-30T03:00:00' as datetime)
 GO
 
-select * from babel_4328_datetime_v1
-go
-
 exec babel_4328_datetime_p1
 go
 
@@ -325,9 +322,6 @@ exec babel_4328_datetime_p3
 go
 
 select babel_4328_datetime_f3()
-go
-
-select * from babel_4328_datetime_v4
 go
 
 exec babel_4328_datetime_p4

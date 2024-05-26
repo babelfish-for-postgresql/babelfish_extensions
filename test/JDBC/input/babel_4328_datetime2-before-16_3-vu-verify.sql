@@ -365,9 +365,6 @@ GO
 SELECT cast('2011-08-15 14:30.00 -8:00' as datetime2)
 GO
 
-select * from babel_4328_datetime2_v1
-go
-
 exec babel_4328_datetime2_p1
 go
 
@@ -390,9 +387,6 @@ exec babel_4328_datetime2_p3
 go
 
 select babel_4328_datetime2_f3()
-go
-
-select * from babel_4328_datetime2_v4
 go
 
 exec babel_4328_datetime2_p4

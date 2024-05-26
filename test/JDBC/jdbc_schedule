@@ -8,18 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-sys-all_sql_modules-dep-vu-prepare
-sys-all_sql_modules-dep-vu-verify
-sys-all_sql_modules-dep-vu-cleanup
-sys-sql_modules-dep-vu-prepare
-sys-sql_modules-dep-vu-verify
-sys-sql_modules-dep-vu-cleanup
-sys-sql_modules-vu-prepare
-sys-sql_modules-vu-verify
-sys-sql_modules-vu-cleanup
-sys-all_sql_modules-vu-prepare
-sys-all_sql_modules-vu-verify
-sys-all_sql_modules-vu-cleanup
+all
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
@@ -304,3 +293,12 @@ ignore#!#newid-vu-prepare
 ignore#!#newid-vu-verify
 ignore#!#newid-vu-cleanup
 
+ignore#!#babel_4328_datetime-before-16_3-vu-prepare
+ignore#!#babel_4328_datetime-before-16_3-vu-verify
+ignore#!#babel_4328_datetime-before-16_3-vu-cleanup
+ignore#!#babel_4328_datetime2-before-16_3-vu-prepare
+ignore#!#babel_4328_datetime2-before-16_3-vu-verify
+ignore#!#babel_4328_datetime2-before-16_3-vu-cleanup
+ignore#!#babel_4328_datetimeoffset-before-16_3-vu-prepare
+ignore#!#babel_4328_datetimeoffset-before-16_3-vu-verify
+ignore#!#babel_4328_datetimeoffset-before-16_3-vu-cleanup

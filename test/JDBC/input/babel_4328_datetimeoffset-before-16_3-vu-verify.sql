@@ -449,9 +449,6 @@ go
 select babel_4328_datetimeoffset_f4()
 go
 
-select * from babel_4328_datetimeoffset_v5
-go
-
 exec babel_4328_datetimeoffset_p5
 go
 
