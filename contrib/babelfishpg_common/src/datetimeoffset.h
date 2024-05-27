@@ -17,7 +17,7 @@
  * So the limit to mins will be 14*60+1 = 841
  */
 #define DATETIMEOFFSET_TIMEZONE_LIMIT 841
-
+#define DATETIMEOFFSET_MAX INT64CONST(252455616000000000)
 
 extern void AdjustTimestampForSmallDatetime(Timestamp *time);
 extern void CheckSmalldatetimeRange(const Timestamp time);
