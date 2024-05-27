@@ -64,21 +64,25 @@ void		CheckDatetimePrecision(fsec_t fsec);
 
 #define DTK_NANO 32
 
-static const char *regex_time_offset = "(((\\+|\\-)[0-9]{1,2}:[0-9]{1,2})|Z)?";
-
-int
-check_regex_for_text_month(char *str, int context)
+/*
+ * This function checks the regex in case of the text month.
+ * We will be checking with the combination of date regex's and
+ * time regex's.
+ */
+bool
+check_regex_for_text_month(char *str, DateTimeContext context)
 {
 	regex_t regex;
 	char curr_regex[200];
     	int status, i, j;
+	const char *regex_time_offset = "(((\\+|\\-)[0-9]{1,2}:[0-9]{1,2})|Z)?";
 
 	for (i = 0; i < num_date_regexes; i++) {
 		/*
 		 * check for just date syntax
 		 */
 		strcpy(curr_regex, "^");
-        	strcat(curr_regex, regex_date_set[i]);
+        	strcat(curr_regex, date_regexes[i]);
         	strcat(curr_regex, "$");
     		status = regcomp(&regex, curr_regex, REG_EXTENDED);
     		status = regexec(&regex, str, 0, NULL, 0);
@@ -92,7 +96,7 @@ check_regex_for_text_month(char *str, int context)
 			 * check for just time syntax
 			 */
 			strcpy(curr_regex, "^");
-        		strcat(curr_regex, regex_time_set[j]);
+        		strcat(curr_regex, time_regexes[j]);
 			if (context == DATE_TIME_OFFSET)
 			{
 				strcat(curr_regex, "\\s*");
@@ -110,9 +114,9 @@ check_regex_for_text_month(char *str, int context)
 			 * check for the combination of date and time
 			 */
 			strcpy(curr_regex, "^");
-			strcat(curr_regex, regex_date_set[i]);
+			strcat(curr_regex, date_regexes[i]);
             		strcat(curr_regex, "\\s+");
-            		strcat(curr_regex, regex_time_set[j]);
+            		strcat(curr_regex, time_regexes[j]);
 			if (context == DATE_TIME_OFFSET)
 			{
 				strcat(curr_regex, "\\s*");
@@ -131,8 +135,12 @@ check_regex_for_text_month(char *str, int context)
 	return 0;
 }
 
+/*
+ * This function cleans up the input string by removing
+ * unnecessary spaces between the fields.
+ */
 char*
-clean_input_str(char *str, bool *contains_extra_spaces, int context)
+clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 {
 	char *result = (char *) palloc(MAXDATELEN);
 	int i = 0, j = 0;
@@ -158,16 +166,23 @@ clean_input_str(char *str, bool *contains_extra_spaces, int context)
 			num_colons++;
 
 		/*
-		 * Modify DATE delimiters to '.'
+		 * Modify DATE delimiters to '.' as in DATETIME multiple delimiters can
+		 * be passed for DATE field.
 		 */
 		if (context == DATE_TIME && (str[i] == '/' || str[i] == '-' || str[i] == '.'))
 		{
 			result[j] = '.';
 			j++;
 		}
+		/*
+		 * If the current character is an alphabet, do not add
+		 * space if the last non space character is a delimiter,
+		 * else an additional space is required.
+		 */
 		else if (isalpha(str[i]))
 		{
-			if (!isdigit(str[last_non_space]) && !isalpha(str[last_non_space]))
+			if (last_non_space == -1 ||
+				(!isdigit(str[last_non_space]) && !isalpha(str[last_non_space])))
 			{
 				result[j] = str[i];
 				j++;
@@ -190,11 +205,16 @@ clean_input_str(char *str, bool *contains_extra_spaces, int context)
 				j+=2;
 			}
 		}
-		
+		/*
+		 * If the current character is a digit, do not add
+		 * space if the last non space character is a delimiter,
+		 * else an additional space is required.
+		 */
 		else if (isdigit(str[i]))
 		{
 			
-			if (!isdigit(str[last_non_space]) && !isalpha(str[last_non_space]))
+			if (last_non_space == -1 || 
+				(!isdigit(str[last_non_space]) && !isalpha(str[last_non_space])))
 			{
 				result[j] = str[i];
 				j++;
@@ -217,12 +237,10 @@ clean_input_str(char *str, bool *contains_extra_spaces, int context)
 				j+=2;
 			}
 		}
-		else if (num_colons > 0 && (str[i] == '-' || str[i] == '+'))
-		{
-			result[j] = ' ';
-			result[j+1] = str[i];
-			j+=2;
-		}
+		/*
+		 * If the context is DATETIME only ',' and ': are allowed
+		 * other than above mentioned characters.
+		 */
 		else if (context != DATE_TIME || (str[i] == ',' || str[i] == ':'))
 		{
 			result[j] = str[i];
@@ -248,7 +266,7 @@ clean_input_str(char *str, bool *contains_extra_spaces, int context)
 	
 }
 
-static int
+static bool
 tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 						bool contains_extra_spaces, struct pg_tm *tm,
 						bool *is_year_set)

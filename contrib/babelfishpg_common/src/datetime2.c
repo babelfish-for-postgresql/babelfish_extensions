@@ -37,10 +37,10 @@ static void AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod);
 static Datum datetime2_in_str(char *str, int32 typmod, Node *escontext);
 void		CheckDatetime2Range(const Timestamp time, Node *escontext);
 
-int
+bool
 tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 				bool contains_extra_spaces, struct pg_tm *tm,
-				bool *is_year_set, bool dump_restore, int context)
+				bool *is_year_set, bool dump_restore, DateTimeContext context)
 {
 	int i, num_colons = 0, time_idx = nf;
 	bool 		date_exists = false;
