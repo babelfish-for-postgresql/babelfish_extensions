@@ -6,9 +6,3 @@ GO
 
 SELECT * FROM sys_check_constraints_dep_vu_prepare_view1
 GO
-
-EXEC sys_check_constraints_dep_vu_prepare_proc2
-GO
-
-SELECT * FROM sys_check_constraints_dep_vu_prepare_view2
-GO

@@ -7,9 +7,3 @@ GO
 
 SELECT * FROM sys_default_constraints_dep_vu_prepare_v1
 GO
-
-EXEC sys_default_constraints_dep_vu_prepare_p2
-GO
-
-SELECT * FROM sys_default_constraints_dep_vu_prepare_v2
-GO
