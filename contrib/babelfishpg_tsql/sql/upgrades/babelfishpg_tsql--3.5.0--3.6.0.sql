@@ -500,7 +500,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_time(TEXT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_deprecated_in_3_6_0_1;
+    ALTER FUNCTION sys.babelfish_conv_helper_to_time(TEXT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_with_arg_text_deprecated_in_3_6_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -513,7 +513,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_time(ANYELEMENT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_deprecated_in_3_6_0_2;
+    ALTER FUNCTION sys.babelfish_conv_helper_to_time(ANYELEMENT, BOOL, NUMERIC) RENAME TO babelfish_conv_helper_to_time_with_arg_anyelement_deprecated_in_3_6_0;
 EXCEPTION
     WHEN undefined_function THEN
         GET STACKED DIAGNOSTICS
@@ -5702,12 +5702,12 @@ LANGUAGE plpgsql IMMUTABLE;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_date');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_date');
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_deprecated_in_3_6_0_1');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_deprecated_in_3_6_0_2');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_with_arg_text_deprecated_in_3_6_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_time_with_arg_anyelement_deprecated_in_3_6_0');
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT * FROM pg_proc 
-                            WHERE proname like 'babelfish_conv_helper_to_time_deprecated_in_%' AND
+    IF NOT EXISTS (SELECT * FROM pg_proc
+                            WHERE proname = 'babelfish_conv_helper_to_time_with_arg_text_deprecated_in_3_6_0' AND
                             pronamespace = 'sys'::regnamespace::oid)
     THEN
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_time');
@@ -5719,9 +5719,12 @@ $$;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_datetime_deprecated_in_3_6_0');
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT * FROM pg_proc
-                            WHERE proname like 'babelfish_conv_helper_to_datetime_deprecated_in_%' AND
-                            pronamespace = 'sys'::regnamespace::oid)
+    IF (NOT EXISTS (SELECT * FROM pg_proc
+                            WHERE proname = 'babelfish_conv_helper_to_datetime_deprecated_in_2_3_0_1' AND
+                            pronamespace = 'sys'::regnamespace::oid) AND
+        NOT EXISTS (SELECT * FROM pg_proc
+                            WHERE proname like 'babelfish_conv_helper_to_datetime_deprecated_in_3_6_0' AND
+                            pronamespace = 'sys'::regnamespace::oid))
     THEN
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_string_to_datetime');
         CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_string_to_datetime');
