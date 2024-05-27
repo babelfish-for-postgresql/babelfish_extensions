@@ -2,4 +2,7 @@ DROP PROCEDURE IF EXISTS sys_computed_columns_dep_vu_prepare_p1
 DROP FUNCTION IF EXISTS sys_computed_columns_dep_vu_prepare_f1
 DROP VIEW IF EXISTS sys_computed_columns_dep_vu_prepare_v1
 DROP TABLE IF EXISTS sys_computed_columns_dep_vu_prepare_t1
+DROP PROCEDURE IF EXISTS sys_computed_columns_dep_vu_prepare_p2
+DROP VIEW IF EXISTS sys_computed_columns_dep_vu_prepare_v2
+DROP TABLE IF EXISTS sys_computed_columns_dep_vu_prepare_t2
 GO
