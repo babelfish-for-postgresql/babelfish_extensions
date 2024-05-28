@@ -558,9 +558,10 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 							pg_strcasecmp(col1->name, "scheme_id") == 0)
 							scheme_id_found = true;
 					}
+					// fix this
 					if (dbid_found && (owner_found || relid != sysdatabases_oid)
-							&& (function_id_found && relid == bbf_partition_function_oid)
-							&& (scheme_id_found && relid == bbf_partition_scheme_oid))
+							&& (function_id_found || relid != bbf_partition_function_oid)
+							&& (scheme_id_found || relid != bbf_partition_scheme_oid))
 						break;
 
 					/*

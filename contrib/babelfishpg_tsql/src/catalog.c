@@ -5192,7 +5192,7 @@ char *get_partition_function(char *partition_scheme_name)
 	HeapTuple	tuple;
 	SysScanDesc	scan;
 	ScanKeyData	scanKey[2];
-	char		*partition_function_name;
+	char		*partition_function_name = NULL;
 	int16		dbid = get_cur_db_id();
 
 	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);

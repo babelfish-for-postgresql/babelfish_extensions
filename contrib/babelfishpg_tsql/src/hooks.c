@@ -4829,7 +4829,7 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 	 * Insert new scheme_id column value in babelfish_partition_scheme
 	 * if dump did not provide it.
 	 */
-	if (relid == bbf_partition_function_oid)
+	if (relid == bbf_partition_scheme_oid)
 	{
 		AttrNumber	attnum;
 
