@@ -2,7 +2,7 @@ SELECT * FROM BABEL_3614_vu_prepare_v1
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:10.1234600
+2017-08-25 13:01:10.12346
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v1
@@ -12,7 +12,7 @@ EXEC BABEL_3614_vu_prepare_p1
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:10.1234600
+2017-08-25 13:01:10.12346
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p1
@@ -32,7 +32,7 @@ SELECT * FROM BABEL_3614_vu_prepare_v2
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:10.1230000
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v2
@@ -42,7 +42,7 @@ EXEC BABEL_3614_vu_prepare_p2
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:10.1230000
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p2
@@ -62,7 +62,7 @@ SELECT * FROM BABEL_3614_vu_prepare_v3
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:10.1000000
+2017-08-25 13:01:10.1
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v3
@@ -72,7 +72,7 @@ EXEC BABEL_3614_vu_prepare_p3
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:10.1000000
+2017-08-25 13:01:10.1
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p3
@@ -92,7 +92,7 @@ SELECT * FROM BABEL_3614_vu_prepare_v4
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:10.1234570
+2017-08-25 13:01:10.123457
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v4
@@ -102,7 +102,7 @@ EXEC BABEL_3614_vu_prepare_p4
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:10.1234570
+2017-08-25 13:01:10.123457
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p4
@@ -174,7 +174,7 @@ GO
 datetime2
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type "decimal" to datetime2.)~~
+~~ERROR (Message: Explicit conversion from data type "decimal" to datetime2 is not allowed.)~~
 
 DROP VIEW BABEL_3614_vu_prepare_v7
 GO
@@ -185,7 +185,7 @@ GO
 datetime2
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type "decimal" to datetime2.)~~
+~~ERROR (Message: Explicit conversion from data type "decimal" to datetime2 is not allowed.)~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p7
 GO
@@ -196,7 +196,7 @@ GO
 datetime2
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type "decimal" to datetime2.)~~
+~~ERROR (Message: Explicit conversion from data type "decimal" to datetime2 is not allowed.)~~
 
 DROP FUNCTION BABEL_3614_vu_prepare_f7()
 GO
@@ -265,7 +265,7 @@ SELECT * FROM BABEL_3614_vu_prepare_v10
 GO
 ~~START~~
 datetime2
-9999-12-31 23:59:59.9999990
+9999-12-31 23:59:59.999999
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v10
@@ -275,7 +275,7 @@ EXEC BABEL_3614_vu_prepare_p10
 GO
 ~~START~~
 datetime2
-9999-12-31 23:59:59.9999990
+9999-12-31 23:59:59.999999
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p10
@@ -385,7 +385,7 @@ SELECT * FROM BABEL_3614_vu_prepare_v14
 GO
 ~~START~~
 datetime2
-1900-01-01 13:01:10.1200000
+1900-01-01 13:01:10.12
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v14
@@ -395,7 +395,7 @@ EXEC BABEL_3614_vu_prepare_p14
 GO
 ~~START~~
 datetime2
-1900-01-01 13:01:10.1200000
+1900-01-01 13:01:10.12
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p14
@@ -415,7 +415,7 @@ SELECT * FROM BABEL_3614_vu_prepare_v15
 GO
 ~~START~~
 datetime2
-1900-01-01 13:01:10.0000000
+1900-01-01 13:01:10
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v15
@@ -425,7 +425,7 @@ EXEC BABEL_3614_vu_prepare_p15
 GO
 ~~START~~
 datetime2
-1900-01-01 13:01:10.0000000
+1900-01-01 13:01:10
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p15

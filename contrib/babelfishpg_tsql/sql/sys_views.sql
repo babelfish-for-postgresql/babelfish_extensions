@@ -1238,7 +1238,7 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(d.adnum as int) as parent_column_id
-  , CAST(tsql_get_expr(d.adbin, d.adrelid) as sys.nvarchar(4000)) as definition
+  , CAST(tsql_get_expr(d.adbin, d.adrelid) as sys.nvarchar) as definition
   , CAST(1 as sys.bit) as is_system_named
 from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
@@ -1265,7 +1265,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(0 as sys.bit) as is_not_for_replication
   , CAST(0 as sys.bit) as is_not_trusted
   , CAST(c.conkey[1] as integer) AS parent_column_id
-  , CAST(tsql_get_constraintdef(c.oid) as sys.nvarchar(4000)) AS definition
+  , CAST(tsql_get_constraintdef(c.oid) as sys.nvarchar) AS definition
   , CAST(1 as sys.bit) as uses_database_collation
   , CAST(0 as sys.bit) as is_system_named
 FROM pg_catalog.pg_constraint as c
@@ -1968,7 +1968,6 @@ select
 from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
 
--- TODO: BABEL-3127
 CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
@@ -1977,7 +1976,7 @@ SELECT
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       ELSE NULL
       END
-    AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
+    AS sys.nvarchar) AS definition
   , CAST(1 as sys.bit)  AS uses_ansi_nulls
   , CAST(1 as sys.bit)  AS uses_quoted_identifier
   , CAST(0 as sys.bit)  AS is_schema_bound
@@ -2012,7 +2011,7 @@ GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 CREATE OR REPLACE VIEW sys.all_sql_modules AS
 SELECT
      CAST(t1.object_id as int)
-    ,CAST(t1.definition as sys.nvarchar(4000))
+    ,CAST(t1.definition as sys.nvarchar)
     ,CAST(t1.uses_ansi_nulls as sys.bit)
     ,CAST(t1.uses_quoted_identifier as sys.bit)
     ,CAST(t1.is_schema_bound as sys.bit)
@@ -2027,7 +2026,7 @@ GRANT SELECT ON sys.all_sql_modules TO PUBLIC;
 CREATE OR REPLACE VIEW sys.system_sql_modules AS
 SELECT
      CAST(t1.object_id as int)
-    ,CAST(t1.definition as sys.nvarchar(4000))
+    ,CAST(t1.definition as sys.nvarchar)
     ,CAST(t1.uses_ansi_nulls as sys.bit)
     ,CAST(t1.uses_quoted_identifier as sys.bit)
     ,CAST(t1.is_schema_bound as sys.bit)
@@ -2043,7 +2042,7 @@ GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
 CREATE OR REPLACE VIEW sys.sql_modules AS
 SELECT
      CAST(t1.object_id as int)
-    ,CAST(t1.definition as sys.nvarchar(4000))
+    ,CAST(t1.definition as sys.nvarchar)
     ,CAST(t1.uses_ansi_nulls as sys.bit)
     ,CAST(t1.uses_quoted_identifier as sys.bit)
     ,CAST(t1.is_schema_bound as sys.bit)
@@ -2106,7 +2105,7 @@ SELECT out_object_id as object_id
   , out_is_masked as is_masked
   , out_graph_type as graph_type
   , out_graph_type_desc as graph_type_desc
-  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar(4000)) AS definition
+  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar) AS definition
   , 1::sys.bit AS uses_database_collation
   , 1::sys.bit AS is_persisted
 FROM sys.columns_internal() sc
@@ -2617,7 +2616,7 @@ SELECT
   , CAST(idx.allow_row_locks AS sys.bit) AS allow_row_locks
   , CAST(idx.allow_page_locks AS sys.bit) AS allow_page_locks
   , CAST(idx.has_filter AS sys.bit) AS has_filter
-  , CAST(idx.filter_definition AS sys.nvarchar(4000)) AS filter_definition
+  , CAST(idx.filter_definition AS sys.nvarchar) AS filter_definition
   , CAST(idx.auto_created AS sys.bit) AS auto_created
   , CAST(NULL AS INT) AS using_xml_index_id
   , CAST(NULL AS sys.bpchar(1)) AS secondary_type
@@ -2833,7 +2832,7 @@ SELECT
    CAST(0 as sys.BIT) AS user_created,
    CAST(0 as sys.BIT) AS no_recompute,
    CAST(0 as sys.BIT) AS has_filter,
-   CAST('' as sys.NVARCHAR(4000)) AS filter_definition,
+   CAST('' as sys.NVARCHAR) AS filter_definition,
    CAST(0 as sys.BIT) AS is_temporary,
    CAST(0 as sys.BIT) AS is_incremental,
    CAST(0 as sys.BIT) AS has_persisted_sample,
@@ -2930,13 +2929,13 @@ SELECT
   , CAST(NULL as sys.datetime) as create_date
   , CAST(NULL as sys.datetime) as modify_date
   , CAST(0 as sys.bit) as is_disabled
-  , CAST('' as sys.nvarchar(4000)) AS query_text
+  , CAST('' as sys.nvarchar) AS query_text
   , CAST(0 as sys.tinyint) AS scope_type
   , CAST('' as sys.nvarchar(60)) AS scope_type_desc
   , CAST(0 as int) AS scope_type_id
-  , CAST('' as sys.nvarchar(4000)) AS scope_batch
-  , CAST('' as sys.nvarchar(4000)) AS parameters
-  , CAST('' as sys.nvarchar(4000)) AS hints
+  , CAST('' as sys.nvarchar) AS scope_batch
+  , CAST('' as sys.nvarchar) AS parameters
+  , CAST('' as sys.nvarchar) AS hints
 WHERE FALSE;
 GRANT SELECT ON sys.plan_guides TO PUBLIC;
 
@@ -3106,7 +3105,7 @@ AS
 SELECT 
     CAST(0 as int) AS object_id
   , CAST(0 as smallint) AS procedure_number
-  , CAST('' as sys.nvarchar(4000)) AS definition
+  , CAST('' as sys.nvarchar) AS definition
 WHERE FALSE; -- This condition will ensure that the view is empty
 GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
