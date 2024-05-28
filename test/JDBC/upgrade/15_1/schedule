@@ -81,11 +81,11 @@ BABEL-3370
 BABEL-3380
 BABEL-3402
 BABEL-3474
-BABEL-3486
+BABEL-3486-before-15_7
 BABEL-3513
 BABEL-3556
 BABEL-3588
-BABEL-3614
+BABEL-3614-before-15_7
 BABEL-3640
 BABEL-3646
 BABEL-3655
@@ -409,3 +409,9 @@ BABEL-4641-before-16_3-or-15_7-or-14_12
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
 BABEL-4815
+test_conv_string_to_date-before-15_7
+test_conv_string_to_datetime-before-15_7
+test_conv_string_to_datetime2-before-15_7
+test_conv_string_to_datetimeoffset-before-15_7
+test_conv_string_to_smalldatetime
+test_conv_string_to_time-before-15_7

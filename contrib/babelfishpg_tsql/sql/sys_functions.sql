@@ -4032,8 +4032,8 @@ BEGIN
     ELSE
         -- Round datetime to fixed bins (e.g. .000, .003, .007)
         IF date_arg_datatype = 'sys.datetime'::regtype THEN
-            date := sys.babelfish_conv_string_to_datetime('DATETIME', date::TEXT)::sys.datetime;
-            origin := sys.babelfish_conv_string_to_datetime('DATETIME', origin::TEXT)::sys.datetime;
+            date := sys.babelfish_conv_string_to_datetime_v2('DATETIME', date::TEXT)::sys.datetime;
+            origin := sys.babelfish_conv_string_to_datetime_v2('DATETIME', origin::TEXT)::sys.datetime;
         END IF;
         -- when datepart is {year, quarter, month} make use of AGE() function to find number of buckets
         IF datepart IN ('year', 'quarter', 'month') THEN

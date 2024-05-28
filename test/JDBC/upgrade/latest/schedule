@@ -528,3 +528,9 @@ login_token-dep
 test_like_for_AI
 BABEL-4869
 BABEL-4815
+test_conv_string_to_date
+test_conv_string_to_datetime
+test_conv_string_to_datetime2
+test_conv_string_to_datetimeoffset
+test_conv_string_to_smalldatetime
+test_conv_string_to_time
