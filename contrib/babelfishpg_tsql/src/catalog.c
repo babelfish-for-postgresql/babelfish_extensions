@@ -4760,24 +4760,31 @@ get_available_partition_scheme_id(void)
  * 		checks if partition function is used by any partition scheme
  */
 static bool 
-is_partition_function_used(int32 partition_function_id)
+is_partition_function_used(char *partition_function_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
 	SysScanDesc	scan;
-	ScanKeyData	scanKey;
+	ScanKeyData	scanKey[2];
 	bool		is_used = false;
+	int16		dbid = get_cur_db_id();
 
 	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
 	
-	ScanKeyInit(&scanKey,
-			Anum_bbf_partition_scheme_func_id,
-			BTEqualStrategyNumber, F_INT2EQ,
-			Int32GetDatum(partition_function_id));
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_scheme_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_scheme_func_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 
 	scan = systable_beginscan(rel,
 			get_bbf_partition_scheme_idx_oid(),
-			false, NULL, 1, &scanKey);
+			false, NULL, 2, scanKey);
 
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
@@ -4846,7 +4853,7 @@ remove_entry_from_bbf_partition_function(char *partition_function_name)
 	ScanKeyData	scanKey[2];
 	SysScanDesc	scan;
 	int16		dbid = get_cur_db_id();
-	int32		partition_function_id = 0;
+	int32		partition_function_exists = false;
 	bool		has_dependent_objects = true;
 
 	/* Fetch the relation */
@@ -4869,12 +4876,9 @@ remove_entry_from_bbf_partition_function(char *partition_function_name)
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
 	{	
-		bool isnull;
-		partition_function_id = DatumGetInt32(heap_getattr(tuple, Anum_bbf_partition_function_id,
-									RelationGetDescr(rel), &isnull));
-
-		/* remove the entry only if there is no dependent  partition scheme on it */
-		if (!is_partition_function_used(partition_function_id))
+		partition_function_exists = true;
+		/* remove the entry only if there is no dependent partition scheme on it */
+		if (!is_partition_function_used(partition_function_name))
 		{
 			has_dependent_objects = false;
 			CatalogTupleDelete(rel, &tuple->t_self);
@@ -4885,7 +4889,7 @@ remove_entry_from_bbf_partition_function(char *partition_function_name)
 	table_close(rel, RowExclusiveLock);
 
 	/* raise error if it doesn't exists in database */
-	if(!partition_function_id) /* implies that it doesn't exists in database */
+	if(!partition_function_exists)
 	{
 		ereport(ERROR, 
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4902,11 +4906,11 @@ remove_entry_from_bbf_partition_function(char *partition_function_name)
 }
 
 /*
- * get_partition_function_id
- * 		Returns the partition function id for the given partition function name.
+ * partition_function_exists
+ * 		checks if provided partition function name exists in database
  */
-int32
-get_partition_function_id(char *partition_function_name)
+bool
+partition_function_exists(char *partition_function_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -4991,26 +4995,35 @@ get_partition_count(char *partition_function_name)
 /*
  * is_partition_scheme_used
  * 		checks if partition scheme is used by any partitioned table or not
- * 		 by looking up sys.babelfish_partition_depend catalog
+ * 		by looking up sys.babelfish_partition_depend catalog
  */
 static 
-bool is_partition_scheme_used(int32 partition_scheme_id)
+bool is_partition_scheme_used(char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
+	ScanKeyData scanKey[2];
 	SysScanDesc scan;
 	bool is_used = false;
+	int16	dbid = get_cur_db_id();
 
-	rel = table_open(get_bbf_partition_depend_oid(), AccessShareLock);
-	ScanKeyInit(&scanKey,
-			Anum_bbf_partition_depend_scheme_id,
-			BTEqualStrategyNumber, F_INT2EQ,
-			Int32GetDatum(partition_scheme_id));
+ 	rel = table_open(get_bbf_partition_depend_oid(), AccessShareLock);
+ 	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_depend_scheme_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
+
 
 	scan = systable_beginscan(rel,
 			get_bbf_partition_depend_idx_oid(),
-			false, NULL, 1, &scanKey);
+			false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
@@ -5026,7 +5039,7 @@ bool is_partition_scheme_used(int32 partition_scheme_id)
  *		Add a new entry to the sys.babelfish_partition_scheme catalog table.
  */
 void
-add_entry_to_bbf_partition_scheme(char *partition_scheme_name, int32 partition_func_id, bool next_used)
+add_entry_to_bbf_partition_scheme(char *partition_scheme_name, char *partition_function_name, bool next_used)
 {
 	Relation	rel;
 	TupleDesc	dsc;
@@ -5047,7 +5060,7 @@ add_entry_to_bbf_partition_scheme(char *partition_scheme_name, int32 partition_f
 	new_record[Anum_bbf_partition_scheme_dbid - 1] = Int16GetDatum(dbid);
 	new_record[Anum_bbf_partition_scheme_id - 1] = Int32GetDatum(partition_scheme_id);
 	new_record[Anum_bbf_partition_scheme_name - 1] = CStringGetTextDatum(partition_scheme_name);
-	new_record[Anum_bbf_partition_scheme_func_id - 1] = Int32GetDatum(partition_func_id);
+	new_record[Anum_bbf_partition_scheme_func_name - 1] = CStringGetTextDatum(partition_function_name);
 	new_record[4] = BoolGetDatum(next_used);
 
 	tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
@@ -5075,7 +5088,7 @@ remove_entry_from_bbf_partition_scheme(char *partition_scheme_name)
 	ScanKeyData	scanKey[2];
 	SysScanDesc	scan;
 	int16		dbid = get_cur_db_id();
-	int32 		partition_scheme_id = 0;
+	bool 		partition_scheme_exists = false;
 	bool 		has_dependent_objects = true;
 
 	/* open the relation */
@@ -5098,11 +5111,9 @@ remove_entry_from_bbf_partition_scheme(char *partition_scheme_name)
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
 	{
-		bool isnull;
-		partition_scheme_id = DatumGetInt32(heap_getattr(tuple, Anum_bbf_partition_scheme_id, RelationGetDescr(rel), &isnull));
-
+		partition_scheme_exists = true;
 		/* remove the entry only if there is no dependent tables on it */
-		if (!is_partition_scheme_used(partition_scheme_id))
+		if (!is_partition_scheme_used(partition_scheme_name))
 		{
 			has_dependent_objects = false;
 			CatalogTupleDelete(rel, &tuple->t_self);
@@ -5114,7 +5125,7 @@ remove_entry_from_bbf_partition_scheme(char *partition_scheme_name)
 	table_close(rel, RowExclusiveLock);
 
 	/* raise error if it doesn't exists in database */
-	if (!partition_scheme_id)
+	if (!partition_scheme_exists)
 	{
 		ereport(ERROR, 
 			(errcode(ERRCODE_UNDEFINED_OBJECT), 
@@ -5131,17 +5142,17 @@ remove_entry_from_bbf_partition_scheme(char *partition_scheme_name)
 }
 
 /*
- * get_partition_scheme_id
- * 		Returns the partition scheme id for the given partition scheme name.
+ * partition_scheme_exists
+ * 		checks if provided partition scheme name exists in database
  */
-int32
-get_partition_scheme_id(char *partition_scheme_name)
+bool
+partition_scheme_exists(char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
 	SysScanDesc	scan;
 	ScanKeyData	scanKey[2];
-	int32		partition_scheme_id = 0;
+	bool		exists = false;
 	int16		dbid = get_cur_db_id();
 
 	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
@@ -5163,26 +5174,25 @@ get_partition_scheme_id(char *partition_scheme_name)
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
 	{
-		bool isnull;
-		partition_scheme_id = DatumGetInt32(heap_getattr(tuple, Anum_bbf_partition_scheme_id, RelationGetDescr(rel), &isnull));
+		exists = true;
 	}
 
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
-	return partition_scheme_id;
+	return exists;
 }
 
 /*
  * get_partition_function
  * 		Returns the partition function name for the given partition scheme name.
  */
-int32 get_partition_function(char *partition_scheme_name)
+char *get_partition_function(char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
 	SysScanDesc	scan;
 	ScanKeyData	scanKey[2];
-	int32		partition_function_id = 0;
+	char		*partition_function_name;
 	int16		dbid = get_cur_db_id();
 
 	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
@@ -5204,15 +5214,13 @@ int32 get_partition_function(char *partition_scheme_name)
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
 	{
-		Datum datum;
 		bool isnull;
-		datum = heap_getattr(tuple, Anum_bbf_partition_scheme_func_id, RelationGetDescr(rel), &isnull);
-		partition_function_id = DatumGetInt32(datum);
+		partition_function_name = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_scheme_func_name, RelationGetDescr(rel), &isnull));
 	}
 
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
-	return partition_function_id;
+	return partition_function_name;
 }
 
 /*

@@ -2535,11 +2535,13 @@ SELECT
   CAST('PARTITION_SCHEME' as sys.nvarchar(60)) as type_desc,
   CAST(0 as sys.bit) as is_default,
   CAST(0 as sys.bit) as is_system,
-  function_id
+  pf.function_id
 FROM
-  sys.babelfish_partition_scheme
+  sys.babelfish_partition_scheme ps
+INNER JOIN
+  sys.babelfish_partition_function pf ON (pf.partition_function_name = ps.partition_function_name and ps.dbid = pf.dbid)
 WHERE
-  dbid = sys.db_id();
+  ps.dbid = sys.db_id();
 GRANT SELECT ON sys.partition_schemes TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.data_spaces

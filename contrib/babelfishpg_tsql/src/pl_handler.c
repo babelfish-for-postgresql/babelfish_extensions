@@ -518,7 +518,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				relid = RangeVarGetRelid(stmt->relation, NoLock, false);
 
 				/*
-				 * Insert new dbid, owner, partition_id and scheme_id column values
+				 * Insert new dbid, owner, function_id and scheme_id column values
 				 * in babelfish catalog if dump did not provide it.
 				 */
 				if (relid == sysdatabases_oid ||

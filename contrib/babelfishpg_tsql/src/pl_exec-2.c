@@ -4133,7 +4133,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		}
 
 		/* check if there is existing partition function with the given name */
-		if(get_partition_function_id(partition_function_name))
+		if(partition_function_exists(partition_function_name))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_DUPLICATE_FUNCTION),
@@ -4277,7 +4277,6 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 
 	if(stmt->is_create)
 	{
-		int		partition_func_id;
 		bool		next_used = false;
 		int		filegroups = stmt->filegroups;
 		char		*partition_func_name = stmt->function_name;
@@ -4292,7 +4291,7 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 		}
 
 		/* raise error if provided partition function doesn't exists in database */
-		if(!(partition_func_id = get_partition_function_id(partition_func_name)))
+		if(!partition_function_exists(partition_func_name))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4325,13 +4324,13 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 		}
 
 		/* check if there is existing partition scheme with the given name */
-		if(get_partition_scheme_id(partition_scheme_name))
+		if(partition_scheme_exists(partition_scheme_name))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					errmsg("There is already an object named '%s' in the database.", partition_scheme_name)));
 		}
-		add_entry_to_bbf_partition_scheme(partition_scheme_name, partition_func_id, next_used);
+		add_entry_to_bbf_partition_scheme(partition_scheme_name, partition_func_name, next_used);
 	}
 	else /* drop */
 	{	
