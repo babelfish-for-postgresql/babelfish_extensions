@@ -445,10 +445,207 @@ FROM sys.all_sql_modules_internal t1
 WHERE t1.is_ms_shipped = 0;
 GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
+ALTER VIEW sys.default_constraints RENAME TO default_constraints_deprecated_2_9_0;
+
+create or replace view sys.default_constraints
+AS
+select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
+  , CAST(d.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(tab.schema_id as int) as schema_id
+  , CAST(d.adrelid as int) as parent_object_id
+  , CAST('D' as char(2)) as type
+  , CAST('DEFAULT_CONSTRAINT' as sys.nvarchar(60)) AS type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modified_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(d.adnum as int) as parent_column_id
+  , CAST(tsql_get_expr(d.adbin, d.adrelid) as sys.nvarchar) as definition
+  , CAST(1 as sys.bit) as is_system_named
+from pg_catalog.pg_attrdef as d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join sys.tables tab on d.adrelid = tab.object_id
+WHERE a.atthasdef = 't' and a.attgenerated = ''
+AND has_schema_privilege(tab.schema_id, 'USAGE')
+AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+GRANT SELECT ON sys.default_constraints TO PUBLIC;
+
+ALTER VIEW sys.check_constraints RENAME TO check_constraints_deprecated_2_9_0;
+
+CREATE or replace VIEW sys.check_constraints AS
+SELECT CAST(c.conname as sys.sysname) as name
+  , CAST(oid as integer) as object_id
+  , CAST(NULL as integer) as principal_id 
+  , CAST(c.connamespace as integer) as schema_id
+  , CAST(conrelid as integer) as parent_object_id
+  , CAST('C' as char(2)) as type
+  , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(0 as sys.bit) as is_disabled
+  , CAST(0 as sys.bit) as is_not_for_replication
+  , CAST(0 as sys.bit) as is_not_trusted
+  , CAST(c.conkey[1] as integer) AS parent_column_id
+  , CAST(tsql_get_constraintdef(c.oid) as sys.nvarchar) AS definition
+  , CAST(1 as sys.bit) as uses_database_collation
+  , CAST(0 as sys.bit) as is_system_named
+FROM pg_catalog.pg_constraint as c
+INNER JOIN sys.schemas s on c.connamespace = s.schema_id
+WHERE has_schema_privilege(s.schema_id, 'USAGE')
+AND c.contype = 'c' and c.conrelid != 0;
+GRANT SELECT ON sys.check_constraints TO PUBLIC;
+
+ALTER VIEW sys.computed_columns RENAME TO computed_columns_deprecated_2_9_0;
+
+CREATE OR REPLACE VIEW sys.computed_columns
+AS
+SELECT out_object_id as object_id
+  , out_name as name
+  , out_column_id as column_id
+  , out_system_type_id as system_type_id
+  , out_user_type_id as user_type_id
+  , out_max_length as max_length
+  , out_precision as precision
+  , out_scale as scale
+  , out_collation_name as collation_name
+  , out_is_nullable as is_nullable
+  , out_is_ansi_padded as is_ansi_padded
+  , out_is_rowguidcol as is_rowguidcol
+  , out_is_identity as is_identity
+  , out_is_computed as is_computed
+  , out_is_filestream as is_filestream
+  , out_is_replicated as is_replicated
+  , out_is_non_sql_subscribed as is_non_sql_subscribed
+  , out_is_merge_published as is_merge_published
+  , out_is_dts_replicated as is_dts_replicated
+  , out_is_xml_document as is_xml_document
+  , out_xml_collection_id as xml_collection_id
+  , out_default_object_id as default_object_id
+  , out_rule_object_id as rule_object_id
+  , out_is_sparse as is_sparse
+  , out_is_column_set as is_column_set
+  , out_generated_always_type as generated_always_type
+  , out_generated_always_type_desc as generated_always_type_desc
+  , out_encryption_type as encryption_type
+  , out_encryption_type_desc as encryption_type_desc
+  , out_encryption_algorithm_name as encryption_algorithm_name
+  , out_column_encryption_key_id as column_encryption_key_id
+  , out_column_encryption_key_database_name as column_encryption_key_database_name
+  , out_is_hidden as is_hidden
+  , out_is_masked as is_masked
+  , out_graph_type as graph_type
+  , out_graph_type_desc as graph_type_desc
+  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar) AS definition
+  , 1::sys.bit AS uses_database_collation
+  , 1::sys.bit AS is_persisted
+FROM sys.columns_internal() sc
+INNER JOIN pg_attribute a ON sc.out_object_id = a.attrelid AND sc.out_column_id = a.attnum
+INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
+GRANT SELECT ON sys.computed_columns TO PUBLIC;
+
+ALTER VIEW sys.xml_indexes RENAME TO xml_indexes_deprecated_2_9_0;
+
+CREATE OR REPLACE VIEW sys.xml_indexes
+AS
+SELECT
+    CAST(idx.object_id AS INT) AS object_id
+  , CAST(idx.name AS sys.sysname) AS name
+  , CAST(idx.index_id AS INT)  AS index_id
+  , CAST(idx.type AS sys.tinyint) AS type
+  , CAST(idx.type_desc AS sys.nvarchar(60)) AS type_desc
+  , CAST(idx.is_unique AS sys.bit) AS is_unique
+  , CAST(idx.data_space_id AS int) AS data_space_id
+  , CAST(idx.ignore_dup_key AS sys.bit) AS ignore_dup_key
+  , CAST(idx.is_primary_key AS sys.bit) AS is_primary_key
+  , CAST(idx.is_unique_constraint AS sys.bit) AS is_unique_constraint
+  , CAST(idx.fill_factor AS sys.tinyint) AS fill_factor
+  , CAST(idx.is_padded AS sys.bit) AS is_padded
+  , CAST(idx.is_disabled AS sys.bit) AS is_disabled
+  , CAST(idx.is_hypothetical AS sys.bit) AS is_hypothetical
+  , CAST(idx.allow_row_locks AS sys.bit) AS allow_row_locks
+  , CAST(idx.allow_page_locks AS sys.bit) AS allow_page_locks
+  , CAST(idx.has_filter AS sys.bit) AS has_filter
+  , CAST(idx.filter_definition AS sys.nvarchar) AS filter_definition
+  , CAST(idx.auto_created AS sys.bit) AS auto_created
+  , CAST(NULL AS INT) AS using_xml_index_id
+  , CAST(NULL AS char(1)) AS secondary_type
+  , CAST(NULL AS sys.nvarchar(60)) AS secondary_type_desc
+  , CAST(0 AS sys.tinyint) AS xml_index_type
+  , CAST(NULL AS sys.nvarchar(60)) AS xml_index_type_description
+  , CAST(NULL AS INT) AS path_id
+FROM  sys.indexes idx
+WHERE idx.type = 3; -- 3 is of type XML
+GRANT SELECT ON sys.xml_indexes TO PUBLIC;
+
+ALTER VIEW sys.stats RENAME TO stats_deprecated_2_9_0;
+
+CREATE OR REPLACE VIEW sys.stats
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST('' as SYSNAME) AS name,
+   CAST(0 as INT) AS stats_id,
+   CAST(0 as sys.BIT) AS auto_created,
+   CAST(0 as sys.BIT) AS user_created,
+   CAST(0 as sys.BIT) AS no_recompute,
+   CAST(0 as sys.BIT) AS has_filter,
+   CAST('' as sys.NVARCHAR) AS filter_definition,
+   CAST(0 as sys.BIT) AS is_temporary,
+   CAST(0 as sys.BIT) AS is_incremental,
+   CAST(0 as sys.BIT) AS has_persisted_sample,
+   CAST(0 as INT) AS stats_generation_method,
+   CAST('' as VARCHAR(255)) AS stats_generation_method_desc
+WHERE FALSE;
+GRANT SELECT ON sys.stats TO PUBLIC;
+
+ALTER VIEW sys.plan_guides RENAME TO plan_guides_deprecated_2_9_0;
+
+CREATE OR REPLACE VIEW sys.plan_guides
+AS
+SELECT 
+    CAST(0 as int) AS plan_guide_id
+  , CAST('' as sys.sysname) AS name
+  , CAST(NULL as sys.datetime) as create_date
+  , CAST(NULL as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_disabled
+  , CAST('' as sys.nvarchar) AS query_text
+  , CAST(0 as sys.tinyint) AS scope_type
+  , CAST('' as sys.nvarchar(60)) AS scope_type_desc
+  , CAST(0 as int) AS scope_type_id
+  , CAST('' as sys.nvarchar) AS scope_batch
+  , CAST('' as sys.nvarchar) AS parameters
+  , CAST('' as sys.nvarchar) AS hints
+WHERE FALSE;
+GRANT SELECT ON sys.plan_guides TO PUBLIC;
+
+ALTER VIEW sys.numbered_procedures RENAME TO numbered_procedures_deprecated_2_9_0;
+
+CREATE OR REPLACE VIEW sys.numbered_procedures
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as smallint) AS procedure_number
+  , CAST('' as sys.nvarchar) AS definition
+WHERE FALSE; -- This condition will ensure that the view is empty
+GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
+
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_sql_modules_internal_deprecated_in_2_9_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_sql_modules_deprecated_in_2_9_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_sql_modules_deprecated_in_2_9_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sql_modules_deprecated_in_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'computed_columns_deprecated_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'xml_indexes_deprecated_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'stats_deprecated_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'plan_guides_deprecated_2_9_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'numbered_procedures_deprecated_2_9_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
