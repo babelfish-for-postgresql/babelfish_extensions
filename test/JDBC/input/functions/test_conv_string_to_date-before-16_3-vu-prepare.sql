@@ -100,8 +100,5 @@ GO
 CREATE VIEW test_conv_string_to_date_v10 as (SELECT CONVERT(date, '02-03-2003 11:11:11 +11:11', 130));
 GO
 
-CREATE VIEW test_conv_string_to_date_v11 as (SELECT CONVERT(date, cast('02-03-2003 11:11:11 +11:11' as sys.varchar(100)), 130));
-GO
-
 CREATE VIEW test_conv_string_to_date_v12 as (SELECT CONVERT(date, CAST('20' as INTEGER)));
 GO

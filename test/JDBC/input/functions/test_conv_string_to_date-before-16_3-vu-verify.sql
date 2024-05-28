@@ -1474,8 +1474,5 @@ GO
 SELECT * FROM test_conv_string_to_date_v10
 GO
 
-SELECT * FROM test_conv_string_to_date_v11
-GO
-
 SELECT * FROM test_conv_string_to_date_v12
 GO

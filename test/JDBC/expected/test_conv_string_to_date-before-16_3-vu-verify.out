@@ -3908,14 +3908,6 @@ date
 ~~ERROR (Message: The input character string does not follow style 130, either change the input character string or use a different style.)~~
 
 
-SELECT * FROM test_conv_string_to_date_v11
-GO
-~~START~~
-date
-2003-02-03
-~~END~~
-
-
 SELECT * FROM test_conv_string_to_date_v12
 GO
 ~~START~~

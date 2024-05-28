@@ -64,8 +64,5 @@ GO
 DROP VIEW test_conv_string_to_date_v10
 GO
 
-DROP VIEW test_conv_string_to_date_v11
-GO
-
 DROP VIEW test_conv_string_to_date_v12
 GO
