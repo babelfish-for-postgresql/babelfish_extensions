@@ -541,7 +541,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 					bool    	scheme_id_found = false;
 
 
-					/* Skip if dbid and owner column already exists */
+					/* Skip if dbid, owner, function_id and scheme_id column already exists */
 					foreach(lc, stmt->cols)
 					{
 						ResTarget  *col1 = (ResTarget *) lfirst(lc);
@@ -558,7 +558,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 							pg_strcasecmp(col1->name, "scheme_id") == 0)
 							scheme_id_found = true;
 					}
-					// fix this
 					if (dbid_found && (owner_found || relid != sysdatabases_oid)
 							&& (function_id_found || relid != bbf_partition_function_oid)
 							&& (scheme_id_found || relid != bbf_partition_scheme_oid))
