@@ -1,0 +1,179 @@
+DROP VIEW GetPartitionFunctionMetadataView
+GO
+
+DROP FUNCTION GetRangeMetadataFunction
+GO
+
+DROP VIEW GetParameterMetadataView
+GO
+
+DROP VIEW GetPartitionSchemesMetadataView
+GO
+
+DROP FUNCTION PartitionFunctionContainsDuplicateName
+GO
+
+DROP FUNCTION PartitionFunctionContainsDuplicateIDs
+GO
+
+DROP FUNCTION PartitionSchemeContainsDuplicateName
+GO
+
+DROP FUNCTION PartitionSchemeContainsDuplicateIDs
+GO
+
+--------------------------------------------------
+--- DROP Partition Scheme
+--------------------------------------------------
+DROP PARTITION SCHEME IntPartitionScheme
+GO
+
+DROP PARTITION SCHEME BigIntPartitionScheme
+GO
+
+DROP PARTITION SCHEME SmallIntPartitionScheme
+GO
+
+DROP PARTITION SCHEME TinyIntPartitionScheme
+GO
+
+DROP PARTITION SCHEME DecimalPartitionScheme
+GO
+
+DROP PARTITION SCHEME NumericPartitionScheme
+GO
+
+DROP PARTITION SCHEME DatePartitionScheme
+GO
+
+DROP PARTITION SCHEME DateTimePartitionScheme
+GO
+
+DROP PARTITION SCHEME DateTime2PartitionScheme
+GO
+
+DROP PARTITION SCHEME SmallDateTimePartitionScheme
+GO
+
+DROP PARTITION SCHEME CharPartitionScheme
+GO
+
+DROP PARTITION SCHEME VarCharPartitionScheme
+GO
+
+DROP PARTITION SCHEME NVarCharPartitionScheme
+GO
+
+DROP PARTITION SCHEME NCharPartitionScheme
+GO
+
+DROP PARTITION SCHEME BinaryPartitionScheme
+GO
+
+DROP PARTITION SCHEME VarBinaryPartitionScheme
+GO
+
+DROP PARTITION SCHEME UniqueIdentifierPartitionScheme
+GO
+
+DROP PARTITION SCHEME SqlVariantPartitionScheme
+GO
+
+DROP PARTITION SCHEME PARTITION_SCHEMEログインαιώνια
+GO
+
+DROP PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻]
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+DROP PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder"
+Go
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+--------------------------------------------------
+--- DROP Partition Function
+-------------------------------------------
+DROP PARTITION FUNCTION IntPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION BigIntPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION SmallIntPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION TinyIntPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION DecimalPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION NumericPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION DatePartitionFunction 
+GO
+
+DROP PARTITION FUNCTION DateTimePartitionFunction 
+GO
+
+DROP PARTITION FUNCTION DateTime2PartitionFunction 
+GO
+
+DROP PARTITION FUNCTION SmallDateTimePartitionFunction 
+GO
+
+DROP PARTITION FUNCTION CharPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION VarCharPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION NVarCharPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION NCharPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION BinaryPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION VarBinaryPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION UniqueIdentifierPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION SqlVariantPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια
+GO
+
+DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻]
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+DROP PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder"
+Go
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+USE PartitionDb;
+GO
+
+DROP LOGIN partition_l1;
+GO
+
+USE master
+go
+
+DROP DATABASE PartitionDb
+go

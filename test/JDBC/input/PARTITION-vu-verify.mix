@@ -1,0 +1,297 @@
+--------------------------------------------------
+--- Unsupported Datatypes for Partition Function 
+--------------------------------------------------
+CREATE PARTITION FUNCTION TextPartitionFunction (text)
+AS RANGE RIGHT FOR VALUES ('a', 'b', 'c');
+GO
+
+CREATE PARTITION FUNCTION NTextPartitionFunction (ntext)
+AS RANGE RIGHT FOR VALUES (N'a', N'b', N'c');
+GO
+
+CREATE PARTITION FUNCTION ImagePartitionFunction (image)
+AS RANGE RIGHT FOR VALUES (0x123456, 0x789ABC, 0xDEF012);
+GO
+
+CREATE PARTITION FUNCTION XmlPartitionFunction (xml)
+AS RANGE RIGHT FOR VALUES ('<a>1</a>', '<b>2</b>', '<c>3</c>');
+GO
+
+CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOMETRY)
+AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
+go
+
+CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOGRAPHY)
+AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
+GO
+
+-- to test rowversion and timestamp
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_rowversion', 'ignore', 'false')
+go
+
+CREATE PARTITION FUNCTION RowVersionPartitionFunction (ROWVERSION)
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x0000000000000001, 0x0000000000000002);
+go
+
+CREATE PARTITION FUNCTION TimestampPartitionFunction (TIMESTAMP)
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x0000000000000001, 0x0000000000000002);
+go
+
+-- reset back the escape hatch
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_rowversion', 'strict', 'true')
+go
+
+-- user defined type
+CREATE TYPE PartitionUserDefinedType FROM VARCHAR(10);
+GO
+
+CREATE PARTITION FUNCTION UdtPartitionFunction (PartitionUserDefinedType)
+AS RANGE RIGHT FOR VALUES ('a', 'b', 'c');
+GO
+
+DROP type PartitionUserDefinedType
+GO
+
+--------------------------------------------------
+--- Unsupported Options with Partition Function 
+--------------------------------------------------
+-- LEFT option is not supported in Babelfish
+CREATE PARTITION FUNCTION PartitionFunctionWithLeft (int)
+AS RANGE LEFT FOR VALUES (10, 1000, 10000);
+GO
+
+-- by default it is LEFT and it should throw error
+CREATE PARTITION FUNCTION PartitionFunctionWithLeft (int)
+AS RANGE FOR VALUES (10, 1000, 10000);
+GO
+
+--------------------------------------------------
+--- Duplicate Create of Partition Function/Scheme
+--------------------------------------------------
+CREATE PARTITION FUNCTION IntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+GO
+
+-- duplicate partition function with invalid args
+CREATE PARTITION FUNCTION IntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES ('xyz', CONVERT(DATETIME, '2023-05-01'), 0x789ABC);
+GO
+
+CREATE PARTITION SCHEME IntPartitionScheme AS
+PARTITION IntPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+-- duplicate partition scheme with invalid Partition function
+CREATE PARTITION SCHEME IntPartitionScheme AS
+PARTITION PartitionFunctionDoesNotExists 
+ALL TO ([PRIMARY]);
+GO
+
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Function/Scheme when it does not exists
+-----------------------------------------------------------------------------------
+DROP PARTITION FUNCTION PartitionFunctionDoesNotExists
+GO
+
+DROP PARTITION SCHEME PartitionSchemeDoesNotExists
+GO
+
+-----------------------------------------------------------------------------------
+--- Create of Partition Scheme when provided partition function doesn't exists
+-----------------------------------------------------------------------------------
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION PartitionFunctionDoesNotExists
+ALL TO ([PRIMARY]);
+GO
+
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Function when there is dependent Partition Scheme
+-----------------------------------------------------------------------------------
+DROP PARTITION FUNCTION IntPartitionFunction
+GO
+
+
+-----------------------------------------------
+--- Filegroup behaviour with Partition Scheme 
+-----------------------------------------------
+
+-- by default user filegroup will be treated as PRIMARY filegroup
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO (user_filegroup);
+GO
+
+DROP PARTITION SCHEME TestPartitionScheme
+GO
+
+-- User can configure the "escape_hatch_storage_options" to STRICT to disallow user filegroups
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_storage_options', 'strict', 'false')
+GO
+
+-- should throw error
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO (user_filegroup);
+GO
+
+-- reset it back
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_storage_options', 'ignore', 'false')
+GO
+
+---------------------------------
+--- Metadata Related Tests
+---------------------------------
+
+SELECT * FROM GetPartitionFunctionMetadataView
+GO
+
+SELECT * FROM GetRangeMetadataFunction()
+GO
+
+SELECT * FROM GetParameterMetadataView
+GO
+
+SELECT * FROM GetPartitionSchemesMetadataView
+GO
+
+SELECT * FROM PartitionFunctionContainsDuplicateName()
+GO
+
+SELECT * FROM PartitionFunctionContainsDuplicateIDs()
+GO
+
+SELECT * FROM PartitionSchemeContainsDuplicateName()
+GO
+
+SELECT * FROM PartitionSchemeContainsDuplicateIDs()
+GO
+
+
+
+--------------------------------------------------
+--- Test Partition Function Argument Limit
+--------------------------------------------------
+-- create with max allowed limit
+DECLARE @partition_count INT = 14998;
+DECLARE @partition_interval INT = 1000;
+DECLARE @partition_function_definition VARCHAR(MAX) = 'CREATE PARTITION FUNCTION PartitionFunctionWith14999Arg (int) AS RANGE RIGHT FOR VALUES (';
+
+-- Build the partition function definition
+
+DECLARE @i INT = 1;
+
+WHILE @i <= @partition_count
+
+BEGIN
+    SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ', '
+    SET @i = @i + 1;
+
+END
+SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ')'
+
+-- Execute the partition function creation
+EXEC (@partition_function_definition)
+GO
+
+SELECT fanout FROM sys.partition_functions WHERE name = 'PartitionFunctionWith14999Arg'
+GO
+
+DROP PARTITION FUNCTION PartitionFunctionWith14999Arg
+GO
+
+-- create when arg > max allowed limit should throw error
+DECLARE @partition_count INT = 14999;
+DECLARE @partition_interval INT = 1000;
+DECLARE @partition_function_definition VARCHAR(MAX) = 'CREATE PARTITION FUNCTION PartitionFunctionWith15000Arg (int) AS RANGE RIGHT FOR VALUES (';
+
+-- Build the partition function definition
+
+DECLARE @i INT = 1;
+
+WHILE @i <= @partition_count
+
+BEGIN
+    SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ', '
+    SET @i = @i + 1;
+
+END
+SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ')'
+
+-- Execute the partition function creation
+EXEC (@partition_function_definition)
+GO
+
+--------------------------------------------------
+--- TO test Permission
+--------------------------------------------------
+-- tsql     user=partition_l1 password=12345678
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+
+-- CREATE/DROP should throw permission error
+CREATE PARTITION FUNCTION TestPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+Go
+
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION PartitionFunctionDoesNotExists
+ALL TO ([PRIMARY]);
+GO
+
+DROP PARTITION FUNCTION IntPartitionFunction
+go
+
+DROP PARTITION SCHEME IntPartitionScheme
+go
+
+-- but they can access the metadata 
+SELECT 
+        name, type, type_desc, fanout, boundary_value_on_right, is_system
+    FROM 
+        sys.partition_functions
+go
+
+SELECT 
+       ps.name as scheme_name, pf.name as function_name, ps.type, ps.type_desc, ps.is_default, ps.is_system
+    FROM 
+        sys.partition_schemes ps
+    INNER JOIN 
+        sys.partition_functions pf on (ps.function_id = pf.function_id)
+go
+
+-- make the user a DB owner
+-- tsql
+USE PartitionDb;
+GO
+
+DROP USER partition_u1;
+GO
+
+execute sp_changedbowner 'partition_l1'
+GO
+
+-- tsql     user=partition_l1 password=12345678
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+--  CREATE/DROP should work now
+CREATE PARTITION FUNCTION TestPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+Go
+
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION TestPartitionFunction
+ALL TO ([PRIMARY]);
+GO
+
+DROP PARTITION SCHEME TestPartitionScheme
+go
+
+DROP PARTITION FUNCTION TestPartitionFunction
+go

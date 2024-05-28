@@ -1,0 +1,360 @@
+
+---------------------------------------------------------------
+---- Views/Function to retrieve from the metadata Views
+----------------------------------------------------------------
+
+CREATE VIEW GetPartitionFunctionMetadataView
+AS 
+(
+    SELECT 
+        name, type, type_desc, fanout, boundary_value_on_right, is_system
+    FROM 
+        sys.partition_functions
+    ORDER BY 
+        name
+)
+GO
+
+CREATE FUNCTION GetRangeMetadataFunction()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        name, parameter_id, boundary_id, value
+    FROM 
+        sys.partition_range_values pr
+    INNER JOIN 
+        sys.partition_functions pf on (pr.function_id = pf.function_id)
+    ORDER BY 
+        name
+)
+GO
+
+
+CREATE VIEW GetParameterMetadataView
+AS 
+(
+    SELECT 
+        name, parameter_id, system_type_id, max_length, precision, scale, collation_name, user_type_id
+    FROM 
+        sys.partition_parameters pp
+    INNER JOIN 
+        sys.partition_functions pf on (pp.function_id = pf.function_id)
+    ORDER BY 
+       name
+)
+GO
+
+CREATE VIEW GetPartitionSchemesMetadataView
+AS 
+(
+    SELECT 
+       ps.name as scheme_name, pf.name as function_name, ps.type, ps.type_desc, is_default, ps.is_system
+    FROM 
+        sys.partition_schemes ps
+    INNER JOIN 
+        sys.partition_functions pf on (ps.function_id = pf.function_id)
+    ORDER BY 
+        ps.name
+)
+GO
+
+CREATE FUNCTION PartitionFunctionContainsDuplicateName()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        name
+    FROM 
+        sys.partition_functions
+    GROUP BY name
+    HAVING COUNT(*) > 1
+)
+GO
+
+CREATE FUNCTION PartitionFunctionContainsDuplicateIDs()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        function_id
+    FROM 
+        sys.partition_functions
+    GROUP BY function_id
+    HAVING COUNT(*) > 1
+)
+GO
+
+CREATE FUNCTION PartitionSchemeContainsDuplicateName()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        name
+    FROM 
+        sys.partition_schemes
+    GROUP BY name
+    HAVING COUNT(*) > 1
+)
+GO
+
+CREATE FUNCTION PartitionSchemeContainsDuplicateIDs()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        data_space_id
+    FROM 
+        sys.partition_schemes
+    GROUP BY data_space_id
+    HAVING COUNT(*) > 1
+)
+GO
+
+
+--------------------------------------------------
+--- Supported Datatypes for Partition Function 
+--------------------------------------------------
+-- using local variable in args
+declare @a int = 0;
+declare @b int = 500;
+declare @c int = 1000;
+CREATE PARTITION FUNCTION IntPartitionFunction (int) 
+AS RANGE RIGHT FOR VALUES (@a, @b, @c);
+GO
+
+-- all datatyps should sort and store the values in ascending order by itself
+CREATE PARTITION FUNCTION BigIntPartitionFunction (bigint)
+AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
+GO
+
+CREATE PARTITION FUNCTION SmallIntPartitionFunction (smallint) 
+AS RANGE RIGHT FOR VALUES (32767, -32768, 0);
+GO
+
+CREATE PARTITION FUNCTION TinyIntPartitionFunction (tinyint)
+AS RANGE RIGHT FOR VALUES (0, 255, 128);
+GO
+
+CREATE PARTITION FUNCTION DecimalPartitionFunction (decimal(10, 5))
+AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 100.0);
+GO
+
+CREATE PARTITION FUNCTION NumericPartitionFunction (numeric(5, 2))
+AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 20.0);
+GO
+
+CREATE PARTITION FUNCTION DatePartitionFunction (date) 
+AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','2023-01-01');
+GO
+
+-- should implicity cast it to input type
+CREATE PARTITION FUNCTION DateTimePartitionFunction (datetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', '2019-01-01 00:00:00');
+GO
+
+CREATE PARTITION FUNCTION DateTime2PartitionFunction (datetime2(3))
+AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', '2019-01-01 00:00:00.000');
+GO
+
+CREATE PARTITION FUNCTION SmallDateTimePartitionFunction (smalldatetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', '2019-01-01');
+GO
+
+CREATE PARTITION FUNCTION CharPartitionFunction (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', 'D');
+GO
+
+CREATE PARTITION FUNCTION VarCharPartitionFunction (varchar(10))
+AS RANGE RIGHT FOR VALUES ('Apple', 'Banana', 'Mango', 'Cherry', 'Date');
+GO
+
+CREATE PARTITION FUNCTION NVarCharPartitionFunction (nvarchar(10))
+AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Mango', N'Cherry', N'Date');
+GO
+
+CREATE PARTITION FUNCTION NCharPartitionFunction (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', N'B');
+GO
+
+CREATE PARTITION FUNCTION BinaryPartitionFunction (binary(4))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000);
+GO
+
+CREATE PARTITION FUNCTION VarBinaryPartitionFunction (varbinary(8))
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 0xC000000000000000);
+GO
+
+CREATE PARTITION FUNCTION UniqueIdentifierPartitionFunction (uniqueidentifier)
+AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', '6F9619FF-8B86-D011-B42D-00C04FC964FF');
+GO
+
+CREATE PARTITION FUNCTION SqlVariantPartitionFunction (sql_variant)
+AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'));
+go
+
+--------------------------------------------------
+--- Partition Scheme
+--------------------------------------------------
+
+-- without all option
+CREATE PARTITION SCHEME IntPartitionScheme AS
+PARTITION IntPartitionFunction 
+TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+
+-- with all option
+CREATE PARTITION SCHEME BigIntPartitionScheme AS
+PARTITION BigIntPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME SmallIntPartitionScheme AS
+PARTITION SmallIntPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME TinyIntPartitionScheme AS
+PARTITION TinyIntPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME DecimalPartitionScheme AS
+PARTITION DecimalPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME NumericPartitionScheme AS
+PARTITION NumericPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME DatePartitionScheme AS
+PARTITION DatePartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME DateTimePartitionScheme AS
+PARTITION DateTimePartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME DateTime2PartitionScheme AS
+PARTITION DateTime2PartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME SmallDateTimePartitionScheme AS
+PARTITION SmallDateTimePartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME CharPartitionScheme AS
+PARTITION CharPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME VarCharPartitionScheme AS
+PARTITION VarCharPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME NVarCharPartitionScheme AS
+PARTITION NVarCharPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME NCharPartitionScheme AS
+PARTITION NCharPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME BinaryPartitionScheme AS
+PARTITION BinaryPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME VarBinaryPartitionScheme AS
+PARTITION VarBinaryPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME UniqueIdentifierPartitionScheme AS
+PARTITION UniqueIdentifierPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME SqlVariantPartitionScheme AS
+PARTITION SqlVariantPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+
+--------------------------------------------------
+--- name identifiers test
+--------------------------------------------------
+CREATE PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια (int)
+AS RANGE RIGHT FOR VALUES (0, 500, 1000);
+GO
+
+CREATE PARTITION SCHEME PARTITION_SCHEMEログインαιώνια AS
+PARTITION PARTITION_FUNCTIONログインαιώνια
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻] (int)
+AS RANGE RIGHT FOR VALUES (0, 500, 1000);
+GO
+
+CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻] AS
+PARTITION [PARTITION_FUNCTION  유니코드스키마👻]
+ALL TO ([PRIMARY]);
+GO
+
+
+-- qouted identifer
+SET QUOTED_IDENTIFIER ON;
+GO
+
+CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder" (int)
+AS RANGE RIGHT FOR VALUES (0, 500, 1000);
+GO
+
+CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder" AS
+PARTITION "PARTITION_FUNCTION 😎$@ #123 🌍rder"
+ALL TO ([PRIMARY]);
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+Go
+
+
+--------------------------------------------------
+--- TO test Permission
+--------------------------------------------------
+CREATE DATABASE PartitionDb;
+GO
+
+USE PartitionDb;
+GO
+
+CREATE LOGIN partition_l1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER partition_u1 FOR LOGIN partition_l1;
+GO
+
+
+CREATE PARTITION FUNCTION PartitionDb_PartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+Go
+
+CREATE PARTITION SCHEME PartitionDb_PartitionScheme AS
+PARTITION PartitionDb_PartitionFunction
+ALL TO ([PRIMARY]);
+GO
