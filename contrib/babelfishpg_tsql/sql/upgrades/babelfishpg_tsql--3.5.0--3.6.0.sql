@@ -6058,7 +6058,7 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , CAST(null as int) as principal_id
   , CAST(tab.schema_id as int) as schema_id
   , CAST(d.adrelid as int) as parent_object_id
-  , CAST('D' as char(2)) as type
+  , CAST('D' as sys.bpchar(2)) as type
   , CAST('DEFAULT_CONSTRAINT' as sys.nvarchar(60)) AS type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modified_date
@@ -6084,7 +6084,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
   , CAST(conrelid as integer) as parent_object_id
-  , CAST('C' as char(2)) as type
+  , CAST('C' as sys.bpchar(2)) as type
   , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
