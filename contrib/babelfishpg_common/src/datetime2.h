@@ -5,6 +5,7 @@
 *
 *-------------------------------------------------------------------------
 */
+#include "datetime.h"
 #ifndef PLTSQL_DATETIME2_H
 #define PLTSQL_DATETIME2_H
 
@@ -19,5 +20,9 @@
 
 /* Range-check a datetime */
 #define IS_VALID_DATETIME2(t)  (MIN_DATETIME2 <= (t) && (t) < END_DATETIME2)
+
+extern bool tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
+				bool contains_extra_spaces, struct pg_tm *tm,
+				bool *is_year_set, bool dump_restore, DateTimeContext context);
 
 #endif							/* PLTSQL_DATETIME2_H */

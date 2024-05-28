@@ -1,0 +1,1019 @@
+-- -- Numeric
+select cast('3-2-4 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2004-03-02 14:30:00.0000000
+~~END~~
+
+
+select cast('3-12-4 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2004-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3-12-24 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3-12-2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3     -        12 -           2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3.2.4 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2004-03-02 14:30:00.0000000
+~~END~~
+
+
+select cast('3.12.4 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2004-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3.12.24 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3.12.2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3     .        12 .           2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3/2/4 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2004-03-02 14:30:00.0000000
+~~END~~
+
+
+select cast('3/12/4 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2004-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3/12/24 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3/12/2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('3     /        12 /           2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-03-12 14:30:00.0000000
+~~END~~
+
+
+select cast('04-02-03 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2003-04-02 14:30:00.0000000
+~~END~~
+
+
+-- invalid syntax
+select cast('3 12 2024' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('3#12#2024' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('3/12.2024' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Alphabetical
+select cast('Apr 12,2000 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2000-04-12 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 12 2000 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2000-04-12 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 1 2000 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2000-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 1,2000 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2000-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 2000 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2000-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 16, 2000 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2000-04-16 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 1, 2000 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2000-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('April 16, 2000 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2000-04-16 14:30:00.0000000
+~~END~~
+
+
+select cast('April 16  2000 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2000-04-16 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 16, 24 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-16 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 16,4 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2004-04-16 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 1,4 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2004-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 16    24 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-16 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 16 4 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2004-04-16 14:30:00.0000000
+~~END~~
+
+
+select cast('April 16 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2016-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 2024 22 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-22 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 2024 2 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-02 14:30:00.0000000
+~~END~~
+
+
+select cast('24 Apr, 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-24 14:30:00.0000000
+~~END~~
+
+
+select cast('3 Apr, 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-03 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr, 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('3 Apr 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-03 14:30:00.0000000
+~~END~~
+
+
+select cast('3Apr2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-03 14:30:00.0000000
+~~END~~
+
+
+select cast('3Apr24 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-03 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr24 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr,24 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('24 Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('12 24 Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+select cast('12 2024 Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+select cast('2024 Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-01 14:30:00.0000000
+~~END~~
+
+
+select cast('2024 12 Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+select cast('2024 9 Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-09 14:30:00.0000000
+~~END~~
+
+
+select cast('2024 Apr 12 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+select cast('12, Apr, 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('12 Apr, 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+select cast('12, Apr 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('2024, Apr, 12 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('2024 Apr, 12 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('2024, Apr 12 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('Apr, 12, 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('Apr 12, 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+2024-04-12 14:30:00.0000000
+~~END~~
+
+
+select cast('Apr, 12 2024 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('Apr, 2024, 12 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('Apr 2024, 12 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('Apr, 2024 12 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('12, 2024, Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('12 2024, Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('12, 2024 Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('2024, 12, Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('2024 12, Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('2024, 12 Apr 14:30' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- ISO 8601	
+select cast('2023-11-27' as datetime2)
+go
+~~START~~
+datetime2
+2023-11-27 00:00:00.0000000
+~~END~~
+
+
+SELECT cast('2022-10-30T03:00:00' as datetime2)
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.0000000
+~~END~~
+
+
+SELECT cast('2022-10-30T03:00:00.123' as datetime2)
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.1230000
+~~END~~
+
+
+SELECT cast('2022-10-30T03:00:00.123-12:12' as datetime2)
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.1230000
+~~END~~
+
+
+SELECT cast('2022-10-30T03:00:00.123+12:12' as datetime2)
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.1230000
+~~END~~
+
+
+SELECT cast('2022-10-30T03:00' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT cast('2022-10 -30T03: 00:00' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT cast('2022-10-30T03:00:00.12345' as datetime2)
+GO
+~~START~~
+datetime2
+2022-10-30 03:00:00.1234500
+~~END~~
+
+
+SELECT cast('2022-10-30T03:00:00:123' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT cast('2022-10-30T03:00:00:12345' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Unseparated
+select cast('20240129' as datetime2)
+go
+~~START~~
+datetime2
+2024-01-29 00:00:00.0000000
+~~END~~
+
+
+select cast('20241329' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('240129' as datetime2)
+go
+~~START~~
+datetime2
+2024-01-29 00:00:00.0000000
+~~END~~
+
+
+select cast('241329' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('2001' as datetime2)
+go
+~~START~~
+datetime2
+2001-01-01 00:00:00.0000000
+~~END~~
+
+
+select cast('0001' as datetime2)
+go
+~~START~~
+datetime2
+0001-01-01 00:00:00.0000000
+~~END~~
+
+
+select cast('20240129 03:00:00' as datetime2)
+go
+~~START~~
+datetime2
+2024-01-29 03:00:00.0000000
+~~END~~
+
+
+select cast('20241329 03:00:00' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('240129 03:00' as datetime2)
+go
+~~START~~
+datetime2
+2024-01-29 03:00:00.0000000
+~~END~~
+
+
+select cast('241329 03:00' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('2001 03:00:00.123' as datetime2)
+go
+~~START~~
+datetime2
+2001-01-01 03:00:00.1230000
+~~END~~
+
+
+select cast('0001 03:00:00.421' as datetime2)
+go
+~~START~~
+datetime2
+0001-01-01 03:00:00.4210000
+~~END~~
+
+
+-- -- invalid syntax
+select cast('0' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('1' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('11' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('111' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('11111' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('1111111' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- should return default datetime2
+select cast('16:23:51' as datetime2)
+go
+~~START~~
+datetime2
+1900-01-01 16:23:51.0000000
+~~END~~
+
+
+select cast('4:12:12:123' as datetime2)
+go
+~~START~~
+datetime2
+1900-01-01 04:12:12.1230000
+~~END~~
+
+
+select cast('4:12:12:1234' as datetime2)
+go
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+select cast('4:12:12.1234' as datetime2)
+go
+~~START~~
+datetime2
+1900-01-01 04:12:12.1234000
+~~END~~
+
+
+-- rounding of datetime2
+select cast('01/01/98 23:59:59.12345679' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234568
+~~END~~
+
+
+select cast('01/01/98 23:59:59.12345678' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234568
+~~END~~
+
+
+select cast('01/01/98 23:59:59.12345677' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234568
+~~END~~
+
+
+select cast('01/01/98 23:59:59.12345676' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234568
+~~END~~
+
+
+select cast('01/01/98 23:59:59.12345675' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234568
+~~END~~
+
+
+select cast('01/01/98 23:59:59.12345674' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234567
+~~END~~
+
+
+select cast('01/01/98 23:59:59.12345673' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234567
+~~END~~
+
+
+select cast('01/01/98 23:59:59.12345672' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234567
+~~END~~
+
+
+select cast('01/01/98 23:59:59.12345671' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234567
+~~END~~
+
+
+select cast('01/01/98 23:59:59.12345670' as datetime2)
+go
+~~START~~
+datetime2
+1998-01-01 23:59:59.1234567
+~~END~~
+
+
+-- -- out of bound values
+SELECT cast('2022-10-00 23:59:59.990' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT cast('0000-10-01 23:59:59.990' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT cast('2023-00-01 23:59:59.990' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT cast('0000-00-00 23:59:59.990' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+--- misc
+SELECT cast('02001-04-22 16:23:51' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT cast('1900-05-06 13:59:29.050 -8:00' as datetime2)
+GO
+~~START~~
+datetime2
+1900-05-06 13:59:29.0500000
+~~END~~
+
+
+SELECT cast('2011-08-15 14:30.00 -8:00' as datetime2)
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 241)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DECLARE @TM_ICLO TIME = '17:24:07.1766670'
+SELECT cast(@TM_ICLO)
+GO
+~~ERROR (Code: 1035)~~
+
+~~ERROR (Message: Incorrect syntax near 'cast', expected 'AS'.)~~
+
+
