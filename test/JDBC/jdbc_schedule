@@ -219,6 +219,9 @@ ignore#!#BABEL_3571-before-15-5-vu-prepare
 ignore#!#BABEL_3571-before-15-5-vu-verify
 ignore#!#BABEL_3571-15_5-or-15_6-or-16_1-or-16_2-vu-prepare
 ignore#!#BABEL_3571-15_5-or-15_6-or-16_1-or-16_2-vu-verify
+ignore#!#BABEL-ROLE-MEMBER-before-16_3-or-15_7-vu-prepare
+ignore#!#BABEL-ROLE-MEMBER-before-16_3-or-15_7-vu-verify
+ignore#!#BABEL-ROLE-MEMBER-before-16_3-or-15_7-vu-cleanup
 
 # These are bash scripts that should not be executed
 ignore#!#load_aggtest

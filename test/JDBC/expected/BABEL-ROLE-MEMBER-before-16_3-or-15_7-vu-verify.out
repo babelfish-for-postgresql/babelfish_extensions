@@ -267,7 +267,7 @@ SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1')
 GO
 ~~START~~
 int
-0
+<NULL>
 ~~END~~
 
 SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1')
