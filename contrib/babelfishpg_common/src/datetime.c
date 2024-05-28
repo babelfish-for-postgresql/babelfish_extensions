@@ -60,7 +60,7 @@ check_regex_for_text_month(char *str, DateTimeContext context)
     	int status, i, j;
 	const char *regex_time_offset = "(((\\+|\\-)[0-9]{1,2}:[0-9]{1,2})|Z)?";
 
-	for (i = 0; i < num_date_regexes; i++) {
+	for (i = 0; i < NUM_DATE_REGEXES; i++) {
 		/*
 		 * check for just date syntax
 		 */
@@ -74,7 +74,7 @@ check_regex_for_text_month(char *str, DateTimeContext context)
 		if (status == 0)
         		return 1;
 
-        	for (j = 0; j < num_time_regexes; j++) {
+        	for (j = 0; j < NUM_TIME_REGEXES; j++) {
 			/*
 			 * check for just time syntax
 			 */
@@ -474,12 +474,7 @@ datetime_in_str(char *str)
 			tm->tm_mday = 1;
 		dterr = 0;
 	}
-	else if (dterr == 1)
-	{
-		tm->tm_mon = 1;
-		tm->tm_mday = 1;
-		dterr = 0;
-	}
+
 	if (dterr != 0)
 		DateTimeParseError(dterr, str, "datetime");
 	switch (dtype)
