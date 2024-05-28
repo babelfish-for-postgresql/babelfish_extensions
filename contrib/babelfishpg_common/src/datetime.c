@@ -145,6 +145,16 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 		if (str[i] == '\0')
 			break;
 
+		if (j > MAXDATELEN)
+		{
+			if (result)
+				pfree(result);
+
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					errmsg("invalid input syntax for type datetime: \"%s\"", str)));
+		}
+
 		if (context == DATE_TIME_OFFSET && str[i] == ':')
 			num_colons++;
 
