@@ -4653,7 +4653,7 @@ partition_function_exists_with_id(int32 id)
  * 		   and the sequence wraps around, we will loop through the entire range of
  * 		   sequence values and on loop completion, we should bail out.
  */
-static int32
+int32
 get_available_partition_function_id(void)
 {
 	int32		id;
@@ -4726,7 +4726,7 @@ partition_scheme_exists_with_id(int32 id)
  * 		   and the sequence wraps around, we will loop through the entire range of
  * 		   sequence values and on loop completion, we should bail out.
  */
-static int32
+int32
 get_available_partition_scheme_id(void)
 {
 	int32		id;

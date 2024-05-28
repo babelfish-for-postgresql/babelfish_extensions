@@ -518,8 +518,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				relid = RangeVarGetRelid(stmt->relation, NoLock, false);
 
 				/*
-				 * Insert new dbid and owner columns value in babelfish catalog
-				 * if dump did not provide it.
+				 * Insert new dbid, owner, partition_id and scheme_id column values
+				 * in babelfish catalog if dump did not provide it.
 				 */
 				if (relid == sysdatabases_oid ||
 					relid == namespace_ext_oid ||
@@ -533,8 +533,13 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 					ResTarget	*col = NULL;
 					A_Const 	*dbidValue = NULL;
 					A_Const 	*ownerValue = NULL;
+					A_Const 	*functionidValue = NULL;
+					A_Const 	*schemeidValue = NULL;
 					bool    	dbid_found = false;
 					bool    	owner_found = false;
+					bool    	function_id_found = false;
+					bool    	scheme_id_found = false;
+
 
 					/* Skip if dbid and owner column already exists */
 					foreach(lc, stmt->cols)
@@ -546,8 +551,16 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						if (relid == sysdatabases_oid &&
 							pg_strcasecmp(col1->name, "owner") == 0)
 							owner_found = true;
+						if (relid == bbf_partition_function_oid &&
+							pg_strcasecmp(col1->name, "function_id") == 0)
+							function_id_found = true;
+						if (relid == bbf_partition_scheme_oid &&
+							pg_strcasecmp(col1->name, "scheme_id") == 0)
+							scheme_id_found = true;
 					}
-					if (dbid_found && (owner_found || relid != sysdatabases_oid))
+					if (dbid_found && (owner_found || relid != sysdatabases_oid)
+							&& (function_id_found && relid == bbf_partition_function_oid)
+							&& (scheme_id_found && relid == bbf_partition_scheme_oid))
 						break;
 
 					/*
@@ -594,6 +607,42 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						stmt->cols = lappend(stmt->cols, col);
 					}
 
+					if (!function_id_found && relid == bbf_partition_function_oid)
+					{
+						/* const value node to store into values clause */
+						functionidValue = makeNode(A_Const);
+						functionidValue->val.ival.type = T_Integer;
+						functionidValue->val.ival.ival = get_available_partition_function_id();
+						functionidValue->location = -1;
+
+						/* function_id column to store into InsertStmt's target list */
+						col = makeNode(ResTarget);
+						col->name = "function_id";
+						col->name_location = -1;
+						col->indirection = NIL;
+						col->val = NULL;
+						col->location = -1;
+						stmt->cols = lappend(stmt->cols, col);
+					}
+
+					if (!scheme_id_found && relid == bbf_partition_scheme_oid)
+					{
+						/* const value node to store into values clause */
+						schemeidValue = makeNode(A_Const);
+						schemeidValue->val.ival.type = T_Integer;
+						schemeidValue->val.ival.ival = get_available_partition_scheme_id();
+						schemeidValue->location = -1;
+
+						/* scheme_id column to store into InsertStmt's target list */
+						col = makeNode(ResTarget);
+						col->name = "scheme_id";
+						col->name_location = -1;
+						col->indirection = NIL;
+						col->val = NULL;
+						col->location = -1;
+						stmt->cols = lappend(stmt->cols, col);
+					}
+
 					foreach(lc, selectStmt->valuesLists)
 					{
 						List	   *sublist = (List *) lfirst(lc);
@@ -602,6 +651,10 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 							sublist = lappend(sublist, dbidValue);
 						if (!owner_found && relid == sysdatabases_oid)
 							sublist = lappend(sublist, ownerValue);
+						if (!function_id_found && relid == bbf_partition_function_oid)
+							sublist = lappend(sublist, functionidValue);
+						if (!scheme_id_found && relid == bbf_partition_scheme_oid)
+							sublist = lappend(sublist, schemeidValue);
 					}
 				}
 				break;
