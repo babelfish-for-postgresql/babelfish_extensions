@@ -102,7 +102,7 @@ go
 
 create table tb_recomp_71(c71 int primary key, x int)
 go
-create procedure p_recomp_71 @p int 
+create procedure p_recomp_71 @p int
 as
 select * from tb_recomp_71 where c71 = @p  -- parametrized
 select * from tb_recomp_71 where c71 = 0   -- non-parametrized
@@ -110,6 +110,17 @@ select set_config('plan_cache_mode', 'force_generic_plan', false) -- change plan
 select * from tb_recomp_71 where c71 = @p  -- parametrized
 select * from tb_recomp_71 where c71 = 0   -- non-parametrized
 go
+
+create procedure p_recomp_72 @p int
+as
+select * from tb_recomp_71 where c71 = @p  -- parametrized
+select * from tb_recomp_71 where c71 = 0   -- non-parametrized
+select set_config('plan_cache_mode', 'force_generic_plan', false) -- change plan_cache mode in proc
+select * from tb_recomp_71 where c71 = @p  -- parametrized
+select div_zero = 1/@p
+select * from tb_recomp_71 where c71 = 0   -- non-parametrized
+go
+
 
 insert tb_recomp_11 
 select *, 0 from generate_series(1,1000)
@@ -124,9 +135,6 @@ insert tb_recomp_21
 select * from tb_recomp_11
 go
 insert tb_recomp_22
-select * from tb_recomp_11
-go
-insert tb_recomp_23
 select * from tb_recomp_11
 go
 insert tb_recomp_31

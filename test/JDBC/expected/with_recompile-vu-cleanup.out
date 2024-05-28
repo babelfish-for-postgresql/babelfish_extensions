@@ -50,5 +50,7 @@ go
 
 drop procedure if exists p_recomp_71
 go
+drop procedure if exists p_recomp_72
+go
 drop table if exists tb_recomp_71
 go
