@@ -6178,7 +6178,7 @@ SELECT
   , CAST(idx.filter_definition AS sys.nvarchar) AS filter_definition
   , CAST(idx.auto_created AS sys.bit) AS auto_created
   , CAST(NULL AS INT) AS using_xml_index_id
-  , CAST(NULL AS char(1)) AS secondary_type
+  , CAST(NULL AS sys.bpchar(1)) AS secondary_type
   , CAST(NULL AS sys.nvarchar(60)) AS secondary_type_desc
   , CAST(0 AS sys.tinyint) AS xml_index_type
   , CAST(NULL AS sys.nvarchar(60)) AS xml_index_type_description
@@ -6204,7 +6204,7 @@ SELECT
    CAST(0 as sys.BIT) AS is_incremental,
    CAST(0 as sys.BIT) AS has_persisted_sample,
    CAST(0 as INT) AS stats_generation_method,
-   CAST('' as VARCHAR(255)) AS stats_generation_method_desc
+   CAST('' as sys.VARCHAR(255)) AS stats_generation_method_desc
 WHERE FALSE;
 GRANT SELECT ON sys.stats TO PUBLIC;
 
