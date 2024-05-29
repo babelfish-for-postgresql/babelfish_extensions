@@ -38,7 +38,7 @@ AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The type 'geometry' is not valid for this operation.)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 
 CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOGRAPHY)
@@ -46,7 +46,7 @@ AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The type 'geography' is not valid for this operation.)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 
 -- to test rowversion and timestamp
@@ -413,9 +413,9 @@ GO
 SELECT * FROM GetPartitionFunctionMetadataView
 GO
 ~~START~~
-varchar#!#char#!#nvarchar#!#int#!#bit#!#bit
-"PARTITION_FUNCTION ?$@ #123 ?rder"#!#R #!#RANGE#!#4#!#1#!#0
-[PARTITION_FUNCTION  ????????]#!#R #!#RANGE#!#4#!#1#!#0
+nvarchar#!#char#!#nvarchar#!#int#!#bit#!#bit
+"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#R #!#RANGE#!#4#!#1#!#0
+[PARTITION_FUNCTION  유니코드스키마👻]#!#R #!#RANGE#!#4#!#1#!#0
 BigIntPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 BinaryPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 CharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
@@ -427,7 +427,8 @@ IntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 NCharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
 NumericPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 NVarCharPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
-PARTITION_FUNCTION??????????#!#R #!#RANGE#!#4#!#1#!#0
+PARTITION_FUNCTIONログインαιώνια#!#R #!#RANGE#!#4#!#1#!#0
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#R #!#RANGE#!#5#!#1#!#0
 SmallDateTimePartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SqlVariantPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
@@ -441,30 +442,30 @@ VarCharPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
 SELECT * FROM GetRangeMetadataFunction()
 GO
 ~~START~~
-varchar#!#int#!#int#!#sql_variant
-"PARTITION_FUNCTION ?$@ #123 ?rder"#!#1#!#3#!#1000
-"PARTITION_FUNCTION ?$@ #123 ?rder"#!#1#!#2#!#500
-"PARTITION_FUNCTION ?$@ #123 ?rder"#!#1#!#1#!#0
-[PARTITION_FUNCTION  ????????]#!#1#!#3#!#1000
-[PARTITION_FUNCTION  ????????]#!#1#!#1#!#0
-[PARTITION_FUNCTION  ????????]#!#1#!#2#!#500
-BigIntPartitionFunction#!#1#!#1#!#0
-BigIntPartitionFunction#!#1#!#2#!#100
-BigIntPartitionFunction#!#1#!#3#!#1000
+nvarchar#!#int#!#int#!#sql_variant
+"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#1#!#1#!#0
+"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#1#!#2#!#500
+"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#1#!#3#!#1000
+[PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#3#!#1000
+[PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#2#!#500
+[PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#1#!#0
 BigIntPartitionFunction#!#1#!#4#!#10000
-BinaryPartitionFunction#!#1#!#3#!#[B@15d49048
-BinaryPartitionFunction#!#1#!#2#!#[B@7098b907
-BinaryPartitionFunction#!#1#!#1#!#[B@503f91c3
-BinaryPartitionFunction#!#1#!#4#!#[B@13526e59
-CharPartitionFunction#!#1#!#1#!#A    
-CharPartitionFunction#!#1#!#2#!#D    
-CharPartitionFunction#!#1#!#3#!#F    
+BigIntPartitionFunction#!#1#!#3#!#1000
+BigIntPartitionFunction#!#1#!#2#!#100
+BigIntPartitionFunction#!#1#!#1#!#0
+BinaryPartitionFunction#!#1#!#1#!#[B@3e2055d6
+BinaryPartitionFunction#!#1#!#2#!#[B@50029372
+BinaryPartitionFunction#!#1#!#4#!#[B@e3b3b2f
+BinaryPartitionFunction#!#1#!#3#!#[B@50f6ac94
 CharPartitionFunction#!#1#!#4#!#K    
-CharPartitionFunction#!#1#!#5#!#P    
-CharPartitionFunction#!#1#!#6#!#U    
+CharPartitionFunction#!#1#!#3#!#F    
+CharPartitionFunction#!#1#!#2#!#D    
+CharPartitionFunction#!#1#!#1#!#A    
 CharPartitionFunction#!#1#!#7#!#Z    
-DatePartitionFunction#!#1#!#2#!#2022-07-01
+CharPartitionFunction#!#1#!#6#!#U    
+CharPartitionFunction#!#1#!#5#!#P    
 DatePartitionFunction#!#1#!#1#!#2022-01-01
+DatePartitionFunction#!#1#!#2#!#2022-07-01
 DatePartitionFunction#!#1#!#3#!#2023-01-01
 DateTime2PartitionFunction#!#1#!#3#!#2022-07-01 00:00:00.0
 DateTime2PartitionFunction#!#1#!#1#!#2019-01-01 00:00:00.0
@@ -472,93 +473,98 @@ DateTime2PartitionFunction#!#1#!#2#!#2022-01-01 00:00:00.0
 DateTimePartitionFunction#!#1#!#1#!#2019-01-01 00:00:00.0
 DateTimePartitionFunction#!#1#!#2#!#2022-01-01 00:00:00.0
 DateTimePartitionFunction#!#1#!#3#!#2022-07-01 00:00:00.0
-DecimalPartitionFunction#!#1#!#4#!#300.00000
-DecimalPartitionFunction#!#1#!#1#!#0.00000
 DecimalPartitionFunction#!#1#!#2#!#100.00000
+DecimalPartitionFunction#!#1#!#1#!#0.00000
 DecimalPartitionFunction#!#1#!#3#!#200.00000
-IntPartitionFunction#!#1#!#1#!#0
+DecimalPartitionFunction#!#1#!#4#!#300.00000
 IntPartitionFunction#!#1#!#2#!#500
+IntPartitionFunction#!#1#!#1#!#0
 IntPartitionFunction#!#1#!#3#!#1000
-NCharPartitionFunction#!#1#!#7#!#Z    
-NCharPartitionFunction#!#1#!#6#!#U    
-NCharPartitionFunction#!#1#!#4#!#K    
-NCharPartitionFunction#!#1#!#2#!#B    
-NCharPartitionFunction#!#1#!#1#!#A    
 NCharPartitionFunction#!#1#!#5#!#P    
 NCharPartitionFunction#!#1#!#3#!#F    
-NumericPartitionFunction#!#1#!#4#!#30.00
+NCharPartitionFunction#!#1#!#1#!#A    
+NCharPartitionFunction#!#1#!#7#!#Z    
+NCharPartitionFunction#!#1#!#2#!#B    
+NCharPartitionFunction#!#1#!#4#!#K    
+NCharPartitionFunction#!#1#!#6#!#U    
 NumericPartitionFunction#!#1#!#1#!#0.00
-NumericPartitionFunction#!#1#!#2#!#10.00
 NumericPartitionFunction#!#1#!#3#!#20.00
+NumericPartitionFunction#!#1#!#2#!#10.00
+NumericPartitionFunction#!#1#!#4#!#30.00
+NVarCharPartitionFunction#!#1#!#1#!#Apple
+NVarCharPartitionFunction#!#1#!#2#!#Banana
+NVarCharPartitionFunction#!#1#!#3#!#Cherry
 NVarCharPartitionFunction#!#1#!#4#!#Date
 NVarCharPartitionFunction#!#1#!#5#!#Mango
-NVarCharPartitionFunction#!#1#!#3#!#Cherry
-NVarCharPartitionFunction#!#1#!#2#!#Banana
-NVarCharPartitionFunction#!#1#!#1#!#Apple
-PARTITION_FUNCTION??????????#!#1#!#2#!#500
-PARTITION_FUNCTION??????????#!#1#!#3#!#1000
-PARTITION_FUNCTION??????????#!#1#!#1#!#0
-SmallDateTimePartitionFunction#!#1#!#3#!#2022-07-01 00:00:00.0
+PARTITION_FUNCTIONログインαιώνια#!#1#!#1#!#0
+PARTITION_FUNCTIONログインαιώνια#!#1#!#3#!#1000
+PARTITION_FUNCTIONログインαιώνια#!#1#!#2#!#500
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#3#!#1000
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#1#!#0
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#2#!#100
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#4#!#10000
 SmallDateTimePartitionFunction#!#1#!#1#!#2019-01-01 00:00:00.0
 SmallDateTimePartitionFunction#!#1#!#2#!#2022-01-01 00:00:00.0
-SmallIntPartitionFunction#!#1#!#1#!#-32768
-SmallIntPartitionFunction#!#1#!#3#!#32767
+SmallDateTimePartitionFunction#!#1#!#3#!#2022-07-01 00:00:00.0
 SmallIntPartitionFunction#!#1#!#2#!#0
+SmallIntPartitionFunction#!#1#!#3#!#32767
+SmallIntPartitionFunction#!#1#!#1#!#-32768
+SqlVariantPartitionFunction#!#1#!#1#!#abc
 SqlVariantPartitionFunction#!#1#!#3#!#2023-05-01 00:00:00.0
 SqlVariantPartitionFunction#!#1#!#2#!#1
-SqlVariantPartitionFunction#!#1#!#1#!#abc
+TinyIntPartitionFunction#!#1#!#3#!#255
 TinyIntPartitionFunction#!#1#!#1#!#0
 TinyIntPartitionFunction#!#1#!#2#!#128
-TinyIntPartitionFunction#!#1#!#3#!#255
-UniqueIdentifierPartitionFunction#!#1#!#3#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
-UniqueIdentifierPartitionFunction#!#1#!#2#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
 UniqueIdentifierPartitionFunction#!#1#!#1#!#00000000-0000-0000-0000-000000000000
-VarBinaryPartitionFunction#!#1#!#2#!#[B@36804139
-VarBinaryPartitionFunction#!#1#!#3#!#[B@20bd8be5
-VarBinaryPartitionFunction#!#1#!#4#!#[B@730d2164
-VarBinaryPartitionFunction#!#1#!#1#!#[B@24959ca4
+UniqueIdentifierPartitionFunction#!#1#!#2#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
+UniqueIdentifierPartitionFunction#!#1#!#3#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
+VarBinaryPartitionFunction#!#1#!#2#!#[B@5038d0b5
+VarBinaryPartitionFunction#!#1#!#4#!#[B@32115b28
+VarBinaryPartitionFunction#!#1#!#1#!#[B@2ad48653
+VarBinaryPartitionFunction#!#1#!#3#!#[B@6bb4dd34
 VarCharPartitionFunction#!#1#!#3#!#Cherry
-VarCharPartitionFunction#!#1#!#2#!#Banana
-VarCharPartitionFunction#!#1#!#5#!#Mango
 VarCharPartitionFunction#!#1#!#1#!#Apple
+VarCharPartitionFunction#!#1#!#5#!#Mango
 VarCharPartitionFunction#!#1#!#4#!#Date
+VarCharPartitionFunction#!#1#!#2#!#Banana
 ~~END~~
 
 
 SELECT * FROM GetParameterMetadataView
 GO
 ~~START~~
-varchar#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int
-"PARTITION_FUNCTION ?$@ #123 ?rder"#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
-[PARTITION_FUNCTION  ????????]#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
+nvarchar#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int
+"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
+[PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
 BigIntPartitionFunction#!#1#!#20#!#8#!#19#!#0#!#<NULL>#!#20
-BinaryPartitionFunction#!#1#!#60106#!#8000#!#0#!#0#!#<NULL>#!#60106
-CharPartitionFunction#!#1#!#59689#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#59689
+BinaryPartitionFunction#!#1#!#17376#!#8000#!#0#!#0#!#<NULL>#!#17376
+CharPartitionFunction#!#1#!#16959#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#16959
 DatePartitionFunction#!#1#!#1082#!#3#!#10#!#0#!#<NULL>#!#1082
-DateTime2PartitionFunction#!#1#!#60298#!#8#!#26#!#6#!#<NULL>#!#60298
-DateTimePartitionFunction#!#1#!#60186#!#8#!#23#!#3#!#<NULL>#!#60186
-DecimalPartitionFunction#!#1#!#59842#!#17#!#38#!#38#!#<NULL>#!#59842
+DateTime2PartitionFunction#!#1#!#17568#!#8#!#26#!#6#!#<NULL>#!#17568
+DateTimePartitionFunction#!#1#!#17456#!#8#!#23#!#3#!#<NULL>#!#17456
+DecimalPartitionFunction#!#1#!#17112#!#17#!#38#!#38#!#<NULL>#!#17112
 IntPartitionFunction#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
-NCharPartitionFunction#!#1#!#59751#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#59751
+NCharPartitionFunction#!#1#!#17021#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#17021
 NumericPartitionFunction#!#1#!#1700#!#17#!#38#!#38#!#<NULL>#!#1700
-NVarCharPartitionFunction#!#1#!#59814#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#59814
-PARTITION_FUNCTION??????????#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
-SmallDateTimePartitionFunction#!#1#!#60372#!#4#!#16#!#0#!#<NULL>#!#60372
+NVarCharPartitionFunction#!#1#!#17084#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#17084
+PARTITION_FUNCTIONログインαιώνια#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#20#!#8#!#19#!#0#!#<NULL>#!#20
+SmallDateTimePartitionFunction#!#1#!#17642#!#4#!#16#!#0#!#<NULL>#!#17642
 SmallIntPartitionFunction#!#1#!#21#!#2#!#5#!#0#!#<NULL>#!#21
-SqlVariantPartitionFunction#!#1#!#60586#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#60586
-TinyIntPartitionFunction#!#1#!#59831#!#1#!#3#!#0#!#<NULL>#!#59831
-UniqueIdentifierPartitionFunction#!#1#!#60140#!#16#!#0#!#0#!#<NULL>#!#60140
-VarBinaryPartitionFunction#!#1#!#60034#!#8000#!#0#!#0#!#<NULL>#!#60034
-VarCharPartitionFunction#!#1#!#59758#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#59758
+SqlVariantPartitionFunction#!#1#!#17856#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#17856
+TinyIntPartitionFunction#!#1#!#17101#!#1#!#3#!#0#!#<NULL>#!#17101
+UniqueIdentifierPartitionFunction#!#1#!#17410#!#16#!#0#!#0#!#<NULL>#!#17410
+VarBinaryPartitionFunction#!#1#!#17304#!#8000#!#0#!#0#!#<NULL>#!#17304
+VarCharPartitionFunction#!#1#!#17028#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#17028
 ~~END~~
 
 
 SELECT * FROM GetPartitionSchemesMetadataView
 GO
 ~~START~~
-varchar#!#varchar#!#char#!#nvarchar#!#bit#!#bit
-"PARTITION_SCHEME ?$@ #123 ?rder"#!#"PARTITION_FUNCTION ?$@ #123 ?rder"#!#PS#!#PARTITION_SCHEME#!#0#!#0
-[PARTITION_SCHEME  ????????]#!#[PARTITION_FUNCTION  ????????]#!#PS#!#PARTITION_SCHEME#!#0#!#0
+nvarchar#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit
+"PARTITION_SCHEME 😎$@ #123 🌍rder"#!#"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#PS#!#PARTITION_SCHEME#!#0#!#0
+[PARTITION_SCHEME  유니코드스키마👻]#!#[PARTITION_FUNCTION  유니코드스키마👻]#!#PS#!#PARTITION_SCHEME#!#0#!#0
 BigIntPartitionScheme#!#BigIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 BinaryPartitionScheme#!#BinaryPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 CharPartitionScheme#!#CharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
@@ -570,7 +576,8 @@ IntPartitionScheme#!#IntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 NCharPartitionScheme#!#NCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 NumericPartitionScheme#!#NumericPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 NVarCharPartitionScheme#!#NVarCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
-PARTITION_SCHEME??????????#!#PARTITION_FUNCTION??????????#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PARTITION_SCHEMEログインαιώνια#!#PARTITION_FUNCTIONログインαιώνια#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallDateTimePartitionScheme#!#SmallDateTimePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallIntPartitionScheme#!#SmallIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SqlVariantPartitionScheme#!#SqlVariantPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0

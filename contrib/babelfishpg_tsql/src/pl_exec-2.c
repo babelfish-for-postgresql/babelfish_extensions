@@ -5,6 +5,7 @@
 
 #include "access/table.h"
 #include "access/attmap.h"
+#include "access/nbtree.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_language.h"
@@ -21,6 +22,7 @@
 #include "catalog.h"
 #include "dbcmds.h"
 #include "pl_explain.h"
+#include "pltsql.h"
 #include "session.h"
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
@@ -4038,9 +4040,9 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 /*
  * tsql_compare_values
  *		Note: This function is used to sort the values in the array.
- *		It compare two datum values using the function oid of operator provided in arg,
+ *		It compare two datum values using the function oid of comparator provided in arg,
  *		it also sets the contains_duplicate flag in the context if duplicate
- *		values are found. This is modified version of compare_values().
+ *		values are found.
  *		Returns -1 if a < b, 1 if a > b and 0 if a == b.
  */
 static int
@@ -4048,22 +4050,14 @@ tsql_compare_values(const void *a, const void *b, void *arg)
 {
 	Datum		*da = (Datum *) a;
 	Datum		*db = (Datum *) b;
-	Datum		r;
+	int		result;
 
 	tsql_compare_context *cxt = (tsql_compare_context *) arg;
 
-	r = OidFunctionCall2Coll(cxt->function_oid, cxt->colloid, *da, *db);
-
-	if (DatumGetBool(r))
-		return -1;
-
-	r = OidFunctionCall2Coll(cxt->function_oid, cxt->colloid, *db, *da);
-
-	if (DatumGetBool(r))
-		return 1;
-
-	cxt->contains_duplicate = true;
-	return 0;
+	result = DatumGetInt32(OidFunctionCall2Coll(cxt->function_oid, cxt->colloid, *da, *db));
+	if (result == 0)
+		cxt->contains_duplicate = true;
+	return result;
 }
 
 /*
@@ -4120,8 +4114,10 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		ArrayType		*arr_value = NULL;
 		Oid			sql_variant_oid;
 		tsql_compare_context 	cxt;
-		Operator		operator;
-		Oid			oprcode;
+		Oid			basetype_oid;
+		Oid			opclass_oid;
+		Oid			opfamily_oid;
+		Oid			cmpfunction_oid;
 		int 			nargs = list_length(arg);
 		MemoryContext		cur_ctxt = CurrentMemoryContext;
 		LOCAL_FCINFO(fcinfo, 1);
@@ -4157,9 +4153,11 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		 * check if datatype is supported or not, if tsql_typename is NULL
 		 * then it implies that typename corresponds to UDT
 		 */
-		if (!tsql_typename || is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
-				is_tsql_geometry_or_geography_datatype(typ->typoid) || 
-				is_tsql_xml_datatype(typ->typoid) || is_tsql_timestamp_datatype(typ->typoid))
+		if (!tsql_typename || 
+			is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
+			is_tsql_geometry_or_geography_datatype(typ->typoid) || 
+			is_tsql_rowversion_or_timestamp_datatype(typ->typoid) ||
+			(strcmp(tsql_typename, "xml") == 0)) /* xml type is not created in sys schema */
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4209,13 +4207,21 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 			PG_END_TRY();
 		}
 
-		/* find comparator operator for input type, which will be used during the sorting */
-		operator = compatible_oper(NULL, list_make1(makeString("<")), typ->typoid, typ->typoid, false, -1);
-		oprcode = oprfuncid(operator);
-		ReleaseSysCache(operator);
+		/* find comparator function's oid for input type, which will be used during the sorting */
+		/*
+		 * Find comparator function's oid for input type, which will be used during the sorting.
+		 * Here, we are first finding the default operator class for the input type then using that
+		 * we are finding the operator family for that operator class then using that we are
+		 * finding the defined comparator function for that operator family.
+		 */
+		basetype_oid = getBaseType(typ->typoid);
+		opclass_oid = GetDefaultOpClass(basetype_oid, BTREE_AM_OID);
+		opfamily_oid = get_opclass_family(opclass_oid);
+		cmpfunction_oid = get_opfamily_proc(opfamily_oid, basetype_oid, basetype_oid,
+							BTORDER_PROC);
 
 		/* set the function oid of operator in tsql comparator context */
-		cxt.function_oid = oprcode;
+		cxt.function_oid = cmpfunction_oid;
 		cxt.colloid = tsql_get_server_collation_oid_internal(false);
 		cxt.contains_duplicate = false;
 
@@ -4236,7 +4242,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 
 		sql_variant_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("sql_variant");
 		/* cast each value to sql_variant datatype */
-		for (int i=0; i < nargs; i++)
+		for (int i = 0; i < nargs; i++)
 		{
 			values[i] = exec_cast_value(estate, values[i], &isnull,
 								typ->typoid, typ->atttypmod,

@@ -2179,8 +2179,7 @@ extern bool is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.v
 extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid);
 extern bool is_tsql_geometry_or_geography_datatype(Oid oid);
-extern bool is_tsql_xml_datatype(Oid oid);
-extern bool is_tsql_timestamp_datatype(Oid oid);
+extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 typedef struct
 {

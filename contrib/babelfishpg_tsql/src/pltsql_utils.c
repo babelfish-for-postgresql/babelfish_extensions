@@ -1171,14 +1171,10 @@ bool is_tsql_geometry_or_geography_datatype(Oid oid)
 		(*common_utility_plugin_ptr->is_tsql_geography_datatype) (oid);
 }
 
-bool is_tsql_xml_datatype(Oid oid)
-{
-	return (*common_utility_plugin_ptr->is_tsql_xml_datatype) (oid);
-}
 
-bool is_tsql_timestamp_datatype(Oid oid)
+bool is_tsql_rowversion_or_timestamp_datatype(Oid oid)
 {
-	return (*common_utility_plugin_ptr->is_tsql_timestamp_datatype) (oid);
+	return (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (oid);
 }
 
 

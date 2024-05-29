@@ -411,15 +411,6 @@ is_tsql_geography_datatype(Oid oid)
 	return tsql_geography_oid == oid;
 }
 
-
-bool
-is_tsql_xml_datatype(Oid oid)
-{
-	if (tsql_xml_oid == InvalidOid)
-		tsql_xml_oid = lookup_tsql_datatype_oid("xml");
-	return tsql_xml_oid == oid;
-}
-
 bool
 is_tsql_timestamp_datatype(Oid oid)
 {
