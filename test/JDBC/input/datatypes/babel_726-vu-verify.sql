@@ -226,3 +226,33 @@ go
 
 select * from babel_726_vu_prepare_v1
 go
+
+select * from babel_726_vu_prepare_v2
+go
+exec babel_726_vu_prepare_p2
+go
+
+select * from babel_726_vu_prepare_v3
+go
+exec babel_726_vu_prepare_p3
+go
+
+select * from babel_726_vu_prepare_v4
+go
+exec babel_726_vu_prepare_p4
+go
+
+select * from babel_726_vu_prepare_v5
+go
+exec babel_726_vu_prepare_p5
+go
+
+select * from babel_726_vu_prepare_v6
+go
+exec babel_726_vu_prepare_p6
+go
+
+select * from babel_726_vu_prepare_v7
+go
+exec babel_726_vu_prepare_p7
+go

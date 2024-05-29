@@ -581,3 +581,93 @@ nvarchar
 x
 ~~END~~
 
+
+select * from babel_726_vu_prepare_v2
+go
+~~START~~
+numeric
+1.04999995
+~~END~~
+
+exec babel_726_vu_prepare_p2
+go
+~~START~~
+numeric
+1.04999995
+~~END~~
+
+
+select * from babel_726_vu_prepare_v3
+go
+~~START~~
+smallmoney
+-10.0500
+~~END~~
+
+exec babel_726_vu_prepare_p3
+go
+~~START~~
+smallmoney
+-10.0500
+~~END~~
+
+
+select * from babel_726_vu_prepare_v4
+go
+~~START~~
+tinyint
+8
+~~END~~
+
+exec babel_726_vu_prepare_p4
+go
+~~START~~
+tinyint
+8
+~~END~~
+
+
+select * from babel_726_vu_prepare_v5
+go
+~~START~~
+ntext
+asdf
+~~END~~
+
+exec babel_726_vu_prepare_p5
+go
+~~START~~
+ntext
+asdf
+~~END~~
+
+
+select * from babel_726_vu_prepare_v6
+go
+~~START~~
+image
+31323334
+~~END~~
+
+exec babel_726_vu_prepare_p6
+go
+~~START~~
+image
+31323334
+~~END~~
+
+
+select * from babel_726_vu_prepare_v7
+go
+~~START~~
+nvarchar
+asdfgh
+~~END~~
+
+exec babel_726_vu_prepare_p7
+go
+~~START~~
+nvarchar
+asdfgh
+~~END~~
+

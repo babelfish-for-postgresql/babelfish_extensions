@@ -101,3 +101,141 @@ GO
 CREATE VIEW babel_726_vu_prepare_v1 AS
 SELECT CAST(CAST('x' as VARBINARY) AS NVARCHAR)
 GO
+
+CREATE VIEW babel_726_vu_prepare_v2 AS
+select coalesce(a9, a10) from babel_726_t1
+GO
+
+CREATE PROCEDURE babel_726_vu_prepare_p2 AS 
+select coalesce(a9, a10) from babel_726_t1
+GO
+
+CREATE VIEW babel_726_vu_prepare_v3 AS
+select coalesce(a12, a13) from babel_726_t1
+GO
+
+CREATE PROCEDURE babel_726_vu_prepare_p3 AS 
+select coalesce(a12, a13) from babel_726_t1
+GO
+
+CREATE VIEW babel_726_vu_prepare_v4 AS
+select coalesce(a16, a17) from babel_726_t1
+GO
+
+CREATE PROCEDURE babel_726_vu_prepare_p4 AS 
+select coalesce(a16, a17) from babel_726_t1
+GO
+
+CREATE VIEW babel_726_vu_prepare_v5 AS
+select coalesce(a18, a19) from babel_726_t1
+GO
+
+CREATE PROCEDURE babel_726_vu_prepare_p5 AS 
+select coalesce(a18, a19) from babel_726_t1
+GO
+
+CREATE VIEW babel_726_vu_prepare_v6 AS
+select coalesce(a20, a21) from babel_726_t1
+GO
+
+CREATE PROCEDURE babel_726_vu_prepare_p6 AS 
+select coalesce(a20, a21) from babel_726_t1
+GO
+
+CREATE VIEW babel_726_vu_prepare_v7 AS
+select coalesce(a22, a23) from babel_726_t1
+GO
+
+CREATE PROCEDURE babel_726_vu_prepare_p7 AS 
+select coalesce(a22, a23) from babel_726_t1
+GO
+
+select * from babel_726_vu_prepare_v2
+go
+~~START~~
+numeric
+1.04999995
+~~END~~
+
+exec babel_726_vu_prepare_p2
+go
+~~START~~
+numeric
+1.04999995
+~~END~~
+
+
+select * from babel_726_vu_prepare_v3
+go
+~~START~~
+smallmoney
+-10.0500
+~~END~~
+
+exec babel_726_vu_prepare_p3
+go
+~~START~~
+smallmoney
+-10.0500
+~~END~~
+
+
+select * from babel_726_vu_prepare_v4
+go
+~~START~~
+tinyint
+8
+~~END~~
+
+exec babel_726_vu_prepare_p4
+go
+~~START~~
+tinyint
+8
+~~END~~
+
+
+select * from babel_726_vu_prepare_v5
+go
+~~START~~
+ntext
+asdf
+~~END~~
+
+exec babel_726_vu_prepare_p5
+go
+~~START~~
+ntext
+asdf
+~~END~~
+
+
+select * from babel_726_vu_prepare_v6
+go
+~~START~~
+image
+31323334
+~~END~~
+
+exec babel_726_vu_prepare_p6
+go
+~~START~~
+image
+31323334
+~~END~~
+
+
+select * from babel_726_vu_prepare_v7
+go
+~~START~~
+nvarchar
+asdfgh
+~~END~~
+
+exec babel_726_vu_prepare_p7
+go
+~~START~~
+nvarchar
+asdfgh
+~~END~~
+
