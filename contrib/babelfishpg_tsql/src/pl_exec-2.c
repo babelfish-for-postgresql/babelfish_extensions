@@ -99,10 +99,12 @@ BulkCopyStmt *cstmt = NULL;
 int			insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 int			insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
 bool		insert_bulk_keep_nulls = false;
+bool		insert_bulk_check_constraints = false;
 
 static int	prev_insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 static int	prev_insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
 static bool prev_insert_bulk_keep_nulls = false;
+static bool prev_insert_bulk_check_constraints = false;
 
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
@@ -2976,6 +2978,11 @@ exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 		prev_insert_bulk_keep_nulls = insert_bulk_keep_nulls;
 		insert_bulk_keep_nulls = true;
 	}
+	if (stmt->check_constraints)
+	{
+		prev_insert_bulk_check_constraints = insert_bulk_check_constraints;
+		insert_bulk_check_constraints = true;
+	}
 	return PLTSQL_RC_OK;
 }
 
@@ -2995,7 +3002,7 @@ execute_bulk_load_insert(int ncol, int nrow,
 		/* Cleanup all the pointers. */
 		if (cstmt)
 		{
-			EndBulkCopy(cstmt->cstate);
+			EndBulkCopy(cstmt->cstate, false);
 			if (cstmt->attlist)
 				list_free_deep(cstmt->attlist);
 			if (cstmt->relation)
@@ -3011,6 +3018,7 @@ execute_bulk_load_insert(int ncol, int nrow,
 
 		/* Reset Insert-Bulk Options. */
 		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
+		insert_bulk_check_constraints = prev_insert_bulk_check_constraints;
 		insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
 		insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
 
@@ -3041,6 +3049,9 @@ execute_bulk_load_insert(int ncol, int nrow,
 		 */
 		MemoryContext oldcontext;
 
+		/* Cleanup cstate. */
+		EndBulkCopy(cstmt->cstate, true);
+
 		if (ActiveSnapshotSet() && GetActiveSnapshot() == snap)
 			PopActiveSnapshot();
 		oldcontext = CurrentMemoryContext;
@@ -3060,6 +3071,7 @@ execute_bulk_load_insert(int ncol, int nrow,
 
 		/* Reset Insert-Bulk Options. */
 		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
+		insert_bulk_check_constraints = prev_insert_bulk_check_constraints;
 		insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
 		insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
 
