@@ -2122,7 +2122,8 @@ file_table_option
 
 storage_partition_clause
     : id (LR_BRACKET id RR_BRACKET)?
-    | char_string  // can be "DEFAULT"
+    | PRIMARY_SQBRACKET
+    | DEFAULT_DOUBLE_QUOTE
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms187956.aspx
