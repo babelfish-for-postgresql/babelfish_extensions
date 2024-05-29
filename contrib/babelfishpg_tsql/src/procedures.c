@@ -630,10 +630,10 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 					if (attrno == InvalidAttrNumber)
 					{
 						ereport(ERROR,
-								(errcode(ERRCODE_UNDEFINED_COLUMN),
-									errmsg("column \"%s\" of relation \"%s\" does not exist",
-										name,
-										RelationGetRelationName(pstate->p_target_relation))));
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 			 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation))));
 					}
 					target_attnums = lappend_int(target_attnums, attrno);
 					break;
@@ -731,17 +731,16 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 					if (attrno == InvalidAttrNumber)
 					{
 						ereport(ERROR,
-								(errcode(ERRCODE_UNDEFINED_COLUMN),
-									errmsg("column \"%s\" of relation \"%s\" does not exist",
-										name,
-										RelationGetRelationName(pstate->p_target_relation))));
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							name,
+							RelationGetRelationName(pstate->p_target_relation))));
 					}
 					res = (ResTarget *) palloc(sizeof(ResTarget));
 					res->type = ref->type;
 					res->name = field->val.str;
 					res->indirection = NIL; /* Unused for now */
-					res->val = (Node *) ref;	/* Store the ColumnRef
-													* here if needed */
+					res->val = (Node *) ref;	/* Store the ColumnRef here if needed */
 					res->location = ref->location;
 
 					extra_restargets = lappend(extra_restargets, res);
@@ -826,8 +825,7 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 					res->type = ref->type;
 					res->name = field->val.str;
 					res->indirection = NIL; /* Unused for now */
-					res->val = (Node *) ref;	/* Store the ColumnRef
-													* here if needed */
+					res->val = (Node *) ref;	/* Store the ColumnRef here if needed */
 					res->location = ref->location;
 
 					extra_restargets = lappend(extra_restargets, res);
