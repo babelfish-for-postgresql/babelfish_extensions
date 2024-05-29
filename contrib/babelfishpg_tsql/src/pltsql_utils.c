@@ -34,11 +34,6 @@ bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
 
-bool		is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
-bool		is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
-bool		is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
-bool		is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
-bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 
 bool
@@ -1169,6 +1164,23 @@ is_tsql_text_ntext_or_image_datatype(Oid oid)
 		(*common_utility_plugin_ptr->is_tsql_ntext_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_image_datatype) (oid);
 }
+
+bool is_tsql_geometry_or_geography_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_geometry_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_geography_datatype) (oid);
+}
+
+bool is_tsql_xml_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_xml_datatype) (oid);
+}
+
+bool is_tsql_timestamp_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_timestamp_datatype) (oid);
+}
+
 
 /*
  * Try to acquire a lock with no wait

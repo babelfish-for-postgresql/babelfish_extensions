@@ -52,6 +52,81 @@ GO
 DROP type PartitionUserDefinedType
 GO
 
+------------------------------------------------------------------------------
+--- Duplicate range values for all supported datatypes in Partition Function 
+------------------------------------------------------------------------------
+CREATE PARTITION FUNCTION IntPartitionFunctionContainsDuplicateValue (int) 
+AS RANGE RIGHT FOR VALUES (0, 100, 1000, 100);
+GO
+
+CREATE PARTITION FUNCTION BigIntPartitionFunctionContainsDuplicateValue (bigint)
+AS RANGE RIGHT FOR VALUES (0, 500, 100, 500, 1000);
+GO
+
+CREATE PARTITION FUNCTION SmallIntPartitionFunctionContainsDuplicateValue (smallint) 
+AS RANGE RIGHT FOR VALUES (32767, 10, -32768, 0, 10);
+GO
+
+CREATE PARTITION FUNCTION TinyIntPartitionFunctionContainsDuplicateValue (tinyint)
+AS RANGE RIGHT FOR VALUES (0, 255, 128, 255);
+GO
+
+CREATE PARTITION FUNCTION DecimalPartitionFunctionContainsDuplicateValue (decimal(10, 5))
+AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 100.0, 300.0);
+GO
+
+CREATE PARTITION FUNCTION NumericPartitionFunctionContainsDuplicateValue (numeric(5, 2))
+AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 20.0, 30.0);
+GO
+
+CREATE PARTITION FUNCTION DatePartitionFunctionContainsDuplicateValue (date) 
+AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','2023-01-01','2022-01-01');
+GO
+
+CREATE PARTITION FUNCTION DateTimePartitionFunctionContainsDuplicateValue (datetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', '2019-01-01 00:00:00', '2022-01-01');
+GO
+
+CREATE PARTITION FUNCTION DateTime2PartitionFunctionContainsDuplicateValue (datetime2(3))
+AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', '2019-01-01 00:00:00.000', '2022-07-01 00:00:00.000');
+GO
+
+CREATE PARTITION FUNCTION SmallDateTimePartitionFunctionContainsDuplicateValue (smalldatetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', '2019-01-01', '2022-07-01');
+GO
+
+CREATE PARTITION FUNCTION CharPartitionFunctionContainsDuplicateValue (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', 'D', 'K');
+GO
+
+CREATE PARTITION FUNCTION VarCharPartitionFunctionContainsDuplicateValue (varchar(10))
+AS RANGE RIGHT FOR VALUES ('Apple', 'Banana', 'Mango', 'Cherry', 'Date', 'Banana');
+GO
+
+CREATE PARTITION FUNCTION NVarCharPartitionFunctionContainsDuplicateValue (nvarchar(10))
+AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Mango', N'Cherry', N'Date', N'Banana');
+GO
+
+CREATE PARTITION FUNCTION NCharPartitionFunctionContainsDuplicateValue (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', N'B',  N'K');
+GO
+
+CREATE PARTITION FUNCTION BinaryPartitionFunctionContainsDuplicateValue (binary(4))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000, 0x800);
+GO
+
+CREATE PARTITION FUNCTION VarBinaryPartitionFunctionContainsDuplicateValue (varbinary(8))
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 0xC000000000000000, 0x8000000000000000);
+GO
+
+CREATE PARTITION FUNCTION UniqueIdentifierPartitionFunctionContainsDuplicateValue (uniqueidentifier)
+AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', '6F9619FF-8B86-D011-B42D-00C04FC964FF', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', '6F9619FF-8B86-D011-B42D-00C04FC964FF');
+GO
+
+CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
+AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'), 'abc');
+go
+
 --------------------------------------------------
 --- Unsupported Options with Partition Function 
 --------------------------------------------------
@@ -139,6 +214,18 @@ GO
 SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_storage_options', 'ignore', 'false')
 GO
 
+-- when more than one filegroup are specified with ALL option
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO ([PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+
+-- when partition function generates more partition than specified filegroups
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+TO ([PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+
 ---------------------------------
 --- Metadata Related Tests
 ---------------------------------
@@ -221,6 +308,20 @@ SET @partition_function_definition = @partition_function_definition + CAST((@i *
 -- Execute the partition function creation
 EXEC (@partition_function_definition)
 GO
+
+
+--------------------------------------------------
+--- Test Partition Function/Scheme Name Limit 
+--------------------------------------------------
+CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz (bigint)
+AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
+GO
+
+CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz AS
+PARTITION PartitionFunctionDoesNotExists 
+ALL TO ([PRIMARY]);
+GO
+
 
 --------------------------------------------------
 --- TO test Permission

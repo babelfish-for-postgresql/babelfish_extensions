@@ -61,7 +61,6 @@ static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltex
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_function *stmt);
 static int	exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_scheme *stmt);
-static void	perform_permission_check(char *name, bool is_create, bool is_partition_function);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -4071,7 +4070,7 @@ tsql_compare_values(const void *a, const void *b, void *arg)
  * Allows only login that is either db owner or member of sysadmin.
  */
 static void 
-perform_permission_check(char *name, bool is_create, bool is_function)
+perform_permission_check(const char *name, bool is_create, bool is_function)
 {
 	char		*dbname = get_cur_db_name();
 	Oid		session_user_id = GetSessionUserId();
@@ -4082,7 +4081,7 @@ perform_permission_check(char *name, bool is_create, bool is_function)
 
 	if (!login_is_db_owner && !is_member_of_role(session_user_id, get_role_oid("sysadmin", false)))
 	{
-		if(is_create)
+		if (is_create)
 			ereport(ERROR, 
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
 					errmsg("User does not have permission to perform this action.")));
@@ -4092,6 +4091,9 @@ perform_permission_check(char *name, bool is_create, bool is_function)
 					errmsg("Cannot drop the partition %s '%s', because it does not exist or you do not have permission.", 
 							(is_function? "function": "scheme"), name)));
 	}
+
+	pfree(dbname);
+	pfree(login);
 }
 
 /*
@@ -4100,7 +4102,7 @@ perform_permission_check(char *name, bool is_create, bool is_function)
 static int
 exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_function *stmt)
 {
-	char *partition_function_name = stmt->function_name;
+	const char *partition_function_name = stmt->function_name;
 
 	/* check if the login has necessary permissions for CREATE/DROP */
 	perform_permission_check(partition_function_name, stmt->is_create, true);
@@ -4125,7 +4127,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		LOCAL_FCINFO(fcinfo, 1);
 
 		/* check if given name is exceeding the allowed limit */
-		if(strlen(partition_function_name) > 128)
+		if (strlen(partition_function_name) > 128)
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4133,7 +4135,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		}
 
 		/* check if there is existing partition function with the given name */
-		if(partition_function_exists(partition_function_name))
+		if (partition_function_exists(partition_function_name))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_DUPLICATE_FUNCTION),
@@ -4155,9 +4157,9 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		 * check if datatype is supported or not, if tsql_typename is NULL
 		 * then it implies that typename corresponds to UDT
 		 */
-		if(!tsql_typename || (strcmp(tsql_typename, "text") == 0) || (strcmp(tsql_typename, "ntext") == 0)
-			|| (strcmp(tsql_typename, "image") == 0) || (strcmp(tsql_typename, "xml") == 0) || (strcmp(tsql_typename, "geometry") == 0)
-			|| (strcmp(tsql_typename, "geography") == 0) || (strcmp(tsql_typename, "timestamp") == 0) )
+		if (!tsql_typename || is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
+				is_tsql_geometry_or_geography_datatype(typ->typoid) || 
+				is_tsql_xml_datatype(typ->typoid) || is_tsql_timestamp_datatype(typ->typoid))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4165,7 +4167,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		}
 
 		/* check if the given number of boundaries are exceeding allowed limit */
-		if(nargs >= 15000)
+		if (nargs >= 15000)
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4225,7 +4227,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		qsort_arg(values, nargs, sizeof(Datum), tsql_compare_values, &cxt);
 
 		/* raise error if input contains duplicate value */
-		if(cxt.contains_duplicate)
+		if (cxt.contains_duplicate)
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4270,19 +4272,19 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 static int
 exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_scheme *stmt)
 {
-	char *partition_scheme_name = stmt->scheme_name;
+	const char *partition_scheme_name = stmt->scheme_name;
 
 	/* check if the login has necessary permissions for CREATE/DROP */
 	perform_permission_check(partition_scheme_name, stmt->is_create, false);
 
-	if(stmt->is_create)
+	if (stmt->is_create)
 	{
 		bool		next_used = false;
 		int		filegroups = stmt->filegroups;
 		char		*partition_func_name = stmt->function_name;
 
 		/* check if given name is exceeding the allowed limit */
-		if(strlen(partition_scheme_name) > 128)
+		if (strlen(partition_scheme_name) > 128)
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4291,7 +4293,7 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 		}
 
 		/* raise error if provided partition function doesn't exists in database */
-		if(!partition_function_exists(partition_func_name))
+		if (!partition_function_exists(partition_func_name))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4310,21 +4312,21 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 		else
 		{	
 			int	partition_count = get_partition_count(partition_func_name);
-			if(filegroups < partition_count)
+			if (filegroups < partition_count)
 			{
 				ereport(ERROR, 
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("The associated partition function '%s' generates more partitions than there are file groups mentioned in the scheme '%s'.", 
 								partition_func_name, partition_scheme_name)));
 			}
-			else if(filegroups > partition_count)
+			else if (filegroups > partition_count)
 			{
 				next_used = true;
 			}
 		}
 
 		/* check if there is existing partition scheme with the given name */
-		if(partition_scheme_exists(partition_scheme_name))
+		if (partition_scheme_exists(partition_scheme_name))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

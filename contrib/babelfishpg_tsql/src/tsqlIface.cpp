@@ -1817,19 +1817,19 @@ public:
 		{
 			stmt = makeDropFulltextIndexStmt(ctx->drop_fulltext_index());
 		}
-		else if(ctx->create_partition_function())
+		else if (ctx->create_partition_function())
 		{
 			stmt = makeCreatePartitionFunction(ctx->create_partition_function());
 		}
-		else if(ctx->drop_partition_function())
+		else if (ctx->drop_partition_function())
 		{
 			stmt = makeDropPartitionFunction(ctx->drop_partition_function());
 		}
-		else if(ctx->create_partition_scheme())
+		else if (ctx->create_partition_scheme())
 		{
 			stmt = makeCreatePartitionScheme(ctx->create_partition_scheme());
 		}
-		else if(ctx->drop_partition_scheme())
+		else if (ctx->drop_partition_scheme())
 		{
 			stmt = makeDropPartitionScheme(ctx->drop_partition_scheme());
 		}
@@ -7104,15 +7104,16 @@ makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
 	std::string typeStr = ::getFullText(ctx->data_type());
 	PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
 	
-	stmt->is_right = true; 
 	stmt->function_name = pstrdup(getFullText(ctx->id()).c_str());
 	stmt->datatype = type;
 	stmt->lineno = getLineNo(ctx);
 	stmt->cmd_type = PLTSQL_STMT_PARTITION_FUNCTION;
 	stmt->is_create = true;
+	/* TODO: Support LEFT boundary option with partition function */
+	stmt->is_right = true; 
 
 	List *arg_list = NIL;
-	if(ctx->expression_list())
+	if (ctx->expression_list())
 	{
 		for (auto expr : ctx->expression_list()->exp)
 		{
@@ -7123,7 +7124,7 @@ makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
 	stmt->args = arg_list;
 
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
-	return (PLtsql_stmt *) stmt;
+return (PLtsql_stmt *) stmt;
 }
 
 PLtsql_stmt *
@@ -7149,10 +7150,10 @@ makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx)
 	stmt->lineno = getLineNo(ctx);
 	stmt->cmd_type = PLTSQL_STMT_PARTITION_SCHEME;
 
-	if(ctx->ALL())
+	if (ctx->ALL())
 		stmt->filegroups = -1;
 	else
-		stmt->filegroups = ctx->filegroups().size();
+		stmt->filegroups = ctx->filegroup_type().size();
 
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 	return (PLtsql_stmt *) stmt;

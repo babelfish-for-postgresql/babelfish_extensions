@@ -2481,7 +2481,7 @@ GRANT SELECT ON sys.dm_hadr_database_replica_states TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.partition_functions AS
 SELECT
-  CAST(partition_function_name as sys.sysname) as name,
+  partition_function_name as name,
   function_id,
   CAST('R' as sys.bpchar(2)) as type,
   CAST('RANGE' as sys.nvarchar(60)) as type_desc,
@@ -2529,7 +2529,7 @@ GRANT SELECT ON  sys.partition_parameters TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.partition_schemes AS
 SELECT
-  CAST(partition_scheme_name as sys.sysname) as name,
+  partition_scheme_name as name,
   scheme_id as data_space_id,
   CAST('PS' as sys.bpchar(2)) as type,
   CAST('PARTITION_SCHEME' as sys.nvarchar(60)) as type_desc,

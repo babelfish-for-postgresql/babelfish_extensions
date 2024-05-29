@@ -38,7 +38,7 @@ AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: The type 'geometry' is not valid for this operation.)~~
 
 
 CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOGRAPHY)
@@ -46,7 +46,7 @@ AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: The type 'geography' is not valid for this operation.)~~
 
 
 -- to test rowversion and timestamp
@@ -97,6 +97,153 @@ GO
 
 DROP type PartitionUserDefinedType
 GO
+
+------------------------------------------------------------------------------
+--- Duplicate range values for all supported datatypes in Partition Function 
+------------------------------------------------------------------------------
+CREATE PARTITION FUNCTION IntPartitionFunctionContainsDuplicateValue (int) 
+AS RANGE RIGHT FOR VALUES (0, 100, 1000, 100);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION BigIntPartitionFunctionContainsDuplicateValue (bigint)
+AS RANGE RIGHT FOR VALUES (0, 500, 100, 500, 1000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION SmallIntPartitionFunctionContainsDuplicateValue (smallint) 
+AS RANGE RIGHT FOR VALUES (32767, 10, -32768, 0, 10);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION TinyIntPartitionFunctionContainsDuplicateValue (tinyint)
+AS RANGE RIGHT FOR VALUES (0, 255, 128, 255);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION DecimalPartitionFunctionContainsDuplicateValue (decimal(10, 5))
+AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 100.0, 300.0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION NumericPartitionFunctionContainsDuplicateValue (numeric(5, 2))
+AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 20.0, 30.0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION DatePartitionFunctionContainsDuplicateValue (date) 
+AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','2023-01-01','2022-01-01');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION DateTimePartitionFunctionContainsDuplicateValue (datetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', '2019-01-01 00:00:00', '2022-01-01');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION DateTime2PartitionFunctionContainsDuplicateValue (datetime2(3))
+AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', '2019-01-01 00:00:00.000', '2022-07-01 00:00:00.000');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION SmallDateTimePartitionFunctionContainsDuplicateValue (smalldatetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', '2019-01-01', '2022-07-01');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION CharPartitionFunctionContainsDuplicateValue (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', 'D', 'K');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION VarCharPartitionFunctionContainsDuplicateValue (varchar(10))
+AS RANGE RIGHT FOR VALUES ('Apple', 'Banana', 'Mango', 'Cherry', 'Date', 'Banana');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION NVarCharPartitionFunctionContainsDuplicateValue (nvarchar(10))
+AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Mango', N'Cherry', N'Date', N'Banana');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION NCharPartitionFunctionContainsDuplicateValue (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', N'B',  N'K');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION BinaryPartitionFunctionContainsDuplicateValue (binary(4))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000, 0x800);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION VarBinaryPartitionFunctionContainsDuplicateValue (varbinary(8))
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 0xC000000000000000, 0x8000000000000000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION UniqueIdentifierPartitionFunctionContainsDuplicateValue (uniqueidentifier)
+AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', '6F9619FF-8B86-D011-B42D-00C04FC964FF', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', '6F9619FF-8B86-D011-B42D-00C04FC964FF');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
+AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'), 'abc');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
 
 --------------------------------------------------
 --- Unsupported Options with Partition Function 
@@ -237,6 +384,26 @@ GO
 text
 ignore
 ~~END~~
+
+
+-- when more than one filegroup are specified with ALL option
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO ([PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only a single filegroup can be specified while creating partition scheme using option ALL to specify all the filegroups.)~~
+
+
+-- when partition function generates more partition than specified filegroups
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+TO ([PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The associated partition function 'IntPartitionFunction' generates more partitions than there are file groups mentioned in the scheme 'TestPartitionScheme'.)~~
 
 
 
@@ -417,7 +584,7 @@ VarCharPartitionScheme#!#VarCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#
 SELECT * FROM PartitionFunctionContainsDuplicateName()
 GO
 ~~START~~
-varchar
+nvarchar
 ~~END~~
 
 
@@ -431,7 +598,7 @@ int
 SELECT * FROM PartitionSchemeContainsDuplicateName()
 GO
 ~~START~~
-varchar
+nvarchar
 ~~END~~
 
 
@@ -506,6 +673,28 @@ GO
 ~~ERROR (Message: CREATE/ALTER partition function failed as only a maximum of 15000 partitions can be created.)~~
 
 
+
+--------------------------------------------------
+--- Test Partition Function/Scheme Name Limit 
+--------------------------------------------------
+CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz (bigint)
+AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The identifier that starts with 'PartitionFunctionNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmno' is too long. Maximum length is 128.)~~
+
+
+CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz AS
+PARTITION PartitionFunctionDoesNotExists 
+ALL TO ([PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The identifier that starts with 'PartitionSchemeNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopq' is too long. Maximum length is 128.)~~
+
+
+
 -- tsql     user=partition_l1 password=12345678
 --------------------------------------------------
 --- TO test Permission
@@ -560,7 +749,7 @@ SELECT
         sys.partition_functions
 go
 ~~START~~
-varchar#!#char#!#nvarchar#!#int#!#bit#!#bit
+nvarchar#!#char#!#nvarchar#!#int#!#bit#!#bit
 PartitionDb_PartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 ~~END~~
 
@@ -573,7 +762,7 @@ SELECT
         sys.partition_functions pf on (ps.function_id = pf.function_id)
 go
 ~~START~~
-varchar#!#varchar#!#char#!#nvarchar#!#bit#!#bit
+nvarchar#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit
 PartitionDb_PartitionScheme#!#PartitionDb_PartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 ~~END~~
 

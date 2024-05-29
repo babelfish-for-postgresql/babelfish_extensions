@@ -198,6 +198,11 @@ CREATE PARTITION FUNCTION SqlVariantPartitionFunction (sql_variant)
 AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'));
 go
 
+-- identifier length greater than 64
+CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (bigint)
+AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
+GO
+
 --------------------------------------------------
 --- Partition Scheme
 --------------------------------------------------
@@ -294,6 +299,11 @@ PARTITION SqlVariantPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 
+-- identifier length greater than 64
+CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz AS
+PARTITION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz 
+ALL TO ([PRIMARY]);
+GO
 
 --------------------------------------------------
 --- name identifiers test

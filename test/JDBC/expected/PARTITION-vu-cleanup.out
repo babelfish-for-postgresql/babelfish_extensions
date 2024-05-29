@@ -79,6 +79,9 @@ GO
 DROP PARTITION SCHEME SqlVariantPartitionScheme
 GO
 
+DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
+GO
+
 DROP PARTITION SCHEME PARTITION_SCHEMEログインαιώνια
 GO
 
@@ -149,6 +152,9 @@ DROP PARTITION FUNCTION UniqueIdentifierPartitionFunction
 GO
 
 DROP PARTITION FUNCTION SqlVariantPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
 
 DROP PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια

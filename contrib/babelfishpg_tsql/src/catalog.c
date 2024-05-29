@@ -308,7 +308,9 @@ IsPLtsqlExtendedCatalog(Oid relationId)
 		relationId == bbf_extended_properties_oid || relationId == bbf_assemblies_oid ||
 		relationId == bbf_configurations_oid || relationId == bbf_helpcollation_oid ||
 		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
-		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid))
+		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid ||
+		relationId == bbf_partition_function_oid || relationId == bbf_partition_scheme_oid ||
+		relationId == bbf_partition_depend_oid))
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -4760,7 +4762,7 @@ get_available_partition_scheme_id(void)
  * 		checks if partition function is used by any partition scheme
  */
 static bool 
-is_partition_function_used(char *partition_function_name)
+is_partition_function_used(const char *partition_function_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -4800,7 +4802,7 @@ is_partition_function_used(char *partition_function_name)
  *		Add a new entry to the sys.babelfish_partition_function catalog table.
  */
 void
-add_entry_to_bbf_partition_function(char *partition_function_name, char *typname,
+add_entry_to_bbf_partition_function(const char *partition_function_name, char *typname,
 					bool partition_option, ArrayType *values)
 {
 	Relation	rel;
@@ -4846,7 +4848,7 @@ add_entry_to_bbf_partition_function(char *partition_function_name, char *typname
  * 		2. If there are any dependent partition schemes on this partition function.
  */
 void
-remove_entry_from_bbf_partition_function(char *partition_function_name)
+remove_entry_from_bbf_partition_function(const char *partition_function_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -4889,7 +4891,7 @@ remove_entry_from_bbf_partition_function(char *partition_function_name)
 	table_close(rel, RowExclusiveLock);
 
 	/* raise error if it doesn't exists in database */
-	if(!partition_function_exists)
+	if (!partition_function_exists)
 	{
 		ereport(ERROR, 
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4897,7 +4899,7 @@ remove_entry_from_bbf_partition_function(char *partition_function_name)
 	}
 
 	/* raise error if there are dependent partition scheme on it */
-	if(has_dependent_objects)
+	if (has_dependent_objects)
 	{
 		ereport(ERROR, 
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4910,7 +4912,7 @@ remove_entry_from_bbf_partition_function(char *partition_function_name)
  * 		checks if provided partition function name exists in database
  */
 bool
-partition_function_exists(char *partition_function_name)
+partition_function_exists(const char *partition_function_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -4955,7 +4957,7 @@ partition_function_exists(char *partition_function_name)
  *		Returns the number of partitions that will be generated using the given partition function name.
  */
 int
-get_partition_count(char *partition_function_name)
+get_partition_count(const char *partition_function_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -4998,7 +5000,7 @@ get_partition_count(char *partition_function_name)
  * 		by looking up sys.babelfish_partition_depend catalog
  */
 static 
-bool is_partition_scheme_used(char *partition_scheme_name)
+bool is_partition_scheme_used(const char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -5039,7 +5041,7 @@ bool is_partition_scheme_used(char *partition_scheme_name)
  *		Add a new entry to the sys.babelfish_partition_scheme catalog table.
  */
 void
-add_entry_to_bbf_partition_scheme(char *partition_scheme_name, char *partition_function_name, bool next_used)
+add_entry_to_bbf_partition_scheme(const char *partition_scheme_name, const char *partition_function_name, bool next_used)
 {
 	Relation	rel;
 	TupleDesc	dsc;
@@ -5061,7 +5063,7 @@ add_entry_to_bbf_partition_scheme(char *partition_scheme_name, char *partition_f
 	new_record[Anum_bbf_partition_scheme_id - 1] = Int32GetDatum(partition_scheme_id);
 	new_record[Anum_bbf_partition_scheme_name - 1] = CStringGetTextDatum(partition_scheme_name);
 	new_record[Anum_bbf_partition_scheme_func_name - 1] = CStringGetTextDatum(partition_function_name);
-	new_record[4] = BoolGetDatum(next_used);
+	new_record[Anum_bbf_partition_scheme_next_used - 1] = BoolGetDatum(next_used);
 
 	tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
 
@@ -5081,7 +5083,7 @@ add_entry_to_bbf_partition_scheme(char *partition_scheme_name, char *partition_f
  * 		2. If there are any dependent tables on this partition scheme.
  */
 void
-remove_entry_from_bbf_partition_scheme(char *partition_scheme_name)
+remove_entry_from_bbf_partition_scheme(const char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -5133,7 +5135,7 @@ remove_entry_from_bbf_partition_scheme(char *partition_scheme_name)
 	}
 
 	/* raise error if there are dependent tables on it */
-	if(has_dependent_objects) 
+	if (has_dependent_objects) 
 	{
 		ereport(ERROR, 
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -5146,7 +5148,7 @@ remove_entry_from_bbf_partition_scheme(char *partition_scheme_name)
  * 		checks if provided partition scheme name exists in database
  */
 bool
-partition_scheme_exists(char *partition_scheme_name)
+partition_scheme_exists(const char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -5186,7 +5188,7 @@ partition_scheme_exists(char *partition_scheme_name)
  * get_partition_function
  * 		Returns the partition function name for the given partition scheme name.
  */
-char *get_partition_function(char *partition_scheme_name)
+char *get_partition_function(const char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;

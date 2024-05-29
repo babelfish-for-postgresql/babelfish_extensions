@@ -283,6 +283,9 @@ Oid			tsql_datetime2_oid = InvalidOid;
 Oid			tsql_smalldatetime_oid = InvalidOid;
 Oid			tsql_datetimeoffset_oid = InvalidOid;
 Oid			tsql_decimal_oid = InvalidOid;
+Oid			tsql_geography_oid = InvalidOid;
+Oid			tsql_geometry_oid = InvalidOid;
+Oid			tsql_xml_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -390,6 +393,31 @@ is_tsql_rowversion_datatype(Oid oid)
 	if (tsql_rowversion_oid == InvalidOid)
 		tsql_rowversion_oid = lookup_tsql_datatype_oid("rowversion");
 	return tsql_rowversion_oid == oid;
+}
+
+bool
+is_tsql_geometry_datatype(Oid oid)
+{
+	if (tsql_geometry_oid == InvalidOid)
+		tsql_geometry_oid = lookup_tsql_datatype_oid("geometry");
+	return tsql_geometry_oid == oid;
+}
+
+bool
+is_tsql_geography_datatype(Oid oid)
+{
+	if (tsql_geography_oid == InvalidOid)
+		tsql_geography_oid = lookup_tsql_datatype_oid("geography");
+	return tsql_geography_oid == oid;
+}
+
+
+bool
+is_tsql_xml_datatype(Oid oid)
+{
+	if (tsql_xml_oid == InvalidOid)
+		tsql_xml_oid = lookup_tsql_datatype_oid("xml");
+	return tsql_xml_oid == oid;
 }
 
 bool

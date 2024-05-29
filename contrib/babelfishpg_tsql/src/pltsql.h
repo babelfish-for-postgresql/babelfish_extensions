@@ -2173,6 +2173,14 @@ extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
 extern Oid get_sysadmin_oid(void);
+extern bool is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
+extern bool is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
+extern bool is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
+extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
+extern bool is_tsql_text_ntext_or_image_datatype(Oid oid);
+extern bool is_tsql_geometry_or_geography_datatype(Oid oid);
+extern bool is_tsql_xml_datatype(Oid oid);
+extern bool is_tsql_timestamp_datatype(Oid oid);
 
 typedef struct
 {

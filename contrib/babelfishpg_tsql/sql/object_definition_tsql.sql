@@ -20,7 +20,7 @@ CREATE TABLE sys.babelfish_partition_function
   partition_function_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
   input_type sys.sysname,
   partition_option sys.bit,
-  range_values sys.sql_variant[],
+  range_values sys.sql_variant[] CHECK (array_length(range_values, 1) < 15000),
   create_date SYS.DATETIME NOT NULL,
   modify_date SYS.DATETIME NOT NULL,
   PRIMARY KEY(dbid, partition_function_name)
