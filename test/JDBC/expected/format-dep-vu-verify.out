@@ -58,6 +58,8 @@ Saturday, March 14, 2020
 
 select * from format_dep_func_datetime()
 go
+~~START~~
+datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetime: "Monday, January 1, 1753 12:00 AM")~~
