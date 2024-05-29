@@ -2762,10 +2762,6 @@ GO
 ~~ROW COUNT: 1~~
 
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: The SQL statement must not be null or empty.)~~
-
 select * from simpleErrorTable ORDER BY c
 GO
 ~~START~~

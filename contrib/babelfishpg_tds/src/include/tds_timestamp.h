@@ -33,6 +33,7 @@ extern void TdsTimeGetDatumFromDays(uint32 numDays, uint64 *val);
 extern void TdsTimeGetDatumFromDatetime(uint32 numDays, uint32 numTicks,
 										Timestamp *timestamp);
 extern uint32 TdsGetDayDifferenceHelper(int day, int mon, int year, bool isDateType);
+extern char* TdsTimeGetDateAsString(Datum value);
 
 /*
  *  structure for datatimeoffset support with separate time zone field

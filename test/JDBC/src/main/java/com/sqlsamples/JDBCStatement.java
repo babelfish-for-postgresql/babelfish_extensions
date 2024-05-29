@@ -36,6 +36,10 @@ public class JDBCStatement {
             bw.write(strLine);
             bw.newLine();
 
+            if (SQL.isEmpty()) {
+                return;
+            }
+
             SQLWarning sqlwarn = null;
             boolean resultSetExist = false;
             boolean warningExist = false;

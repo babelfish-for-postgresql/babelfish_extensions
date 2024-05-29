@@ -59,7 +59,7 @@ jtds-TestBinary
 TestImage-vu-prepare
 TestImage-vu-verify
 TestImage-vu-cleanup
-# Failure: Message: Data truncation
+# Failure: date type support for TDS 7.1 has been added, time and datetime2 support pending
 # TestSQLVariant-vu-prepare
 # TestSQLVariant-vu-verify
 # TestSQLVariant-vu-cleanup

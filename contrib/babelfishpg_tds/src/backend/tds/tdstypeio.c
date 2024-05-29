@@ -4153,22 +4153,68 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	}
 	else if (isBaseDate)
 	{
-		/*
-		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 * data(3B)
-		 */
 
 		if (variantBaseType == VARIANT_TYPE_DATE)
 		{
 			memset(&dateval, 0, sizeof(dateval));
 			memcpy(&dateval, buf, sizeof(dateval));
-			numDays = TdsDayDifference(dateval);
-			dataLen = 3;
-			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATE;
-			rc = TdsPutUInt32LE(totalLen);
-			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATE);
-			rc |= TdsPutDate(numDays);
+
+			if (GetClientTDSVersion() <= TDS_VERSION_7_2)
+			{
+				/*
+				 * DATENTYPE type was introduced in TDS 7.3, with earlier protocol
+				 * versions date is sent as NVARCHARTYPE.
+				 *
+				 * dataformat: totalLen(4B) + baseType(1B) + metadatalen(1B) +
+				 * encodingLen(5B) + dataLen(2B) + data(dataLen)
+				 */
+				StringInfoData strbuf;
+				int			actualDataLen = 0;	/* Number of bytes that would be
+												* needed to store given string in
+												* given encoding. */
+				char	   *dateStr = NULL;
+
+				dateStr = TdsTimeGetDateAsString(dateval);
+				initStringInfo(&strbuf);
+				TdsUTF8toUTF16StringInfo(&strbuf, dateStr, 10);
+				pfree(dateStr);
+
+				actualDataLen = strbuf.len;
+				totalLen = actualDataLen + VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES;
+
+				rc = TdsPutUInt32LE(totalLen);
+				rc |= TdsPutInt8(VARIANT_TYPE_NVARCHAR);
+				rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_CHAR_DATATYPES);
+
+				/*
+				 * 5B of fixed collation TODO: [BABEL-1069] Remove collation related
+				 * hardcoding from sql_variant sender for char class basetypes
+				 */
+				rc |= TdsPutInt8(9);
+				rc |= TdsPutInt8(4);
+				rc |= TdsPutInt8(208);
+				rc |= TdsPutInt8(0);
+				rc |= TdsPutInt8(52);
+
+				rc |= TdsPutUInt16LE(actualDataLen);
+
+				rc |= TdsPutbytes(strbuf.data, actualDataLen);
+				pfree(strbuf.data);
+			}
+			else
+			{
+				/*
+				* dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
+				* data(3B)
+				*/
+				numDays = TdsDayDifference(dateval);
+				dataLen = 3;
+				totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATE;
+				rc = TdsPutUInt32LE(totalLen);
+				rc |= TdsPutInt8(variantBaseType);
+				rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATE);
+				rc |= TdsPutDate(numDays);
+			}
 		}
 
 		/*

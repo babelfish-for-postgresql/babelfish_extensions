@@ -551,3 +551,29 @@ TdsGetTimestampFromDayTime(uint32 numDays, uint64 numMicro, int tz,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
 }
+
+char*
+TdsTimeGetDateAsString(Datum value)
+{
+	struct pg_tm ti,
+			   *tm = &ti;
+	char	*result;
+
+	memset(tm, '\0', sizeof(struct pg_tm));
+	GetDateFromDatum(value, tm);
+	/*
+	 * Adjust the timestamp converting it from Postgres' datetime where tm_mon
+	 * is counted from 1 and tm_year is relative to 1 BCE to POSIX datetime
+	 * where tm_mon counts from 0 and tm_year is relative to 1900.
+	 */
+	tm->tm_year -= 1900;
+	tm->tm_mon -= 1;
+
+	result = palloc(10 + 1);
+	if (!pg_strftime(result, 10 + 1, "%Y-%m-%d", tm))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range")));
+
+	return result;
+}
