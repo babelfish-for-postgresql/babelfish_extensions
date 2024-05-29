@@ -683,7 +683,7 @@ bit
 SELECT * FROM babel_726_v8
 GO
 ~~START~~
-smallint
+bit
 1
 ~~END~~
 

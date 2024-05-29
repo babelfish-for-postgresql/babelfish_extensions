@@ -215,14 +215,14 @@ DECLARE @ID_UNDE INT = 7;
 select COALESCE(@ID_UNDE, 'Não Informado')
 go
 
--- exec babel_726_vu_prepare_p1
--- go
+exec babel_726_vu_prepare_p1
+go
 
--- select babel_726_vu_prepare_f1()
--- go
+select babel_726_vu_prepare_f1()
+go
 
--- select coalesce(CAST('x'AS VARBINARY), CAST('x' AS NVARCHAR(4000)), 'x')
--- go
+select coalesce(CAST('x'AS VARBINARY), CAST('x' AS NVARCHAR(4000)), 'x')
+go
 
 select * from babel_726_vu_prepare_v1
 go
