@@ -88,9 +88,6 @@ extern "C"
 	extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 
 	extern int escape_hatch_showplan_all;
-
-	/* To store the time spent in ANTLR parsing for the current batch */
-	extern instr_time antlr_parse_time;
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -3233,7 +3230,6 @@ antlr_parser_cpp(const char *sourceText)
 	instr_time	parseStart;
 	instr_time	parseEnd;
 	INSTR_TIME_SET_CURRENT(parseStart);
-	INSTR_TIME_SET_ZERO(antlr_parse_time);
 
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
@@ -3275,9 +3271,6 @@ antlr_parser_cpp(const char *sourceText)
 	INSTR_TIME_SET_CURRENT(parseEnd);
 	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
 	elog(DEBUG1, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
-
-	/* And store time spent in ANTLR parsing so that we can emit it for EXPLAIN info if required */
-	antlr_parse_time = parseEnd;
 
 	return result;
 }
