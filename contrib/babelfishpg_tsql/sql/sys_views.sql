@@ -2522,7 +2522,7 @@ SELECT
 FROM
   sys.babelfish_partition_function pf
 INNER JOIN
-  sys.types st on pf.input_type = st.name
+  sys.types st on pf.input_parameter_type = st.name
 WHERE
   dbid = sys.db_id();
 GRANT SELECT ON  sys.partition_parameters TO PUBLIC;

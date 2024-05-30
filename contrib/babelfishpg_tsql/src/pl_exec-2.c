@@ -4157,7 +4157,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 			is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
 			is_tsql_geometry_or_geography_datatype(typ->typoid) || 
 			is_tsql_rowversion_or_timestamp_datatype(typ->typoid) ||
-			(strcmp(tsql_typename, "xml") == 0)) /* xml type is not created in sys schema */
+			is_tsql_xml_datatype(typ->typoid))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4207,11 +4207,10 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 			PG_END_TRY();
 		}
 
-		/* find comparator function's oid for input type, which will be used during the sorting */
 		/*
-		 * Find comparator function's oid for input type, which will be used during the sorting.
+		 * Find oid of comparator function for input type, which will be used during the sorting.
 		 * Here, we are first finding the default operator class for the input type then using that
-		 * we are finding the operator family for that operator class then using that we are
+		 * we are finding the operator family for that operator class and finally using that we are
 		 * finding the defined comparator function for that operator family.
 		 */
 		basetype_oid = getBaseType(typ->typoid);

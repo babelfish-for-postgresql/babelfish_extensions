@@ -24,10 +24,8 @@ RETURN
         name, parameter_id, boundary_id, value
     FROM 
         sys.partition_range_values pr
-    INNER JOIN 
+    LEFT JOIN 
         sys.partition_functions pf on (pr.function_id = pf.function_id)
-    ORDER BY 
-        name
 )
 GO
 

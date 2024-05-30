@@ -100,6 +100,7 @@ extern bool is_tsql_rowversion_datatype(Oid oid);
 extern bool is_tsql_timestamp_datatype(Oid oid);
 extern bool is_tsql_geography_datatype(Oid oid);
 extern bool is_tsql_geometry_datatype(Oid oid);
+extern bool is_tsql_xml_datatype(Oid oid);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 extern bool is_tsql_datetime2_datatype(Oid oid);
 extern bool is_tsql_smalldatetime_datatype(Oid oid);

@@ -1177,6 +1177,11 @@ bool is_tsql_rowversion_or_timestamp_datatype(Oid oid)
 	return (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (oid);
 }
 
+bool is_tsql_xml_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_xml_datatype) (oid);
+}
+
 
 /*
  * Try to acquire a lock with no wait

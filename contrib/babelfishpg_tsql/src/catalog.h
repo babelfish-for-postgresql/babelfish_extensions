@@ -395,7 +395,7 @@ extern Oid	get_bbf_extended_properties_idx_oid(void);
 #define Anum_bbf_partition_function_dbid 1
 #define Anum_bbf_partition_function_id 2
 #define Anum_bbf_partition_function_name 3
-#define Anum_bbf_partition_function_input_type 4
+#define Anum_bbf_partition_function_input_parameter_type 4
 #define Anum_bbf_partition_function_partition_option 5
 #define Anum_bbf_partition_function_range_values 6
 

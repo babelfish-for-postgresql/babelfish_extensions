@@ -301,6 +301,20 @@ lookup_tsql_datatype_oid(const char *typename)
 	return typoid;
 }
 
+static Oid
+lookup_pg_datatype_oid(const char *typename)
+{
+	Oid			nspoid;
+	Oid			typoid;
+
+	nspoid = get_namespace_oid("pg_catalog", true);
+	if (nspoid == InvalidOid)
+		return InvalidOid;
+
+	typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
+	return typoid;
+}
+
 bool
 is_tsql_bpchar_datatype(Oid oid)
 {
@@ -417,6 +431,17 @@ is_tsql_timestamp_datatype(Oid oid)
 	if (tsql_timestamp_oid == InvalidOid)
 		tsql_timestamp_oid = lookup_tsql_datatype_oid("timestamp");
 	return tsql_timestamp_oid == oid;
+}
+
+bool
+is_tsql_xml_datatype(Oid oid)
+{
+	if (tsql_xml_oid == InvalidOid)
+	{
+		/* lookup for xml datatype in pg_catalog namespace */
+		tsql_xml_oid = lookup_pg_datatype_oid("xml");
+	}
+	return tsql_xml_oid == oid;
 }
 
 bool

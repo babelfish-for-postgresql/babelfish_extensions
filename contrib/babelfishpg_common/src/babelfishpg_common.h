@@ -54,6 +54,7 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_varbinary_datatype) (Oid oid);
 	bool		(*is_tsql_geography_datatype) (Oid oid);
 	bool		(*is_tsql_geometry_datatype) (Oid oid);
+	bool		(*is_tsql_xml_datatype) (Oid oid);
 	bool		(*is_tsql_timestamp_datatype) (Oid oid);
 	bool		(*is_tsql_datetime2_datatype) (Oid oid);
 	bool		(*is_tsql_smalldatetime_datatype) (Oid oid);
