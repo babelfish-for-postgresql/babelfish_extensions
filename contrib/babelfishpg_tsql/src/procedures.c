@@ -617,30 +617,11 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 					xpr = (A_Expr *)arg;
 					if (nodeTag(xpr->lexpr) != T_ColumnRef)
 					{
-						xpr = (A_Expr *) arg;
-
-						if (nodeTag(xpr->lexpr) != T_ColumnRef)
+						if (is_sp_describe_undeclared_parameters)
 						{
-							if (is_sp_describe_undeclared_parameters)
-							{
-								is_supported_case_sp_describe_undeclared_parameters = false;
-								return target_attnums;
-							}
+							is_supported_case_sp_describe_undeclared_parameters = false;
+							return target_attnums;
 						}
-						ref = (ColumnRef *) xpr->lexpr;
-						field = linitial(ref->fields);
-						name = field->val.str;
-						attrno = attnameAttNum(pstate->p_target_relation, name, false);
-						if (attrno == InvalidAttrNumber)
-						{
-							ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_COLUMN),
-									 errmsg("column \"%s\" of relation \"%s\" does not exist",
-											name,
-											RelationGetRelationName(pstate->p_target_relation))));
-						}
-						target_attnums = lappend_int(target_attnums, attrno);
-						break;
 					}
 					ref = (ColumnRef *) xpr->lexpr;
 					field = linitial(ref->fields);
@@ -649,8 +630,8 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 					if (attrno == InvalidAttrNumber)
 					{
 						ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 								name,
 								RelationGetRelationName(pstate->p_target_relation))));
 					}
@@ -737,38 +718,11 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 
 					if (nodeTag(xpr->lexpr) != T_ColumnRef)
 					{
-						xpr = (A_Expr *) arg;
-
-						if (nodeTag(xpr->lexpr) != T_ColumnRef)
+						if (is_sp_describe_undeclared_parameters)
 						{
-							if (is_sp_describe_undeclared_parameters)
-							{
-								is_supported_case_sp_describe_undeclared_parameters = false;
-								return extra_restargets;
-							}
+							is_supported_case_sp_describe_undeclared_parameters = false;
+							return extra_restargets;
 						}
-						ref = (ColumnRef *) xpr->lexpr;
-						field = linitial(ref->fields);
-						name = field->val.str;
-						attrno = attnameAttNum(pstate->p_target_relation, name, false);
-						if (attrno == InvalidAttrNumber)
-						{
-							ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_COLUMN),
-									 errmsg("column \"%s\" of relation \"%s\" does not exist",
-											name,
-											RelationGetRelationName(pstate->p_target_relation))));
-						}
-						res = (ResTarget *) palloc(sizeof(ResTarget));
-						res->type = ref->type;
-						res->name = field->val.str;
-						res->indirection = NIL; /* Unused for now */
-						res->val = (Node *) ref;	/* Store the ColumnRef
-													 * here if needed */
-						res->location = ref->location;
-
-						extra_restargets = lappend(extra_restargets, res);
-						break;
 					}
 					ref = (ColumnRef *) xpr->lexpr;
 					field = linitial(ref->fields);
@@ -779,14 +733,14 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 						ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("column \"%s\" of relation \"%s\" does not exist",
-								name,
-								RelationGetRelationName(pstate->p_target_relation))));
+							name,
+							RelationGetRelationName(pstate->p_target_relation))));
 					}
 					res = (ResTarget *) palloc(sizeof(ResTarget));
 					res->type = ref->type;
 					res->name = field->val.str;
 					res->indirection = NIL; /* Unused for now */
-					res->val = (Node *) ref; /* Store the ColumnRef here if needed */
+					res->val = (Node *) ref;	/* Store the ColumnRef here if needed */
 					res->location = ref->location;
 
 					extra_restargets = lappend(extra_restargets, res);
@@ -859,28 +813,11 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 
 					if (nodeTag(xpr->rexpr) != T_ColumnRef)
 					{
-						xpr = (A_Expr *) arg;
-
-						if (nodeTag(xpr->rexpr) != T_ColumnRef)
+						if (is_sp_describe_undeclared_parameters)
 						{
-							if (is_sp_describe_undeclared_parameters)
-							{
-								is_supported_case_sp_describe_undeclared_parameters = false;
-								return extra_restargets;
-							}
+							is_supported_case_sp_describe_undeclared_parameters = false;
+							return extra_restargets;
 						}
-						ref = (ColumnRef *) xpr->rexpr;
-						field = linitial(ref->fields);
-						res = (ResTarget *) palloc(sizeof(ResTarget));
-						res->type = ref->type;
-						res->name = field->val.str;
-						res->indirection = NIL; /* Unused for now */
-						res->val = (Node *) ref;	/* Store the ColumnRef
-													 * here if needed */
-						res->location = ref->location;
-
-						extra_restargets = lappend(extra_restargets, res);
-						break;
 					}
 					ref = (ColumnRef *) xpr->rexpr;
 					field = linitial(ref->fields);
@@ -888,7 +825,7 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 					res->type = ref->type;
 					res->name = field->val.str;
 					res->indirection = NIL; /* Unused for now */
-					res->val = (Node *) ref; /* Store the ColumnRef here if needed */
+					res->val = (Node *) ref;	/* Store the ColumnRef here if needed */
 					res->location = ref->location;
 
 					extra_restargets = lappend(extra_restargets, res);
