@@ -6537,7 +6537,7 @@ SELECT
   st.user_type_id
 FROM
   sys.babelfish_partition_function pf
-INNER JOIN
+LEFT JOIN
   sys.types st on pf.input_parameter_type = st.name
 WHERE
   dbid = sys.db_id();
