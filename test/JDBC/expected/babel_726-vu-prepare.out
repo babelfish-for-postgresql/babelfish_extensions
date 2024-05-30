@@ -64,6 +64,8 @@ insert into babel_726_t1 values (
     234.546
 )
 go
+~~ROW COUNT: 1~~
+
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go
@@ -75,6 +77,12 @@ insert into babel_726_t2 values (1, 'abcde', 1.02)
 insert into babel_726_t2 values (NULL, '2.01', 1.02)
 insert into babel_726_t2 values (NULL, NULL, 1.02)
 go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 -- dependency testing
 CREATE FUNCTION babel_726_vu_prepare_f1() RETURNS NVARCHAR(4000) AS
@@ -144,55 +152,90 @@ GO
 
 select * from babel_726_vu_prepare_v2
 go
+~~START~~
+numeric
+1.04999995
+~~END~~
+
 exec babel_726_vu_prepare_p2
 go
+~~START~~
+numeric
+1.04999995
+~~END~~
+
 
 select * from babel_726_vu_prepare_v3
 go
+~~START~~
+smallmoney
+-10.0500
+~~END~~
+
 exec babel_726_vu_prepare_p3
 go
+~~START~~
+smallmoney
+-10.0500
+~~END~~
+
 
 select * from babel_726_vu_prepare_v4
 go
+~~START~~
+tinyint
+8
+~~END~~
+
 exec babel_726_vu_prepare_p4
 go
+~~START~~
+tinyint
+8
+~~END~~
+
 
 select * from babel_726_vu_prepare_v5
 go
+~~START~~
+ntext
+asdf
+~~END~~
+
 exec babel_726_vu_prepare_p5
 go
+~~START~~
+ntext
+asdf
+~~END~~
+
 
 select * from babel_726_vu_prepare_v6
 go
+~~START~~
+image
+31323334
+~~END~~
+
 exec babel_726_vu_prepare_p6
 go
+~~START~~
+image
+31323334
+~~END~~
+
 
 select * from babel_726_vu_prepare_v7
 go
+~~START~~
+nvarchar
+asdfgh
+~~END~~
+
 exec babel_726_vu_prepare_p7
 go
-
-CREATE FUNCTION babel_726_f8(@a smallint, @b bit)
-RETURNS BIT AS
-BEGIN
-    DECLARE @ans BIT
-    SELECT @ans = COALESCE(@b, @a)
-    RETURN @ans
-END
-GO
-
-CREATE VIEW babel_726_v8 AS SELECT COALESCE(CAST(1 as BIT), CAST(5 as SMALLINT))
-GO
-
-CREATE PROCEDURE babel_726_p8 AS SELECT COALESCE(CAST(1 as BIT), CAST(5 as SMALLINT))
-GO
-
-SELECT babel_726_f8(6,0)
-GO
-
-SELECT * FROM babel_726_v8
-GO
-
-EXEC babel_726_p8
-GO
+~~START~~
+nvarchar
+asdfgh
+~~END~~
 
