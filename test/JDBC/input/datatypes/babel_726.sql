@@ -283,6 +283,13 @@ go
 select coalesce(a,b,c) from babel_726_t2
 go
 
+DECLARE @ID_UNDE INT = 7;
+select COALESCE(@ID_UNDE, 'Não Informado')
+go
+
+select coalesce(CAST('x'AS VARBINARY), CAST('x' AS NVARCHAR(4000)), 'x')
+go
+
 drop table babel_726_t1
 go
 

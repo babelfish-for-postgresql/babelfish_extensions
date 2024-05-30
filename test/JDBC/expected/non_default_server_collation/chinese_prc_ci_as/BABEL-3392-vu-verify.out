@@ -1930,7 +1930,7 @@ ORDER BY 1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: UNION could not convert type varbinary to "varchar")~~
+~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
 
 
 -- BABEL-1874
