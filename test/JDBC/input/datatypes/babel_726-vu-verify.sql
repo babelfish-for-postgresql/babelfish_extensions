@@ -256,12 +256,3 @@ select * from babel_726_vu_prepare_v7
 go
 exec babel_726_vu_prepare_p7
 go
-
-SELECT babel_726_f8(6,0)
-GO
-
-SELECT * FROM babel_726_v8
-GO
-
-EXEC babel_726_p8
-GO

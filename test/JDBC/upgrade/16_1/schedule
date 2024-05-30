@@ -125,7 +125,6 @@ babel_417
 BABEL-493
 BABEL_539
 BABEL-621-before-15_7-or-16_3
-babel_726-before-14_12-or-15_7-or-16_3
 BABEL-728
 BABEL-733
 BABEL-741
@@ -513,6 +512,7 @@ babel_test_int8_numeric_oper_before_16_3
 babel_test_int2_numeric_oper_before_16_3
 BABEL_3571-15_5-or-15_6-or-16_1-or-16_2
 BABEL-4869
+babel_726-before-14_12-or-15_7-or-16_3
 test_conv_string_to_date-before-16_3
 test_conv_string_to_datetime-before-16_3
 test_conv_string_to_datetime2-before-16_3

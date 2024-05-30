@@ -48,12 +48,3 @@ go
 
 drop table babel_726_t1
 go
-
-DROP FUNCTION babel_726_f8
-GO
-
-DROP VIEW babel_726_v8
-GO
-
-DROP PROCEDURE babel_726_p8
-GO
