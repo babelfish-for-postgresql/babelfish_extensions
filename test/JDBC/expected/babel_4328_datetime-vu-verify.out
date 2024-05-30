@@ -1,3 +1,11 @@
+SELECT CAST('' AS DATETIME)
+go
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
 -- DATE
 -- -- Numeric: [m]m<seperator>[d]d<seperator>([y]y|yyyy)
 select cast('3-2-4' as datetime)
@@ -125,6 +133,769 @@ go
 ~~START~~
 datetime
 2003-04-02 00:00:00.0
+~~END~~
+
+
+SELECT CAST('3-2-4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-03-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3-12-4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3-12-24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3-12-2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('11-12-2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3     -        12 -           2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3.2.4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-03-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3.12.4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3.12.24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3.12.2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('11.12.2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3     .        12 .           2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3/2/4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-03-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3/12/4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3/12/24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3/12/2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('11/12/2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3     /        12 /           2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+-- [m]m<seperator>([y]y|yyyy)<seperator>[d]d
+SELECT CAST('3-4-2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2002-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3-4-12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2012-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3-24-12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2012-03-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3-2024-12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('11-2024-12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3 -           2024     -        12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3.4.2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2002-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3.4.12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2012-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3.24.12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2012-03-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3.2024.12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('11.2024.12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3 .           2024     .        12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3/4/2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2002-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3/4/12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2012-03-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3/24/12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2012-03-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3/2024/12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('11/2024/12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('3 /           2024     /        12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+-- [d]d<seperator>[m]m<seperator>([y]y|yyyy)
+SELECT CAST('2-3-4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-02-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12-3-4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12-3-24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12-3-2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12-11-2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 -           3     -        2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2.3.4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-02-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12.3.4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12.3.24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12.3.2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12.11.2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 .           3     .        2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2/3/4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-02-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12/3/4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12/3/24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12/3/2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12/11/2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 /           3     /        2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+-- [d]d<seperator>([y]y|yyyy)<seperator>[m]m
+SELECT CAST('2-4-3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2003-02-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12-4-3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2003-12-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12-24-3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2003-12-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12-2024-3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12-2024-11 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12     -        2024 -           3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2.4.3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2003-02-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12.4.3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2003-12-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12.24.3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2003-12-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12.2024.3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12.2024.11 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12     .        2024 .           3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2/4/3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2003-02-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12/4/3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2003-12-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12/24/3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2003-12-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12/2024/3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12/2024/11 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-11 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12     /        2024 /           3 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-12-03 14:30:00.0
+~~END~~
+
+
+-- ([y]y|yyyy)<seperator>[m]m<seperator>[d]d
+SELECT CAST('4-3-2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2002-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('4-3-12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2012-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('24-3-12 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "24-3-12 14:30")~~
+
+
+SELECT CAST('2024-3-12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024-11-12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024     -        3 -           12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('4.3.2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2002-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('4.3.12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2012-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('24.3.12 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "24.3.12 14:30")~~
+
+
+SELECT CAST('2024.3.12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024.11.12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024     .        3 .           12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('4/3/2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2002-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('4/3/12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2012-04-03 14:30:00.0
+~~END~~
+
+
+SELECT CAST('24/3/12 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "24/3/12 14:30")~~
+
+
+SELECT CAST('2024/3/12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024/11/12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024     /        3 /           12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 14:30:00.0
+~~END~~
+
+
+-- combination of different seperator also works for DATETIME
+SELECT CAST('2024/11-12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024-11/12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024.11/12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024.11-12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-11-12 14:30:00.0
+~~END~~
+
+
+-- invalid syntax
+SELECT CAST('3 12 2024' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-03-12 00:00:00.0
 ~~END~~
 
 
@@ -413,6 +1184,740 @@ datetime
 ~~END~~
 
 
+--- mon [dd][,] yyyy
+SELECT CAST('Apr 12,2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 12 2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 1,2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 1 2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr,2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr12,2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr12 2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-12 14:30:00.0
+~~END~~
+
+
+
+SELECT CAST('Apr1,2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr1 2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr,2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr2000 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2000-04-01 14:30:00.0
+~~END~~
+
+
+--- mon [d]d[,] [yy]
+SELECT CAST('Apr 12, 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 12 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 12, 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 12 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 12, 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr 12, 14:30")~~
+
+
+SELECT CAST('Apr 12 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr 12 14:30")~~
+
+
+SELECT CAST('Apr 1, 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 1 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 1, 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 1 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 1, 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr 1, 14:30")~~
+
+
+SELECT CAST('Apr 1 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr 1 14:30")~~
+
+
+SELECT CAST('Apr12, 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr12 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr12, 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr12 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr12, 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr12, 14:30")~~
+
+
+SELECT CAST('Apr12 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr12 14:30")~~
+
+
+SELECT CAST('Apr1, 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr1 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr1, 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr1 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr1, 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr1, 14:30")~~
+
+
+SELECT CAST('Apr1 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr1 14:30")~~
+
+
+--- mon yyyy [dd]
+SELECT CAST('Apr 2024 22 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-22 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 2024 2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr2024 22 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-22 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr2024 2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+--- [dd] mon[,] yyyy
+SELECT CAST('24 Apr, 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('24 Apr 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('4 Apr, 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('4 Apr 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr, 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('24Apr, 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('24Apr2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-24 14:30:00.0
+~~END~~
+
+
+SELECT CAST('4Apr, 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('4Apr2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-04 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr, 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('Apr2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+--- dd mon[,][yy]yy
+SELECT CAST('12 Apr, 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 Apr 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 Apr, 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 Apr 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 Apr, 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 Apr 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 Apr, 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "12 Apr, 14:30")~~
+
+
+SELECT CAST('12 Apr 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "12 Apr 14:30")~~
+
+
+SELECT CAST('12Apr, 2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12Apr2024 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12Apr, 24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12Apr24 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12Apr, 4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12Apr4 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2004-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12Apr, 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "12Apr, 14:30")~~
+
+
+SELECT CAST('12Apr 14:30' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "12Apr 14:30")~~
+
+
+--- dd [yy]yy mon
+SELECT CAST('12 2024 Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 24 Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 2024Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 24Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+--- [dd] yyyy mon
+SELECT CAST('12 2024 Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2 2024 Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024 Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('12 2024Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2 2024Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+--- yyyy mon [dd]
+SELECT CAST('2024 Apr 12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024 Apr 2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024 Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024Apr12 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024Apr2 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+--- yyyy [dd] mon
+SELECT CAST('2024 12 Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024 2 Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024 Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024 12Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-12 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024 2Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-02 14:30:00.0
+~~END~~
+
+
+SELECT CAST('2024Apr 14:30' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-04-01 14:30:00.0
+~~END~~
+
+
 -- ISO 8601	
 select cast('2023-11-27' as datetime)
 go
@@ -442,6 +1947,110 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type datetime: "2022-10-30T03:00:00.123-11:11")~~
+
+
+SELECT CAST('2022-10-22T13:34:12.123' AS DATETIME)
+GO
+~~START~~
+datetime
+2022-10-22 13:34:12.123
+~~END~~
+
+
+SELECT CAST('2022-1-22T13:34:12.123' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-1-22T13:34:12.123")~~
+
+
+SELECT CAST('2022-10-2T13:34:12.123' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10-2T13:34:12.123")~~
+
+
+SELECT CAST('2022-10-22T3:34:12.123' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10-22T3:34:12.123")~~
+
+
+SELECT CAST('2022-10-22T13:4:12.123' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10-22T13:4:12.123")~~
+
+
+SELECT CAST('2022-10-22T13:34:1.123' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10-22T13:34:1.123")~~
+
+
+SELECT CAST('2022-10-22T13:34:12.1' AS DATETIME)
+GO
+~~START~~
+datetime
+2022-10-22 13:34:12.1
+~~END~~
+
+
+SELECT CAST('2022-10-22T13:34:12.12' AS DATETIME)
+GO
+~~START~~
+datetime
+2022-10-22 13:34:12.12
+~~END~~
+
+
+SELECT CAST('2022-10-22T13:34:12.123' AS DATETIME)
+GO
+~~START~~
+datetime
+2022-10-22 13:34:12.123
+~~END~~
+
+
+SELECT CAST('2022-10-22T13:34:12.1234' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10-22T13:34:12.1234")~~
+
+
+SELECT CAST('2022-10-22T13:34:12.15' AS DATETIME)
+GO
+~~START~~
+datetime
+2022-10-22 13:34:12.15
+~~END~~
+
+
+-- spaces are not allowed between any two tokens for ISO 8601
+SELECT CAST('2022-10-22T13 :34:12.123' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10-22T13 :34:12.123")~~
+
+
+SELECT CAST('2022-10 -22T13:34:12.123' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10 -22T13:34:12.123")~~
+
+
+SELECT CAST('2022-10-22 T 13:34:12.123' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10-22 T 13:34:12.123")~~
 
 
 -- Unseparated
@@ -490,7 +2099,52 @@ go
 ~~ERROR (Message: data out of range for datetime)~~
 
 
--- -- invalid syntax
+SELECT CAST('20240129 03:00:00' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-01-29 03:00:00.0
+~~END~~
+
+
+SELECT CAST('20241329 03:00:00' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "20241329 03:00:00")~~
+
+
+SELECT CAST('240129 03:00' AS DATETIME)
+GO
+~~START~~
+datetime
+2024-01-29 03:00:00.0
+~~END~~
+
+
+SELECT CAST('241329 03:00' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "241329 03:00")~~
+
+
+SELECT CAST('2001 03:00:00.123' AS DATETIME)
+GO
+~~START~~
+datetime
+2001-01-01 03:00:00.123
+~~END~~
+
+
+SELECT CAST('0001 03:00:00.421' AS DATETIME)
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+-- invalid syntax
 select cast('0' as datetime)
 go
 ~~ERROR (Code: 33557097)~~
@@ -644,7 +2298,104 @@ GO
 ~~ERROR (Message: date/time field value out of range: "0000-00-00")~~
 
 
--- -- misc
+-- boundary tests
+SELECT CAST('9999-12-31 23:59:59.999' AS DATETIME)
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+SELECT CAST('9999-12-31 23:59:59.998' AS DATETIME)
+GO
+~~START~~
+datetime
+9999-12-31 23:59:59.997
+~~END~~
+
+
+-- rounding of DATETIME
+SELECT CAST('01/01/98 23:59:59.999' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-02 00:00:00.0
+~~END~~
+
+
+SELECT CAST('01/01/98 23:59:59.998' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-01 23:59:59.997
+~~END~~
+
+
+SELECT CAST('01/01/98 23:59:59.997' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-01 23:59:59.997
+~~END~~
+
+
+SELECT CAST('01/01/98 23:59:59.996' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-01 23:59:59.997
+~~END~~
+
+
+SELECT CAST('01/01/98 23:59:59.995' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-01 23:59:59.997
+~~END~~
+
+
+SELECT CAST('01/01/98 23:59:59.994' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-01 23:59:59.993
+~~END~~
+
+
+SELECT CAST('01/01/98 23:59:59.993' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-01 23:59:59.993
+~~END~~
+
+
+SELECT CAST('01/01/98 23:59:59.992' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-01 23:59:59.993
+~~END~~
+
+
+SELECT CAST('01/01/98 23:59:59.991' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-01 23:59:59.99
+~~END~~
+
+
+SELECT CAST('01/01/98 23:59:59.990' AS DATETIME)
+GO
+~~START~~
+datetime
+1998-01-01 23:59:59.99
+~~END~~
+
+
+-- misc
 SELECT cast('2022-10-29 20:01:00.000' as datetime)
 GO
 ~~START~~
