@@ -326,6 +326,15 @@ GO
 --------------------------------------------------
 --- TO test Permission
 --------------------------------------------------
+USE PartitionDb;
+GO
+
+CREATE LOGIN partition_l1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER partition_u1 FOR LOGIN partition_l1;
+GO
+
 -- tsql     user=partition_l1 password=12345678
 USE PartitionDb;
 GO
