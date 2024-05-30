@@ -63,6 +63,21 @@ void		CheckDatetimePrecision(fsec_t fsec);
 
 #define DTK_NANO 32
 
+static bool
+match_regex(char *str, char *regex_exp)
+{
+	regex_t regex;
+	int status;
+	status = regcomp(&regex, regex_exp, REG_EXTENDED);
+    	status = regexec(&regex, str, 0, NULL, 0);
+    	regfree(&regex);
+	
+	if (status == 0)
+		return true;
+	
+	return false;
+}
+
 /*
  * This function checks the regex in case of the text month.
  * We will be checking with the combination of date regex's and
@@ -71,10 +86,37 @@ void		CheckDatetimePrecision(fsec_t fsec);
 bool
 check_regex_for_text_month(char *str, DateTimeContext context)
 {
-	regex_t regex;
 	char curr_regex[200];
-    	int status, i, j;
+    	int i, j;
 	const char *regex_time_offset = "(((\\+|\\-)[0-9]{1,2}:[0-9]{1,2})|Z)?";
+	const char *datetime2_offset_supported[] = {
+		"[0-9]{2}\\s*[a-zA-Z]{3,10}",
+		"[a-zA-Z]{3,10}\\s*[0-9]{2}"
+	};
+	const int num_datetime2_offset_supported = lengthof(datetime2_offset_supported);
+
+	for (i = 0; i < num_datetime2_offset_supported; i++) {
+		for (j = 0; j < NUM_TIME_REGEXES; j++) {
+			if (context == DATE_TIME)
+				break;
+	    		/*
+			 * check for the combination of date and time
+			 */
+			strcpy(curr_regex, "^");
+			strcat(curr_regex, datetime2_offset_supported[i]);
+            		strcat(curr_regex, "\\s+");
+            		strcat(curr_regex, time_regexes[j]);
+			if (context == DATE_TIME_OFFSET)
+			{
+				strcat(curr_regex, "\\s*");
+            			strcat(curr_regex, regex_time_offset);
+			}
+			strcat(curr_regex, "$");
+
+			if(match_regex(str, curr_regex))
+				return true;
+		}
+	}
 
 	for (i = 0; i < NUM_DATE_REGEXES; i++) {
 		/*
@@ -83,12 +125,9 @@ check_regex_for_text_month(char *str, DateTimeContext context)
 		strcpy(curr_regex, "^");
         	strcat(curr_regex, date_regexes[i]);
         	strcat(curr_regex, "$");
-    		status = regcomp(&regex, curr_regex, REG_EXTENDED);
-    		status = regexec(&regex, str, 0, NULL, 0);
-    		regfree(&regex);
 
-		if (status == 0)
-        		return 1;
+		if(match_regex(str, curr_regex))
+			return true;
 
         	for (j = 0; j < NUM_TIME_REGEXES; j++) {
 			/*
@@ -102,12 +141,9 @@ check_regex_for_text_month(char *str, DateTimeContext context)
             			strcat(curr_regex, regex_time_offset);
 			}
         		strcat(curr_regex, "$");
-            		status = regcomp(&regex, curr_regex, REG_EXTENDED);
-            		status = regexec(&regex, str, 0, NULL, 0);
-            		regfree(&regex);
 
-			if (status == 0)
-                		return 1;
+			if(match_regex(str, curr_regex))
+				return true;
 
 	    		/*
 			 * check for the combination of date and time
@@ -122,16 +158,13 @@ check_regex_for_text_month(char *str, DateTimeContext context)
             			strcat(curr_regex, regex_time_offset);
 			}
 			strcat(curr_regex, "$");
-            		status = regcomp(&regex, curr_regex, REG_EXTENDED);
-            		status = regexec(&regex, str, 0, NULL, 0);
-            		regfree(&regex);
 
-            		if (status == 0)
-                		return 1;
+			if(match_regex(str, curr_regex))
+				return true;
         	}
     	}
 
-	return 0;
+	return false;
 }
 
 /*
@@ -145,6 +178,8 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 	int i = 0, j = 0;
 	int last_non_space = -1;
 	int num_colons = 0;
+	char *context_str = (context == DATE_TIME) ? "datetime" 
+			: ((context == DATE_TIME_2) ? "datetime2" : "datetimeoffset");
 
 	while (str[i] != '\0')
 	{
@@ -168,7 +203,7 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					errmsg("invalid input syntax for type datetime: \"%s\"", str)));
+					errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
 		}
 
 		if (context == DATE_TIME_OFFSET && str[i] == ':')
@@ -247,10 +282,12 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 			}
 		}
 		/*
-		 * If the context is DATETIME only ',' and ': are allowed
+		 * If the context is DATETIME only ',' and ':' are allowed
 		 * other than above mentioned characters.
 		 */
-		else if (context != DATE_TIME || (str[i] == ',' || str[i] == ':'))
+		else if ((str[i] == ',' || str[i] == ':') || 
+				(context != DATE_TIME && (str[i] == '.' || str[i] == '/' 
+				|| str[i] == '+' || str[i] == '-')))
 		{
 			result[j] = str[i];
 			j++;
@@ -262,7 +299,7 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					errmsg("invalid input syntax for type datetime: \"%s\"", str)));
+					errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
 		}
 
 		last_non_space = i;
@@ -354,6 +391,14 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 
 			if (ftype[i] == ISOTIME && (contains_extra_spaces || num_colons < 2))
 				return 1;
+			
+			else if (ftype[i] == ISOTIME)
+			{
+				char *regex_exp = "^[0-9]{4}[-][0-9]{2}[-][0-9]{2}[T][0-9]{2}[:][0-9]{2}[:][0-9]{2}([.][0-9]{1,3})?$";
+				
+				if (!match_regex(orig_str, regex_exp))
+					return 1;
+			}
 
 			if(ftype[i] != MONTH)
 			{
@@ -413,12 +458,34 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 			 * exceeds.
 			 */
 			char *cp = field[i];
+			/* regex expression for "[m]m-yyyy-[d]d" format */
+			char *regex_expr = "^[0-9]{1,2}[-|.|/][0-9]{4}[-|.|/][0-9]{1,2}$";
 
 			while (cp != NULL && *cp != '\0' && !isalpha(*cp))
 				cp++;
 
 			if (cp != NULL && isalpha(*cp))
 				continue;
+			
+			/*
+			 * If the DATE is in mm-yyyy-dd format, DecodeDateTime
+			 * throws error, hence we need to rearrange it the DATE string
+			 * to mm-dd-yyyy format
+			 */
+			
+			if (match_regex(field[i], regex_expr))
+			{
+				int month = 0, year = 0, day = 0;
+				cp = field[i];
+
+				month = strtoi64(cp, &cp, 10);
+				cp++;
+				year = strtoi64(cp, &cp, 10);
+				cp++;
+				day = strtoi64(cp, &cp, 10);
+
+				sprintf(field[i], "%d.%d.%d", month, day, year);
+			}
 
 			if (strlen(field[i]) > 10)
 				return 1;
