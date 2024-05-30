@@ -1,0 +1,52 @@
+DROP VIEW test_conv_string_to_smalldatetime_v1
+GO
+DROP PROCEDURE test_conv_string_to_smalldatetime_p1
+GO
+DROP FUNCTION test_conv_string_to_smalldatetime_f1()
+GO
+
+DROP VIEW test_conv_string_to_smalldatetime_v2
+GO
+DROP PROCEDURE test_conv_string_to_smalldatetime_p2
+GO
+DROP FUNCTION test_conv_string_to_smalldatetime_f2()
+GO
+
+DROP VIEW test_conv_string_to_smalldatetime_v3
+GO
+DROP PROCEDURE test_conv_string_to_smalldatetime_p3
+GO
+DROP FUNCTION test_conv_string_to_smalldatetime_f3()
+GO
+
+DROP VIEW test_conv_string_to_smalldatetime_v4
+GO
+DROP PROCEDURE test_conv_string_to_smalldatetime_p4
+GO
+DROP FUNCTION test_conv_string_to_smalldatetime_f4()
+GO
+
+DROP VIEW test_conv_string_to_smalldatetime_v5
+GO
+DROP PROCEDURE test_conv_string_to_smalldatetime_p5
+GO
+DROP FUNCTION test_conv_string_to_smalldatetime_f5()
+GO
+
+DROP VIEW test_conv_string_to_smalldatetime_v6
+GO
+DROP PROCEDURE test_conv_string_to_smalldatetime_p6
+GO
+DROP FUNCTION test_conv_string_to_smalldatetime_f6()
+GO
+
+DROP VIEW test_conv_string_to_smalldatetime_v7
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "test_conv_string_to_smalldatetime_v7" does not exist)~~
+
+DROP PROCEDURE test_conv_string_to_smalldatetime_p7
+GO
+DROP FUNCTION test_conv_string_to_smalldatetime_f7()
+GO

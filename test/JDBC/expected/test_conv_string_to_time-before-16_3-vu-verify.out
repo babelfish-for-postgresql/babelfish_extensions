@@ -1,0 +1,2566 @@
+-- Empty string, should return default values
+SELECT CONVERT(TIME, '')
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '', 130)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 AM')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 AM')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 PM')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 PM')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24 PM')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 PM')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 AM')
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11AM      ')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '     13AM')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11PM')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13PM')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24PM')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '    11:22    ')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 AM')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 PM')
+GO
+~~START~~
+time
+23:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22.123')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 AM')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 PM')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:  22   :12')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12 AM')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12 PM')
+GO
+~~START~~
+time
+23:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 :22:12:123')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12:1234')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12:123 AM')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12  :123 PM')
+GO
+~~START~~
+time
+23:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12.123')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  1234')
+GO
+~~START~~
+time
+11:22:12.1234000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123456789')
+GO
+~~START~~
+time
+11:22:12.1234570
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22  :12.1234567891')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11: 22:12.123 AM')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123234 PM')
+GO
+~~START~~
+time
+23:22:12.1232340
+~~END~~
+
+
+-- TIME with typmod
+SELECT CONVERT(TIME(0), '01/01/98 23:59:56.501')
+GO
+~~START~~
+time
+23:59:57
+~~END~~
+
+
+SELECT CONVERT(TIME(0), '01/01/98 23:59:56.500')
+GO
+~~START~~
+time
+23:59:57
+~~END~~
+
+
+SELECT CONVERT(TIME(0), '01/01/98 23:59:56.499')
+GO
+~~START~~
+time
+23:59:56
+~~END~~
+
+
+SELECT CONVERT(TIME(1), '01/01/98 23:59:59.123')
+GO
+~~START~~
+time
+23:59:59.1
+~~END~~
+
+
+SELECT CONVERT(TIME(2), '01/01/98 23:59:59.123')
+GO
+~~START~~
+time
+23:59:59.12
+~~END~~
+
+
+SELECT CONVERT(TIME(3), '01/01/98 23:59:59.123')
+GO
+~~START~~
+time
+23:59:59.123
+~~END~~
+
+
+-- -- rounding of minutes or fractional seconds
+SELECT CONVERT(TIME, '11:22:12.12345675')
+GO
+~~START~~
+time
+11:22:12.1234570
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.12345674')
+GO
+~~START~~
+time
+11:22:12.1234570
+~~END~~
+
+
+-- -- Boundary values
+SELECT CONVERT(TIME, '9999-12-30 23:59:59.9999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-30 23:59:59.99999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-30 23:59:59.999999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-30 23:59:59.9999999999')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '9999-12-31 23:59:59.9999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-31 23:59:59.99999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-31 23:59:59.999999999')
+GO
+~~START~~
+time
+23:59:59.9999990
+~~END~~
+
+
+SELECT CONVERT(TIME, '9999-12-31 23:59:59.9999999999')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12.129')
+GO
+~~START~~
+time
+11:22:12.1290000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.128')
+GO
+~~START~~
+time
+11:22:12.1280000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.127')
+GO
+~~START~~
+time
+11:22:12.1270000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.126')
+GO
+~~START~~
+time
+11:22:12.1260000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.125')
+GO
+~~START~~
+time
+11:22:12.1250000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.124')
+GO
+~~START~~
+time
+11:22:12.1240000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.123')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.122')
+GO
+~~START~~
+time
+11:22:12.1220000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.121')
+GO
+~~START~~
+time
+11:22:12.1210000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.120')
+GO
+~~START~~
+time
+11:22:12.1200000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:29')
+GO
+~~START~~
+time
+11:22:29.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:30')
+GO
+~~START~~
+time
+11:22:30.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 AM +00:00')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 AM -00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 PM +00:00')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 PM -00:00')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24 PM +00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 PM -00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 AM +00:00')
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11AM       -00:00')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '     13AM +00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11PM -00:00')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13PM +00:00')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24PM -00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 +00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '    11:22     -00:00')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 AM -00:00')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 PM +00:00')
+GO
+~~START~~
+time
+23:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22.123 -00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 AM +00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 PM -00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:  22   :12 +00:00')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12 AM -00:00')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12 PM +00:00')
+GO
+~~START~~
+time
+23:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 :22:12:123 -00:00')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12:1234 +00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12:123 AM -00:00')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12  :123 PM +00:00')
+GO
+~~START~~
+time
+23:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12.123 -00:00')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  1234 +00:00')
+GO
+~~START~~
+time
+11:22:12.1234000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123456789 -00:00')
+GO
+~~START~~
+time
+11:22:12.1234570
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22  :12.1234567891 +00:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11: 22:12.123 AM -00:00')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123234 PM +00:00')
+GO
+~~START~~
+time
+23:22:12.1232340
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 AM -05:12')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 AM +05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 PM -05:12')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 PM +05:12')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24 PM -05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 PM +05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 AM -05:12')
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11AM       +05:12')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '     13AM -05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11PM +05:12')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13PM -05:12')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24PM +05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 -05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '    11:22     +05:12')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 AM -05:12')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 PM +05:12')
+GO
+~~START~~
+time
+23:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22.123 -05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 AM +05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 PM -05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:  22   :12 +05:12')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12 AM -05:12')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12 PM +05:12')
+GO
+~~START~~
+time
+23:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 :22:12:123 -05:12')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12:1234 +05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12:123 AM -05:12')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12  :123 PM +05:12')
+GO
+~~START~~
+time
+23:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12.123 -05:12')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  1234 +05:12')
+GO
+~~START~~
+time
+11:22:12.1234000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123456789 -05:12')
+GO
+~~START~~
+time
+11:22:12.1234570
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22  :12.1234567891 +05:12')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11: 22:12.123 AM -05:12')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123234 PM +05:12')
+GO
+~~START~~
+time
+23:22:12.1232340
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 AM -14:00')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 AM +14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 PM -14:00')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 PM +14:00')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24 PM -14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 PM +14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 AM -14:00')
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11AM       +14:00')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '     13AM -14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11PM +14:00')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13PM -14:00')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24PM +14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 -14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '    11:22     +14:00')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 AM -14:00')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 PM +14:00')
+GO
+~~START~~
+time
+23:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22.123 -14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 AM +14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 PM -14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:  22   :12 +14:00')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12 AM -14:00')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12 PM +14:00')
+GO
+~~START~~
+time
+23:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 :22:12:123 -14:00')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12:1234 +14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12:123 AM -14:00')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12  :123 PM +14:00')
+GO
+~~START~~
+time
+23:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12.123 -14:00')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  1234 +14:00')
+GO
+~~START~~
+time
+11:22:12.1234000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123456789 -14:00')
+GO
+~~START~~
+time
+11:22:12.1234570
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22  :12.1234567891 +14:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11: 22:12.123 AM -14:00')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123234 PM +14:00')
+GO
+~~START~~
+time
+23:22:12.1232340
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 AM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '13 AM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 PM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '13 PM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '24 PM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 PM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 AM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11AM       +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '     13AM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11PM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '13PM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '24PM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '    11:22     +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22 AM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22 PM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 AM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 PM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:  22   :12 +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12 AM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:  22:12 PM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 :22:12:123 -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12:1234 +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12:123 AM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12  :123 PM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:  22:12.123 -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  1234 +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123456789 -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22  :12.1234567891 +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11: 22:12.123 AM -14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123234 PM +14:10')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 AM Z')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 AM Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11 PM Z')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13 PM Z')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24 PM Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 PM Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '0 AM Z')
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11AM      Z')
+GO
+~~START~~
+time
+11:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '     13AM Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11PM Z')
+GO
+~~START~~
+time
+23:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '13PM Z')
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '24PM Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a time data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(TIME, '11Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '    11:22    Z')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 AM Z')
+GO
+~~START~~
+time
+11:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22 PM Z')
+GO
+~~START~~
+time
+23:22:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22.123Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 AM Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22.123 PM Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:  22   :12Z')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12 AM Z')
+GO
+~~START~~
+time
+11:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12 PM Z')
+GO
+~~START~~
+time
+23:22:12.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11 :22:12:123Z')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12:1234Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11:22:12:123 AM Z')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12  :123 PM Z')
+GO
+~~START~~
+time
+23:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:  22:12.123Z')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  1234Z')
+GO
+~~START~~
+time
+11:22:12.1234000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123456789Z')
+GO
+~~START~~
+time
+11:22:12.1234570
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22  :12.1234567891Z')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '11: 22:12.123 AM Z')
+GO
+~~START~~
+time
+11:22:12.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '11:22:12.  123234 PM Z')
+GO
+~~START~~
+time
+23:22:12.1232340
+~~END~~
+
+
+-- default value if only DATE is passed
+SELECT CONVERT(TIME, '2000-04-22')
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+-- Different DATETIME formats with their corresponding styles
+SELECT CONVERT(TIME, 'Apr 10 2021 11:12AM', 0)
+GO
+~~START~~
+time
+11:12:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '02/12/21', 1)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '21.02.12', 2)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12/02/21', 3)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12.02.21', 4)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12-02-21', 5)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12 Apr 21', 6)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, 'Apr 12, 21', 7)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '10:13:14', 8)
+GO
+~~START~~
+time
+10:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '10:13:14', 24)
+GO
+~~START~~
+time
+10:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, 'Apr 12 2021 10:13:14:123AM', 9)
+GO
+~~START~~
+time
+10:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '02-12-21', 10)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '21/02/12', 11)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '210212', 12)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12 Apr 2021 15:13:14:123', 13)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '15:13:14:123', 14)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021-02-12 15:13:14', 20)
+GO
+~~START~~
+time
+15:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021-02-12 15:13:14.123', 21)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '02/12/21 15:13:14 PM', 22)
+GO
+~~START~~
+time
+15:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021-02-12', 23)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021-02-12 15:13:14.123', 25)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, 'Apr 10 2021 11:12AM', 100)
+GO
+~~START~~
+time
+11:12:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '02/12/2021', 101)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021.02.12', 102)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12/02/2021', 103)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12.02.2021', 104)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12-02-2021', 105)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12 Apr 2021', 106)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, 'Apr 12, 2021', 107)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '10:13:14', 108)
+GO
+~~START~~
+time
+10:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, 'Apr 12 2021 10:13:14:123AM', 109)
+GO
+~~START~~
+time
+10:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '02-12-2021', 110)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021/02/12', 111)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '20210212', 112)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12 Apr 2021 15:13:14:123', 113)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '15:13:14:123', 114)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021-02-12 15:13:14', 120)
+GO
+~~START~~
+time
+15:13:14.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021-02-12 15:13:14.123', 121)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021-02-12T15:13:14.123', 126)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2021-02-12T15:13:14.123', 127)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+SELECT CONVERT(TIME, N'22 محرم 1440 1:39:17.090', 130)
+GO
+~~START~~
+time
+01:39:17.0900000
+~~END~~
+
+
+SELECT CONVERT(TIME, '12/02/2021 15:13:14:123 PM', 131)
+GO
+~~START~~
+time
+15:13:14.1230000
+~~END~~
+
+
+-- -- misc
+SELECT CONVERT(TIME,'2022-10-29 20:01:00.000')
+GO
+~~START~~
+time
+20:01:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2020')
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2000-04-22 16:23:51.7668c0')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '2000-04-22 16:23:51.7668c0')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '2001-04-022 16:23:51.766890 +12:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+
+SELECT CONVERT(TIME, '02001-04-22 16:23:51.766890 +12:00') 
+GO 
+SELECT CONVERT(TIME, ' 2001- 04 - 22 16: 23: 51. 766890 +12:00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '02001-04-22 16:23:51')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '1900-05-06 13:59:29.050 -8:00')
+GO
+~~START~~
+time
+13:59:29.0500000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2011-08-15 14:30.00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME, '2011-08-15 14:30.00')
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(TIME,'2022-10-29 20:01:00.000')
+GO
+~~START~~
+time
+20:01:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2020')
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CONVERT(TIME, '2022-10-30T03:00:00')
+GO
+~~START~~
+time
+03:00:00.0000000
+~~END~~
+
+
+DECLARE @TM_ICLO TIME = '17:24:07.1766670'
+SELECT CONVERT(TIME, @TM_ICLO)
+GO
+~~START~~
+time
+17:24:07.1766670
+~~END~~
+
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_time_v1
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p1
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f1()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v2
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p2
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f2()
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v3
+GO
+~~START~~
+time
+01:01:01.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p3
+GO
+~~START~~
+time
+01:01:01.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f3()
+GO
+~~START~~
+time
+01:01:01.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v4
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p4
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f4()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v5
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p5
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f5()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v6
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p6
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f6()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v7
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p7
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f7()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v8
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to time without time zone)~~
+
+EXEC test_conv_string_to_time_p8
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
+
+SELECT test_conv_string_to_time_f8()
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
+
+
+SELECT * FROM test_conv_string_to_time_v9
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+EXEC test_conv_string_to_time_p9
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+SELECT test_conv_string_to_time_f9()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v10
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting time from character string.)~~
+
+
+SELECT * FROM test_conv_string_to_time_v11
+GO
+~~START~~
+time
+11:11:11.0000000
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_time_v12
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to time without time zone)~~
+
