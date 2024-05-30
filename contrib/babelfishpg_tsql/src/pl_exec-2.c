@@ -4063,7 +4063,7 @@ tsql_compare_values(const void *a, const void *b, void *arg)
 /*
  * Allows only login that is either db owner or member of sysadmin.
  */
-static void 
+static void
 perform_permission_check(const char *name, bool is_create, bool is_function)
 {
 	char		*dbname = get_cur_db_name();
@@ -4157,7 +4157,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 			is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
 			is_tsql_geometry_or_geography_datatype(typ->typoid) || 
 			is_tsql_rowversion_or_timestamp_datatype(typ->typoid) ||
-			is_tsql_xml_datatype(typ->typoid))
+			typ->typoid == XMLOID) /* because we don't have XML type specific to TSQL */
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

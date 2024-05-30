@@ -1,7 +1,7 @@
 DROP VIEW GetPartitionFunctionMetadataView
 GO
 
-DROP FUNCTION GetRangeMetadataFunction
+DROP VIEW GetRangeMetadataView
 GO
 
 DROP VIEW GetParameterMetadataView

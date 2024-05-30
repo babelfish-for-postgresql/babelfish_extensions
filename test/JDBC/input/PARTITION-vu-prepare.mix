@@ -15,10 +15,8 @@ AS
 )
 GO
 
-CREATE FUNCTION GetRangeMetadataFunction()
-RETURNS TABLE
+CREATE VIEW GetRangeMetadataVIEW
 AS
-RETURN
 (
     SELECT 
         name, parameter_id, boundary_id, value

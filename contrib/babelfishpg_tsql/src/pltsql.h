@@ -2180,7 +2180,6 @@ extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varcha
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
 extern bool is_tsql_geometry_or_geography_datatype(Oid oid); /* sys.geometry, sys.geography */
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid); /* sys.rowversion, sys.timestamp */
-extern bool is_tsql_xml_datatype(Oid oid); /* pg_catalog.xml */
 
 typedef struct
 {

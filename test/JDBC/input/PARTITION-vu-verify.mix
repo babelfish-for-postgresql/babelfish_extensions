@@ -233,7 +233,7 @@ GO
 SELECT * FROM GetPartitionFunctionMetadataView
 GO
 
-SELECT * FROM GetRangeMetadataFunction()
+SELECT * FROM GetRangeMetadataView
 GO
 
 SELECT * FROM GetParameterMetadataView

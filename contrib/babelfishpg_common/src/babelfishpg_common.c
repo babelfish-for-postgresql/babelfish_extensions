@@ -182,7 +182,6 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_sys_varbinary_datatype = &is_tsql_sys_varbinary_datatype;
 		common_utility_plugin_var.is_tsql_geometry_datatype = &is_tsql_geometry_datatype;
 		common_utility_plugin_var.is_tsql_geography_datatype = &is_tsql_geography_datatype;
-		common_utility_plugin_var.is_tsql_xml_datatype = &is_tsql_xml_datatype;
 		common_utility_plugin_var.is_tsql_timestamp_datatype = &is_tsql_timestamp_datatype;
 		common_utility_plugin_var.is_tsql_datetime2_datatype = &is_tsql_datetime2_datatype;
 		common_utility_plugin_var.is_tsql_smalldatetime_datatype = &is_tsql_smalldatetime_datatype;
