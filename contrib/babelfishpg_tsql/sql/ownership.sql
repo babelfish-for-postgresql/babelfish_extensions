@@ -314,6 +314,8 @@ BEGIN
 	CALL sys.babel_drop_all_logins();
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = false', CURRENT_DATABASE());
 	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_function_seq RESTART';
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_scheme_seq RESTART';
 	DROP OWNED BY sysadmin;
 	DROP ROLE sysadmin;
 	DROP OWNED BY bbf_role_admin;

@@ -34,13 +34,15 @@ CREATE VIEW GetParameterMetadataView
 AS 
 (
     SELECT 
-        name, parameter_id, system_type_id, max_length, precision, scale, collation_name, user_type_id
+        pf.name as function_name, typ.name as typname, parameter_id, pp.max_length, pp.precision, pp.scale, pp.collation_name
     FROM 
         sys.partition_parameters pp
     INNER JOIN 
         sys.partition_functions pf on (pp.function_id = pf.function_id)
+    INNER JOIN 
+        sys.types typ on pp.user_type_id = typ.user_type_id
     ORDER BY 
-       name
+       pf.name
 )
 GO
 
@@ -126,17 +128,18 @@ CREATE PARTITION FUNCTION IntPartitionFunction (int)
 AS RANGE RIGHT FOR VALUES (@a, @b, @c);
 GO
 
--- all datatyps should sort and store the values in ascending order by itself
+-- all datatypes should sort and store the values in ascending order by itself
+-- and input values should be implicit casted into specified type
 CREATE PARTITION FUNCTION BigIntPartitionFunction (bigint)
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
 GO
 
 CREATE PARTITION FUNCTION SmallIntPartitionFunction (smallint) 
-AS RANGE RIGHT FOR VALUES (32767, -32768, 0);
+AS RANGE RIGHT FOR VALUES (cast(32767 as bigint), -32768, 0);
 GO
 
 CREATE PARTITION FUNCTION TinyIntPartitionFunction (tinyint)
-AS RANGE RIGHT FOR VALUES (0, 255, 128);
+AS RANGE RIGHT FOR VALUES (0, cast(255 as varchar), 128);
 GO
 
 CREATE PARTITION FUNCTION DecimalPartitionFunction (decimal(10, 5))

@@ -59,3 +59,5 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_view_def', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_function', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_scheme', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_depend', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_function_seq', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_scheme_seq', '');

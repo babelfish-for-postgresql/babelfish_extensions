@@ -500,14 +500,14 @@ NCharPartitionFunction#!#1#!#4#!#K
 NCharPartitionFunction#!#1#!#5#!#P    
 NCharPartitionFunction#!#1#!#6#!#U    
 NCharPartitionFunction#!#1#!#7#!#Z    
-BinaryPartitionFunction#!#1#!#1#!#[B@503f91c3
-BinaryPartitionFunction#!#1#!#2#!#[B@13526e59
-BinaryPartitionFunction#!#1#!#3#!#[B@2235eaab
-BinaryPartitionFunction#!#1#!#4#!#[B@17503f6b
-VarBinaryPartitionFunction#!#1#!#1#!#[B@3bcd05cb
-VarBinaryPartitionFunction#!#1#!#2#!#[B@3b6d844d
-VarBinaryPartitionFunction#!#1#!#3#!#[B@36804139
-VarBinaryPartitionFunction#!#1#!#4#!#[B@20bd8be5
+BinaryPartitionFunction#!#1#!#1#!#[B@4647881c
+BinaryPartitionFunction#!#1#!#2#!#[B@6e0cff20
+BinaryPartitionFunction#!#1#!#3#!#[B@359b650b
+BinaryPartitionFunction#!#1#!#4#!#[B@6a9b0a6f
+VarBinaryPartitionFunction#!#1#!#1#!#[B@10667848
+VarBinaryPartitionFunction#!#1#!#2#!#[B@191a709b
+VarBinaryPartitionFunction#!#1#!#3#!#[B@77c7ed8e
+VarBinaryPartitionFunction#!#1#!#4#!#[B@453d496b
 UniqueIdentifierPartitionFunction#!#1#!#1#!#00000000-0000-0000-0000-000000000000
 UniqueIdentifierPartitionFunction#!#1#!#2#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
 UniqueIdentifierPartitionFunction#!#1#!#3#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
@@ -533,29 +533,29 @@ PARTITION_FUNCTIONログインαιώνια#!#1#!#3#!#1000
 SELECT * FROM GetParameterMetadataView
 GO
 ~~START~~
-nvarchar#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int
-"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
-[PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
-BigIntPartitionFunction#!#1#!#20#!#8#!#19#!#0#!#<NULL>#!#20
-BinaryPartitionFunction#!#1#!#17376#!#8000#!#0#!#0#!#<NULL>#!#17376
-CharPartitionFunction#!#1#!#16959#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#16959
-DatePartitionFunction#!#1#!#1082#!#3#!#10#!#0#!#<NULL>#!#1082
-DateTime2PartitionFunction#!#1#!#17568#!#8#!#26#!#6#!#<NULL>#!#17568
-DateTimePartitionFunction#!#1#!#17456#!#8#!#23#!#3#!#<NULL>#!#17456
-DecimalPartitionFunction#!#1#!#17112#!#17#!#38#!#38#!#<NULL>#!#17112
-IntPartitionFunction#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
-NCharPartitionFunction#!#1#!#17021#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#17021
-NumericPartitionFunction#!#1#!#1700#!#17#!#38#!#38#!#<NULL>#!#1700
-NVarCharPartitionFunction#!#1#!#17084#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#17084
-PARTITION_FUNCTIONログインαιώνια#!#1#!#23#!#4#!#10#!#0#!#<NULL>#!#23
-PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#20#!#8#!#19#!#0#!#<NULL>#!#20
-SmallDateTimePartitionFunction#!#1#!#17642#!#4#!#16#!#0#!#<NULL>#!#17642
-SmallIntPartitionFunction#!#1#!#21#!#2#!#5#!#0#!#<NULL>#!#21
-SqlVariantPartitionFunction#!#1#!#17856#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#17856
-TinyIntPartitionFunction#!#1#!#17101#!#1#!#3#!#0#!#<NULL>#!#17101
-UniqueIdentifierPartitionFunction#!#1#!#17410#!#16#!#0#!#0#!#<NULL>#!#17410
-VarBinaryPartitionFunction#!#1#!#17304#!#8000#!#0#!#0#!#<NULL>#!#17304
-VarCharPartitionFunction#!#1#!#17028#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#17028
+nvarchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar
+"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+[PARTITION_FUNCTION  유니코드스키마👻]#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+BigIntPartitionFunction#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
+BinaryPartitionFunction#!#binary#!#1#!#8000#!#0#!#0#!#<NULL>
+CharPartitionFunction#!#char#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
+DatePartitionFunction#!#date#!#1#!#3#!#10#!#0#!#<NULL>
+DateTime2PartitionFunction#!#datetime2#!#1#!#8#!#26#!#6#!#<NULL>
+DateTimePartitionFunction#!#datetime#!#1#!#8#!#23#!#3#!#<NULL>
+DecimalPartitionFunction#!#decimal#!#1#!#17#!#38#!#38#!#<NULL>
+IntPartitionFunction#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+NCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
+NumericPartitionFunction#!#numeric#!#1#!#17#!#38#!#38#!#<NULL>
+NVarCharPartitionFunction#!#nvarchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
+PARTITION_FUNCTIONログインαιώνια#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
+SmallDateTimePartitionFunction#!#smalldatetime#!#1#!#4#!#16#!#0#!#<NULL>
+SmallIntPartitionFunction#!#smallint#!#1#!#2#!#5#!#0#!#<NULL>
+SqlVariantPartitionFunction#!#sql_variant#!#1#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as
+TinyIntPartitionFunction#!#tinyint#!#1#!#1#!#3#!#0#!#<NULL>
+UniqueIdentifierPartitionFunction#!#uniqueidentifier#!#1#!#16#!#0#!#0#!#<NULL>
+VarBinaryPartitionFunction#!#varbinary#!#1#!#8000#!#0#!#0#!#<NULL>
+VarCharPartitionFunction#!#varchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
@@ -811,3 +811,126 @@ go
 
 DROP PARTITION FUNCTION TestPartitionFunction
 go
+
+-- tsql
+USE master
+GO
+
+
+------------------------------------------------------------------------------------------------------------
+--- Test error during Implicit Conversion of range values in Partition Function for each datatypes
+------------------------------------------------------------------------------------------------------------
+CREATE PARTITION FUNCTION NewIntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, cast('xyz' as varchar));
+-- having duplicates also, but first it should try to convert and fail
+CREATE PARTITION FUNCTION NewBigIntPartitionFunction (bigint)
+AS RANGE RIGHT FOR VALUES (1000,  1000, 1000, cast('xyz' as varchar), 1000, 1000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewSmallIntPartitionFunction (smallint) 
+AS RANGE RIGHT FOR VALUES ('xyz', 32767, -32768);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 1 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewTinyIntPartitionFunction (tinyint)
+AS RANGE RIGHT FOR VALUES (0, 255, cast('xyz' as varchar));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewDecimalPartitionFunction (decimal(10, 5))
+AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 4 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewNumericPartitionFunction (numeric(5, 2))
+AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 4 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewDatePartitionFunction (date) 
+AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewDateTimePartitionFunction (datetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewDateTime2PartitionFunction (datetime2(3))
+AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewSmallDateTimePartitionFunction (smalldatetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewCharPartitionFunction (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 7 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewNCharPartitionFunction (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 7 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewBinaryPartitionFunction (binary(4))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 4 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewVarBinaryPartitionFunction (varbinary(8))
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 4 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewUniqueIdentifierPartitionFunction (uniqueidentifier)
+AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', 123);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+

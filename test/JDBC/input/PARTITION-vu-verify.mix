@@ -396,3 +396,70 @@ go
 
 DROP PARTITION FUNCTION TestPartitionFunction
 go
+
+-- tsql
+USE master
+GO
+
+------------------------------------------------------------------------------------------------------------
+--- Test error during Implicit Conversion of range values in Partition Function for each datatypes
+------------------------------------------------------------------------------------------------------------
+CREATE PARTITION FUNCTION NewIntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, cast('xyz' as varchar));
+
+-- having duplicates also, but first it should try to convert and fail
+CREATE PARTITION FUNCTION NewBigIntPartitionFunction (bigint)
+AS RANGE RIGHT FOR VALUES (1000,  1000, 1000, cast('xyz' as varchar), 1000, 1000);
+GO
+
+CREATE PARTITION FUNCTION NewSmallIntPartitionFunction (smallint) 
+AS RANGE RIGHT FOR VALUES ('xyz', 32767, -32768);
+GO
+
+CREATE PARTITION FUNCTION NewTinyIntPartitionFunction (tinyint)
+AS RANGE RIGHT FOR VALUES (0, 255, cast('xyz' as varchar));
+GO
+
+CREATE PARTITION FUNCTION NewDecimalPartitionFunction (decimal(10, 5))
+AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewNumericPartitionFunction (numeric(5, 2))
+AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewDatePartitionFunction (date) 
+AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','xyz');
+GO
+
+CREATE PARTITION FUNCTION NewDateTimePartitionFunction (datetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewDateTime2PartitionFunction (datetime2(3))
+AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewSmallDateTimePartitionFunction (smalldatetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', cast(0x123 as binary(4)));
+GO
+
+CREATE PARTITION FUNCTION NewCharPartitionFunction (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', cast(0x123 as binary(4)));
+GO
+
+CREATE PARTITION FUNCTION NewNCharPartitionFunction (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', cast(0x123 as binary(4)));
+GO
+
+CREATE PARTITION FUNCTION NewBinaryPartitionFunction (binary(4))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewVarBinaryPartitionFunction (varbinary(8))
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewUniqueIdentifierPartitionFunction (uniqueidentifier)
+AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', 123);
+GO
