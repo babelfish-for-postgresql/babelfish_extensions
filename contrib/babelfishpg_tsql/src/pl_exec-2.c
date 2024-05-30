@@ -4153,11 +4153,11 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		 * check if datatype is supported or not, if tsql_typename is NULL
 		 * then it implies that typename corresponds to UDT
 		 */
-		if (!tsql_typename || 
-			is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
-			is_tsql_geometry_or_geography_datatype(typ->typoid) || 
-			is_tsql_rowversion_or_timestamp_datatype(typ->typoid) ||
-			typ->typoid == XMLOID) /* because we don't have XML type specific to TSQL */
+		if (!tsql_typename || is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
+			(*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typ->typoid) ||
+			(*common_utility_plugin_ptr->is_tsql_geography_datatype) (typ->typoid) ||
+			(*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (typ->typoid) ||
+			typ->typoid == XMLOID) /* we don't have XML type specific to TSQL */
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

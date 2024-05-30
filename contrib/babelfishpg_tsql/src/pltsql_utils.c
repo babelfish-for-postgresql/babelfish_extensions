@@ -1165,18 +1165,6 @@ is_tsql_text_ntext_or_image_datatype(Oid oid)
 		(*common_utility_plugin_ptr->is_tsql_image_datatype) (oid);
 }
 
-bool is_tsql_geometry_or_geography_datatype(Oid oid)
-{
-	return (*common_utility_plugin_ptr->is_tsql_geometry_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_geography_datatype) (oid);
-}
-
-bool is_tsql_rowversion_or_timestamp_datatype(Oid oid)
-{
-	return (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (oid);
-}
-
-
 /*
  * Try to acquire a lock with no wait
  */

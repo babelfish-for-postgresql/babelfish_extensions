@@ -1857,6 +1857,7 @@ typedef struct tsql_identity_insert_fields
 	Oid			rel_oid;
 	Oid			schema_oid;
 } tsql_identity_insert_fields;
+
 /* 
  * used to provide extra arg during sort,
  * it is modified version of compare_context
@@ -1867,6 +1868,7 @@ typedef struct tsql_compare_context
 	Oid colloid;
 	bool contains_duplicate;
 } tsql_compare_context;
+
 extern tsql_identity_insert_fields tsql_identity_insert;
 extern check_lang_as_clause_hook_type check_lang_as_clause_hook;
 extern write_stored_proc_probin_hook_type write_stored_proc_probin_hook;
@@ -2178,8 +2180,6 @@ extern bool is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvar
 extern bool is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
 extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
-extern bool is_tsql_geometry_or_geography_datatype(Oid oid); /* sys.geometry, sys.geography */
-extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid); /* sys.rowversion, sys.timestamp */
 
 typedef struct
 {
