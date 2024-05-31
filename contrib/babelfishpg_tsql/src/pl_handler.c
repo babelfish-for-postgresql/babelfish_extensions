@@ -6174,7 +6174,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 
 			/* Get major_name */
 			major_name = pstrdup(RelationGetRelationName(relation));
-			relation_close(relation, RelationIsBBFTempTable(relation) ? NoLock : AccessShareLock);
+			relation_close(relation, RelationIsENRTable(relation) ? NoLock : AccessShareLock);
 
 			/* Get schema_name */
 			schema_oid = get_object_namespace(&address);
