@@ -4918,17 +4918,17 @@ remove_entry_from_bbf_partition_function(const char *partition_function_name)
 
 /*
  * partition_function_exists
- * 		checks if provided partition function name exists in database
+ * 		Returns function id of provided partition function name
+ * 		if it exists in the provided database otherwise 0.
  */
-bool
-partition_function_exists(const char *partition_function_name)
+int32
+partition_function_exists(const char *partition_function_name, int16 dbid)
 {
 	Relation	rel;
 	HeapTuple	tuple;
 	SysScanDesc	scan;
 	ScanKeyData	scanKey[2];
 	int32		partition_function_id = 0;
-	int16		dbid = get_cur_db_id();
 
 	/* open the relation */
 	rel = table_open(get_bbf_partition_function_oid(), AccessShareLock);
@@ -5157,17 +5157,17 @@ remove_entry_from_bbf_partition_scheme(const char *partition_scheme_name)
 
 /*
  * partition_scheme_exists
- * 		checks if provided partition scheme name exists in database
+ * 		Returns scheme id of provided partition scheme name
+ * 		if it exists in the provided database otherwise 0.
  */
-bool
-partition_scheme_exists(const char *partition_scheme_name)
+int32
+partition_scheme_exists(const char *partition_scheme_name, int16 dbid)
 {
 	Relation	rel;
 	HeapTuple	tuple;
 	SysScanDesc	scan;
 	ScanKeyData	scanKey[2];
 	bool		exists = false;
-	int16		dbid = get_cur_db_id();
 
 	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
 	
