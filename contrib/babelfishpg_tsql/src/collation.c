@@ -469,10 +469,11 @@ PG_FUNCTION_INFO_V1(remove_accents_internal);
 Datum remove_accents_internal(PG_FUNCTION_ARGS)
 {
 	char *input_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	UChar *utf16_input;
+	UChar *utf16_input, *utf16_res;
 	int32_t len_uinput, limit, capacity, len_result;
 	char *result;
 	UErrorCode status = U_ZERO_ERROR;
+	text *res_str;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
@@ -505,6 +506,17 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	}
 
 	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
+	/*
+	 * icu_to_uchar would return palloc'd string which can not be passed directly to utrans_transUChars
+	 * because it will modify input string in place. It can also reallocate memory which is not the same
+	 * as palloc routines. Hence, we can not pass palloc'd allocated memory to utrans_transUChars. Otherwise,
+	 * user may receive error such as "pfree called with invalid pointer 0x149fb5b3c050 (header 0x0069032703270327)"
+	 * or even result in server crash.
+	 * So create the copy of input string through malloc and pass it to utrans_transUChars for the modification. 
+	 */
+	utf16_res = (UChar *) malloc((len_uinput + 1) * sizeof(UChar));
+	memcpy(utf16_res, utf16_input, (len_uinput + 1) * sizeof(UChar));
+	pfree(utf16_input);
 	pfree(input_str);
 
 	limit = len_uinput;
@@ -516,7 +528,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	capacity = (limit < (PG_INT32_MAX / MAX_BYTES_PER_CHAR)) ? (limit * MAX_BYTES_PER_CHAR) : PG_INT32_MAX;
 
 	utrans_transUChars(cached_transliterator,
-						utf16_input,
+						utf16_res,
 						&len_uinput,
 						capacity,
 						0,
@@ -531,10 +543,13 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 					errdetail("The input string may have caused buffer overflow")));
 	}
 
-	len_result = icu_from_uchar(&result, utf16_input, len_uinput);
+	len_result = icu_from_uchar(&result, utf16_res, len_uinput);
+	free(utf16_res);
 
 	// Return result as NVARCHAR
-	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result + 1));
+	res_str = cstring_to_text_with_len(result, len_result);
+	pfree(result);
+	PG_RETURN_VARCHAR_P(res_str);
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
