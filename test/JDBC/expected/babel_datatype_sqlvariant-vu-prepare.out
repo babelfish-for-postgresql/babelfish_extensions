@@ -919,3 +919,4 @@ go
 insert into babel_4036_t2(a, c, e) values(4, cast(-99999999999999999999999999999999999999 as decimal(38,0)), 'abc');
 go
 ~~ROW COUNT: 1~~
+

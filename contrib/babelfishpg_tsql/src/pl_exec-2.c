@@ -4119,6 +4119,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		Oid			opfamily_oid;
 		Oid			cmpfunction_oid;
 		int 			nargs = list_length(arg);
+		int			dbid = get_cur_db_id();
 		MemoryContext		cur_ctxt = CurrentMemoryContext;
 		LOCAL_FCINFO(fcinfo, 1);
 
@@ -4130,8 +4131,8 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 					errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.", partition_function_name)));
 		}
 
-		/* check if there is existing partition function with the given name */
-		if (partition_function_exists(partition_function_name))
+		/* check if there is existing partition function with the given name in the current database */
+		if (partition_function_exists(partition_function_name, dbid))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_DUPLICATE_FUNCTION),
@@ -4287,6 +4288,7 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 		bool		next_used = false;
 		int		filegroups = stmt->filegroups;
 		char		*partition_func_name = stmt->function_name;
+		int		dbid = get_cur_db_id();
 
 		/* check if given name is exceeding the allowed limit */
 		if (strlen(partition_scheme_name) > 128)
@@ -4297,8 +4299,8 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 							partition_scheme_name)));
 		}
 
-		/* raise error if provided partition function doesn't exists in database */
-		if (!partition_function_exists(partition_func_name))
+		/* raise error if provided partition function doesn't exists in the current database */
+		if (!partition_function_exists(partition_func_name, dbid))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4330,8 +4332,8 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 			}
 		}
 
-		/* check if there is existing partition scheme with the given name */
-		if (partition_scheme_exists(partition_scheme_name))
+		/* check if there is existing partition scheme with the given name in the current database */
+		if (partition_scheme_exists(partition_scheme_name, dbid))
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
