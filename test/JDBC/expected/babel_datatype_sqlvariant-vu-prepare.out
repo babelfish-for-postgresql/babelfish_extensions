@@ -4,10 +4,6 @@ go
 -- Test CAST to SQL_VARIANT
 create sequence babel_datatype_sqlvariant_vu_prepare_t1_sec start with 1;
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t1_sec" already exists)~~
-
 create table babel_datatype_sqlvariant_vu_prepare_t1 (id int default nextval('babel_datatype_sqlvariant_vu_prepare_t1_sec'), a sql_variant);
 go
 
@@ -204,16 +200,8 @@ go
 -- SQL_VARAINT_PROPERTY function
 CREATE SEQUENCE babel_datatype_sqlvariant_vu_prepare_t2_sec start with 1 increment by 1;
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t2_sec" already exists)~~
-
 create table babel_datatype_sqlvariant_vu_prepare_t2 (id int default nextval('babel_datatype_sqlvariant_vu_prepare_t2_sec'), testcase varchar(50), v sql_variant);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t2" already exists)~~
-
 insert into babel_datatype_sqlvariant_vu_prepare_t2 (testcase, v) values ('datetime2 basic', cast('2020-10-05 09:00:00' as datetime2));
 go
 ~~ROW COUNT: 1~~
@@ -329,10 +317,6 @@ go
 -- test null value
 CREATE table babel_datatype_sqlvariant_vu_prepare_t3 ( a sql_variant);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t3" already exists)~~
-
 insert into babel_datatype_sqlvariant_vu_prepare_t3 values (null);
 go
 ~~ROW COUNT: 1~~
@@ -342,16 +326,8 @@ go
 -- Comparision functions
 CREATE SEQUENCE babel_datatype_sqlvariant_vu_prepare_t4_sec START WITH 1;
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t4_sec" already exists)~~
-
 create table babel_datatype_sqlvariant_vu_prepare_t4 (id int default nextval('babel_datatype_sqlvariant_vu_prepare_t4_sec'), a sql_variant, b sql_variant);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t4" already exists)~~
-
 
 -- datetime2
 insert into babel_datatype_sqlvariant_vu_prepare_t4 (a , b) values (cast('2020-10-05 09:00:00' as datetime2), cast('2020-10-05 09:00:00' as datetime2));
@@ -599,16 +575,8 @@ go
 -- comparison between different types
 CREATE SEQUENCE babel_datatype_sqlvariant_vu_prepare_t5_sec START WITH 1;
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t5_sec" already exists)~~
-
 create table babel_datatype_sqlvariant_vu_prepare_t5 (id int default nextval('babel_datatype_sqlvariant_vu_prepare_t5_sec'), a sql_variant, b sql_variant);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t5" already exists)~~
-
 
 insert into babel_datatype_sqlvariant_vu_prepare_t5 ( a, b) values (cast(1234 as int), cast('5678' as varchar(10)));
 go
@@ -621,22 +589,10 @@ go
 
 create table babel_datatype_sqlvariant_vu_prepare_t6 (a sql_variant, b sql_variant);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t6" already exists)~~
-
 create index babel_datatype_sqlvariant_vu_prepare_t6_idx1 on babel_datatype_sqlvariant_vu_prepare_t5 (a);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prda53cf6c27213158b8c822dbd49e497b" already exists)~~
-
 create index babel_datatype_sqlvariant_vu_prepare_t6_idx2 on babel_datatype_sqlvariant_vu_prepare_t5 (b);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_pr684fea658a793a1b2d4f671a9e36f970" already exists)~~
-
 -- datetime2
 insert into babel_datatype_sqlvariant_vu_prepare_t6 (a , b) values (cast('2020-10-05 09:00:00' as datetime2), cast('2020-10-05 09:00:00' as datetime2));
 go
@@ -736,10 +692,6 @@ go
 -- test sql_variant specific comparison rules
 create table babel_datatype_sqlvariant_vu_prepare_t7 (a sql_variant, b sql_variant);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t7" already exists)~~
-
 insert into babel_datatype_sqlvariant_vu_prepare_t7 values(cast('01-01-01 00:00:00' as datetime2), cast('23:59:59' as time));
 go
 ~~ROW COUNT: 1~~
@@ -759,10 +711,6 @@ go
 
 create table babel_datatype_sqlvariant_vu_prepare_t8 (a sql_variant, b sql_variant);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t8" already exists)~~
-
 
 insert into babel_datatype_sqlvariant_vu_prepare_t8 values (cast('$922337203685477.5807' as money), cast(922337203685478 as bigint));
 go
@@ -783,10 +731,6 @@ go
 
 create table babel_datatype_sqlvariant_vu_prepare_t9 (a sql_variant, b sql_variant);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_datatype_sqlvariant_vu_prepare_t9" already exists)~~
-
 
 
 insert into babel_datatype_sqlvariant_vu_prepare_t9 values (cast('$200' as money), cast(200 as bigint));
@@ -804,10 +748,6 @@ go
 
 create table babel_4036_t1( a int, b sql_variant, c varchar(50), d sql_variant, e sql_variant);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_4036_t1" already exists)~~
-
 
 insert into babel_4036_t1(a,c,e) values (1, 'String 1', cast('Varchar String' as varchar(50)));
 go
@@ -891,10 +831,6 @@ go
 -- test generated column for sql_variant column
 create table babel_4036_t2 (a int, b as a * a, c sql_variant, d as c, e varchar(50));
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_4036_t2" already exists)~~
-
 -- some corner cases for numeric and decimal datatype
 insert into babel_4036_t2 (a, c, e) values(1, CAST('-0.9999999999999996' as numeric(18,17)) ,'String 1');
 go
