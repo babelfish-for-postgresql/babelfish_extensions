@@ -31,6 +31,7 @@ static char *rewrite_exec_scalar_func_params(const char *stmt, List *raw_parsetr
 static List *get_func_info_from_raw_parsetree(List *raw_parsetree_list, int *nargs,
 											  bool *func_variadic, int *first_arg_location);
 static void exec_simple_check_plan(PLtsql_execstate *estate, PLtsql_expr *expr);
+static bool is_dml_on_pltsql_table_variable(PLtsql_execstate *estate, Node *raw_stmt);
 
 extern void pltsql_estate_setup(PLtsql_execstate *estate, PLtsql_function *func,
 								ReturnSetInfo *rsi, EState *simple_eval_estate);
@@ -47,7 +48,7 @@ SPIPlanPtr
 prepare_stmt_execsql(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stmt_execsql *stmt, bool keepplan)
 {
 	PLtsql_expr *expr = stmt->sqlstmt;
-	ListCell   *l;
+	ListCell    *l;
 
 	exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, keepplan);
 	stmt->mod_stmt = false;
@@ -73,51 +74,47 @@ prepare_stmt_execsql(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stm
 			 plansource->commandTag == CMDTAG_UPDATE ||
 			 plansource->commandTag == CMDTAG_DELETE))
 		{
-			ListCell   *lc;
-			int			n;
-			PLtsql_tbl *tbl;
-			const char *relname;
+			Node		*raw_stmt = plansource->raw_parse_tree->stmt;
+			bool		non_table_variable_found = false;
 
 			stmt->mod_stmt = true;
 
-			/* Check if the statement's relation is a table variable */
-			switch (nodeTag(plansource->raw_parse_tree->stmt))
-			{
-				case T_InsertStmt:
-					relname = ((InsertStmt *) plansource->raw_parse_tree->stmt)->relation->relname;
-					break;
-				case T_UpdateStmt:
-					relname = ((UpdateStmt *) plansource->raw_parse_tree->stmt)->relation->relname;
-					break;
-				case T_DeleteStmt:
-					relname = ((DeleteStmt *) plansource->raw_parse_tree->stmt)->relation->relname;
-					break;
-				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("unexpected parse node type: %d",
-									(int) nodeTag(plansource->raw_parse_tree->stmt))));
-					break;
-			}
-
-			/* estate not set up, or not a table variable */
-			if (!estate || strncmp(relname, "@", 1) != 0)
+			/* estate not set up */
+			if (!estate)
 				break;
-			foreach(lc, estate->func->table_varnos)
-			{
-				n = lfirst_int(lc);
-				if (estate->datums[n]->dtype != PLTSQL_DTYPE_TBL)
-					continue;
 
-				tbl = (PLtsql_tbl *) estate->datums[n];
-				if (strcmp(relname, tbl->refname) == 0)
+			if (!is_dml_on_pltsql_table_variable(estate, raw_stmt))
+				break;
+
+			/*
+			 * pltsql OUTPUT INTO clause is rewritten to have two DML nodes
+			 * refer tsql_update_output_into_cte_transformation
+			 */
+			if (nodeTag(raw_stmt) == T_InsertStmt && ((InsertStmt *) raw_stmt)->withClause)
+			{
+				ListCell	*cte_lc;
+
+				foreach(cte_lc, ((InsertStmt *) raw_stmt)->withClause->ctes)
 				{
-					stmt->mod_stmt_tablevar = true;
-					break;
+					CommonTableExpr *cte = (CommonTableExpr *) lfirst(cte_lc);
+
+					if (IsA(cte->ctequery, InsertStmt) ||
+						IsA(cte->ctequery, UpdateStmt) ||
+						IsA(cte->ctequery, DeleteStmt))
+					{
+						if (!is_dml_on_pltsql_table_variable(estate, cte->ctequery))
+						{
+							non_table_variable_found = true;
+							break;
+						}
+					}
 				}
 			}
 
-			break;
+			if (non_table_variable_found)
+				break;
+
+			stmt->mod_stmt_tablevar = true;
 		}
 	}
 
@@ -711,4 +708,45 @@ cleanup_temporal_plan(ExecCodes *exec_codes)
 		if (stmt_exec->expr->plan && !stmt_exec->expr->plan->saved)
 			stmt_exec->expr->plan = NULL;
 	}
+}
+
+static bool
+is_dml_on_pltsql_table_variable(PLtsql_execstate *estate, Node *raw_stmt)
+{
+	ListCell	*lc;
+	PLtsql_tbl	*tbl;
+	int     	n;
+	const char 	*relname;
+
+	switch (nodeTag(raw_stmt))
+	{
+		case T_InsertStmt:
+			relname = ((InsertStmt *) raw_stmt)->relation->relname;
+			break;
+		case T_UpdateStmt:
+			relname = ((UpdateStmt *) raw_stmt)->relation->relname;
+			break;
+		case T_DeleteStmt:
+			relname = ((DeleteStmt *) raw_stmt)->relation->relname;
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("unexpected parse node type: %d",
+							(int) nodeTag(raw_stmt))));
+			break;
+	}
+
+	foreach(lc, estate->func->table_varnos)
+	{
+		n = lfirst_int(lc);
+		if (estate->datums[n]->dtype != PLTSQL_DTYPE_TBL)
+			continue;
+
+		tbl = (PLtsql_tbl *) estate->datums[n];
+		if (strcmp(relname, tbl->refname) == 0)
+			return true;
+	}
+
+	return false;
 }
