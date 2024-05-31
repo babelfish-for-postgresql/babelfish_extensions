@@ -18,13 +18,21 @@ go
 ~~ROW COUNT: 1~~
 
 -- datetimeoffset
--- insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset) );
--- go
--- insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
--- go
--- -- exceeding range error
--- insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('10000-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
--- go
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset) );
+go
+~~ROW COUNT: 1~~
+
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
+go
+~~ROW COUNT: 1~~
+
+-- exceeding range error
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('10000-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetimeoffset)~~
+
 -- smalldatetime
 -- exceeding range error
 insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2079-10-05 09:00:00' as smalldatetime) );
@@ -173,12 +181,12 @@ go
 ~~ROW COUNT: 1~~
 
 -- varbinary
-insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast(0x123 as varbinary(3)) );
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('abc' as varbinary(3)) );
 go
 ~~ROW COUNT: 1~~
 
 -- binary
-insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast(0x123 as binary(3)) );
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('abc' as binary(3)) );
 go
 ~~ROW COUNT: 1~~
 
@@ -911,4 +919,3 @@ go
 insert into babel_4036_t2(a, c, e) values(4, cast(-99999999999999999999999999999999999999 as decimal(38,0)), 'abc');
 go
 ~~ROW COUNT: 1~~
-

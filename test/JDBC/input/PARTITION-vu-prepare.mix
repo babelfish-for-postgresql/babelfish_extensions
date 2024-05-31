@@ -38,7 +38,7 @@ AS
     INNER JOIN 
         sys.partition_functions pf on (pp.function_id = pf.function_id)
     LEFT JOIN 
-        sys.types typ on pp.system_type_id = typ.system_type_id
+        sys.types typ on pp.user_type_id = typ.user_type_id
     ORDER BY 
        pf.name
 )

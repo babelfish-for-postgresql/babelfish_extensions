@@ -1,5 +1,5 @@
 -- DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
-select id, a from babel_datatype_sqlvariant_vu_prepare_t1 order by id;
+select a from babel_datatype_sqlvariant_vu_prepare_t1 order by id;
 go
 
 -- Test CAST from SQL_VARIANT

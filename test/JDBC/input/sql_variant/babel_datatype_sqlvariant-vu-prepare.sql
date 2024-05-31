@@ -14,13 +14,13 @@ go
 insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00' as datetime) );
 go
 -- datetimeoffset
--- insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset) );
--- go
--- insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
--- go
--- -- exceeding range error
--- insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('10000-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
--- go
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset) );
+go
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
+go
+-- exceeding range error
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('10000-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
+go
 -- smalldatetime
 -- exceeding range error
 insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2079-10-05 09:00:00' as smalldatetime) );
@@ -103,10 +103,10 @@ go
 insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('£' as char(1)) );
 go
 -- varbinary
-insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast(0x123 as varbinary(3)) );
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('abc' as varbinary(3)) );
 go
 -- binary
-insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast(0x123 as binary(3)) );
+insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('abc' as binary(3)) );
 go
 -- uniqueidentifier
 insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier) );
