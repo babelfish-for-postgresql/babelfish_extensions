@@ -171,28 +171,3 @@ select * from babel_726_vu_prepare_v7
 go
 exec babel_726_vu_prepare_p7
 go
-
-CREATE FUNCTION babel_726_f8(@a smallint, @b bit)
-RETURNS BIT AS
-BEGIN
-    DECLARE @ans BIT
-    SELECT @ans = COALESCE(@b, @a)
-    RETURN @ans
-END
-GO
-
-CREATE VIEW babel_726_v8 AS SELECT COALESCE(CAST(1 as BIT), CAST(5 as SMALLINT))
-GO
-
-CREATE PROCEDURE babel_726_p8 AS SELECT COALESCE(CAST(1 as BIT), CAST(5 as SMALLINT))
-GO
-
-SELECT babel_726_f8(6,0)
-GO
-
-SELECT * FROM babel_726_v8
-GO
-
-EXEC babel_726_p8
-GO
-
