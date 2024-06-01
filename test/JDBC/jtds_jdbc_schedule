@@ -59,10 +59,15 @@ jtds-TestBinary
 TestImage-vu-prepare
 TestImage-vu-verify
 TestImage-vu-cleanup
-# Failure: date type support for TDS 7.1 has been added, time and datetime2 support pending
-# TestSQLVariant-vu-prepare
-# TestSQLVariant-vu-verify
-# TestSQLVariant-vu-cleanup
+# There are two discrepancies with output: bit base type is returned by jTDS as "1", and datetime2
+# type is printed with fractional seconds having all trailing zeros according to scale (BTW scale is 
+# currently always set incorrectly to max value 7 - see #2638). With mssql-jdbs traling zeros are
+# not printed because resulting value is returned as java.sql.Timestamp, but with jTDS datetime2
+# value converted to nvarchar on server because of this trailing zero are preserved up to scale.
+# jTDS behaviour with both bit and datetime2 types are consistent between Babelfish and MSSQL.
+jtds-TestSQLVariant-vu-prepare
+jtds-TestSQLVariant-vu-verify
+jtds-TestSQLVariant-vu-cleanup
 # jTDS reports XML column as ntext in ResultSetMetaData, this behaviour is the same
 # with both MSSQL and Babelfish
 jtds-TestXML

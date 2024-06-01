@@ -1,0 +1,288 @@
+
+
+--[BABEL-582]Checking all base datatypes for sql_variant
+--The following list of base datatypes cannot be stored by using sql_variant:
+--[datetimeoffset(SQL server 2012), geography, geometry, hierarchyid, image, ntext, nvarchar(max),
+--rowversion (timestamp), text, varchar(max), varbinary(max), User-defined types, xml]
+Select * from testsqlvariant_sourceTable1;
+go
+~~START~~
+sql_variant#!#sql_variant
+1#!#1
+<NULL>#!#0
+~~END~~
+
+
+Select * from testsqlvariant_sourceTable2;
+go
+~~START~~
+sql_variant#!#sql_variant
+0#!#10
+2#!#29
+4#!#87
+<NULL>#!#100
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable3;
+go
+~~START~~
+sql_variant#!#sql_variant
+0#!#-10
+2#!#-29
+876#!#-1234
+-32768#!#32767
+<NULL>#!#100
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable4;
+go
+~~START~~
+sql_variant#!#sql_variant
+0#!#-10
+-12345#!#10
+4#!#224466
+-2147483648#!#2147483647
+<NULL>#!#100
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable5;
+go
+~~START~~
+sql_variant#!#sql_variant
+0#!#-120
+-12345#!#100
+-12245532534#!#86
+-9223372036854775808#!#9223372036854775807
+<NULL>#!#-4
+~~END~~
+
+
+Select * from testsqlvariant_sourceTable6;
+go
+~~START~~
+sql_variant#!#sql_variant
+0.0#!#1.05
+-4.0#!#1.05
+86.0#!#-1.22455328E8
+3.4E38#!#-3.4E38
+<NULL>#!#-2.0
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable7;
+go
+~~START~~
+sql_variant#!#sql_variant
+0.0#!#1.05
+-1.23452345E7#!#1.05
+86.0#!#-2.0
+-1.79E308#!#1.79E308
+<NULL>#!#100.0
+~~END~~
+
+
+
+SELECT * FROM testsqlvariant_money_dt;
+go
+~~START~~
+sql_variant#!#sql_variant
+100.5#!#10.05
+10#!#10
+-10.05#!#-10.0
+-214748.3648#!#-922337203685477.5808
+214748.3647#!#22337203685477.5807
+214748.3647#!#22337203685477.5807
+-214748.3648#!#-922337203685477.5808
+214748.3647#!#922337203685477.5807
+214748.3647#!#922337203685477.5807
+<NULL>#!#<NULL>
+~~END~~
+
+
+Select * from testsqlvariant_sourceTable8;
+go
+~~START~~
+sql_variant#!#sql_variant
+0.0000#!#1050.0000
+<NULL>#!#-2.0000
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable9;
+go
+~~START~~
+sql_variant#!#sql_variant
+0.0000#!#1050.0000
+<NULL>#!#-2.0000
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable10;
+go
+~~START~~
+sql_variant#!#sql_variant
+2000-12-13#!#1900-02-28
+<NULL>#!#0001-01-01
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable11;
+go
+~~START~~
+sql_variant#!#sql_variant
+2007-05-08 12:35:00.0#!#2007-05-08 12:36:00.0
+2007-05-08 13:00:00.0#!#2000-02-29 00:00:00.0
+1900-03-01 00:00:00.0#!#2000-02-28 23:46:00.0
+<NULL>#!#1900-01-01 00:00:00.0
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable12;
+go
+~~START~~
+sql_variant#!#sql_variant
+2000-12-13 12:58:23.123#!#1900-02-28 23:59:59.99
+1900-02-28 23:59:59.99#!#1900-02-28 23:59:59.993
+1900-02-28 23:59:59.993#!#1900-02-28 23:59:59.997
+1900-02-28 23:59:59.997#!#1753-01-01 00:00:00.0
+<NULL>#!#9999-12-31 23:59:59.997
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable13;
+go
+~~START~~
+sql_variant#!#sql_variant
+Satarupa                #!#    Satarupa            
+                        #!#   S,B                  
+<NULL>#!#                        
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable14;
+go
+~~START~~
+sql_variant#!#sql_variant
+Satarupa                #!#    Satarupa            
+                        #!#   S,B                  
+ dthdcjdfjwf dwfw fgegeg#!#😊😋😎😍😅😆                  
+<NULL>#!#                        
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable15;
+go
+~~START~~
+sql_variant#!#sql_variant
+Satarupa#!#    Satarupa
+#!#   S,B
+ dthdcjdfjwf dwfw fgegeg#!#😊😋😎😍😅😆
+<NULL>#!#  
+~~END~~
+
+
+
+Select * from testsqlvariant_sourceTable16;
+go
+~~START~~
+sql_variant#!#sql_variant
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#BAB96BC8-60B9-40DD-B0DE-C90A80F5739E
+DBA2726C-2131-409F-AEFA-5C8079571623#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+<NULL>#!#60AEAA5C-E272-4B17-BAD0-C25710FD7A60
+~~END~~
+
+
+Select * from testsqlvariant_sourceTable17;
+go
+~~START~~
+sql_variant#!#sql_variant
+Delhi#!#    Surat
+#!#   S,B
+<NULL>#!#  
+~~END~~
+
+
+Select * from testsqlvariant_sourceTable18;
+go
+~~START~~
+sql_variant#!#sql_variant
+Delhi                   #!#    Surat               
+                        #!#   S,B                  
+<NULL>#!#                        
+~~END~~
+
+
+Select * from testsqlvariant_sourceTable19;
+go
+~~START~~
+sql_variant#!#sql_variant
+123.46#!#123.40
+<NULL>#!#123.00
+-123.46#!#-123.00
+~~END~~
+
+
+Select * from testsqlvariant_sourceTable20;
+go
+~~START~~
+sql_variant#!#sql_variant
+123.46#!#123.40
+<NULL>#!#123.00
+-123.46#!#-123.00
+~~END~~
+
+
+Select * from testsqlvariant_sourceTable21;
+go
+~~START~~
+sql_variant#!#sql_variant
+12:45:37.0000000#!#12:45:37.1000000
+<NULL>#!#12:45:37.1200000
+12:45:37.1230000#!#12:45:37.1234000
+12:45:37.1234500#!#12:45:37.1234560
+~~END~~
+
+
+Select * from testsqlvariant_sourceTable22;
+go
+~~START~~
+sql_variant#!#sql_variant
+2016-10-23 12:45:37.0000000#!#2016-10-23 12:45:37.1000000
+<NULL>#!#2016-10-23 12:45:37.1200000
+2016-10-23 12:45:37.1230000#!#2016-10-23 12:45:37.1234000
+2016-10-23 12:45:37.1234500#!#2016-10-23 12:45:37.1234560
+~~END~~
+
+
+Select * from testsqlvariant_vu_prepare_view1;
+go
+~~START~~
+sql_variant
+abc
+~~END~~
+
+
+Select * from testsqlvariant_vu_prepare_view2;
+go
+~~START~~
+sql_variant
+2016-10-23 12:45:37.1000000
+2016-10-23 12:45:37.1200000
+2016-10-23 12:45:37.1234000
+2016-10-23 12:45:37.1234560
+~~END~~
+

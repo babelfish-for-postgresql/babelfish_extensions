@@ -318,6 +318,9 @@ ignore#!#jtds-TestDatetimeoffset-vu-cleanup
 ignore#!#jtds-TestErrorsWithTryCatch
 ignore#!#jtds-TestSimpleErrors
 ignore#!#jtds-TestSQLQueries
+ignore#!#jtds-TestSQLVariant-vu-prepare
+ignore#!#jtds-TestSQLVariant-vu-verify
+ignore#!#jtds-TestSQLVariant-vu-cleanup
 ignore#!#jtds-TestStoredProcedures
 ignore#!#jtds-TestTableType-vu-cleanup
 ignore#!#jtds-TestTableType-vu-prepare

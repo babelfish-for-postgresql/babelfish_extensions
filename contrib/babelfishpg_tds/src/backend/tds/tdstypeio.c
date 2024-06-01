@@ -3338,80 +3338,25 @@ TdsSendTypeUniqueIdentifier(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
-static char*
-AppendFractionalSeconds(char *cp, fsec_t fsec, int scale)
-{
-	int		value,
-				oldval,
-				remainder,
-				idx;
-	char	buf[MAX_TIMESTAMP_PRECISION];
-
-	if (scale > 0)
-	{
-		*cp++ = '.';
-		value = abs(fsec);
-
-		for (idx = sizeof(buf) - 1; idx >= 0; idx--)
-		{
-			if (value > 0)
-			{
-				oldval = value;
-				value /= 10;
-				remainder = oldval - value * 10;
-				buf[idx] = '0' + remainder;
-			}
-			else
-				buf[idx] = '0';
-		}
-
-		for (idx = 0; idx < scale; idx++)
-		{
-			if (idx < sizeof(buf))
-				*cp++ = buf[idx]; 
-			else
-				*cp++ = '0'; 
-		}
-	}
-
-	return cp;
-}
-
 static int
 TdsSendTimeAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	struct pg_tm tt,
-			   *tm = &tt;
-	fsec_t		fsec;
 	int			rc,
 				scale;
-	char	   *out,
-				*cp;
+	char	   *st;
 	TdsColumnMetaData *col;
 	StringInfoData buf;
-	TimeADT time;
 
 	col = (TdsColumnMetaData *) vMetaData;
-	time = (TimeADT) value;
 	scale = (int) col->atttypmod;
 	if (scale < 0)
 		scale = MAX_TIMESTAMP_PRECISION + 1;
 
-	time2tm(time, tm, &fsec);
-
-	out = palloc0(16 + 1);
-	cp = out;
-
-	cp = pg_ultostr_zeropad(cp, tm->tm_hour, 2);
-	*cp++ = ':';
-	cp = pg_ultostr_zeropad(cp, tm->tm_min, 2);
-	*cp++ = ':';
-	cp = pg_ultostr_zeropad(cp, tm->tm_sec, 2);
-	cp = AppendFractionalSeconds(cp, fsec, scale);
+	st = TdsTimeGetTimeAsString((TimeADT) value, scale);
 
 	initStringInfo(&buf);
-	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
-	pfree(out);
+	TdsUTF8toUTF16StringInfo(&buf, st, strlen(st));
+	pfree(st);
 
 	if ((rc = TdsPutInt16LE(buf.len)) == 0)
 		TdsPutbytes(buf.data, buf.len);
@@ -3469,52 +3414,22 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 static int
 TdsSendDatetime2AsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	struct pg_tm tt,
-			   *tm = &tt;
-	fsec_t		fsec;
 	int			rc,
 				scale;
-	char	   *out,
-				*cp;
+	char	   *st;
 	TdsColumnMetaData *col;
 	StringInfoData buf;
-	Timestamp timestamp;
 
 	col = (TdsColumnMetaData *) vMetaData;
-	timestamp = (Timestamp) value;
 	scale = (int) col->atttypmod;
 	if (scale < 0)
 		scale = MAX_TIMESTAMP_PRECISION + 1;
 
-	out = palloc0(27 + 1);
-	cp = out;
-
-	if (TIMESTAMP_NOT_FINITE(timestamp))
-		EncodeSpecialTimestamp(timestamp, out);
-	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
-	{
-		cp = pg_ultostr_zeropad(cp,
-									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
-		*cp++ = '-';
-		cp = pg_ultostr_zeropad(cp, tm->tm_mon, 2);
-		*cp++ = '-';
-		cp = pg_ultostr_zeropad(cp, tm->tm_mday, 2);
-		*cp++ = ' ';
-		cp = pg_ultostr_zeropad(cp, tm->tm_hour, 2);
-		*cp++ = ':';
-		cp = pg_ultostr_zeropad(cp, tm->tm_min, 2);
-		*cp++ = ':';
-		cp = pg_ultostr_zeropad(cp, tm->tm_sec, 2);
-		cp = AppendFractionalSeconds(cp, fsec, scale);
-	}
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
+	st = TdsTimeGetDatetime2AsString((Timestamp) value, scale);
 
 	initStringInfo(&buf);
-	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
-	pfree(out);
+	TdsUTF8toUTF16StringInfo(&buf, st, strlen(st));
+	pfree(st);
 
 	if ((rc = TdsPutInt16LE(buf.len)) == 0)
 		TdsPutbytes(buf.data, buf.len);
@@ -3940,6 +3855,48 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	PG_RETURN_BYTEA_P(result);
 }
 
+/*
+ * dataformat: totalLen(4B) + baseType(1B) + metadatalen(1B) +
+ * encodingLen(5B) + dataLen(2B) + data(dataLen)
+ */
+static int
+TdsSendTypeSqlvariantAsNVarcharHelper(const char *st)
+{				
+	int			rc = EOF,
+				totalLen = 0;
+	StringInfoData strbuf;
+	int			actualDataLen = 0;	/* Number of bytes that would be
+									* needed to store given string in
+									* given encoding. */
+
+	initStringInfo(&strbuf);
+	TdsUTF8toUTF16StringInfo(&strbuf, st, strlen(st));
+
+	actualDataLen = strbuf.len;
+	totalLen = actualDataLen + VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES;
+
+	rc = TdsPutUInt32LE(totalLen);
+	rc |= TdsPutInt8(VARIANT_TYPE_NVARCHAR);
+	rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_CHAR_DATATYPES);
+
+	/*
+	 * 5B of fixed collation TODO: [BABEL-1069] Remove collation related
+	 * hardcoding from sql_variant sender for char class basetypes
+	 */
+	rc |= TdsPutInt8(9);
+	rc |= TdsPutInt8(4);
+	rc |= TdsPutInt8(208);
+	rc |= TdsPutInt8(0);
+	rc |= TdsPutInt8(52);
+
+	rc |= TdsPutUInt16LE(actualDataLen);
+
+	rc |= TdsPutbytes(strbuf.data, actualDataLen);
+	pfree(strbuf.data);
+
+	return rc;
+}
+
 int
 TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
@@ -3953,7 +3910,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	bytea	   *vlena = DatumGetByteaPCopy(value);
 	char	   *buf = VARDATA(vlena),
 			   *decString = NULL,
-			   *out = NULL;
+			   *out = NULL,
+				 *dateStr = NULL,
+				 *timeStr = NULL,
+				 *datetime2Str = NULL;
 	bool		isBaseNum = false,
 				isBaseChar = false;
 	bool		isBaseBin = false,
@@ -4164,42 +4124,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 				/*
 				 * DATENTYPE type was introduced in TDS 7.3, with earlier protocol
 				 * versions date is sent as NVARCHARTYPE.
-				 *
-				 * dataformat: totalLen(4B) + baseType(1B) + metadatalen(1B) +
-				 * encodingLen(5B) + dataLen(2B) + data(dataLen)
 				 */
-				StringInfoData strbuf;
-				int			actualDataLen = 0;	/* Number of bytes that would be
-												* needed to store given string in
-												* given encoding. */
-				char	   *dateStr = NULL;
-
 				dateStr = TdsTimeGetDateAsString(dateval);
-				initStringInfo(&strbuf);
-				TdsUTF8toUTF16StringInfo(&strbuf, dateStr, 10);
+				rc = TdsSendTypeSqlvariantAsNVarcharHelper(dateStr);
 				pfree(dateStr);
-
-				actualDataLen = strbuf.len;
-				totalLen = actualDataLen + VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES;
-
-				rc = TdsPutUInt32LE(totalLen);
-				rc |= TdsPutInt8(VARIANT_TYPE_NVARCHAR);
-				rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_CHAR_DATATYPES);
-
-				/*
-				 * 5B of fixed collation TODO: [BABEL-1069] Remove collation related
-				 * hardcoding from sql_variant sender for char class basetypes
-				 */
-				rc |= TdsPutInt8(9);
-				rc |= TdsPutInt8(4);
-				rc |= TdsPutInt8(208);
-				rc |= TdsPutInt8(0);
-				rc |= TdsPutInt8(52);
-
-				rc |= TdsPutUInt16LE(actualDataLen);
-
-				rc |= TdsPutbytes(strbuf.data, actualDataLen);
-				pfree(strbuf.data);
 			}
 			else
 			{
@@ -4252,64 +4180,92 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		}
 		else if (variantBaseType == VARIANT_TYPE_TIME)
 		{
-			/*
-			 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-			 * scale(1B) + data(3B-5B)
-			 */
+			memcpy(&numMicro, buf, sizeof(numMicro));
+
 			if (scale == 0xff || scale < 0 || scale > 7)
 				scale = DATETIMEOFFSETMAXSCALE;
 
-			if (scale >= 0 && scale < 3)
-				dataLen = 3;
-			else if (scale >= 3 && scale < 5)
-				dataLen = 4;
-			else if (scale >= 5 && scale <= 7)
-				dataLen = 5;
-
-			memcpy(&numMicro, buf, sizeof(numMicro));
-			temp = scale;
-			if (scale == 7 || scale == 0xff)
-				numMicro *= 10;
-
-			while (temp < 6)
+			if (GetClientTDSVersion() <= TDS_VERSION_7_2)
 			{
-				numMicro /= 10;
-				temp++;
+				/*
+				 * TIMENTYPE type was introduced in TDS 7.3, with earlier protocol
+				 * versions time is sent as NVARCHARTYPE.
+				 */
+				timeStr = TdsTimeGetTimeAsString((TimeADT) numMicro, scale);
+				rc = TdsSendTypeSqlvariantAsNVarcharHelper(timeStr);
+				pfree(timeStr);
 			}
-			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_TIME;
-			rc = TdsPutUInt32LE(totalLen);
-			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_TIME);
-			rc |= TdsPutInt8(scale);
-			rc = TdsPutbytes(&numMicro, dataLen);
+			else
+			{
+				/*
+				 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
+				 * scale(1B) + data(3B-5B)
+				 */
+				if (scale >= 0 && scale < 3)
+					dataLen = 3;
+				else if (scale >= 3 && scale < 5)
+					dataLen = 4;
+				else if (scale >= 5 && scale <= 7)
+					dataLen = 5;
+
+				temp = scale;
+				if (scale == 7 || scale == 0xff)
+					numMicro *= 10;
+
+				while (temp < 6)
+				{
+					numMicro /= 10;
+					temp++;
+				}
+				totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_TIME;
+				rc = TdsPutUInt32LE(totalLen);
+				rc |= TdsPutInt8(variantBaseType);
+				rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_TIME);
+				rc |= TdsPutInt8(scale);
+				rc = TdsPutbytes(&numMicro, dataLen);
+			}
 		}
 		else if (variantBaseType == VARIANT_TYPE_DATETIME2)
 		{
-			/*
-			 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-			 * scale(1B) + data(6B-8B)
-			 */
+			memcpy(&timestamp, buf, sizeof(timestamp));
+
 			if (scale == 0xff || scale < 0 || scale > 7)
 				scale = DATETIMEOFFSETMAXSCALE;
 
-			if (scale >= 0 && scale < 3)
-				dataLen = 6;
-			else if (scale >= 3 && scale < 5)
-				dataLen = 7;
-			else if (scale >= 5 && scale <= 7)
-				dataLen = 8;
+			if (GetClientTDSVersion() <= TDS_VERSION_7_2)
+			{
+				/*
+				 * DATETIME2NTYPE type was introduced in TDS 7.3, with earlier protocol
+				 * versions datetime2 is sent as NVARCHARTYPE.
+				 */
+				datetime2Str = TdsTimeGetDatetime2AsString(timestamp, scale);
+				rc = TdsSendTypeSqlvariantAsNVarcharHelper(datetime2Str);
+				pfree(datetime2Str);
+			}
+			else
+			{
+				/*
+				 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
+				 * scale(1B) + data(6B-8B)
+				 */
+				if (scale >= 0 && scale < 3)
+					dataLen = 6;
+				else if (scale >= 3 && scale < 5)
+					dataLen = 7;
+				else if (scale >= 5 && scale <= 7)
+					dataLen = 8;
 
-			memcpy(&timestamp, buf, sizeof(timestamp));
-			TdsGetDayTimeFromTimestamp((Timestamp) timestamp, &numDays,
-									   &numMicro, scale);
+				TdsGetDayTimeFromTimestamp((Timestamp) timestamp, &numDays,
+											&numMicro, scale);
 
-			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATETIME2;
-			rc = TdsPutUInt32LE(totalLen);
-			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATETIME2);
-			rc |= TdsPutInt8(scale);
-			rc |= TdsPutbytes(&numMicro, dataLen - 3);
-			rc |= TdsPutDate(numDays);
+				totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATETIME2;
+				rc = TdsPutUInt32LE(totalLen);
+				rc |= TdsPutInt8(variantBaseType);
+				rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATETIME2);
+				rc |= TdsPutInt8(scale);
+				rc |= TdsPutbytes(&numMicro, dataLen - 3);
+				rc |= TdsPutDate(numDays);
+			}
 		}
 		else if (variantBaseType == VARIANT_TYPE_DATETIMEOFFSET)
 		{
@@ -4369,81 +4325,25 @@ TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken token)
 	return result;
 }
 
-/* EncodeTimezone()
- *		Copies representation of a numeric timezone offset to str.
- *
- * Returns a pointer to the new end of string.  No NUL terminator is put
- * there; callers are responsible for NUL terminating str themselves.
- */
-static char *
-EncodeTimezone(char *str, int tz, int style)
-{
-	int			hour,
-				min;
-
-	min = abs(tz);
-	hour = min / MINS_PER_HOUR;
-	min -= hour * MINS_PER_HOUR;
-
-	/* TZ is negated compared to sign we wish to display ... */
-	*str++ = (tz <= 0 ? '+' : '-');
-
-	str = pg_ultostr_zeropad(str, hour, 2);
-	*str++ = ':';
-	str = pg_ultostr_zeropad(str, min, 2);
-
-	return str;
-}
-
 static int
 TdsSendDatetimeoffsetAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	struct pg_tm tt,
-			   *tm = &tt;
-	fsec_t		fsec;
 	int			rc,
 				scale;
-	char	   *out,
-				*cp;
+	char	   *st;
 	TdsColumnMetaData *col;
 	StringInfoData buf;
-	tsql_datetimeoffset *df;
 
 	col = (TdsColumnMetaData *) vMetaData;
-	df = (tsql_datetimeoffset *) value;
 	scale = (int) col->atttypmod;
 	if (scale < 0)
 		scale = MAX_TIMESTAMP_PRECISION + 1;
 
-	out = palloc0(34 + 1);
-	cp = out;
-
-	if (timestamp2tm(df->tsql_ts, NULL, tm, &fsec, NULL, NULL) == 0)
-	{
-		cp = pg_ultostr_zeropad(cp,
-									(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1), 4);
-		*cp++ = '-';
-		cp = pg_ultostr_zeropad(cp, tm->tm_mon, 2);
-		*cp++ = '-';
-		cp = pg_ultostr_zeropad(cp, tm->tm_mday, 2);
-		*cp++ = ' ';
-		cp = pg_ultostr_zeropad(cp, tm->tm_hour, 2);
-		*cp++ = ':';
-		cp = pg_ultostr_zeropad(cp, tm->tm_min, 2);
-		*cp++ = ':';
-		cp = pg_ultostr_zeropad(cp, tm->tm_sec, 2);
-		cp = AppendFractionalSeconds(cp, fsec, scale);
-		*cp++ = ' ';
-		cp = EncodeTimezone(cp, df->tsql_tz, DateStyle);
-	}
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("datetimeoffset out of range")));
+	st = TdsTimeGetDatetimeoffsetAsString((tsql_datetimeoffset *) value, scale);
 
 	initStringInfo(&buf);
-	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
-	pfree(out);
+	TdsUTF8toUTF16StringInfo(&buf, st, strlen(st));
+	pfree(st);
 
 	if ((rc = TdsPutInt16LE(buf.len)) == 0)
 		TdsPutbytes(buf.data, buf.len);
