@@ -413,3 +413,4 @@ INSERT INTO test_babel_5006 VALUES
 ('ph64jY3â'),
 ('KöĲ1ɽuⱯ1ĈRÆꞂQɍĜ'),
 ('æɵꞇNWꞂ3ÑŝꞆ7Ñçĝꝭd4qrɍ');
+GO

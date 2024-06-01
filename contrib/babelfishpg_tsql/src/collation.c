@@ -494,7 +494,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 
 		// Open transliterator
 		cached_transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
-		if (U_FAILURE(status))
+		if (U_FAILURE(status) || !cached_transliterator)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
@@ -506,18 +506,6 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	}
 
 	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
-	/*
-	 * icu_to_uchar would return palloc'd string which can not be passed directly to utrans_transUChars
-	 * because it will modify input string in place. It can also reallocate memory which is not the same
-	 * as palloc routines. Hence, we can not pass palloc'd allocated memory to utrans_transUChars. Otherwise,
-	 * user may receive error such as "pfree called with invalid pointer 0x149fb5b3c050 (header 0x0069032703270327)"
-	 * or even result in server crash.
-	 * So create the copy of input string through malloc and pass it to utrans_transUChars for the modification. 
-	 */
-	utf16_res = (UChar *) malloc((len_uinput + 1) * sizeof(UChar));
-	memcpy(utf16_res, utf16_input, (len_uinput + 1) * sizeof(UChar));
-	pfree(utf16_input);
-	pfree(input_str);
 
 	limit = len_uinput;
 	/* 
@@ -526,6 +514,16 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	 * have maximum INT32_MAX value
 	 */
 	capacity = (limit < (PG_INT32_MAX / MAX_BYTES_PER_CHAR)) ? (limit * MAX_BYTES_PER_CHAR) : PG_INT32_MAX;
+
+	/*
+	 * utrans_transUChars will modify input string in place so ensure that it has enough capacity to store
+	 * transformed string. 
+	 */
+	utf16_res = (UChar *) palloc0(capacity);
+	/* utf16_input would have one NULL terminator at the end. Copy that too. */
+	memcpy(utf16_res, utf16_input, (len_uinput + 1) * sizeof(UChar));
+	pfree(utf16_input);
+	pfree(input_str);
 
 	utrans_transUChars(cached_transliterator,
 						utf16_res,
@@ -544,7 +542,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	}
 
 	len_result = icu_from_uchar(&result, utf16_res, len_uinput);
-	free(utf16_res);
+	pfree(utf16_res);
 
 	// Return result as NVARCHAR
 	res_str = cstring_to_text_with_len(result, len_result);
