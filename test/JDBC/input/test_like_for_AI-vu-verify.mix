@@ -1775,7 +1775,7 @@ GO
 SELECT count(*) FROM test_babel_5006 where str like '%taeiou';
 GO
 
-SELECT count(*) FROM test_babel_5006 where str like 'taeiouc' ORDER BY str;
+SELECT count(*) FROM test_babel_5006 where str like 'taeiouc';
 GO
 
 SELECT count(*) FROM test_babel_5006 where str like '%²%';
@@ -1787,5 +1787,5 @@ GO
 SELECT count(*) FROM test_babel_5006 where str like '%taeio%';
 GO
 
-SELECT count(*) FROM test_babel_5006 where str like 'taeiouc' ORDER BY str;
+SELECT count(*) FROM test_babel_5006 where str like 'taeiouc';
 GO

@@ -4924,11 +4924,12 @@ int
 ~~END~~
 
 
-SELECT count(*) FROM test_babel_5006 where str like 'taeiouc' ORDER BY str;
+SELECT count(*) FROM test_babel_5006 where str like 'taeiouc';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "test_babel_5006.str" must appear in the GROUP BY clause or be used in an aggregate function)~~
+~~START~~
+int
+0
+~~END~~
 
 
 SELECT count(*) FROM test_babel_5006 where str like '%²%';
@@ -4955,9 +4956,10 @@ int
 ~~END~~
 
 
-SELECT count(*) FROM test_babel_5006 where str like 'taeiouc' ORDER BY str;
+SELECT count(*) FROM test_babel_5006 where str like 'taeiouc';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "test_babel_5006.str" must appear in the GROUP BY clause or be used in an aggregate function)~~
+~~START~~
+int
+0
+~~END~~
 

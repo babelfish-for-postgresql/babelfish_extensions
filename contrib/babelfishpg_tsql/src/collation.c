@@ -551,7 +551,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				errmsg("This function requires ICU library, which is not available")));
+				errmsg("ICU library is required to be installed in order to use the function remove_accents_internal")));
 	PG_RETURN_NULL();
 #endif
 }
