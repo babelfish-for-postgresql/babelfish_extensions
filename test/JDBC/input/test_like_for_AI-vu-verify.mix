@@ -816,7 +816,7 @@ GO
 SELECT * FROM test_like_for_AI_prepare_employee_CI_AI;
 GO
 
--- CASE 22: Sublink
+-- CASE 22: Sublink (with other combinations)
 SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI);
 GO
 
@@ -833,6 +833,12 @@ SELECT 1 WHERE N'chaptéR' LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci 
 GO
 
 SELECT 1 WHERE N'chaptéR' COLLATE Latin1_General_CI_AI LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
+GO
+
+SELECT 1 WHERE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI) LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI);
+GO
+
+SELECT 1 WHERE (SELECT 'chaptéR' COLLATE Latin1_General_CI_AI) LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
 GO
 
 ------------------- CS_AI ----------------------
@@ -1655,7 +1661,7 @@ GO
 SELECT * FROM test_like_for_AI_prepare_employee_CS_AI;
 GO
 
--- CASE 22: Sublink
+-- CASE 22: Sublink (with other combinations)
 SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI);
 GO
 
@@ -1672,6 +1678,12 @@ SELECT 1 WHERE N'chaptéR' LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs 
 GO
 
 SELECT 1 WHERE N'chaptéR' COLLATE Latin1_General_CS_AI LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
+GO
+
+SELECT 1 WHERE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI) LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI);
+GO
+
+SELECT 1 WHERE (SELECT 'chaptéR' COLLATE Latin1_General_CS_AI) LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
 GO
 
 --- ADDITIONAL CORNER CASE TESTING ---
