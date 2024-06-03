@@ -1366,6 +1366,21 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 		}
 
 		tblname = psprintf("%s_%d", var->refname, estate->nestlevel);
+
+		/*
+		 * If the original refname was already >=63 characters (the max limit of PG identifiers),
+		 * then the above construction of tblname will be >63 characters, which will violate the
+		 * max length of PG identiefiers and cause issues down the road. Fix this by truncating
+		 * tblname so that adding the "_<@@nestlevel>" suffix will be exactly 63 characters.
+		 */
+		if (strlen(tblname) >= NAMEDATALEN)
+		{
+			// truncate tblname to fit the "_#" nestlevel suffix
+			tblname[(NAMEDATALEN-1)-(strlen(tblname)-(NAMEDATALEN-1))] = '\0';
+			// previous palloc of tblname will be cleaned up with the memory context
+			tblname = psprintf("%s_%d", tblname, estate->nestlevel);
+		}
+		
 		if (stmt->tbltypname)
 			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
 							 tblname, stmt->tbltypname);
@@ -3975,7 +3990,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 	ProcessUtility(wrapper,
 				is_create ? "(CREATE FULLTEXT INDEX STATEMENT )" : "(DELETE FULLTEXT INDEX STATEMENT )",
 				false,
-				PROCESS_UTILITY_SUBCOMMAND,
+				PROCESS_UTILITY_QUERY,
 				NULL,
 				NULL,
 				None_Receiver,

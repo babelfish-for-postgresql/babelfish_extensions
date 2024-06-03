@@ -1,0 +1,133 @@
+-- parallel_query_expected
+-- tsql
+
+USE master;
+GO
+
+-- test volatility of function in batch
+-- should see different id values with each iteration
+DECLARE @i INT = 1
+DECLARE @num_iter INT = 5
+CREATE TABLE newid_volatile (u uniqueidentifier)
+WHILE @i <= @num_iter
+BEGIN
+    INSERT INTO newid_volatile VALUES (NEWID())
+    SET @i = @i + 1
+END
+
+-- should be equal to @num_iter
+select count(distinct u) from newid_volatile
+go
+
+TRUNCATE TABLE newid_volatile
+GO
+
+DECLARE @i INT = 1
+DECLARE @num_iter INT = 5
+WHILE @i <= @num_iter
+BEGIN
+    INSERT INTO newid_volatile VALUES (NEWSEQUENTIALID())
+    SET @i = @i + 1
+END
+
+-- should be equal to @num_iter
+select count(distinct u) from newid_volatile
+go
+
+-- test volatility of function in procedure
+-- should see different id values with each iteration
+CREATE PROC p_newid AS
+DECLARE @num_iter INT = 5
+DECLARE @i INT = 1
+CREATE TABLE newid_volatile_proc (u uniqueidentifier, v uniqueidentifier)
+WHILE @i <= @num_iter
+BEGIN
+    INSERT INTO newid_volatile_proc VALUES (NEWID(), NEWSEQUENTIALID())
+    SET @i = @i + 1
+END
+go
+
+EXEC p_newid
+
+-- should be equal to @num_iter
+select count(distinct u) from newid_volatile_proc
+GO
+
+select count(distinct v) from newid_volatile_proc
+GO
+
+DROP TABLE newid_volatile
+DROP TABLE newid_volatile_proc
+DROP PROCEDURE p_newid
+GO
+
+-- Add alter table coverage
+CREATE TABLE TestNewId(
+	id INT,
+	name VARCHAR(32)
+)
+GO
+
+insert into TestNewId values(1, 'aaa')
+insert into TestNewId values(2, 'bbb')
+insert into TestNewId values(3, 'ccc')
+GO
+
+-- should be successful
+ALTER TABLE TestNewId ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY;
+GO
+
+INSERT INTO TestNewId SELECT generate_series(1, 1000, 1), 'hello', NEWID()
+GO
+
+-- should be 1000+3
+SELECT COUNT(DISTINCT uuid) FROM TestNewId
+GO
+
+-- psql
+ANALYZE master_dbo.TestNewId
+GO
+
+-- tsql
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+-- cannot use indexscan with volatile anymore
+SET BABELFISH_SHOWPLAN_ALL ON
+SELECT * FROM TestNewId WHERE uuid=NEWID()
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+-- Repeat with NEWSEQUENTIALID instead of NEWID
+ALTER TABLE TestNewId DROP COLUMN uuid
+GO
+
+ALTER TABLE TestNewId ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID() PRIMARY KEY;
+GO
+
+-- psql
+ANALYZE master_dbo.TestNewId
+GO
+
+
+-- tsql
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+-- cannot use indexscan with volatile anymore
+SET BABELFISH_SHOWPLAN_ALL ON
+SELECT * FROM TestNewId WHERE uuid=NEWID()
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+-- should still be 1003
+SELECT COUNT(DISTINCT uuid) FROM TestNewId
+GO
+
+DROP TABLE TestNewId
+GO

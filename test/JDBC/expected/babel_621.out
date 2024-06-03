@@ -17,16 +17,8 @@ alter table table_3 add constraint uniq unique (a);
 go
 create index uniq on table_3(a);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "uniqtable_3ceb6b355c65c1ee318991aead0f652e4" already exists)~~
-
 drop index uniq on table_3;
 go
-~~ERROR (Code: 3723)~~
-
-~~ERROR (Message: cannot drop index uniqtable_3ceb6b355c65c1ee318991aead0f652e4 because constraint uniqtable_3ceb6b355c65c1ee318991aead0f652e4 on table table_3 requires it)~~
-
 --
 create table table_4 (a int);
 go
@@ -34,16 +26,8 @@ create index uniq_table_4 on table_4(a);
 go
 alter table table_4 add constraint uniq_table_4 unique (a);
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "uniq_table_4table_40bc519c02c847b83a833f1f3715ff0fd" already exists)~~
-
 alter table table_4 drop constraint uniq_table_4;
 go
-~~ERROR (Code: 3728)~~
-
-~~ERROR (Message: constraint "uniq_table_4table_40bc519c02c847b83a833f1f3715ff0fd" of relation "table_4" does not exist)~~
-
 
 -- Test that `sp_rename` is NOT available. If it is available, we need more tests with index/constraints renames
 -- We expect this test to break when `sp_rename` will be implemented

@@ -766,6 +766,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		drop_related_bbf_users(db_users_list);
 		/* delete extended property */
 		delete_extended_property(dbid, NULL, NULL, NULL, NULL);
+		/* clean up bbf schema permission catalog */
+		drop_bbf_schema_permission_entries(dbid);
 
 		/* Release the session-level exclusive lock */
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, true);
@@ -1148,6 +1150,13 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 	Form_sysdatabases bbf_db;
 	const char *dbname;
 	bool		creating_extension_backup = creating_extension;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"create_guest_schema_for_all_dbs()")));
 
 	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 

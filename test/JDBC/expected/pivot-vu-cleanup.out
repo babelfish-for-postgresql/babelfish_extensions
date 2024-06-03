@@ -1,6 +1,12 @@
 use pivot_test;
 GO
 
+drop trigger pivot_trigger
+GO
+
+drop table trigger_testing
+GO
+
 drop table OSTable;
 GO
 
@@ -12,6 +18,13 @@ GO
 
 drop view StoreReceipt_view;
 GO
+
+drop view pivot_view;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "pivot_view" does not exist)~~
+
 
 drop table pivot_insert_into;
 GO
@@ -26,6 +39,18 @@ drop function test_table_valued_function;
 GO
 
 drop table StoreReceipt;
+GO
+
+drop table orders;
+GO
+
+drop table products;
+GO
+
+drop table pivot_schema.products_sch;
+GO
+
+drop schema pivot_schema;
 GO
 
 use master;

@@ -299,6 +299,11 @@ INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeogColumn) VALUES ( 2, geography::STGe
 
 INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeomColumn, GeogColumn) VALUES ( 3, geometry::STGeomFromText('Point(1.0 2.0)', 4326), geography::STGeomFromText('Point(1.0 2.0)', 4326) )
 
+CREATE TABLE geomTabWithoutSrid (PrimaryKey int, GeomColumn geometry, ByteaColumn bytea)
+INSERT INTO geomTabWithoutSrid VALUES ( 1, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0), CAST (0x00000000010C17D9CEF753D34740D34D6210585936C0 AS bytea) )
+INSERT INTO geomTabWithoutSrid VALUES ( 2, geometry::STGeomFromText('Point(48.65100 -22.34900)', 4326), CAST (0xE6100000010C17D9CEF753534840D34D6210585936C0 AS bytea) )
+INSERT INTO geomTabWithoutSrid VALUES ( 3, geometry::STGeomFromText('Point(1.0 2.0)', 0), CAST (0x00000000010C000000000000F03F0000000000000040 AS bytea) )
+INSERT INTO geomTabWithoutSrid VALUES ( 4, geometry::STGeomFromText('Point(2.0 2.0)', 4326), CAST (0xE6100000010C00000000000000400000000000000040 AS bytea) )
 
 #Tests for Spatial type Prepared Statements
 prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeomColumn) values(@PrimaryKey, @GeomColumn) #!#int|-|PrimaryKey|-|4#!#GEOMETRY|-|GeomColumn|-|Point(47.65100 -22.34900):4326

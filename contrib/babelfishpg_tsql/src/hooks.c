@@ -1,6 +1,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/heapam.h"
 #include "access/htup.h"
 #include "access/table.h"
 #include "catalog/heap.h"
@@ -122,10 +123,9 @@ static List* replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaul
 static Node* optimize_explicit_cast(ParseState *pstate, Node *node);
 
 static ResTarget* make_restarget_from_cstr_list(List * l);
-static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
 													SortByDir ordering);
-
+static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 /*****************************************
  * 			Commands Hooks
  *****************************************/
@@ -176,6 +176,7 @@ extern Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
+static void pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr);
 
 /*****************************************
  * 			Replication Hooks
@@ -241,6 +242,7 @@ static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
+static pass_pivot_data_to_fcinfo_hook_type pre_pass_pivot_data_to_fcinfo_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static called_for_tsql_itvf_func_hook_type pre_called_for_tsql_itvf_func_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
@@ -408,6 +410,9 @@ InstallExtendedHooks(void)
 
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
+
+	pre_pass_pivot_data_to_fcinfo_hook = pass_pivot_data_to_fcinfo_hook;
+	pass_pivot_data_to_fcinfo_hook = pass_pivot_data_to_fcinfo;
 
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
@@ -2144,6 +2149,10 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+			if (pg_trigger_physical_schema == NULL)
+			{
+				return InvalidOid;
+			}
 			if (strcasecmp(pg_trigger_physical_schema, cur_physical_schema) == 0)
 			{
 				trigger_rel_oid = reloid;
@@ -2672,6 +2681,30 @@ gen_func_arg_list(Oid objectId)
 	return arg_list.data;
 }
 
+char * 
+gen_func_arg_list_from_params(List* parameters)
+{
+	int	nargs = list_length(parameters);
+	int i = 0;
+	ListCell *l;
+	StringInfoData arg_list;
+
+	initStringInfo(&arg_list);
+
+
+	foreach (l, parameters)
+	{
+		FunctionParameter	*fp = lfirst(l);
+		TypeName 	*tn = fp->argType;
+
+		appendStringInfoString(&arg_list, TypeNameToString(tn));
+		if (i < nargs - 1)
+			appendStringInfoString(&arg_list, ", ");
+		i++;
+	}
+	return arg_list.data;
+}
+
 /*
 * This function adds column names to the insert target relation in rewritten
 * CTE for OUTPUT INTO clause.
@@ -3024,6 +3057,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 
 /*
  * Stores argument positions of default values of a PL/tsql function to bbf_function_ext catalog
+ * Updates the existing catalog entry if it already exists.
  */
 void
 pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location)
@@ -3037,7 +3071,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 				proctup,
 				oldtup;
 	Form_pg_proc form_proctup;
-	NameData   *schema_name_NameData;
+	NameData   *schema_name_NameData, *objname_data;
 	char	   *physical_schemaname;
 	char	   *func_signature;
 	char	   *original_name = NULL;
@@ -3047,6 +3081,8 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	uint64		flag_values = 0,
 				flag_validity = 0;
 	char	   *original_query = get_original_query_string();
+	ScanKeyData		key[2];
+	TableScanDesc	tblscan;
 
 	/* Disallow extended catalog lookup during restore */
 	if (babelfish_dump_restore)
@@ -3111,7 +3147,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
 
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
+	MemSet(new_record_replaces, true, sizeof(new_record_replaces)); // if the entry already exists, we need to update it.
 
 	if (origname_location != -1 && queryString)
 	{
@@ -3181,6 +3217,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	new_record[Anum_bbf_function_ext_flag_validity - 1] = UInt64GetDatum(flag_validity);
 	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	new_record_replaces[Anum_bbf_function_ext_create_date - 1] = false; // never overwrite create date
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 
 	/*
@@ -3192,7 +3229,22 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		new_record_nulls[Anum_bbf_function_ext_definition - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
-	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
+	ScanKeyInit(&key[0],
+				Anum_bbf_function_ext_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(schema_name_NameData));
+	objname_data = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(objname_data->data, NAMEDATALEN, "%s", NameStr(form_proctup->proname));
+	ScanKeyInit(&key[1],
+				Anum_bbf_function_ext_funcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(objname_data));
+	
+	// scan
+	tblscan = table_beginscan_catalog(bbf_function_ext_rel, 2, key);
+
+	// get the scan result -> original tuple
+	oldtup = heap_getnext(tblscan, ForwardScanDirection);
 
 	if (HeapTupleIsValid(oldtup))
 	{
@@ -3200,8 +3252,6 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 								  new_record, new_record_nulls,
 								  new_record_replaces);
 		CatalogTupleUpdate(bbf_function_ext_rel, &tuple->t_self, tuple);
-
-		ReleaseSysCache(oldtup);
 	}
 	else
 	{
@@ -3226,7 +3276,117 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	pfree(func_signature);
 	ReleaseSysCache(proctup);
 	heap_freetuple(tuple);
+	heap_endscan(tblscan);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
+
+/*
+ * Update 'function_args' in 'sys.babelfish_schema_permissions' 
+ */
+void
+alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int objtypeInt, Oid oid)
+{
+	Relation	bbf_schema_rel;
+	TupleDesc	bbf_schema_dsc;
+	ScanKeyData key[4];
+	HeapTuple	tuple_bbf_schema;
+	HeapTuple	new_tuple;
+	SysScanDesc scan;
+	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {0};
+	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
+	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
+	char		*logical_schema_name = NULL;
+	char		*physical_schema_name = NULL;
+	char		*object_name = NULL;
+	const char	*object_type = NULL;
+	const char *func_args = NULL;
+	int16		dbid = get_cur_db_id();
+
+	/* open the catalog table */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(), RowExclusiveLock);
+	/* get the description of the table */
+	bbf_schema_dsc = RelationGetDescr(bbf_schema_rel);
+
+	// Only procedures and functions supported for now
+	if (objtypeInt == OBJECT_PROCEDURE)
+		object_type = OBJ_PROCEDURE;
+	else if (objtypeInt == OBJECT_FUNCTION)
+		object_type = OBJ_FUNCTION;
+	DeconstructQualifiedName(owa->objname, &physical_schema_name, &object_name);
+	if(physical_schema_name != NULL) {
+		logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, false);
+		
+		/* search for the row for update => build the key */
+		ScanKeyInit(&key[0],
+					Anum_bbf_schema_perms_dbid,
+					BTEqualStrategyNumber, F_INT2EQ,
+					Int16GetDatum(dbid));
+		ScanKeyEntryInitialize(&key[1], 0,
+					Anum_bbf_schema_perms_schema_name,
+					BTEqualStrategyNumber, InvalidOid,
+					tsql_get_server_collation_oid_internal(false),
+					F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
+		ScanKeyEntryInitialize(&key[2], 0,
+					Anum_bbf_schema_perms_object_name,
+					BTEqualStrategyNumber, InvalidOid,
+					tsql_get_server_collation_oid_internal(false),
+					F_TEXTEQ, CStringGetTextDatum(object_name));
+		ScanKeyEntryInitialize(&key[3], 0,
+					Anum_bbf_schema_perms_object_type,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_type));
+
+		/* scan */
+		scan = systable_beginscan(bbf_schema_rel,
+				get_bbf_schema_perms_oid(),
+				false, NULL, 4, key);
+
+		/* get the scan result -> original tuple */
+		tuple_bbf_schema = systable_getnext(scan);
+
+		/* Build updated parameter list */ 
+		func_args = gen_func_arg_list_from_params(parameters);
+
+		/*
+		* If a permission on the same object is granted to multiple grantees,
+		* there can be multiple rows in the catalog corresponding to each grantee name.
+		* All such rows need to be updated with the new parameters.
+		*
+		* It is OK to not throw an error if an entry is not found in 'babelfish_schema_permissions'.
+		* Explaination: An entry is added to 'babelfish_schema_permissions' only if an object has an explicit GRANT on it.
+		* It is not necessary that each RENAME on an object has a GRANT of that object too.
+		* Hence, there can be missing entries.
+		*/
+		while (HeapTupleIsValid(tuple_bbf_schema))
+		{
+			/* create new tuple to substitute */
+			new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(func_args);
+			new_record_repl_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = true;
+
+			new_tuple = heap_modify_tuple(tuple_bbf_schema,
+										bbf_schema_dsc,
+										new_record_bbf_schema,
+										new_record_nulls_bbf_schema,
+										new_record_repl_bbf_schema);
+
+			CatalogTupleUpdate(bbf_schema_rel, &new_tuple->t_self, new_tuple);
+
+			heap_freetuple(new_tuple);
+			tuple_bbf_schema = systable_getnext(scan);
+		}
+		if (physical_schema_name != NULL)
+			pfree(physical_schema_name);
+		if (logical_schema_name != NULL)
+			pfree(logical_schema_name);
+		if (object_name != NULL)
+			pfree(object_name);
+
+		systable_endscan(scan);
+	}
+	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
 /*
@@ -4447,33 +4607,46 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	List		*src_sql_groupbylist;
 	List		*src_sql_sortbylist;
 	List		*src_sql_fromClause_copy;
+	List 		*pivot_context_list;
 	char		*pivot_colstr;
 	char		*value_colstr;
 	String		*funcName;
 	ColumnRef	*value_col;
 	TargetEntry	*aggfunc_te;
-	RangeFunction	*pivot_from_function;
+	RangeFunction	*wrapperSelect_RangeFunction;
 	SelectStmt 		*pivot_src_sql;
 	RawStmt			*s_sql;
 	RawStmt			*c_sql;
-	tsql_pivot_fields	*pivot_fields;
-	MemoryContext 		oldContext;
-	MemoryContext 		tsql_outmost_context;
-	PLtsql_execstate 	*tsql_outmost_estat;
-	int					nestlevel;
+	FuncCall 		*pivot_func;
+	WithClause		*with_clause;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	new_src_sql_targetist = NULL;
-	new_pivot_aliaslist = NULL;
-	src_sql_groupbylist = NULL;
-	src_sql_sortbylist = NULL;
+	new_src_sql_targetist = NIL;
+	new_pivot_aliaslist = NIL;
+	src_sql_groupbylist = NIL;
+	src_sql_sortbylist = NIL;
 
+	with_clause = copyObject(stmt->withClause);
 	pivot_src_sql =  makeNode(SelectStmt);
 	pivot_src_sql->fromClause = copyObject(stmt->srcSql->fromClause);
+	pivot_src_sql->withClause = copyObject(with_clause);
+
+	((SelectStmt *)stmt->srcSql)->withClause = copyObject(with_clause);
+	stmt->withClause = NULL;
+	
 	src_sql_fromClause_copy = copyObject(stmt->srcSql->fromClause);
-	/* transform temporary src_sql */
+	
+	/*
+	 * During pre_transform_target_entry, we only rewrote object references in pivot wrapper sql 
+	 * and skipped stmt->srcSql rewriting. Here we rewrite srcSql to correct the right reference 
+	 * for object with schema name
+	 */
+	if (enable_schema_mapping())
+		rewrite_object_refs((Node *)stmt->srcSql);
+
+	/* We execute first parse_sub_analyze to get the correct pivot_src_sql targetlist */
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
 										false,
 										false);
@@ -4483,7 +4656,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	pivot_colstr = ((String *) llast(((ColumnRef *)stmt->pivotCol)->fields))->sval;
 	value_col = list_nth_node(ColumnRef, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->args, 0);
 	funcName = list_nth_node(String, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->funcname, 0);
-	value_colstr = list_nth_node(String, value_col->fields, 0)->sval;
+	value_colstr = list_nth_node(String, value_col->fields, ((List *)value_col->fields)->length - 1)->sval;
 
 	/* Get the targetList of the src table */
 	for (int i = 0; i < temp_src_targetlist->length; i++)
@@ -4499,10 +4672,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 		/* prepare src_sql's targetList */
 		tempResTarget = make_restarget_from_cstr_list(list_make1(makeString(colName)));
 
-		if (new_src_sql_targetist == NULL)
-			new_src_sql_targetist = list_make1(tempResTarget);
-		else
-			new_src_sql_targetist = lappend(new_src_sql_targetist, tempResTarget);
+		new_src_sql_targetist = lappend(new_src_sql_targetist, tempResTarget);
 		
 		/* prepare pivot sql's alias_clause */
 		tempColDef = makeColumnDef(colName,
@@ -4510,19 +4680,23 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 								((Var *)tempEntry->expr)->vartypmod,
 								((Var *)tempEntry->expr)->varcollid
 								);
-
-		if (new_pivot_aliaslist == NULL)
-			new_pivot_aliaslist = list_make1(tempColDef);
-		else
-			new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
+		
+		new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
 	}
-	/* source_sql: non-pivot column + pivot colunm+ agg(value_col) */
-	/* complete src_sql's targetList*/	
+
+   	/* pivot_src_sql: non-pivot column + pivot colunm+ agg(value_col)*/	
 	new_src_sql_targetist = lappend(new_src_sql_targetist, make_restarget_from_cstr_list(stmt->pivotCol->fields));
 	new_src_sql_targetist = lappend(new_src_sql_targetist, (ResTarget *)stmt->aggFunc);
-	((SelectStmt *)stmt->srcSql)->targetList = new_src_sql_targetist;
 	pivot_src_sql->targetList = copyObject(new_src_sql_targetist);
-	/* complete src_sql's groupby*/
+
+	/*
+	 *  We need second round of parse_sub_analyze to get the output type of 
+	 *  pivot aggregation function, and therefore we can create correct alias
+	 *  column names and datatypes for wrapper/outer sql.
+	 */
+	((SelectStmt *)stmt->srcSql)->targetList = new_src_sql_targetist;
+	
+	/* complete src_sql's groupby */
 	for (int i = 0; i < new_src_sql_targetist->length - 1; i++)
 	{
 		A_Const		*tempAConst = makeNode(A_Const);
@@ -4537,25 +4711,23 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 		tempSortby->useOp = NIL;
 		tempSortby->location = -1;
 
-		if (src_sql_groupbylist == NULL)
-		{
-			src_sql_groupbylist = list_make1(tempAConst);
-			src_sql_sortbylist = list_make1(tempSortby);
-		}
-		else
-		{
-			src_sql_groupbylist = lappend(src_sql_groupbylist, tempAConst);
-			src_sql_sortbylist = lappend(src_sql_sortbylist, tempSortby);
-		}
+		src_sql_groupbylist = lappend(src_sql_groupbylist, tempAConst);
+		src_sql_sortbylist = lappend(src_sql_sortbylist, tempSortby);
 	}
 	((SelectStmt *)stmt->srcSql)->groupClause = src_sql_groupbylist;
 	((SelectStmt *)stmt->srcSql)->sortClause = src_sql_sortbylist;
 	pivot_src_sql->groupClause = copyObject(src_sql_groupbylist);
 	pivot_src_sql->sortClause = copyObject(src_sql_sortbylist);
 	
-	/* use the copy of the orgininal fromClause to prevent double analyzing fromClause */
+	/* use the copy of the orgininal fromClause and withClause to prevent double analyzing fromClause */
 	((SelectStmt *)stmt->srcSql)->fromClause = src_sql_fromClause_copy;
-	/* Transform the new src_sql & get the output type of that agg function*/
+	((SelectStmt *)stmt->srcSql)->withClause = with_clause;
+
+	/* we rewrite srcSql object refereces again because we used a new copy of fromClause */
+	if (enable_schema_mapping())
+		rewrite_object_refs((Node *)stmt->srcSql);
+
+	/* transform src_sql and get the output datatype of that agg function */
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
 									false,
 									false);
@@ -4569,31 +4741,21 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	aggfunc_te = list_nth_node(TargetEntry, temp_src_targetlist, temp_src_targetlist->length - 1);
 
 	/* Rewrite the fromClause in the outer select to have correct alias column name and datatype */
-	pivot_from_function = list_nth_node(RangeFunction, stmt->fromClause, 0);
+	wrapperSelect_RangeFunction = list_nth_node(RangeFunction, stmt->fromClause, 0);
 	for(int i = 0; i < stmt->value_col_strlist->length; i++)
 	{
 		ColumnDef	*tempColDef;
-		tempColDef = makeColumnDef((char *) list_nth(stmt->value_col_strlist, i),
+		tempColDef = makeColumnDef(((String *) list_nth(stmt->value_col_strlist, i))->sval,
 									((Aggref *)aggfunc_te->expr)->aggtype, 
 									-1,
 									((Aggref *)aggfunc_te->expr)->aggcollid
 									);
 
-		if (new_pivot_aliaslist == NULL)
-			new_pivot_aliaslist = list_make1(tempColDef);
-		else
-			new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
+		new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
 	}
 
-	pivot_from_function->coldeflist = new_pivot_aliaslist;
+	wrapperSelect_RangeFunction->coldeflist = new_pivot_aliaslist;
 
-	/* put the correct src_sql raw parse tree into the memory context for later use */
-	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
-	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
-	if (!tsql_outmost_context)
-		ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("pivot outer context not found")));
 
 	s_sql = makeNode(RawStmt);
 	c_sql = makeNode(RawStmt);
@@ -4605,16 +4767,41 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	c_sql->stmt_location = 0;
 	c_sql->stmt_len = 0;
 
-	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
-	/* save rewrited sqls to global variable for later retrive */
-	pivot_fields = (tsql_pivot_fields *) palloc(sizeof(tsql_pivot_fields));
-	pivot_fields->s_sql = copyObject(s_sql);
-	pivot_fields->c_sql = copyObject(c_sql);
-	pivot_fields->sourcetext = pstrdup(pstate->p_sourcetext);
-	pivot_fields->funcName = pstrdup(funcName->sval);
-	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, pivot_fields);
-	tsql_outmost_estat->pivot_number++;	
-	MemoryContextSwitchTo(oldContext);
+	pivot_context_list = list_make3(list_make1(makeString("bbf_pivot_func")),
+									list_make2((Node *) copyObject(s_sql),
+												(Node *) copyObject(c_sql)
+												),
+									list_make2(makeString(pstrdup(pstate->p_sourcetext)),
+												makeString(pstrdup(funcName->sval))
+												)
+									);
+
+	/* Store pivot information in FuncCall to live through parser analyzer */
+	pivot_func = makeFuncCall(list_make2(makeString("sys"), makeString("bbf_pivot")), NIL, COERCE_EXPLICIT_CALL, -1);
+	pivot_func->context = (Node *) pivot_context_list;
+	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
+}
+
+static void
+pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr)
+{
+	/* if current FuncExpr is a bbf_pivot function, we set the fcinfo context to pivot data */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	if (IsA(expr, FuncExpr) 
+		&& ((FuncExpr*) expr)->context != NULL
+		&& (IsA(((FuncExpr*) expr)->context, List)))
+	{
+		Node *node;	
+		node = list_nth((List *)((FuncExpr*) expr)->context, 0);
+		if (IsA(node, List) 
+				&& IsA(list_nth((List *)node, 0), String) 
+				&& strcmp(((String *)list_nth((List *)node, 0))->sval, "bbf_pivot_func") == 0)
+		{
+			fcinfo->context = ((FuncExpr*) expr)->context;
+		}
+	}
 }
 
 static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
@@ -4704,7 +4891,12 @@ is_function_pg_stat_valid(FunctionCallInfo fcinfo, PgStat_FunctionCallUsage *fcu
 static SortByNulls
 unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 {
-	if (constraint_type == CONSTR_UNIQUE)
+	/*
+	 * Ordering is only allowed when index has amcanorder = true (eg: btree)
+	 * PRIMARY KEY and UNIQUE constraints currently only use btree indexes
+	 * so we can be sure that setting nulls_order here is okay
+	 */
+	if (constraint_type == CONSTR_UNIQUE || constraint_type == CONSTR_PRIMARY)
 	{
 		switch (ordering)
 		{

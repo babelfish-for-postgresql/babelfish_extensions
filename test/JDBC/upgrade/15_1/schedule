@@ -81,11 +81,11 @@ BABEL-3370
 BABEL-3380
 BABEL-3402
 BABEL-3474
-BABEL-3486
+BABEL-3486-before-15_7
 BABEL-3513
 BABEL-3556
 BABEL-3588
-BABEL-3614
+BABEL-3614-before-15_7
 BABEL-3640
 BABEL-3646
 BABEL-3655
@@ -103,6 +103,7 @@ babel_417
 BABEL-493
 BABEL_539
 BABEL-621-before-15_7-or-16_3
+babel_726-before-14_12-or-15_7-or-16_3
 BABEL-728
 BABEL-741
 BABEL-775
@@ -211,8 +212,9 @@ sys_all_objects
 sys_all_objects-dep
 sys-all_parameters
 sys-all_parameters-dep
+sys-sql_modules-before-15_7-or-14_12-dep
+sys-all_sql_modules-before-15_7-or-14_12-dep
 sys-all_sql_modules_before-14_7-or-15_2
-sys-all_sql_modules-dep
 sys-all_views
 sys-assemblies
 sys-assembly_modules
@@ -304,7 +306,6 @@ sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
 sys-sql_modules_before-14_7-or-15_2
-sys-sql_modules-dep
 sys-stats
 sys-suser_sid
 sys-synonyms
@@ -411,3 +412,11 @@ rtrim-before-15_7-or-16_3
 left-before-15_7-or-16_3
 right-before-15_7-or-16_3
 BABEL-4863-before-16_3-or-15_7-or-14_12
+BABEL-4869
+BABEL-4815
+test_conv_string_to_date-before-15_7
+test_conv_string_to_datetime-before-15_7
+test_conv_string_to_datetime2-before-15_7
+test_conv_string_to_datetimeoffset-before-15_7
+test_conv_string_to_smalldatetime
+test_conv_string_to_time-before-15_7

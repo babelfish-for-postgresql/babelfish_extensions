@@ -1,0 +1,436 @@
+BEGIN TRANSACTION babel_4815
+GO
+
+SELECT set_config('force_parallel_mode', '1', true)
+SELECT set_config('parallel_setup_cost', '0', true)
+SELECT set_config('parallel_tuple_cost', '0', true)
+select set_config('max_parallel_workers_per_gather', '1', true);
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+0
+~~END~~
+
+~~START~~
+text
+0
+~~END~~
+
+~~START~~
+text
+1
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+select * from babel_4815_1;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_2;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_2
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_3;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_3
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_4;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_4
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_5;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_5
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_6;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_6
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_7;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_7
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_8;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_8
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_9;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_9
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_10;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_10
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_11;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_11
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_12;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_12
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_13;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_13
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_14;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_14
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_15;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_15
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_16;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_16
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_17;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_17
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_18;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_18
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+~~END~~
+
+
+select * from babel_4815_19;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_19
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, a) > a)
+~~END~~
+
+
+select * from babel_4815_20;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_20
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, b) > (a)::datetimeoffset)
+~~END~~
+
+
+select * from babel_4815_21;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_21
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, c) > (a)::datetime2)
+~~END~~
+
+
+select * from babel_4815_22;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_22
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: ((dateadd('day'::text COLLATE "default", '-5'::integer, d))::datetime > a)
+~~END~~
+
+
+select * from babel_4815_23;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_23
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: ((dateadd('day'::text COLLATE "default", '-5'::integer, e))::datetime > a)
+~~END~~
+
+
+select * from babel_4815_24;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_24
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, f) > a)
+~~END~~
+
+
+select * from babel_4815_25;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_25
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, g) > a)
+~~END~~
+
+
+select * from babel_4815_26;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_26
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, h) > a)
+~~END~~
+
+
+select * from babel_4815_27;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_27
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (datediff('day'::text COLLATE "default", a, (b)::datetime) > 5)
+~~END~~
+
+
+select * from babel_4815_28;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_28
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (datediff('day'::text COLLATE "default", b, (c)::datetimeoffset) > 5)
+~~END~~
+
+
+select * from babel_4815_29;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_29
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (datediff('day'::text COLLATE "default", c, (a)::datetime2) > 5)
+~~END~~
+
+
+select * from babel_4815_30;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_30
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (datediff('day'::text COLLATE "default", d, (e)::smalldatetime(0) without time zone) > 5)
+~~END~~
+
+
+select * from babel_4815_31;
+go
+~~START~~
+text
+Query Text: select * from babel_4815_31
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Seq Scan on babel_4815
+        Filter: (datediff('day'::text COLLATE "default", e, (a)::date) > 5)
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+go
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+commit TRANSACTION babel_4815;
+GO

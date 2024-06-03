@@ -28,6 +28,8 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_default_acl.h"
+#include "catalog/pg_shdepend.h"
 #include "commands/createas.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
@@ -136,6 +138,8 @@ static void call_prev_ProcessUtility(PlannedStmt *pstmt,
 						 DestReceiver *dest,
 						 QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
+static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc);
+static void pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -1021,8 +1025,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 								{
 									Constraint *c = (Constraint *) element;
 
-									c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
-
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
 								}
@@ -1110,8 +1112,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 								{
 									Constraint *c = castNode(Constraint, cmd->def);
 
-									c->conname = construct_unique_index_name(c->conname, atstmt->relation->relname);
-
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
 								}
@@ -1190,9 +1190,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 													 errmsg("Defaults cannot be created on columns of data type timestamp.")));
 									}
 								}
-								break;
-							case AT_DropConstraint:
-								cmd->name = construct_unique_index_name(cmd->name, atstmt->relation->relname);
 								break;
 							default:
 								break;
@@ -2122,13 +2119,8 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 			continue;
 
 		tbl = (PLtsql_tbl *) estate->datums[n];
-		if (strcmp(relname, tbl->refname) == 0)
+		if (strcmp(relname, tbl->refname) == 0 && tbl->tblname)
 		{
-			if (!tbl->tblname)	/* FIXME: throwing an error instead of a crash
-								 * until table-type is supported in ANTLR
-								 * parser */
-				ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-								errmsg("table variable underlying typename is NULL. refname: %s", tbl->refname)));
 			return get_relname_relid(tbl->tblname, relnamespace);
 		}
 	}
@@ -2320,6 +2312,98 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 	switch (nodeTag(parsetree))
 	{
+		case T_AlterFunctionStmt:
+			{
+				/*
+				* For ALTER PROC, we will:
+				* 1. Save important pg_proc metadata from the current proc (oid, proacl)
+				* 2. drop the current proc
+				* 3. create the new proc
+				* 4. update the pg_proc entry for the new proc with metadata from the old proc
+				* 5. update the babelfish_function_ext entry for the existing proc with new metadata based on the new proc
+				*/
+				AlterFunctionStmt *stmt = (AlterFunctionStmt *) parsetree;
+				bool 				isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+				bool 				needCleanup;
+				Oid					oldoid;
+				Acl					*proacl;
+				bool				isSameProc;
+				ObjectAddress 		address;
+				CreateFunctionStmt	*cfs;
+				ListCell 			*option, *location_cell = NULL;
+				int 				origname_location = -1;
+
+				if (stmt->objtype != OBJECT_PROCEDURE)
+					break;
+
+				/* All event trigger calls are done only when isCompleteQuery is true */
+				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+
+				/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
+				PG_TRY();
+				{
+					StartTransactionCommand();
+					if (isCompleteQuery)
+						EventTriggerDDLCommandStart(parsetree);
+
+					foreach (option, stmt->actions)
+					{
+						DefElem *defel = (DefElem *) lfirst(option);
+						if (strcmp(defel->defname, "location") == 0)
+						{
+							/*
+							* location is an implicit option in tsql dialect,
+							* we use this mechanism to store location of function
+							* name so that we can extract original input function
+							* name from queryString.
+							*/
+							origname_location = intVal((Node *) defel->arg);
+							location_cell = option;
+							pfree(defel);
+						}
+					}
+
+					/* delete location cell if it exists as it is for internal use only */
+					if (location_cell)
+						stmt->actions = list_delete_cell(stmt->actions, location_cell);
+
+					/* make a CreateFunctionStmt to pass into CreateFunction() */
+					cfs = makeNode(CreateFunctionStmt);
+					cfs->is_procedure = true;
+					cfs->replace = true;
+					cfs->funcname = stmt->func->objname;
+					cfs->parameters = stmt->func->objfuncargs;
+					cfs->returnType = NULL;
+					cfs->options = stmt->actions;
+
+					pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc);
+					if (!isSameProc) /* i.e. different signature */
+						RemoveFunctionById(oldoid);
+					address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
+					pg_proc_update_oid_acl(address, oldoid, proacl);
+					/* Update function/procedure related metadata in babelfish catalog */
+					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
+					if (!isSameProc) {
+						/*
+						 * When the signatures differ we need to manually update the 'function_args' column in 
+						 * the 'bbf_schema_permissions' catalog
+						 */
+						alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, OBJECT_PROCEDURE, oldoid);
+					}
+					/* Clean up table entries for the create function statement */
+					deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
+					deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
+					deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
+					CommitTransactionCommand();
+				}
+				PG_FINALLY();
+				{
+					if (needCleanup)
+						EventTriggerEndCompleteQuery();
+				}
+				PG_END_TRY();
+				return;
+			}
 		case T_AlterTableStmt:
 			{
 				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
@@ -3363,7 +3447,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					break;
 				}
 
-
 				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
 					/*
@@ -3373,8 +3456,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
 					char	   *cur_db = get_cur_db_name();
 					const char	*logicalschema = get_logical_schema_name(schemaname, true);
+					bool	is_drop_db_statement = 0 == strcmp(queryString, "(DROP DATABASE )");
 
-					if (strcmp(queryString, "(DROP DATABASE )") != 0)
+					if (!is_drop_db_statement)
 					{
 						char	   *guest_schema_name = get_physical_schema_name(cur_db, "guest");
 
@@ -3388,7 +3472,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
-					clean_up_bbf_schema_permissions(logicalschema, NULL, true);
+					if (!is_drop_db_statement)
+					{
+						/*
+						 * Prevent cleaning up the catalog here if it is a part
+						 * of drop database command.
+						 */
+						clean_up_bbf_schema_permissions(logicalschema, NULL, true);
+					}
 
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3634,6 +3725,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							return;
 						}
 					}
+				}
+
+				if(IS_TDS_CLIENT() &&
+				   (strcmp(variable_set->name, "session_authorization") == 0 ||
+					strcmp(variable_set->name, "role") == 0))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("SET/RESET %s not is not supported from TDS endpoint.",
+							        variable_set->name)));
 				}
 				break;
 			}
@@ -3884,6 +3985,112 @@ call_prev_ProcessUtility(PlannedStmt *pstmt,
 	else
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 								queryEnv, dest, qc);
+}
+
+/*
+ * Get the oid and acl of a TSQL proc by name. Raises an error if the proc doesn't exist, or if there are
+ * multiple procs with the same name (and different parameters). Also sets isSameFunc based on whether
+ * the found proc is the exact same proc as requested (i.e. the parameters match).
+ */
+static void 
+pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc)
+{
+	int					spi_rc;
+	char				*funcname, *query;
+	bool				isnull;
+	Oid					schemaOid, funcOid;
+
+	MemoryContext oldMemoryContext = CurrentMemoryContext;
+
+	/* Look up the proc */
+	schemaOid = QualifiedNameGetCreationNamespace(stmt->func->objname, &funcname);
+
+	if ((spi_rc = SPI_connect()) != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect() failed in pltsql_proc_get_oid_proname_proacl with return code %d", spi_rc);
+
+	query = psprintf("SELECT oid, proacl FROM pg_catalog.pg_proc WHERE proname = '%s' AND pronamespace = %d", funcname, schemaOid);
+	SPI_execute(query, true, 0);
+
+	if (SPI_processed > 1)
+		ereport(ERROR, 
+			(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+				errmsg("Multiple procedures are defined with the same name and different parameters. Please ensure that there is only one procedure with the target name before calling ALTER PROCEDURE")));
+
+	if (SPI_processed == 0)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				errmsg("No existing procedure found with the name for ALTER PROCEDURE")));
+
+	/* exactly one existing procedure with the given name found, retrieve its oid and acl */
+	*oid = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
+
+	MemoryContextSwitchTo(oldMemoryContext);
+	*acl = aclcopy(DatumGetAclP(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 2, &isnull)));
+
+	if ((spi_rc = SPI_finish()) != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish() failed in pltsql_proc_get_oid_proname_proacl with return code %d", spi_rc);
+
+	/* now we need to check if the function is exactly the same proc (i.e. the params match as well) or else
+	 * we will run into issues if we try to delete it.
+	 */
+	funcOid = LookupFuncWithArgs(stmt->objtype, stmt->func, true);
+
+	*isSameFunc = OidIsValid(funcOid);
+}
+
+/*
+ * Update the oid and acl of a pg_proc entry given its address
+ */
+static void
+pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
+{
+	Relation		rel;
+	HeapTuple		proctup;
+	Form_pg_proc	form_proctup;
+	char		*physical_schemaname;
+
+	Datum		values[Natts_pg_proc];
+	bool		nulls[Natts_pg_proc];
+	bool		replaces[Natts_pg_proc];
+	HeapTuple	newtup;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
+	if (!HeapTupleIsValid(proctup))
+		return;
+
+	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+
+	if (!is_pltsql_language_oid(form_proctup->prolang))
+	{
+		ReleaseSysCache(proctup);
+		return;
+	}
+
+	physical_schemaname = get_namespace_name(form_proctup->pronamespace);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form_proctup->pronamespace);
+	}
+
+	rel = table_open(ProcedureRelationId, RowExclusiveLock);
+
+	memset(values, 0, sizeof(values));
+	memset(nulls, 0, sizeof(nulls));
+	memset(replaces, 0, sizeof(replaces));
+	values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(oid);
+	replaces[Anum_pg_proc_oid - 1] = true;
+	values[Anum_pg_proc_proacl - 1] = PointerGetDatum(acl);
+	replaces[Anum_pg_proc_proacl - 1] = true;
+
+	newtup = heap_modify_tuple(proctup, RelationGetDescr(rel), values, nulls, replaces);
+	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
+
+	/* Clean up */
+	ReleaseSysCache(proctup);
+
+	table_close(rel, RowExclusiveLock);
 }
 
 /*

@@ -187,7 +187,7 @@ sys_all_objects
 sys_all_objects-dep
 sys-all_parameters
 sys-all_sql_modules_before-14_5
-sys-all_sql_modules-dep
+sys-sql_modules_before-14_7-or-15_2
 sys-assemblies
 sys-assembly_modules
 sys-change_tracking_databases
@@ -259,8 +259,8 @@ sys-sp_statistics
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
-sys-sql_modules_before-14_7-or-15_2
-sys-sql_modules-dep
+sys-sql_modules-before-15_7-or-14_12-dep
+sys-all_sql_modules-before-15_7-or-14_12-dep
 sys-stats
 sys-suser_sid
 sys-suser_sname
@@ -360,3 +360,15 @@ rtrim-before-15_7-or-16_3
 left-before-15_7-or-16_3
 right-before-15_7-or-16_3
 BABEL-4863-before-16_3-or-15_7-or-14_12
+babel_726-before-14_12-or-15_7-or-16_3
+babel_test_int4_numeric_oper_before_16_3_or_15_7
+babel_test_int8_numeric_oper_before_16_3_or_15_7
+babel_test_int2_numeric_oper_before_16_3_or_15_7
+BABEL-4869
+BABEL-4815-before-14_13
+test_conv_string_to_date-before-15_7
+test_conv_string_to_datetime-before-14_6
+test_conv_string_to_datetime2-before-14_5
+test_conv_string_to_datetimeoffset-before-15_7
+test_conv_string_to_smalldatetime-before-14_6
+test_conv_string_to_time-before-15_7

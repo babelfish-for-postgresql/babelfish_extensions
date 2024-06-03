@@ -189,14 +189,24 @@ jobs:
           } > pg_hba.conf
         shell: bash
 
+      - name: Check Babelfish metadata inconsistency before Major Version Upgrade
+        id: check-babelfish-inconsistency
+        if: always() && steps.setup-new-datadir.outcome == 'success'
+        uses: ./.github/composite-actions/check-babelfish-inconsistency
+
       - name: Run pg_upgrade
         id: run-pg_upgrade
-        if: always() && steps.setup-new-datadir.outcome == 'success'
+        if: |
+          always() && steps.setup-new-datadir.outcome == 'success'
+          && steps.check-babelfish-inconsistency.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
 
       - name: Disable TDS fault injection tests in release mode
         id: disable-fault-injection
-        if: always() && steps.setup-new-datadir.outcome == 'success'
+        if: |
+          always() && steps.setup-new-datadir.outcome == 'success' 
+          && steps.check-babelfish-inconsistency.outcome == 'success' 
+          && steps.check-babelfish-inconsistency.outputs.check_result == 0
         run: |
           cd test/JDBC/
           echo 'ignore#!#babel_tds_fault_injection' >> jdbc_schedule

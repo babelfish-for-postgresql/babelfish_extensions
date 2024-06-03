@@ -12,6 +12,12 @@ go
 create user babel_4344_u1 for login babel_4344_l1;
 go
 
+create login abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz with password = '12345678'
+go
+
+create user abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz for login abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
+go
+
 create login αιώνια with password = '12345678'
 go
 
@@ -211,10 +217,25 @@ go
 create table abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz(a int);
 go
 
-grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
+grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
 go
 
-revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
+-- check for inconsistent metadata
+select COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+go
+~~START~~
+int
+0
+~~END~~
+
+
+revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
+go
+
+drop user abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
+go
+
+drop login abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz;
 go
 
 -- unsupported features
@@ -4008,6 +4029,14 @@ grant select on schema::s1 to u3;
 go
 grant execute on schema::s1 to u3;
 go
+-- check for inconsistent metadata
+select COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+go
+~~START~~
+int
+0
+~~END~~
+
 
 -- tsql user=l3 password=123
 -- u3 has select and execute privilege on s1 and s2
@@ -4553,3 +4582,60 @@ drop login l5;
 go
 drop login l6;
 go
+
+-- tsql
+-- test drop database removes correct entries from the catalog
+create table babel_4344_t1(a int);
+go
+grant select on babel_4344_t1 to guest;
+go
+create database babel_4344_d1;
+go
+use babel_4344_d1;
+go
+create table babel_4344_t1(a int);
+go
+grant select on babel_4344_t1 to guest;
+go
+use master;
+go
+
+-- psql
+-- should have 2 entries for master and babel_4344_d1 databases
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where object_name = 'babel_4344_t1';
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
+dbo#!#babel_4344_t1#!#2#!#master_guest
+dbo#!#babel_4344_t1#!#2#!#babel_4344_d1_guest
+~~END~~
+
+
+-- tsql
+use master
+go
+drop database babel_4344_d1;
+go
+
+-- psql
+-- should have 1 entry for master database since babel_4344_d1 is dropped
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where object_name = 'babel_4344_t1';
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
+dbo#!#babel_4344_t1#!#2#!#master_guest
+~~END~~
+
+
+-- tsql
+drop table babel_4344_t1;
+go
+
+-- psql
+-- should have no entries since the table is dropped
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where object_name = 'babel_4344_t1';
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
+~~END~~
+

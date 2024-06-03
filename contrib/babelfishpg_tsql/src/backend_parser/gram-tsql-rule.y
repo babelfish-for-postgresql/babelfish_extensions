@@ -1616,16 +1616,19 @@ simple_select:
 			| tsql_values_clause							{ $$ = $1; }
 			;
 
-tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
+tsql_pivot_expr: TSQL_PIVOT '(' func_name '(' columnref ')' FOR columnref IN_P '(' columnList ')' ')'
 				{						
 					ColumnRef 		*a_star;
+					ColumnRef		*agg_col;
 					ResTarget 		*a_star_restarget;
 					RangeSubselect 	*range_sub_select;
 					Alias 			*temptable_alias;
-					List    *ret;
-					List    *value_col_strlist = NULL;
-					List	*subsel_valuelists = NULL;
-					String 	*pivot_colstr;
+					String 			*pivot_colstr;
+					String 			*agg_colstr;
+					List    		*ret;
+					List 			*column_list;
+					List			*column_const_list;
+					ListCell 		*lc;
 					
 					SelectStmt 	*category_sql = makeNode(SelectStmt);
 					SelectStmt 	*valuelists_sql = makeNode(SelectStmt);
@@ -1640,42 +1643,45 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
 					a_star_restarget->indirection = NIL;
 					a_star_restarget->val = (Node *) a_star;
 					a_star_restarget->location = -1;
-					
 
 					/* prepare aggregation function for pivot source sql */
+					agg_col = (ColumnRef *)$5;
 					restarget_aggfunc->name = NULL;
 					restarget_aggfunc->name_location = -1;
 					restarget_aggfunc->indirection = NIL;
-					restarget_aggfunc->val = (Node *) $3;
+					restarget_aggfunc->val = (Node *) makeFuncCall($3, list_make1(agg_col),
+																   COERCE_EXPLICIT_CALL,
+																   @3);
 					restarget_aggfunc->location = -1;
-					
-					if (IsA((List *)$7, List))
+
+					agg_colstr = list_nth_node(String, agg_col->fields, ((List *)agg_col->fields)->length - 1);
+					column_list = (List *)$11;
+					column_const_list = NIL;
+
+					foreach(lc ,column_list)
 					{
-						for (int i = 0; i < ((List *)$7)->length; i++)
-						{
-							ColumnRef	*tempRef = list_nth((List *)$7, i);
-							String		*s = list_nth(tempRef->fields, 0);
-							Node		*n = makeStringConst(s->sval, -1);
-							List 		*l = list_make1(copyObject(n));
-							if (value_col_strlist == NULL || subsel_valuelists == NULL)
-							{
-								value_col_strlist = list_make1(s->sval);
-								subsel_valuelists = list_make1(l);
-							}else
-							{
-								value_col_strlist = lappend(value_col_strlist, s->sval);
-								subsel_valuelists = lappend(subsel_valuelists, l);
-							}
-						}
+						Node 	*column_const;
+						String 	*column_str;
+
+						column_str = (String *)lfirst(lc);
+
+						if (column_str != NULL && strcmp(column_str->sval, agg_colstr->sval) == 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+										errmsg("The column name \"%s\" specified in the PIVOT operator conflicts with the existing column name in the PIVOT argument.", agg_colstr->sval),
+										parser_errposition(@5)));
+
+						column_const = makeStringConst(pstrdup(column_str->sval), -1);
+						column_const_list = lappend(column_const_list, list_make1(column_const));
 					}
 
 					temptable_alias = makeNode(Alias);
 					temptable_alias->aliasname = "pivotTempTable";
 					/* get the column name from the columnref*/
-					pivot_colstr = llast(((ColumnRef *)$5)->fields);
+					pivot_colstr = llast(((ColumnRef *)$8)->fields);
 					temptable_alias->colnames = list_make1(copyObject(pivot_colstr));
 					
-					valuelists_sql->valuesLists = subsel_valuelists;
+					valuelists_sql->valuesLists = column_const_list;
 
 					range_sub_select = makeNode(RangeSubselect);
 					range_sub_select->subquery = (Node *) valuelists_sql;
@@ -1684,7 +1690,7 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
 					category_sql->targetList = list_make1(a_star_restarget);
 					category_sql->fromClause = list_make1(range_sub_select);
 
-					ret = list_make4($5, restarget_aggfunc, category_sql, value_col_strlist);
+					ret = list_make4($8, restarget_aggfunc, category_sql, column_list);
 					$$ = (Node*) ret; 
 				} 
 			;
@@ -2449,6 +2455,7 @@ tsql_stmt :
 			| AlterExtensionContentsStmt
 			| AlterFdwStmt
 			| AlterFunctionStmt
+			| tsql_AlterFunctionStmt
 			| AlterGroupStmt
 			| tsql_AlterLoginStmt
 			| AlterObjectDependsStmt
@@ -3912,7 +3919,7 @@ tsql_CreateFunctionStmt:
 								 parser_errposition(@1)));
 
 					tbltyp = list_truncate(tbltyp, list_length(tbltyp) - 1);
-					tbltyp = lappend(tbltyp, makeString(tbltyp_name));
+					tbltyp = lappend(tbltyp, makeString(downcase_truncate_identifier(tbltyp_name, strlen(tbltyp_name), true)));
 					n1->relation = makeRangeVarFromAnyName(tbltyp, @4, yyscanner);
 					n1->tableElts = $10;
 					n1->inhRelations = NIL;
@@ -3972,6 +3979,29 @@ tsql_CreateFunctionStmt:
 					n->options = list_make3(lang, body, location);
 
 					$$ = (Node *)n;
+				}
+		;
+
+tsql_AlterFunctionStmt:
+			TSQL_ALTER proc_keyword tsql_func_name tsql_createproc_args
+			tsql_createfunc_options AS tokens_remaining
+				{
+					ObjectWithArgs *owa = makeNode(ObjectWithArgs);
+					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
+					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
+					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($7)), @7);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@3), @3);
+
+					/* Fill in the ObjectWithArgs node */
+					owa->objname = $3;
+					owa->objargs = extractArgTypes($4);
+					owa->objfuncargs = $4;
+
+					/* now fill in the AlterFunctionStmt node */
+					n->objtype = OBJECT_PROCEDURE;
+					n->func = owa;
+					n->actions = list_concat(list_make3(lang, body, location), $5); // piggy-back on actions to just put the new proc body instead
+					$$ = (Node *) n;
 				}
 		;
 

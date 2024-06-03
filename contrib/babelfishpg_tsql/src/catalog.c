@@ -14,6 +14,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/namespace.h"
+#include "commands/extension.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
 #include "tcop/utility.h"
@@ -1483,7 +1484,7 @@ clean_up_bbf_function_ext(int16 dbid)
  *			SCHEMA
  *****************************************/
 
-static Oid
+Oid
 get_bbf_schema_perms_oid()
 {
 	if (!OidIsValid(bbf_schema_perms_oid))
@@ -2172,26 +2173,35 @@ get_function_name(HeapTuple tuple, TupleDesc dsc)
 static Datum
 get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
 {
-	bool		isNull;
-	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &isNull);
+	bool		schema_is_null, dbid_is_null;
+	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &schema_is_null);
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_schema_perms_dbid, dsc, &dbid_is_null);
+	char		*physical_schema_name;
 
-	if (isNull)
+	if (dbid_is_null)
 		ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					errmsg("schema name should not be null.")));
-	return schema_name;
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_schema_permissions catalog")));
+	if (schema_is_null)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("schema name should not be null in babelfish_schema_permissions catalog")));
+
+	/* get_physical_schema_name() itself handles truncation, no explicit truncation needed */
+	physical_schema_name = get_physical_schema_name(get_db_name(DatumGetInt16(dbid)), TextDatumGetCString(schema_name));
+
+	return CStringGetDatum(physical_schema_name);
 }
 
 static Datum
 get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc)
 {
 	bool		isNull;
-	Datum		grantee_name = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
-	if (isNull)
-		ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					errmsg("grantee name should not be null.")));
-	return grantee_name;
+	Datum		grantee_datum = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
+	char *grantee_name = pstrdup(TextDatumGetCString(grantee_datum));
+	truncate_identifier(grantee_name, strlen(grantee_name), false);
+
+	return CStringGetDatum(grantee_name);
 }
 
 static Datum
@@ -2502,6 +2512,13 @@ update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 	TableScanDesc scan;
 	HeapTuple	tuple;
 	bool		is_null;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"update_user_catalog_for_guest()")));
 
 	db_rel = table_open(sysdatabases_oid, AccessShareLock);
 	scan = table_beginscan_catalog(db_rel, 0, NULL);
@@ -3531,6 +3548,42 @@ clean_up_bbf_schema_permissions(const char *schema_name,
 					get_bbf_schema_perms_idx_oid(),
 					true, NULL, 3, scanKey);
 	}
+
+	while ((tuple_bbf_schema = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(tuple_bbf_schema))
+			CatalogTupleDelete(bbf_schema_rel,
+							   &tuple_bbf_schema->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
+}
+
+/*
+ * Clean up babelfish_schema_permissions table for a given database
+ * when database is dropped.
+ */
+void
+drop_bbf_schema_permission_entries(int16 dbid)
+{
+	Relation	bbf_schema_rel;
+	HeapTuple	tuple_bbf_schema;
+	ScanKeyData scanKey[1];
+	SysScanDesc scan;
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(), RowExclusiveLock);
+
+	/* Search and drop the entries */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	scan = systable_beginscan(bbf_schema_rel,
+							  get_bbf_schema_perms_idx_oid(),
+							  true, NULL, 1, scanKey);
 
 	while ((tuple_bbf_schema = systable_getnext(scan)) != NULL)
 	{

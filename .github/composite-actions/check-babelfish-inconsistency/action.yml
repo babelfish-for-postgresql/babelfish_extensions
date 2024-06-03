@@ -1,0 +1,41 @@
+name: 'Check Babelfish metadata inconsistency'
+description: Check for Babelfish metadata inconsistency before Major/Minor Version Upgrade
+runs:
+  using: 'composite'
+  steps:
+    - name: Check Babelfish metadata inconsistency
+      id: check-babelfish-inconsistency
+      run: |
+        # Check if the function exists
+        function_exists=$(sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "
+        SELECT CASE WHEN COUNT(*) > 0 THEN 'exists' ELSE 'not_exists' END
+        FROM pg_proc
+        WHERE proname = 'check_for_inconsistent_metadata';" | grep -o 'exists\|not_exists')
+
+        echo "::set-output name=function_exists::$function_exists"
+        echo "Check Babelfish metadata inconsistency function exists: $function_exists"
+        
+        # If the function exists, run the metadata inconsistency check
+        if [[ "$function_exists" == "exists" ]]; then
+          output=$(sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT 'check_result=', sys.check_for_inconsistent_metadata() GO" | grep 'check_result' | sed 's/[[:blank:]]//g')
+          check_result=$(echo "$output" | grep -oP 'check_result=\K.+')
+          echo "Check Babelfish metadata inconsistency result: $check_result"
+          
+          if [[ "$check_result" == "1" ]]; then
+            echo "Check Babelfish metadata inconsistency failed"
+            
+            # Fetch and print the detailed inconsistent rules
+            inconsistent_rules=$(sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "
+            SELECT DISTINCT object_type, schema_name, object_name, detail::text
+            FROM sys.babelfish_inconsistent_metadata();")
+
+            echo "Babelfish Inconsistent Metadata failing rules:"
+            echo "$inconsistent_rules"
+            exit 1
+          else
+            echo "Check Babelfish metadata inconsistency succeeded"
+          fi
+        else
+          echo "The function check_for_inconsistent_metadata does not exist, skipping metadata check."
+        fi
+      shell: bash

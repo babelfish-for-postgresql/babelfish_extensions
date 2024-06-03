@@ -1649,7 +1649,7 @@ BEGIN
     return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS INTEGER
 AS
@@ -1658,7 +1658,7 @@ BEGIN
     return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS INTEGER
 AS
@@ -1667,7 +1667,7 @@ BEGIN
     return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS INTEGER
 AS
@@ -1676,7 +1676,7 @@ BEGIN
     return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS INTEGER
 AS
@@ -1685,7 +1685,7 @@ BEGIN
     return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS INTEGER
 AS
@@ -1694,7 +1694,7 @@ BEGIN
     return sys.datediff_internal(datepart, startdate, enddate);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 -- datediff big
 CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT
@@ -1704,7 +1704,7 @@ BEGIN
     return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS BIGINT
 AS
@@ -1713,7 +1713,7 @@ BEGIN
     return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS BIGINT
 AS
@@ -1722,7 +1722,7 @@ BEGIN
     return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS BIGINT
 AS
@@ -1731,7 +1731,7 @@ BEGIN
     return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS BIGINT
 AS
@@ -1740,7 +1740,7 @@ BEGIN
     return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS BIGINT
 AS
@@ -1749,7 +1749,7 @@ BEGIN
     return sys.datediff_internal_big(datepart, startdate, enddate);
 END
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 
  -- Duplicate functions with arg TEXT since ANYELEMENT cannot handle type unknown.
@@ -1769,7 +1769,7 @@ BEGIN
     END IF;
 END;
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate sys.bit) RETURNS DATETIME
 AS
@@ -1778,7 +1778,7 @@ BEGIN
         return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
 END;
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate numeric) RETURNS DATETIME
 AS
@@ -1787,7 +1787,7 @@ BEGIN
         return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
 END;
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate real) RETURNS DATETIME
@@ -1797,7 +1797,7 @@ BEGIN
         return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
 END;
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate double precision) RETURNS DATETIME
 AS
@@ -1806,7 +1806,7 @@ BEGIN
         return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
 END;
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT
 AS
@@ -1821,7 +1821,7 @@ BEGIN
     END IF;
 END;
 $body$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.dateadd_numeric_representation_helper(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS DATETIME AS $$
 DECLARE
@@ -1861,7 +1861,7 @@ BEGIN
 END;
 $$
 STRICT
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 /*
     This function is needed when input date is datetimeoffset type. When running the following query in postgres using tsql dialect, it faied.
@@ -1896,7 +1896,7 @@ BEGIN
 END;
 $$
 STRICT
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE parallel safe;
 
 CREATE OR REPLACE FUNCTION sys.dateadd_internal_datetime(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT, IN datetimetype INT) 
 RETURNS TIMESTAMP AS
@@ -4613,8 +4613,8 @@ BEGIN
     ELSE
         -- Round datetime to fixed bins (e.g. .000, .003, .007)
         IF date_arg_datatype = 'sys.datetime'::regtype THEN
-            date := sys.babelfish_conv_string_to_datetime('DATETIME', date::TEXT)::sys.datetime;
-            origin := sys.babelfish_conv_string_to_datetime('DATETIME', origin::TEXT)::sys.datetime;
+            date := sys.babelfish_conv_string_to_datetime_v2('DATETIME', date::TEXT)::sys.datetime;
+            origin := sys.babelfish_conv_string_to_datetime_v2('DATETIME', origin::TEXT)::sys.datetime;
         END IF;
         -- when datepart is {year, quarter, month} make use of AGE() function to find number of buckets
         IF datepart IN ('year', 'quarter', 'month') THEN

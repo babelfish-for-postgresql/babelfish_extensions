@@ -1,6 +1,12 @@
 use pivot_test;
 GO
 
+drop trigger pivot_trigger
+GO
+
+drop table trigger_testing
+GO
+
 drop table OSTable;
 GO
 
@@ -11,6 +17,9 @@ drop table seating_tbl;
 GO
 
 drop view StoreReceipt_view;
+GO
+
+drop view pivot_view;
 GO
 
 drop table pivot_insert_into;
@@ -26,6 +35,18 @@ drop function test_table_valued_function;
 GO
 
 drop table StoreReceipt;
+GO
+
+drop table orders;
+GO
+
+drop table products;
+GO
+
+drop table pivot_schema.products_sch;
+GO
+
+drop schema pivot_schema;
 GO
 
 use master;

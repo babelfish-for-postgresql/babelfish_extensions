@@ -252,23 +252,23 @@ datetime
 select convert(datetime, '9999-12-31 23:59:59.999');
 ~~START~~
 datetime
-~~ERROR (Code: 517)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetime)~~
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
 
 select convert(datetime, '1752-12-31 23:59:59.997');
 ~~START~~
 datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The conversion of a VARCHAR data type to a DATETIME data type resulted in an out-of-range value.)~~
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
 
 select convert(datetime, '0000-00-00 00:00:00.000');
 ~~START~~
 datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The conversion of a VARCHAR data type to a DATETIME data type resulted in an out-of-range value.)~~
+~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
 
 select convert(datetime, NULL);
 ~~START~~
