@@ -4598,6 +4598,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	RawStmt			*s_sql;
 	RawStmt			*c_sql;
 	FuncCall 		*pivot_func;
+	WithClause		*with_clause;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -4607,10 +4608,25 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	src_sql_groupbylist = NIL;
 	src_sql_sortbylist = NIL;
 
+	with_clause = copyObject(stmt->withClause);
 	pivot_src_sql =  makeNode(SelectStmt);
 	pivot_src_sql->fromClause = copyObject(stmt->srcSql->fromClause);
+	pivot_src_sql->withClause = copyObject(with_clause);
+
+	((SelectStmt *)stmt->srcSql)->withClause = copyObject(with_clause);
+	stmt->withClause = NULL;
+	
 	src_sql_fromClause_copy = copyObject(stmt->srcSql->fromClause);
-	/* transform temporary src_sql */
+	
+	/*
+	 * During pre_transform_target_entry, we only rewrote object references in pivot wrapper sql 
+	 * and skipped stmt->srcSql rewriting. Here we rewrite srcSql to correct the right reference 
+	 * for object with schema name
+	 */
+	if (enable_schema_mapping())
+		rewrite_object_refs((Node *)stmt->srcSql);
+
+	/* We execute first parse_sub_analyze to get the correct pivot_src_sql targetlist */
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
 										false,
 										false);
@@ -4647,13 +4663,20 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 		
 		new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
 	}
-	/* source_sql: non-pivot column + pivot colunm+ agg(value_col) */
-	/* complete src_sql's targetList*/	
+
+   	/* pivot_src_sql: non-pivot column + pivot colunm+ agg(value_col)*/	
 	new_src_sql_targetist = lappend(new_src_sql_targetist, make_restarget_from_cstr_list(stmt->pivotCol->fields));
 	new_src_sql_targetist = lappend(new_src_sql_targetist, (ResTarget *)stmt->aggFunc);
-	((SelectStmt *)stmt->srcSql)->targetList = new_src_sql_targetist;
 	pivot_src_sql->targetList = copyObject(new_src_sql_targetist);
-	/* complete src_sql's groupby*/
+
+	/*
+	 *  We need second round of parse_sub_analyze to get the output type of 
+	 *  pivot aggregation function, and therefore we can create correct alias
+	 *  column names and datatypes for wrapper/outer sql.
+	 */
+	((SelectStmt *)stmt->srcSql)->targetList = new_src_sql_targetist;
+	
+	/* complete src_sql's groupby */
 	for (int i = 0; i < new_src_sql_targetist->length - 1; i++)
 	{
 		A_Const		*tempAConst = makeNode(A_Const);
@@ -4676,9 +4699,15 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	pivot_src_sql->groupClause = copyObject(src_sql_groupbylist);
 	pivot_src_sql->sortClause = copyObject(src_sql_sortbylist);
 	
-	/* use the copy of the orgininal fromClause to prevent double analyzing fromClause */
+	/* use the copy of the orgininal fromClause and withClause to prevent double analyzing fromClause */
 	((SelectStmt *)stmt->srcSql)->fromClause = src_sql_fromClause_copy;
-	/* Transform the new src_sql & get the output type of that agg function*/
+	((SelectStmt *)stmt->srcSql)->withClause = with_clause;
+
+	/* we rewrite srcSql object refereces again because we used a new copy of fromClause */
+	if (enable_schema_mapping())
+		rewrite_object_refs((Node *)stmt->srcSql);
+
+	/* transform src_sql and get the output datatype of that agg function */
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
 									false,
 									false);
@@ -4696,7 +4725,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	for(int i = 0; i < stmt->value_col_strlist->length; i++)
 	{
 		ColumnDef	*tempColDef;
-		tempColDef = makeColumnDef((char *) list_nth(stmt->value_col_strlist, i),
+		tempColDef = makeColumnDef(((String *) list_nth(stmt->value_col_strlist, i))->sval,
 									((Aggref *)aggfunc_te->expr)->aggtype, 
 									-1,
 									((Aggref *)aggfunc_te->expr)->aggcollid
@@ -4842,7 +4871,12 @@ is_function_pg_stat_valid(FunctionCallInfo fcinfo, PgStat_FunctionCallUsage *fcu
 static SortByNulls
 unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 {
-	if (constraint_type == CONSTR_UNIQUE)
+	/*
+	 * Ordering is only allowed when index has amcanorder = true (eg: btree)
+	 * PRIMARY KEY and UNIQUE constraints currently only use btree indexes
+	 * so we can be sure that setting nulls_order here is okay
+	 */
+	if (constraint_type == CONSTR_UNIQUE || constraint_type == CONSTR_PRIMARY)
 	{
 		switch (ordering)
 		{

@@ -1,0 +1,185 @@
+-- Test typmod for BINARY datatype
+-- tsql
+CREATE TABLE babel_4956_tab_binary (
+    c1  INT  NOT NULL PRIMARY KEY
+    , c2     BINARY(4) NOT NULL)
+GO
+
+-- tsql port=8199
+-- typmod of binary column is kept less in this table
+-- compared to source table to test typmod compatibility.
+CREATE TABLE babel_4956_tab_binary (
+    c1  INT  NOT NULL PRIMARY KEY
+    , c2     BINARY(3) NOT NULL)
+GO
+
+-- Add table to publication
+-- psql
+CREATE PUBLICATION my_pub1 FOR TABLE master_dbo.babel_4956_tab_binary;
+GO
+
+-- Add publication and refresh the subscription
+-- psql port=5433
+ALTER SUBSCRIPTION my_sub ADD PUBLICATION my_pub1;
+GO
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- terminate-tsql-conn
+-- terminate-tsql-conn port=8199
+
+-- psql
+select pg_sleep(5);
+GO
+
+-- Insert a 4 byte binary value with last trailing byte as 0 in the
+-- source table so that it fits into 3 byte in target table's column.
+-- tsql
+INSERT INTO babel_4956_tab_binary(c1, c2) VALUES(1, 0x11223300);
+GO
+
+SELECT * FROM babel_4956_tab_binary;
+GO
+
+-- Wait for data to get replicated
+-- psql
+select pg_sleep(2);
+GO
+
+-- data should have replicated to target table
+-- tsql port=8199
+SELECT * FROM babel_4956_tab_binary;
+GO
+
+-- Now insert a 4 byte binary value with no trailing zero bytes in the
+-- source table so that it does not fit into 3 byte in target table's column.
+-- tsql
+INSERT INTO babel_4956_tab_binary(c1, c2) VALUES(2, 0x11223344);
+GO
+
+SELECT * FROM babel_4956_tab_binary;
+GO
+
+-- Wait for data to get replicated
+-- psql
+select pg_sleep(2);
+GO
+
+-- we should not see the new row in target table
+-- tsql port=8199
+SELECT * FROM babel_4956_tab_binary;
+GO
+
+-- Cleanup
+-- psql port=5433
+ALTER SUBSCRIPTION my_sub DROP PUBLICATION my_pub1;
+GO
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- psql
+DROP PUBLICATION my_pub1;
+GO
+
+-- tsql
+DROP TABLE babel_4956_tab_binary;
+GO
+
+-- tsql port=8199
+DROP TABLE babel_4956_tab_binary;
+GO
+
+-- Test typmod for VARBINARY datatype
+-- tsql
+CREATE TABLE babel_4956_tab_varbinary (
+    c1  INT  NOT NULL PRIMARY KEY
+    , c2     VARBINARY(4) NOT NULL)
+GO
+
+-- tsql port=8199
+-- typmod of varbinary columns is kept less in this table
+-- compared to source table to test typmod compatibility.
+CREATE TABLE babel_4956_tab_varbinary (
+    c1  INT  NOT NULL PRIMARY KEY
+    , c2     VARBINARY(3) NOT NULL)
+GO
+
+-- Add table to publication
+-- psql
+CREATE PUBLICATION my_pub2 FOR TABLE master_dbo.babel_4956_tab_varbinary;
+GO
+
+-- Add publication and refresh the subscription
+-- psql port=5433
+ALTER SUBSCRIPTION my_sub ADD PUBLICATION my_pub2;
+GO
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- terminate-tsql-conn
+-- terminate-tsql-conn port=8199
+
+-- psql
+select pg_sleep(5);
+GO
+
+-- Insert a 4 byte varbinary value with last trailing byte as 0 in the
+-- source table so that it fits into 3 byte in target table's column.
+-- tsql
+INSERT INTO babel_4956_tab_varbinary(c1, c2) VALUES(1, 0x11223300);
+GO
+
+SELECT * FROM babel_4956_tab_varbinary;
+GO
+
+-- Wait for data to get replicated
+-- psql
+select pg_sleep(2);
+GO
+
+-- data should have replicated to target table
+-- tsql port=8199
+SELECT * FROM babel_4956_tab_varbinary;
+GO
+
+-- Now insert a 4 byte varbinary value with no trailing zero bytes in the
+-- source table so that it does not fit into 3 byte in target table's column.
+-- tsql
+INSERT INTO babel_4956_tab_varbinary(c1, c2) VALUES(2, 0x11223344);
+GO
+
+SELECT * FROM babel_4956_tab_varbinary;
+GO
+
+-- Wait for data to get replicated
+-- psql
+select pg_sleep(2);
+GO
+
+-- we should not see the new row in target table
+-- tsql port=8199
+SELECT * FROM babel_4956_tab_varbinary;
+GO
+
+-- Cleanup
+-- psql port=5433
+SET client_min_messages TO ERROR;
+GO
+ALTER SUBSCRIPTION my_sub DROP PUBLICATION my_pub2;
+GO
+RESET client_min_messages;
+GO
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- psql
+DROP PUBLICATION my_pub2;
+GO
+
+-- tsql
+DROP TABLE babel_4956_tab_varbinary;
+GO
+
+-- tsql port=8199
+DROP TABLE babel_4956_tab_varbinary;
+GO

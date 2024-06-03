@@ -1,0 +1,2045 @@
+-- Empty string, should return default values
+SELECT CONVERT(DATETIMEOFFSET, '')
+GO
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '', 130)
+GO
+~~START~~
+datetimeoffset
+2464-12-29 00:00:00.0000000 +00:00
+~~END~~
+
+
+-- -- Numeric
+SELECT CONVERT(DATETIMEOFFSET, '3-2-4 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2004-03-02 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3-12-4 14:30 +8:00')
+GO
+~~START~~
+datetimeoffset
+2004-03-12 14:30:00.0000000 +08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3-12-24 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-03-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3-12-2024 14:30 +8:00')
+GO
+~~START~~
+datetimeoffset
+2024-03-12 14:30:00.0000000 +08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3     -        12 -           2024 14:30 +8:00')
+GO
+~~START~~
+datetimeoffset
+2024-03-12 14:30:00.0000000 +08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3.2.4 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2004-03-02 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3.12.4 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2004-03-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3.12.24 14:30 +8:00')
+GO
+~~START~~
+datetimeoffset
+2024-03-12 14:30:00.0000000 +08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3.12.2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-03-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3     .        12 .           2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-03-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3/2/4 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2004-03-02 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3/12/4 14:30 +8:00')
+GO
+~~START~~
+datetimeoffset
+2004-03-12 14:30:00.0000000 +08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3/12/24 14:30 +8:00')
+GO
+~~START~~
+datetimeoffset
+2024-03-12 14:30:00.0000000 +08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3/12/2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-03-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3     /        12 /           2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-03-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '04-02-03 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2003-04-02 14:30:00.0000000 -08:00
+~~END~~
+
+
+-- invalid syntax
+SELECT CONVERT(DATETIMEOFFSET, '3 12 2024 +8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3#12#2024 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3/12.2024 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Alphabetical
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 12,2000 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2000-04-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 12 2000 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2000-04-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 1 2000 14:30 +8:00')
+GO
+~~START~~
+datetimeoffset
+2000-04-01 14:30:00.0000000 +08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 1,2000 14:30 +8:00')
+GO
+~~START~~
+datetimeoffset
+2000-04-01 14:30:00.0000000 +08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 2000 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2000-04-01 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 16, 2000 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2000-04-16 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 1, 2000 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2000-04-01 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'April 16, 2000 14:30 +8:00')
+GO
+~~START~~
+datetimeoffset
+2000-04-16 14:30:00.0000000 +08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'April 16  2000 14:30Z')
+GO
+~~START~~
+datetimeoffset
+2000-04-16 14:30:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 16, 24 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-16 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 16,4 14:30Z')
+GO
+~~START~~
+datetimeoffset
+2004-04-16 14:30:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 1,4 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2004-04-01 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 16    24 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-16 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 16 4 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2004-04-16 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'April 16 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2016-04-01 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 2024 14:30Z')
+GO
+~~START~~
+datetimeoffset
+2024-04-01 14:30:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 2024 22 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-22 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 2024 2 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-02 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '24 Apr, 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-24 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3 Apr, 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-03 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr, 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-01 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-01 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3 Apr 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-03 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3Apr2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-03 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '3Apr24 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-03 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr24 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-01 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr,24 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '24 Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-01 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12 24 Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12 2024 Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024 Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-01 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024 12 Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024 9 Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-09 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024 Apr 12 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12, Apr, 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12 Apr, 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12, Apr 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024, Apr, 12 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024 Apr, 12 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024, Apr 12 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr, 12, 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 12, 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-04-12 14:30:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr, 12 2024 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr, 2024, 12 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 2024, 12 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr, 2024 12 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12, 2024, Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12 2024, Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12, 2024 Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024, 12, Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024 12, Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2024, 12 Apr 14:30 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- W3C XML
+SELECT CONVERT(DATETIMEOFFSET, '2023-11-27-8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- ISO 8601	
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00-8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.123-8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.123-12:12')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.1230000 -12:12
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.123+12:12')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.1230000 +12:12
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00-8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10 -30T03: 00:00-8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.12345-8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00:123-8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00:12345-8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2023-11-27+8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00+8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.123+8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.123-12:12')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.1230000 -12:12
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.123+12:12')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.1230000 +12:12
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00+8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10 -30T03: 00:00+8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.12345+8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00:123+8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00:12345+8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2023-11-27Z')
+GO
+~~START~~
+datetimeoffset
+2023-11-27 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00Z')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.123Z')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.123-12:12')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.1230000 -12:12
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.123+12:12')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.1230000 +12:12
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00Z')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10 -30T03: 00:00Z')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00.12345Z')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.1234500 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00:123Z')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00:12345Z')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+
+-- Unseparated
+SELECT CONVERT(DATETIMEOFFSET, '20240129 +8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '20241329 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '240129 Z')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '241329 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2001 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '0001 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '20240129 03:00:00 -8:00')
+GO
+~~START~~
+datetimeoffset
+2024-01-29 03:00:00.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '20241329 03:00:00 +8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '240129 03:00 Z')
+GO
+~~START~~
+datetimeoffset
+2024-01-29 03:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '241329 03:00 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2001 03:00:00.123 -8:00')
+GO
+~~START~~
+datetimeoffset
+2001-01-01 03:00:00.1230000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '0001 03:00:00.421Z')
+GO
+~~START~~
+datetimeoffset
+0001-01-01 03:00:00.4210000 +00:00
+~~END~~
+
+
+-- -- invalid syntax
+SELECT CONVERT(DATETIMEOFFSET, '0')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '1')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '11')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '111')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '11111')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '1111111')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- should return default DATETIMEOFFSET
+SELECT CONVERT(DATETIMEOFFSET, '16:23:51 -8:00')
+GO
+~~START~~
+datetimeoffset
+1900-01-01 16:23:51.0000000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '4:12:12:123 -8:00')
+GO
+~~START~~
+datetimeoffset
+1900-01-01 04:12:12.1230000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '4:12:12:1234 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '4:12:12.1234 -8:00')
+GO
+~~START~~
+datetimeoffset
+1900-01-01 04:12:12.1234000 -08:00
+~~END~~
+
+
+-- hijri
+SELECT CONVERT(DATETIMEOFFSET, '20231229', 130)
+GO
+~~START~~
+datetimeoffset
+2585-04-19 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '20231230', 130)
+GO
+~~START~~
+datetimeoffset
+2585-04-20 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '20231129', 130)
+GO
+~~START~~
+datetimeoffset
+2585-03-20 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '20231130', 130)
+GO
+~~START~~
+datetimeoffset
+2585-03-21 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, N'22 محرم 1440 1:39:17.090', 130)
+GO
+~~START~~
+datetimeoffset
+2018-10-02 01:39:17.0900000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, N'22 محرم 1440 1:39:17.090', 131)
+GO
+~~START~~
+datetimeoffset
+2018-10-02 01:39:17.0900000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '22/12/1440 1:39:17.090PM', 130)
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The input character string does not follow style 130, either change the input character string or use a different style.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '22/12/1440 1:39:17.090PM', 131)
+GO
+~~START~~
+datetimeoffset
+2019-08-23 13:39:17.0900000 +00:00
+~~END~~
+
+
+-- -- hijri leap year
+SELECT CONVERT(DATETIMEOFFSET, '20241230', 130)
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+
+-- rounding of DATETIMEOFFSET
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345679 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345678 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345677 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345676 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345675 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345674 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345673 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345672 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345671 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '01/01/98 23:59:59.12345670 -8:00')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1234570 -08:00
+~~END~~
+
+
+-- DATETIMEOFFSET with typmod
+SELECT CONVERT(DATETIMEOFFSET(0), '01/01/98 23:59:56.501')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:57 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET(0), '01/01/98 23:59:56.500')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:57 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET(0), '01/01/98 23:59:56.499')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:56 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET(1), '01/01/98 23:59:59.123')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.1 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET(2), '01/01/98 23:59:59.123')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.12 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET(3), '01/01/98 23:59:59.123')
+GO
+~~START~~
+datetimeoffset
+1998-01-01 23:59:59.123 +00:00
+~~END~~
+
+
+-- -- Boundary values
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-30 23:59:59.9999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-30 23:59:59.99999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-30 23:59:59.999999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-30 23:59:59.9999999999')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-31 23:59:59.9999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.9999990 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-31 23:59:59.99999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.9999990 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-31 23:59:59.999999999')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.9999990 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '9999-12-31 23:59:59.9999999999')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- -- out of bound values
+SELECT CONVERT(DATETIMEOFFSET,'2022-10-00 23:59:59.990 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET,'0000-10-01 23:59:59.990 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET,'2023-00-01 23:59:59.990 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET,'0000-00-00 23:59:59.990 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET,'2022-10-21 23:59:59.990 +14:01')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET,'2022-10-21 23:59:59.990 -15:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a datetimeoffset data type resulted in an out-of-range value.)~~
+
+
+-- Different DATETIME formats with their corresponding styles
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 10 2021 11:12AM', 0)
+GO
+~~START~~
+datetimeoffset
+2021-04-10 11:12:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '02/12/21', 1)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '21.02.12', 2)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12/02/21', 3)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12.02.21', 4)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12-02-21', 5)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12 Apr 21', 6)
+GO
+~~START~~
+datetimeoffset
+2021-04-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 12, 21', 7)
+GO
+~~START~~
+datetimeoffset
+2021-04-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '10:13:14', 8)
+GO
+~~START~~
+datetimeoffset
+1900-01-01 10:13:14.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '10:13:14', 24)
+GO
+~~START~~
+datetimeoffset
+1900-01-01 10:13:14.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 12 2021 10:13:14:123AM', 9)
+GO
+~~START~~
+datetimeoffset
+2021-04-12 10:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '02-12-21', 10)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '21/02/12', 11)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '210212', 12)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12 Apr 2021 15:13:14:123', 13)
+GO
+~~START~~
+datetimeoffset
+2021-04-12 15:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '15:13:14:123', 14)
+GO
+~~START~~
+datetimeoffset
+1900-01-01 15:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021-02-12 15:13:14', 20)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 15:13:14.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021-02-12 15:13:14.123', 21)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 15:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '02/12/21 15:13:14 PM', 22)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 15:13:14.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021-02-12', 23)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021-02-12 15:13:14.123', 25)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 15:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 10 2021 11:12AM', 100)
+GO
+~~START~~
+datetimeoffset
+2021-04-10 11:12:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '02/12/2021', 101)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021.02.12', 102)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12/02/2021', 103)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12.02.2021', 104)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12-02-2021', 105)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12 Apr 2021', 106)
+GO
+~~START~~
+datetimeoffset
+2021-04-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 12, 2021', 107)
+GO
+~~START~~
+datetimeoffset
+2021-04-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '10:13:14', 108)
+GO
+~~START~~
+datetimeoffset
+1900-01-01 10:13:14.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, 'Apr 12 2021 10:13:14:123AM', 109)
+GO
+~~START~~
+datetimeoffset
+2021-04-12 10:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '02-12-2021', 110)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021/02/12', 111)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '20210212', 112)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12 Apr 2021 15:13:14:123', 113)
+GO
+~~START~~
+datetimeoffset
+2021-04-12 15:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '15:13:14:123', 114)
+GO
+~~START~~
+datetimeoffset
+1900-01-01 15:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021-02-12 15:13:14', 120)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 15:13:14.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021-02-12 15:13:14.123', 121)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 15:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021-02-12T15:13:14.123', 126)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 15:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2021-02-12T15:13:14.123', 127)
+GO
+~~START~~
+datetimeoffset
+2021-02-12 15:13:14.1230000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, N'22 محرم 1440 1:39:17.090', 130)
+GO
+~~START~~
+datetimeoffset
+2018-10-02 01:39:17.0900000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '12/02/2021 15:13:14:123 PM', 131)
+GO
+~~START~~
+datetimeoffset
+2582-07-04 15:13:14.1230000 +00:00
+~~END~~
+
+
+--- misc
+SELECT CONVERT(DATETIMEOFFSET,'2022-10-29 20:01:00.000')
+GO
+~~START~~
+datetimeoffset
+2022-10-29 20:01:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2020')
+GO
+~~START~~
+datetimeoffset
+2020-01-01 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2000-04-22 16:23:51.7668c0')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2001-04-022 16:23:51.766890 +12:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+
+SELECT CONVERT(DATETIMEOFFSET, '02001-04-22 16:23:51.766890 +12:00') 
+GO 
+SELECT CONVERT(DATETIMEOFFSET, ' 2001- 04 - 22 16: 23: 51. 766890 +12:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '02001-04-22 16:23:51')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '1900-05-06 13:59:29.050 -8:00')
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.0500000 -08:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2011-08-15 14:30.00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET,'2022-10-29 20:01:00.000')
+GO
+~~START~~
+datetimeoffset
+2022-10-29 20:01:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2020')
+GO
+~~START~~
+datetimeoffset
+2020-01-01 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2022-10-30T03:00:00')
+GO
+~~START~~
+datetimeoffset
+2022-10-30 03:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, CONVERT(DATETIMEOFFSET,'2021-01-01 00:00:00.000 +12:00'))
+GO
+~~START~~
+datetimeoffset
+2021-01-01 00:00:00.0000000 +12:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2011-08-15 10:30.00 AMZ')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2011-08-15 10:30.00 PMZ')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DECLARE @TM_ICLO TIME = '17:24:07.1766670'
+SELECT CONVERT(DATETIMEOFFSET, @TM_ICLO)
+GO
+~~START~~
+datetimeoffset
+1900-01-01 17:24:07.1766670 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '02001-04-22 16:23:51 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '1900-05-06 13:59:29.050')
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.0500000 +00:00
+~~END~~
+
+
+SELECT CONVERT(DATETIMEOFFSET, '2000-04-22 16:23:51.7668c0 -8:00')
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Dependent objects
+SELECT * FROM test_conv_string_to_datetimeoffset_v1
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+EXEC test_conv_string_to_datetimeoffset_p1
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+SELECT test_conv_string_to_datetimeoffset_f1()
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v2
+GO
+~~START~~
+datetimeoffset
+1900-01-01 13:01:59.0000000 +12:15
+~~END~~
+
+EXEC test_conv_string_to_datetimeoffset_p2
+GO
+~~START~~
+datetimeoffset
+1900-01-01 13:01:59.0000000 +12:15
+~~END~~
+
+SELECT test_conv_string_to_datetimeoffset_f2()
+GO
+~~START~~
+datetimeoffset
+1900-01-01 13:01:59.0000000 +12:15
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v3
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+EXEC test_conv_string_to_datetimeoffset_p3
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+SELECT test_conv_string_to_datetimeoffset_f3()
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v4
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+EXEC test_conv_string_to_datetimeoffset_p4
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+SELECT test_conv_string_to_datetimeoffset_f4()
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v5
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+EXEC test_conv_string_to_datetimeoffset_p5
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+SELECT test_conv_string_to_datetimeoffset_f5()
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v6
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+EXEC test_conv_string_to_datetimeoffset_p6
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+SELECT test_conv_string_to_datetimeoffset_f6()
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetimeoffset_v7
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to datetimeoffset is not allowed.)~~
+
+EXEC test_conv_string_to_datetimeoffset_p7
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to datetimeoffset is not allowed.)~~
+
+SELECT test_conv_string_to_datetimeoffset_f7()
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to datetimeoffset is not allowed.)~~
+
