@@ -2306,6 +2306,54 @@ int#!#nvarchar
 ~~END~~
 
 
+-- CASE 22: Sublink
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI) COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CI_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CI_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI) COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'chaptéR' LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'chaptéR' COLLATE Latin1_General_CI_AI LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
+GO
+~~START~~
+int
+1
+~~END~~
+
 
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -4517,6 +4565,55 @@ GO
 int#!#nvarchar
 1#!#Adam
 10#!#Ądam
+~~END~~
+
+
+-- CASE 22: Sublink
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI) COLLATE Latin1_General_CS_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CS_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CS_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI) COLLATE Latin1_General_CS_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'chaptéR' LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'chaptéR' COLLATE Latin1_General_CS_AI LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
+GO
+~~START~~
+int
+1
 ~~END~~
 
 

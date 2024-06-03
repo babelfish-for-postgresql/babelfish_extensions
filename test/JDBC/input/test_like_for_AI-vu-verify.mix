@@ -816,6 +816,24 @@ GO
 SELECT * FROM test_like_for_AI_prepare_employee_CI_AI;
 GO
 
+-- CASE 22: Sublink
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI);
+GO
+
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI) COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CI_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI);
+GO
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CI_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI) COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT 1 WHERE N'chaptéR' LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
+GO
+
+SELECT 1 WHERE N'chaptéR' COLLATE Latin1_General_CI_AI LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
+GO
 
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -1635,6 +1653,25 @@ INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (7, 'ôob'
 GO
 
 SELECT * FROM test_like_for_AI_prepare_employee_CS_AI;
+GO
+
+-- CASE 22: Sublink
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI);
+GO
+
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI) COLLATE Latin1_General_CS_AI;
+GO
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CS_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI);
+GO
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CS_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI) COLLATE Latin1_General_CS_AI;
+GO
+
+SELECT 1 WHERE N'chaptéR' LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
+GO
+
+SELECT 1 WHERE N'chaptéR' COLLATE Latin1_General_CS_AI LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
 GO
 
 --- ADDITIONAL CORNER CASE TESTING ---

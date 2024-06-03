@@ -608,6 +608,24 @@ convert_node_to_funcexpr_for_like(Node *node)
 				newFuncExpr->args = list_make1(new_node);
 				break;
 			}
+		case T_SubLink:
+			{
+				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+				if (unlikely(new_node == NULL))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+				}
+				new_node = expression_tree_mutator(new_node, pgtsql_expression_tree_mutator, NULL);
+				newFuncExpr->args = list_make1(new_node);
+				break;
+			}
+
 		default:
 			{
 				ereport(ERROR,
