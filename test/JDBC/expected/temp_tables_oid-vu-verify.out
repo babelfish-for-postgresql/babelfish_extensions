@@ -107,12 +107,15 @@ drop table #temp_tables_oid_t1
 go
 
 -- At the end of all the temp table creation, let's ensure that the permanent OID count did not increase
--- This should be 3, unless temp OID generation is turned off
+-- This should be 3 when temp OID generation is turned on. 
 create table temp_tables_oid_perm_tab_4(a int)
-select object_id('temp_tables_oid_perm_tab_4') - object_id('temp_tables_oid_perm_tab_3')
+if  (object_id('temp_tables_oid_perm_tab_4') - object_id('temp_tables_oid_perm_tab_3')) = 3
+    select true;
+else
+    select false;
 go
 ~~START~~
-int
-3
+bit
+0
 ~~END~~
 
