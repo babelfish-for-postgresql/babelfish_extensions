@@ -400,7 +400,7 @@ BEGIN
     END IF;
 END;
 $$
-LANGUAGE plpgsql STRICT STABLE PARALLEL SAFE;
+LANGUAGE plpgsql STRICT STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_configure(IN "@option_name" varchar(128),  IN "@option_value" varchar(128), IN "@option_scope" varchar(128))
 AS $$
