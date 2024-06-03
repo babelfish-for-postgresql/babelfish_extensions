@@ -509,19 +509,23 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 
 	limit = len_uinput;
 	/* 
-	 * set the capacity to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
-	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can 
-	 * have maximum INT32_MAX value
+	 * set the capacity (In UChar terms) to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
+	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can have maximum INT32_MAX
+	 * value which would be equivalent to 2GB UChar points and 2GB * sizeof(UChar) in byte terms.
+	 * XXX: It is assumed that this capacity should handle almost all the general input strings.
 	 */
 	capacity = (limit < (PG_INT32_MAX / MAX_BYTES_PER_CHAR)) ? (limit * MAX_BYTES_PER_CHAR) : PG_INT32_MAX;
 
 	/*
 	 * utrans_transUChars will modify input string in place so ensure that it has enough capacity to store
-	 * transformed string. 
+	 * transformed string.
 	 */
-	utf16_res = (UChar *) palloc0(capacity);
-	/* utf16_input would have one NULL terminator at the end. Copy that too. */
-	memcpy(utf16_res, utf16_input, (len_uinput + 1) * sizeof(UChar));
+	utf16_res = (UChar *) palloc0(capacity * sizeof(UChar));
+	/*
+	 * utf16_input would have one NULL terminator at the end. Copy that too. Limiting memory copy to min of
+	 * (len_uinput + 1) * sizeof(UChar) and capacity * sizeof(UChar) in order to avoid buffer overwriting.
+	 */
+	memcpy(utf16_res, utf16_input, Min((len_uinput + 1) * sizeof(UChar), capacity * sizeof(UChar)));
 	pfree(utf16_input);
 	pfree(input_str);
 
@@ -533,12 +537,19 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 						&limit,
 						&status);
 
+	/* Allocated capacity may not be enough to hold un-accented string. This shouldn't occur ideally but still defensive code. */
+	if (status == U_BUFFER_OVERFLOW_ERROR)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("Buffer overflow occurred while normalising the string. Error: %s", u_errorName(status))));
+	}
+
 	if (U_FAILURE(status))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					errmsg("Error normalising the input string: %s", u_errorName(status)),
-					errdetail("The input string may have caused buffer overflow")));
+					errmsg("Error normalising the input string: %s", u_errorName(status))));
 	}
 
 	len_result = icu_from_uchar(&result, utf16_res, len_uinput);
