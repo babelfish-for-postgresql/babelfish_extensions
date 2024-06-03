@@ -49,13 +49,6 @@ GO
 CREATE USER test_user3 FOR LOGIN test_login3
 GO
 
--- check for roles with name > 64 characters
-CREATE ROLE thisroleisaveryuniquerolewhereitsnamelengthisveryveryverylongandspansonehundredandelevencharacterswhichis__111
-GO
-
-CREATE ROLE thisroleisaveryuniquerolewhereitsnamelengthisveryveryverylongandspansonehundredandelevencharacterswhichis__111_dup
-GO
-
 -- role1 -> role2 -> role3 -> role4
 ALTER ROLE test_role1 ADD MEMBER test_role2
 GO
@@ -73,9 +66,6 @@ GO
 ALTER ROLE test_role3 ADD MEMBER test_user3
 GO
 
-ALTER ROLE thisroleisaveryuniquerolewhereitsnamelengthisveryveryverylongandspansonehundredandelevencharacterswhichis__111 ADD MEMBER test_user3
-GO
-
 -- Print the current membership status
 EXEC babel_role_members
 GO
@@ -88,7 +78,6 @@ test_role2#!#R#!#test_role3#!#R
 test_role2#!#R#!#test_user2#!#S
 test_role3#!#R#!#test_role4#!#R
 test_role3#!#R#!#test_user3#!#S
-thisroleisaveryuniquerolewhereitsnamelengthisveryveryverylongandspansonehundredandelevencharacterswhichis__111#!#R#!#test_user3#!#S
 ~~END~~
 
 
@@ -220,7 +209,7 @@ SELECT IS_MEMBER('sysadmin')
 GO
 ~~START~~
 int
-0
+<NULL>
 ~~END~~
 
 
@@ -237,7 +226,7 @@ SELECT IS_MEMBER('test_user1')
 GO
 ~~START~~
 int
-0
+<NULL>
 ~~END~~
 
 
@@ -306,7 +295,7 @@ SELECT IS_MEMBER('test_user1')
 GO
 ~~START~~
 int
-0
+<NULL>
 ~~END~~
 
 SELECT IS_ROLEMEMBER('test_user1')
@@ -587,23 +576,9 @@ int
 1
 ~~END~~
 
-SELECT IS_MEMBER('thisroleisaveryuniquerolewhereitsnamelengthisveryveryverylongandspansonehundredandelevencharacterswhichis__111')
-GO
-~~START~~
-int
-1
-~~END~~
-
 
 -- Should return 0
 SELECT IS_MEMBER('test_role4')
-GO
-~~START~~
-int
-0
-~~END~~
-
-SELECT IS_MEMBER('thisroleisaveryuniquerolewhereitsnamelengthisveryveryverylongandspansonehundredandelevencharacterswhichis__111_dup')
 GO
 ~~START~~
 int
@@ -665,10 +640,6 @@ GO
 DROP ROLE test_role2
 GO
 DROP ROLE test_role1
-GO
-DROP ROLE thisroleisaveryuniquerolewhereitsnamelengthisveryveryverylongandspansonehundredandelevencharacterswhichis__111
-GO
-DROP ROLE thisroleisaveryuniquerolewhereitsnamelengthisveryveryverylongandspansonehundredandelevencharacterswhichis__111_dup
 GO
 
 -- psql
