@@ -823,6 +823,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	SimpleEcontextStackEntry *topEntry;
 	SPIExecuteOptions options;
 	bool		need_path_reset = false;
+	bool 		free_plan = false;
 
 	Oid			current_user_id = GetUserId();
 	char	   *cur_dbname = get_cur_db_name();
@@ -900,7 +901,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		DestReceiver *dest;
 
 		if (plan == NULL)
+		{
+			free_plan = true;
 			plan = prepare_stmt_exec(estate, estate->func, stmt, estate->atomic);
+		}
 
 		/*
 		 * If we will deal with scalar function, we need to know the correct
@@ -1280,7 +1284,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * If we aren't saving the plan, unset the pointer.  Note that it
 		 * could have been unset already, in case of a recursive call.
 		 */
-		if (expr->plan && !expr->plan->saved)
+		if (free_plan && expr->plan && !expr->plan->saved)
 		{
 			SPIPlanPtr	plan = expr->plan;
 
@@ -1302,7 +1306,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		SetCurrentRoleId(current_user_id, false);
 	}
 
-	if (expr->plan && !expr->plan->saved)
+	if (free_plan && expr->plan && !expr->plan->saved)
 	{
 		SPIPlanPtr	plan = expr->plan;
 
