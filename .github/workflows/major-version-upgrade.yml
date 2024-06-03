@@ -197,9 +197,8 @@ jobs:
       - name: Run pg_upgrade
         id: run-pg_upgrade
         if: |
-          always() && steps.setup-new-datadir.outcome == 'success' 
-          && steps.check-babelfish-inconsistency.outcome == 'success' 
-          && steps.check-babelfish-inconsistency.outputs.check_result == 0
+          always() && steps.setup-new-datadir.outcome == 'success'
+          && steps.check-babelfish-inconsistency.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
 
       - name: Disable TDS fault injection tests in release mode

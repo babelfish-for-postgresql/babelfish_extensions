@@ -529,6 +529,7 @@ babel_test_int8_numeric_oper
 babel_test_int2_numeric_oper
 login_token-dep
 test_like_for_AI
+babel_726
 BABEL-4869
 test_conv_string_to_date
 test_conv_string_to_datetime

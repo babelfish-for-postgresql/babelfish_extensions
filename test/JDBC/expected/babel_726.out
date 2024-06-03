@@ -59,6 +59,8 @@ int
 
 SELECT COALESCE(NULL, 'I am a string', 1, 2)
 go
+~~START~~
+int
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "I am a string")~~
@@ -617,6 +619,23 @@ float
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type double precision: "abcde")~~
+
+
+DECLARE @ID_UNDE INT = 7;
+select COALESCE(@ID_UNDE, 'Não Informado')
+go
+~~START~~
+int
+7
+~~END~~
+
+
+select coalesce(CAST('x'AS VARBINARY), CAST('x' AS NVARCHAR(4000)), 'x')
+go
+~~START~~
+nvarchar
+x
+~~END~~
 
 
 drop table babel_726_t1
