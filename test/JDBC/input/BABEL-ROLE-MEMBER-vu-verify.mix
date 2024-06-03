@@ -86,7 +86,7 @@ GO
 SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', NULL)
 GO
 
--- Given role name is not a real role, should return NULL
+-- Given name is a real user but not associated with login, should return 0
 SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1')
 GO
 SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1')

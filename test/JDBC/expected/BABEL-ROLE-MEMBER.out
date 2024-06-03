@@ -226,7 +226,7 @@ SELECT IS_MEMBER('test_user1')
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -295,7 +295,7 @@ SELECT IS_MEMBER('test_user1')
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 SELECT IS_ROLEMEMBER('test_user1')
