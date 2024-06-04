@@ -38,6 +38,7 @@
  * Ref: https://www.rfc-editor.org/rfc/rfc3629#section-3
  */
 #define MAX_BYTES_PER_CHAR 4
+#define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
@@ -503,6 +504,19 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 
 		// Switch back to original memory context
 		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/*
+	 * XXX: Currently, we are allowing length of input string upto 250MB bytes. For long term,
+	 * we should try to chunk the input string into smaller parts, remove the accents of that
+	 * part and concat back the final string.
+	 */
+	if (strlen(input_str) > MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("Input string of the length greater than 250MB is not supported by the function remove_accents_internal." \
+							" This function might be used internally by LIKE operator.")));
 	}
 
 	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
