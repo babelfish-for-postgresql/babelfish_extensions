@@ -1,0 +1,6 @@
+SELECT * FROM new_table;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "new_table" does not exist)~~
+

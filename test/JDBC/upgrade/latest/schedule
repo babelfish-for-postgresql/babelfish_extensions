@@ -538,3 +538,4 @@ test_conv_string_to_datetimeoffset
 test_conv_string_to_smalldatetime
 test_conv_string_to_time
 BABEL-3401
+BABEL-4952

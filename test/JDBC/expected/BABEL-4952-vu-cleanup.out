@@ -1,0 +1,12 @@
+DROP TABLE new_table;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "new_table" does not exist)~~
+
+
+DROP TABLE t1_default_collation;
+GO
+
+DROP TABLE t2_ci_ai_collation;
+GO
