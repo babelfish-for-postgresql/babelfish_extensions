@@ -3,7 +3,7 @@ show babelfishpg_tsql.temp_oid_buffer_size
 GO
 ~~START~~
 text
-65536
+0
 ~~END~~
 
 
