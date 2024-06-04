@@ -7097,7 +7097,7 @@ makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
 	std::string typeStr = ::getFullText(ctx->data_type());
 	PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
 	
-	stmt->function_name = pstrdup(getFullText(ctx->id()).c_str());
+	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->datatype = type;
 	stmt->lineno = getLineNo(ctx);
 	stmt->cmd_type = PLTSQL_STMT_PARTITION_FUNCTION;
@@ -7124,7 +7124,7 @@ PLtsql_stmt *
 makeDropPartitionFunction(TSqlParser::Drop_partition_functionContext *ctx)
 {
 	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc0(sizeof(PLtsql_stmt_partition_function));
-	stmt->function_name = pstrdup(getFullText(ctx->id()).c_str());
+	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->lineno = getLineNo(ctx);
 	stmt->cmd_type = PLTSQL_STMT_PARTITION_FUNCTION;
 	stmt->is_create = false;
@@ -7137,8 +7137,8 @@ PLtsql_stmt *
 makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx)
 {
 	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc0(sizeof(PLtsql_stmt_partition_scheme));
-	stmt->scheme_name = pstrdup(getFullText(ctx->id()[0]).c_str());
-	stmt->function_name = pstrdup(getFullText(ctx->id()[1]).c_str());
+	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()[0]).c_str());
+	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()[1]).c_str());
 	stmt->is_create = true;
 	stmt->lineno = getLineNo(ctx);
 	stmt->cmd_type = PLTSQL_STMT_PARTITION_SCHEME;
@@ -7157,7 +7157,7 @@ makeDropPartitionScheme(TSqlParser::Drop_partition_schemeContext *ctx)
 {
 	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc0(sizeof(PLtsql_stmt_partition_scheme));
 	stmt->is_create = false;
-	stmt->scheme_name = pstrdup(getFullText(ctx->id()).c_str());
+	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->lineno = getLineNo(ctx);
 	stmt->cmd_type = PLTSQL_STMT_PARTITION_SCHEME;
 
