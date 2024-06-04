@@ -1859,14 +1859,16 @@ typedef struct tsql_identity_insert_fields
 } tsql_identity_insert_fields;
 
 /* 
- * used to provide extra arg during sort,
- * it is modified version of compare_context
+ * It is modified version of compare_context, which is used to
+ * provide extra arg during sort operation to compare function.
+ * Please check tsql_compare_values() and exec_stmt_partition_function()
+ * for more details.
  */
 typedef struct tsql_compare_context
 {
-	Oid function_oid;
-	Oid colloid;
-	bool contains_duplicate;
+	Oid function_oid; /* oid of comparator operator */
+	Oid colloid; /* collation which needs to used during comparison */
+	bool contains_duplicate; /* true if the array contains duplicate values */
 } tsql_compare_context;
 
 extern tsql_identity_insert_fields tsql_identity_insert;

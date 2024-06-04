@@ -4835,8 +4835,7 @@ add_entry_to_bbf_partition_function(const char *partition_function_name, char *t
 	new_record[Anum_bbf_partition_function_input_parameter_type - 1] =  CStringGetTextDatum(typname);
 	new_record[Anum_bbf_partition_function_partition_option - 1] = BoolGetDatum(partition_option);
 	new_record[Anum_bbf_partition_function_range_values - 1] = PointerGetDatum(values);
-	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(3));
-	new_record[7] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	new_record[6] = new_record[7] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 
 	tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
 
