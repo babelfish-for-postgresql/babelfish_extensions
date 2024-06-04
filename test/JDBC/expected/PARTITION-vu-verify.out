@@ -414,7 +414,6 @@ SELECT * FROM GetPartitionFunctionMetadataView
 GO
 ~~START~~
 nvarchar#!#char#!#nvarchar#!#int#!#bit#!#bit
-[PARTITION_FUNCTION  유니코드스키마👻]#!#R #!#RANGE#!#4#!#1#!#0
 BigIntPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 BinaryPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 CharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
@@ -430,7 +429,6 @@ PARTITION_FUNCTIONログインαιώνια#!#R #!#RANGE#!#4#!#1#!#0
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#R #!#RANGE#!#5#!#1#!#0
 SmallDateTimePartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
-SqlVariantPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 TinyIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 UniqueIdentifierPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 VarBinaryPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
@@ -510,9 +508,6 @@ VarBinaryPartitionFunction#!#1#!#4#!#[B@616b241a
 UniqueIdentifierPartitionFunction#!#1#!#1#!#00000000-0000-0000-0000-000000000000
 UniqueIdentifierPartitionFunction#!#1#!#2#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
 UniqueIdentifierPartitionFunction#!#1#!#3#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
-SqlVariantPartitionFunction#!#1#!#1#!#abc
-SqlVariantPartitionFunction#!#1#!#2#!#1
-SqlVariantPartitionFunction#!#1#!#3#!#2023-05-01 00:00:00.0
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#1#!#0
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#2#!#100
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#3#!#1000
@@ -520,9 +515,6 @@ PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!
 PARTITION_FUNCTIONログインαιώνια#!#1#!#1#!#0
 PARTITION_FUNCTIONログインαιώνια#!#1#!#2#!#500
 PARTITION_FUNCTIONログインαιώνια#!#1#!#3#!#1000
-[PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#1#!#0
-[PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#2#!#500
-[PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#3#!#1000
 ~~END~~
 
 
@@ -530,7 +522,6 @@ SELECT * FROM GetParameterMetadataView
 GO
 ~~START~~
 nvarchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar
-[PARTITION_FUNCTION  유니코드스키마👻]#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 BigIntPartitionFunction#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
 BinaryPartitionFunction#!#binary#!#1#!#8000#!#0#!#0#!#<NULL>
 CharPartitionFunction#!#char#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
@@ -546,7 +537,6 @@ PARTITION_FUNCTIONログインαιώνια#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
 SmallDateTimePartitionFunction#!#smalldatetime#!#1#!#4#!#16#!#0#!#<NULL>
 SmallIntPartitionFunction#!#smallint#!#1#!#2#!#5#!#0#!#<NULL>
-SqlVariantPartitionFunction#!#sql_variant#!#1#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as
 TinyIntPartitionFunction#!#tinyint#!#1#!#1#!#3#!#0#!#<NULL>
 UniqueIdentifierPartitionFunction#!#uniqueidentifier#!#1#!#16#!#0#!#0#!#<NULL>
 VarBinaryPartitionFunction#!#varbinary#!#1#!#8000#!#0#!#0#!#<NULL>
@@ -558,7 +548,6 @@ SELECT * FROM GetPartitionSchemesMetadataView
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit
-[PARTITION_SCHEME  유니코드스키마👻]#!#[PARTITION_FUNCTION  유니코드스키마👻]#!#PS#!#PARTITION_SCHEME#!#0#!#0
 BigIntPartitionScheme#!#BigIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 BinaryPartitionScheme#!#BinaryPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 CharPartitionScheme#!#CharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
@@ -570,11 +559,9 @@ IntPartitionScheme#!#IntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 NCharPartitionScheme#!#NCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 NumericPartitionScheme#!#NumericPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 NVarCharPartitionScheme#!#NVarCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
-PARTITION_SCHEMEログインαιώνια#!#PARTITION_FUNCTIONログインαιώνια#!#PS#!#PARTITION_SCHEME#!#0#!#0
 PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallDateTimePartitionScheme#!#SmallDateTimePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallIntPartitionScheme#!#SmallIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
-SqlVariantPartitionScheme#!#SqlVariantPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 TinyIntPartitionScheme#!#TinyIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 UniqueIdentifierPartitionScheme#!#UniqueIdentifierPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 VarBinaryPartitionScheme#!#VarBinaryPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0

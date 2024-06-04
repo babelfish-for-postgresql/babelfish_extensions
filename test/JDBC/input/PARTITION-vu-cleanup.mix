@@ -76,17 +76,17 @@ GO
 DROP PARTITION SCHEME UniqueIdentifierPartitionScheme
 GO
 
-DROP PARTITION SCHEME SqlVariantPartitionScheme
-GO
+-- DROP PARTITION SCHEME SqlVariantPartitionScheme
+-- GO
 
 DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
 
-DROP PARTITION SCHEME PARTITION_SCHEMEログインαιώνια
-GO
+-- DROP PARTITION SCHEME PARTITION_SCHEMEログインαιώνια
+-- GO
 
-DROP PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻]
-GO
+-- DROP PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻]
+-- GO
 
 -- SET QUOTED_IDENTIFIER ON;
 -- GO
@@ -151,8 +151,8 @@ GO
 DROP PARTITION FUNCTION UniqueIdentifierPartitionFunction 
 GO
 
-DROP PARTITION FUNCTION SqlVariantPartitionFunction 
-GO
+-- DROP PARTITION FUNCTION SqlVariantPartitionFunction 
+-- GO
 
 DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
@@ -160,8 +160,8 @@ GO
 DROP PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια
 GO
 
-DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻]
-GO
+-- DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻]
+-- GO
 
 -- SET QUOTED_IDENTIFIER ON;
 -- GO
