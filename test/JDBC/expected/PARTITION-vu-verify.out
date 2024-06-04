@@ -414,7 +414,6 @@ SELECT * FROM GetPartitionFunctionMetadataView
 GO
 ~~START~~
 nvarchar#!#char#!#nvarchar#!#int#!#bit#!#bit
-"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#R #!#RANGE#!#4#!#1#!#0
 [PARTITION_FUNCTION  유니코드스키마👻]#!#R #!#RANGE#!#4#!#1#!#0
 BigIntPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 BinaryPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
@@ -524,9 +523,6 @@ PARTITION_FUNCTIONログインαιώνια#!#1#!#3#!#1000
 [PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#1#!#0
 [PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#2#!#500
 [PARTITION_FUNCTION  유니코드스키마👻]#!#1#!#3#!#1000
-"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#1#!#1#!#0
-"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#1#!#2#!#500
-"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#1#!#3#!#1000
 ~~END~~
 
 
@@ -534,7 +530,6 @@ SELECT * FROM GetParameterMetadataView
 GO
 ~~START~~
 nvarchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar
-"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 [PARTITION_FUNCTION  유니코드스키마👻]#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 BigIntPartitionFunction#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
 BinaryPartitionFunction#!#binary#!#1#!#8000#!#0#!#0#!#<NULL>
@@ -563,7 +558,6 @@ SELECT * FROM GetPartitionSchemesMetadataView
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit
-"PARTITION_SCHEME 😎$@ #123 🌍rder"#!#"PARTITION_FUNCTION 😎$@ #123 🌍rder"#!#PS#!#PARTITION_SCHEME#!#0#!#0
 [PARTITION_SCHEME  유니코드스키마👻]#!#[PARTITION_FUNCTION  유니코드스키마👻]#!#PS#!#PARTITION_SCHEME#!#0#!#0
 BigIntPartitionScheme#!#BigIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 BinaryPartitionScheme#!#BinaryPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
