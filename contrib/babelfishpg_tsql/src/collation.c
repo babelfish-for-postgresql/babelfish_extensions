@@ -38,6 +38,7 @@
  * Ref: https://www.rfc-editor.org/rfc/rfc3629#section-3
  */
 #define MAX_BYTES_PER_CHAR 4
+#define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
@@ -469,10 +470,11 @@ PG_FUNCTION_INFO_V1(remove_accents_internal);
 Datum remove_accents_internal(PG_FUNCTION_ARGS)
 {
 	char *input_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	UChar *utf16_input;
+	UChar *utf16_input, *utf16_res;
 	int32_t len_uinput, limit, capacity, len_result;
 	char *result;
 	UErrorCode status = U_ZERO_ERROR;
+	text *res_str;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
@@ -493,7 +495,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 
 		// Open transliterator
 		cached_transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
-		if (U_FAILURE(status))
+		if (U_FAILURE(status) || !cached_transliterator)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
@@ -504,41 +506,77 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldcontext);
 	}
 
+	/*
+	 * XXX: Currently, we are allowing length of input string upto 250MB bytes. For long term,
+	 * we should try to chunk the input string into smaller parts, remove the accents of that
+	 * part and concat back the final string.
+	 */
+	if (strlen(input_str) > MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("Input string of the length greater than 250MB is not supported by the function remove_accents_internal." \
+							" This function might be used internally by LIKE operator.")));
+	}
+
 	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
-	pfree(input_str);
 
 	limit = len_uinput;
 	/* 
-	 * set the capacity to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
-	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can 
-	 * have maximum INT32_MAX value
+	 * set the capacity (In UChar terms) to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
+	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can have maximum INT32_MAX
+	 * value which would be equivalent to 2GB UChar points and 2GB * sizeof(UChar) in byte terms.
+	 * XXX: It is assumed that this capacity should handle almost all the general input strings.
 	 */
 	capacity = (limit < (PG_INT32_MAX / MAX_BYTES_PER_CHAR)) ? (limit * MAX_BYTES_PER_CHAR) : PG_INT32_MAX;
 
+	/*
+	 * utrans_transUChars will modify input string in place so ensure that it has enough capacity to store
+	 * transformed string.
+	 */
+	utf16_res = (UChar *) palloc0(capacity * sizeof(UChar));
+	/*
+	 * utf16_input would have one NULL terminator at the end. Copy that too. Limiting memory copy to min of
+	 * (len_uinput + 1) * sizeof(UChar) and capacity * sizeof(UChar) in order to avoid buffer overwriting.
+	 */
+	memcpy(utf16_res, utf16_input, Min((len_uinput + 1) * sizeof(UChar), capacity * sizeof(UChar)));
+	pfree(utf16_input);
+	pfree(input_str);
+
 	utrans_transUChars(cached_transliterator,
-						utf16_input,
+						utf16_res,
 						&len_uinput,
 						capacity,
 						0,
 						&limit,
 						&status);
 
+	/* Allocated capacity may not be enough to hold un-accented string. This shouldn't occur ideally but still defensive code. */
+	if (status == U_BUFFER_OVERFLOW_ERROR)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("Buffer overflow occurred while normalising the string. Error: %s", u_errorName(status))));
+	}
+
 	if (U_FAILURE(status))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					errmsg("Error normalising the input string: %s", u_errorName(status)),
-					errdetail("The input string may have caused buffer overflow")));
+					errmsg("Error normalising the input string: %s", u_errorName(status))));
 	}
 
-	len_result = icu_from_uchar(&result, utf16_input, len_uinput);
+	len_result = icu_from_uchar(&result, utf16_res, len_uinput);
+	pfree(utf16_res);
 
 	// Return result as NVARCHAR
-	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result + 1));
+	res_str = cstring_to_text_with_len(result, len_result);
+	pfree(result);
+	PG_RETURN_VARCHAR_P(res_str);
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				errmsg("This function requires ICU library, which is not available")));
+				errmsg("ICU library is required to be installed in order to use the function remove_accents_internal")));
 	PG_RETURN_NULL();
 #endif
 }
