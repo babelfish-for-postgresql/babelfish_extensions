@@ -612,7 +612,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						/* const value node to store into values clause */
 						functionidValue = makeNode(A_Const);
 						functionidValue->val.ival.type = T_Integer;
-						functionidValue->val.ival.ival = get_available_partition_function_id();
 						functionidValue->location = -1;
 
 						/* function_id column to store into InsertStmt's target list */
@@ -630,7 +629,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						/* const value node to store into values clause */
 						schemeidValue = makeNode(A_Const);
 						schemeidValue->val.ival.type = T_Integer;
-						schemeidValue->val.ival.ival = get_available_partition_scheme_id();
 						schemeidValue->location = -1;
 
 						/* scheme_id column to store into InsertStmt's target list */
@@ -652,9 +650,17 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						if (!owner_found && relid == sysdatabases_oid)
 							sublist = lappend(sublist, ownerValue);
 						if (!function_id_found && relid == bbf_partition_function_oid)
+						{
+							/* add new function id for each row */
+							functionidValue->val.ival.ival = get_available_partition_function_id();
 							sublist = lappend(sublist, functionidValue);
+						}
 						if (!scheme_id_found && relid == bbf_partition_scheme_oid)
+						{
+							/* add new scheme id for each row */
+							schemeidValue->val.ival.ival = get_available_partition_scheme_id();
 							sublist = lappend(sublist, schemeidValue);
+						}
 					}
 				}
 				break;
