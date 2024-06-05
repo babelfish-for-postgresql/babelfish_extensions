@@ -2520,8 +2520,8 @@ SELECT
   st.user_type_id
 FROM
   sys.babelfish_partition_function pf
-LEFT JOIN
-  sys.types st on pf.input_parameter_type = st.name
+INNER JOIN
+  sys.types st on (pf.input_parameter_type = st.name and st.user_type_id = st.system_type_id)
 WHERE
   dbid = sys.db_id();
 GRANT SELECT ON  sys.partition_parameters TO PUBLIC;

@@ -51,10 +51,10 @@ AS
         pf.name as function_name, typ.name as typname, parameter_id, pp.max_length, pp.precision, pp.scale, pp.collation_name
     FROM 
         sys.partition_functions pf
-    LEFT JOIN 
+    INNER JOIN 
         sys.partition_parameters pp on (pp.function_id = pf.function_id)
-    LEFT JOIN 
-        sys.types typ on pp.user_type_id = typ.user_type_id
+    INNER JOIN 
+        sys.types typ on (pp.user_type_id = typ.user_type_id and pp.user_type_id = typ.system_type_id)
     ORDER BY 
        pf.name
 )
