@@ -82,14 +82,14 @@ dump-restore-version: [[
   {
     version: source.latest,
     dump-data-as: inserts,
-    dump-format: directory,
+    dump-format: plain,
     database-level: true,
     type: schema-cum-data-only
   },
   {
     version: target.latest,
     dump-data-as: inserts,
-    dump-format: directory,
+    dump-format: plain,
     database-level: true,
     type: schema-cum-data-only
   }
