@@ -236,6 +236,9 @@ GO
 SELECT * FROM GetRangeMetadataView
 GO
 
+SELECT * FROM GetRangeMetadataVarBinaryFunctionView
+GO
+
 SELECT * FROM GetParameterMetadataView
 GO
 

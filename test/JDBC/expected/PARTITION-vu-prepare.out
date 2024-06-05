@@ -24,6 +24,22 @@ AS
         sys.partition_range_values pr
     LEFT JOIN 
         sys.partition_functions pf on (pr.function_id = pf.function_id)
+    WHERE
+        name not in ('BinaryPartitionFunction', 'VarBinaryPartitionFunction')
+)
+GO
+
+CREATE VIEW GetRangeMetadataVarBinaryFunctionView
+AS
+(
+    SELECT 
+        name, parameter_id, boundary_id, cast(value as varbinary)
+    FROM 
+        sys.partition_range_values pr
+    LEFT JOIN 
+        sys.partition_functions pf on (pr.function_id = pf.function_id)
+    WHERE
+        name in ('BinaryPartitionFunction', 'VarBinaryPartitionFunction')
 )
 GO
 
@@ -34,9 +50,9 @@ AS
     SELECT 
         pf.name as function_name, typ.name as typname, parameter_id, pp.max_length, pp.precision, pp.scale, pp.collation_name
     FROM 
-        sys.partition_parameters pp
-    INNER JOIN 
-        sys.partition_functions pf on (pp.function_id = pf.function_id)
+        sys.partition_functions pf
+    LEFT JOIN 
+        sys.partition_parameters pp on (pp.function_id = pf.function_id)
     LEFT JOIN 
         sys.types typ on pp.user_type_id = typ.user_type_id
     ORDER BY 

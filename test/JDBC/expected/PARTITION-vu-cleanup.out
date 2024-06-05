@@ -4,6 +4,9 @@ GO
 DROP VIEW GetRangeMetadataView
 GO
 
+DROP VIEW GetRangeMetadataVarBinaryFunctionView
+GO
+
 DROP VIEW GetParameterMetadataView
 GO
 

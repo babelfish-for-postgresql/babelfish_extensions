@@ -497,14 +497,6 @@ NCharPartitionFunction#!#1#!#4#!#K
 NCharPartitionFunction#!#1#!#5#!#P    
 NCharPartitionFunction#!#1#!#6#!#U    
 NCharPartitionFunction#!#1#!#7#!#Z    
-BinaryPartitionFunction#!#1#!#1#!#[B@203c20cf
-BinaryPartitionFunction#!#1#!#2#!#[B@2a1debfa
-BinaryPartitionFunction#!#1#!#3#!#[B@44de94c3
-BinaryPartitionFunction#!#1#!#4#!#[B@256aa5f2
-VarBinaryPartitionFunction#!#1#!#1#!#[B@6411d3c8
-VarBinaryPartitionFunction#!#1#!#2#!#[B@2116b68b
-VarBinaryPartitionFunction#!#1#!#3#!#[B@11de56e6
-VarBinaryPartitionFunction#!#1#!#4#!#[B@616b241a
 UniqueIdentifierPartitionFunction#!#1#!#1#!#00000000-0000-0000-0000-000000000000
 UniqueIdentifierPartitionFunction#!#1#!#2#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
 UniqueIdentifierPartitionFunction#!#1#!#3#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
@@ -515,6 +507,21 @@ PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!
 PARTITION_FUNCTIONログインαιώνια#!#1#!#1#!#0
 PARTITION_FUNCTIONログインαιώνια#!#1#!#2#!#500
 PARTITION_FUNCTIONログインαιώνια#!#1#!#3#!#1000
+~~END~~
+
+
+SELECT * FROM GetRangeMetadataVarBinaryFunctionView
+GO
+~~START~~
+nvarchar#!#int#!#int#!#varbinary
+BinaryPartitionFunction#!#1#!#1#!#00000000
+BinaryPartitionFunction#!#1#!#2#!#04000000
+BinaryPartitionFunction#!#1#!#3#!#08000000
+BinaryPartitionFunction#!#1#!#4#!#C0000000
+VarBinaryPartitionFunction#!#1#!#1#!#0000000000000000
+VarBinaryPartitionFunction#!#1#!#2#!#4000000000000000
+VarBinaryPartitionFunction#!#1#!#3#!#8000000000000000
+VarBinaryPartitionFunction#!#1#!#4#!#C000000000000000
 ~~END~~
 
 
