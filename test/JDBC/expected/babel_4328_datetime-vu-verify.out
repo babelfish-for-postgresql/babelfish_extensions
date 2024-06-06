@@ -893,10 +893,9 @@ datetime
 -- invalid syntax
 SELECT CAST('3 12 2024' AS DATETIME)
 GO
-~~START~~
-datetime
-2024-03-12 00:00:00.0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "3 12 2024")~~
 
 
 -- invalid syntax
@@ -2259,7 +2258,7 @@ select cast('4:12:12:1234' as datetime)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data precision out of range for datetime)~~
+~~ERROR (Message: invalid input syntax for type datetime: "4:12:12:1234")~~
 
 
 select cast('4:12:12.1234' as datetime)
