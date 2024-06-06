@@ -1628,10 +1628,9 @@ datetime2
 
 select cast('4:12:12:1234' as datetime2)
 go
-~~START~~
-datetime2
-1900-01-01 04:12:12.1234000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime2: "4:12:12:1234")~~
 
 
 select cast('4:12:12.1234' as datetime2)

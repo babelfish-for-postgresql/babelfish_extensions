@@ -42,10 +42,10 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 				bool contains_extra_spaces, struct pg_tm *tm,
 				bool *is_year_set, bool dump_restore, DateTimeContext context)
 {
-	int i, num_colons = 0, time_idx = nf;
+	int i, num_colons = 0, time_idx = nf, number_fields = 0;
 	bool 		date_exists = false;
 	bool 		contains_iso_time = false;
-	bool		contains_text_month = false;
+	bool		contains_text_month = false, am_pm = false, contains_time = false;
 	/*
 	 * Modify time field to accept ':' as separator for
 	 * seconds and milliseconds.
@@ -55,6 +55,12 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 	for (i = 0; i < nf; i++)
 	{
 		char	*cp;
+
+		if (ftype[i] == DTK_NUMBER)
+		{
+			number_fields++;
+			continue;
+		}
 		if (ftype[i] == DTK_DATE)
 			date_exists = true;
 
@@ -62,6 +68,7 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 		{
 			continue;
 		}
+		contains_time = true;
 		time_idx = i;
 		cp = field[i];
 		strtoi64(cp, &cp, 10);
@@ -70,6 +77,9 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 			num_colons++;
 			if(num_colons == 3)
 			{
+				if (strlen(cp) > 4)
+						return 1;
+
 				*cp = '.';
 				break;
 			}
@@ -104,9 +114,13 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 
 			ftype[i] = DecodeSpecial(i, field[i], &temp_int);
 
+			if ((pg_strcasecmp(field[i], "AM") == 0 ||
+				pg_strcasecmp(field[i], "PM") == 0))
+				am_pm = true;
+
 			if (ftype[i] == ISOTIME && (contains_extra_spaces || num_colons != 2))
 				return 1;
-			else if (ftype[i] == ISOTIME)
+			else if (ftype[i] == ISOTIME || (pg_strcasecmp(field[i], "z") == 0))
 				contains_iso_time = true;
 
 			if(ftype[i] != MONTH)
@@ -183,18 +197,14 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 			return 1;
 	}
 
-	if (context == DATE_TIME_2)
-		return 0;
-
-	if (time_idx == nf && !contains_text_month && nf > 1)
+	if (context == DATE_TIME_OFFSET && time_idx == nf && !contains_text_month && !contains_iso_time && nf > 1)
 		return 1;
  
 	/*
 	 * If the input is in ISO format, we need to check whether hours and minutes
 	 * in the TZ field are of 2 digits, else throw an error.
 	 */
- 
-	for (i = time_idx; contains_iso_time && i < nf; i++)
+	for (i = time_idx; context == DATE_TIME_OFFSET && contains_iso_time && i < nf; i++)
 	{
 		int j = 0, curr_count = 0;
  
@@ -216,6 +226,11 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 		if (curr_count != 2)
 			return 1;
 	}
+
+	if (!am_pm || contains_time)
+		return (contains_text_month == true) ? (number_fields > 2) : (number_fields > 1);
+	else
+		return (contains_text_month == true) ? (number_fields > 3) : (number_fields > 1);
 
 	return 0;
 }
