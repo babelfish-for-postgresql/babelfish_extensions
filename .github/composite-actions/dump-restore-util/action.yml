@@ -301,7 +301,7 @@ runs:
           done < <(tail -n +3 ~/upgrade/servers_file.txt | head -n -2)
         fi
         echo 'Database restore complete.'
-        # rm -rf ~/upgrade/dump
+        rm -rf ~/upgrade/dump
 
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash

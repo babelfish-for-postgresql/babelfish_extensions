@@ -533,8 +533,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 					ResTarget	*col = NULL;
 					A_Const 	*dbidValue = NULL;
 					A_Const 	*ownerValue = NULL;
-					A_Const 	*functionidValue = NULL;
-					A_Const 	*schemeidValue = NULL;
 					bool    	dbid_found = false;
 					bool    	owner_found = false;
 					bool    	function_id_found = false;
@@ -607,13 +605,12 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						stmt->cols = lappend(stmt->cols, col);
 					}
 
+					/*
+					 * Populate function_id column in babelfish_partition_function catalog with
+					 * new one.
+					 */
 					if (!function_id_found && relid == bbf_partition_function_oid)
 					{
-						/* const value node to store into values clause */
-						functionidValue = makeNode(A_Const);
-						functionidValue->val.ival.type = T_Integer;
-						functionidValue->location = -1;
-
 						/* function_id column to store into InsertStmt's target list */
 						col = makeNode(ResTarget);
 						col->name = "function_id";
@@ -624,13 +621,12 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						stmt->cols = lappend(stmt->cols, col);
 					}
 
+					/*
+					 * Populate scheme_id column in babelfish_partition_scheme catalog with
+					 * new one.
+					 */
 					if (!scheme_id_found && relid == bbf_partition_scheme_oid)
 					{
-						/* const value node to store into values clause */
-						schemeidValue = makeNode(A_Const);
-						schemeidValue->val.ival.type = T_Integer;
-						schemeidValue->location = -1;
-
 						/* scheme_id column to store into InsertStmt's target list */
 						col = makeNode(ResTarget);
 						col->name = "scheme_id";
@@ -649,15 +645,25 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 							sublist = lappend(sublist, dbidValue);
 						if (!owner_found && relid == sysdatabases_oid)
 							sublist = lappend(sublist, ownerValue);
+						/*
+						 * For babelfish_partition_function and babelfish_partition_scheme catalog,
+						 * new ID needs to be added for each value in values clause.
+						 */
 						if (!function_id_found && relid == bbf_partition_function_oid)
 						{
-							/* add new function id for each row */
+							/* const value node to store into value clause */
+							A_Const *functionidValue = makeNode(A_Const);
+							functionidValue->val.ival.type = T_Integer;
+							functionidValue->location = -1;
 							functionidValue->val.ival.ival = get_available_partition_function_id();
 							sublist = lappend(sublist, functionidValue);
 						}
 						if (!scheme_id_found && relid == bbf_partition_scheme_oid)
 						{
-							/* add new scheme id for each row */
+							/* const value node to store into value clause */
+							A_Const *schemeidValue = makeNode(A_Const);
+							schemeidValue->val.ival.type = T_Integer;
+							schemeidValue->location = -1;
 							schemeidValue->val.ival.ival = get_available_partition_scheme_id();
 							sublist = lappend(sublist, schemeidValue);
 						}

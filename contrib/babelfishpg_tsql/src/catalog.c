@@ -4631,7 +4631,7 @@ partition_function_id_exists(int32 id)
 	
 	ScanKeyInit(&scanKey,
 					Anum_bbf_partition_function_id,
-					BTEqualStrategyNumber, F_INT2EQ,
+					BTEqualStrategyNumber, F_INT4EQ,
 					Int32GetDatum(id));
 
 	/* scan using index */
@@ -4707,7 +4707,7 @@ partition_scheme_id_exists(int32 id)
 	
 	ScanKeyInit(&scanKey,
 			Anum_bbf_partition_scheme_id,
-			BTEqualStrategyNumber, F_INT2EQ,
+			BTEqualStrategyNumber, F_INT4EQ,
 			Int32GetDatum(id));
 
 	/* scan using index */
