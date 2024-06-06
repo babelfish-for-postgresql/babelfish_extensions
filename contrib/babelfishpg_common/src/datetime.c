@@ -312,16 +312,10 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 	for (i = 0; i < nf; i++)
 	{
 		if (ftype[i] == DTK_NUMBER)
-		{
 			number_fields++;
-			continue;
-		}
-		if (ftype[i] == DTK_DATE)
-		{
+		else if (ftype[i] == DTK_DATE)
 			date_exists = true;
-			continue;
-		}
-		if (ftype[i] == DTK_TIME)
+		else if (ftype[i] == DTK_TIME)
 		{
 			char	*cp;
 
@@ -489,10 +483,15 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 		}
 	}
 
+	/*
+	 * Date delimiter should not be a space ' '. ParseDateTime() allows
+	 * ' ' as a delimiter for DATE field. But, in T-SQL it should be blocked.
+	 * Hence, check the number of DTK_NUMBER fields.
+	 */
 	if (!am_pm || contains_time)
-		return (contains_text_month == true) ? (number_fields > 2) : (number_fields > 1);
+		return (contains_text_month) ? (number_fields > 2) : (number_fields > 1);
 	else
-		return (contains_text_month == true) ? (number_fields > 3) : (number_fields > 1);
+		return (contains_text_month) ? (number_fields > 3) : (number_fields > 1);
 
 	return 0;
 }
