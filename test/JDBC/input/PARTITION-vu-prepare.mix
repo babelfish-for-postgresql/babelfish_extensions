@@ -209,9 +209,16 @@ CREATE PARTITION FUNCTION UniqueIdentifierPartitionFunction (uniqueidentifier)
 AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', '6F9619FF-8B86-D011-B42D-00C04FC964FF');
 GO
 
--- CREATE PARTITION FUNCTION SqlVariantPartitionFunction (sql_variant)
--- AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'));
--- go
+CREATE PARTITION FUNCTION SqlVariantPartitionFunction (sql_variant)
+AS RANGE RIGHT
+FOR VALUES (
+    CAST('abc' AS char(5)),
+    CAST(N'xyz' AS nchar(5)),
+    CAST('Apple' AS VARCHAR(10)),
+    CAST(N'Banana' AS NVARCHAR(10)),
+    CAST('Some text' AS SQL_VARIANT)
+);
+go
 
 -- identifier length greater than 64
 CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (bigint)
@@ -309,10 +316,10 @@ PARTITION UniqueIdentifierPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 
--- CREATE PARTITION SCHEME SqlVariantPartitionScheme AS
--- PARTITION SqlVariantPartitionFunction 
--- ALL TO ([PRIMARY]);
--- GO
+CREATE PARTITION SCHEME SqlVariantPartitionScheme AS
+PARTITION SqlVariantPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
 
 -- identifier length greater than 64
 CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz AS
@@ -323,40 +330,40 @@ GO
 --------------------------------------------------
 --- name identifiers test
 --------------------------------------------------
--- CREATE PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια (int)
--- AS RANGE RIGHT FOR VALUES (0, 500, 1000);
--- GO
+CREATE PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια (int)
+AS RANGE RIGHT FOR VALUES (0, 500, 1000);
+GO
 
--- CREATE PARTITION SCHEME PARTITION_SCHEMEログインαιώνια AS
--- PARTITION PARTITION_FUNCTIONログインαιώνια
--- ALL TO ([PRIMARY]);
--- GO
+CREATE PARTITION SCHEME PARTITION_SCHEMEログインαιώνια AS
+PARTITION PARTITION_FUNCTIONログインαιώνια
+ALL TO ([PRIMARY]);
+GO
 
--- CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻] (int)
--- AS RANGE RIGHT FOR VALUES (0, 500, 1000);
--- GO
+CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻] (int)
+AS RANGE RIGHT FOR VALUES (0, 500, 1000);
+GO
 
--- CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻] AS
--- PARTITION [PARTITION_FUNCTION  유니코드스키마👻]
--- ALL TO ([PRIMARY]);
--- GO
+CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻] AS
+PARTITION [PARTITION_FUNCTION  유니코드스키마👻]
+ALL TO ([PRIMARY]);
+GO
 
 
 -- qouted identifer
--- SET QUOTED_IDENTIFIER ON;
--- GO
+SET QUOTED_IDENTIFIER ON;
+GO
 
--- CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder" (int)
--- AS RANGE RIGHT FOR VALUES (0, 500, 1000);
--- GO
+CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder" (int)
+AS RANGE RIGHT FOR VALUES (0, 500, 1000);
+GO
 
--- CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder" AS
--- PARTITION "PARTITION_FUNCTION 😎$@ #123 🌍rder"
--- ALL TO ([PRIMARY]);
--- GO
+CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder" AS
+PARTITION "PARTITION_FUNCTION 😎$@ #123 🌍rder"
+ALL TO ([PRIMARY]);
+GO
 
--- SET QUOTED_IDENTIFIER OFF;
--- Go
+SET QUOTED_IDENTIFIER OFF;
+Go
 
 
 --------------------------------------------------
