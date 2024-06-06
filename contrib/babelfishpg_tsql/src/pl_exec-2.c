@@ -1022,7 +1022,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			ReleaseSysCache(func_tuple);
 			
 			/* handle RECOMPILE */
-			created_with_recompile = is_created_with_recompile(funcexpr->funcid);		
+			created_with_recompile = is_created_with_recompile(funcexpr->funcid);	
 			if (stmt->exec_with_recompile || created_with_recompile)
 			{
 				old_plan_mode = GetConfigOption("plan_cache_mode", true, true);
@@ -1295,7 +1295,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/*
 		 * old_plan_mode may be NULL when an exception occurred before capturing the old mode 
 		 */
-		if ((stmt->exec_with_recompile || created_with_recompile) && !old_plan_mode)
+		if ((stmt->exec_with_recompile || created_with_recompile) && old_plan_mode)
 		{
 			(void) set_config_option("plan_cache_mode", old_plan_mode,
 							  GUC_CONTEXT_CONFIG,
@@ -1331,7 +1331,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	/*
 	 * Restore plan_cache_mode
 	 */
-	if ((stmt->exec_with_recompile || created_with_recompile) && !old_plan_mode)
+	if ((stmt->exec_with_recompile || created_with_recompile) && old_plan_mode)
 	{
 		(void) set_config_option("plan_cache_mode", old_plan_mode,
 						  GUC_CONTEXT_CONFIG,
@@ -1369,7 +1369,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	exec_eval_cleanup(estate);
 	SPI_freetuptable(SPI_tuptable);
-
+	
 	return PLTSQL_RC_OK;
 }
 
