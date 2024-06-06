@@ -3,27 +3,27 @@
 SET NOCOUNT ON
 GO
 -- column constraint
-CREATE TABLE babel_4940_t1(id INT PRIMARY KEY)
+CREATE TABLE babel_4940_t1(id INT PRIMARY KEY, c1 VARCHAR(5) DEFAULT 'a')
 GO
-INSERT INTO babel_4940_t1 VALUES(generate_series(1,100000))
+INSERT INTO babel_4940_t1 (id) VALUES(generate_series(1,100000))
 GO
 
 -- table constraint
-CREATE TABLE babel_4940_t2(id INT, PRIMARY KEY(id))
+CREATE TABLE babel_4940_t2(id INT, PRIMARY KEY(id), c1 VARCHAR(5) DEFAULT 'a')
 GO
-INSERT INTO babel_4940_t2 VALUES(generate_series(1,100000))
+INSERT INTO babel_4940_t2 (id) VALUES(generate_series(1,100000))
 GO
 
 -- table constraint multiple column
-CREATE TABLE babel_4940_t3(id INT, id1 INT, PRIMARY KEY(id, id1))
+CREATE TABLE babel_4940_t3(id INT, id1 INT, PRIMARY KEY(id, id1), c1 VARCHAR(5) DEFAULT 'a')
 GO
 SET NOCOUNT ON
 DECLARE @i INT=0;
 WHILE (@i<1000)
 BEGIN
-    INSERT INTO babel_4940_t3 VALUES(@i,@i+1)
-    INSERT INTO babel_4940_t3 VALUES(@i,@i+2)
-    INSERT INTO babel_4940_t3 VALUES(@i,@i+3)
+    INSERT INTO babel_4940_t3 (id, id1) VALUES(@i,@i+1)
+    INSERT INTO babel_4940_t3 (id, id1) VALUES(@i,@i+2)
+    INSERT INTO babel_4940_t3 (id, id1) VALUES(@i,@i+3)
     SET @i = @i + 1;
 END
 GO
@@ -31,34 +31,34 @@ GO
 
 -- same test as above but create primary key using alter table add constraints
 -- column constraint
-CREATE TABLE babel_4940_t4(id INT PRIMARY KEY)
+CREATE TABLE babel_4940_t4(id INT PRIMARY KEY, c1 VARCHAR(5) DEFAULT 'a')
 GO
 ALTER TABLE babel_4940_t4 DROP COLUMN id
 GO
 ALTER TABLE babel_4940_t4 ADD id INT PRIMARY KEY
 GO
-INSERT INTO babel_4940_t4 VALUES(generate_series(1,100000))
+INSERT INTO babel_4940_t4 (id) VALUES(generate_series(1,100000))
 GO
 
 -- table constraint
-CREATE TABLE babel_4940_t5(id INT)
+CREATE TABLE babel_4940_t5(id INT, c1 VARCHAR(5) DEFAULT 'a')
 GO
 ALTER TABLE babel_4940_t5 ADD CONSTRAINT c PRIMARY KEY (id)
 GO
-INSERT INTO babel_4940_t5 VALUES(generate_series(1,100000))
+INSERT INTO babel_4940_t5 (id) VALUES(generate_series(1,100000))
 GO
 
 -- table constraint multiple column
-CREATE TABLE babel_4940_t6(id INT, id1 INT)
+CREATE TABLE babel_4940_t6(id INT, id1 INT, c1 VARCHAR(5) DEFAULT 'a')
 GO
 ALTER TABLE babel_4940_t6 ADD CONSTRAINT c1 PRIMARY KEY(id, id1 DESC)
 GO
 DECLARE @i INT=0;
 WHILE (@i<1000)
 BEGIN
-    INSERT INTO babel_4940_t6 VALUES(@i,@i+1)
-    INSERT INTO babel_4940_t6 VALUES(@i,@i+2)
-    INSERT INTO babel_4940_t6 VALUES(@i,@i+3)
+    INSERT INTO babel_4940_t6 (id, id1) VALUES(@i,@i+1)
+    INSERT INTO babel_4940_t6 (id, id1) VALUES(@i,@i+2)
+    INSERT INTO babel_4940_t6 (id, id1) VALUES(@i,@i+3)
     SET @i = @i + 1;
 END
 GO

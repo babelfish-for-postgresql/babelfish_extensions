@@ -109,7 +109,7 @@ AS 'babelfishpg_common', 'varbinaryvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.BBF_VARBINARY AS sys.VARCHAR)
-WITH FUNCTION sys.varbinarysysvarchar (sys.BBF_VARBINARY, integer, boolean) AS ASSIGNMENT;
+WITH FUNCTION sys.varbinarysysvarchar (sys.BBF_VARBINARY, integer, boolean) AS IMPLICIT;
 
 CREATE OR REPLACE FUNCTION sys.varbinaryvarchar(sys.BBF_VARBINARY, integer, boolean)
 RETURNS pg_catalog.VARCHAR
