@@ -592,6 +592,7 @@ convert_node_to_funcexpr_for_like(Node *node)
 		case T_Param:
 		case T_CaseExpr:
 		case T_RelabelType:
+		case T_CoerceViaIO:
 		case T_CollateExpr:
 			{
 				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),

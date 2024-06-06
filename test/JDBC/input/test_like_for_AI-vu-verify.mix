@@ -841,6 +841,74 @@ GO
 SELECT 1 WHERE (SELECT 'chaptéR' COLLATE Latin1_General_CI_AI) LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
 GO
 
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') LIKE '%pai%';
+GO
+
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE 'spain' LIKE (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain');
+GO
+
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') LIKE (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE b LIKE 'spain');
+GO
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') AS subquery_result FROM test_like_for_AI_prepare_t1_ci 
+WHERE col LIKE (SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI);
+GO
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') AS subquery_result FROM test_like_for_AI_prepare_t1_ci
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI) LIKE 'ResumE' COLLATE Latin1_General_CI_AI;
+GO
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') AS subquery_result FROM test_like_for_AI_prepare_t1_ci
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI) LIKE 
+(SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI);
+GO
+
+SELECT col, 
+(SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') AS subquery_result1,
+(SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI) AS subquery_result2
+FROM test_like_for_AI_prepare_t1_ci
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI) LIKE 'ré%';
+GO
+
+SELECT col, 
+(SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain' COLLATE Latin1_General_CI_AI) AS subquery_result
+FROM test_like_for_AI_prepare_t1_ci
+WHERE 
+(col IS NOT NULL AND EXISTS (SELECT 1 FROM test_like_for_AI_prepare_t7_ci WHERE col_v LIKE 'résumé' COLLATE Latin1_General_CI_AI)) OR
+(col IS NULL AND col LIKE 'ré%' COLLATE Latin1_General_CI_AI);
+GO
+
+-- CASE 23: T_CoerceViaIO (with other combinations)
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as nvarchar(3));
+GO
+
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as varchar(3));
+GO
+
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as char(3));
+GO
+
+SELECT 1 WHERE  CAST(123 as nvarchar(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+
+SELECT 1 WHERE  CAST(123 as varchar(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+
+SELECT 1 WHERE  CAST(123 as char(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+
+SELECT c1, (SELECT CAST(c1 AS NVARCHAR(50)) WHERE CAST(c1 AS NVARCHAR(50)) COLLATE Latin1_General_CI_AI LIKE '1%') FROM test_like_for_AI_prepare_escape;
+GO
+
+SELECT c1, (SELECT string WHERE string COLLATE Latin1_General_CI_AI LIKE CAST('451201%' AS NVARCHAR(50))) FROM test_like_for_AI_prepare_escape;
+GO
+
+SELECT c1, (SELECT CAST(c1 AS NVARCHAR(50)) WHERE CAST(c1 AS NVARCHAR(50)) COLLATE Latin1_General_CI_AI LIKE CAST('1%' AS NVARCHAR(50))) FROM test_like_for_AI_prepare_escape;
+GO
+
+SELECT c1, string, (SELECT CAST(string AS NVARCHAR(50)) WHERE CAST(string AS NVARCHAR(50)) COLLATE Latin1_General_CI_AI LIKE '451201%') FROM test_like_for_AI_prepare_escape;
+GO
+
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
 select 1 where 'cantáis' like 'cá%' collate Latin1_General_CS_AI;
@@ -1685,6 +1753,75 @@ GO
 
 SELECT 1 WHERE (SELECT 'chaptéR' COLLATE Latin1_General_CS_AI) LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
 GO
+
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') LIKE '%pai%';
+GO
+
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE 'Spain' LIKE (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain');
+GO
+
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') LIKE (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE b LIKE 'SPAIn');
+GO
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') AS subquery_result FROM test_like_for_AI_prepare_t1_cs 
+WHERE col LIKE (SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI);
+GO
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') AS subquery_result FROM test_like_for_AI_prepare_t1_cs
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI) LIKE 'resume' COLLATE Latin1_General_CS_AI;
+GO
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') AS subquery_result FROM test_like_for_AI_prepare_t1_cs
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI) LIKE 
+(SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI);
+GO
+
+SELECT col, 
+(SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') AS subquery_result1,
+(SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI) AS subquery_result2
+FROM test_like_for_AI_prepare_t1_cs
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI) LIKE 'ré%';
+GO
+
+SELECT col, 
+(SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain' COLLATE Latin1_General_CS_AI) AS subquery_result
+FROM test_like_for_AI_prepare_t1_cs
+WHERE 
+(col IS NOT NULL AND EXISTS (SELECT 1 FROM test_like_for_AI_prepare_t7_cs WHERE col_v LIKE 'résumé' COLLATE Latin1_General_CS_AI)) OR
+(col IS NULL AND col LIKE 'ré%' COLLATE Latin1_General_CS_AI);
+GO
+
+-- CASE 23: T_CoerceViaIO (with other combinations)
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as nvarchar(3));
+GO
+
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as varchar(3));
+GO
+
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as char(3));
+GO
+
+SELECT 1 WHERE  CAST(123 as nvarchar(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+
+SELECT 1 WHERE  CAST(123 as varchar(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+
+SELECT 1 WHERE  CAST(123 as char(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+
+SELECT c1, (SELECT CAST(c1 AS NVARCHAR(50)) WHERE CAST(c1 AS NVARCHAR(50)) COLLATE Latin1_General_CS_AI LIKE '1%') FROM test_like_for_AI_prepare_escape;
+GO
+
+SELECT c1, (SELECT string WHERE string COLLATE Latin1_General_CS_AI LIKE CAST('451201%' AS NVARCHAR(50))) FROM test_like_for_AI_prepare_escape;
+GO
+
+SELECT c1, (SELECT CAST(c1 AS NVARCHAR(50)) WHERE CAST(c1 AS NVARCHAR(50)) COLLATE Latin1_General_CS_AI LIKE CAST('1%' AS NVARCHAR(50))) FROM test_like_for_AI_prepare_escape;
+GO
+
+SELECT c1, string, (SELECT CAST(string AS NVARCHAR(50)) WHERE CAST(string AS NVARCHAR(50)) COLLATE Latin1_General_CS_AI LIKE '451201%') FROM test_like_for_AI_prepare_escape;
+GO
+
 
 --- ADDITIONAL CORNER CASE TESTING ---
 
