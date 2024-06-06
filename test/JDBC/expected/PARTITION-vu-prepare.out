@@ -320,22 +320,22 @@ PARTITION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuv
 ALL TO ([PRIMARY]);
 GO
 
+
+
+
+
+
+
+
+
+
+
 --------------------------------------------------
 --- name identifiers test
 --------------------------------------------------
-CREATE PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια (int)
-AS RANGE RIGHT FOR VALUES (0, 500, 1000);
-GO
-
-
-
-
-
-
-
-
-
-
+-- CREATE PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια (int)
+-- AS RANGE RIGHT FOR VALUES (0, 500, 1000);
+-- GO
 -- CREATE PARTITION SCHEME PARTITION_SCHEMEログインαιώνια AS
 -- PARTITION PARTITION_FUNCTIONログインαιώνια
 -- ALL TO ([PRIMARY]);

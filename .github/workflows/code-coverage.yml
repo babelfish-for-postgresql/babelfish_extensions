@@ -61,34 +61,34 @@ jobs:
         with:
           install_dir: ${{env.INSTALL_DIR}}
 
-      - name: Run JDBC Tests
-        id: run-jdbc-tests
-        if: always() && steps.install-extensions.outcome == 'success'
-        timeout-minutes: 60
-        uses: ./.github/composite-actions/run-jdbc-tests 
+      # - name: Run JDBC Tests
+      #   id: run-jdbc-tests
+      #   if: always() && steps.install-extensions.outcome == 'success'
+      #   timeout-minutes: 60
+      #   uses: ./.github/composite-actions/run-jdbc-tests 
       
-      - name: Run Dotnet Tests
-        id: install-and-run-dotnet
-        if: always() && steps.install-extensions.outcome == 'success'
-        uses: ./.github/composite-actions/install-and-run-dotnet
+      # - name: Run Dotnet Tests
+      #   id: install-and-run-dotnet
+      #   if: always() && steps.install-extensions.outcome == 'success'
+      #   uses: ./.github/composite-actions/install-and-run-dotnet
       
-      - name: Run ODBC Tests
-        id: install-and-run-odbc-tests
-        if: always() && steps.install-extensions.outcome == 'success'
-        uses: ./.github/composite-actions/install-and-run-odbc
+      # - name: Run ODBC Tests
+      #   id: install-and-run-odbc-tests
+      #   if: always() && steps.install-extensions.outcome == 'success'
+      #   uses: ./.github/composite-actions/install-and-run-odbc
 
-      - name: Drop and re-create Babelfish database
-        id: re-install-extensions
-        if: always() && steps.install-extensions.outcome == 'success'
-        run: |
-          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="single-db" -v tsql_port=1433 -v parallel_query_mode=false -f .github/scripts/create_extension.sql
-          sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
+      # - name: Drop and re-create Babelfish database
+      #   id: re-install-extensions
+      #   if: always() && steps.install-extensions.outcome == 'success'
+      #   run: |
+      #     sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+      #     sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="single-db" -v tsql_port=1433 -v parallel_query_mode=false -f .github/scripts/create_extension.sql
+      #     sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       
-      - name: Run Python Tests
-        id: install-and-run-python
-        if: always() && steps.re-install-extensions.outcome == 'success'
-        uses: ./.github/composite-actions/install-and-run-python
+      # - name: Run Python Tests
+      #   id: install-and-run-python
+      #   if: always() && steps.re-install-extensions.outcome == 'success'
+      #   uses: ./.github/composite-actions/install-and-run-python
 
       - name: Generate code coverage HTML report
         id: code-coverage

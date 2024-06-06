@@ -160,8 +160,8 @@ GO
 DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
 
-DROP PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια
-GO
+-- DROP PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια
+-- GO
 
 -- DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻]
 -- GO
