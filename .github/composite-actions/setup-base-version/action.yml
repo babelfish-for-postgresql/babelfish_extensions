@@ -227,8 +227,15 @@ runs:
         python3 upgrade_validation.py
       shell: bash
 
+    - name: Run Babelfish metadata inconsistency check
+      id: check-babelfish-inconsistency
+      if: always() && steps.run-dependency-check.outcome == 'success'
+      uses: ./.github/composite-actions/check-babelfish-inconsistency
+      
     - name: Upload artifacts
-      if: always() && steps.run-dependency-check.outcome == 'failure'
+      if: |
+        always() && (steps.run-dependency-check.outcome == 'failure'
+        || steps.check-babelfish-inconsistency.outcome == 'failure')
       run: |
         mkdir -p ~/upgrade
         cp test/python/output/upgrade_validation/* ~/upgrade
