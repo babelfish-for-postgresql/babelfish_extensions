@@ -61,36 +61,35 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 			number_fields++;
 			continue;
 		}
-		if (ftype[i] == DTK_DATE)
+		else if (ftype[i] == DTK_DATE)
 			date_exists = true;
 
-		if (ftype[i] != DTK_TIME)
+		else if (ftype[i] == DTK_TIME)
 		{
-			continue;
-		}
-		contains_time = true;
-		time_idx = i;
-		cp = field[i];
-		strtoi64(cp, &cp, 10);
-		while (*cp == ':')
-		{
-			num_colons++;
-			if(num_colons == 3)
-			{
-				if (strlen(cp) > 4)
-						return 1;
-
-				*cp = '.';
-				break;
-			}
-			cp++;
+			contains_time = true;
+			time_idx = i;
+			cp = field[i];
 			strtoi64(cp, &cp, 10);
+			while (*cp == ':')
+			{
+				num_colons++;
+				if(num_colons == 3)
+				{
+					if (strlen(cp) > 4)
+							return 1;
+
+					*cp = '.';
+					break;
+				}
+				cp++;
+				strtoi64(cp, &cp, 10);
+			}
+
+			if (num_colons < 2 && cp != NULL && *cp == '.')
+				return 1;
+
+			break;
 		}
-
-		if (num_colons < 2 && cp != NULL && *cp == '.')
-			return 1;
-
-		break;
 	}
 
 	/*
@@ -227,6 +226,11 @@ tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, in
 			return 1;
 	}
 
+	/*
+	 * Date delimiter should not be a space ' '. ParseDateTime() allows
+	 * ' ' as a delimiter for DATE field. But, in T-SQL it should be blocked.
+	 * Hence, check the number of DTK_NUMBER fields.
+	 */
 	if (!am_pm || contains_time)
 		return (contains_text_month == true) ? (number_fields > 2) : (number_fields > 1);
 	else
