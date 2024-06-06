@@ -2240,6 +2240,7 @@ bool		pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p
 void		pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char **probin_str_p);
 void		pltsql_function_probin_reader(ParseState *pstate,
 										  List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
+Node*		pltsql_inline_function(Oid funcoid);
 extern void probin_json_reader(text *probin, int **typmod_arr_p, int typmod_arr_len);
 
 /*
@@ -2267,4 +2268,9 @@ void		GetOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDes
 extern void 	exec_utility_cmd_helper(char *query_str);
 extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 
+/*
+ * Functions for Scalar UDF Inlining
+ */
+extern inline_function_call_hook_type inline_function_call_hook;
+Node* pltsql_compile_and_inline_scalar_udf(ParseState *pstate, Oid funcoid);
 #endif							/* PLTSQL_H */

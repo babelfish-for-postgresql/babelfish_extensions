@@ -77,6 +77,7 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
+#include "pltsql.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -5202,4 +5203,69 @@ unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 	}
 
 	return SORTBY_NULLS_DEFAULT;
+}
+
+static Node *
+pltsql_inline_scalar_udf(ParseState *pstate, PLtsql_function *function)
+{
+	ListCell *s = NULL;
+	Node *result = NULL;
+
+	// KLTODO: this is a hack for this particular function
+	foreach(s, function->action->body)
+	{
+		PLtsql_stmt *stmt = (PLtsql_stmt *) lfirst(s);
+		if (stmt->cmd_type == PLTSQL_STMT_BLOCK)
+		{
+			PLtsql_stmt_block *innerblock = (PLtsql_stmt_block *) stmt;
+			ListCell *ss = NULL;
+			List *raw_parsetree_list;
+			SelectStmt *selectstmt;
+
+			foreach(ss, innerblock->body)
+			{
+				PLtsql_stmt *innerstmt = (PLtsql_stmt *) lfirst(ss);
+				PLtsql_stmt_return *return_stmt = (PLtsql_stmt_return *) innerstmt;
+				SubLink *sublink = NULL;
+				Assert(innerstmt->cmd_type == PLTSQL_STMT_RETURN);
+
+				ereport(LOG, (errmsg("Return statement: %s", return_stmt->expr->query)));
+
+				raw_parsetree_list = raw_parser(return_stmt->expr->query, RAW_PARSE_DEFAULT);
+				Assert(list_length(raw_parsetree_list) == 1);
+
+				selectstmt = (SelectStmt *) parsetree_nth_stmt(raw_parsetree_list, 0);
+
+				sublink = makeNode(SubLink);
+				sublink->subLinkType = EXPR_SUBLINK;
+				sublink->subLinkId = 0;
+				sublink->subselect = (Node *) selectstmt;
+
+				result = transformExpr(pstate, (Node *) sublink, pstate->p_expr_kind);
+			}
+		}
+	}
+
+	return result;
+}
+
+Node *
+pltsql_compile_and_inline_scalar_udf(ParseState *pstate, Oid funcoid)
+{
+	LOCAL_FCINFO(fake_fcinfo, 0);
+	FmgrInfo	flinfo;
+	PLtsql_function *func;
+
+	/*
+	* Set up a fake fcinfo with just enough info to satisfy
+	* pltsql_compile().
+	*/
+	MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(0));
+	MemSet(&flinfo, 0, sizeof(flinfo));
+	fake_fcinfo->flinfo = &flinfo;
+	flinfo.fn_oid = funcoid;
+	flinfo.fn_mcxt = CurrentMemoryContext;
+
+	func = pltsql_compile(fake_fcinfo, false);
+	return pltsql_inline_scalar_udf(pstate, func);
 }
