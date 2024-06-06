@@ -696,9 +696,10 @@ GO
 
 select cast('2023-11-27Z' as datetimeoffset)
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type datetimeoffset: "2023-11-27Z")~~
+~~START~~
+datetimeoffset
+2023-11-27 00:00:00.0000000 +00:00
+~~END~~
 
 
 SELECT cast('2022-10-30T03:00:00Z' as datetimeoffset)
@@ -921,10 +922,9 @@ datetimeoffset
 
 select cast('4:12:12:1234 -8:00' as datetimeoffset)
 go
-~~START~~
-datetimeoffset
-1900-01-01 04:12:12.1234000 -08:00
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "4:12:12:1234 -8:00")~~
 
 
 select cast('4:12:12.1234 -8:00' as datetimeoffset)

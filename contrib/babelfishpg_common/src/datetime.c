@@ -302,8 +302,8 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 						bool *is_year_set)
 {
 	int start_idx = 0, last_idx = nf, time_idx = -1;
-	int i, num_colons = 0;
-	bool date_exists = false;
+	int i = 0, num_colons = 0, number_fields = 0;
+	bool date_exists, am_pm = false, contains_text_month = false, contains_time = false;
 
 	/*
 	 * Modify time field to accept ':' as separator for
@@ -311,6 +311,11 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 	 */
 	for (i = 0; i < nf; i++)
 	{
+		if (ftype[i] == DTK_NUMBER)
+		{
+			number_fields++;
+			continue;
+		}
 		if (ftype[i] == DTK_DATE)
 		{
 			date_exists = true;
@@ -319,6 +324,8 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 		if (ftype[i] == DTK_TIME)
 		{
 			char	*cp;
+
+			contains_time = true;
 
 			time_idx = i;
 			cp = field[time_idx];
@@ -329,6 +336,9 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 				num_colons++;
 				if(num_colons == 3)
 				{
+					if (strlen(cp) > 4)
+						return 1;
+
 					*cp = '.';
 					break;
 				}
@@ -342,6 +352,7 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 			if (i+1 < nf && (pg_strcasecmp(field[i+1], "AM") == 0 ||
 				pg_strcasecmp(field[i+1], "PM") == 0))
 			{
+				am_pm = true;
 				start_idx = (i==0) ? 2 : 0;
 				last_idx = (start_idx==0) ? i : nf;
 			}
@@ -389,6 +400,8 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 				ftype[i] = DTK_STRING;
 				continue;
 			}
+
+			contains_text_month = true;
 
 			if(!check_regex_for_text_month(str, DATE_TIME))
 				return 1;
@@ -475,6 +488,11 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 				return 1;
 		}
 	}
+
+	if (!am_pm || contains_time)
+		return (contains_text_month == true) ? (number_fields > 2) : (number_fields > 1);
+	else
+		return (contains_text_month == true) ? (number_fields > 3) : (number_fields > 1);
 
 	return 0;
 }
