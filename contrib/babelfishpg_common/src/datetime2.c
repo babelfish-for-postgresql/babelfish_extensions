@@ -40,12 +40,18 @@ void		CheckDatetime2Range(const Timestamp time, Node *escontext);
 bool
 tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
 				bool contains_extra_spaces, struct pg_tm *tm,
-				bool *is_year_set, bool dump_restore, DateTimeContext context)
+				bool *is_year_set, DateTimeContext context)
 {
 	int i, num_colons = 0, time_idx = nf, number_fields = 0;
 	bool 		date_exists = false;
 	bool 		contains_iso_time = false;
 	bool		contains_text_month = false, am_pm = false, contains_time = false;
+	bool		dump_restore = false;
+	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+
+	if (babelfish_dump_restore &&
+		 strncmp(babelfish_dump_restore, "on", 2) == 0)
+		 dump_restore = true;
 	/*
 	 * Modify time field to accept ':' as separator for
 	 * seconds and milliseconds.
@@ -262,12 +268,6 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 	bool		is_year_set = false;
 	DateTimeErrorExtra extra;
 	char		*modified_str = str;
-	bool		dump_restore = false;
-	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
-
-	if (babelfish_dump_restore &&
-		 strncmp(babelfish_dump_restore, "on", 2) == 0)
-		 dump_restore = true;
 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -288,7 +288,7 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 						  field, ftype, MAXDATEFIELDS, &nf);
 
 	if (tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
-								contains_extra_spaces, tm, &is_year_set, dump_restore, DATE_TIME_2))
+								contains_extra_spaces, tm, &is_year_set, DATE_TIME_2))
 	{
 		if (modified_str)
 			pfree(modified_str);

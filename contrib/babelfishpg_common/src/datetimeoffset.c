@@ -101,16 +101,10 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	bool		contains_extra_spaces = false, is_year_set = false;
 	DateTimeErrorExtra extra;
 	char		*modified_str = str;
-	bool		dump_restore = false;
-	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 
 
 	datetimeoffset = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
 
-	if (babelfish_dump_restore &&
-		 strncmp(babelfish_dump_restore, "on", 2) == 0)
-		 dump_restore = true;
- 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
 	tm->tm_mday = 0;
@@ -134,7 +128,7 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 						  field, ftype, MAXDATEFIELDS, &nf);
 
 	if (tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
-								contains_extra_spaces, tm, &is_year_set, dump_restore, DATE_TIME_OFFSET))
+								contains_extra_spaces, tm, &is_year_set, DATE_TIME_OFFSET))
 	{
 		if (modified_str)
 			pfree(modified_str);
