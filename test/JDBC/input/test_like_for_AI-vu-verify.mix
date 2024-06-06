@@ -1951,3 +1951,27 @@ GO
 
 EXEC test_like_for_AI_prepare_procedure @input_text = 'ȌÆß';
 GO
+
+SELECT * FROM test_babel_5006 where str like 'c%' order by str;
+GO
+
+SELECT * FROM test_babel_5006 where str like '%Æ%' order by str;
+GO
+
+SELECT count(*) FROM test_babel_5006 where str like '%taeiou';
+GO
+
+SELECT count(*) FROM test_babel_5006 where str like 'taeiouc';
+GO
+
+SELECT count(*) FROM test_babel_5006 where str like '%²%';
+GO
+
+SELECT count(*) FROM test_babel_5006 where str like '%taei%';
+GO
+
+SELECT count(*) FROM test_babel_5006 where str like '%taeio%';
+GO
+
+SELECT count(*) FROM test_babel_5006 where str like 'taeiouc';
+GO

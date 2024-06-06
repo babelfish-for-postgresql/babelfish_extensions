@@ -3216,6 +3216,7 @@ SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_c LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
 SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_c LIKE 'ch%';
@@ -3248,6 +3249,7 @@ SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_nchar LIKE 'cafe';
 GO
 ~~START~~
 nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
 ~~END~~
 
 SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE col_nchar LIKE 'ch%';
@@ -5635,5 +5637,131 @@ GO
 ~~START~~
 nvarchar
 OAEss
+~~END~~
+
+
+SELECT * FROM test_babel_5006 where str like 'c%' order by str;
+GO
+~~START~~
+nvarchar
+çQÑw0qÑAÀûu
+ÇVêḬ1ŸĈdȲ3ɖŒÑĥvaIĴɽ
+ƇæÞGꝪsĝÖ6YɵSɍiüⱤs
+ƇḬꝫĥn9ǽɵàɲɲƇAƈŒǿæzꞑ
+ƇuÄêɌŴuɵIñÊŋÑǽ
+~~END~~
+
+
+SELECT * FROM test_babel_5006 where str like '%Æ%' order by str;
+GO
+~~START~~
+nvarchar
+1ǽØĥŸ
+5éǼƈɐYÉŋŜÖɽPpgÂDô
+7æ8Ꞑ4ŴǿÖEñ4Vp
+7ꝭȲEAꝪmæɽ
+8ŜꝫñꞄxJḭǼ
+àæêĲR
+AæÞĴhǽærBƝ
+Àé2FÞrÉaḬœĉḬ0Vê6ꞃĈ
+ǽɖoEƉMçñNJƊqtdŶ
+æJɐÐAǽÑǽꞑIñĲÀɲñɖ
+ænŋƝeƟÜ
+æƝꞄDꞅðqǼñþŴÿäcvÊÆꞑnŴ
+æɵꞇNWꞂ3ÑŝꞆ7Ñçĝꝭd4qrɍ
+ÆŝꝬŝPĤs0
+ÄFñĜĵdQǽƊꞑqꝫKɽoꞅD0ḬƊ
+ÄrŴÇzàÆ96UNð
+âꝪmꝫŒƊIŒEYXÀrêŝ6ǽŜê
+ⱯNâÔâɍñɐÆ2ǼƟøûækŜrꝭɌ
+ⱯꝬꞇŴUzsǼ
+boḬÐfaǼꞃøHĲŋȳJǼƟRqX
+ƇæÞGꝪsĝÖ6YɵSɍiüⱤs
+ƇḬꝫĥn9ǽɵàɲɲƇAƈŒǿæzꞑ
+ƇuÄêɌŴuɵIñÊŋÑǽ
+Ð1æǽÿŝĴⱯ
+DRĤØæÊwĤxĜktPÜ
+FqgĜƟæÇîvñĳƊ1ÎÄkŊpl
+îɗĈnéḬꞅĳYdĉƈÄŝⱤjǼ
+ḭöæLRØ
+KÂSǼXꞇꞐÔ2Û
+KöĲ1ɽuⱯ1ĈRÆꞂQɍĜ
+LĜƊ0ⱤĲÀɵFꞐêɐꝫPØǽĜR
+LĤÑþĉ0ǽⱯ
+LÔjéÀŴÜǼ
+lŜǽcÛ
+ÑŋæÇAüÊŊȳÖÛîŴꞃǿtœ
+ñSÇÿGkæo2ÆꞇÄÑKꝪ
+ꞐiÛmŜþSpéæĤĴ
+Ǿ1pÜꞇǼꞑû
+œæǽüĤɲ0G
+ǾG8ÎǼꞃscöKŝɲ
+OĝŜbŒyÆàĜ6SÉⱯ
+ôŋ1lyÆ
+PœⱤIQâñxæȲ
+rV1oûÉꞑUJþ1gǼtÉ
+ɌæyḬǾVŶ4eǿÜðqûÑƊ
+ɍÉɍøGɲZYꝭ5EgǼĈôÊƊêôh
+ɍĤfYɐÿŒwƈǼbQvŊǼꞑȳüĴ
+ɌMƟĉAÆÎḬ6eeta
+ɌØêȳyǼÖMCƊØlÑjRÀⱤꞑ
+ɽäŶÆŴñÛꝪîŷŸĳꞂǼ
+ⱤƉÖaæêⱯñ
+ɽÞgÞûiƝǽæꝭsƊƈcjÑ
+ŝǼɍÂǼ
+üǽɲÔ3Ɵ4ꞇPw6ĈQꞂbôk
+vötÄnȳàǼꝬǽƊɲŊ
+ŵBIɐþçÎƉéææ2ꞐGI
+Wŵg4t8ǽ6ÆoœO
+ÿÿǼLꞄSéƈñBⱯPÊ7ǿ
+ꝫǽÎ9HöɌꝫÂJĵɍð
+~~END~~
+
+
+SELECT count(*) FROM test_babel_5006 where str like '%taeiou';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) FROM test_babel_5006 where str like 'taeiouc';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) FROM test_babel_5006 where str like '%²%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) FROM test_babel_5006 where str like '%taei%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) FROM test_babel_5006 where str like '%taeio%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) FROM test_babel_5006 where str like 'taeiouc';
+GO
+~~START~~
+int
+0
 ~~END~~
 
