@@ -93,4 +93,20 @@ dump-restore-version: [[
     database-level: true,
     type: schema-cum-data-only
   }
+],
+[
+  {
+    version: 15.5,
+    dump-data-as: copy,
+    dump-format: tar,
+    database-level: true,
+    type: full
+  },
+  {
+    version: 15.5,
+    dump-data-as: copy,
+    dump-format: tar,
+    database-level: true,
+    type: full
+  }
 ]]
