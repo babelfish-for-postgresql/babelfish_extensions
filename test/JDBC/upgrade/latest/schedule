@@ -536,3 +536,6 @@ test_conv_string_to_datetimeoffset
 test_conv_string_to_smalldatetime
 test_conv_string_to_time
 BABEL-3401
+babel_4328_datetime
+babel_4328_datetime2
+babel_4328_datetimeoffset
