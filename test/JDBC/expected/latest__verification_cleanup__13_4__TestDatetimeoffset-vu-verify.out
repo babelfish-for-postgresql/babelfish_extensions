@@ -467,10 +467,9 @@ go
 -- Test datetimeoffset value ranges
 select cast('0001-01-01 +0' as datetimeoffset);
 go
-~~START~~
-datetimeoffset
-0001-01-01 00:00:00.0000000 +00:00
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "0001-01-01 +0")~~
 
 select cast('0001-01-01 -1' as datetimeoffset);
 go 
@@ -492,21 +491,21 @@ select cast('0001-01-01 +0 BC' as datetimeoffset);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetimeoffset)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "0001-01-01 +0 BC")~~
 
 -- out of range
 select cast('0001-01-01 +1' as datetimeoffset);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetimeoffset)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "0001-01-01 +1")~~
 
 -- out of range
 select cast('0001-01-01 +0:20' as datetimeoffset);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetimeoffset)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "0001-01-01 +0:20")~~
 
 -- out of range
 select cast('9999-12-31 23:59:29.998 -1' as datetimeoffset);
@@ -520,7 +519,7 @@ select cast('10000-01-01 00:00' as datetimeoffset);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetimeoffset)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "10000-01-01 00:00")~~
 
 
 -- Testing arithmetic operators
@@ -853,7 +852,7 @@ exec testdatettimeoffset_vu_prepare_cast @dto;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetimeoffset)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "19200-05-06 13:39:29.123456 +0:00")~~
 
 
 -- test comparing datetimeoffset inside procedure
