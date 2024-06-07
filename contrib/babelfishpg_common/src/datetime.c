@@ -319,7 +319,7 @@ tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int
 {
 	int start_idx = 0, last_idx = nf, time_idx = -1;
 	int i = 0, num_colons = 0, number_fields = 0;
-	bool date_exists, am_pm = false, contains_text_month = false, contains_time = false;
+	bool date_exists = false, am_pm = false, contains_text_month = false, contains_time = false;
 
 	/*
 	 * Modify time field to accept ':' as separator for
