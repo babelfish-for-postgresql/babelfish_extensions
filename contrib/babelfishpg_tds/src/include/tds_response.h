@@ -75,6 +75,7 @@ extern void PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, 
 extern void SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 										 FmgrInfo *finfo, Datum datum, bool isNull,
 										 bool forceCoercion);
+extern void SendReturnValueIntInternal(uint8 status, int32 value);
 extern void TdsSendEnvChange(int envid, const char *new_val, const char *old_val);
 extern void TdsSendInfoOrError(int token, int number, int state, int class,
 							   char *message, char *server_name,

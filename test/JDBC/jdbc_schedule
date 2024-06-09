@@ -310,6 +310,7 @@ ignore#!#BABEL-3513_before_15_8_or_16_4-vu-verify
 
 # These tests are for jTDS driver
 ignore#!#jtds-TestBinary
+ignore#!#jtds-TestCursorFetchNext
 ignore#!#jtds-TestDate
 ignore#!#jtds-TestDatetime
 ignore#!#jtds-TestDatetimeoffset-vu-prepare

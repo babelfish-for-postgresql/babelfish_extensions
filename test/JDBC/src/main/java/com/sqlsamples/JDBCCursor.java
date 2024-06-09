@@ -53,7 +53,7 @@ public class JDBCCursor {
     void setHoldabilityOnConnection(Connection conn, int holdability) throws SQLException {
         if ("JtdsConnection".equals(conn.getClass().getSimpleName()) &&
                 ResultSet.CLOSE_CURSORS_AT_COMMIT == holdability) {
-            // CLOSE_CURSORS_AT_COMMIT option not supported i jTDS
+            // CLOSE_CURSORS_AT_COMMIT option not supported in jTDS
             return;
         }
         conn.setHoldability(holdability);

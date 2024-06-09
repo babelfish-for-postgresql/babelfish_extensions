@@ -2394,6 +2394,42 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 	(token->paramMeta.sendFunc) (finfo, datum, (void *) &token->paramMeta);
 }
 
+/*
+ * SendReturnValueIntInternal
+ *
+ * status - stored procedure (0x01) or UDF (0x02)
+ */
+void
+SendReturnValueIntInternal(uint8 status, int32 value)
+{
+	SendPendingDone(true);
+
+	/* token type */
+	TDS_DEBUG(TDS_DEBUG2, "SendReturnValueIntInternal: token=0x%02x", TDS_TOKEN_RETURNVALUE);
+
+	/*  TokenType */
+	TdsPutUInt8(TDS_TOKEN_RETURNVALUE);		
+	/* ParamOrdinal */
+	TdsPutUInt16LE(0x0d);		
+	/* ParamName */
+	TdsPutUInt8(0);		
+	/* Status */
+	TdsPutUInt8(status);		
+	/* UserType */
+	if (GetClientTDSVersion() <= TDS_VERSION_7_1_1)
+		TdsPutUInt16LE(0);		
+	else
+		TdsPutUInt32LE(0);		
+	/* Flags */
+	TdsPutUInt16LE(0);		
+	/* TypeInfo */
+	TdsPutUInt8(TDS_TYPE_INTEGER);
+	TdsPutUInt8(0x04);
+	/* Value */
+	TdsPutUInt8(0x04);
+	TdsPutInt32LE(value);		
+}
+
 int
 GetTypModForToken(ParameterToken token)
 {

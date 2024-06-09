@@ -2525,6 +2525,7 @@ FetchAndValidateCursorFetchOptions(TDSRequestSP req, int *fetchType,
 		case SP_CURSOR_FETCH_PREV:
 		case SP_CURSOR_FETCH_LAST:
 		case SP_CURSOR_FETCH_ABSOLUTE:
+		case SP_CURSOR_FETCH_INFO:
 			break;
 
 			/*
@@ -2535,7 +2536,6 @@ FetchAndValidateCursorFetchOptions(TDSRequestSP req, int *fetchType,
 			 */
 		case SP_CURSOR_FETCH_RELATIVE:
 		case SP_CURSOR_FETCH_REFRESH:
-		case SP_CURSOR_FETCH_INFO:
 		case SP_CURSOR_FETCH_PREV_NOADJUST:
 		case SP_CURSOR_FETCH_SKIP_UPDT_CNCY:
 			ereport(ERROR,
@@ -2550,7 +2550,7 @@ FetchAndValidateCursorFetchOptions(TDSRequestSP req, int *fetchType,
 
 	token = req->cursorExtraArg2;
 
-	if (token)
+	if (token && !token->isNull)
 	{
 		/* the token must be integer */
 		Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
@@ -2574,7 +2574,7 @@ FetchAndValidateCursorFetchOptions(TDSRequestSP req, int *fetchType,
 
 	token = req->cursorExtraArg3;
 
-	if (token)
+	if (token && !token->isNull)
 	{
 		/* the token must be integer */
 		Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
@@ -2597,6 +2597,10 @@ FetchAndValidateCursorFetchOptions(TDSRequestSP req, int *fetchType,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid nrow value 0 for cursor type %X", *fetchType)));
 		}
+	}
+	else if (*fetchType == SP_CURSOR_FETCH_INFO)
+	{
+		*howMany = -1;
 	}
 	else
 	{
@@ -2641,6 +2645,13 @@ HandleSPCursorFetchRequest(TDSRequestSP req)
 	PG_END_TRY();
 
 	TDSStatementEndCallback(NULL, NULL);
+
+	if (fetchType == SP_CURSOR_FETCH_INFO)
+	{
+		/* return rownum and nrows as output parameters */
+		SendReturnValueIntInternal(1, rownum);
+		SendReturnValueIntInternal(1, nrows);
+	}
 
 	TdsSendDone(TDS_TOKEN_DONEINPROC, TDS_DONE_MORE, TDS_CMD_SELECT, SPI_processed);
 

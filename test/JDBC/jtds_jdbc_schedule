@@ -89,10 +89,8 @@ jtds-TestErrorsWithTryCatch
 jtds-TestStoredProcedures
 
 # cursors
-# Failure:
-# ERROR:  cursor fetch type 100 not supported
-# jTDS calls sp_cursorfetch procedure with FETCH_INFO (100) option
-# TestCursorFetchNext
+# cursor.last() is not supported in jTDS - it relies on cursor 'nrows' that is not available in Postgres
+jtds-TestCursorFetchNext
 # Failure:
 # LOG:  Unmapped error found. Code: 1088, Message: 
 #	 Tds SP_CURSORPREPARE not supported yet, File: tdsrpc.c, Line: 3367, Context: TDS
