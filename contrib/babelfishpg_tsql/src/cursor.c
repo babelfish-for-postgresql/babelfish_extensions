@@ -1241,7 +1241,7 @@ execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pn
 		case SP_CURSOR_FETCH_INFO:
 			/* return fetch_info_rownum saved during the last fetch */
 			if (hentry->fetch_info_rownum > INT_MAX)
-				elog(ERROR, "fetch_info_rownum overflow: %" PRId64, hentry->fetch_info_rownum);
+				elog(ERROR, "fetch_info_rownum overflow: %ld", hentry->fetch_info_rownum);
 			*prownum = (int) hentry->fetch_info_rownum;
 			/* number of rows in cursor is not available in PG */
 			*pnrows = -1;
