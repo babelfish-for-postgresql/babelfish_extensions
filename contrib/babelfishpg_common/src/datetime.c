@@ -174,7 +174,7 @@ check_regex_for_text_month(char *str, DateTimeContext context)
 char*
 clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 {
-	char *result = (char *) palloc(MAXDATELEN);
+	char *result = (char *) palloc(MAXDATELEN + 1);
 	int i = 0, j = 0;
 	int last_non_space = -1;
 	int num_colons = 0;
