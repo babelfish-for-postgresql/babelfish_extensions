@@ -6,6 +6,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include <regex.h>
 #include "postgres.h"
 
 #include "fmgr.h"
@@ -63,6 +64,455 @@ void		CheckDatetimePrecision(fsec_t fsec);
 
 #define DTK_NANO 32
 
+static bool
+match_regex(char *str, char *regex_exp)
+{
+	regex_t regex;
+	int status;
+	status = regcomp(&regex, regex_exp, REG_EXTENDED);
+    	status = regexec(&regex, str, 0, NULL, 0);
+    	regfree(&regex);
+	
+	if (status == 0)
+		return true;
+	
+	return false;
+}
+
+/*
+ * This function checks the regex in case of the text month.
+ * We will be checking with the combination of date regex's and
+ * time regex's.
+ */
+bool
+check_regex_for_text_month(char *str, DateTimeContext context)
+{
+	char curr_regex[200];
+    	int i, j;
+	const char *regex_time_offset = "(((\\+|\\-)[0-9]{1,2}:[0-9]{1,2})|Z)?";
+	const char *datetime2_offset_supported[] = {
+		"[0-9]{2}\\s*[a-zA-Z]{3,10}",
+		"[a-zA-Z]{3,10}\\s*[0-9]{2}"
+	};
+	const int num_datetime2_offset_supported = lengthof(datetime2_offset_supported);
+
+	for (i = 0; i < num_datetime2_offset_supported; i++) {
+		for (j = 0; j < NUM_TIME_REGEXES; j++) {
+			if (context == DATE_TIME)
+				break;
+	    		/*
+			 * check for the combination of date and time
+			 */
+			strcpy(curr_regex, "^");
+			strcat(curr_regex, datetime2_offset_supported[i]);
+            		strcat(curr_regex, "\\s+");
+            		strcat(curr_regex, time_regexes[j]);
+			if (context == DATE_TIME_OFFSET)
+			{
+				strcat(curr_regex, "\\s*");
+            			strcat(curr_regex, regex_time_offset);
+			}
+			strcat(curr_regex, "$");
+
+			if(match_regex(str, curr_regex))
+				return true;
+		}
+	}
+
+	for (i = 0; i < NUM_DATE_REGEXES; i++) {
+		/*
+		 * check for just date syntax
+		 */
+		strcpy(curr_regex, "^");
+        	strcat(curr_regex, date_regexes[i]);
+        	strcat(curr_regex, "$");
+
+		if(match_regex(str, curr_regex))
+			return true;
+
+        	for (j = 0; j < NUM_TIME_REGEXES; j++) {
+			/*
+			 * check for just time syntax
+			 */
+			strcpy(curr_regex, "^");
+        		strcat(curr_regex, time_regexes[j]);
+			if (context == DATE_TIME_OFFSET)
+			{
+				strcat(curr_regex, "\\s*");
+            			strcat(curr_regex, regex_time_offset);
+			}
+        		strcat(curr_regex, "$");
+
+			if(match_regex(str, curr_regex))
+				return true;
+	    		/*
+			 * check for the combination of date and time
+			 */
+			strcpy(curr_regex, "^");
+			strcat(curr_regex, date_regexes[i]);
+            		strcat(curr_regex, "\\s+");
+            		strcat(curr_regex, time_regexes[j]);
+			if (context == DATE_TIME_OFFSET)
+			{
+				strcat(curr_regex, "\\s*");
+            			strcat(curr_regex, regex_time_offset);
+			}
+			strcat(curr_regex, "$");
+
+			if(match_regex(str, curr_regex))
+				return true;
+        	}
+    	}
+
+	return false;
+}
+
+/*
+ * This function cleans up the input string by removing
+ * unnecessary spaces between the fields.
+ */
+char*
+clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
+{
+	char *result = (char *) palloc(MAXDATELEN);
+	int i = 0, j = 0;
+	int last_non_space = -1;
+	int num_colons = 0;
+	char *context_str = (context == DATE_TIME) ? "datetime" 
+			: ((context == DATE_TIME_2) ? "datetime2" : "datetimeoffset");
+
+	while (str[i] != '\0')
+	{
+		/*
+		 * Remove leading spaces
+		 */
+		while (str[i] != '\0' && isspace(str[i]))
+		{
+			if (i != 0)
+				*contains_extra_spaces = true;
+			i++;
+		}
+
+		if (str[i] == '\0')
+			break;
+
+		if (j > MAXDATELEN)
+		{
+			if (result)
+				pfree(result);
+
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
+		}
+		
+		if (context == DATE_TIME_OFFSET && str[i] == ':')
+			num_colons++;
+
+		/*
+		 * Modify DATE delimiters to '.' as in DATETIME multiple delimiters can
+		 * be passed for DATE field.
+		 */
+		if (context == DATE_TIME && (str[i] == '/' || str[i] == '-' || str[i] == '.'))
+		{
+			result[j] = '.';
+			j++;
+		}
+		/*
+		 * If the current character is an alphabet, do not add
+		 * space if the last non space character is a delimiter,
+		 * else an additional space is required.
+		 */
+		else if (isalpha(str[i]))
+		{
+			if (last_non_space == -1 ||
+				(!isdigit(str[last_non_space]) && !isalpha(str[last_non_space])))
+			{
+				result[j] = str[i];
+				j++;
+			}
+			else if (isdigit(str[last_non_space]))
+			{
+				result[j] = ' ';
+				result[j+1] = str[i];
+				j+=2;
+			}
+			else if (last_non_space == i-1)
+			{
+				result[j] = str[i];
+				j++;
+			}
+			else
+			{
+				result[j] = ' ';
+				result[j+1] = str[i];
+				j+=2;
+			}
+		}
+		/*
+		 * If the current character is a digit, do not add
+		 * space if the last non space character is a delimiter,
+		 * else an additional space is required.
+		 */
+		else if (isdigit(str[i]))
+		{
+			
+			if (last_non_space == -1 || 
+				(!isdigit(str[last_non_space]) && !isalpha(str[last_non_space])))
+			{
+				result[j] = str[i];
+				j++;
+			}
+			else if (isalpha(str[last_non_space]))
+			{
+				result[j] = ' ';
+				result[j+1] = str[i];
+				j+=2;
+			}
+			else if (last_non_space == i-1)
+			{
+				result[j] = str[i];
+				j++;
+			}
+			else
+			{
+				result[j] = ' ';
+				result[j+1] = str[i];
+				j+=2;
+			}
+		}
+		/*
+		 * If the context is DATETIME only ',' and ':' are allowed
+		 * other than above mentioned characters.
+		 */
+		else if ((str[i] == ',' || str[i] == ':') || 
+				(context != DATE_TIME && (str[i] == '.' || str[i] == '/' 
+				|| str[i] == '+' || str[i] == '-')))
+		{
+			result[j] = str[i];
+			j++;
+		}
+		else
+		{
+			if (result)
+				pfree(result);
+			
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
+		}
+
+		last_non_space = i;
+		i++;
+	}
+
+	result[j] = '\0';
+
+	return result;
+	
+}
+
+static bool
+tsql_decode_datetime_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
+						bool contains_extra_spaces, struct pg_tm *tm,
+						bool *is_year_set)
+{
+	int start_idx = 0, last_idx = nf, time_idx = -1;
+	int i = 0, num_colons = 0, number_fields = 0;
+	bool date_exists = false, am_pm = false, contains_text_month = false, contains_time = false;
+
+	/*
+	 * Modify time field to accept ':' as separator for
+	 * seconds and milliseconds.
+	 */
+	for (i = 0; i < nf; i++)
+	{
+		if (ftype[i] == DTK_NUMBER)
+			number_fields++;
+		else if (ftype[i] == DTK_DATE)
+			date_exists = true;
+		else if (ftype[i] == DTK_TIME)
+		{
+			char	*cp;
+
+			contains_time = true;
+
+			time_idx = i;
+			cp = field[time_idx];
+
+			strtoi64(cp, &cp, 10);
+			while (*cp == ':')
+			{
+				num_colons++;
+				if(num_colons == 3)
+				{
+					if (strlen(cp) > 4)
+						return 1;
+
+					*cp = '.';
+					break;
+				}
+				cp++;
+				strtoi64(cp, &cp, 10);
+			}
+
+			if (num_colons == 1 && cp != NULL && *cp == '.')
+				*cp = ':';
+
+			if (i+1 < nf && (pg_strcasecmp(field[i+1], "AM") == 0 ||
+				pg_strcasecmp(field[i+1], "PM") == 0))
+			{
+				am_pm = true;
+				start_idx = (i==0) ? 2 : 0;
+				last_idx = (start_idx==0) ? i : nf;
+			}
+			else
+			{
+				start_idx = (i == 0) ? 1 : 0;
+				last_idx = (i == 0) ? nf : nf-1;
+			}
+		}				
+	}
+	/*
+	 * Number of DATE fields can not be more than 3 in any case.
+	 */
+	if (last_idx - start_idx > 3)
+		return 1;
+
+	/*
+	 * If there is a text month in the input str, move it to the 
+	 * beginning of the DATE field.
+	 * Also, if it is in ISO 8601 format, we need to check whether
+	 * input str is matching 'YYYY-MM-DDThh:mm:ss[.mmm]' format.
+	 */
+	for (i = start_idx; i < last_idx; i++)
+	{
+		if (ftype[i] == DTK_STRING)
+		{
+			int j = i-1, temp_int;
+			char *temp;
+
+			ftype[i] = DecodeSpecial(i, field[i], &temp_int);
+
+			if (ftype[i] == ISOTIME && (contains_extra_spaces || num_colons < 2))
+				return 1;
+			
+			else if (ftype[i] == ISOTIME)
+			{
+				char *regex_exp = "^[0-9]{4}[-][0-9]{2}[-][0-9]{2}[T][0-9]{2}[:][0-9]{2}[:][0-9]{2}([.][0-9]{1,3})?$";
+				
+				if (!match_regex(orig_str, regex_exp))
+					return 1;
+			}
+
+			if(ftype[i] != MONTH)
+			{
+				ftype[i] = DTK_STRING;
+				continue;
+			}
+
+			contains_text_month = true;
+
+			if(!check_regex_for_text_month(str, DATE_TIME))
+				return 1;
+
+			tm->tm_mon = temp_int;
+
+			while (j>=0)
+			{
+				/* Swap ftype entries */
+				temp_int = ftype[j];
+				ftype[j] = ftype[j+1];
+				ftype[j+1] = temp_int;
+
+				/* Swap field entries */
+				temp = field[j];
+				field[j] = field[j+1];
+				field[j+1] = temp;
+
+				j--;
+			}
+		}
+		else if (ftype[i] == DTK_NUMBER && !date_exists)
+		{
+			int field_len = strlen(field[i]);
+			if (last_idx - start_idx > 2)
+				continue;
+
+			if (field_len == 4)
+			{
+				tm->tm_year = atoi(field[i]);
+				*is_year_set = true;
+			}
+			else if (field_len == 2 && time_idx == 2)
+			{
+				int temp = atoi(field[i]);
+				tm->tm_year = (temp < 50) ? (2000 + temp) : (1900 + temp);
+				*is_year_set = true;
+			}
+			else if (last_idx - start_idx != 1 || (field_len != 8 && field_len != 6))
+				return 1;
+
+
+		}
+		else if (ftype[i] == DTK_DATE)
+		{
+			/*
+			 * Check whether the field contains any alphabet.
+			 * If yes, it might contain text month. 
+			 * If no alphabet are found, we need to check whether the
+			 * length of the DATE field is less than 10. Throw error if it
+			 * exceeds.
+			 */
+			char *cp = field[i];
+			/* regex expression for "[m]m-yyyy-[d]d" format */
+			char *regex_expr = "^[0-9]{1,2}[-|.|/][0-9]{4}[-|.|/][0-9]{1,2}$";
+
+			while (cp != NULL && *cp != '\0' && !isalpha(*cp))
+				cp++;
+			
+			if (cp != NULL && isalpha(*cp))
+				continue;
+			
+			/*
+			 * If the DATE is in mm-yyyy-dd format, DecodeDateTime
+			 * throws error, hence we need to rearrange it the DATE string
+			 * to mm-dd-yyyy format
+			 */
+			
+			if (match_regex(field[i], regex_expr))
+			{
+				int month = 0, year = 0, day = 0;
+				cp = field[i];
+
+				month = strtoi64(cp, &cp, 10);
+				cp++;
+				year = strtoi64(cp, &cp, 10);
+				cp++;
+				day = strtoi64(cp, &cp, 10);
+
+				sprintf(field[i], "%d.%d.%d", month, day, year);
+			}
+
+			if (strlen(field[i]) > 10)
+				return 1;
+		}
+	}
+
+	/*
+	 * Date delimiter should not be a space ' '. ParseDateTime() allows
+	 * ' ' as a delimiter for DATE field. But, in T-SQL it should be blocked.
+	 * Hence, check the number of DTK_NUMBER fields.
+	 */
+	if (!am_pm || contains_time)
+		return (contains_text_month) ? (number_fields > 2) : (number_fields > 1);
+	else
+		return (contains_text_month) ? (number_fields > 3) : (number_fields > 1);
+
+	return 0;
+}
+
+
 Datum
 datetime_in_str(char *str, Node *escontext)
 {
@@ -81,6 +531,9 @@ datetime_in_str(char *str, Node *escontext)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+	bool		contains_extra_spaces = false;
+	bool		is_year_set = false;
+	char		*modified_str = str;
 
 	/*
 	 * Set input to default '1900-01-01 00:00:00.000' if empty string
@@ -92,20 +545,56 @@ datetime_in_str(char *str, Node *escontext)
 		PG_RETURN_TIMESTAMP(result);
 	}
 
-	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+	tm->tm_year = 0;
+	tm->tm_mon = 0;
+	tm->tm_mday = 0;
+
+	strcpy(modified_str, str);
+
+	modified_str = clean_input_str(modified_str, &contains_extra_spaces, DATE_TIME);
+
+	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
+
+	/*
+	 * throw error if the return value is not zero.
+	 */
+	if(tsql_decode_datetime_fields(str, modified_str, field, nf, ftype, 
+					contains_extra_spaces, tm, &is_year_set))
+	{
+		if (modified_str)
+			pfree(modified_str);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				errmsg("invalid input syntax for type datetime: \"%s\"", str)));
+	}
+
+	if (modified_str)
+		pfree(modified_str);
+	
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, 
-							   &dtype, tm, &fsec, &tz, &extra);
+							&dtype, tm, &fsec, &tz, &extra);
+
 	/* dterr == 1 means that input is TIME format(e.g 12:34:59.123) */
-	/* initialize other necessary date parts and accept input format */
-	if (dterr == 1)
+	if (dterr == 1 || is_year_set)
 	{
-		tm->tm_year = 1900;
+		if (!is_year_set)
+			tm->tm_year = 1900;
+		if (!tm->tm_mon)
+			tm->tm_mon = 1;
+		if (is_year_set || !tm->tm_mday)
+			tm->tm_mday = 1;
+		dterr = 0;
+	}
+	else if(dterr == 1)
+	{
 		tm->tm_mon = 1;
 		tm->tm_mday = 1;
 		dterr = 0;
 	}
+
 	if (dterr != 0)
 		DateTimeParseError(dterr, &extra, str, "datetime", escontext);
 	switch (dtype)
