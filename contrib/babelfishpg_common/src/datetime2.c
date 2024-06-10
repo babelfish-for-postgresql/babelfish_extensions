@@ -267,7 +267,7 @@ datetime2_in_str(char *str, int32 typmod)
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 	bool		contains_extra_spaces = false;
 	bool		is_year_set = false;
-	char		*modified_str = str;
+	char		*modified_str;
 
 	/* Set input to default '1900-01-01 00:00:00.* if empty string encountered */
 	if (*str == '\0')
@@ -282,7 +282,7 @@ datetime2_in_str(char *str, int32 typmod)
 	tm->tm_mon = 0;
 	tm->tm_mday = 0;
 
-	modified_str = clean_input_str(modified_str, &contains_extra_spaces, DATE_TIME_2);
+	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME_2);
 
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
