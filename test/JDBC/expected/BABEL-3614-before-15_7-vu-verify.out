@@ -181,8 +181,6 @@ GO
 
 EXEC BABEL_3614_vu_prepare_p7
 GO
-~~START~~
-datetime2
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Explicit conversion from data type "decimal" to datetime2 is not allowed.)~~

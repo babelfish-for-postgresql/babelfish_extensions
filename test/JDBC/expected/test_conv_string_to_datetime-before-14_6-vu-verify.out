@@ -617,8 +617,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '24-3-12 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -666,8 +664,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '24.3.12 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -715,8 +711,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '24/3/12 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -782,8 +776,6 @@ datetime
 -- invalid syntax
 SELECT CONVERT(DATETIME, '3 12 2024')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -791,8 +783,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '3#12#2024')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -849,8 +839,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '22-03-2024')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -907,8 +895,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '22-2024-03')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -930,8 +916,6 @@ datetime
 -- For DATE as follows, it will always be treated as YMD DATEFORMAT as YDM is not supported.
 SELECT CONVERT(DATETIME, '2024-22-03')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1172,8 +1156,6 @@ datetime
 
 SELECT CONVERT(DATETIME, 'Apr 12, 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1181,8 +1163,6 @@ datetime
 
 SELECT CONVERT(DATETIME, 'Apr 12 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1222,8 +1202,6 @@ datetime
 
 SELECT CONVERT(DATETIME, 'Apr 1, 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1231,8 +1209,6 @@ datetime
 
 SELECT CONVERT(DATETIME, 'Apr 1 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1272,8 +1248,6 @@ datetime
 
 SELECT CONVERT(DATETIME, 'Apr12, 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1281,8 +1255,6 @@ datetime
 
 SELECT CONVERT(DATETIME, 'Apr12 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1322,8 +1294,6 @@ datetime
 
 SELECT CONVERT(DATETIME, 'Apr1, 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1331,8 +1301,6 @@ datetime
 
 SELECT CONVERT(DATETIME, 'Apr1 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1342,8 +1310,6 @@ datetime
 -- this is only applicable for datetime and smalldatetime, for other datatypes error will be thrown
 SELECT CONVERT(DATETIME, N'محرم 12, 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1351,8 +1317,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 12 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1360,8 +1324,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 12, 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1369,8 +1331,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 12 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1378,8 +1338,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 12,  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1387,8 +1345,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 12  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1396,8 +1352,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 1, 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1405,8 +1359,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 1 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1414,8 +1366,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 1, 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1423,8 +1373,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 1 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1432,8 +1380,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 1,  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1441,8 +1387,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم 1  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1450,8 +1394,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم12, 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1459,8 +1401,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم12 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1468,8 +1408,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم12, 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1477,8 +1415,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم12 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1486,8 +1422,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم12,  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1495,8 +1429,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم12  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1504,8 +1436,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم1, 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1513,8 +1443,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم1 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1522,8 +1450,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم1, 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1531,8 +1457,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم1 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -1540,8 +1464,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم1,  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1549,8 +1471,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'محرم1  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1901,8 +1821,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '12 Apr, 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1910,8 +1828,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '12 Apr 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1967,8 +1883,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '12Apr, 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -1976,8 +1890,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '12Apr 14:30')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2003,8 +1915,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12 محرم, 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2012,8 +1922,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12 محرم 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2021,8 +1929,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12 محرم, 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2030,8 +1936,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12 محرم 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2039,8 +1943,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12 محرم,  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2048,8 +1950,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12 محرم  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2073,8 +1973,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12محرم, 24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2082,8 +1980,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12محرم24  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2091,8 +1987,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12محرم, 4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2100,8 +1994,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12محرم4  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2109,8 +2001,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12محرم,  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2118,8 +2008,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12محرم  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2170,8 +2058,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12 24 محرم  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2187,8 +2073,6 @@ datetime
 
 SELECT CONVERT(DATETIME, N'12 24محرم  14:30', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2502,8 +2386,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2022-1-22T13:34:12.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2511,8 +2393,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2022-10-2T13:34:12.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2520,8 +2400,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2022-10-22T3:34:12.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2529,8 +2407,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2022-10-22T13:4:12.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2538,8 +2414,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2022-10-22T13:34:1.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2571,8 +2445,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2022-10-22T13:34:12.1234')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2589,8 +2461,6 @@ datetime
 -- -- spaces are not allowed between any two tokens for ISO 8601
 SELECT CONVERT(DATETIME, '2022-10-22T13 :34:12.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2598,8 +2468,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2022-10 -22T13:34:12.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2607,8 +2475,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2022-10-22 T 13:34:12.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2625,8 +2491,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '20241329')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2642,8 +2506,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '241329')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2659,8 +2521,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '0001')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2676,8 +2536,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '20241329 03:00:00')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2693,8 +2551,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '241329 03:00')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2710,8 +2566,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '0001 03:00:00.421')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2720,8 +2574,6 @@ datetime
 -- -- invalid syntax
 SELECT CONVERT(DATETIME, '0')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2729,8 +2581,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '1')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2738,8 +2588,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '11')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2747,8 +2595,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '111')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2756,8 +2602,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '11111')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2765,8 +2609,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '1111111')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2791,8 +2633,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '4:12:12:1234')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2800,8 +2640,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '4:12:12.1234')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -2875,8 +2713,6 @@ datetime
 -- -- hijri leap year
 SELECT CONVERT(DATETIME, '20241230', 130)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -2966,8 +2802,6 @@ datetime
 -- DATETIME with typmod
 SELECT CONVERT(DATETIME(1), '01/01/98 23:59:59.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: CAST or CONVERT: invalid attributes specified for type 'datetime')~~
@@ -2975,8 +2809,6 @@ datetime
 
 SELECT CONVERT(DATETIME(2), '01/01/98 23:59:59.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: CAST or CONVERT: invalid attributes specified for type 'datetime')~~
@@ -2984,8 +2816,6 @@ datetime
 
 SELECT CONVERT(DATETIME(3), '01/01/98 23:59:59.123')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: CAST or CONVERT: invalid attributes specified for type 'datetime')~~
@@ -2994,8 +2824,6 @@ datetime
 -- boundary tests
 SELECT CONVERT(DATETIME, '9999-12-31 23:59:59.999')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -3012,8 +2840,6 @@ datetime
 -- -- out of bound values
 SELECT CONVERT(DATETIME,'2022-10-00 23:59:59.990')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -3021,8 +2847,6 @@ datetime
 
 SELECT CONVERT(DATETIME,'0000-10-01 23:59:59.990')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -3030,8 +2854,6 @@ datetime
 
 SELECT CONVERT(DATETIME,'2023-00-01 23:59:59.990')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -3039,8 +2861,6 @@ datetime
 
 SELECT CONVERT(DATETIME,'0000-00-00 23:59:59.990')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -3048,8 +2868,6 @@ datetime
 
 SELECT CONVERT(DATETIME,'1742-10-01 23:59:59.990')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
@@ -3202,8 +3020,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '02/12/21 15:13:14 PM', 22)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -3211,8 +3027,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2021-02-12', 23)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -3220,8 +3034,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2021-02-12 15:13:14.123', 25)
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -3414,8 +3226,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2000-04-22 16:23:51.7668c0')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -3423,8 +3233,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2001-04-022 16:23:51.766890 +12:00')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -3435,8 +3243,6 @@ SELECT CONVERT(DATETIME, '02001-04-22 16:23:51.766890 +12:00')
 GO 
 SELECT CONVERT(DATETIME, ' 2001- 04 - 22 16: 23: 51. 766890 +12:00')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -3444,8 +3250,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '02001-04-22 16:23:51')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -3453,8 +3257,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '1900-05-06 13:59:29.050 -8:00')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -3502,8 +3304,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2011-08-15 10:30.00 AMZ')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
@@ -3511,8 +3311,6 @@ datetime
 
 SELECT CONVERT(DATETIME, '2011-08-15 10:30.00 PMZ')
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~

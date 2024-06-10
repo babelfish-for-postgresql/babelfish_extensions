@@ -71,8 +71,6 @@ datetimeoffset
 
 Select '2022-10-29 20:01:00.000' AT TIME ZONE convert(datetime,'2022-10-29 20:01:00.000')
 Go
-~~START~~
-datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.)~~

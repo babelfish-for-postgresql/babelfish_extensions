@@ -686,7 +686,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_day NUMERIC,
@@ -768,7 +768,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_day TEXT,
@@ -784,7 +784,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE)
@@ -804,7 +804,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 -- Following function can be used to convert string literal to DATE, TIME and DATETIME2.
@@ -1453,7 +1453,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 -- Following function can be used to convert string literal to DATETIME and SMALLDATETIME
@@ -2117,7 +2117,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 -- Following function can be used to convert string literal to DATETIMEOFFSET
@@ -2202,7 +2202,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT,
@@ -2478,7 +2478,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_int_part(IN p_srcnumber DOUBLE PRECISION)
@@ -2493,7 +2493,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_jobs ()
@@ -2698,7 +2698,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_monthnum_by_name(IN p_monthname TEXT,
@@ -9788,7 +9788,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetime_v2(IN p_datatype TEXT,
@@ -9807,7 +9807,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetimeoffset(IN p_datatype TEXT,
@@ -9826,7 +9826,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_time_to_string(IN p_datatype TEXT,
@@ -9866,7 +9866,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg sys.VARCHAR,
                                                         IN try BOOL,
@@ -9879,7 +9879,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg sys.NVARCHAR,
                                                         IN try BOOL,
@@ -9892,7 +9892,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg sys.BPCHAR,
                                                         IN try BOOL,
@@ -9905,7 +9905,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg sys.NCHAR,
                                                         IN try BOOL,
@@ -9918,7 +9918,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg anyelement,
                                                         IN try BOOL,
@@ -9946,7 +9946,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_date(IN arg anyelement)
 RETURNS DATE
@@ -9962,7 +9962,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 -- conversion to time
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
@@ -9989,7 +9989,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
                                                         IN arg sys.VARCHAR,
@@ -10003,7 +10003,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
                                                         IN arg sys.NVARCHAR,
@@ -10017,7 +10017,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
                                                         IN arg sys.BPCHAR,
@@ -10031,7 +10031,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
                                                         IN arg sys.NCHAR,
@@ -10045,7 +10045,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN typmod INTEGER,
                                                         IN arg anyelement,
@@ -10074,7 +10074,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_time(IN arg anyelement)
 RETURNS TIME
@@ -10090,7 +10090,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 -- conversion to datetime
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
@@ -10117,7 +10117,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
                                                             IN arg sys.VARCHAR,
@@ -10131,7 +10131,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
                                                             IN arg sys.NVARCHAR,
@@ -10145,7 +10145,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
                                                             IN arg sys.BPCHAR,
@@ -10159,7 +10159,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
                                                             IN arg sys.NCHAR,
@@ -10173,7 +10173,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN typmod INTEGER,
                                                             IN arg anyelement,
@@ -10202,7 +10202,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement)
 RETURNS sys.DATETIME
@@ -10218,7 +10218,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 -- conversion to datetime2
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
@@ -10245,7 +10245,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
                                                             IN arg sys.VARCHAR,
@@ -10259,7 +10259,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
                                                             IN arg sys.NVARCHAR,
@@ -10273,7 +10273,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
                                                             IN arg sys.BPCHAR,
@@ -10287,7 +10287,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
                                                             IN arg sys.NCHAR,
@@ -10301,7 +10301,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typmod INTEGER,
                                                             IN arg anyelement,
@@ -10330,7 +10330,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime2(IN arg anyelement)
 RETURNS sys.DATETIME2
@@ -10346,7 +10346,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 -- conversion to datetimeoffset
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
@@ -10373,7 +10373,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
                                                             IN arg sys.VARCHAR,
@@ -10387,7 +10387,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
                                                             IN arg sys.NVARCHAR,
@@ -10401,7 +10401,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
                                                             IN arg sys.BPCHAR,
@@ -10415,7 +10415,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
                                                             IN arg sys.NCHAR,
@@ -10429,7 +10429,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetimeoffset(IN typmod INTEGER,
                                                             IN arg anyelement,
@@ -10458,7 +10458,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetimeoffset(IN arg anyelement)
 RETURNS sys.DATETIMEOFFSET
@@ -10474,7 +10474,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 -- conversion to smalldatetime
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
@@ -10501,7 +10501,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
                                                             IN arg sys.VARCHAR,
@@ -10515,7 +10515,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
                                                             IN arg sys.NVARCHAR,
@@ -10529,7 +10529,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
                                                             IN arg sys.BPCHAR,
@@ -10543,7 +10543,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
                                                             IN arg sys.NCHAR,
@@ -10557,7 +10557,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_smalldatetime(IN typmod INTEGER,
                                                             IN arg anyelement,
@@ -10586,7 +10586,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_smalldatetime(IN arg anyelement)
 RETURNS sys.SMALLDATETIME
@@ -10602,7 +10602,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 -- conversion to varchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,

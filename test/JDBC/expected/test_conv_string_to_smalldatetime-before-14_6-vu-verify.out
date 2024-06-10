@@ -147,8 +147,6 @@ smalldatetime
 -- invalid syntax
 SELECT CONVERT(SMALLDATETIME, '3 12 2024')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -156,8 +154,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '3#12#2024')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -286,8 +282,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, 'April 16 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -375,8 +369,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, 'Apr24 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -384,8 +376,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, 'Apr,24 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -393,8 +383,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '24 Apr 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -474,8 +462,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2024, Apr, 12 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -491,8 +477,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2024, Apr 12 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -524,8 +508,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, 'Apr, 2024, 12 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -533,8 +515,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, 'Apr 2024, 12 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -550,8 +530,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '12, 2024, Apr 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -559,8 +537,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '12 2024, Apr 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -576,8 +552,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2024, 12, Apr 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -593,8 +567,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2024, 12 Apr 14:30')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -604,8 +576,6 @@ smalldatetime
 -- this is only applicable for datetime and smalldatetime, for other datatypes error will be thrown
 SELECT CONVERT(SMALLDATETIME, N'محرم 12,2000 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -613,8 +583,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 12 2000 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -622,8 +590,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 1 2000 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -631,8 +597,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 1,2000 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -640,8 +604,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 2000 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -649,8 +611,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 16, 2000 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -658,8 +618,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 1, 2000 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -667,8 +625,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 16, 2000 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -676,8 +632,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 16  2000 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -685,8 +639,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 16, 24 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -694,8 +646,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 16,4 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -703,8 +653,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 1,4 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -712,8 +660,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 16    24 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -721,8 +667,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 16 4 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -730,8 +674,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 16 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -739,8 +681,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 2024 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -748,8 +688,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 2024 22 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -757,8 +695,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 2024 2 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -766,8 +702,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'24 محرم, 2024 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -775,8 +709,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'3 محرم, 2024 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -784,8 +716,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم, 2024 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -793,8 +723,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 2024 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -802,8 +730,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'3 محرم 2024 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -811,8 +737,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'3محرم2024 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -820,8 +744,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'3محرم24 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -829,8 +751,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم24 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -838,8 +758,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم,24 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -847,8 +765,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'24 محرم 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -856,8 +772,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'12 24 محرم 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -865,8 +779,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'12 2024 محرم 14:30', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -874,8 +786,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024 محرم 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -883,8 +793,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024 12 محرم 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -892,8 +800,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024 9 محرم 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -901,8 +807,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024 محرم 12 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -910,8 +814,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'12, محرم, 2024 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -919,8 +821,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'12 محرم, 2024 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -928,8 +828,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'12, محرم 2024 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -937,8 +835,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024, محرم, 12 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -946,8 +842,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024 محرم, 12 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -955,8 +849,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024, محرم 12 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -964,8 +856,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم, 12, 2024 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -973,8 +863,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 12, 2024 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -982,8 +870,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم, 12 2024 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -991,8 +877,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم, 2024, 12 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1000,8 +884,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم 2024, 12 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1009,8 +891,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'محرم, 2024 12 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1018,8 +898,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'12, 2024, محرم 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1027,8 +905,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'12 2024, محرم 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1036,8 +912,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'12, 2024 محرم 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1045,8 +919,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024, 12, محرم 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1054,8 +926,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024 12, محرم 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1063,8 +933,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, N'2024, 12 محرم 14:30', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1097,8 +965,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2022-10-30T03:00:00.123-12:12')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1106,8 +972,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2022-10-30T03:00:00.123+12:12')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1115,8 +979,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2022-10-30T03:00')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1124,8 +986,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2022-10 -30T03: 00:00')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1133,8 +993,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2022-10-30T03:00:00.12345')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1142,8 +1000,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2022-10-30T03:00:00:123')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1151,8 +1007,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2022-10-30T03:00:00:12345')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1169,8 +1023,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '20241329')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1186,8 +1038,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '241329')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1203,8 +1053,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '0001')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1220,8 +1068,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '20241329 03:00:00')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1237,8 +1083,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '241329 03:00')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1254,8 +1098,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '0001 03:00:00.421')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1264,8 +1106,6 @@ smalldatetime
 -- -- invalid syntax
 SELECT CONVERT(SMALLDATETIME, '0')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1273,8 +1113,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '1')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1282,8 +1120,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '11')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1291,8 +1127,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '111')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1300,8 +1134,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '11111')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1309,8 +1141,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '1111111')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1335,8 +1165,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '4:12:12:1234')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1344,8 +1172,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '4:12:12.1234')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1354,8 +1180,6 @@ smalldatetime
 -- hijri
 SELECT CONVERT(SMALLDATETIME, '20231229', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1363,8 +1187,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '20231230', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1372,8 +1194,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '20231129', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1381,8 +1201,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '20231130', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1423,8 +1241,6 @@ smalldatetime
 -- -- hijri leap year
 SELECT CONVERT(SMALLDATETIME, '20241230', 130)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1450,8 +1266,6 @@ smalldatetime
 -- SMALLDATETIME with typmod
 SELECT CONVERT(SMALLDATETIME(1), '01/01/98 23:59:59.123')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: CAST or CONVERT: invalid attributes specified for type 'smalldatetime')~~
@@ -1459,8 +1273,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME(2), '01/01/98 23:59:59.123')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: CAST or CONVERT: invalid attributes specified for type 'smalldatetime')~~
@@ -1468,8 +1280,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME(3), '01/01/98 23:59:59.123')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: CAST or CONVERT: invalid attributes specified for type 'smalldatetime')~~
@@ -1478,8 +1288,6 @@ smalldatetime
 -- boundary tests
 SELECT CONVERT(SMALLDATETIME, '2079-06-06 23:59:29.999')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1496,8 +1304,6 @@ smalldatetime
 -- -- out of bound values
 SELECT CONVERT(SMALLDATETIME,'2022-10-00 23:59:59.990')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1505,8 +1311,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME,'0000-10-01 23:59:59.990')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1514,8 +1318,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME,'2023-00-01 23:59:59.990')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1523,8 +1325,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME,'0000-00-00 23:59:59.990')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1532,8 +1332,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME,'1742-10-01 23:59:59.990')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1686,8 +1484,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '02/12/21 15:13:14 PM', 22)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1695,8 +1491,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2021-02-12', 23)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1704,8 +1498,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2021-02-12 15:13:14.123', 25)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1873,8 +1665,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '12/02/2021 15:13:14:123 PM', 131)
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The conversion of a varchar data type to a smalldatetime data type resulted in an out-of-range value.)~~
@@ -1899,8 +1689,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2000-04-22 16:23:51.7668c0')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1908,8 +1696,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2001-04-022 16:23:51.766890 +12:00')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1920,8 +1706,6 @@ SELECT CONVERT(SMALLDATETIME, '02001-04-22 16:23:51.766890 +12:00')
 GO 
 SELECT CONVERT(SMALLDATETIME, ' 2001- 04 - 22 16: 23: 51. 766890 +12:00')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1929,8 +1713,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '02001-04-22 16:23:51')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1938,8 +1720,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '1900-05-06 13:59:29.050 -8:00')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1987,8 +1767,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2011-08-15 10:30.00 AMZ')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
@@ -1996,8 +1774,6 @@ smalldatetime
 
 SELECT CONVERT(SMALLDATETIME, '2011-08-15 10:30.00 PMZ')
 GO
-~~START~~
-smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting character string to smalldatetime data type.)~~
