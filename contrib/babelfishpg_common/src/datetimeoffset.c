@@ -98,7 +98,7 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 	bool		contains_extra_spaces = false, is_year_set = false;
-	char		*modified_str = str;
+	char		*modified_str;
 
 	datetimeoffset = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
 
@@ -119,7 +119,7 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 		PG_RETURN_DATETIMEOFFSET(datetimeoffset);
 	}
 
-	modified_str = clean_input_str(modified_str, &contains_extra_spaces, DATE_TIME_OFFSET);
+	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME_OFFSET);
 
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);

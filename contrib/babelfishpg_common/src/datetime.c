@@ -174,7 +174,7 @@ check_regex_for_text_month(char *str, DateTimeContext context)
 char*
 clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 {
-	char *result = (char *) palloc(MAXDATELEN);
+	char *result = (char *) palloc(MAXDATELEN + 1);
 	int i = 0, j = 0;
 	int last_non_space = -1;
 	int num_colons = 0;
@@ -196,7 +196,7 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 		if (str[i] == '\0')
 			break;
 
-		if (j > MAXDATELEN)
+		if (j >= MAXDATELEN)
 		{
 			if (result)
 				pfree(result);
@@ -531,7 +531,7 @@ datetime_in_str(char *str)
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 	bool		contains_extra_spaces = false;
 	bool		is_year_set = false;
-	char		*modified_str = str;
+	char		*modified_str;
 
 	/*
 	 * Set input to default '1900-01-01 00:00:00.000' if empty string
@@ -547,9 +547,7 @@ datetime_in_str(char *str)
 	tm->tm_mon = 0;
 	tm->tm_mday = 0;
 
-	strcpy(modified_str, str);
-
-	modified_str = clean_input_str(modified_str, &contains_extra_spaces, DATE_TIME);
+	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME);
 
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
