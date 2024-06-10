@@ -1694,6 +1694,7 @@ process_antlr_parsing_time(PLtsql_execstate *estate)
 	es->format = pltsql_explain_format;
 	ExplainBeginOutput(es);
 	ExplainPropertyFloat("ANTLR Batch Parsing Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(antlr_parse_time), 3, es);
+	ExplainEndOutput(es);
 
 	/*
 	 * Let the protocol plugin know that we are about to start execution
@@ -1733,6 +1734,12 @@ process_antlr_parsing_time(PLtsql_execstate *estate)
 													0xF7 /* TDS_CMD_INFO */ ,
 													0	/* nprocessed */
 		);
+
+	/* And free the resources allocated to explain state */
+	pfree(es->str->data);
+	pfree(es->str);
+	pfree(es);
+
 	return ;
 }
 
