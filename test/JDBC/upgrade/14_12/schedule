@@ -447,3 +447,4 @@ test_conv_string_to_datetimeoffset-before-16_3
 test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-16_3
 BABEL-3401
+BABEL-5031
