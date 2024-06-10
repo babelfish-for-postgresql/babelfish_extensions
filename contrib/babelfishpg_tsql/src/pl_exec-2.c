@@ -1284,12 +1284,13 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * If we aren't saving the plan, unset the pointer.  Note that it
 		 * could have been unset already, in case of a recursive call.
 		 */
-		if (free_plan && expr->plan && !expr->plan->saved)
+		if (expr->plan && !expr->plan->saved)
 		{
 			SPIPlanPtr	plan = expr->plan;
 
 			expr->plan = NULL;
-			SPI_freeplan(plan);
+			if (free_plan)
+				SPI_freeplan(plan);
 		}
 		PG_RE_THROW();
 	}
@@ -1306,12 +1307,13 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		SetCurrentRoleId(current_user_id, false);
 	}
 
-	if (free_plan && expr->plan && !expr->plan->saved)
+	if (expr->plan && !expr->plan->saved)
 	{
 		SPIPlanPtr	plan = expr->plan;
 
 		expr->plan = NULL;
-		SPI_freeplan(plan);
+		if (free_plan)
+			SPI_freeplan(plan);
 	}
 
 	if (rc < 0)
