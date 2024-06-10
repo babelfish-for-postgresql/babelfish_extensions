@@ -267,7 +267,7 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 	bool		contains_extra_spaces = false;
 	bool		is_year_set = false;
 	DateTimeErrorExtra extra;
-	char		*modified_str = str;
+	char		*modified_str;
 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -282,7 +282,7 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 		PG_RETURN_TIMESTAMP(result);
 	}
 
-	modified_str = clean_input_str(modified_str, &contains_extra_spaces, DATE_TIME_2);
+	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME_2);
 
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
