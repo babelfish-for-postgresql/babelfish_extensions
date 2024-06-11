@@ -1693,7 +1693,7 @@ process_antlr_parsing_time(PLtsql_execstate *estate)
 	es = NewExplainState();
 	es->format = pltsql_explain_format;
 	ExplainBeginOutput(es);
-	ExplainPropertyFloat("ANTLR Batch Parsing Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(antlr_parse_time), 3, es);
+	ExplainPropertyFloat("Babelfish T-SQL Batch Parsing Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(antlr_parse_time), 3, es);
 	ExplainEndOutput(es);
 
 	/*
