@@ -136,6 +136,9 @@ runs:
               $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_do.archive --dbname=jdbc_testdb > ~/upgrade/error.log
             fi
           done < <(tail -n +3 ~/upgrade/databases_file.txt | head -n -2)
+
+          # Also dump the objects in PUBLIC schema.
+          $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user --quote-all-identifiers --schema=public --schema-only --file=pg_dump_public.sql --dbname=jdbc_testdb > ~/upgrade/error_public_schema.log
         fi
 
         # Stop old server and start the new.
@@ -309,6 +312,9 @@ runs:
             # Execute the query to create the user mapping
             sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "$query;"
           done < <(tail -n +3 ~/upgrade/servers_file.txt | head -n -2)
+
+          # Restore the objects in PUBLIC schema.
+          sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -f ~/upgrade/dump/pg_dump_public.sql &> ~/upgrade/error_public_schema.log
         fi
         echo 'Database restore complete.'
         rm -rf ~/upgrade/dump
