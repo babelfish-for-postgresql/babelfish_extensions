@@ -109,4 +109,20 @@ dump-restore-version: [[
     database-level: true,
     type: full
   }
+],
+[
+  {
+    version: 16.1,
+    dump-data-as: inserts,
+    dump-format: custom,
+    database-level: true,
+    type: full
+  },
+  {
+    version: 16.1,
+    dump-data-as: inserts,
+    dump-format: custom,
+    database-level: true,
+    type: full
+  }
 ]]
