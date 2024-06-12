@@ -330,4 +330,6 @@ ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-cleanup
 ignore#!#newid-vu-prepare
 ignore#!#newid-vu-verify
 ignore#!#newid-vu-cleanup
-
+ignore#!#newid_before_15_8_or_16_4-vu-prepare
+ignore#!#newid_before_15_8_or_16_4-vu-verify
+ignore#!#newid_before_15_8_or_16_4-vu-cleanup

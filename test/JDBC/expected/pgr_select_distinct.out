@@ -468,12 +468,9 @@ GO
 ~~START~~
 text
 Unique
-  ->  Gather Merge
-        Workers Planned: 1
-        ->  Unique
-              ->  Sort
-                    Sort Key: (distinct_func(1))
-                    ->  Parallel Seq Scan on tenk1
+  ->  Sort
+        Sort Key: (distinct_func(1))
+        ->  Seq Scan on tenk1
 ~~END~~
 
 
