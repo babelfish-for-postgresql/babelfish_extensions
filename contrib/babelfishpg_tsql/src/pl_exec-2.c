@@ -829,10 +829,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	/* fetch current search_path */
 	char	   *old_search_path = NULL;
-	char	   *new_search_path;
-	
-	/* keep previous plan mode */
-	const char *old_plan_mode = NULL;
+	char	   *new_search_path;		
 	
 	/* whether procedure was created WITH RECOMPILE */
 	bool created_with_recompile = false;		
@@ -1025,7 +1022,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			created_with_recompile = is_created_with_recompile(funcexpr->funcid);	
 			if (stmt->exec_with_recompile || created_with_recompile)
 			{
-				old_plan_mode = GetConfigOption("plan_cache_mode", true, true);
+				/*
+				 * Note: it appears not to be necessary to restore the previous value
+				 * of plan_cache_mode
+				 */
 				(void) set_config_option("plan_cache_mode", "force_custom_plan",
 								  GUC_CONTEXT_CONFIG,
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);			
@@ -1283,6 +1283,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	{
 		if (need_path_reset)
 		{
+			/*
+			 * Note: there is no test case to validate the resetting of search_path below.
+			 * In fact, we don't know whether this is even required, since removing the
+			 * call set_config_option("search_path") does not cause any test cases to fail.
+			 * Nevertheless we're keeping the code in out of an abundance of caution.
+			 */
 			(void) set_config_option("search_path", old_search_path,
 									 PGC_USERSET, PGC_S_SESSION,
 									 GUC_ACTION_SAVE, true, 0, false);
@@ -1291,16 +1297,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		if (stmt->is_cross_db)
 			SetCurrentRoleId(current_user_id, false);
-
-		/*
-		 * old_plan_mode may be NULL when an exception occurred before capturing the old mode 
-		 */
-		if ((stmt->exec_with_recompile || created_with_recompile) && old_plan_mode)
-		{
-			(void) set_config_option("plan_cache_mode", old_plan_mode,
-							  GUC_CONTEXT_CONFIG,
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);									  		
-		}
 		
 		/*
 		 * If we aren't saving the plan, unset the pointer.  Note that it
@@ -1322,21 +1318,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	if (need_path_reset)
 	{
+		/*
+		 * Note: there is no test case to validate the resetting of search_path below.
+		 * In fact, we don't know whether this is even required, since removing the
+		 * call set_config_option("search_path") does not cause any test cases to fail.
+		 * Nevertheless we're keeping the code in out of an abundance of caution.
+		 */		
 		(void) set_config_option("search_path", old_search_path,
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
 		SetCurrentRoleId(current_user_id, false);
 	}
-	
-	/*
-	 * Restore plan_cache_mode
-	 */
-	if ((stmt->exec_with_recompile || created_with_recompile) && old_plan_mode)
-	{
-		(void) set_config_option("plan_cache_mode", old_plan_mode,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);		
-	}	
 
 	if (expr->plan && !expr->plan->saved)
 	{
