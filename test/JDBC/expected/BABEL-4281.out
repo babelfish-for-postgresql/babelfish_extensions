@@ -70,6 +70,11 @@ Sort
                     ->  Parallel Seq Scan on t_babel4281
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 125.377 ms
+~~END~~
+
 
 -- set configurations back
 SET BABELFISH_SHOWPLAN_ALL OFF

@@ -64,6 +64,11 @@ Hash Join
                     Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 173.805 ms
+~~END~~
+
 
 /*
  * Give the hints in the queries to follow a specified join plan.
@@ -90,6 +95,11 @@ Merge Join
                     Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.835 ms
+~~END~~
+
 
 select * from babel_3293_t1 t1 inner merge join babel_3293_t2 t2 on t1.a1 = t2.a2 where b1 = 1 and b2 = 1
 go
@@ -112,6 +122,11 @@ Merge Join
                     Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 26.015 ms
+~~END~~
+
 
 select * from babel_3293_t1 left outer loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
@@ -129,6 +144,11 @@ Nested Loop
               Recheck Cond: (b2 = 1)
               ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                     Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 43.074 ms
 ~~END~~
 
 
@@ -150,6 +170,11 @@ Nested Loop
                     Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.532 ms
+~~END~~
+
 
 select * from babel_3293_t1 with(index(index_babel_3293_t1_b1)) join babel_3293_t2 (index(index_babel_3293_t2_b2)) on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1 -- Join query with just table hints
 go
@@ -163,6 +188,11 @@ Hash Join
   ->  Hash
         ->  Index Scan using index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e on babel_3293_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.710 ms
 ~~END~~
 
 
@@ -190,6 +220,11 @@ Nested Loop
         Filter: (b3 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.698 ms
+~~END~~
+
 
 select * from babel_3293_t1 left outer merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.a1 = babel_3293_t3.a3
 go
@@ -203,6 +238,11 @@ Nested Loop
         ->  Index Scan using babel_3293_t2_pkey on babel_3293_t2
   ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
         Index Cond: (a3 = babel_3293_t1.a1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.987 ms
 ~~END~~
 
 
@@ -229,6 +269,11 @@ Nested Loop
   ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
         Index Cond: (a3 = babel_3293_t1.a1)
         Filter: (b3 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.324 ms
 ~~END~~
 
 
@@ -258,6 +303,11 @@ Merge Join
               Filter: (b3 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.601 ms
+~~END~~
+
 
 select * from babel_3293_t1 left outer loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner loop join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
 go
@@ -280,6 +330,11 @@ Nested Loop
   ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
         Index Cond: (a3 = babel_3293_t2.a2)
         Filter: (b3 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.372 ms
 ~~END~~
 
 
@@ -309,6 +364,11 @@ Nested Loop
         Filter: (b3 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.319 ms
+~~END~~
+
 
 select * from babel_3293_t1 t1 left outer merge join babel_3293_t2 t2 on t1.a1 = t2.a2 inner loop join babel_3293_t3 t3 on t2.a2 = t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
 go
@@ -336,6 +396,11 @@ Nested Loop
         Filter: (b3 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 13.399 ms
+~~END~~
+
 
 select * from babel_3293_t1, babel_3293_t2 inner merge join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where babel_3293_t1.a1=babel_3293_t3.a3
 go
@@ -349,6 +414,11 @@ Merge Join
         ->  Index Scan using babel_3293_t1_pkey on babel_3293_t1
         ->  Index Scan using babel_3293_t2_pkey on babel_3293_t2
   ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.392 ms
 ~~END~~
 
 
@@ -366,6 +436,11 @@ Merge Join
   ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3 t3
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.727 ms
+~~END~~
+
 
 select * from babel_3293_t1 t1, babel_3293_t2 t2 inner hash join babel_3293_t3 t3 on t2.a2 = t3.a3
 go
@@ -380,6 +455,11 @@ Hash Join
               ->  Seq Scan on babel_3293_t2 t2
   ->  Hash
         ->  Seq Scan on babel_3293_t3 t3
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.304 ms
 ~~END~~
 
 
@@ -409,6 +489,11 @@ Nested Loop
         Filter: (b3 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.720 ms
+~~END~~
+
 
 -- Join hints through option clause
 select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(hash join)
@@ -427,6 +512,11 @@ Hash Join
               Recheck Cond: (b2 = 1)
               ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                     Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.984 ms
 ~~END~~
 
 
@@ -451,6 +541,11 @@ Merge Join
                     Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.261 ms
+~~END~~
+
 
 select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(loop join)
 go
@@ -468,6 +563,11 @@ Nested Loop
               Recheck Cond: (b2 = 1)
               ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                     Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.253 ms
 ~~END~~
 
 
@@ -498,6 +598,11 @@ Merge Join
               Filter: (b3 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.312 ms
+~~END~~
+
 
 select * from babeL_3293_T1 join BABEL_3293_T2 on babeL_3293_T1.a1 = BABEL_3293_T2.a2 join babEl_3293_t3 on babel_3293_T2.a2 = BABEL_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1 option(merge join)
 go
@@ -526,6 +631,11 @@ Merge Join
               Filter: (b3 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.313 ms
+~~END~~
+
 
 -- Conflicting join hints
 select * from babel_3293_t1 inner hash join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 option(merge join)
@@ -547,6 +657,11 @@ Hash Join
         ->  Seq Scan on babel_3293_t2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.182 ms
+~~END~~
+
 
 select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 option(merge join, loop join)
 go
@@ -557,6 +672,11 @@ Merge Join
   Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
   ->  Index Scan using babel_3293_t1_pkey on babel_3293_t1
   ->  Index Scan using babel_3293_t2_pkey on babel_3293_t2
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.258 ms
 ~~END~~
 
 
@@ -600,6 +720,11 @@ Merge Join
               Filter: (b3 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.317 ms
+~~END~~
+
 
 -- Queries with both table hints and join hints
 select * from babel_3293_t1 with(index(index_babel_3293_t1_b1)) inner loop join babel_3293_t2 (index(index_babel_3293_t2_b2)) on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
@@ -614,6 +739,11 @@ Nested Loop
   ->  Materialize
         ->  Index Scan using index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e on babel_3293_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.311 ms
 ~~END~~
 
 
@@ -634,6 +764,11 @@ Merge Join
               Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 17.183 ms
+~~END~~
+
 
 select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(loop join, table hint(babel_3293_t1, index(index_babel_3293_t1_b1)), table hint(babel_3293_t2, index(index_babel_3293_t2_b2)))
 go
@@ -647,6 +782,11 @@ Nested Loop
   ->  Materialize
         ->  Index Scan using index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e on babel_3293_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.716 ms
 ~~END~~
 
 
@@ -663,6 +803,11 @@ Hash Join
         ->  HashAggregate
               Group Key: babel_3293_t1.a1
               ->  Seq Scan on babel_3293_t1
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 56.443 ms
 ~~END~~
 
 
@@ -684,6 +829,11 @@ Hash Join
               ->  Seq Scan on babel_3293_t1 babel_3293_t1_1
   ->  Hash
         ->  Seq Scan on babel_3293_t2 babel_3293_t2_1
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 71.672 ms
 ~~END~~
 
 
@@ -710,6 +860,11 @@ Hash Join
         ->  Seq Scan on babel_3293_t2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.342 ms
+~~END~~
+
 
 /*
  * Run the above SELECT query and give the FORCE ORDER query hint to make sure that the join order is preserved
@@ -733,6 +888,11 @@ Merge Join
         ->  Seq Scan on babel_3293_t3
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.414 ms
+~~END~~
+
 
 -- UPDATE and DELETE queries with join hints needs to be revisited later. pg_hint_plan is currently not following the given join hints 
 -- Test UPDATE queries with and without hints
@@ -753,6 +913,11 @@ Update on babel_3293_t1
                     Recheck Cond: (b2 = 1)
                     ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                           Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 37.025 ms
 ~~END~~
 
 
@@ -778,6 +943,11 @@ Update on babel_3293_t1
                           Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.254 ms
+~~END~~
+
 
 update babel_3293_t1 set a1 = 1 from babel_3293_t1 with(index(index_babel_3293_t1_b1)) full outer merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
@@ -800,6 +970,11 @@ Update on babel_3293_t1
                           Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.467 ms
+~~END~~
+
 
 -- Test DELETE queries with and without hints
 delete babel_3293_t1 from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
@@ -819,6 +994,11 @@ Delete on babel_3293_t1
                     Recheck Cond: (b2 = 1)
                     ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                           Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 43.809 ms
 ~~END~~
 
 
@@ -844,6 +1024,11 @@ Delete on babel_3293_t1
                           Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.227 ms
+~~END~~
+
 
 delete babel_3293_t1 from babel_3293_t1 with(index(index_babel_3293_t1_b1)) left outer merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
@@ -863,6 +1048,11 @@ Delete on babel_3293_t1
                     Recheck Cond: (b2 = 1)
                     ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
                           Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.272 ms
 ~~END~~
 
 
@@ -937,6 +1127,11 @@ Merge Join
                     Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 150.486 ms
+~~END~~
+
 
 select * from tempdb.babel_3293_schema.t1 with(index(index_babel_3293_schema_t1_b1)) join tempdb.dbo.babel_3293_t2 (index(index_babel_3293_t2_b2)) on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1 -- Join query with just table hints
 go
@@ -950,6 +1145,11 @@ Hash Join
   ->  Hash
         ->  Index Scan using index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e on babel_3293_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 18.476 ms
 ~~END~~
 
 
@@ -968,6 +1168,11 @@ Merge Join
         Sort Key: babel_3293_t2.a2
         ->  Index Scan using index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e on babel_3293_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 9.927 ms
 ~~END~~
 
 
@@ -990,6 +1195,11 @@ Merge Join
         ->  Seq Scan on babel_3293_t3
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.637 ms
+~~END~~
+
 
 select * from tempdb.babel_3293_schema.t1 inner loop join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 left outer merge join tempdb.dbo.babel_3293_t3 on tempdb.babel_3293_schema.t1.b1 = tempdb.dbo.babel_3293_t3.b3
 go
@@ -1005,6 +1215,11 @@ Merge Left Join
   ->  Sort
         Sort Key: babel_3293_t3.b3 NULLS FIRST
         ->  Seq Scan on babel_3293_t3
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 32.244 ms
 ~~END~~
 
 

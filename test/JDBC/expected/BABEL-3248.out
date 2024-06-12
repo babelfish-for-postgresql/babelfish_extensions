@@ -65,6 +65,11 @@ Query Text: select 1
 Result
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.063 ms
+~~END~~
+
 set showplan_all off;
 go
 set statistics profile on;
@@ -80,6 +85,11 @@ int
 text
 Query Text: select 1
 Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
 ~~END~~
 
 set statistics profile off;

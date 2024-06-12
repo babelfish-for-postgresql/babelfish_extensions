@@ -36,6 +36,11 @@ Query Text: select 1
 Result  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.257 ms
+~~END~~
+
 select * from babel_2843_t1 where b1 = 1;
 go
 ~~START~~
@@ -47,6 +52,11 @@ text
 Query Text: select * from babel_2843_t1 where b1 = 1
 Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=0 loops=1)
   Filter: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 145.292 ms
 ~~END~~
 
 
@@ -63,6 +73,11 @@ xml
 <explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Query-Text>select set_config('babelfishpg_tsql.explain_format', 'xml', false)</Query-Text><newline>  <Plan><newline>    <Node-Type>Result</Node-Type><newline>    <Parallel-Aware>false</Parallel-Aware><newline>    <Async-Capable>false</Async-Capable><newline>    <Startup-Cost>0.00</Startup-Cost><newline>    <Total-Cost>0.01</Total-Cost><newline>    <Plan-Rows>1</Plan-Rows><newline>    <Plan-Width>32</Plan-Width><newline>    <Actual-Rows>1</Actual-Rows><newline>    <Actual-Loops>1</Actual-Loops><newline>  </Plan><newline>  <Triggers><newline>  </Triggers><newline></explain>
 ~~END~~
 
+~~START~~
+xml
+<explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Babelfish-T-SQL-Batch-Parsing-Time>0.206</Babelfish-T-SQL-Batch-Parsing-Time><newline></explain>
+~~END~~
+
 select * from babel_2843_t1 where b1 = 1;
 go
 ~~START~~
@@ -72,6 +87,11 @@ int#!#int
 ~~START~~
 xml
 <explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Query-Text>select * from babel_2843_t1 where b1 = 1</Query-Text><newline>  <Plan><newline>    <Node-Type>Seq Scan</Node-Type><newline>    <Parallel-Aware>false</Parallel-Aware><newline>    <Async-Capable>false</Async-Capable><newline>    <Relation-Name>babel_2843_t1</Relation-Name><newline>    <Alias>babel_2843_t1</Alias><newline>    <Startup-Cost>0.00</Startup-Cost><newline>    <Total-Cost>38.25</Total-Cost><newline>    <Plan-Rows>11</Plan-Rows><newline>    <Plan-Width>8</Plan-Width><newline>    <Actual-Rows>0</Actual-Rows><newline>    <Actual-Loops>1</Actual-Loops><newline>    <Filter>(b1 = 1)</Filter><newline>    <Rows-Removed-by-Filter>0</Rows-Removed-by-Filter><newline>  </Plan><newline>  <Triggers><newline>  </Triggers><newline></explain>
+~~END~~
+
+~~START~~
+xml
+<explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Babelfish-T-SQL-Batch-Parsing-Time>0.140</Babelfish-T-SQL-Batch-Parsing-Time><newline></explain>
 ~~END~~
 
 
@@ -88,6 +108,11 @@ text
 {<newline>  "Query Text": "select set_config('babelfishpg_tsql.explain_format', 'json', false)",<newline>  "Plan": {<newline>    "Node Type": "Result",<newline>    "Parallel Aware": false,<newline>    "Async Capable": false,<newline>    "Startup Cost": 0.00,<newline>    "Total Cost": 0.01,<newline>    "Plan Rows": 1,<newline>    "Plan Width": 32,<newline>    "Actual Rows": 1,<newline>    "Actual Loops": 1<newline>  },<newline>  "Triggers": [<newline>  ]<newline>}
 ~~END~~
 
+~~START~~
+text
+[<newline>  "Babelfish T-SQL Batch Parsing Time": 0.157<newline>]
+~~END~~
+
 select * from babel_2843_t1 where b1 = 1;
 go
 ~~START~~
@@ -97,6 +122,11 @@ int#!#int
 ~~START~~
 text
 {<newline>  "Query Text": "select * from babel_2843_t1 where b1 = 1",<newline>  "Plan": {<newline>    "Node Type": "Seq Scan",<newline>    "Parallel Aware": false,<newline>    "Async Capable": false,<newline>    "Relation Name": "babel_2843_t1",<newline>    "Alias": "babel_2843_t1",<newline>    "Startup Cost": 0.00,<newline>    "Total Cost": 38.25,<newline>    "Plan Rows": 11,<newline>    "Plan Width": 8,<newline>    "Actual Rows": 0,<newline>    "Actual Loops": 1,<newline>    "Filter": "(b1 = 1)",<newline>    "Rows Removed by Filter": 0<newline>  },<newline>  "Triggers": [<newline>  ]<newline>}
+~~END~~
+
+~~START~~
+text
+[<newline>  "Babelfish T-SQL Batch Parsing Time": 0.125<newline>]
 ~~END~~
 
 
@@ -113,6 +143,11 @@ text
 Query Text: "select set_config('babelfishpg_tsql.explain_format', 'yaml', false)"<newline>Plan: <newline>  Node Type: "Result"<newline>  Parallel Aware: false<newline>  Async Capable: false<newline>  Startup Cost: 0.00<newline>  Total Cost: 0.01<newline>  Plan Rows: 1<newline>  Plan Width: 32<newline>  Actual Rows: 1<newline>  Actual Loops: 1<newline>Triggers: 
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.141
+~~END~~
+
 select * from babel_2843_t1 where b1 = 1;
 go
 ~~START~~
@@ -122,6 +157,11 @@ int#!#int
 ~~START~~
 text
 Query Text: "select * from babel_2843_t1 where b1 = 1"<newline>Plan: <newline>  Node Type: "Seq Scan"<newline>  Parallel Aware: false<newline>  Async Capable: false<newline>  Relation Name: "babel_2843_t1"<newline>  Alias: "babel_2843_t1"<newline>  Startup Cost: 0.00<newline>  Total Cost: 38.25<newline>  Plan Rows: 11<newline>  Plan Width: 8<newline>  Actual Rows: 0<newline>  Actual Loops: 1<newline>  Filter: "(b1 = 1)"<newline>  Rows Removed by Filter: 0<newline>Triggers: 
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.115
 ~~END~~
 
 
@@ -136,6 +176,11 @@ text
 text
 Query Text: select set_config('babelfishpg_tsql.explain_format', 'text', false)
 Result  (cost=0.00..0.01 rows=1 width=32) (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.129 ms
 ~~END~~
 
 
@@ -198,6 +243,11 @@ Query Text: select * from babel_2843_t2
 Seq Scan on babel_2843_t2  (cost=0.00..32.60 rows=2260 width=8) (actual rows=1 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 21.976 ms
+~~END~~
+
 
 -- procedure
 create procedure babel_2843_proc @param int
@@ -229,6 +279,11 @@ Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loo
   Rows Removed by Filter: 2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 25.649 ms
+~~END~~
+
 drop procedure babel_2843_proc;
 go
 
@@ -258,6 +313,11 @@ Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loo
 text
 Query Text: select * from babel_2843_itvf(2)
 Function Scan on babel_2843_itvf  (cost=0.25..10.25 rows=1000 width=8) (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
 ~~END~~
 
 drop function babel_2843_itvf;
@@ -315,6 +375,11 @@ Query Text: select * from babel_2843_mstvf(1)
 Function Scan on babel_2843_mstvf  (cost=0.25..10.25 rows=1000 width=8) (actual rows=2 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
+~~END~~
+
 drop function babel_2843_mstvf;
 go
 
@@ -347,6 +412,11 @@ Query Text: select 1
 Result  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 30.918 ms
+~~END~~
+
 
 -- execsql
 DECLARE @val INT;
@@ -369,6 +439,11 @@ Query Text: select * from babel_2843_t1 where a1 = "@param"
 Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
   Filter: (a1 = 2)
   Rows Removed by Filter: 2
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.616 ms
 ~~END~~
 
 

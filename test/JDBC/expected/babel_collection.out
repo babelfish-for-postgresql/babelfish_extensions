@@ -188,6 +188,11 @@ Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=3 width=32)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.700 ms
+~~END~~
+
 
 select c1 from testing4 where c1 LIKE 'Jon%';
 GO
@@ -197,6 +202,11 @@ Query Text: select c1 from testing4 where c1 LIKE 'Jon%'
 Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
   Filter: (((c1)::text ~~* 'Jon%'::text COLLATE "default") AND ((c1)::text >= 'Jon'::text COLLATE "default") AND ((c1)::text < 'Jon?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.145 ms
 ~~END~~
 
 
@@ -210,6 +220,11 @@ Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
+~~END~~
+
 
 select c1 from testing4 where c1 LIKE '_one_';
 GO
@@ -221,6 +236,11 @@ Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=5 width=32)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
+~~END~~
+
 
 select c1 from testing4 where c1 LIKE '%on%s';
 GO
@@ -230,6 +250,11 @@ Query Text: select c1 from testing4 where c1 LIKE '%on%s'
 Bitmap Heap Scan on testing4  (cost=11.41..29.53 rows=26 width=32)
   Filter: ((c1)::text ~~* '%on%s'::text COLLATE "default")
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
 ~~END~~
 
 
@@ -244,6 +269,11 @@ Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
+~~END~~
+
 select c1 from testing4 where c1 LIKE 'äb%';
 GO
 ~~START~~
@@ -254,6 +284,11 @@ Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
+~~END~~
+
 select c1 from testing4 where c1 LIKE 'äḃĆ_';
 GO
 ~~START~~
@@ -262,6 +297,11 @@ Query Text: select c1 from testing4 where c1 LIKE 'ä??_'
 Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
   Filter: (((c1)::text ~~* 'ä??_'::text COLLATE "default") AND ((c1)::text >= 'ä??'::text COLLATE "default") AND ((c1)::text < 'ä???'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 
@@ -276,6 +316,11 @@ Bitmap Heap Scan on testing4  (cost=11.56..29.69 rows=647 width=32)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.323 ms
+~~END~~
+
 
 select c1 from testing4 where c1 NOT LIKE 'jone%';
 GO
@@ -287,6 +332,11 @@ Bitmap Heap Scan on testing4  (cost=11.56..32.94 rows=648 width=32)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.137 ms
+~~END~~
+
 
 select c1 from testing4 where c1 NOT LIKE 'ä%';
 GO
@@ -296,6 +346,11 @@ Query Text: select c1 from testing4 where c1 NOT LIKE 'ä%'
 Bitmap Heap Scan on testing4  (cost=11.55..32.92 rows=592 width=32)
   Filter: (((c1)::text !~~* 'ä%'::text COLLATE "default") OR ((c1)::text < 'ä'::text COLLATE "default") OR ((c1)::text >= 'ä?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 
@@ -311,6 +366,11 @@ Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
+~~END~~
+
 
 select c1 from testing4 where c1 LIKE '\_ones';
 GO
@@ -320,6 +380,11 @@ Query Text: select c1 from testing4 where c1 LIKE '\_ones'
 Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
   Filter: (((c1)::text ~~* '\_ones'::text COLLATE "default") AND ((c1)::text >= '\'::text COLLATE "default") AND ((c1)::text < '\?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.128 ms
 ~~END~~
 
 
@@ -449,6 +514,11 @@ Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=7 width=32)
   Filter: ((c1)::text ~~ 'jo%'::text COLLATE "default")
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
+~~END~~
+
 SET babelfish_showplan_all OFF;
 GO
 select * from testing5 where c1 NOT LIKE 'j%';
@@ -485,6 +555,11 @@ Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=7 width=32)
   Filter: ((c1)::text ~~ ''::text COLLATE "default")
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
+~~END~~
+
 SET babelfish_showplan_all OFF;
 GO
 SELECT * from testing5 where c1 like NULL;
@@ -502,6 +577,11 @@ text
 Query Text: SELECT * from testing5 where c1 like NULL
 Result  (cost=0.00..0.00 rows=0 width=0)
   One-Time Filter: false
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -526,14 +606,17 @@ Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
   Filter: (((c1)::text ~~* 'jo%'::text COLLATE "default") AND ((c1)::text >= 'jo'::text COLLATE "default") AND ((c1)::text < 'jo?'::text))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.131 ms
+~~END~~
+
 SET babelfish_showplan_all OFF;
 GO
 SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
 GO
 ~~START~~
 varchar
-JONES
-JoneS
 ~~END~~
 
 SET babelfish_showplan_all ON;
@@ -545,6 +628,11 @@ text
 Query Text: SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%'
 Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
   Filter: (((c1)::text ~~* 'jo%'::text COLLATE "default") AND ((c1)::text >= 'jo'::text COLLATE "default") AND ((c1)::text < 'jo?'::text))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;

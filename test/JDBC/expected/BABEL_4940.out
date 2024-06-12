@@ -119,6 +119,11 @@ Limit (actual rows=10 loops=1)
   ->  Index Scan using babel_4940_t1_pkey on babel_4940_t1 (actual rows=10 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 48.588 ms
+~~END~~
+
 SELECT TOP 10 * FROM babel_4940_t1 ORDER BY id DESC
 GO
 ~~START~~
@@ -140,6 +145,11 @@ text
 Query Text: SELECT TOP 10 * FROM babel_4940_t1 ORDER BY id DESC
 Limit (actual rows=10 loops=1)
   ->  Index Scan Backward using babel_4940_t1_pkey on babel_4940_t1 (actual rows=10 loops=1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.383 ms
 ~~END~~
 
 SELECT TOP 10 * FROM babel_4940_t2 ORDER BY id 
@@ -165,6 +175,11 @@ Limit (actual rows=10 loops=1)
   ->  Index Scan using babel_4940_t2_pkey on babel_4940_t2 (actual rows=10 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.200 ms
+~~END~~
+
 SELECT TOP 10 * FROM babel_4940_t2 ORDER BY id DESC
 GO
 ~~START~~
@@ -186,6 +201,11 @@ text
 Query Text: SELECT TOP 10 * FROM babel_4940_t2 ORDER BY id DESC
 Limit (actual rows=10 loops=1)
   ->  Index Scan Backward using babel_4940_t2_pkey on babel_4940_t2 (actual rows=10 loops=1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
 ~~END~~
 
 SELECT TOP 10 * FROM babel_4940_t3 ORDER BY id, id1
@@ -211,6 +231,11 @@ Limit (actual rows=10 loops=1)
   ->  Index Scan using babel_4940_t3_pkey on babel_4940_t3 (actual rows=10 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 11.092 ms
+~~END~~
+
 SELECT TOP 10 * FROM babel_4940_t3 ORDER BY id DESC, id1 DESC
 GO
 ~~START~~
@@ -232,6 +257,11 @@ text
 Query Text: SELECT TOP 10 * FROM babel_4940_t3 ORDER BY id DESC, id1 DESC
 Limit (actual rows=10 loops=1)
   ->  Index Scan Backward using babel_4940_t3_pkey on babel_4940_t3 (actual rows=10 loops=1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.262 ms
 ~~END~~
 
 SELECT TOP 10 * FROM babel_4940_t4 ORDER BY id
@@ -257,6 +287,11 @@ Limit (actual rows=10 loops=1)
   ->  Index Scan using babel_4940_t4_pkey on babel_4940_t4 (actual rows=10 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
+~~END~~
+
 SELECT TOP 10 * FROM babel_4940_t4 ORDER BY id DESC
 GO
 ~~START~~
@@ -278,6 +313,11 @@ text
 Query Text: SELECT TOP 10 * FROM babel_4940_t4 ORDER BY id DESC
 Limit (actual rows=10 loops=1)
   ->  Index Scan Backward using babel_4940_t4_pkey on babel_4940_t4 (actual rows=10 loops=1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 SELECT TOP 10 * FROM babel_4940_t5 ORDER BY id 
@@ -303,6 +343,11 @@ Limit (actual rows=10 loops=1)
   ->  Index Scan using c on babel_4940_t5 (actual rows=10 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
+~~END~~
+
 SELECT TOP 10 * FROM babel_4940_t5 ORDER BY id DESC
 GO
 ~~START~~
@@ -324,6 +369,11 @@ text
 Query Text: SELECT TOP 10 * FROM babel_4940_t5 ORDER BY id DESC
 Limit (actual rows=10 loops=1)
   ->  Index Scan Backward using c on babel_4940_t5 (actual rows=10 loops=1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.168 ms
 ~~END~~
 
 SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id, id1 DESC
@@ -349,6 +399,11 @@ Limit (actual rows=10 loops=1)
   ->  Index Scan using c1 on babel_4940_t6 (actual rows=10 loops=1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.188 ms
+~~END~~
+
 SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id DESC, id1 ASC
 GO
 ~~START~~
@@ -370,6 +425,11 @@ text
 Query Text: SELECT TOP 10 * FROM babel_4940_t6 ORDER BY id DESC, id1 ASC
 Limit (actual rows=10 loops=1)
   ->  Index Scan Backward using c1 on babel_4940_t6 (actual rows=10 loops=1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.976 ms
 ~~END~~
 
 

@@ -345,11 +345,11 @@ public class TestQueryFile {
         String expectedFilePath = expectedFile.getAbsolutePath();
         ProcessBuilder diffProcessBuilder;
 
-        // if expected file is generated from SQL Server, do not compare error code and message
+        // if expected file is generated from SQL Server, do not compare error code, error message and T-SQL Batch parsing time
         if (expectedFilePath.contains("sql_expected")) {
-            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "~~ERROR", expectedFilePath, outputFilePath);
+            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "~~ERROR", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
         } else {
-            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", expectedFilePath, outputFilePath);
+            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
         }
 
         try {
