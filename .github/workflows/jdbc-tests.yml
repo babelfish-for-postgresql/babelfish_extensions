@@ -121,7 +121,8 @@ jobs:
           mkdir -p ~/failed-testscript-outputs
           # copy output files of failed test scripts
           for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" $timestamp"_runSummary.log" | cut -d ":" -f 1); 
-          do 
+          do
+            echo "$f"
             cp ../../output/$f".out" ~/failed-testscript-outputs/$f".out"
           done
 
@@ -140,9 +141,9 @@ jobs:
         with:
           name: jdbc-output-diff
           path: |
+            ~/failed-testscript-outputs
             test/JDBC/Info/output-diff.diff
             test/JDBC/Info/replication-output-diff.diff
-            ~/failed-testscript-outputs
 
       - name: Check and upload coredumps
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
