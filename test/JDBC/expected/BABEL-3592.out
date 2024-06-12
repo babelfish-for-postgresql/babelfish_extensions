@@ -97,7 +97,7 @@ Query Text: EXEC babel_3592_insert_multiline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.062 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -114,7 +114,7 @@ Query Text: EXEC babel_3592_insert_singleline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.062 ms
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
 ~~END~~
 
 
@@ -185,7 +185,7 @@ Query Text: EXEC babel_3592_insert_multiline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.052 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -202,7 +202,7 @@ Query Text: EXEC babel_3592_updates_singleline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.071 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -274,7 +274,7 @@ Query Text: EXEC babel_3592_insert_multiline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.053 ms
+Babelfish T-SQL Batch Parsing Time: 0.078 ms
 ~~END~~
 
 
@@ -291,7 +291,7 @@ Query Text: EXEC babel_3592_delete_singleline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.060 ms
+Babelfish T-SQL Batch Parsing Time: 0.079 ms
 ~~END~~
 
 
@@ -410,8 +410,10 @@ Query Text: EXEC babel_3592_proc_mixed_statements
 into
 babel_3592_t2 select * from babel_3592_t1 where b1 = 1
   ->  Insert on babel_3592_t2
-        ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
-              Index Cond: (b1 = 1)
+        ->  Bitmap Heap Scan on babel_3592_t1
+              Recheck Cond: (b1 = 1)
+              ->  Bitmap Index Scan on index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836
+                    Index Cond: (b1 = 1)
   Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1                                     where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
@@ -422,8 +424,10 @@ babel_3592_t2 select * from babel_3592_t1 where b1 = 1
               Index Cond: (b1 = 1)
   Query Text: update babel_3592_t1 set a1 = 1 where b1 = 1
   ->  Update on babel_3592_t1
-        ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
-              Index Cond: (b1 = 1)
+        ->  Bitmap Heap Scan on babel_3592_t1
+              Recheck Cond: (b1 = 1)
+              ->  Bitmap Index Scan on index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836
+                    Index Cond: (b1 = 1)
   Query Text: select/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) indexscan(babel_3592_t2 index_babel_3592_t2_b2babel_359155b730148d8fcf0167f32edb84e3f7d) */ * from babel_3592_t1                                    , babel_3592_t2                                     where b1 = 1 and b2 = 1
   ->  Nested Loop
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
@@ -435,7 +439,7 @@ babel_3592_t2 select * from babel_3592_t1 where b1 = 1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.056 ms
+Babelfish T-SQL Batch Parsing Time: 0.080 ms
 ~~END~~
 
 
