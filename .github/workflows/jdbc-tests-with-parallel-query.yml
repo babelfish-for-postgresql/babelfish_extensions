@@ -89,14 +89,6 @@ jobs:
           cd $timestamp
           mv $timestamp.diff ../output-diff.diff
           mv "$timestamp"_runSummary.log ../run-summary.log
-          cd ..
-          mkdir -p ~/failed-testscript-outputs
-          # copy output files of failed test scripts
-          for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" run-summary.log | cut -d ":" -f 1); 
-          do
-          echo "$f"
-          cp ../output/$f".out" ~/failed-testscript-outputs/$f".out"
-          done
       
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename == 'success'
@@ -109,10 +101,8 @@ jobs:
         if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
-          name: output-diff
-          path: |
-            ~/failed-testscript-outputs
-            test/JDBC/Info/output-diff.diff
+          name: output-diff.diff
+          path: test/JDBC/Info/output-diff.diff
       
       - name: Check and upload coredumps
         if: always() && steps.jdbc.outcome == 'failure'

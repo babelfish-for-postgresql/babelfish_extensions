@@ -121,7 +121,7 @@ Query Text: EXEC babel_3512_proc_1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 14.446 ms
+Babelfish T-SQL Batch Parsing Time: 10.142 ms
 ~~END~~
 
 
@@ -169,7 +169,7 @@ Query Text: EXEC babel_3512_proc_2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.105 ms
 ~~END~~
 
 
@@ -207,7 +207,7 @@ Query Text: EXEC babel_3512_proc_3
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.074 ms
+Babelfish T-SQL Batch Parsing Time: 0.073 ms
 ~~END~~
 
 
@@ -270,7 +270,7 @@ Query Text: EXEC babel_3512_proc_4
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.077 ms
+Babelfish T-SQL Batch Parsing Time: 0.080 ms
 ~~END~~
 
 
@@ -309,7 +309,7 @@ Query Text: EXEC babel_3512_proc_5
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.071 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -359,7 +359,7 @@ Query Text: EXEC babel_3512_proc_6
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Babelfish T-SQL Batch Parsing Time: 0.103 ms
 ~~END~~
 
 
@@ -401,7 +401,7 @@ Query Text: EXEC babel_3512_proc_7
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.067 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -436,11 +436,15 @@ Query Text: EXEC babel_3512_proc_8
         Workers Planned: 1
         Single Copy: true
         ->  Nested Loop
-              ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
-                    Index Cond: (b1 = 1)
+              ->  Bitmap Heap Scan on babel_3512_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a
+                          Index Cond: (b1 = 1)
               ->  Materialize
-                    ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
-                          Index Cond: (b2 = 1)
+                    ->  Bitmap Heap Scan on babel_3512_t2
+                          Recheck Cond: (b2 = 1)
+                          ->  Bitmap Index Scan on index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9
+                                Index Cond: (b2 = 1)
   Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1
   ->  Gather
         Workers Planned: 1
@@ -465,7 +469,7 @@ Query Text: EXEC babel_3512_proc_8
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.063 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -507,7 +511,7 @@ Query Text: EXEC babel_3512_proc_9
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.067 ms
+Babelfish T-SQL Batch Parsing Time: 0.071 ms
 ~~END~~
 
 
@@ -538,15 +542,18 @@ text
 Query Text: EXEC babel_3512_proc_10
   Query Text: SELECT * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
   ->  Gather
-        Workers Planned: 1
-        Single Copy: true
+        Workers Planned: 2
         ->  Nested Loop
-              Join Filter: (babel_3512_t1.a1 = babel_3512_t2.a2)
-              ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
-                    Index Cond: (b1 = 1)
-              ->  Materialize
-                    ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
-                          Index Cond: (b2 = 1)
+              ->  Parallel Bitmap Heap Scan on babel_3512_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a
+                          Index Cond: (b1 = 1)
+              ->  Memoize
+                    Cache Key: babel_3512_t1.a1
+                    Cache Mode: logical
+                    ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+                          Index Cond: (a2 = babel_3512_t1.a1)
+                          Filter: (b2 = 1)
   Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) set(enable_hashjoin off) set(enable_mergejoin off) */ * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
   ->  Gather
         Workers Planned: 1
@@ -576,7 +583,7 @@ Query Text: EXEC babel_3512_proc_10
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.076 ms
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
 ~~END~~
 
 
@@ -626,21 +633,17 @@ GO
 text
 Query Text: SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Merge Join
-        Merge Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
-        ->  Sort
-              Sort Key: babel_3512_t1.a1
-              ->  Seq Scan on babel_3512_t1
-        ->  Sort
-              Sort Key: babel_3512_t2.a2
-              ->  Seq Scan on babel_3512_t2
+  Workers Planned: 3
+  ->  Parallel Hash Join
+        Hash Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Parallel Hash
+              ->  Parallel Seq Scan on babel_3512_t2
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.292 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -659,7 +662,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.294 ms
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 
@@ -678,7 +681,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.285 ms
+Babelfish T-SQL Batch Parsing Time: 0.163 ms
 ~~END~~
 
 
@@ -697,7 +700,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.375 ms
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
 ~~END~~
 
 
@@ -739,7 +742,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.286 ms
+Babelfish T-SQL Batch Parsing Time: 0.152 ms
 ~~END~~
 
 
@@ -757,7 +760,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 44.407 ms
+Babelfish T-SQL Batch Parsing Time: 29.944 ms
 ~~END~~
 
 
@@ -776,7 +779,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.195 ms
+Babelfish T-SQL Batch Parsing Time: 0.249 ms
 ~~END~~
 
 
@@ -795,7 +798,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.182 ms
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
 ~~END~~
 
 
@@ -814,7 +817,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.182 ms
+Babelfish T-SQL Batch Parsing Time: 0.155 ms
 ~~END~~
 
 
@@ -833,7 +836,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
 ~~END~~
 
 SELECT/*this is a comment
@@ -855,7 +858,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.183 ms
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
 ~~END~~
 
 
@@ -907,10 +910,11 @@ Query Text: EXEC babel_3512_comment_test_1
   Query Text: SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Gather
         Workers Planned: 3
-        ->  Nested Loop
+        ->  Parallel Hash Join
+              Hash Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
               ->  Parallel Seq Scan on babel_3512_t1
-              ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
-                    Index Cond: (a2 = babel_3512_t1.a1)
+              ->  Parallel Hash
+                    ->  Parallel Seq Scan on babel_3512_t2
   Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Gather
         Workers Planned: 3
@@ -944,7 +948,7 @@ Query Text: EXEC babel_3512_comment_test_1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.076 ms
+Babelfish T-SQL Batch Parsing Time: 0.081 ms
 ~~END~~
 
 
@@ -980,7 +984,7 @@ Query Text: EXEC babel_3512_comment_test_2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.071 ms
 ~~END~~
 
 
