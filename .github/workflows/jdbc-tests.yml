@@ -114,16 +114,17 @@ jobs:
           # get the replication output diff as well if it is present
           dir_count=`ls | wc -l`
           if [[ $dir_count -eq 2 ]];then
-            timestamp=`ls -rt | tail -n 2 | sort -r | tail -n 1`
-            cd $timestamp
-            mv $timestamp.diff ../replication-output-diff.diff
-            mv "$timestamp"_runSummary.log ../replication-run-summary.log
+          timestamp=`ls -rt | tail -n 2 | sort -r | tail -n 1`
+          cd $timestamp
+          mv $timestamp.diff ../replication-output-diff.diff
+          mv "$timestamp"_runSummary.log ../replication-run-summary.log
+          fi
           mkdir -p ~/failed-testscript-outputs
           # copy output files of failed test scripts
           for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" $timestamp"_runSummary.log" | cut -d ":" -f 1); 
           do
-            echo "$f"
-            cp ../../output/$f".out" ~/failed-testscript-outputs/$f".out"
+          echo "$f"
+          cp ../../output/$f".out" ~/failed-testscript-outputs/$f".out"
           done
 
       - name: Upload Run Summary 
