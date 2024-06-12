@@ -117,7 +117,7 @@ jobs:
           timestamp=`ls -rt | tail -n 2 | sort -r | tail -n 1`
           cd $timestamp
           mv $timestamp.diff ../replication-output-diff.diff
-          mv "$timestamp"_runSummary.log ../replication-run-summary.log
+          # mv "$timestamp"_runSummary.log ../replication-run-summary.log
           fi
           mkdir -p ~/failed-testscript-outputs
           # copy output files of failed test scripts
