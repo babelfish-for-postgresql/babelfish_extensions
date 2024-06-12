@@ -118,6 +118,12 @@ jobs:
             cd $timestamp
             mv $timestamp.diff ../replication-output-diff.diff
             mv "$timestamp"_runSummary.log ../replication-run-summary.log
+          mkdir -p ~/failed-testscript-outputs
+          # copy output files of failed test scripts
+          for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" $timestamp"_runSummary.log" | cut -d ":" -f 1); 
+          do 
+            cp ../../output/$f".out" ~/failed-testscript-outputs/$f".out"
+          done
 
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename.outcome == 'success'
@@ -127,6 +133,7 @@ jobs:
           path: |
             test/JDBC/Info/run-summary.log
             test/JDBC/Info/replication-run-summary.log
+            ~/failed-testscript-outputs
 
       - name: Upload Output Diff
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')

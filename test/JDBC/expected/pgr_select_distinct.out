@@ -8,9 +8,11 @@
 --
 SELECT DISTINCT two FROM onek ORDER BY 1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "onek" does not exist)~~
+~~START~~
+int
+0
+1
+~~END~~
 
 
 --
@@ -18,9 +20,19 @@ GO
 --
 SELECT DISTINCT ten FROM onek ORDER BY 1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "onek" does not exist)~~
+~~START~~
+int
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+~~END~~
 
 
 --
@@ -28,9 +40,13 @@ GO
 --
 SELECT DISTINCT string4 FROM onek ORDER BY 1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "onek" does not exist)~~
+~~START~~
+varchar
+AAAAxx
+HHHHxx
+OOOOxx
+VVVVxx
+~~END~~
 
 
 --
@@ -41,9 +57,49 @@ SELECT DISTINCT two, string4, ten
    FROM onek
    ORDER BY two asc, string4 asc, ten asc;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "onek" does not exist)~~
+~~START~~
+int#!#varchar#!#int
+0#!#AAAAxx#!#0
+0#!#AAAAxx#!#2
+0#!#AAAAxx#!#4
+0#!#AAAAxx#!#6
+0#!#AAAAxx#!#8
+0#!#HHHHxx#!#0
+0#!#HHHHxx#!#2
+0#!#HHHHxx#!#4
+0#!#HHHHxx#!#6
+0#!#HHHHxx#!#8
+0#!#OOOOxx#!#0
+0#!#OOOOxx#!#2
+0#!#OOOOxx#!#4
+0#!#OOOOxx#!#6
+0#!#OOOOxx#!#8
+0#!#VVVVxx#!#0
+0#!#VVVVxx#!#2
+0#!#VVVVxx#!#4
+0#!#VVVVxx#!#6
+0#!#VVVVxx#!#8
+1#!#AAAAxx#!#1
+1#!#AAAAxx#!#3
+1#!#AAAAxx#!#5
+1#!#AAAAxx#!#7
+1#!#AAAAxx#!#9
+1#!#HHHHxx#!#1
+1#!#HHHHxx#!#3
+1#!#HHHHxx#!#5
+1#!#HHHHxx#!#7
+1#!#HHHHxx#!#9
+1#!#OOOOxx#!#1
+1#!#OOOOxx#!#3
+1#!#OOOOxx#!#5
+1#!#OOOOxx#!#7
+1#!#OOOOxx#!#9
+1#!#VVVVxx#!#1
+1#!#VVVVxx#!#3
+1#!#VVVVxx#!#5
+1#!#VVVVxx#!#7
+1#!#VVVVxx#!#9
+~~END~~
 
 
 
@@ -74,17 +130,38 @@ GO
 
 SELECT count(*) FROM (SELECT DISTINCT two, four, two FROM tenk1) ss;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+Query Text: SELECT count(*) FROM (SELECT DISTINCT two, four, two FROM tenk1) ss
+Aggregate
+  ->  HashAggregate
+        Group Key: tenk1.two, tenk1.four
+        ->  Seq Scan on tenk1
+~~END~~
 
-~~ERROR (Message: relation "tenk1" does not exist)~~
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 108.969 ms
+~~END~~
 
 
 SELECT count(*) FROM
   (SELECT DISTINCT two, four, two FROM tenk1) ss;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+Query Text: SELECT count(*) FROM
+  (SELECT DISTINCT two, four, two FROM tenk1) ss
+Aggregate
+  ->  HashAggregate
+        Group Key: tenk1.two, tenk1.four
+        ->  Seq Scan on tenk1
+~~END~~
 
-~~ERROR (Message: relation "tenk1" does not exist)~~
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
+~~END~~
 
 
 SET BABELFISH_SHOWPLAN_ALL OFF;
@@ -140,7 +217,7 @@ Unique
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 39.645 ms
+Babelfish T-SQL Batch Parsing Time: 38.447 ms
 ~~END~~
 
 
@@ -200,7 +277,7 @@ HashAggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
 ~~END~~
 
 
@@ -307,9 +384,23 @@ GO
 
 SELECT DISTINCT four FROM tenk1;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+Query Text: SELECT DISTINCT four FROM tenk1
+Unique
+  ->  Sort
+        Sort Key: four
+        ->  Gather
+              Workers Planned: 2
+              ->  HashAggregate
+                    Group Key: four
+                    ->  Parallel Seq Scan on tenk1
+~~END~~
 
-~~ERROR (Message: relation "tenk1" does not exist)~~
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 13.195 ms
+~~END~~
 
 
 SET BABELFISH_SHOWPLAN_ALL OFF;
@@ -318,9 +409,13 @@ GO
 -- Ensure the parallel plan produces the correct results
 SELECT DISTINCT four FROM tenk1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "tenk1" does not exist)~~
+~~START~~
+int
+0
+1
+2
+3
+~~END~~
 
 
 
@@ -329,11 +424,13 @@ GO
 -- Ensure the parallel plan produces the correct results
 SELECT DISTINCT four FROM master_dbo.tenk1;
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: relation "master_dbo.tenk1" does not exist
-  Position: 191
-    Server SQLState: 42P01)~~
+~~START~~
+int4
+0
+1
+3
+2
+~~END~~
 
 
 CREATE OR REPLACE FUNCTION distinct_func(a INT) RETURNS INT AS $$
@@ -347,11 +444,13 @@ GO
 EXPLAIN (COSTS OFF)
 SELECT DISTINCT distinct_func(1) FROM master_dbo.tenk1;
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: relation "master_dbo.tenk1" does not exist
-  Position: 131
-    Server SQLState: 42P01)~~
+~~START~~
+text
+Unique
+  ->  Sort
+        Sort Key: (distinct_func(1))
+        ->  Seq Scan on tenk1
+~~END~~
 
 
 -- make the function parallel safe
@@ -366,11 +465,16 @@ GO
 EXPLAIN (COSTS OFF)
 SELECT DISTINCT distinct_func(1) FROM master_dbo.tenk1;
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: relation "master_dbo.tenk1" does not exist
-  Position: 132
-    Server SQLState: 42P01)~~
+~~START~~
+text
+Unique
+  ->  Gather Merge
+        Workers Planned: 1
+        ->  Unique
+              ->  Sort
+                    Sort Key: (distinct_func(1))
+                    ->  Parallel Seq Scan on tenk1
+~~END~~
 
 
 RESET max_parallel_workers_per_gather;
