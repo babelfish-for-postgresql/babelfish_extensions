@@ -122,7 +122,7 @@ jobs:
           fi
           mkdir -p ~/failed-testscript-outputs
           # copy output files of failed test scripts
-          for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" run-summary.log" | cut -d ":" -f 1); 
+          for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" run-summary.log | cut -d ":" -f 1); 
           do
           echo "$f"
           cp ../output/$f".out" ~/failed-testscript-outputs/$f".out"
