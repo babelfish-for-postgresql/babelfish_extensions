@@ -117,14 +117,15 @@ jobs:
           timestamp=`ls -rt | tail -n 2 | sort -r | tail -n 1`
           cd $timestamp
           mv $timestamp.diff ../replication-output-diff.diff
-          # mv "$timestamp"_runSummary.log ../replication-run-summary.log
+          mv "$timestamp"_runSummary.log ../replication-run-summary.log
+          cd ..
           fi
           mkdir -p ~/failed-testscript-outputs
           # copy output files of failed test scripts
-          for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" $timestamp"_runSummary.log" | cut -d ":" -f 1); 
+          for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" run-summary.log" | cut -d ":" -f 1); 
           do
           echo "$f"
-          cp ../../output/$f".out" ~/failed-testscript-outputs/$f".out"
+          cp ../output/$f".out" ~/failed-testscript-outputs/$f".out"
           done
 
       - name: Upload Run Summary 
