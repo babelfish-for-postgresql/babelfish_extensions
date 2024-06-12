@@ -133,16 +133,16 @@ jobs:
           path: |
             test/JDBC/Info/run-summary.log
             test/JDBC/Info/replication-run-summary.log
-            ~/failed-testscript-outputs
 
       - name: Upload Output Diff
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: actions/upload-artifact@v2
         with:
-          name: jdbc-output-diff.diff
+          name: jdbc-output-diff
           path: |
             test/JDBC/Info/output-diff.diff
             test/JDBC/Info/replication-output-diff.diff
+            ~/failed-testscript-outputs
 
       - name: Check and upload coredumps
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
