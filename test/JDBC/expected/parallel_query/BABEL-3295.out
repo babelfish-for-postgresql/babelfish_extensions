@@ -42,6 +42,11 @@ Gather
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 145.184 ms
+~~END~~
+
 
 select * from babel_3295_t1 where b1 = 1 option(table hint(babel_3295_t1, index(index_babel_3295_t1_b1)))
 go
@@ -55,6 +60,11 @@ Gather
         Recheck Cond: (b1 = 1)
         ->  Bitmap Index Scan on index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7
               Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.609 ms
 ~~END~~
 
 
@@ -72,6 +82,11 @@ Gather
               ->  Parallel Seq Scan on babel_3295_t2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 28.801 ms
+~~END~~
+
 
 select * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2 option(merge join)
 go
@@ -85,6 +100,11 @@ Gather
         ->  Parallel Seq Scan on babel_3295_t1
         ->  Parallel Hash
               ->  Parallel Seq Scan on babel_3295_t2
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.182 ms
 ~~END~~
 
 
@@ -118,6 +138,11 @@ Gather
         Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.188 ms
+~~END~~
+
 
 select * from babel_3295_t1 where b1 = 1 option(table hint(babel_3295_t1, index(index_babel_3295_t1_b1)))
 go
@@ -129,6 +154,11 @@ Gather
   Single Copy: true
   ->  Index Scan using index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7 on babel_3295_t1
         Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
 ~~END~~
 
 
@@ -145,6 +175,11 @@ Gather
         ->  Index Scan using babel_3295_t2_pkey on babel_3295_t2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
+~~END~~
+
 
 select * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2 option(merge join)
 go
@@ -157,6 +192,11 @@ Gather
         Merge Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
         ->  Parallel Index Scan using babel_3295_t1_pkey on babel_3295_t1
         ->  Index Scan using babel_3295_t2_pkey on babel_3295_t2
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.271 ms
 ~~END~~
 
 
