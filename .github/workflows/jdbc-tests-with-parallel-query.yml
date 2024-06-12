@@ -89,6 +89,7 @@ jobs:
           cd $timestamp
           mv $timestamp.diff ../output-diff.diff
           mv "$timestamp"_runSummary.log ../run-summary.log
+          cd ..
           mkdir -p ~/failed-testscript-outputs
           # copy output files of failed test scripts
           for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" run-summary.log | cut -d ":" -f 1); 
