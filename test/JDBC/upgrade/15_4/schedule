@@ -474,6 +474,9 @@ BABEL_3571-before-15-5
 BABEL-4641-before-16_3-or-15_7-or-14_12
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
+babel_4328_datetime-before-16_3
+babel_4328_datetime2-before-16_3
+babel_4328_datetimeoffset-before-16_3
 test_conv_string_to_date-before-16_3
 test_conv_string_to_datetime-before-16_3
 test_conv_string_to_datetime2-before-16_3

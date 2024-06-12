@@ -436,6 +436,9 @@ babel_test_int8_numeric_oper_before_16_3
 babel_test_int2_numeric_oper_before_16_3
 newid
 BABEL-4869
+babel_4328_datetime
+babel_4328_datetime2
+babel_4328_datetimeoffset
 babel_726
 test_conv_string_to_date-before-16_3
 test_conv_string_to_datetime-before-16_3
