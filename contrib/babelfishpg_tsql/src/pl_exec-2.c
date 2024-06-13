@@ -829,7 +829,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	/* fetch current search_path */
 	char	   *old_search_path = NULL;
-	char	   *new_search_path;		
+	char	   *new_search_path;
 	
 	/* whether procedure was created WITH RECOMPILE */
 	bool created_with_recompile = false;		
@@ -1297,7 +1297,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		if (stmt->is_cross_db)
 			SetCurrentRoleId(current_user_id, false);
-		
+
 		/*
 		 * If we aren't saving the plan, unset the pointer.  Note that it
 		 * could have been unset already, in case of a recursive call.
@@ -1361,7 +1361,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	exec_eval_cleanup(estate);
 	SPI_freetuptable(SPI_tuptable);
-	
+
 	return PLTSQL_RC_OK;
 }
 

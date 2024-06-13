@@ -276,9 +276,9 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 				else if (strcmp(defel->defname, "recompile") == 0)
 				{
 					/*
-					* CREATE PROCEDURE ... WITH RECOMPILE
-					* Record RECOMPILE in catalog
-					*/
+					 * CREATE PROCEDURE ... WITH RECOMPILE
+					 * Record RECOMPILE in catalog
+					 */
 					with_recompile = true;
 				}					
 			}
