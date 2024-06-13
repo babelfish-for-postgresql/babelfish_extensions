@@ -151,7 +151,6 @@ insteadof_nested_trigger_inside_proc
 insteadof_nested_trigger_with_dml
 nested_trigger_inside_proc
 nested_trigger_with_dml
-newid_before_14_12_or_15_7_or_16_3
 triggers_with_transaction
 Test-sp_addrole
 Test-sp_addrolemember
@@ -174,7 +173,6 @@ babelfish_authid_user_ext
 babelfish_inconsistent_metadata
 babelfish_migration_mode
 schema_resolution_func
-BABEL-3147-before-16_3-or-15_7-or-14_12
 collation_tests_arabic
 collation_tests_greek
 collation_tests_mongolian
@@ -238,8 +236,6 @@ sys-syscolumns-dep
 sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-dep
-sys-sql_modules-before-14_12-dep
-sys-all_sql_modules-before-14_12-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
