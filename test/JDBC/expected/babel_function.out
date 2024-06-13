@@ -320,17 +320,15 @@ select TRY_CONVERT(date, 123);
 GO
 ~~START~~
 date
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type integer to date is not allowed.)~~
+<NULL>
+~~END~~
 
 select TRY_CONVERT(time, 123);
 GO
 ~~START~~
 time
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
+<NULL>
+~~END~~
 
 select TRY_CONVERT(datetime, 123);
 GO
