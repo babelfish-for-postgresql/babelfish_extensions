@@ -3,6 +3,8 @@
 *.DS_Store
 *.o
 *.so
+*.gcda
+*.gcno
 test/JDBC/Info/
 test/JDBC/output/*
 test/JDBC/target/classes/*

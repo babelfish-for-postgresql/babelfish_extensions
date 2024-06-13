@@ -8,7 +8,9 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+Test-sp_addrole-dep-prepare
+Test-sp_addrole-dep-verify
+Test-sp_addrole-dep-cleanup
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
