@@ -1284,10 +1284,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		if (need_path_reset)
 		{
 			/*
-			 * Note: there is no test case to validate the resetting of search_path below.
-			 * In fact, we don't know whether this is even required, since removing the
+			 * Note: there is no test case to validate restoring the search_path below.
+			 * In fact, we don't know whether this restore is even required, since removing the
 			 * call set_config_option("search_path") does not cause any test cases to fail.
-			 * Nevertheless we're keeping the code in out of an abundance of caution.
+			 * Nevertheless we're keeping the code out of an abundance of caution.
 			 */
 			(void) set_config_option("search_path", old_search_path,
 									 PGC_USERSET, PGC_S_SESSION,
@@ -1319,11 +1319,11 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	if (need_path_reset)
 	{
 		/*
-		 * Note: there is no test case to validate the resetting of search_path below.
-		 * In fact, we don't know whether this is even required, since removing the
+		 * Note: there is no test case to validate restoring the search_path below.
+		 * In fact, we don't know whether this restore is even required, since removing the
 		 * call set_config_option("search_path") does not cause any test cases to fail.
-		 * Nevertheless we're keeping the code in out of an abundance of caution.
-		 */		
+		 * Nevertheless we're keeping the code out of an abundance of caution.
+		 */	
 		(void) set_config_option("search_path", old_search_path,
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
