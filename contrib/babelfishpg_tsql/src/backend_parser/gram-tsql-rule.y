@@ -9,7 +9,7 @@
  *       | XXX_TSQL {}
  */
 
-/* Start of exsiting grammar rule in gram.y */
+/* Start of existing grammar rule in gram.y */
 
 parse_toplevel:
 			DIALECT_TSQL tsql_stmtmulti
@@ -4065,6 +4065,11 @@ tsql_func_opt_item:
 					 */
 					$$ = makeDefElem("schemabinding", (Node *)makeBoolean(false), @1);
 				}
+				| TSQL_RECOMPILE
+				{
+					/* Only applies to procedures, the ANTLR parser has already processed this clause */
+					$$ = makeDefElem("recompile", (Node *) makeBoolean(true), @1);
+				}
 		;
 
 /*
@@ -4615,6 +4620,7 @@ unreserved_keyword:
 			| TSQL_READCOMMITTED
 			| TSQL_READPAST
 			| TSQL_READUNCOMMITTED
+			| TSQL_RECOMPILE
 			| TSQL_REPEATABLEREAD
 			| TSQL_REPLICATION
 			| TSQL_ROOT
@@ -4886,5 +4892,3 @@ tsql_for_json_common_directive:
 			| TSQL_INCLUDE_NULL_VALUES					{ $$ = makeIntConst(TSQL_JSON_DIRECTIVE_INCLUDE_NULL_VALUES, -1); }
 			| TSQL_WITHOUT_ARRAY_WRAPPER				{ $$ = makeIntConst(TSQL_JSON_DIRECTIVE_WITHOUT_ARRAY_WRAPPER, -1); }
 		;
-
-
