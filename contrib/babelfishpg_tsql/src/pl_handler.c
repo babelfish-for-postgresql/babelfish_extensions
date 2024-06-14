@@ -147,7 +147,7 @@ extern bool pltsql_check_guc_plan(CachedPlanSource *plansource);
 bool		pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p, char **probin_str_p);
 extern void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char **probin_str_p);
 extern void pltsql_function_probin_reader(ParseState *pstate, List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
-extern Node* pltsql_compile_and_inline_scalar_udf(ParseState *pstate, Oid funcoid);
+extern Node* pltsql_compile_and_inline_scalar_udf(ParseState *pstate, FuncExpr *expr);
 
 static void check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column);
 static bool is_identity_constraint(ColumnDef *column);

@@ -2272,5 +2272,5 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
  * Functions for Scalar UDF Inlining
  */
 extern inline_function_call_hook_type inline_function_call_hook;
-Node* pltsql_compile_and_inline_scalar_udf(ParseState *pstate, Oid funcoid);
+Node* pltsql_compile_and_inline_scalar_udf(ParseState *pstate, FuncExpr *expr);
 #endif							/* PLTSQL_H */

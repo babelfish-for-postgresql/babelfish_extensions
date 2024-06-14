@@ -78,6 +78,7 @@
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
 #include "pltsql.h"
+#include "rewrite/rewriteManip.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -266,6 +267,10 @@ static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
 static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_constraint_nulls_ordering_hook = NULL;
 
+extern void pltsql_estate_setup(PLtsql_execstate *estate, PLtsql_function *func,
+                                ReturnSetInfo *rsi, EState *simple_eval_estate);
+extern void copy_pltsql_datums(PLtsql_execstate *estate, PLtsql_function *func);
+extern void pltsql_estate_cleanup(void );
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -5205,8 +5210,76 @@ unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 	return SORTBY_NULLS_DEFAULT;
 }
 
+typedef struct
+{
+    int         nargs;
+    List       *args;
+    int         sublevels_up;
+} substitute_actual_srf_parameters_context;
+
+static Query * substitute_actual_srf_parameters(Query *expr, int nargs, List *args);
+static Node * substitute_actual_srf_parameters_mutator(Node *node, substitute_actual_srf_parameters_context *context);
+
+static Query * substitute_actual_srf_parameters(Query *expr, int nargs, List *args)
+{
+	substitute_actual_srf_parameters_context context;
+
+	context.nargs = nargs;
+	context.args = args;
+	context.sublevels_up = 1;
+
+	return query_tree_mutator(expr,
+								substitute_actual_srf_parameters_mutator,
+								&context,
+								0);
+}
+
+static Node * substitute_actual_srf_parameters_mutator(Node *node, substitute_actual_srf_parameters_context *context)
+{
+	Node       *result;
+
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Query))
+	{
+		context->sublevels_up++;
+		result = (Node *) query_tree_mutator((Query *) node,
+												substitute_actual_srf_parameters_mutator,
+												(void *) context,
+												0);
+		context->sublevels_up--;
+		return result;
+	}
+	if (IsA(node, Param))
+	{
+		Param      *param = (Param *) node;
+
+		if (param->paramkind == PARAM_EXTERN)
+		{
+			if (param->paramid <= 0 || param->paramid > context->nargs)
+				elog(ERROR, "invalid paramid: %d", param->paramid);
+
+			/*
+			* Where the actual replacement happens.
+			*/
+			result = copyObject(list_nth(context->args, param->paramid - 1));
+
+			/*
+			* Since the parameter is being inserted into a subquery, we must
+			* adjust levels.
+			*/
+			
+			IncrementVarSublevelsUp(result, context->sublevels_up, 0);
+			return result;
+		}
+	}
+	return expression_tree_mutator(node,
+									substitute_actual_srf_parameters_mutator,
+									(void *) context);
+}
+
 static Node *
-pltsql_inline_scalar_udf(ParseState *pstate, PLtsql_function *function)
+pltsql_inline_scalar_udf(ParseState *pstate, PLtsql_function *function, FuncExpr *expr)
 {
 	ListCell *s = NULL;
 	Node *result = NULL;
@@ -5219,29 +5292,53 @@ pltsql_inline_scalar_udf(ParseState *pstate, PLtsql_function *function)
 		{
 			PLtsql_stmt_block *innerblock = (PLtsql_stmt_block *) stmt;
 			ListCell *ss = NULL;
-			List *raw_parsetree_list;
-			SelectStmt *selectstmt;
 
 			foreach(ss, innerblock->body)
 			{
+
+				PLtsql_execstate estate;
+				List *raw_parsetree_list;
+				Query *querytree = NULL;
+				SubLink *sublink = NULL;
+
 				PLtsql_stmt *innerstmt = (PLtsql_stmt *) lfirst(ss);
 				PLtsql_stmt_return *return_stmt = (PLtsql_stmt_return *) innerstmt;
-				SubLink *sublink = NULL;
 				Assert(innerstmt->cmd_type == PLTSQL_STMT_RETURN);
 
-				ereport(LOG, (errmsg("Return statement: %s", return_stmt->expr->query)));
-
-				raw_parsetree_list = raw_parser(return_stmt->expr->query, RAW_PARSE_DEFAULT);
+				raw_parsetree_list = pg_parse_query(return_stmt->expr->query);
 				Assert(list_length(raw_parsetree_list) == 1);
 
-				selectstmt = (SelectStmt *) parsetree_nth_stmt(raw_parsetree_list, 0);
+				Assert(!return_stmt->expr->func);
+				return_stmt->expr->func = function;
 
+				// KLTODO: I dont think we should be calling pltsql_estate_setup here 
+				// because we are not executing it. This needs some investigation
+				pltsql_estate_setup(&estate, function, NULL, NULL);
+				estate.atomic = false;
+				copy_pltsql_datums(&estate, function);
+
+				querytree = parse_analyze_withcb(linitial(raw_parsetree_list),
+												 return_stmt->expr->query,
+												 (ParserSetupHook) pltsql_parser_setup,
+												 (void *) return_stmt->expr,
+												 NULL);
+
+				pltsql_estate_cleanup();
+
+				Assert(querytree); // keep compiler happy
+				return_stmt->expr->func = NULL;
+				function->cur_estate = NULL;
+
+				// Substitute actual paramaters
+				querytree = substitute_actual_srf_parameters(querytree, function->fn_nargs, expr->args);
 				sublink = makeNode(SubLink);
 				sublink->subLinkType = EXPR_SUBLINK;
 				sublink->subLinkId = 0;
-				sublink->subselect = (Node *) selectstmt;
+				sublink->subselect = (Node *) querytree;
+				pstate->p_hasSubLinks = true; // KLTODO: This is hacky, cant do this.
 
-				result = transformExpr(pstate, (Node *) sublink, pstate->p_expr_kind);
+				return (Node *) sublink;
+
 			}
 		}
 	}
@@ -5250,7 +5347,7 @@ pltsql_inline_scalar_udf(ParseState *pstate, PLtsql_function *function)
 }
 
 Node *
-pltsql_compile_and_inline_scalar_udf(ParseState *pstate, Oid funcoid)
+pltsql_compile_and_inline_scalar_udf(ParseState *pstate, FuncExpr *expr)
 {
 	LOCAL_FCINFO(fake_fcinfo, 0);
 	FmgrInfo	flinfo;
@@ -5263,9 +5360,10 @@ pltsql_compile_and_inline_scalar_udf(ParseState *pstate, Oid funcoid)
 	MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(0));
 	MemSet(&flinfo, 0, sizeof(flinfo));
 	fake_fcinfo->flinfo = &flinfo;
-	flinfo.fn_oid = funcoid;
+	flinfo.fn_oid = expr->funcid;
 	flinfo.fn_mcxt = CurrentMemoryContext;
 
 	func = pltsql_compile(fake_fcinfo, false);
-	return pltsql_inline_scalar_udf(pstate, func);
+
+	return pltsql_inline_scalar_udf(pstate, func, expr);
 }
