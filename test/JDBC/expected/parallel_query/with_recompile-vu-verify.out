@@ -50,7 +50,7 @@ analyze master_dbo.tb_recomp_71
 go
 
 -- tsql
-select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext
+select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext where funcname like 'p_recomp%'
 go
 ~~START~~
 varchar#!#varchar#!#bigint#!#bigint

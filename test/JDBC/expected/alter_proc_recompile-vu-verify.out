@@ -3,7 +3,7 @@ analyze master_dbo.tb_alter_recomp_1
 go
 
 -- tsql
-select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext
+select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext where funcname like 'p_alter_recomp%'
 go
 ~~START~~
 varchar#!#varchar#!#bigint#!#bigint
@@ -170,7 +170,7 @@ as
 select 'p_alter_recomp_02', c1 as col1, x as col2 from tb_alter_recomp_1 where c1 = @p
 go
 
-select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext
+select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext where funcname like 'p_alter_recomp%'
 go
 ~~START~~
 varchar#!#varchar#!#bigint#!#bigint
