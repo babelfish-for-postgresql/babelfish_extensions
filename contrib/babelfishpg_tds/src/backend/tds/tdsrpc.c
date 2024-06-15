@@ -2350,7 +2350,8 @@ static void
 HandleSPCursorOpenCommon(TDSRequestSP req)
 {
 	int			curoptions = 0;
-	int			ret;
+	int			ret,
+				i;
 	StringInfoData buf;
 
 	TdsErrorContext->err_text = "Processing SP_CURSOROPEN Common Request";
@@ -2394,6 +2395,17 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 																			NULL /* TODO row_count */ , req->nTotalParams, req->boundParamsData, req->boundParamsNullList);
 					break;
 				case SP_CURSORPREPARE:
+					for (i = 0; i < buf.len-2; i++)
+					{
+						if ('@' == buf.data[i] && 'P' == buf.data[i + 1])
+						{
+							buf.data[i] = ' ';
+							buf.data[i + 1] = '$';
+							// todo: fixme for @P9+
+							buf.data[i + 2] = buf.data[i + 2] + 1;
+						}
+					}
+
 					set_ps_display("active");
 					activity = psprintf("SP_CURSORPREPARE: %s", buf.data);
 					pgstat_report_activity(STATE_RUNNING, activity);
@@ -2435,7 +2447,13 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 	TDSStatementEndCallback(NULL, NULL);
 
 	/* Send the response now */
-	SendCursorResponse(req);
+	if (req->spType == SP_CURSORPREPARE)
+	{
+		SendReturnValueIntInternal(1, req->cursorPreparedHandle);
+		TdsSendDone(TDS_TOKEN_DONEPROC, TDS_DONE_FINAL, 0xe0, 0);
+	}	
+	else
+		SendCursorResponse(req);
 
 	/* Log immediately if dictated by log_statement and log_duration */
 	TDSLogStatementCursorHandler(req, buf.data, PRINT_BOTH_CURSOR_HANDLE);
@@ -3382,9 +3400,6 @@ GetRPCRequest(StringInfo message)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 							 errmsg("%s parameter should be of %s type", "ccopt", "integer")));
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("\n Tds %s not supported yet", "SP_CURSORPREPARE")));
 			}
 			break;
 		case SP_EXECUTESQL:
@@ -3607,10 +3622,16 @@ ProcessRPCRequest(TDSRequest request)
 			HandleSPCursorRequest(req);
 			break;
 		case SP_CURSOROPEN:
-		case SP_CURSORPREPARE:
 		case SP_CURSORPREPEXEC:
 		case SP_CURSOREXEC:
 			GenerateBindParamsData(req);
+			HandleSPCursorOpenCommon(req);
+			break;
+		case SP_CURSORPREPARE:
+			// todo: fixme
+			req->boundParamsOidList = palloc0(sizeof(Oid) * 1);
+			req->boundParamsOidList[0] = 23;
+			req->nTotalBindParams = 1;
 			HandleSPCursorOpenCommon(req);
 			break;
 		case SP_CURSORFETCH:
