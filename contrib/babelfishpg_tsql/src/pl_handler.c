@@ -2329,6 +2329,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				CreateFunctionStmt	*cfs;
 				ListCell 			*option, *location_cell = NULL;
 				int 				origname_location = -1;
+				bool 				with_recompile = false;
 
 				if (stmt->objtype != OBJECT_PROCEDURE)
 					break;
@@ -2358,6 +2359,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							location_cell = option;
 							pfree(defel);
 						}
+						else if (strcmp(defel->defname, "recompile") == 0)
+						{
+							/*
+							 * ALTER PROCEDURE ... WITH RECOMPILE
+							 * Record RECOMPILE in catalog
+							 */
+							with_recompile = true;
+						}
 					}
 
 					/* delete location cell if it exists as it is for internal use only */
@@ -2379,8 +2388,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
 					pg_proc_update_oid_acl(address, oldoid, proacl);
 					/* Update function/procedure related metadata in babelfish catalog */
-					/* ToDo: handle WITH RECOMPILE option; using false as placeholder until then */
-					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, false);
+					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
 					if (!isSameProc) {
 						/*
 						 * When the signatures differ we need to manually update the 'function_args' column in 

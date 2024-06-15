@@ -489,6 +489,7 @@ BABEL_4330
 kill
 set_tran_isolvl
 with_recompile
+alter_proc_recompile
 BABEL-4217
 Test_ISNULL
 BABEL-4270

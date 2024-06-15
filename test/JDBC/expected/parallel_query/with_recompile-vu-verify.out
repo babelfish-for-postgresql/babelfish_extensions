@@ -50,6 +50,25 @@ analyze master_dbo.tb_recomp_71
 go
 
 -- tsql
+select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext
+go
+~~START~~
+varchar#!#varchar#!#bigint#!#bigint
+master_dbo#!#p_recomp_11#!#4#!#0
+master_dbo#!#p_recomp_12#!#4#!#0
+master_dbo#!#p_recomp_13#!#4#!#0
+master_dbo#!#p_recomp_21#!#4#!#0
+master_dbo#!#p_recomp_22#!#4#!#0
+master_dbo#!#p_recomp_31#!#4#!#0
+master_dbo#!#p_recomp_32#!#4#!#0
+master_dbo#!#p_recomp_33#!#4#!#0
+master_dbo#!#p_recomp_41#!#4#!#4
+master_dbo#!#p_recomp_51#!#4#!#0
+master_dbo#!#p_recomp_61#!#4#!#4
+master_dbo#!#p_recomp_71#!#4#!#0
+master_dbo#!#p_recomp_72#!#4#!#0
+~~END~~
+
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
 go
 ~~START~~

@@ -51,6 +51,8 @@ analyze master_dbo.tb_recomp_71
 go
 
 -- tsql
+select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext
+go
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
 go
 --==== EXEC with RECOMPILE tests with plan_cache_mode=auto ======

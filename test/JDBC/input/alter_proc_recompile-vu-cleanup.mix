@@ -1,0 +1,6 @@
+drop procedure if exists p_alter_recomp_01
+go
+drop procedure if exists p_alter_recomp_02
+go
+drop table if exists tb_alter_recomp_1
+go

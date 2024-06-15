@@ -1,0 +1,15 @@
+create table tb_alter_recomp_1(c1 int primary key, x int)
+go
+create procedure p_alter_recomp_01 @p int as
+select 'p_alter_recomp_01', * from tb_alter_recomp_1 where c1 = @p
+go
+
+create procedure p_alter_recomp_02 @p int 
+with recompile
+as
+select 'p_alter_recomp_02', * from tb_alter_recomp_1 where c1 = @p
+go
+
+insert tb_alter_recomp_1 
+select *, 0 from generate_series(1,1000)
+go
