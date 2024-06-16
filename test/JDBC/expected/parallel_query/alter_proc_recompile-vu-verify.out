@@ -3,7 +3,7 @@ analyze master_dbo.tb_alter_recomp_1
 go
 
 -- tsql
-select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext where funcname like 'p_alter_recomp%'
+select nspname, funcname, flag_validity&4, flag_values&4 from sys.babelfish_function_ext where funcname like 'p_alter_recomp%' order by funcname
 go
 ~~START~~
 varchar#!#varchar#!#bigint#!#bigint
