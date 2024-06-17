@@ -9,6 +9,8 @@ go
 varchar#!#varchar#!#bigint#!#bigint
 master_dbo#!#p_alter_recomp_01#!#4#!#0
 master_dbo#!#p_alter_recomp_02#!#4#!#4
+master_dbo#!#p_alter_recomp_11#!#4#!#4
+master_dbo#!#p_alter_recomp_12#!#4#!#0
 ~~END~~
 
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
@@ -49,12 +51,16 @@ on
 ~~END~~
 
 
---- generating generic plan for p_alter_recomp_01 -----
+--- generating generic plan for p_alter_recomp_01/p_alter_recomp_12 -----
+--- generating custom plan for p_alter_recomp_02/p_alter_recomp_11 -----
 go
 declare @i int = 6
 while @i > 0
 begin
 execute p_alter_recomp_01 0  -- created without recompile
+execute p_alter_recomp_02 0  -- created with recompile
+execute p_alter_recomp_11 0  -- altered with recompile; for MVU test
+execute p_alter_recomp_12 0  -- altered without recompile; for MVU test
 set @i -= 1
 end
 go
@@ -82,8 +88,79 @@ varchar#!#int#!#int
 varchar#!#int#!#int
 ~~END~~
 
+~~START~~
+varchar#!#int#!#int
+~~END~~
 
---- using index scan ----
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+
 go
 set babelfish_showplan_all on
 go
@@ -107,28 +184,31 @@ Query Text: EXEC    p_alter_recomp_02 0
         Index Cond: (c1 = 0)
 ~~END~~
 
+execute p_alter_recomp_11 0  -- altered with recompile; for MVU test
+go
+~~START~~
+text
+Query Text: EXEC    p_alter_recomp_11 0
+  Query Text: select 'p_alter_recomp_11', c1 as col1, x as col2 from tb_alter_recomp_1 where c1 = "@p"
+  ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
+        Index Cond: (c1 = 0)
+~~END~~
+
+execute p_alter_recomp_12 0  -- altered without recompile; for MVU test
+go
+~~START~~
+text
+Query Text: EXEC    p_alter_recomp_12 0
+  Query Text: select 'p_alter_recomp_12', c1 as col1, x as col2 from tb_alter_recomp_1 where c1 = "@p"
+  ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
+        Index Cond: (c1 = $1)
+~~END~~
+
 set babelfish_showplan_all off
 go
 
---- turning off index scan ----
-go
-select set_config('enable_indexscan', 'off', false)
-go
-~~START~~
-text
-off
-~~END~~
-
-select current_setting('enable_indexscan') as indexscan_off
-go
-~~START~~
-text
-off
-~~END~~
-
-
---- using index scan for p_alter_recomp_01 (generic plan) ----
---- using bitmap scan for p_alter_recomp_02 (custom plan) ----
+--- using generic plan for p_alter_recomp_01 (Index Cond: c1 = $1) ----
+--- using custom scan for p_alter_recomp_02 (Index Cond: c1 = 0) ----
 go
 set babelfish_showplan_all on
 go
@@ -148,10 +228,8 @@ go
 text
 Query Text: EXEC    p_alter_recomp_02 0
   Query Text: select 'p_alter_recomp_02', * from tb_alter_recomp_1 where c1 = "@p"
-  ->  Bitmap Heap Scan on tb_alter_recomp_1
-        Recheck Cond: (c1 = 0)
-        ->  Bitmap Index Scan on tb_alter_recomp_1_pkey
-              Index Cond: (c1 = 0)
+  ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
+        Index Cond: (c1 = 0)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -176,6 +254,8 @@ go
 varchar#!#varchar#!#bigint#!#bigint
 master_dbo#!#p_alter_recomp_01#!#4#!#4
 master_dbo#!#p_alter_recomp_02#!#4#!#0
+master_dbo#!#p_alter_recomp_11#!#4#!#4
+master_dbo#!#p_alter_recomp_12#!#4#!#0
 ~~END~~
 
 
@@ -183,7 +263,8 @@ master_dbo#!#p_alter_recomp_02#!#4#!#0
 declare @i int = 6
 while @i > 0
 begin
-execute p_alter_recomp_02 0  -- created without recompile
+execute p_alter_recomp_01 0  -- altered with recompile
+execute p_alter_recomp_02 0  -- altered without recompile
 set @i -= 1
 end
 go
@@ -211,58 +292,33 @@ varchar#!#int#!#int
 varchar#!#int#!#int
 ~~END~~
 
-
--- using bitmap scan for p_alter_recomp_01 (custom plan) ----
--- using bitmap scan for p_alter_recomp_02 (generic plan) ----
-go
-set babelfish_showplan_all on
-go
-execute p_alter_recomp_01 0  -- altered with recompile
-go
 ~~START~~
-text
-Query Text: EXEC    p_alter_recomp_01 0
-  Query Text: select 'p_alter_recomp_01', c1 as col1, x as col2 from tb_alter_recomp_1 where c1 = "@p"
-  ->  Bitmap Heap Scan on tb_alter_recomp_1
-        Recheck Cond: (c1 = 0)
-        ->  Bitmap Index Scan on tb_alter_recomp_1_pkey
-              Index Cond: (c1 = 0)
+varchar#!#int#!#int
 ~~END~~
 
-execute p_alter_recomp_02 0  -- altered without recompile
-go
 ~~START~~
-text
-Query Text: EXEC    p_alter_recomp_02 0
-  Query Text: select 'p_alter_recomp_02', c1 as col1, x as col2 from tb_alter_recomp_1 where c1 = "@p"
-  ->  Bitmap Heap Scan on tb_alter_recomp_1
-        Recheck Cond: (c1 = $1)
-        ->  Bitmap Index Scan on tb_alter_recomp_1_pkey
-              Index Cond: (c1 = $1)
+varchar#!#int#!#int
 ~~END~~
 
-set babelfish_showplan_all off
-go
-
---- turning on index scan ----
-go
-select set_config('enable_indexscan', 'on', false)
-go
 ~~START~~
-text
-on
+varchar#!#int#!#int
 ~~END~~
 
-select current_setting('enable_indexscan') as indexscan_on
-go
 ~~START~~
-text
-on
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
+~~END~~
+
+~~START~~
+varchar#!#int#!#int
 ~~END~~
 
 
--- using index scan for p_alter_recomp_01 (custom plan) ----
--- using bitmap scan for p_alter_recomp_02 (generic plan) ----
+--- using custom plan for p_alter_recomp_01 (Index Cond: c1 = 0) ----
+--- using generic scan for p_alter_recomp_02 (Index Cond: c1 = $1) ----
 go
 set babelfish_showplan_all on
 go
@@ -282,10 +338,8 @@ go
 text
 Query Text: EXEC    p_alter_recomp_02 0
   Query Text: select 'p_alter_recomp_02', c1 as col1, x as col2 from tb_alter_recomp_1 where c1 = "@p"
-  ->  Bitmap Heap Scan on tb_alter_recomp_1
-        Recheck Cond: (c1 = $1)
-        ->  Bitmap Index Scan on tb_alter_recomp_1_pkey
-              Index Cond: (c1 = $1)
+  ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
+        Index Cond: (c1 = $1)
 ~~END~~
 
 set babelfish_showplan_all off
@@ -293,13 +347,6 @@ go
 
 --==== end of tests ======
 go
-select set_config('enable_indexscan', 'on', false)
-go
-~~START~~
-text
-on
-~~END~~
-
 select set_config('plan_cache_mode', 'auto', false)
 go
 ~~START~~
