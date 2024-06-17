@@ -73,6 +73,7 @@ jobs:
           extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
           install_dir: ${{ steps.find-branch.outputs.base-dir }}
           migration_mode: 'multi-db'
+          dump_restore: 'true'
 
       - name: Setup Dump Restore Composite Action
         id: setup-dump-restore-ca
@@ -85,6 +86,8 @@ jobs:
         id: dump-restore-and-test
         if: always() && steps.setup-dump-restore-ca.outcome == 'success' 
         uses: ./.github/composite-actions/dump-restore
+
+      - uses: actions/checkout@v2
 
       # Due to some action/checkout's in previous step the dynamically generated dump-restore composite action isn't available,
       # hence to avoid error in post action step recreated the dump-restore composite action
