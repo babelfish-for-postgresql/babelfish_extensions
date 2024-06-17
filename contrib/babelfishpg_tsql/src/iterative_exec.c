@@ -1765,8 +1765,9 @@ process_explain(PLtsql_execstate *estate, bool *show_antlr_parsing_time)
 	 * This is particulary useful in order to avoid showing unnecessary ANTLR parsing time when
 	 * batch only contains statement like SET BABELFISH_STATISTICS PROFILE ON or
 	 * set BABELFISH_SHOWPLAN_ALL on.
+	 * We should set show_antlr_parsing_time to true if babelfishpg_tsql.explain_summary is enabled.
 	 */
-	*show_antlr_parsing_time = true;
+	*show_antlr_parsing_time = pltsql_explain_summary;
 
 	/* Let the protocol plugin know that we are about to start execution */
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_beg)
@@ -1851,8 +1852,9 @@ process_explain_analyze(PLtsql_execstate *estate, bool *show_antlr_parsing_time)
 			 * This is particulary useful in order to avoid showing unnecessary ANTLR parsing time when
 			 * batch only contains statement like SET BABELFISH_STATISTICS PROFILE ON or
 			 * set BABELFISH_SHOWPLAN_ALL on.
+			 * We should set show_antlr_parsing_time to true if babelfishpg_tsql.explain_summary is enabled.
 			 */
-			*show_antlr_parsing_time = true;
+			*show_antlr_parsing_time = pltsql_explain_summary;
 
 			/*
 			 * Let the protocol plugin know that we are about to start
