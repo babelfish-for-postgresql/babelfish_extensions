@@ -2305,6 +2305,406 @@ int#!#nvarchar
 ~~END~~
 
 
+-- CASE 22: Sublink (with other combinations)
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI) COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CI_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CI_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI) COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'chaptéR' LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'chaptéR' COLLATE Latin1_General_CI_AI LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI) LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE (SELECT 'chaptéR' COLLATE Latin1_General_CI_AI) LIKE (SELECT col FROM test_like_for_AI_prepare_t1_ci where col like N'chaptéR');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') LIKE '%pai%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+árbol#!#árbol#!#árbol#!#árbol#!#árbol                                             #!#árbol                                             
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE 'spain' LIKE (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain');
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+árbol#!#árbol#!#árbol#!#árbol#!#árbol                                             #!#árbol                                             
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+SELECT * FROM test_like_for_AI_prepare_t1_ci WHERE (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') LIKE (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE b LIKE 'spain');
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+árbol#!#árbol#!#árbol#!#árbol#!#árbol                                             #!#árbol                                             
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') AS subquery_result FROM test_like_for_AI_prepare_t1_ci 
+WHERE col LIKE (SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+nvarchar#!#nvarchar
+résumé#!#Șpain
+~~END~~
+
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') AS subquery_result FROM test_like_for_AI_prepare_t1_ci
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI) LIKE 'ResumE' COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+nvarchar#!#nvarchar
+café#!#Șpain
+jalapeño#!#Șpain
+résumé#!#Șpain
+naïve#!#Șpain
+Piñata#!#Șpain
+Año Nuevo#!#Șpain
+TELÉFONO#!#Șpain
+película#!#Șpain
+árbol#!#Șpain
+canapé#!#Șpain
+chaptéR#!#Șpain
+TEññiȘ#!#Șpain
+~~END~~
+
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') AS subquery_result FROM test_like_for_AI_prepare_t1_ci
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI) LIKE 
+(SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+nvarchar#!#nvarchar
+café#!#Șpain
+jalapeño#!#Șpain
+résumé#!#Șpain
+naïve#!#Șpain
+Piñata#!#Șpain
+Año Nuevo#!#Șpain
+TELÉFONO#!#Șpain
+película#!#Șpain
+árbol#!#Șpain
+canapé#!#Șpain
+chaptéR#!#Șpain
+TEññiȘ#!#Șpain
+~~END~~
+
+
+SELECT col, 
+(SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain') AS subquery_result1,
+(SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI) AS subquery_result2
+FROM test_like_for_AI_prepare_t1_ci
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_ci WHERE col LIKE 'résumé' COLLATE Latin1_General_CI_AI) LIKE 'ré%';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+café#!#Șpain#!#résumé
+jalapeño#!#Șpain#!#résumé
+résumé#!#Șpain#!#résumé
+naïve#!#Șpain#!#résumé
+Piñata#!#Șpain#!#résumé
+Año Nuevo#!#Șpain#!#résumé
+TELÉFONO#!#Șpain#!#résumé
+película#!#Șpain#!#résumé
+árbol#!#Șpain#!#résumé
+canapé#!#Șpain#!#résumé
+chaptéR#!#Șpain#!#résumé
+TEññiȘ#!#Șpain#!#résumé
+~~END~~
+
+
+SELECT col, 
+(SELECT a FROM test_like_for_AI_prepare_t6_ci WHERE a LIKE 'spain' COLLATE Latin1_General_CI_AI) AS subquery_result
+FROM test_like_for_AI_prepare_t1_ci
+WHERE 
+(col IS NOT NULL AND EXISTS (SELECT 1 FROM test_like_for_AI_prepare_t7_ci WHERE col_v LIKE 'résumé' COLLATE Latin1_General_CI_AI)) OR
+(col IS NULL AND col LIKE 'ré%' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+nvarchar#!#nvarchar
+résumé#!#Șpain
+~~END~~
+
+
+-- CASE 23: T_CoerceViaIO (with other combinations)
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as nvarchar(3));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as varchar(3));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as char(3));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE  CAST(123 as nvarchar(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE  CAST(123 as varchar(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE  CAST(123 as char(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT c1, (SELECT CAST(c1 AS NVARCHAR(50)) WHERE CAST(c1 AS NVARCHAR(50)) COLLATE Latin1_General_CI_AI LIKE '1%') FROM test_like_for_AI_prepare_escape;
+GO
+~~START~~
+int#!#nvarchar
+1#!#1
+2#!#<NULL>
+3#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
+6#!#<NULL>
+7#!#<NULL>
+8#!#<NULL>
+9#!#<NULL>
+10#!#10
+11#!#11
+12#!#12
+13#!#13
+14#!#14
+15#!#15
+16#!#16
+17#!#17
+18#!#18
+19#!#19
+20#!#<NULL>
+21#!#<NULL>
+22#!#<NULL>
+23#!#<NULL>
+24#!#<NULL>
+25#!#<NULL>
+26#!#<NULL>
+27#!#<NULL>
+28#!#<NULL>
+29#!#<NULL>
+~~END~~
+
+
+SELECT c1, (SELECT string WHERE string COLLATE Latin1_General_CI_AI LIKE CAST('451201%' AS NVARCHAR(50))) FROM test_like_for_AI_prepare_escape;
+GO
+~~START~~
+int#!#nvarchar
+1#!#451201-7825
+2#!#451201x7825
+3#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
+6#!#<NULL>
+7#!#<NULL>
+8#!#<NULL>
+9#!#<NULL>
+10#!#<NULL>
+11#!#<NULL>
+12#!#<NULL>
+13#!#<NULL>
+14#!#<NULL>
+15#!#<NULL>
+16#!#<NULL>
+17#!#<NULL>
+18#!#<NULL>
+19#!#<NULL>
+20#!#<NULL>
+21#!#<NULL>
+22#!#<NULL>
+23#!#<NULL>
+24#!#<NULL>
+25#!#<NULL>
+26#!#<NULL>
+27#!#<NULL>
+28#!#<NULL>
+29#!#<NULL>
+~~END~~
+
+
+SELECT c1, (SELECT CAST(c1 AS NVARCHAR(50)) WHERE CAST(c1 AS NVARCHAR(50)) COLLATE Latin1_General_CI_AI LIKE CAST('1%' AS NVARCHAR(50))) FROM test_like_for_AI_prepare_escape;
+GO
+~~START~~
+int#!#nvarchar
+1#!#1
+2#!#<NULL>
+3#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
+6#!#<NULL>
+7#!#<NULL>
+8#!#<NULL>
+9#!#<NULL>
+10#!#10
+11#!#11
+12#!#12
+13#!#13
+14#!#14
+15#!#15
+16#!#16
+17#!#17
+18#!#18
+19#!#19
+20#!#<NULL>
+21#!#<NULL>
+22#!#<NULL>
+23#!#<NULL>
+24#!#<NULL>
+25#!#<NULL>
+26#!#<NULL>
+27#!#<NULL>
+28#!#<NULL>
+29#!#<NULL>
+~~END~~
+
+
+SELECT c1, string, (SELECT CAST(string AS NVARCHAR(50)) WHERE CAST(string AS NVARCHAR(50)) COLLATE Latin1_General_CI_AI LIKE '451201%') FROM test_like_for_AI_prepare_escape;
+GO
+~~START~~
+int#!#nvarchar#!#nvarchar
+1#!#451201-7825#!#451201-7825
+2#!#451201x7825#!#451201x7825
+3#!#Andersson#!#<NULL>
+4#!#Bertilsson#!#<NULL>
+5#!#Carlson#!#<NULL>
+6#!#Davidsson#!#<NULL>
+7#!#Eriksson#!#<NULL>
+8#!#Fredriksson#!#<NULL>
+9#!#F#!#<NULL>
+10#!#F.#!#<NULL>
+11#!#Göransson#!#<NULL>
+12#!#Karlsson#!#<NULL>
+13#!#KarlsTon#!#<NULL>
+14#!#Karlson#!#<NULL>
+15#!#Persson#!#<NULL>
+16#!#Uarlson#!#<NULL>
+17#!#McDonalds#!#<NULL>
+18#!#MacDonalds#!#<NULL>
+19#!#15% off#!#<NULL>
+20#!#15 % off#!#<NULL>
+21#!#15 %off#!#<NULL>
+22#!#15 %#!#<NULL>
+23#!#15 % /off#!#<NULL>
+24#!#My[String#!#<NULL>
+25#!#My]String#!#<NULL>
+26#!#My[]String#!#<NULL>
+27#!#My][String#!#<NULL>
+28#!#My[valid]String#!#<NULL>
+29#!#<NULL>#!#<NULL>
+~~END~~
+
 
 ------------------- CS_AI ----------------------
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -4519,6 +4919,408 @@ int#!#nvarchar
 1#!#Adam
 10#!#Ądam
 ~~END~~
+
+
+-- CASE 22: Sublink (with other combinations)
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI) COLLATE Latin1_General_CS_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CS_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE 'Götterdämmerung' COLLATE Latin1_General_CS_AI LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI) COLLATE Latin1_General_CS_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'chaptéR' LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'chaptéR' COLLATE Latin1_General_CS_AI LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI) LIKE (SELECT 'Götterdämmerung' COLLATE Latin1_General_CS_AI);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE (SELECT 'chaptéR' COLLATE Latin1_General_CS_AI) LIKE (SELECT col FROM test_like_for_AI_prepare_t1_cs where col like N'chaptéR');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') LIKE '%pai%';
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+árbol#!#árbol#!#árbol#!#árbol#!#árbol                                             #!#árbol                                             
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE 'Spain' LIKE (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain');
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+árbol#!#árbol#!#árbol#!#árbol#!#árbol                                             #!#árbol                                             
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+SELECT * FROM test_like_for_AI_prepare_t1_cs WHERE (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') LIKE (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE b LIKE 'SPAIn');
+GO
+~~START~~
+nvarchar#!#varchar#!#text#!#ntext#!#char#!#nchar
+café#!#café#!#café#!#café#!#café                                              #!#café                                              
+jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño                                          #!#jalapeño                                          
+résumé#!#résumé#!#résumé#!#résumé#!#résumé                                            #!#résumé                                            
+naïve#!#naïve#!#naïve#!#naïve#!#naïve                                             #!#naïve                                             
+Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata                                            #!#Piñata                                            
+Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo                                         #!#Año Nuevo                                         
+TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO                                          #!#TELÉFONO                                          
+película#!#película#!#película#!#película#!#película                                          #!#película                                          
+árbol#!#árbol#!#árbol#!#árbol#!#árbol                                             #!#árbol                                             
+canapé#!#canapé#!#canapé#!#canapé#!#canapé                                            #!#canapé                                            
+chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR                                           #!#chaptéR                                           
+TEññiȘ#!#TEññi?#!#TEññi?#!#TEññiȘ#!#TEññi?                                            #!#TEññiȘ                                            
+~~END~~
+
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') AS subquery_result FROM test_like_for_AI_prepare_t1_cs 
+WHERE col LIKE (SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI);
+GO
+~~START~~
+nvarchar#!#nvarchar
+résumé#!#Șpain
+~~END~~
+
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') AS subquery_result FROM test_like_for_AI_prepare_t1_cs
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI) LIKE 'resume' COLLATE Latin1_General_CS_AI;
+GO
+~~START~~
+nvarchar#!#nvarchar
+café#!#Șpain
+jalapeño#!#Șpain
+résumé#!#Șpain
+naïve#!#Șpain
+Piñata#!#Șpain
+Año Nuevo#!#Șpain
+TELÉFONO#!#Șpain
+película#!#Șpain
+árbol#!#Șpain
+canapé#!#Șpain
+chaptéR#!#Șpain
+TEññiȘ#!#Șpain
+~~END~~
+
+
+SELECT col, (SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') AS subquery_result FROM test_like_for_AI_prepare_t1_cs
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI) LIKE 
+(SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI);
+GO
+~~START~~
+nvarchar#!#nvarchar
+café#!#Șpain
+jalapeño#!#Șpain
+résumé#!#Șpain
+naïve#!#Șpain
+Piñata#!#Șpain
+Año Nuevo#!#Șpain
+TELÉFONO#!#Șpain
+película#!#Șpain
+árbol#!#Șpain
+canapé#!#Șpain
+chaptéR#!#Șpain
+TEññiȘ#!#Șpain
+~~END~~
+
+
+SELECT col, 
+(SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain') AS subquery_result1,
+(SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI) AS subquery_result2
+FROM test_like_for_AI_prepare_t1_cs
+WHERE (SELECT col FROM test_like_for_AI_prepare_t7_cs WHERE col LIKE 'résumé' COLLATE Latin1_General_CS_AI) LIKE 'ré%';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+café#!#Șpain#!#résumé
+jalapeño#!#Șpain#!#résumé
+résumé#!#Șpain#!#résumé
+naïve#!#Șpain#!#résumé
+Piñata#!#Șpain#!#résumé
+Año Nuevo#!#Șpain#!#résumé
+TELÉFONO#!#Șpain#!#résumé
+película#!#Șpain#!#résumé
+árbol#!#Șpain#!#résumé
+canapé#!#Șpain#!#résumé
+chaptéR#!#Șpain#!#résumé
+TEññiȘ#!#Șpain#!#résumé
+~~END~~
+
+
+SELECT col, 
+(SELECT a FROM test_like_for_AI_prepare_t6_cs WHERE a LIKE 'Spain' COLLATE Latin1_General_CS_AI) AS subquery_result
+FROM test_like_for_AI_prepare_t1_cs
+WHERE 
+(col IS NOT NULL AND EXISTS (SELECT 1 FROM test_like_for_AI_prepare_t7_cs WHERE col_v LIKE 'résumé' COLLATE Latin1_General_CS_AI)) OR
+(col IS NULL AND col LIKE 'ré%' COLLATE Latin1_General_CS_AI);
+GO
+~~START~~
+nvarchar#!#nvarchar
+résumé#!#Șpain
+~~END~~
+
+
+-- CASE 23: T_CoerceViaIO (with other combinations)
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as nvarchar(3));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as varchar(3));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE N'123' collate Latin1_General_CI_AI LIKE CAST(123 as char(3));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE  CAST(123 as nvarchar(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE  CAST(123 as varchar(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 WHERE  CAST(123 as char(3)) LIKE N'123' collate Latin1_General_CI_AI;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT c1, (SELECT CAST(c1 AS NVARCHAR(50)) WHERE CAST(c1 AS NVARCHAR(50)) COLLATE Latin1_General_CS_AI LIKE '1%') FROM test_like_for_AI_prepare_escape;
+GO
+~~START~~
+int#!#nvarchar
+1#!#1
+2#!#<NULL>
+3#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
+6#!#<NULL>
+7#!#<NULL>
+8#!#<NULL>
+9#!#<NULL>
+10#!#10
+11#!#11
+12#!#12
+13#!#13
+14#!#14
+15#!#15
+16#!#16
+17#!#17
+18#!#18
+19#!#19
+20#!#<NULL>
+21#!#<NULL>
+22#!#<NULL>
+23#!#<NULL>
+24#!#<NULL>
+25#!#<NULL>
+26#!#<NULL>
+27#!#<NULL>
+28#!#<NULL>
+29#!#<NULL>
+~~END~~
+
+
+SELECT c1, (SELECT string WHERE string COLLATE Latin1_General_CS_AI LIKE CAST('451201%' AS NVARCHAR(50))) FROM test_like_for_AI_prepare_escape;
+GO
+~~START~~
+int#!#nvarchar
+1#!#451201-7825
+2#!#451201x7825
+3#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
+6#!#<NULL>
+7#!#<NULL>
+8#!#<NULL>
+9#!#<NULL>
+10#!#<NULL>
+11#!#<NULL>
+12#!#<NULL>
+13#!#<NULL>
+14#!#<NULL>
+15#!#<NULL>
+16#!#<NULL>
+17#!#<NULL>
+18#!#<NULL>
+19#!#<NULL>
+20#!#<NULL>
+21#!#<NULL>
+22#!#<NULL>
+23#!#<NULL>
+24#!#<NULL>
+25#!#<NULL>
+26#!#<NULL>
+27#!#<NULL>
+28#!#<NULL>
+29#!#<NULL>
+~~END~~
+
+
+SELECT c1, (SELECT CAST(c1 AS NVARCHAR(50)) WHERE CAST(c1 AS NVARCHAR(50)) COLLATE Latin1_General_CS_AI LIKE CAST('1%' AS NVARCHAR(50))) FROM test_like_for_AI_prepare_escape;
+GO
+~~START~~
+int#!#nvarchar
+1#!#1
+2#!#<NULL>
+3#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
+6#!#<NULL>
+7#!#<NULL>
+8#!#<NULL>
+9#!#<NULL>
+10#!#10
+11#!#11
+12#!#12
+13#!#13
+14#!#14
+15#!#15
+16#!#16
+17#!#17
+18#!#18
+19#!#19
+20#!#<NULL>
+21#!#<NULL>
+22#!#<NULL>
+23#!#<NULL>
+24#!#<NULL>
+25#!#<NULL>
+26#!#<NULL>
+27#!#<NULL>
+28#!#<NULL>
+29#!#<NULL>
+~~END~~
+
+
+SELECT c1, string, (SELECT CAST(string AS NVARCHAR(50)) WHERE CAST(string AS NVARCHAR(50)) COLLATE Latin1_General_CS_AI LIKE '451201%') FROM test_like_for_AI_prepare_escape;
+GO
+~~START~~
+int#!#nvarchar#!#nvarchar
+1#!#451201-7825#!#451201-7825
+2#!#451201x7825#!#451201x7825
+3#!#Andersson#!#<NULL>
+4#!#Bertilsson#!#<NULL>
+5#!#Carlson#!#<NULL>
+6#!#Davidsson#!#<NULL>
+7#!#Eriksson#!#<NULL>
+8#!#Fredriksson#!#<NULL>
+9#!#F#!#<NULL>
+10#!#F.#!#<NULL>
+11#!#Göransson#!#<NULL>
+12#!#Karlsson#!#<NULL>
+13#!#KarlsTon#!#<NULL>
+14#!#Karlson#!#<NULL>
+15#!#Persson#!#<NULL>
+16#!#Uarlson#!#<NULL>
+17#!#McDonalds#!#<NULL>
+18#!#MacDonalds#!#<NULL>
+19#!#15% off#!#<NULL>
+20#!#15 % off#!#<NULL>
+21#!#15 %off#!#<NULL>
+22#!#15 %#!#<NULL>
+23#!#15 % /off#!#<NULL>
+24#!#My[String#!#<NULL>
+25#!#My]String#!#<NULL>
+26#!#My[]String#!#<NULL>
+27#!#My][String#!#<NULL>
+28#!#My[valid]String#!#<NULL>
+29#!#<NULL>#!#<NULL>
+~~END~~
+
 
 
 

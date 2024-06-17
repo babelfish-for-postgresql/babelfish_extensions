@@ -12,6 +12,7 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/guc.h"
 #include "libpq/pqformat.h"
 #include "utils/timestamp.h"
 #include "parser/scansup.h"
@@ -20,6 +21,7 @@
 #include "miscadmin.h"
 #include "datetimeoffset.h"
 #include "datetime.h"
+#include "datetime2.h"
 
 static void AdjustDatetimeoffsetForTypmod(Timestamp *time, int32 typmod);
 static void CheckDatetimeoffsetRange(const tsql_datetimeoffset *df, Node *escontext);
@@ -46,7 +48,7 @@ PG_FUNCTION_INFO_V1(datetimeoffset_pl_interval);
 PG_FUNCTION_INFO_V1(datetimeoffset_mi_interval);
 PG_FUNCTION_INFO_V1(interval_pl_datetimeoffset);
 PG_FUNCTION_INFO_V1(datetimeoffset_mi);
-
+ 
 PG_FUNCTION_INFO_V1(datetimeoffset_hash);
 PG_FUNCTION_INFO_V1(datetimeoffset_hash_extended);
 
@@ -96,10 +98,17 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+	bool		contains_extra_spaces = false, is_year_set = false;
 	DateTimeErrorExtra extra;
+	char		*modified_str;
+
 
 	datetimeoffset = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
 
+	tm->tm_year = 0;
+	tm->tm_mon = 0;
+	tm->tm_mday = 0;
+ 
 	/*
 	 * Set input to default '1900-01-01 00:00:00.* 00:00' if empty string
 	 * encountered
@@ -112,20 +121,39 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 		datetimeoffset->tsql_tz = 0;
 		PG_RETURN_DATETIMEOFFSET(datetimeoffset);
 	}
-
-	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+ 
+	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME_OFFSET);
+ 
+	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 
+	if (tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
+								contains_extra_spaces, tm, &is_year_set, DATE_TIME_OFFSET))
+	{
+		if (modified_str)
+			pfree(modified_str);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
+	}
+
+	if (modified_str)
+		pfree(modified_str);
+ 
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, 
 							   &dtype, tm, &fsec, &tz, &extra);
 	/* dterr == 1 means that input is TIME format(e.g 12:34:59.123) */
 	/* initialize other necessary date parts and accept input format */
-	if (dterr == 1)
+	if (dterr == 1 || is_year_set)
 	{
-		tm->tm_year = 1900;
-		tm->tm_mon = 1;
-		tm->tm_mday = 1;
+		if (!is_year_set)
+			tm->tm_year = 1900;
+		if (!tm->tm_mon)
+			tm->tm_mon = 1;
+		if (is_year_set || !tm->tm_mday)
+			tm->tm_mday = 1;
 		dterr = 0;
 	}
 	if (dterr != 0)
@@ -169,6 +197,10 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	}
 	AdjustDatetimeoffsetForTypmod(&tsql_ts, typmod);
 	datetimeoffset->tsql_ts = (int64) tsql_ts;
+	
+	if (datetimeoffset->tsql_ts == DATETIMEOFFSET_MAX)
+		datetimeoffset->tsql_ts = DATETIMEOFFSET_MAX - 1;
+
 	CheckDatetimeoffsetRange(datetimeoffset, fcinfo->context);
 
 	PG_RETURN_DATETIMEOFFSET(datetimeoffset);

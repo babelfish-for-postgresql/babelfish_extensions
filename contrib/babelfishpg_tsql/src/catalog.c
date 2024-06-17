@@ -1524,6 +1524,60 @@ clean_up_bbf_function_ext(int16 dbid)
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 
+/*
+ * Look up the RECOMPILE flag in the extended catalog
+ * This is called for every procedure execution so overhead should be minimized.
+ */ 
+bool
+is_created_with_recompile(Oid objectId) 
+{
+	HeapTuple	proctuple,
+				bbffunctuple;
+	bool recompile = false;
+
+	proctuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(objectId));
+	if (!HeapTupleIsValid(proctuple))
+	{
+		ReleaseSysCache(proctuple);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot find the object \"%d\", because it does not exist or you do not have permission.", objectId)));
+	}
+
+	/* 
+	 * The next lookup is relevant only for procedures (prokind = 'p') but since the OID 
+	 * can only be for a procedure we do not check this to avoid additonal overhead
+	 */
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctuple);
+
+	if (HeapTupleIsValid(bbffunctuple))
+	{
+		bool isnull = false;
+		Datum flag_validity;
+		Datum flag_values;
+		flag_validity = SysCacheGetAttr(PROCNSPSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_flag_validity,
+												&isnull);	
+		Assert(isnull == false);				
+																
+		flag_values   = SysCacheGetAttr(PROCNSPSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_flag_values,
+												&isnull);		
+		Assert(isnull == false);									
+
+		/* Get the RECOMPILE bit */
+		if ((DatumGetUInt64(flag_values) & DatumGetUInt64(flag_validity)) & FLAG_CREATED_WITH_RECOMPILE) 
+			recompile = true;
+
+		ReleaseSysCache(bbffunctuple);
+	}
+
+	ReleaseSysCache(proctuple);
+	
+	return recompile;
+}
 
 /*****************************************
  *			SCHEMA

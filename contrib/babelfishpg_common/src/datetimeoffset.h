@@ -18,6 +18,8 @@
  */
 #define DATETIMEOFFSET_TIMEZONE_LIMIT 841
 
+#define DATETIMEOFFSET_MAX INT64CONST(252455616000000000)
+
 
 extern void AdjustTimestampForSmallDatetime(Timestamp *time);
 extern void CheckSmalldatetimeRange(const Timestamp time, Node *escontext);
