@@ -166,8 +166,8 @@ Seq Scan on babel_2844_t1  (cost=0.00..38.25 rows=11 width=8)
 ~~END~~
 
 ~~START~~
-xml
-<explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Babelfish-T-SQL-Batch-Parsing-Time>0.109</Babelfish-T-SQL-Batch-Parsing-Time><newline></explain>
+text
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
