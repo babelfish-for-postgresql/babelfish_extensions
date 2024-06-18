@@ -46,8 +46,6 @@ runs:
         extension_branch: ${{ inputs.extension_branch }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
 
-    - uses: actions/checkout@v2
-
     - name: Build latest dump/restore utilities
       id: build-dump-utils
       if: always() && steps.setup-new-version.outcome == 'success'
