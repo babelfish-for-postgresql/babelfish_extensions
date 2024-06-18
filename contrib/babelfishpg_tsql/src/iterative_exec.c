@@ -1691,7 +1691,10 @@ process_antlr_parsing_time(PLtsql_execstate *estate)
 		return;
 
 	es = NewExplainState();
-	es->format = pltsql_explain_format;
+	/*
+	 * Format would always be TEXT if it is EXPLAIN ONLY mode. Obey setting of pltsql_explain_format otherwise.
+	 */
+	es->format = is_explain_analyze_mode() ? pltsql_explain_format : EXPLAIN_FORMAT_TEXT;
 	ExplainBeginOutput(es);
 	ExplainPropertyFloat("Babelfish T-SQL Batch Parsing Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(antlr_parse_time), 3, es);
 	ExplainEndOutput(es);
@@ -1703,7 +1706,7 @@ process_antlr_parsing_time(PLtsql_execstate *estate)
 		((*pltsql_protocol_plugin_ptr)->stmt_beg) (estate, NULL);
 
 	tupdesc = CreateTemplateTupleDesc(1);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, NULL, pltsql_explain_format == EXPLAIN_FORMAT_XML ? XMLOID : TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, NULL, es->format == EXPLAIN_FORMAT_XML ? XMLOID : TEXTOID, -1, 0);
 
 	receiver = CreateDestReceiver(DestRemote);
 	portal = CreateNewPortal();
