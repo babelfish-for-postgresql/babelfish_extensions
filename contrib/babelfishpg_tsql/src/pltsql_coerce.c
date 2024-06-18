@@ -922,9 +922,11 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
 
 /*
  * getImmediateBaseTypeOfUDT()
- * This funciton 
+ * This function returns the Immediate base type for UDT.
+ * Returns InvalidOid if given type is not an UDT
  */
-static Oid getImmediateBaseTypeOfUDT(Oid typeid)
+static Oid
+getImmediateBaseTypeOfUDT(Oid typeid)
 {
 	Relation					relsetting;
 	HeapTuple					tuple;
@@ -978,7 +980,8 @@ static Oid getImmediateBaseTypeOfUDT(Oid typeid)
  * For a given function details, validate whether it is in special function list
  * and also validate the input argument data types.
  */
-bool validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
+static bool
+validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
 {
 	tsql_special_function_t    *special_func;
 	bool                        type_match;
@@ -1121,34 +1124,17 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	/* Get the candidate with matching return type */
 	ncandidates = 0;
 	best_candidate = NULL;
-	relsetting = table_open(ProcedureRelationId, AccessShareLock);
 	for (current_candidate = candidates;
 			current_candidate != NULL;
 			current_candidate = current_candidate->next)
 	{
-		ScanKeyInit(&scankey,
-					Anum_pg_proc_oid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(current_candidate->oid));
-	
-		scan = systable_beginscan(relsetting, ProcedureOidIndexId, true, NULL, 1, &scankey);
-		tuple = systable_getnext(scan);
-		if (HeapTupleIsValid(tuple))
+		retType = get_func_rettype(current_candidate->oid);
+		if (expr_result_type == retType)
 		{
-			datum = heap_getattr(tuple, Anum_pg_proc_prorettype, RelationGetDescr(relsetting), &isnull);
-			if (!isnull)
-			{
-				retType = DatumGetObjectId(datum);	
-				if (expr_result_type == retType)
-				{
-					best_candidate = current_candidate;
-					ncandidates++;
-				}
-			}
+			best_candidate = current_candidate;
+			ncandidates++;
 		}
-		systable_endscan(scan);
 	}
-	table_close(relsetting, AccessShareLock);
 
 	/* Only one definition should exists per return type for special function */
 	Assert(ncandidates == 1);
