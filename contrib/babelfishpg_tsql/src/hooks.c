@@ -3250,7 +3250,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
  * Updates the existing catalog entry if it already exists.
  */
 void
-pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location)
+pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location, bool with_recompile)
 {
 	Relation	bbf_function_ext_rel;
 	TupleDesc	bbf_function_ext_rel_dsc;
@@ -3376,11 +3376,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	}
 
 	/*
-	 * To store certain flag, Set corresponding bit in flag_validity which
+	 * To store a certain flag, set the corresponding bit in flag_validity which
 	 * tracks currently supported flag bits and then set/unset flag_values bit
 	 * according to flag settings. Used !Transform_null_equals instead of
 	 * pltsql_ansi_nulls because NULL is being inserted in catalog if it is
-	 * used. Currently, Only two flags are supported.
+	 * used. Currently, Only three flags are supported.
 	 */
 	flag_validity |= FLAG_IS_ANSI_NULLS_ON;
 	if (!Transform_null_equals)
@@ -3388,6 +3388,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	flag_validity |= FLAG_USES_QUOTED_IDENTIFIER;
 	if (pltsql_quoted_identifier)
 		flag_values |= FLAG_USES_QUOTED_IDENTIFIER;
+
+	flag_validity |= FLAG_CREATED_WITH_RECOMPILE;	
+	if (with_recompile)	
+		flag_values |= FLAG_CREATED_WITH_RECOMPILE;		
 
 	schema_name_NameData = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(schema_name_NameData->data, NAMEDATALEN, "%s", physical_schemaname);

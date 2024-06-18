@@ -66,7 +66,6 @@ BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
-BABEL-3147
 BABEL-3166
 BABEL-3192
 BABEL-3204
@@ -115,7 +114,6 @@ BABEL-3914
 BABEL-3938
 BABEL-3952
 BABEL-3953-datetrunc
-BABEL-404
 BABEL-405
 BABEL-4078
 BABEL-4098
@@ -124,7 +122,6 @@ BABEL-4516
 babel_417
 BABEL-493
 BABEL_539
-BABEL-621
 BABEL-728
 BABEL-733
 BABEL-741
@@ -149,7 +146,6 @@ babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
-check_for_inconsistent_metadata
 babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
@@ -226,7 +222,6 @@ fulltextserviceproperty
 FULLTEXT_INDEX
 fts-contains
 fts-contains-utils
-BABEL-4785
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -249,7 +244,6 @@ msdb-dbo-syspolicy_configuration
 msdb-dbo-syspolicy_system_health_state
 nested_trigger_inside_proc
 nested_trigger_with_dml
-newid
 objectpropertyex
 openjson
 openquery_upgrd_before_15_4
@@ -453,7 +447,6 @@ TestTableType
 TestText
 TestTime
 TestTinyInt
-TestUDD
 TestUniqueIdentifier
 Test_user_from_win_login
 TestVarChar
@@ -488,8 +481,6 @@ sp_who
 BABEL_4330
 kill
 set_tran_isolvl
-with_recompile
-alter_proc_recompile
 BABEL-4217
 Test_ISNULL
 BABEL-4270
@@ -519,21 +510,8 @@ BABEL-730
 babel-4475
 babel-3254
 babel-4517
-babel_table_type
-alter-procedure
-1_GRANT_SCHEMA
-BABEL-4707
-BABEL_4817
-BABEL-4641
-BABEL-4863
-babel_test_int4_numeric_oper
-babel_test_int8_numeric_oper
-babel_test_int2_numeric_oper
-login_token-dep
-test_like_for_AI
+BABEL-4815
+Test_alter_db_rename
+Test_sp_renamedb
+Test_sp_rename_database
 BABEL-4869
-babel_4328_datetime
-babel_4328_datetime2
-babel_4328_datetimeoffset
-babel_726
-BABEL-3401

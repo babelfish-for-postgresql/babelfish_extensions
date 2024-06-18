@@ -268,6 +268,7 @@ typedef FormData_bbf_servers_def *Form_bbf_servers_def;
 #define BBF_FUNCTION_EXT_NUM_COLS 10
 #define FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define FLAG_USES_QUOTED_IDENTIFIER (1<<1)
+#define FLAG_CREATED_WITH_RECOMPILE (1<<2)
 extern Oid	bbf_function_ext_oid;
 extern Oid	bbf_function_ext_idx_oid;
 
@@ -275,6 +276,7 @@ extern Oid	get_bbf_function_ext_oid(void);
 extern Oid	get_bbf_function_ext_idx_oid(void);
 extern HeapTuple get_bbf_function_tuple_from_proctuple(HeapTuple proctuple);
 extern void clean_up_bbf_function_ext(int16 dbid);
+extern bool is_created_with_recompile(Oid objectId);
 
 typedef struct FormData_bbf_function_ext
 {
