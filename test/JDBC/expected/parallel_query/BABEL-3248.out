@@ -68,11 +68,6 @@ Gather
   ->  Result
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
-~~END~~
-
 set showplan_all off;
 go
 set statistics profile on;
@@ -92,11 +87,6 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.077 ms
 ~~END~~
 
 set statistics profile off;

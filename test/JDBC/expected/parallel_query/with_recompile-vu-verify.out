@@ -113,6 +113,11 @@ Query Text: EXEC    p_recomp_11 0
               Index Cond: (c11 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 156.798 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -198,6 +203,11 @@ Query Text: EXEC    p_recomp_12 0
               Index Cond: (c12 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.187 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -244,6 +254,11 @@ Query Text: EXEC    p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
               Index Cond: (c11 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.990 ms
+~~END~~
+
 exec    p_recomp_12 0 with recompile
 go
 ~~START~~
@@ -263,6 +278,11 @@ Query Text: EXEC    p_recomp_12 0 /* EXECUTE WITH RECOMPILE */
         Single Copy: true
         ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
               Index Cond: (c12 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -290,6 +310,11 @@ Query Text: EXEC p_recomp_12 0
         Single Copy: true
         ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
               Index Cond: (c12 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.406 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -322,6 +347,11 @@ Query Text: EXEC p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
               Index Cond: (c11 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.875 ms
+~~END~~
+
 -- test case without execute keyword
 p_recomp_11 0 with result sets none, recompile
 go
@@ -342,6 +372,11 @@ Query Text: EXEC p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
         Single Copy: true
         ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
               Index Cond: (c11 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.102 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -374,6 +409,11 @@ Query Text: EXEC    p_recomp_13 0
                     Index Cond: (c13 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.226 ms
+~~END~~
+
 exec    p_recomp_13 0 with recompile
 go
 ~~START~~
@@ -395,6 +435,11 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c13 = 0)
               ->  Bitmap Index Scan on tb_recomp_13_pkey
                     Index Cond: (c13 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -498,6 +543,11 @@ Query Text: EXEC    p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
               Index Cond: (c11 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
+~~END~~
+
 exec    p_recomp_12 0 with recompile 
 go
 ~~START~~
@@ -515,6 +565,11 @@ Query Text: EXEC    p_recomp_12 0 /* EXECUTE WITH RECOMPILE */
         Single Copy: true
         ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
               Index Cond: (c12 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -543,6 +598,11 @@ Query Text: EXEC    p_recomp_12 0
               Index Cond: (c12 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -569,6 +629,11 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c13 = 0)
               ->  Bitmap Index Scan on tb_recomp_13_pkey
                     Index Cond: (c13 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.074 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -601,6 +666,11 @@ Query Text: EXEC    p_recomp_13 0
                     Index Cond: (c13 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.063 ms
+~~END~~
+
 exec    p_recomp_13 0 with recompile
 go
 ~~START~~
@@ -620,6 +690,11 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c13 = 0)
               ->  Bitmap Index Scan on tb_recomp_13_pkey
                     Index Cond: (c13 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.080 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -676,6 +751,11 @@ Query Text: EXEC    p_recomp_21 0
               Index Cond: (c21 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.291 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -721,6 +801,11 @@ Query Text: EXEC    p_recomp_21 0 /* EXECUTE WITH RECOMPILE */
               Index Cond: (c21 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.105 ms
+~~END~~
+
 
 --- p_recomp_22: EXEC with RECOMPILE: first plan generated: bitmap scans ----
 go
@@ -745,6 +830,11 @@ Query Text: EXEC    p_recomp_22 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c22 = 0)
               ->  Bitmap Index Scan on tb_recomp_22_pkey
                     Index Cond: (c22 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.243 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -775,6 +865,11 @@ Query Text: EXEC    p_recomp_22 0
               Recheck Cond: (c22 = 0)
               ->  Bitmap Index Scan on tb_recomp_22_pkey
                     Index Cond: (c22 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.067 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -820,6 +915,11 @@ Query Text: EXEC    p_recomp_21 0 /* EXECUTE WITH RECOMPILE */
               Index Cond: (c21 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
 
 --- p_recomp_22: EXEC with RECOMPILE: recompiled plan: index scan for parametrized, btmap scan for non-parametrized ----
 go
@@ -842,6 +942,11 @@ Query Text: EXEC    p_recomp_22 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c22 = 0)
               ->  Bitmap Index Scan on tb_recomp_22_pkey
                     Index Cond: (c22 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.080 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -872,6 +977,11 @@ Query Text: EXEC    p_recomp_22 0
               Recheck Cond: (c22 = 0)
               ->  Bitmap Index Scan on tb_recomp_22_pkey
                     Index Cond: (c22 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.063 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -926,6 +1036,11 @@ Query Text: EXEC    p_recomp_31 0
               Index Cond: (c31 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.304 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -972,6 +1087,11 @@ Query Text: EXEC    p_recomp_31 0 /* EXECUTE WITH RECOMPILE */
               Index Cond: (c31 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
+~~END~~
+
 
 --- p_recomp_32: EXEC with RECOMPILE: bitmap scans (due to force_custom_plan through RECOMPILE) ----
 go
@@ -996,6 +1116,11 @@ Query Text: EXEC    p_recomp_32 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c32 = 0)
               ->  Bitmap Index Scan on tb_recomp_32_pkey
                     Index Cond: (c32 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.232 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1028,6 +1153,11 @@ Query Text: EXEC    p_recomp_32 0
                     Index Cond: (c32 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.071 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -1058,6 +1188,11 @@ Query Text: EXEC    p_recomp_33 0
                     Index Cond: (c33 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.219 ms
+~~END~~
+
 --- tb_recomp_33: with RECOMPILE: bitmap scans ----
 go
 exec    p_recomp_33 0 with recompile
@@ -1081,6 +1216,11 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c33 = 0)
               ->  Bitmap Index Scan on tb_recomp_33_pkey
                     Index Cond: (c33 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.078 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1126,6 +1266,11 @@ Query Text: EXEC    p_recomp_31 0 /* EXECUTE WITH RECOMPILE */
               Index Cond: (c31 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
 --- p_recomp_32: EXEC with RECOMPILE: recompiled plan: index scan for paramtrized, bitmap scan for non-parametrized ----
 go
 exec    p_recomp_32 0 with recompile 
@@ -1147,6 +1292,11 @@ Query Text: EXEC    p_recomp_32 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c32 = 0)
               ->  Bitmap Index Scan on tb_recomp_32_pkey
                     Index Cond: (c32 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.077 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1177,6 +1327,11 @@ Query Text: EXEC    p_recomp_32 0
                     Index Cond: (c32 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.064 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -1203,6 +1358,11 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c33 = 0)
               ->  Bitmap Index Scan on tb_recomp_33_pkey
                     Index Cond: (c33 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.072 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1233,6 +1393,11 @@ Query Text: EXEC    p_recomp_33 0
                     Index Cond: (c33 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.070 ms
+~~END~~
+
 --- tb_recomp_33 with RECOMPILE: index scan for paramtrized stmt, bitmap scan for non-param stmt  ----
 go
 exec    p_recomp_33 0 with recompile
@@ -1254,6 +1419,11 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
               Recheck Cond: (c33 = 0)
               ->  Bitmap Index Scan on tb_recomp_33_pkey
                     Index Cond: (c33 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1436,6 +1606,11 @@ Query Text: EXEC    p_recomp_61 0
               Index Cond: (c61 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.213 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -1498,6 +1673,11 @@ Query Text: EXEC    p_recomp_61 0
               Index Cond: (c61 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -1540,6 +1720,11 @@ Query Text: EXEC    p_recomp_61 0 /* EXECUTE WITH RECOMPILE */
         Single Copy: true
         ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
               Index Cond: (c61 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.206 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1600,6 +1785,11 @@ Query Text: EXEC    p_recomp_61 0
               Index Cond: (c61 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -1638,6 +1828,11 @@ Query Text: EXEC    p_recomp_61 0 /* EXECUTE WITH RECOMPILE */
         Single Copy: true
         ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
               Index Cond: (c61 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2120,6 +2315,11 @@ Query Text: EXEC    p_recomp_51 0
                 Index Cond: (c41 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -2251,6 +2451,11 @@ Query Text: EXEC    p_recomp_51 0
                 Index Cond: (c41 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -2365,6 +2570,11 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2489,6 +2699,11 @@ Query Text: EXEC    p_recomp_51 0
                 Index Cond: (c41 = 0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
+~~END~~
+
 set babelfish_showplan_all off
 go
 
@@ -2592,6 +2807,11 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
                 Index Cond: (c41 = 0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 set babelfish_showplan_all off

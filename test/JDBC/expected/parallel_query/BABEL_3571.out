@@ -205,11 +205,6 @@ Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 28.857 ms
-~~END~~
-
 SELECT * FROM babel_3571_1 ORDER BY id1
 GO
 ~~START~~
@@ -229,11 +224,6 @@ Gather (actual rows=5 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.626 ms
 ~~END~~
 
 SELECT * FROM babel_3571_2 ORDER BY id1
@@ -257,11 +247,6 @@ Gather (actual rows=5 loops=1)
   ->  Index Scan using babel_3571_2_id1_id2_key on babel_3571_2 (actual rows=5 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.136 ms
-~~END~~
-
 SELECT * FROM babel_3571_3 ORDER BY id1
 GO
 ~~START~~
@@ -281,11 +266,6 @@ Gather (actual rows=5 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=5 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.132 ms
 ~~END~~
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -485,11 +465,6 @@ Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.376 ms
-~~END~~
-
 SELECT * FROM babel_3571_1 ORDER BY id1
 GO
 ~~START~~
@@ -509,11 +484,6 @@ Gather (actual rows=5 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.168 ms
 ~~END~~
 
 SELECT * FROM babel_3571_2 ORDER BY id1
@@ -537,11 +507,6 @@ Gather (actual rows=5 loops=1)
   ->  Index Scan using babel_3571_2_id1_id2_key on babel_3571_2 (actual rows=5 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.236 ms
-~~END~~
-
 SELECT * FROM babel_3571_3 ORDER BY id1
 GO
 ~~START~~
@@ -562,11 +527,6 @@ Gather (actual rows=6 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan Backward using babel_3571_3_unique_idx on babel_3571_3 (actual rows=6 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
 ~~END~~
 
 SET BABELFISH_STATISTICS PROFILE OFF;
@@ -814,11 +774,6 @@ Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.370 ms
-~~END~~
-
 SELECT * FROM babel_3571_1 ORDER BY id1
 GO
 ~~START~~
@@ -838,11 +793,6 @@ Gather (actual rows=5 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using babel_3571_1_id1_key on babel_3571_1 (actual rows=5 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 SELECT * FROM babel_3571_2 ORDER BY id1
@@ -866,11 +816,6 @@ Gather (actual rows=5 loops=1)
   ->  Index Scan using babel_3571_2_id1_key on babel_3571_2 (actual rows=5 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.166 ms
-~~END~~
-
 SELECT * FROM babel_3571_3 ORDER BY id1
 GO
 ~~START~~
@@ -890,11 +835,6 @@ Gather (actual rows=5 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce on babel_3571_3 (actual rows=5 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.225 ms
 ~~END~~
 
 SET BABELFISH_STATISTICS PROFILE OFF;

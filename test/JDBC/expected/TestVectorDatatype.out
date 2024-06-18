@@ -388,11 +388,6 @@ Query Text: SELECT set_config('enable_seqscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 17.060 ms
-~~END~~
-
 
 SELECT * FROM vector_table WHERE val = '[1,2,3]';
 go
@@ -409,11 +404,6 @@ Index Only Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_
   Heap Fetches: 1
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 110.852 ms
-~~END~~
-
 
 SELECT TOP 1 * FROM vector_table ORDER BY val;
 go
@@ -428,11 +418,6 @@ Query Text: SELECT TOP 1 * FROM vector_table ORDER BY val
 Limit (actual rows=1 loops=1)
   ->  Index Only Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=1 loops=1)
         Heap Fetches: 1
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 18.048 ms
 ~~END~~
 
 
@@ -471,11 +456,6 @@ Query Text: SELECT set_config('enable_seqscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.185 ms
-~~END~~
-
 
 SELECT * FROM vector_table ORDER BY val <=> '[3,3,3]';
 go
@@ -490,11 +470,6 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <=> '[3,3,3]' NULLS LAST
 Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=2 loops=1)
   Order By: (val <=> '[3,3,3]'::vector)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 24.043 ms
 ~~END~~
 
 
@@ -513,11 +488,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <=> '[0,0,0]'::vector)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 102.262 ms
-~~END~~
-
 SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector))) t2;
 go
 ~~START~~
@@ -533,11 +503,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <=> $0)
         InitPlan 1 (returns $0)
           ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 55.023 ms
 ~~END~~
 
 
@@ -576,11 +541,6 @@ Query Text: SELECT set_config('enable_seqscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
-~~END~~
-
 
 SELECT * FROM vector_table ORDER BY val <#> '[3,3,3]';
 go
@@ -596,11 +556,6 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <#> '[3,3,3]' NULLS LAST
 Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
   Order By: (val <#> '[3,3,3]'::vector)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 1.429 ms
 ~~END~~
 
 
@@ -619,11 +574,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <#> '[0,0,0]'::vector)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 2.568 ms
-~~END~~
-
 SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> (SELECT CAST(NULL as vector))) t2;
 go
 ~~START~~
@@ -639,11 +589,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <#> $0)
         InitPlan 1 (returns $0)
           ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.274 ms
 ~~END~~
 
 
@@ -682,11 +627,6 @@ Query Text: SELECT set_config('enable_seqscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.166 ms
-~~END~~
-
 
 SELECT * FROM vector_table ORDER BY val <-> '[3,3,3]';
 go
@@ -702,11 +642,6 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <-> '[3,3,3]' NULLS LAST
 Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
   Order By: (val <-> '[3,3,3]'::vector)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 1.391 ms
 ~~END~~
 
 
@@ -725,11 +660,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <-> '[0,0,0]'::vector)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 2.559 ms
-~~END~~
-
 SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector))) t2;
 go
 ~~START~~
@@ -745,11 +675,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <-> $0)
         InitPlan 1 (returns $0)
           ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.272 ms
 ~~END~~
 
 
@@ -861,11 +786,6 @@ Query Text: SELECT set_config('enable_seqscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
-~~END~~
-
 
 SELECT * FROM vector_table ORDER BY val <=> '[3,3,3]';
 go
@@ -881,11 +801,6 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <=> '[3,3,3]' NULLS LAST
 Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
   Order By: (val <=> '[3,3,3]'::vector)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 
@@ -904,11 +819,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <=> '[0,0,0]'::vector)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.233 ms
-~~END~~
-
 
 SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector))) t2;
 go
@@ -925,11 +835,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <=> $0)
         InitPlan 1 (returns $0)
           ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.281 ms
 ~~END~~
 
 
@@ -973,11 +878,6 @@ Query Text: SELECT set_config('enable_seqscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.169 ms
-~~END~~
-
 
 SELECT * FROM vector_table ORDER BY val <#> '[3,3,3]';
 go
@@ -996,11 +896,6 @@ Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_tabl
   Order By: (val <#> '[3,3,3]'::vector)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.130 ms
-~~END~~
-
 
 SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> '[0,0,0]') t2;
 go
@@ -1015,11 +910,6 @@ Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> '[
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_table (actual rows=4 loops=1)
         Order By: (val <#> '[0,0,0]'::vector)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.217 ms
 ~~END~~
 
 
@@ -1038,11 +928,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <#> $0)
         InitPlan 1 (returns $0)
           ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.256 ms
 ~~END~~
 
 
@@ -1087,11 +972,6 @@ Query Text: SELECT set_config('enable_seqscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.174 ms
-~~END~~
-
 SELECT * FROM vector_table ORDER BY val <-> '[3,3,3]';
 go
 ~~START~~
@@ -1107,11 +987,6 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <-> '[3,3,3]' NULLS LAST
 Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=4 loops=1)
   Order By: (val <-> '[3,3,3]'::vector)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.126 ms
 ~~END~~
 
 
@@ -1130,11 +1005,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <-> '[0,0,0]'::vector)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.214 ms
-~~END~~
-
 
 SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector))) t2;
 go
@@ -1151,11 +1021,6 @@ Aggregate (actual rows=1 loops=1)
         Order By: (val <-> $0)
         InitPlan 1 (returns $0)
           ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.276 ms
 ~~END~~
 
 
@@ -1418,11 +1283,6 @@ Query Text: SELECT set_config('enable_seqscan', 'off', false)
 Result (actual rows=1 loops=1)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.168 ms
-~~END~~
-
 
 SELECT * FROM vector_table1 ORDER BY val <=> '[3,3,3]';
 go
@@ -1435,11 +1295,6 @@ text
 Query Text: SELECT * FROM vector_table1 ORDER BY val <=> '[3,3,3]' NULLS LAST
 Index Scan using idxvector_table17f9bec28bc8902d45d905788d7aa59a1 on vector_table1 (actual rows=0 loops=1)
   Order By: (val <=> '[3,3,3]'::vector)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
 ~~END~~
 
 
@@ -1459,11 +1314,6 @@ Nested Loop (actual rows=0 loops=1)
         Order By: (val <=> '[0,0,0]'::vector)
   ->  Materialize (never executed)
         ->  Seq Scan on vector_table2 t2 (never executed)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 67.828 ms
 ~~END~~
 
 
@@ -1491,11 +1341,6 @@ Sort (actual rows=0 loops=1)
               ->  Seq Scan on vector_table2 t2 (never executed)
 ~~END~~
 
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 50.926 ms
-~~END~~
-
 
 SELECT t1.* FROM vector_table1 as t1 JOIN table3 as t2 ON t1.a = t2.a ORDER BY val <=> '[0,0,0]';
 go
@@ -1512,11 +1357,6 @@ Nested Loop (actual rows=0 loops=1)
         Order By: (val <=> '[0,0,0]'::vector)
   ->  Materialize (never executed)
         ->  Seq Scan on table3 t2 (never executed)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.237 ms
 ~~END~~
 
 
@@ -1541,11 +1381,6 @@ Sort (actual rows=0 loops=1)
         ->  Sort (never executed)
               Sort Key: t2.a
               ->  Seq Scan on table3 t2 (never executed)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 15.983 ms
 ~~END~~
 
 
