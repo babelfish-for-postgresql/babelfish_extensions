@@ -173,8 +173,8 @@ Gather  (cost=0.00..19.11 rows=11 width=8)
 ~~END~~
 
 ~~START~~
-xml
-<explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Babelfish-T-SQL-Batch-Parsing-Time>0.164</Babelfish-T-SQL-Batch-Parsing-Time><newline></explain>
+text
+Babelfish T-SQL Batch Parsing Time: 0.109 ms<newline>
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
