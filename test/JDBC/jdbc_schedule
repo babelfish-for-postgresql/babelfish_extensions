@@ -271,44 +271,6 @@ ignore#!#BABEL-621-after-14_12-before-15-vu-prepare
 ignore#!#BABEL-621-after-14_12-before-15-vu-verify
 ignore#!#BABEL-621-after-14_12-before-15-vu-cleanup
 
-# These tests are meant for upgrade scenario prior to 14_12 or 15_7 or 16_3 release
-ignore#!#BABEL-3614-before-15_7-vu-prepare
-ignore#!#BABEL-3614-before-15_7-vu-verify
-ignore#!#BABEL-3486-before-15_7-vu-prepare
-ignore#!#BABEL-3486-before-15_7-vu-verify
-ignore#!#TestDatetime-numeric-dateaddfunction-before-15_7-vu-prepare
-ignore#!#TestDatetime-numeric-dateaddfunction-before-15_7-vu-verify
-ignore#!#test_conv_string_to_date-before-15_7-vu-prepare
-ignore#!#test_conv_string_to_date-before-15_7-vu-verify
-ignore#!#test_conv_string_to_date-before-15_7-vu-cleanup
-ignore#!#test_conv_string_to_date-before-13_6-vu-prepare
-ignore#!#test_conv_string_to_date-before-13_6-vu-verify
-ignore#!#test_conv_string_to_date-before-13_6-vu-cleanup
-ignore#!#test_conv_string_to_time-before-15_7-vu-prepare
-ignore#!#test_conv_string_to_time-before-15_7-vu-verify
-ignore#!#test_conv_string_to_time-before-15_7-vu-cleanup
-ignore#!#test_conv_string_to_time-before-13_6-vu-prepare
-ignore#!#test_conv_string_to_time-before-13_6-vu-verify
-ignore#!#test_conv_string_to_time-before-13_6-vu-cleanup
-ignore#!#test_conv_string_to_datetime2-before-15_7-vu-prepare
-ignore#!#test_conv_string_to_datetime2-before-15_7-vu-verify
-ignore#!#test_conv_string_to_datetime2-before-15_7-vu-cleanup
-ignore#!#test_conv_string_to_datetime2-before-14_5-vu-prepare
-ignore#!#test_conv_string_to_datetime2-before-14_5-vu-verify
-ignore#!#test_conv_string_to_datetime2-before-14_5-vu-cleanup
-ignore#!#test_conv_string_to_datetimeoffset-before-15_7-vu-prepare
-ignore#!#test_conv_string_to_datetimeoffset-before-15_7-vu-verify
-ignore#!#test_conv_string_to_datetimeoffset-before-15_7-vu-cleanup
-ignore#!#test_conv_string_to_smalldatetime-before-14_6-vu-prepare
-ignore#!#test_conv_string_to_smalldatetime-before-14_6-vu-verify
-ignore#!#test_conv_string_to_smalldatetime-before-14_6-vu-cleanup
-ignore#!#test_conv_string_to_datetime-before-15_7-vu-prepare
-ignore#!#test_conv_string_to_datetime-before-15_7-vu-verify
-ignore#!#test_conv_string_to_datetime-before-15_7-vu-cleanup
-ignore#!#test_conv_string_to_datetime-before-14_6-vu-prepare
-ignore#!#test_conv_string_to_datetime-before-14_6-vu-verify
-ignore#!#test_conv_string_to_datetime-before-14_6-vu-cleanup
-
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
 ignore#!#BABEL-4279-vu-verify
@@ -329,3 +291,12 @@ ignore#!#newid-vu-prepare
 ignore#!#newid-vu-verify
 ignore#!#newid-vu-cleanup
 
+ignore#!#babel_4328_datetime-before-15_7-vu-prepare
+ignore#!#babel_4328_datetime-before-15_7-vu-verify
+ignore#!#babel_4328_datetime-before-15_7-vu-cleanup
+ignore#!#babel_4328_datetime2-before-15_7-vu-prepare
+ignore#!#babel_4328_datetime2-before-15_7-vu-verify
+ignore#!#babel_4328_datetime2-before-15_7-vu-cleanup
+ignore#!#babel_4328_datetimeoffset-before-15_7-vu-prepare
+ignore#!#babel_4328_datetimeoffset-before-15_7-vu-verify
+ignore#!#babel_4328_datetimeoffset-before-15_7-vu-cleanup
