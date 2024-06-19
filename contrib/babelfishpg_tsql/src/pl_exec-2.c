@@ -4089,17 +4089,21 @@ tsql_compare_values(const void *a, const void *b, void *arg)
 }
 
 /*
- * Allows only login that is either db owner or member of sysadmin.
+ * check_create_or_drop_permission_for_partition_specifier
+ *	Checks if the current user has permission to create or drop a partition 
+ *	function or partition scheme. It allows only those logins that is either 
+ *	db owner or member of sysadmin.
  */
 static void
-perform_permission_check(const char *name, bool is_create, bool is_function)
+check_create_or_drop_permission_for_partition_specifier(const char *name, bool is_create, bool is_function)
 {
 	char		*dbname = get_cur_db_name();
 	Oid		session_user_id = GetSessionUserId();
 	char		*login = GetUserNameFromId(session_user_id, false);
-	bool		login_is_db_owner;
+	bool		login_is_db_owner = false;
 
-	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+	if (strncmp(login, get_owner_of_db(dbname), NAMEDATALEN) == 0)
+		login_is_db_owner = true;
 
 	if (!login_is_db_owner && !is_member_of_role(session_user_id, get_role_oid("sysadmin", false)))
 	{
@@ -4119,262 +4123,269 @@ perform_permission_check(const char *name, bool is_create, bool is_function)
 }
 
 /*
- * CREATE/DROP PARTITION FUNCTION
+ * exec_stmt_partition_scheme
+ * 	 Handles the CREATE/DROP PARTITION FUNCTION statement.
  */
 static int
 exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_function *stmt)
 {
-	const char *partition_function_name = stmt->function_name;
+	const char		*partition_function_name = stmt->function_name;
+	PLtsql_type		*typ = stmt->datatype;
+	List 			*arg = stmt->args;
+	bool 			isnull;
+	Oid			valtype;
+	int32			valtypmod;
+	Datum			tsql_type_datum;
+	char			*tsql_typename = NULL;
+	Datum			*values = NULL;
+	ArrayType		*arr_value = NULL;
+	Oid			sql_variant_oid;
+	Oid			basetype_oid;
+	Oid			opclass_oid;
+	Oid			opfamily_oid;
+	Oid			cmpfunction_oid;
+	int			nargs;
+	int16			dbid = get_cur_db_id();
+	tsql_compare_context	cxt;
+	LOCAL_FCINFO(fcinfo, 1);
 
 	/* check if the login has necessary permissions for CREATE/DROP */
-	perform_permission_check(partition_function_name, stmt->is_create, true);
+	check_create_or_drop_permission_for_partition_specifier(partition_function_name, stmt->is_create, true);
 
-	if (stmt->is_create) 
+	if (!stmt->is_create) /* drop command */
 	{
-		PLtsql_type		*typ = stmt->datatype;
-		List 			*arg = stmt->args;
-		bool 			isnull;
-		Oid			valtype;
-		int32			valtypmod;
-		Datum			tsql_type_datum;
-		char			*tsql_typename = NULL;
-		Datum			*values = NULL;
-		ArrayType		*arr_value = NULL;
-		Oid			sql_variant_oid;
-		tsql_compare_context 	cxt;
-		Oid			basetype_oid;
-		Oid			opclass_oid;
-		Oid			opfamily_oid;
-		Oid			cmpfunction_oid;
-		int 			nargs = list_length(arg);
-		int			dbid = get_cur_db_id();
-		MemoryContext		cur_ctxt = CurrentMemoryContext;
-		LOCAL_FCINFO(fcinfo, 1);
+		/* delete entry from the sys.babelfish_partition_scheme catalog */
+		remove_entry_from_bbf_partition_function(dbid, partition_function_name);
+		/* make sure later statements in batch can see the updated catalog entry */
+		CommandCounterIncrement();
+		return PLTSQL_RC_OK;
+	}
 
-		/* check if given name is exceeding the allowed limit */
-		if (strlen(partition_function_name) > 128)
-		{
-			ereport(ERROR, 
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.", partition_function_name)));
-		}
+	/*
+	 * Otherwise, Create Command.
+	 */
 
-		/* check if there is existing partition function with the given name in the current database */
-		if (partition_function_exists(partition_function_name, dbid))
-		{
-			ereport(ERROR, 
-				(errcode(ERRCODE_DUPLICATE_FUNCTION),
-					errmsg("There is already an object named '%s' in the database.", partition_function_name)));
-		}
+	/* check if given name is exceeding the allowed limit */
+	if (strlen(partition_function_name) > 128)
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.", partition_function_name)));
+	}
 
-		/* get the tsql typename from the input type */
-		InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-		fcinfo->args[0].value = ObjectIdGetDatum(typ->typoid);
-		fcinfo->args[0].isnull = false;
-		tsql_type_datum = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+	/* check if there is existing partition function with the given name in the current database */
+	if (partition_function_exists(dbid, partition_function_name))
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_DUPLICATE_FUNCTION),
+				errmsg("There is already an object named '%s' in the database.", partition_function_name)));
+	}
 
-		if (tsql_type_datum)
-		{
-			tsql_typename = text_to_cstring(DatumGetTextPP(tsql_type_datum));
-		}
+	/* get the tsql typename from the input type */
+	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+	fcinfo->args[0].value = ObjectIdGetDatum(typ->typoid);
+	fcinfo->args[0].isnull = false;
+	tsql_type_datum = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
 
-		/*
-		 * check if datatype is supported or not, if tsql_typename is NULL
-		 * then it implies that typename corresponds to UDT
-		 */
-		if (!tsql_typename || is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
-			(*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typ->typoid) ||
-			(*common_utility_plugin_ptr->is_tsql_geography_datatype) (typ->typoid) ||
-			(*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (typ->typoid) ||
-			typ->typoid == XMLOID) /* we don't have XML type specific to TSQL */
-		{
-			ereport(ERROR, 
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("The type '%s' is not valid for this operation.", typ->typname)));
-		}
+	if (tsql_type_datum)
+	{
+		tsql_typename = text_to_cstring(DatumGetTextPP(tsql_type_datum));
+	}
 
-		/* check if the given number of boundaries are exceeding allowed limit */
-		if (nargs >= 15000)
-		{
-			ereport(ERROR, 
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("CREATE/ALTER partition function failed as only a maximum of 15000 partitions can be created.")));
-		}
+	/*
+	 * check if datatype is supported or not, if tsql_typename is NULL
+	 * then it implies that typename corresponds to UDT
+	*/
+	if (!tsql_typename || is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
+		(*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typ->typoid) ||
+		(*common_utility_plugin_ptr->is_tsql_geography_datatype) (typ->typoid) ||
+		(*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (typ->typoid) ||
+		typ->typoid == XMLOID) /* we don't have XML type specific to TSQL */
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The type '%s' is not valid for this operation.", typ->typname)));
+	}
 
-		values = palloc0(nargs * sizeof(Datum));
+	/* check if the given number of boundaries are exceeding allowed limit */
+	nargs = list_length(arg);
+	if (nargs >= MAX_PARTITIONS_LIMIT)
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("CREATE/ALTER partition function failed as only a "
+					"maximum of %d partitions can be created.", MAX_PARTITIONS_LIMIT)));
+	}
 
-		for (int i = 0; i < nargs; i++)
-		{
-			Datum val;
+	values = palloc(nargs * sizeof(Datum));
 
-			/* evaluate the value from the expr */
-			val = exec_eval_expr(estate, list_nth(arg, i), &isnull, &valtype, &valtypmod);
+	for (int i = 0; i < nargs; i++)
+	{
+		Datum val;
 
-			/* 
-			 * implicitly convert range values to specified parameter type
-			 * and raise error with ordinal position if conversion fails
-			 */
-			PG_TRY();
-			{
-				values[i] = exec_cast_value(estate, val, &isnull,
-								valtype, valtypmod,
-								typ->typoid, typ->atttypmod);
-			}
-			PG_CATCH();
-			{
-				MemoryContext err_ctx;
-				err_ctx = MemoryContextSwitchTo(cur_ctxt);
-				pfree(tsql_typename);
-				pfree(values);
-				FlushErrorState();
-				MemoryContextSwitchTo(err_ctx);
-				ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("Could not implicitly convert range values type specified at ordinal %d to partition function parameter type.",
-							i+1)));
-			}
-			PG_END_TRY();
-		}
-
-		/*
-		 * Find oid of comparator function for input type, which will be used during the sorting.
-		 * Here, we are first finding the default operator class for the input type then using that
-		 * we are finding the operator family for that operator class and finally using that we are
-		 * finding the defined comparator function for that operator family.
-		 */
-		basetype_oid = getBaseType(typ->typoid);
-		opclass_oid = GetDefaultOpClass(basetype_oid, BTREE_AM_OID);
-		opfamily_oid = get_opclass_family(opclass_oid);
-		cmpfunction_oid = get_opfamily_proc(opfamily_oid, basetype_oid, basetype_oid,
-							BTORDER_PROC);
-
-		/* set the function oid of operator in tsql comparator context */
-		cxt.function_oid = cmpfunction_oid;
-		cxt.colloid = tsql_get_server_collation_oid_internal(false);
-		cxt.contains_duplicate = false;
+		/* evaluate the value from the expr */
+		val = exec_eval_expr(estate, list_nth(arg, i), &isnull, &valtype, &valtypmod);
 
 		/* 
-		 * sort the datum values using quick sort, we don't need to worry about worst case
-		 * of quick sort here when the array is already sorted, the function qsort_arg()
-		 * itself first checks and returns the same array if values already sorted.
+		 * implicitly convert range values to specified parameter type
+		 * and raise error with ordinal position if conversion fails
 		 */
-		qsort_arg(values, nargs, sizeof(Datum), tsql_compare_values, &cxt);
-
-		/* raise error if input contains duplicate value */
-		if (cxt.contains_duplicate)
+		PG_TRY();
+		{
+			values[i] = exec_cast_value(estate, val, &isnull,
+							valtype, valtypmod,
+							typ->typoid, typ->atttypmod);
+		}
+		PG_CATCH();
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("Duplicate values are not allowed in partition function boundary values list.")));
+					errmsg("Could not implicitly convert range values type specified at ordinal %d to partition function parameter type.",
+						i+1)));
 		}
-
-		sql_variant_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("sql_variant");
-		/* cast each value to sql_variant datatype */
-		for (int i = 0; i < nargs; i++)
-		{
-			values[i] = exec_cast_value(estate, values[i], &isnull,
-								typ->typoid, typ->atttypmod,
-								sql_variant_oid,
-								-1);
-		}
-
-		/* construct array object from the values which needs to inserted in the catalog */
-		arr_value = construct_array(values, nargs, sql_variant_oid,
-										-1, false, 'i');
-
-		/* add entry in the sys.babelfish_partition_function catalog */
-		add_entry_to_bbf_partition_function(partition_function_name, tsql_typename, stmt->is_right, arr_value);
-
-		pfree(tsql_typename);
-		pfree(values);
-		pfree(arr_value);
+		PG_END_TRY();
 	}
-	else /* drop */
+
+	/*
+	 * Find oid of comparator function for input type, which will be used during the sorting.
+	 * Here, we are first finding the default operator class for the input type then using that
+	 * we are finding the operator family for that operator class and finally using that we are
+	 * finding the defined comparator function for that operator family.
+	 */
+	basetype_oid = getBaseType(typ->typoid);
+	opclass_oid = GetDefaultOpClass(basetype_oid, BTREE_AM_OID);
+	opfamily_oid = get_opclass_family(opclass_oid);
+	cmpfunction_oid = get_opfamily_proc(opfamily_oid, basetype_oid, basetype_oid,
+						BTORDER_PROC);
+
+	/* set the function oid of operator in tsql comparator context */
+	cxt.function_oid = cmpfunction_oid;
+	cxt.colloid = tsql_get_server_collation_oid_internal(false);
+	cxt.contains_duplicate = false;
+
+	/* 
+	 * sort the datum values using quick sort, we don't need to worry about worst case
+	 * of quick sort here when the array is already sorted, the function qsort_arg()
+	 * itself first checks and returns the same array if values already sorted.
+	 */
+	qsort_arg(values, nargs, sizeof(Datum), tsql_compare_values, &cxt);
+
+	/* raise error if input contains duplicate value */
+	if (cxt.contains_duplicate)
 	{
-		/* delete entry from the sys.babelfish_partition_scheme catalog */
-		remove_entry_from_bbf_partition_function(partition_function_name);
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Duplicate values are not allowed in partition function boundary values list.")));
 	}
 
-	/* make sure later steps can see the updated catalog entry */
+	sql_variant_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("sql_variant");
+	/* cast each value to sql_variant datatype */
+	for (int i = 0; i < nargs; i++)
+	{
+		values[i] = exec_cast_value(estate, values[i], &isnull,
+							typ->typoid, typ->atttypmod,
+							sql_variant_oid,
+							-1);
+	}
+
+	/* construct array object from the values which needs to inserted in the catalog */
+	arr_value = construct_array(values, nargs, sql_variant_oid,
+									-1, false, 'i');
+
+	/* add entry in the sys.babelfish_partition_function catalog */
+	add_entry_to_bbf_partition_function(dbid, partition_function_name, tsql_typename, stmt->is_right, arr_value);
+
+	pfree(tsql_typename);
+	pfree(values);
+	pfree(arr_value);
+	
+	/* make sure later statements in batch can see the updated catalog entry */
 	CommandCounterIncrement();
 	return PLTSQL_RC_OK;
 }
 
 /*
- * CREATE/DROP PARTITION SCHEME
+ * exec_stmt_partition_scheme
+ * 	 Handles the CREATE/DROP PARTITION SCHEME statement.
  */
 static int
 exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_scheme *stmt)
 {
 	const char *partition_scheme_name = stmt->scheme_name;
+	bool		next_used = false;
+	int		filegroups = stmt->filegroups;
+	char		*partition_func_name = stmt->function_name;
+	int16		dbid = get_cur_db_id();
 
 	/* check if the login has necessary permissions for CREATE/DROP */
-	perform_permission_check(partition_scheme_name, stmt->is_create, false);
+	check_create_or_drop_permission_for_partition_specifier(partition_scheme_name, stmt->is_create, false);
 
-	if (stmt->is_create)
+	if (!stmt->is_create) /* drop command */
 	{
-		bool		next_used = false;
-		int		filegroups = stmt->filegroups;
-		char		*partition_func_name = stmt->function_name;
-		int		dbid = get_cur_db_id();
+		/* delete entry from the sys.babelfish_partition_scheme catalog */
+		remove_entry_from_bbf_partition_scheme(dbid, partition_scheme_name);
+		/* make sure later statements in batch can see the updated catalog entry */
+		CommandCounterIncrement();
+		return PLTSQL_RC_OK;
+	}
+	
+	/*
+	 * Otherwise, Create Command.
+	 */
 
-		/* check if given name is exceeding the allowed limit */
-		if (strlen(partition_scheme_name) > 128)
+	/* check if given name is exceeding the allowed limit */
+	if (strlen(partition_scheme_name) > 128)
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.",
+						partition_scheme_name)));
+	}
+
+	/* raise error if provided partition function doesn't exists in the current database */
+	if (!partition_function_exists(dbid, partition_func_name))
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Invalid object name '%s'.", partition_func_name)));
+	}
+
+	/* 
+	 * perform next_used calculation check if it is specified
+	 * filegroups are sufficient for the partitions which 
+	 * will be created using the given partition function
+	 */
+	if (filegroups == -1) /* implies that ALL option was used */
+	{
+		next_used = true;
+	}
+	else
+	{
+		int	partition_count = get_partition_count(partition_func_name);
+		if (filegroups < partition_count)
 		{
 			ereport(ERROR, 
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.",
-							partition_scheme_name)));
+					errmsg("The associated partition function '%s' generates more partitions than there are file groups mentioned in the scheme '%s'.", 
+							partition_func_name, partition_scheme_name)));
 		}
-
-		/* raise error if provided partition function doesn't exists in the current database */
-		if (!partition_function_exists(partition_func_name, dbid))
-		{
-			ereport(ERROR, 
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("Invalid object name '%s'.", partition_func_name)));
-		}
-
-		/* 
-		 * perform next_used calculation check if it is specified
-		 * filegroups are sufficient for the partitions which 
-		 * will be created using the given partition function
-		 */
-		if (filegroups == -1) /* implies that ALL option was used */
+		else if (filegroups > partition_count)
 		{
 			next_used = true;
 		}
-		else
-		{	
-			int	partition_count = get_partition_count(partition_func_name);
-			if (filegroups < partition_count)
-			{
-				ereport(ERROR, 
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("The associated partition function '%s' generates more partitions than there are file groups mentioned in the scheme '%s'.", 
-								partition_func_name, partition_scheme_name)));
-			}
-			else if (filegroups > partition_count)
-			{
-				next_used = true;
-			}
-		}
+	}
 
-		/* check if there is existing partition scheme with the given name in the current database */
-		if (partition_scheme_exists(partition_scheme_name, dbid))
-		{
-			ereport(ERROR, 
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("There is already an object named '%s' in the database.", partition_scheme_name)));
-		}
-		add_entry_to_bbf_partition_scheme(partition_scheme_name, partition_func_name, next_used);
+	/* check if there is existing partition scheme with the given name in the current database */
+	if (partition_scheme_exists(dbid, partition_scheme_name))
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("There is already an object named '%s' in the database.", partition_scheme_name)));
 	}
-	else /* drop */
-	{	
-		/* delete entry from the sys.babelfish_partition_scheme catalog */
-		remove_entry_from_bbf_partition_scheme(partition_scheme_name);
-	}
-	/* make sure later steps can see the updated catalog entry */
+	/* add entry in the sys.babelfish_partition_scheme catalog */
+	add_entry_to_bbf_partition_scheme(dbid, partition_scheme_name, partition_func_name, next_used);
+
+	/* make sure later statements in batch can see the updated catalog entry */
 	CommandCounterIncrement();
 	return PLTSQL_RC_OK;
 }

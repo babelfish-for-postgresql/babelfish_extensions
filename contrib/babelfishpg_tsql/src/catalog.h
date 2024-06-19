@@ -390,7 +390,7 @@ extern Oid	get_bbf_extended_properties_idx_oid(void);
  *			PARTITION_FUNCTION
  *****************************************/
 #define BBF_PARTITION_FUNCTION_TABLE_NAME "babelfish_partition_function"
-#define BBF_PARTITION_FUNCTION_IDX_NAME "babelfish_partition_function_pkey"
+#define BBF_PARTITION_FUNCTION_PK_IDX_NAME "babelfish_partition_function_pkey"
 #define BBF_PARTITION_FUNCTION_ID_IDX_NAME "babelfish_partition_function_function_id_key"
 #define BBF_PARTITION_FUNCTION_SEQ_NAME "babelfish_partition_function_seq"
 
@@ -404,18 +404,19 @@ extern Oid	get_bbf_extended_properties_idx_oid(void);
 #define BBF_PARTITION_FUNCTION_NUM_COLS 8
 
 extern Oid	bbf_partition_function_oid;
-extern Oid	bbf_partition_function_idx_oid;
+extern Oid	bbf_partition_function_pk_idx_oid;
 extern Oid	bbf_partition_function_id_idx_oid;
 extern Oid	bbf_partition_function_seq_oid;
 
 extern Oid	get_bbf_partition_function_oid(void);
-extern Oid	get_bbf_partition_function_idx_oid(void);
+extern Oid	get_bbf_partition_function_pk_idx_oid(void);
 extern Oid	get_bbf_partition_function_id_idx_oid(void);
 extern Oid	get_bbf_partition_function_seq_oid(void);
 extern int32	get_available_partition_function_id(void);
-extern void	add_entry_to_bbf_partition_function(const char *partition_function_name, char *typname, bool partition_option, ArrayType *values);
-extern void	remove_entry_from_bbf_partition_function(const char *partition_function_name);
-extern int32	partition_function_exists(const char *partition_function_name, int16 dbid);
+extern void	add_entry_to_bbf_partition_function(int16 dbid, const char *partition_function_name,
+						char *typname, bool partition_option, ArrayType *values);
+extern void	remove_entry_from_bbf_partition_function(int16 dbid, const char *partition_function_name);
+extern int32	partition_function_exists(int16 dbid, const char *partition_function_name);
 extern int	get_partition_count(const char *partition_function_name);
 extern void	clean_up_bbf_partition_metadata(int16 dbid);
 
@@ -424,7 +425,7 @@ extern void	clean_up_bbf_partition_metadata(int16 dbid);
  *			PARTITION_SCHEME
  *****************************************/
 #define BBF_PARTITION_SCHEME_TABLE_NAME "babelfish_partition_scheme"
-#define BBF_PARTITION_SCHEME_IDX_NAME "babelfish_partition_scheme_pkey"
+#define BBF_PARTITION_SCHEME_PK_IDX_NAME "babelfish_partition_scheme_pkey"
 #define BBF_PARTITION_SCHEME_ID_IDX_NAME "babelfish_partition_scheme_scheme_id_key"
 #define BBF_PARTITION_SCHEME_SEQ_NAME "babelfish_partition_scheme_seq"
 
@@ -436,18 +437,18 @@ extern void	clean_up_bbf_partition_metadata(int16 dbid);
 #define BBF_PARTITION_SCHEME_NUM_COLS 5
 
 extern Oid	bbf_partition_scheme_oid;
-extern Oid	bbf_partition_scheme_idx_oid;
+extern Oid	bbf_partition_scheme_pk_idx_oid;
 extern Oid	bbf_partition_scheme_id_idx_oid;
 extern Oid	bbf_partition_scheme_seq_oid;
 
 extern Oid	get_bbf_partition_scheme_oid(void);
-extern Oid	get_bbf_partition_scheme_idx_oid(void);
+extern Oid	get_bbf_partition_scheme_pk_idx_oid(void);
 extern Oid	get_bbf_partition_scheme_id_idx_oid(void);
 extern Oid	get_bbf_partition_scheme_seq_oid(void);
 extern int32	get_available_partition_scheme_id(void);
-extern void	add_entry_to_bbf_partition_scheme(const char *partition_scheme_name, const char *partition_function_name, bool next_used);
-extern void	remove_entry_from_bbf_partition_scheme(const char *partition_scheme_name);
-extern int32	partition_scheme_exists(const char *partition_scheme_name, int16 dbid);
+extern void	add_entry_to_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name, const char *partition_function_name, bool next_used);
+extern void	remove_entry_from_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name);
+extern int32	partition_scheme_exists(int16 dbid, const char *partition_scheme_name);
 extern char	*get_partition_function(const char *partition_scheme_name);
 
 /*****************************************

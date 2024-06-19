@@ -113,7 +113,7 @@ Oid			bbf_extended_properties_idx_oid = InvalidOid;
  *			PARTITION_FUNCTION
  *****************************************/
 Oid	bbf_partition_function_oid = InvalidOid;
-Oid	bbf_partition_function_idx_oid = InvalidOid;
+Oid	bbf_partition_function_pk_idx_oid = InvalidOid;
 Oid	bbf_partition_function_id_idx_oid = InvalidOid;
 Oid	bbf_partition_function_seq_oid = InvalidOid;
 
@@ -121,7 +121,7 @@ Oid	bbf_partition_function_seq_oid = InvalidOid;
  *			PARTITION_SCHEME
  *****************************************/
 Oid	bbf_partition_scheme_oid = InvalidOid;
-Oid	bbf_partition_scheme_idx_oid = InvalidOid;
+Oid	bbf_partition_scheme_pk_idx_oid = InvalidOid;
 Oid	bbf_partition_scheme_id_idx_oid = InvalidOid;
 Oid	bbf_partition_scheme_seq_oid = InvalidOid;
 
@@ -257,13 +257,13 @@ init_catalog(PG_FUNCTION_ARGS)
 
 	/* bbf_partition_function */
 	bbf_partition_function_oid = get_bbf_partition_function_oid();
-	bbf_partition_function_idx_oid = get_bbf_partition_function_idx_oid();
+	bbf_partition_function_pk_idx_oid = get_bbf_partition_function_pk_idx_oid();
 	bbf_partition_function_id_idx_oid = get_bbf_partition_function_id_idx_oid();
 	bbf_partition_function_seq_oid = get_bbf_partition_function_seq_oid();
 
 	/* bbf_partition_scheme */
 	bbf_partition_scheme_oid = get_bbf_partition_scheme_oid();
-	bbf_partition_scheme_idx_oid = get_bbf_partition_scheme_idx_oid();
+	bbf_partition_scheme_pk_idx_oid = get_bbf_partition_scheme_pk_idx_oid();
 	bbf_partition_scheme_id_idx_oid = get_bbf_partition_scheme_id_idx_oid();
 	bbf_partition_scheme_seq_oid = get_bbf_partition_scheme_seq_oid();
 
@@ -1675,13 +1675,13 @@ get_bbf_partition_function_seq_oid()
 }
 
 Oid
-get_bbf_partition_function_idx_oid()
+get_bbf_partition_function_pk_idx_oid()
 {
-	if (!OidIsValid(bbf_partition_function_idx_oid))
-		bbf_partition_function_idx_oid = get_relname_relid(BBF_PARTITION_FUNCTION_IDX_NAME,
+	if (!OidIsValid(bbf_partition_function_pk_idx_oid))
+		bbf_partition_function_pk_idx_oid = get_relname_relid(BBF_PARTITION_FUNCTION_PK_IDX_NAME,
 									get_namespace_oid("sys", false));
 
-	return bbf_partition_function_idx_oid;
+	return bbf_partition_function_pk_idx_oid;
 }
 
 Oid
@@ -1708,13 +1708,13 @@ get_bbf_partition_scheme_oid()
 }
 
 Oid
-get_bbf_partition_scheme_idx_oid()
+get_bbf_partition_scheme_pk_idx_oid()
 {
-	if (!OidIsValid(bbf_partition_scheme_idx_oid))
-		bbf_partition_scheme_idx_oid = get_relname_relid(BBF_PARTITION_SCHEME_IDX_NAME,
+	if (!OidIsValid(bbf_partition_scheme_pk_idx_oid))
+		bbf_partition_scheme_pk_idx_oid = get_relname_relid(BBF_PARTITION_SCHEME_PK_IDX_NAME,
 									get_namespace_oid("sys", false));
 
-	return bbf_partition_scheme_idx_oid;
+	return bbf_partition_scheme_pk_idx_oid;
 }
 
 Oid
@@ -4847,7 +4847,7 @@ is_partition_function_used(const char *partition_function_name)
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 
 	scan = systable_beginscan(rel,
-			get_bbf_partition_scheme_idx_oid(),
+			get_bbf_partition_scheme_pk_idx_oid(),
 			false, NULL, 2, scanKey);
 
 	tuple = systable_getnext(scan);
@@ -4864,7 +4864,7 @@ is_partition_function_used(const char *partition_function_name)
  *		Add a new entry to the sys.babelfish_partition_function catalog table.
  */
 void
-add_entry_to_bbf_partition_function(const char *partition_function_name, char *typname,
+add_entry_to_bbf_partition_function(int16 dbid, const char *partition_function_name, char *typname,
 					bool partition_option, ArrayType *values)
 {
 	Relation	rel;
@@ -4872,7 +4872,6 @@ add_entry_to_bbf_partition_function(const char *partition_function_name, char *t
 	HeapTuple	tuple;
 	Datum		new_record[BBF_PARTITION_FUNCTION_NUM_COLS];
 	bool		new_record_nulls[BBF_PARTITION_FUNCTION_NUM_COLS];
-	int16		dbid = get_cur_db_id();
 	int32		partition_function_id = get_available_partition_function_id();
 
 	MemSet(new_record, 0, sizeof(new_record));
@@ -4910,13 +4909,12 @@ add_entry_to_bbf_partition_function(const char *partition_function_name, char *t
  * 		2. If there are any dependent partition schemes on this partition function.
  */
 void
-remove_entry_from_bbf_partition_function(const char *partition_function_name)
+remove_entry_from_bbf_partition_function(int16 dbid, const char *partition_function_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
 	ScanKeyData	scanKey[2];
 	SysScanDesc	scan;
-	int16		dbid = get_cur_db_id();
 	int32		partition_function_exists = false;
 	bool		has_dependent_objects = true;
 
@@ -4934,7 +4932,7 @@ remove_entry_from_bbf_partition_function(const char *partition_function_name)
 				tsql_get_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 	/* scan using index */
-	scan = systable_beginscan(rel, get_bbf_partition_function_idx_oid(),
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
 					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
@@ -4975,7 +4973,7 @@ remove_entry_from_bbf_partition_function(const char *partition_function_name)
  * 		if it exists in the provided database otherwise 0.
  */
 int32
-partition_function_exists(const char *partition_function_name, int16 dbid)
+partition_function_exists(int16 dbid, const char *partition_function_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -4998,7 +4996,7 @@ partition_function_exists(const char *partition_function_name, int16 dbid)
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 	
 	/* scan using index */
-	scan = systable_beginscan(rel, get_bbf_partition_function_idx_oid(),
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
 					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
@@ -5040,7 +5038,7 @@ get_partition_count(const char *partition_function_name)
 				tsql_get_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 	/* scan using index */
-	scan = systable_beginscan(rel, get_bbf_partition_function_idx_oid(),
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
 					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
@@ -5105,14 +5103,13 @@ is_partition_scheme_used(const char *partition_scheme_name)
  *		Add a new entry to the sys.babelfish_partition_scheme catalog table.
  */
 void
-add_entry_to_bbf_partition_scheme(const char *partition_scheme_name, const char *partition_function_name, bool next_used)
+add_entry_to_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name, const char *partition_function_name, bool next_used)
 {
 	Relation	rel;
 	TupleDesc	dsc;
 	HeapTuple	tuple;
 	Datum		new_record[BBF_PARTITION_SCHEME_NUM_COLS];
 	bool		new_record_nulls[BBF_PARTITION_SCHEME_NUM_COLS];
-	int16		dbid = get_cur_db_id();
 	int32		partition_scheme_id = get_available_partition_scheme_id();
 
 	/* Fetch the relation */
@@ -5148,13 +5145,12 @@ add_entry_to_bbf_partition_scheme(const char *partition_scheme_name, const char 
  * 		2. If there are any dependent tables on this partition scheme.
  */
 void
-remove_entry_from_bbf_partition_scheme(const char *partition_scheme_name)
+remove_entry_from_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
 	ScanKeyData	scanKey[2];
 	SysScanDesc	scan;
-	int16		dbid = get_cur_db_id();
 	bool 		partition_scheme_exists = false;
 	bool 		has_dependent_objects = true;
 
@@ -5172,7 +5168,7 @@ remove_entry_from_bbf_partition_scheme(const char *partition_scheme_name)
 				tsql_get_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 	/* scan using index */
-	scan = systable_beginscan(rel, get_bbf_partition_scheme_idx_oid(),
+	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
 					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
@@ -5214,7 +5210,7 @@ remove_entry_from_bbf_partition_scheme(const char *partition_scheme_name)
  * 		if it exists in the provided database otherwise 0.
  */
 int32
-partition_scheme_exists(const char *partition_scheme_name, int16 dbid)
+partition_scheme_exists(int16 dbid, const char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -5235,7 +5231,7 @@ partition_scheme_exists(const char *partition_scheme_name, int16 dbid)
 				tsql_get_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 
-	scan = systable_beginscan(rel, get_bbf_partition_scheme_idx_oid(),
+	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
 					false, NULL, 2, scanKey);
 
 	tuple = systable_getnext(scan);
@@ -5276,7 +5272,7 @@ get_partition_function(const char *partition_scheme_name)
 				tsql_get_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 
-	scan = systable_beginscan(rel, get_bbf_partition_scheme_idx_oid(),
+	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
 					false, NULL, 2, scanKey);
 	
 	tuple = systable_getnext(scan);
@@ -5332,7 +5328,7 @@ clean_up_bbf_partition_metadata(int16 dbid)
 			BTEqualStrategyNumber, F_INT2EQ,
 			Int16GetDatum(dbid));
 
-	scan = systable_beginscan(rel, get_bbf_partition_scheme_idx_oid(),
+	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
 					true, NULL, 1, &scanKey);
 
 	while ((tuple = systable_getnext(scan)) != NULL)
@@ -5352,7 +5348,7 @@ clean_up_bbf_partition_metadata(int16 dbid)
 			BTEqualStrategyNumber, F_INT2EQ,
 			Int16GetDatum(dbid));
 
-	scan = systable_beginscan(rel, get_bbf_partition_function_idx_oid(),
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
 					true, NULL, 1, &scanKey);
 
 	while ((tuple = systable_getnext(scan)) != NULL)

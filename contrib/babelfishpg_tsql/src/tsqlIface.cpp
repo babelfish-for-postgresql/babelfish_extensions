@@ -1862,7 +1862,6 @@ public:
 		if (ctx->create_partition_function() || ctx->drop_partition_function()
 			 || ctx->create_partition_scheme() || ctx->drop_partition_scheme())
 		{
-			clear_rewritten_query_fragment();
 			return;
 		}
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
@@ -7120,7 +7119,7 @@ getDatabaseSchemaAndTableName(TSqlParser::Table_nameContext* tctx)
 PLtsql_stmt *
 makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
 {
-	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc0(sizeof(PLtsql_stmt_partition_function));
+	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc(sizeof(PLtsql_stmt_partition_function));
 	std::string typeStr = ::getFullText(ctx->data_type());
 	PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
 	
@@ -7150,7 +7149,7 @@ return (PLtsql_stmt *) stmt;
 PLtsql_stmt *
 makeDropPartitionFunction(TSqlParser::Drop_partition_functionContext *ctx)
 {
-	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc0(sizeof(PLtsql_stmt_partition_function));
+	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc(sizeof(PLtsql_stmt_partition_function));
 	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->lineno = getLineNo(ctx);
 	stmt->cmd_type = PLTSQL_STMT_PARTITION_FUNCTION;
@@ -7163,7 +7162,7 @@ makeDropPartitionFunction(TSqlParser::Drop_partition_functionContext *ctx)
 PLtsql_stmt *
 makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx)
 {
-	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc0(sizeof(PLtsql_stmt_partition_scheme));
+	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc(sizeof(PLtsql_stmt_partition_scheme));
 	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()[0]).c_str());
 	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()[1]).c_str());
 	stmt->is_create = true;
@@ -7182,7 +7181,7 @@ makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx)
 PLtsql_stmt *
 makeDropPartitionScheme(TSqlParser::Drop_partition_schemeContext *ctx)
 {
-	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc0(sizeof(PLtsql_stmt_partition_scheme));
+	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc(sizeof(PLtsql_stmt_partition_scheme));
 	stmt->is_create = false;
 	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->lineno = getLineNo(ctx);

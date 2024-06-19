@@ -64,6 +64,9 @@
 
 #define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
 
+ /* Max number of partitions allowed for babelfish partitioned tables. */
+#define MAX_PARTITIONS_LIMIT 15000
+
 /*
  * Compiler's namespace item types
  */
@@ -1101,13 +1104,13 @@ typedef struct PLtsql_stmt_grantschema
  */
 typedef struct PLtsql_stmt_partition_function
 {
-	PLtsql_stmt_type cmd_type;
+	PLtsql_stmt_type	cmd_type;
 	int			lineno;
-	char		*function_name;
-	bool		is_create;
-	bool		is_right;
-	PLtsql_type *datatype;
-	List		*args;			/* the arguments (list of exprs) */
+	char			*function_name;
+	bool			is_create;
+	bool			is_right;
+	PLtsql_type		*datatype;
+	List			*args;		/* the arguments (list of exprs) */
 } PLtsql_stmt_partition_function;
 
 /*
@@ -1115,12 +1118,12 @@ typedef struct PLtsql_stmt_partition_function
  */
 typedef struct PLtsql_stmt_partition_scheme
 {
-	PLtsql_stmt_type cmd_type;
+	PLtsql_stmt_type	cmd_type;
 	int			lineno;
-	char		*scheme_name;
-	char		*function_name;
-	bool		is_create;
-	int			filegroups; /* filegroups count, -1 indicates ALL is specified */
+	char			*scheme_name;
+	bool			is_create;
+	char			*function_name;
+	int			filegroups;	/* filegroups count, -1 indicates ALL is specified */
 } PLtsql_stmt_partition_scheme;
 
 /*

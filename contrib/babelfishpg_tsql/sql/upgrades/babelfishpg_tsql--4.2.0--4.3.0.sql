@@ -54,7 +54,7 @@ CREATE TABLE sys.babelfish_partition_function
 );
 
 -- SEQUENCE to maintain the ID of partition function.
-CREATE SEQUENCE sys.babelfish_partition_function_seq START 2 MAXVALUE 2147483647 CYCLE;
+CREATE SEQUENCE sys.babelfish_partition_function_seq MAXVALUE 2147483647 CYCLE;
 
 -- BBF_PARTITION_SCHEME
 -- This catalog stores the metadata of partition schemes.
@@ -69,6 +69,8 @@ CREATE TABLE sys.babelfish_partition_scheme
 );
 
 -- SEQUENCE to maintain the ID of partition scheme.
+-- The combination of the partition scheme ID and filegroup ID are used as
+-- DATA_SPACE_ID, where the value 1 is reseverd for [PRIMARY] filegroup.
 CREATE SEQUENCE sys.babelfish_partition_scheme_seq START 2 MAXVALUE 2147483647 CYCLE;
 
 -- BBF_PARTITION_DEPEND
