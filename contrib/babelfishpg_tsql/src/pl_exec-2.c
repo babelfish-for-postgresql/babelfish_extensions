@@ -4137,7 +4137,8 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	int32			valtypmod;
 	Datum			tsql_type_datum;
 	char			*tsql_typename = NULL;
-	Datum			*values = NULL;
+	Datum			*input_values;
+	Datum			*sql_variant_values;
 	ArrayType		*arr_value = NULL;
 	Oid			sql_variant_oid;
 	Oid			basetype_oid;
@@ -4217,7 +4218,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 					"maximum of %d partitions can be created.", MAX_PARTITIONS_LIMIT)));
 	}
 
-	values = palloc(nargs * sizeof(Datum));
+	input_values = palloc(nargs * sizeof(Datum));
 
 	for (int i = 0; i < nargs; i++)
 	{
@@ -4232,7 +4233,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		 */
 		PG_TRY();
 		{
-			values[i] = exec_cast_value(estate, val, &isnull,
+			input_values[i] = exec_cast_value(estate, val, &isnull,
 							valtype, valtypmod,
 							typ->typoid, typ->atttypmod);
 		}
@@ -4268,7 +4269,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	 * of quick sort here when the array is already sorted, the function qsort_arg()
 	 * itself first checks and returns the same array if values already sorted.
 	 */
-	qsort_arg(values, nargs, sizeof(Datum), tsql_compare_values, &cxt);
+	qsort_arg(input_values, nargs, sizeof(Datum), tsql_compare_values, &cxt);
 
 	/* raise error if input contains duplicate value */
 	if (cxt.contains_duplicate)
@@ -4279,25 +4280,30 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	}
 
 	sql_variant_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("sql_variant");
+	sql_variant_values = palloc(nargs * sizeof(Datum));
 	/* cast each value to sql_variant datatype */
 	for (int i = 0; i < nargs; i++)
 	{
-		values[i] = exec_cast_value(estate, values[i], &isnull,
+		sql_variant_values[i] = exec_cast_value(estate, input_values[i], &isnull,
 							typ->typoid, typ->atttypmod,
 							sql_variant_oid,
 							-1);
 	}
 
 	/* construct array object from the values which needs to inserted in the catalog */
-	arr_value = construct_array(values, nargs, sql_variant_oid,
-									-1, false, 'i');
+	arr_value = construct_array(sql_variant_values, nargs, sql_variant_oid,
+					-1, false, 'i');
 
 	/* add entry in the sys.babelfish_partition_function catalog */
 	add_entry_to_bbf_partition_function(dbid, partition_function_name, tsql_typename, stmt->is_right, arr_value);
 
 	pfree(tsql_typename);
-	pfree(values);
+	pfree(input_values);
+	pfree(sql_variant_values);
 	pfree(arr_value);
+
+	/* cleanup estate */
+	exec_eval_cleanup(estate);
 	
 	/* make sure later statements in batch can see the updated catalog entry */
 	CommandCounterIncrement();
