@@ -254,7 +254,7 @@ typedef FormData_bbf_servers_def *Form_bbf_servers_def;
  *			FUNCTION_EXT
  *****************************************/
 #define BBF_FUNCTION_EXT_TABLE_NAME "babelfish_function_ext"
-#define BBF_FUNCTION_EXT_IDX_NAME "babelfish_function_ext_pkey"
+#define BBF_FUNCTION_EXT_IDX_NAME "babelfish_function_ext_name_idx"
 #define Anum_bbf_function_ext_nspname 1
 #define Anum_bbf_function_ext_funcname 2
 #define Anum_bbf_function_ext_orig_name 3

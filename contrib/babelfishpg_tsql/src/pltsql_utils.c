@@ -1265,7 +1265,7 @@ flatten_search_path(List *oid_list)
 	return pathbuf.data;
 }
 
-const char *
+char *
 get_pltsql_function_signature_internal(const char *funcname,
 									   int nargs, const Oid *argtypes)
 {

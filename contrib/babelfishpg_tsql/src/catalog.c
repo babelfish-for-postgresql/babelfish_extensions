@@ -21,6 +21,7 @@
 #include "parser/scansup.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/formatting.h"
 #include "utils/lsyscache.h"
@@ -146,13 +147,13 @@ static struct cachedesc my_cacheinfo[] = {
 		},
 		16
 	},
-	{-1,						/* PROCNSPSIGNATURE */
+	{-1,						/* PROCNAMENSPSIGNATURE */
 		-1,
-		2,
+		3,
 		{
+			Anum_bbf_function_ext_funcname,
 			Anum_bbf_function_ext_nspname,
 			Anum_bbf_function_ext_funcsignature,
-			0,
 			0
 		},
 		16
@@ -1367,10 +1368,13 @@ get_bbf_function_ext_idx_oid()
 HeapTuple
 get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 {
-	HeapTuple	bbffunctuple;
-	Form_pg_proc form;
-	char	   *physical_schemaname;
-	const char *func_signature;
+	CatCList    	*catlist;
+	HeapTuple   	newtup = NULL;
+	HeapTuple   	bbffunctuple;
+	Form_pg_proc	form;
+	char        	*physical_schemaname;
+	NameData    	nsp_name;
+	char        	*func_signature;
 
 	/* Disallow extended catalog lookup during restore */
 	if (!HeapTupleIsValid(proctuple) || babelfish_dump_restore)
@@ -1394,24 +1398,49 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 		return NULL;
 	}
 
+	namestrcpy(&nsp_name, physical_schemaname);
+	pfree(physical_schemaname);
+
+	/* First search just using function name and schema name */
+	catlist = SearchSysCacheList2(PROCNAMENSPSIGNATURE,
+								  NameGetDatum(&form->proname),
+								  NameGetDatum(&nsp_name));
+
+	if (catlist->n_members == 0)
+	{
+		ReleaseSysCacheList(catlist);
+		return NULL;
+	}
+
+	/* Done, found a unique function */
+	if (catlist->n_members == 1)
+	{
+		bbffunctuple = heap_copytuple(&catlist->members[0]->tuple);
+		ReleaseSysCacheList(catlist);
+		return bbffunctuple;
+	}
+
+	/* Now search using function name, schema name and signature */
 	func_signature = get_pltsql_function_signature_internal(NameStr(form->proname),
 															form->pronargs,
 															form->proargtypes.values);
 
 	if (func_signature == NULL)
-	{
-		pfree(physical_schemaname);
 		return NULL;
-	}
 
-	bbffunctuple = SearchSysCache2(PROCNSPSIGNATURE,
-								   CStringGetDatum(physical_schemaname),
+	bbffunctuple = SearchSysCache3(PROCNAMENSPSIGNATURE,
+								   NameGetDatum(&form->proname),
+								   NameGetDatum(&nsp_name),
 								   CStringGetTextDatum(func_signature));
 
-	pfree(physical_schemaname);
-	pfree((char *) func_signature);
+	if (HeapTupleIsValid(bbffunctuple))
+	{
+		newtup = heap_copytuple(bbffunctuple);
+		ReleaseSysCache(bbffunctuple);
+	}
+	pfree(func_signature);
 
-	return bbffunctuple;
+	return newtup;
 }
 
 void
@@ -1512,13 +1541,13 @@ is_created_with_recompile(Oid objectId)
 		bool isnull = false;
 		Datum flag_validity;
 		Datum flag_values;
-		flag_validity = SysCacheGetAttr(PROCNSPSIGNATURE,
+		flag_validity = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 												bbffunctuple,
 												Anum_bbf_function_ext_flag_validity,
 												&isnull);	
 		Assert(isnull == false);				
 																
-		flag_values   = SysCacheGetAttr(PROCNSPSIGNATURE,
+		flag_values   = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 												bbffunctuple,
 												Anum_bbf_function_ext_flag_values,
 												&isnull);		
@@ -1528,7 +1557,7 @@ is_created_with_recompile(Oid objectId)
 		if ((DatumGetUInt64(flag_values) & DatumGetUInt64(flag_validity)) & FLAG_CREATED_WITH_RECOMPILE) 
 			recompile = true;
 
-		ReleaseSysCache(bbffunctuple);
+		heap_freetuple(bbffunctuple);
 	}
 
 	ReleaseSysCache(proctuple);

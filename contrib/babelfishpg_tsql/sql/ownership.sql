@@ -45,6 +45,8 @@ CREATE TABLE sys.babelfish_function_ext (
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
+CREATE INDEX babelfish_function_ext_name_idx ON sys.babelfish_function_ext (funcname, nspname, funcsignature);
+
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
 -- BABELFISH_NAMESPACE_EXT

@@ -37,6 +37,9 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+SET allow_system_table_mods = ON;
+CREATE INDEX babelfish_function_ext_name_idx ON sys.babelfish_function_ext (funcname, nspname, funcsignature);
+RESET allow_system_table_mods;
 
 
 
