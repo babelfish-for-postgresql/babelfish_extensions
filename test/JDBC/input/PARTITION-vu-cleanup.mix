@@ -121,6 +121,12 @@ GO
 DROP PARTITION FUNCTION NumericPartitionFunction 
 GO
 
+DROP PARTITION FUNCTION MoneyPartitionFunction 
+GO
+
+DROP PARTITION FUNCTION SmallMoneyPartitionFunction 
+GO
+
 DROP PARTITION FUNCTION DatePartitionFunction 
 GO
 
@@ -160,11 +166,33 @@ GO
 DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
 
+DROP PARTITION FUNCTION PartitionFunctionHavingDifferentCollationInput
+GO
+
 DROP PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια
 GO
 
 DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻]
 GO
+
+DROP PROCEDURE PartitionProcedureCreatePartitionFunction
+GO
+
+DROP PROCEDURE PartitionProcedureCreatePartitionScheme
+GO
+
+DROP PROCEDURE PartitionProcedureCreatePartitionFunctionAndScheme
+GO
+
+DROP PROCEDURE PartitionProcedureDropPartitionFunction
+GO
+
+DROP PROCEDURE PartitionProcedureDropPartitionScheme
+GO
+
+DROP PROCEDURE PartitionProcedureDropPartitionFunctionAndScheme
+GO
+
 
 SET QUOTED_IDENTIFIER ON;
 GO

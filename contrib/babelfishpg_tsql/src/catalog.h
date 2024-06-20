@@ -416,8 +416,8 @@ extern int32	get_available_partition_function_id(void);
 extern void	add_entry_to_bbf_partition_function(int16 dbid, const char *partition_function_name,
 						char *typname, bool partition_option, ArrayType *values);
 extern void	remove_entry_from_bbf_partition_function(int16 dbid, const char *partition_function_name);
-extern int32	partition_function_exists(int16 dbid, const char *partition_function_name);
-extern int	get_partition_count(const char *partition_function_name);
+extern bool	partition_function_exists(int16 dbid, const char *partition_function_name);
+extern int	get_partition_count(int16 dbid, const char *partition_function_name);
 extern void	clean_up_bbf_partition_metadata(int16 dbid);
 
 
@@ -448,8 +448,8 @@ extern Oid	get_bbf_partition_scheme_seq_oid(void);
 extern int32	get_available_partition_scheme_id(void);
 extern void	add_entry_to_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name, const char *partition_function_name, bool next_used);
 extern void	remove_entry_from_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name);
-extern int32	partition_scheme_exists(int16 dbid, const char *partition_scheme_name);
-extern char	*get_partition_function(const char *partition_scheme_name);
+extern bool	partition_scheme_exists(int16 dbid, const char *partition_scheme_name);
+extern char	*get_partition_function(int16 dbid, const char *partition_scheme_name);
 
 /*****************************************
  *			PARTITION_DEPEND

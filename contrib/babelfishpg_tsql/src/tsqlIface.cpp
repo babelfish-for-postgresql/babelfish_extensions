@@ -885,6 +885,30 @@ public:
 		}
 	}
 
+	void enterCreate_partition_function(TSqlParser::Create_partition_functionContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'CREATE PARTITION FUNCTION' within a function.", 0, 0);
+		}
+	}
+
+	void enterDrop_partition_function(TSqlParser::Drop_partition_functionContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'DROP PARTITION FUNCTION' within a function.", 0, 0);
+		}
+	}
+
+	void enterCreate_partition_scheme(TSqlParser::Create_partition_schemeContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'CREATE PARTITION SCHEME' within a function.", 0, 0);
+		}
+	}
+
+	void enterDrop_partition_scheme(TSqlParser::Drop_partition_schemeContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'DROP PARTITION SCHEME' within a function.", 0, 0);
+		}
+	}
+
 	/* Column Name */
 	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override
 	{

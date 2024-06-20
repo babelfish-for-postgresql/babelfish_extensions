@@ -26,6 +26,8 @@ AS
         sys.partition_functions pf on (pr.function_id = pf.function_id)
     WHERE
         name not in ('BinaryPartitionFunction', 'VarBinaryPartitionFunction')
+    ORDER BY
+        name, boundary_id
 )
 GO
 
@@ -40,6 +42,8 @@ AS
         sys.partition_functions pf on (pr.function_id = pf.function_id)
     WHERE
         name in ('BinaryPartitionFunction', 'VarBinaryPartitionFunction')
+    ORDER BY 
+        name, boundary_id
 )
 GO
 
@@ -164,6 +168,14 @@ CREATE PARTITION FUNCTION NumericPartitionFunction (numeric(5, 2))
 AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 20.0);
 GO
 
+CREATE PARTITION FUNCTION MoneyPartitionFunction (MONEY)
+AS RANGE RIGHT FOR VALUES ($2.56789, ¥4.91, $3.56789);
+GO
+
+CREATE PARTITION FUNCTION SmallMoneyPartitionFunction (SMALLMONEY)
+AS RANGE RIGHT FOR VALUES ($2.56789, ¥4.91, $3.56789);
+GO
+
 CREATE PARTITION FUNCTION DatePartitionFunction (date) 
 AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','2023-01-01');
 GO
@@ -223,6 +235,16 @@ go
 -- identifier length greater than 64
 CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (bigint)
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
+GO
+
+CREATE PARTITION FUNCTION PartitionFunctionHavingDifferentCollationInput (NVARCHAR(50))
+AS RANGE RIGHT
+FOR VALUES (
+    N'John Doe',
+    N'Jane Smith' COLLATE Latin1_General_CI_AS,
+    N'châu phố' COLLATE Vietnamese_CI_AS,
+    N'Müller GmbH' COLLATE Traditional_Spanish_CI_AS
+);
 GO
 
 
@@ -383,3 +405,54 @@ CREATE PARTITION SCHEME PartitionDb_PartitionScheme AS
 PARTITION PartitionDb_PartitionFunction
 ALL TO ([PRIMARY]);
 GO
+
+USE MASTER
+go
+
+---------------------------------------------------------------
+--- CREATE/DROP Partition Function/Scheme inside Procedure
+---------------------------------------------------------------
+CREATE PROCEDURE PartitionProcedureCreatePartitionFunction AS
+BEGIN
+CREATE PARTITION FUNCTION PartitionFunctionInsideProc1 (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000)
+END;
+Go
+
+CREATE PROCEDURE PartitionProcedureCreatePartitionScheme AS
+BEGIN
+CREATE PARTITION SCHEME PartitionSchemeInsideProc1 AS
+PARTITION PartitionFunctionInsideProc1
+ALL TO ([PRIMARY])
+END;
+GO
+
+
+CREATE PROCEDURE PartitionProcedureCreatePartitionFunctionAndScheme AS
+BEGIN
+CREATE PARTITION FUNCTION PartitionFunctionInsideProc2 (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+CREATE PARTITION SCHEME PartitionSchemeInsideProc2 AS
+PARTITION PartitionFunctionInsideProc2
+ALL TO ([PRIMARY]);
+END;
+Go
+
+CREATE PROCEDURE PartitionProcedureDropPartitionFunction AS
+BEGIN
+DROP PARTITION FUNCTION PartitionFunctionInsideProc1
+END;
+Go
+
+CREATE PROCEDURE PartitionProcedureDropPartitionScheme AS
+BEGIN
+DROP PARTITION SCHEME PartitionSchemeInsideProc1 
+END;
+GO
+
+CREATE PROCEDURE PartitionProcedureDropPartitionFunctionAndScheme AS
+BEGIN
+DROP PARTITION SCHEME PartitionSchemeInsideProc2;
+DROP PARTITION FUNCTION PartitionFunctionInsideProc2;
+END;
+Go

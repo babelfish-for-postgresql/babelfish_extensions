@@ -1,6 +1,76 @@
 --------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME using procedure
+--------------------------------------------------
+EXEC PartitionProcedureCreatePartitionFunction
+GO
+
+EXEC PartitionProcedureCreatePartitionScheme
+GO
+
+EXEC PartitionProcedureCreatePartitionFunctionAndScheme
+GO
+
+--------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME inside Function
+--------------------------------------------------
+CREATE FUNCTION TestFunctionCreatePartitionFunction()
+RETURNS INT
+AS
+BEGIN
+    CREATE PARTITION FUNCTION TestPartitionFunction (int)
+    AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION TestFunctionDropPartitionFunction()
+RETURNS INT
+AS
+BEGIN
+    DROP PARTITION FUNCTION IntPartitionFunction;
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION TestFunctionCreatePartitionScheme()
+RETURNS INT
+AS
+BEGIN
+    CREATE PARTITION SCHEME TestPartitionScheme AS
+    PARTITION IntPartitionFunction
+    ALL TO ([PRIMARY]);
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION TestFunctionDropPartitionScheme()
+RETURNS INT
+AS
+BEGIN
+    DROP PARTITION SCHEME IntPartitionScheme;
+    RETURN 1;
+END;
+GO
+
+--------------------------------------------------
 --- Unsupported Datatypes for Partition Function 
 --------------------------------------------------
+CREATE PARTITION FUNCTION VarcharMaxPartitionFunction (VARCHAR(MAX)) 
+AS RANGE RIGHT FOR VALUES ('A', 'B', 'C', 'D');
+GO
+
+CREATE PARTITION FUNCTION NVarcharMaxPartitionFunction (NVARCHAR(MAX)) 
+AS RANGE RIGHT FOR VALUES (N'A', N'B', N'C', N'D');
+GO
+
+CREATE PARTITION FUNCTION VarbinaryMaxPartitionFunction (VARBINARY(MAX)) 
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000);
+GO
+
+CREATE PARTITION FUNCTION BinaryMaxPartitionFunction (BINARY(MAX))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000);
+GO
+
 CREATE PARTITION FUNCTION TextPartitionFunction (text)
 AS RANGE RIGHT FOR VALUES ('a', 'b', 'c');
 GO
@@ -125,6 +195,11 @@ GO
 
 CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
 AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'), 'abc');
+go
+
+-- duplicate value with different basetype 
+CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
+AS RANGE RIGHT FOR VALUES (1, cast('abc' as varchar(10)), CONVERT(DATETIME, '2023-05-01'), cast('abc' as nvarchar(10)));
 go
 
 --------------------------------------------------
@@ -474,4 +549,17 @@ GO
 
 CREATE PARTITION FUNCTION NewUniqueIdentifierPartitionFunction (uniqueidentifier)
 AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', 123);
+GO
+
+
+--------------------------------------------------
+--- DROP PARTITION FUNCTION/SCHEME using procedure
+--------------------------------------------------
+EXEC PartitionProcedureDropPartitionScheme
+GO
+
+EXEC PartitionProcedureDropPartitionFunction
+GO
+
+EXEC PartitionProcedureDropPartitionFunctionAndScheme
 GO

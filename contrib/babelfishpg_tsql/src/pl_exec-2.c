@@ -4194,9 +4194,9 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	}
 
 	/*
-	 * check if datatype is supported or not, if tsql_typename is NULL
-	 * then it implies that typename corresponds to UDT
-	*/
+	 * Check if datatype is supported or not, if tsql_typename is NULL
+	 * then it implies that type is User Defined Type.
+	 */
 	if (!tsql_typename || is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
 		(*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typ->typoid) ||
 		(*common_utility_plugin_ptr->is_tsql_geography_datatype) (typ->typoid) ||
@@ -4206,6 +4206,15 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		ereport(ERROR, 
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("The type '%s' is not valid for this operation.", typ->typname)));
+	}
+	/*
+	 * Types varchar(max), nvarchar(max), varbinary(max) are also not supported.
+	 */
+	else if (typ->atttypmod == -1 && is_tsql_datatype_with_max_scale_expr_allowed(typ->typoid))
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The type '%s(max)' is not valid for this operation.", tsql_typename)));
 	}
 
 	/* check if the given number of boundaries are exceeding allowed limit */
@@ -4367,7 +4376,7 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 	}
 	else
 	{
-		int	partition_count = get_partition_count(partition_func_name);
+		int	partition_count = get_partition_count(dbid, partition_func_name);
 		if (filegroups < partition_count)
 		{
 			ereport(ERROR, 
