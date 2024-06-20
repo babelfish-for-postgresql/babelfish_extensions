@@ -541,6 +541,96 @@ GO
 DROP DATABASE db2;
 GO
 
+-- tsql
+-- Test schema resolution when select inside a PROCEDURE has joins.
+CREATE DATABASE db1
+GO
+
+USE db1;
+GO
+
+CREATE TABLE test1(id int, test_context varchar(255));
+GO
+
+CREATE TABLE test2(id int, test_context2 varchar(255));
+GO
+
+CREATE PROCEDURE test_with_join_with_db_schema
+AS
+BEGIN
+    SELECT A.id, A.test_context ,B.test_context2 FROM db1.dbo.test1
+    AS A
+    INNER JOIN test2 AS B ON A.id = B.id
+END
+GO
+
+CREATE PROCEDURE test_with_join_with_schema
+AS
+BEGIN
+    SELECT A.id, A.test_context ,B.test_context2 FROM dbo.test1
+    AS A
+    INNER JOIN test2 AS B ON A.id = B.id
+END
+GO
+
+CREATE PROCEDURE test_with_join_no_schema
+AS
+BEGIN
+    SELECT A.id, A.test_context ,B.test_context2 FROM test1
+    AS A
+    INNER JOIN test2 AS B ON A.id = B.id
+END
+GO
+
+use master
+go
+
+exec db1.dbo.test_with_join_no_schema;
+go
+~~START~~
+int#!#varchar#!#varchar
+~~END~~
+
+
+exec db1.dbo.test_with_join_with_schema;
+go
+~~START~~
+int#!#varchar#!#varchar
+~~END~~
+
+
+exec db1.dbo.test_with_join_with_db_schema;
+go
+~~START~~
+int#!#varchar#!#varchar
+~~END~~
+
+
+use db1;
+go
+
+-- drop objects
+drop PROCEDURE test_with_join_no_schema;
+go
+
+drop PROCEDURE test_with_join_with_db_schema;
+go
+
+drop PROCEDURE test_with_join_with_schema;
+go
+
+drop TABLE test1;
+go
+
+drop table test2;
+go
+
+use master;
+go
+
+drop DATABASE db1;
+go
+
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
 SELECT pg_reload_conf();

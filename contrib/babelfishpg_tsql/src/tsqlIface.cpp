@@ -1223,7 +1223,6 @@ public:
 	std::string schema_name;
 	std::string db_name;
 	bool is_function = false;
-	bool is_schema_specified = false;	
 	
 	// We keep a stack of the containers that are active during a traversal.
 	// A container will correspond to a block or a batch - these are containers
@@ -1725,14 +1724,16 @@ public:
 		if (is_function)
 			stmt->func_call = true;
 
+		// record if the SQL object is schema qualified
 		if (!schema_name.empty())
+		{
 			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+			stmt->is_schema_specified = true;
+		}
+
 		// record db name for the cross db query
 		if (!db_name.empty())
 			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
-		// record if the SQL object is schema qualified
-		if (is_schema_specified)
-			stmt->is_schema_specified = true;
 
 		if (is_compiling_create_function())
 		{
@@ -2292,10 +2293,7 @@ public:
 		if (ctx && (ctx->DOT().size() <= 2) && ctx->schema)
 		{
 			schema_name = stripQuoteFromId(ctx->schema);
-			is_schema_specified = true;
 		}
-		else
-			is_schema_specified = false;
 		tsqlCommonMutator::exitFull_object_name(ctx);
 		if (ctx && (ctx->DOT().size() <= 2) && ctx->database)
 		{
