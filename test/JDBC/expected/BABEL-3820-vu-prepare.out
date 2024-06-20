@@ -1,3 +1,4 @@
+-- Test strict mode where path does not exist
 -- Expect error
 CREATE PROCEDURE openjson_3820_p1
 AS
@@ -6,6 +7,7 @@ BEGIN
 END;
 GO
 
+-- Test lax mode where path does not exist
 -- Expect empty result and no error
 CREATE PROCEDURE openjson_3820_p2
 AS
@@ -15,6 +17,7 @@ BEGIN
 END;
 GO
 
+-- Test strict mode where path does not exist
 -- Expect an error for no path
 CREATE PROCEDURE openjson_3820_p3
 AS
@@ -24,6 +27,7 @@ BEGIN
 END;
 GO
 
+-- Test standard OPENJSON call
 -- Expect result
 CREATE PROCEDURE openjson_3820_p4
 AS
@@ -33,6 +37,7 @@ BEGIN
 END;
 GO
 
+-- Test strict mode where path does not exist
 -- Expect error in strict mode
 CREATE PROCEDURE openjson_3820_p5
 AS
@@ -41,6 +46,7 @@ BEGIN
 END;
 GO
 
+-- Test lax mode where path does not exist
 -- Expect empty result because path does not exist
 CREATE PROCEDURE openjson_3820_p6
 AS
@@ -50,7 +56,8 @@ BEGIN
 END;
 GO
 
--- Expect proper json result
+-- Test OPENJSON strict call where path exists
+-- Expect json result
 CREATE PROCEDURE openjson_3820_p7
 AS
 BEGIN
@@ -59,16 +66,18 @@ BEGIN
 END;
 GO
 
--- Expect proper json result
+-- Test OPENJSON strict call where path exists, strict is mixed case, 
+-- and no space between "strict" and the path. Expect json result
 CREATE PROCEDURE openjson_3820_p8
 AS
 BEGIN
     DECLARE @json_p8 NVARCHAR(4000) = N'{"path": {"to":{"sub-object":["en-GB", "en-UK","de-AT","es-AR","sr-Cyrl"]}}}'; 
-    SELECT [key], value FROM OPENJSON(@json_p8,'strict$.path.to."sub-object"')
+    SELECT [key], value FROM OPENJSON(@json_p8,'sTrIct$.path.to."sub-object"')
 END;
 GO
 
--- Expect error for incorrect path
+-- Test OPENJSON strict with incorrect path
+-- Expect error
 CREATE PROCEDURE openjson_3820_p9
 AS
 BEGIN
@@ -77,7 +86,8 @@ BEGIN
 END;
 GO
 
--- Expect empty result for non existent path
+-- Test OPENJSON with incorrect path
+-- Expect empty result
 CREATE PROCEDURE openjson_3820_p10
 AS
 BEGIN
@@ -86,6 +96,7 @@ BEGIN
 END;
 GO
 
+-- Test strict mode where path does not exist
 -- Expect error in strict mode
 CREATE PROCEDURE openjson_3820_p11
 AS
