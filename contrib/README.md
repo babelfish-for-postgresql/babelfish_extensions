@@ -279,4 +279,8 @@ SELECT * FROM babelfishpg_unit.babelfishpg_unit_run_tests();
       ./init.sh
       mvn test
       ```
+        - If you run into errors connecting to psql such as `psql: error: could not connect to server: No such file or directory` try re-appending `postgres/bin` to your path by running this command and retrying the above code block:
+            ```
+            export PATH="~/postgres/bin:$PATH"
+            ```
 For detailed instructions on how to write, add, and run tests in JDBC test framework, refer [to the online instructions](../test/JDBC/README.md).
