@@ -5473,6 +5473,11 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
   Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text COLLATE "default")
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.432 ms
+~~END~~
+
 
 select c1 from test_like_for_AI_prepare_index where c1 LIKE 'Jon%';
 GO
@@ -5481,6 +5486,11 @@ text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'Jon%'
 Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
   Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.200 ms
 ~~END~~
 
 
@@ -5493,6 +5503,11 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
   Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
+~~END~~
+
 
 select c1 from test_like_for_AI_prepare_index where c1 LIKE '_one_';
 GO
@@ -5503,6 +5518,11 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
   Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text COLLATE "default")
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.135 ms
+~~END~~
+
 
 select c1 from test_like_for_AI_prepare_index where c1 LIKE '%on%s';
 GO
@@ -5511,6 +5531,11 @@ text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE '%on%s'
 Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
   Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text COLLATE "default")
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.135 ms
 ~~END~~
 
 
@@ -5524,6 +5549,11 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
   Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jones'::text)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
+~~END~~
+
 
 select c2 from test_like_for_AI_prepare_index where c2 LIKE 'Jon%';
 GO
@@ -5532,6 +5562,11 @@ text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'Jon%'
 Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
   Filter: ((remove_accents_internal((c2)::text))::text ~~ 'Jon%'::text)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.155 ms
 ~~END~~
 
 
@@ -5544,6 +5579,11 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
   Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jone_'::text)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
+~~END~~
+
 
 select c2 from test_like_for_AI_prepare_index where c2 LIKE '_one_';
 GO
@@ -5554,6 +5594,11 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
   Filter: ((remove_accents_internal((c2)::text))::text ~~ '_one_'::text)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
+~~END~~
+
 
 select c2 from test_like_for_AI_prepare_index where c2 LIKE '%on%s';
 GO
@@ -5562,6 +5607,11 @@ text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE '%on%s'
 Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
   Filter: ((remove_accents_internal((c2)::text))::text ~~ '%on%s'::text)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
 ~~END~~
 
 

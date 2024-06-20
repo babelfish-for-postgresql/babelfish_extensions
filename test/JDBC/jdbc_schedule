@@ -272,6 +272,9 @@ ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-cleanup
 ignore#!#newid-vu-prepare
 ignore#!#newid-vu-verify
 ignore#!#newid-vu-cleanup
+ignore#!#newid_before_15_8_or_16_4-vu-prepare
+ignore#!#newid_before_15_8_or_16_4-vu-verify
+ignore#!#newid_before_15_8_or_16_4-vu-cleanup
 
 ignore#!#babel_4328_datetime-before-15_7-vu-prepare
 ignore#!#babel_4328_datetime-before-15_7-vu-verify
@@ -282,3 +285,6 @@ ignore#!#babel_4328_datetime2-before-15_7-vu-cleanup
 ignore#!#babel_4328_datetimeoffset-before-15_7-vu-prepare
 ignore#!#babel_4328_datetimeoffset-before-15_7-vu-verify
 ignore#!#babel_4328_datetimeoffset-before-15_7-vu-cleanup
+
+ignore#!#BABEL-3513_before_15_8_or_16_4-vu-prepare
+ignore#!#BABEL-3513_before_15_8_or_16_4-vu-verify

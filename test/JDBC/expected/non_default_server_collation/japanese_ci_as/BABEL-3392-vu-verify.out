@@ -763,15 +763,15 @@ ORDER BY 1
 GO
 ~~START~~
 text
-Query Text: SELECT CAST(N'????' AS NCHAR(8)) AS Col1
+Query Text: SELECT CAST(N'ΘЖ??' AS NCHAR(8)) AS Col1
 UNION
 SELECT CAST('1' AS CHAR(4)) AS Col1
 ORDER BY 1
 Sort
-  Sort Key: ('????    '::"nchar"(8)) NULLS FIRST
+  Sort Key: ('ΘЖ??    '::"nchar"(8)) NULLS FIRST
   ->  Unique
         ->  Sort
-              Sort Key: ('????    '::"nchar"(8))
+              Sort Key: ('ΘЖ??    '::"nchar"(8))
               ->  Append
                     ->  Result
                     ->  Result
@@ -779,7 +779,7 @@ Sort
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.265 ms
+Babelfish T-SQL Batch Parsing Time: 0.200 ms
 ~~END~~
 
 
@@ -796,7 +796,7 @@ Query Text: SELECT NULL
 UNION
 SELECT NULL
 UNION
-SELECT CAST(N'????' AS NVARCHAR(12)) AS Col1
+SELECT CAST(N'ΘЖ??' AS NVARCHAR(12)) AS Col1
 ORDER BY 1
 Sort
   Sort Key: (NULL::nvarchar(12)) NULLS FIRST
@@ -810,7 +810,7 @@ Sort
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.255 ms
+Babelfish T-SQL Batch Parsing Time: 0.268 ms
 ~~END~~
 
 
@@ -837,7 +837,7 @@ Sort
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.956 ms
+Babelfish T-SQL Batch Parsing Time: 2.636 ms
 ~~END~~
 
 
