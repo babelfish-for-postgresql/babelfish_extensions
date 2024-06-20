@@ -39,6 +39,11 @@ Query Text: EXEC test_int2_numeric_p0
               Index Cond: (a = 1.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 146.177 ms
+~~END~~
+
 exec test_int2_numeric_p00;
 GO
 ~~START~~
@@ -48,6 +53,11 @@ Query Text: EXEC test_int2_numeric_p00
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a = 1.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.398 ms
 ~~END~~
 
 exec test_int2_numeric_p1;
@@ -61,6 +71,11 @@ Query Text: EXEC test_int2_numeric_p1
               Index Cond: (a IS NULL)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.392 ms
+~~END~~
+
 exec test_int2_numeric_p2;
 GO
 ~~START~~
@@ -70,6 +85,11 @@ Query Text: EXEC test_int2_numeric_p2
   ->  Aggregate
         ->  Seq Scan on test_int2_numeric_vu
               Filter: (a <> 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.399 ms
 ~~END~~
 
 exec test_int2_numeric_p3;
@@ -83,6 +103,11 @@ Query Text: EXEC test_int2_numeric_p3
               Filter: (5.0 <> a)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.897 ms
+~~END~~
+
 exec test_int2_numeric_p4;
 GO
 ~~START~~
@@ -92,6 +117,11 @@ Query Text: EXEC test_int2_numeric_p4
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a < 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.669 ms
 ~~END~~
 
 exec test_int2_numeric_p5;
@@ -105,6 +135,11 @@ Query Text: EXEC test_int2_numeric_p5
               Index Cond: (a < 5.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.621 ms
+~~END~~
+
 exec test_int2_numeric_p6;
 GO
 ~~START~~
@@ -114,6 +149,11 @@ Query Text: EXEC test_int2_numeric_p6
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a < '-32768.0'::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 19.055 ms
 ~~END~~
 
 exec test_int2_numeric_p7;
@@ -127,6 +167,11 @@ Query Text: EXEC test_int2_numeric_p7
               Index Cond: (a < '-32768.0'::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.536 ms
+~~END~~
+
 exec test_int2_numeric_p8;
 GO
 ~~START~~
@@ -136,6 +181,11 @@ Query Text: EXEC test_int2_numeric_p8
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a <= 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.880 ms
 ~~END~~
 
 exec test_int2_numeric_p9;
@@ -149,6 +199,11 @@ Query Text: EXEC test_int2_numeric_p9
               Index Cond: (a <= 5.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.865 ms
+~~END~~
+
 exec test_int2_numeric_p10;
 GO
 ~~START~~
@@ -158,6 +213,11 @@ Query Text: EXEC test_int2_numeric_p10
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a > 32763.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.984 ms
 ~~END~~
 
 exec test_int2_numeric_p11;
@@ -171,6 +231,11 @@ Query Text: EXEC test_int2_numeric_p11
               Index Cond: (a > 32763.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.842 ms
+~~END~~
+
 exec test_int2_numeric_p12;
 GO
 ~~START~~
@@ -180,6 +245,11 @@ Query Text: EXEC test_int2_numeric_p12
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a >= 32763.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.158 ms
 ~~END~~
 
 exec test_int2_numeric_p13;
@@ -193,6 +263,11 @@ Query Text: EXEC test_int2_numeric_p13
               Index Cond: (a >= 32763.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.145 ms
+~~END~~
+
 exec test_int2_numeric_p14;
 GO
 ~~START~~
@@ -202,6 +277,11 @@ Query Text: EXEC test_int2_numeric_p14
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a > 32767.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.128 ms
 ~~END~~
 
 exec test_int2_numeric_p15;
@@ -215,6 +295,11 @@ Query Text: EXEC test_int2_numeric_p15
               Index Cond: (a > 32767.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.125 ms
+~~END~~
+
 exec test_int2_numeric_p16;
 GO
 ~~START~~
@@ -224,6 +309,11 @@ Query Text: EXEC test_int2_numeric_p16
   ->  Aggregate
         ->  Seq Scan on test_int2_numeric_vu
               Filter: (a > 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 exec test_int2_numeric_p17;
@@ -237,6 +327,11 @@ Query Text: EXEC test_int2_numeric_p17
               Filter: (5.0 < a)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
+~~END~~
+
 exec test_int2_numeric_p18;
 GO
 ~~START~~
@@ -246,6 +341,11 @@ Query Text: EXEC test_int2_numeric_p18
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: ((a >= 5.0) AND (a <= 10.0))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.583 ms
 ~~END~~
 
 exec test_int2_numeric_p19;
@@ -259,6 +359,11 @@ Query Text: EXEC test_int2_numeric_p19
               Filter: ((a >= 5.0) AND (a <= 32768.0))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
+~~END~~
+
 exec test_int2_numeric_p20;
 GO
 ~~START~~
@@ -268,6 +373,11 @@ Query Text: EXEC test_int2_numeric_p20
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: ((a >= 5.0) AND (a <= 32768.0) AND (a = 10))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 11.555 ms
 ~~END~~
 
 exec test_int2_numeric_p21;
@@ -281,6 +391,11 @@ Query Text: EXEC test_int2_numeric_p21
               Index Cond: ((a > 5.0) AND (a < 7))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.260 ms
+~~END~~
+
 exec test_int2_numeric_p22;
 GO
 ~~START~~
@@ -290,6 +405,11 @@ Query Text: EXEC test_int2_numeric_p22
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: ((a > 5.0) AND (a < 7))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.724 ms
 ~~END~~
 
 exec test_int2_numeric_p23;
@@ -303,6 +423,11 @@ Query Text: EXEC test_int2_numeric_p23
               Filter: (a <> 5)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.751 ms
+~~END~~
+
 exec test_int2_numeric_p24;
 GO
 ~~START~~
@@ -312,6 +437,11 @@ Query Text: EXEC test_int2_numeric_p24
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a < 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.644 ms
 ~~END~~
 
 exec test_int2_numeric_p25;
@@ -325,6 +455,11 @@ Query Text: EXEC test_int2_numeric_p25
               Index Cond: (a < '-32768'::integer)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 12.805 ms
+~~END~~
+
 exec test_int2_numeric_p26;
 GO
 ~~START~~
@@ -334,6 +469,11 @@ Query Text: EXEC test_int2_numeric_p26
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a <= 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.209 ms
 ~~END~~
 
 exec test_int2_numeric_p27;
@@ -347,6 +487,11 @@ Query Text: EXEC test_int2_numeric_p27
               Index Cond: (a > 32763)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.794 ms
+~~END~~
+
 exec test_int2_numeric_p28;
 GO
 ~~START~~
@@ -356,6 +501,11 @@ Query Text: EXEC test_int2_numeric_p28
   ->  Aggregate
         ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
               Index Cond: (a >= 32763)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.184 ms
 ~~END~~
 
 exec test_int2_numeric_p29;
@@ -369,6 +519,11 @@ Query Text: EXEC test_int2_numeric_p29
               Index Cond: (a > 32767)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.158 ms
+~~END~~
+
 exec test_int2_numeric_p30;
 GO
 ~~START~~
@@ -378,6 +533,11 @@ Query Text: EXEC test_int2_numeric_p30
   ->  Aggregate
         ->  Seq Scan on test_int2_numeric_vu
               Filter: (a > 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.147 ms
 ~~END~~
 
 exec test_int2_numeric_p31;
@@ -391,6 +551,11 @@ Query Text: EXEC test_int2_numeric_p31
               Index Cond: ((a >= 5) AND (a <= 10))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.112 ms
+~~END~~
+
 exec test_int2_numeric_p32;
 GO
 ~~START~~
@@ -400,6 +565,11 @@ Query Text: EXEC test_int2_numeric_p32
   ->  Aggregate
         ->  Seq Scan on test_int2_numeric_vu
               Filter: ((a >= 5) AND (a <= 32768))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 
@@ -717,6 +887,11 @@ Aggregate
         Filter: ((a)::numeric = 1.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.807 ms
+~~END~~
+
 select * from test_int2_numeric_v00;
 GO
 ~~START~~
@@ -725,6 +900,11 @@ Query Text: select * from test_int2_numeric_v00
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: (1.0 = (a)::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 select * from test_int2_numeric_v1;
@@ -737,6 +917,11 @@ Aggregate
         Index Cond: (a IS NULL)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
 select * from test_int2_numeric_v2;
 GO
 ~~START~~
@@ -745,6 +930,11 @@ Query Text: select * from test_int2_numeric_v2
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: ((a)::numeric <> 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.071 ms
 ~~END~~
 
 select * from test_int2_numeric_v3;
@@ -757,6 +947,11 @@ Aggregate
         Filter: (5.0 <> (a)::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
+~~END~~
+
 select * from test_int2_numeric_v4;
 GO
 ~~START~~
@@ -765,6 +960,11 @@ Query Text: select * from test_int2_numeric_v4
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: ((a)::numeric < 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 select * from test_int2_numeric_v5;
@@ -777,6 +977,11 @@ Aggregate
         Filter: (5.0 > (a)::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
 select * from test_int2_numeric_v6;
 GO
 ~~START~~
@@ -785,6 +990,11 @@ Query Text: select * from test_int2_numeric_v6
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: ((a)::numeric < '-32768.0'::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 select * from test_int2_numeric_v7;
@@ -797,6 +1007,11 @@ Aggregate
         Filter: ('-32768.0'::numeric > (a)::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.070 ms
+~~END~~
+
 select * from test_int2_numeric_v8;
 GO
 ~~START~~
@@ -805,6 +1020,11 @@ Query Text: select * from test_int2_numeric_v8
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: ((a)::numeric <= 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 select * from test_int2_numeric_v9;
@@ -817,6 +1037,11 @@ Aggregate
         Filter: (5.0 >= (a)::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
+~~END~~
+
 select * from test_int2_numeric_v10;
 GO
 ~~START~~
@@ -825,6 +1050,11 @@ Query Text: select * from test_int2_numeric_v10
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: ((a)::numeric > 32763.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 select * from test_int2_numeric_v11;
@@ -837,6 +1067,11 @@ Aggregate
         Filter: (32763.0 < (a)::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
+~~END~~
+
 select * from test_int2_numeric_v12;
 GO
 ~~START~~
@@ -845,6 +1080,11 @@ Query Text: select * from test_int2_numeric_v12
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: ((a)::numeric >= 32763.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 select * from test_int2_numeric_v13;
@@ -857,6 +1097,11 @@ Aggregate
         Filter: (32763.0 <= (a)::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.072 ms
+~~END~~
+
 select * from test_int2_numeric_v14;
 GO
 ~~START~~
@@ -865,6 +1110,11 @@ Query Text: select * from test_int2_numeric_v14
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: ((a)::numeric > 32767.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 select * from test_int2_numeric_v15;
@@ -877,6 +1127,11 @@ Aggregate
         Filter: (32767.0 < (a)::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
 select * from test_int2_numeric_v16;
 GO
 ~~START~~
@@ -885,6 +1140,11 @@ Query Text: select * from test_int2_numeric_v16
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: ((a)::numeric > 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.070 ms
 ~~END~~
 
 select * from test_int2_numeric_v17;
@@ -897,6 +1157,11 @@ Aggregate
         Filter: (5.0 < (a)::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
 select * from test_int2_numeric_v18;
 GO
 ~~START~~
@@ -907,6 +1172,11 @@ Aggregate
         Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 10.0))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
+~~END~~
+
 select * from test_int2_numeric_v19;
 GO
 ~~START~~
@@ -915,6 +1185,11 @@ Query Text: select * from test_int2_numeric_v19
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 32768.0))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.067 ms
 ~~END~~
 
 select * from test_int2_numeric_v20;
@@ -928,6 +1203,11 @@ Aggregate
         Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 32768.0))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
 select * from test_int2_numeric_v21;
 GO
 ~~START~~
@@ -937,6 +1217,11 @@ Aggregate
   ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
         Index Cond: (a < 7)
         Filter: ((a)::numeric > 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 select * from test_int2_numeric_v22;
@@ -950,6 +1235,11 @@ Aggregate
         Filter: (5.0 < (a)::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
 select * from test_int2_numeric_v23;
 GO
 ~~START~~
@@ -958,6 +1248,11 @@ Query Text: select * from test_int2_numeric_v23
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: (a <> 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 select * from test_int2_numeric_v24;
@@ -970,6 +1265,11 @@ Aggregate
         Index Cond: (a < 5)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.070 ms
+~~END~~
+
 select * from test_int2_numeric_v25;
 GO
 ~~START~~
@@ -978,6 +1278,11 @@ Query Text: select * from test_int2_numeric_v25
 Aggregate
   ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
         Index Cond: (a < '-32768'::integer)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 select * from test_int2_numeric_v26;
@@ -990,6 +1295,11 @@ Aggregate
         Index Cond: (a <= 5)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.067 ms
+~~END~~
+
 select * from test_int2_numeric_v27;
 GO
 ~~START~~
@@ -998,6 +1308,11 @@ Query Text: select * from test_int2_numeric_v27
 Aggregate
   ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
         Index Cond: (a > 32763)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.067 ms
 ~~END~~
 
 select * from test_int2_numeric_v28;
@@ -1010,6 +1325,11 @@ Aggregate
         Index Cond: (a >= 32763)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
+~~END~~
+
 select * from test_int2_numeric_v29;
 GO
 ~~START~~
@@ -1018,6 +1338,11 @@ Query Text: select * from test_int2_numeric_v29
 Aggregate
   ->  Index Only Scan using test_int2_numeric_vu_idxtest_inccb07f0118052b1df7b858613c42763a on test_int2_numeric_vu
         Index Cond: (a > 32767)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 select * from test_int2_numeric_v30;
@@ -1030,6 +1355,11 @@ Aggregate
         Filter: (a > 5)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
 select * from test_int2_numeric_v31;
 GO
 ~~START~~
@@ -1040,6 +1370,11 @@ Aggregate
         Index Cond: ((a >= 5) AND (a <= 10))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
+~~END~~
+
 select * from test_int2_numeric_v32;
 GO
 ~~START~~
@@ -1048,6 +1383,11 @@ Query Text: select * from test_int2_numeric_v32
 Aggregate
   ->  Seq Scan on test_int2_numeric_vu
         Filter: ((a >= 5) AND (a <= 32768))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.070 ms
 ~~END~~
 
 

@@ -88,6 +88,9 @@ extern "C"
 	extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 
 	extern int escape_hatch_showplan_all;
+
+	/* To store the time spent in ANTLR parsing for the current batch */
+	extern instr_time antlr_parse_time;
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -3204,6 +3207,7 @@ antlr_parser_cpp(const char *sourceText)
 	instr_time	parseStart;
 	instr_time	parseEnd;
 	INSTR_TIME_SET_CURRENT(parseStart);
+	INSTR_TIME_SET_ZERO(antlr_parse_time);
 
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
@@ -3245,6 +3249,9 @@ antlr_parser_cpp(const char *sourceText)
 	INSTR_TIME_SET_CURRENT(parseEnd);
 	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
 	elog(DEBUG1, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
+
+	/* And store time spent in ANTLR parsing so that we can emit it for EXPLAIN info if required */
+	antlr_parse_time = parseEnd;
 
 	return result;
 }
@@ -6127,10 +6134,14 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	size_t startPos = ctx->start->getStartIndex(); // start position of statement
 	size_t namePos = -1;   // start position of procedure name
 	size_t argPos = -1;	// start position of first argument	
+	
+	bool exec_with_recompile = false;  // indicates if WITH RECOMPILE was specified
+	std::vector<TSqlParser::Execute_optionContext *> exec_options;	
 
 	// Set up calltype-dependent values
 	if (execute_statement) 
 	{
+		/* Executes a procedure with EXEC[UTE] keyword */
 		TSqlParser::Execute_statementContext *ctxES = (TSqlParser::Execute_statementContext *) ctx;
 			
 		if (ctxES->EXECUTE()) execKeywd = "EXEC   ";  // same length as EXECUTE. DO NOT CHANGE!						
@@ -6138,17 +6149,29 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		Assert(body);
 		
 		ctx_name       = body->func_proc_name_server_database_schema();
-		func_proc_args = body->execute_statement_arg();		
+		func_proc_args = body->execute_statement_arg();
+		exec_options   = body->execute_option();		
 	}
 	else // execute_body_batch
 	{
+		/* Executes a procedure as first statement in the batch, without EXEC[UTE] keyword */
 		TSqlParser::Execute_body_batchContext *ctxEBB = (TSqlParser::Execute_body_batchContext *) ctx;
 		ctx_name       = ctxEBB->func_proc_name_server_database_schema();		
-		func_proc_args = ctxEBB->execute_statement_arg();		
+		func_proc_args = ctxEBB->execute_statement_arg();
+		exec_options   = ctxEBB->execute_option();
 		Assert(ctx_name);
-	}		
-	
+	}
 
+	for (TSqlParser::Execute_optionContext *opt : exec_options)
+	{
+		if (opt->RECOMPILE())
+		{
+			/* RECOMPILE option was specified; not processing any other options for now */
+			exec_with_recompile = true;
+			break;
+		}
+	}
+	
 	if (ctx_name) 
 	{
 		// Get the name of procedure being executed, and split up in parts
@@ -6244,6 +6267,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	result->paramno = 0;
 	result->params = NIL;
 	result->is_cross_db = is_cross_db;  // Record whether this is a cross-db call
+	result->exec_with_recompile = exec_with_recompile;	
 
 	// Handle name parts
 	if (!proc_name.empty())
@@ -6320,6 +6344,16 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		
 		ss << ::getFullText(func_proc_args);		
 	}
+	
+	if (exec_with_recompile)
+	{
+		/* 
+		 * When displaying the query plan, indicate that EXECUTE ... WITH RECOMPILE was specified.
+		 * This may be relevant for understanding the plan.
+		 */
+		ss << " /* EXECUTE WITH RECOMPILE */";
+	}
+		
 	std::string expr_query = ss.str();
 	result->expr = makeTsqlExpr(expr_query, false);
 
@@ -8748,4 +8782,3 @@ handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx)
 
 	return;
 }
-

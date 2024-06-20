@@ -40,6 +40,11 @@ Query Text: EXEC babel_3513_proc_1
                     ->  Seq Scan on babel_3513_t2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 164.204 ms
+~~END~~
+
 
 set babelfish_showplan_all off;
 go
@@ -75,6 +80,11 @@ Query Text: EXEC babel_3513_proc_1
                     ->  Seq Scan on babel_3513_t2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
+~~END~~
+
 
 -- expect nested loop join
 SELECT babel_3513_t1.a1 FROM babel_3513_t1 inner merge join babel_3513_t2 ON a1 = b2;
@@ -89,6 +99,11 @@ Gather
         Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
         ->  Seq Scan on babel_3513_t1
         ->  Seq Scan on babel_3513_t2
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.585 ms
 ~~END~~
 
 
