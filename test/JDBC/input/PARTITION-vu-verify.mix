@@ -52,6 +52,19 @@ BEGIN
 END;
 GO
 
+---------------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME using 2-part name
+---------------------------------------------------------
+
+CREATE PARTITION FUNCTION [TestDb].[TwoPartParitionFunction](DATE)
+AS RANGE RIGHT FOR VALUES ('20230101', '20230201', '20230301', '20230401');
+GO
+
+CREATE PARTITION SCHEME [TestDb].[TwoPartParitionScheme]
+AS PARTITION [TestDb].[TwoPartPF]
+TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+
 --------------------------------------------------
 --- Unsupported Datatypes for Partition Function 
 --------------------------------------------------

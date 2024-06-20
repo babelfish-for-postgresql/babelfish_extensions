@@ -68,6 +68,27 @@ GO
 ~~ERROR (Message: Invalid use of a side-effecting operator 'DROP PARTITION SCHEME' within a function.)~~
 
 
+
+---------------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME using 2-part name
+---------------------------------------------------------
+CREATE PARTITION FUNCTION [TestDb].[TwoPartParitionFunction](DATE)
+AS RANGE RIGHT FOR VALUES ('20230101', '20230201', '20230301', '20230401');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 4 and character position 34)~~
+
+
+CREATE PARTITION SCHEME [TestDb].[TwoPartParitionScheme]
+AS PARTITION [TestDb].[TwoPartPF]
+TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 32)~~
+
+
 --------------------------------------------------
 --- Unsupported Datatypes for Partition Function 
 --------------------------------------------------
