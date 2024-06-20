@@ -139,6 +139,11 @@ Aggregate
         ->  Seq Scan on tenk1
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 108.969 ms
+~~END~~
+
 
 SELECT count(*) FROM
   (SELECT DISTINCT two, four, two FROM tenk1) ss;
@@ -151,6 +156,11 @@ Aggregate
   ->  HashAggregate
         Group Key: tenk1.two, tenk1.four
         ->  Seq Scan on tenk1
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
 ~~END~~
 
 
@@ -203,6 +213,11 @@ Unique
   ->  Sort
         Sort Key: ((g % 1000))
         ->  Function Scan on generate_series g
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 38.447 ms
 ~~END~~
 
 
@@ -258,6 +273,11 @@ Query Text: SELECT DISTINCT g%1000 FROM generate_series(0,9999) g
 HashAggregate
   Group Key: (g % 1000)
   ->  Function Scan on generate_series g
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
 ~~END~~
 
 
@@ -375,6 +395,11 @@ Unique
               ->  HashAggregate
                     Group Key: four
                     ->  Parallel Seq Scan on tenk1
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 13.195 ms
 ~~END~~
 
 

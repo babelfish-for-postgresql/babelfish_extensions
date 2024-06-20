@@ -66,6 +66,11 @@ Gather
         Filter: (a1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 166.248 ms
+~~END~~
+
 
 /*
  * The MAXDOP hint should be handled specially the hint value is 0
@@ -84,6 +89,11 @@ Gather
         Filter: (a1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.287 ms
+~~END~~
+
 
 /*
  * Run SELECT queries and give the MAXDOP hint with different values to verify the hint is actually getting mapped
@@ -99,6 +109,11 @@ Gather
         Filter: (a1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.189 ms
+~~END~~
+
 
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 2)
 go
@@ -109,6 +124,11 @@ Gather
   Workers Planned: 2
   ->  Parallel Seq Scan on babel_3294_t1 t1
         Filter: (a1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.239 ms
 ~~END~~
 
 
@@ -123,6 +143,11 @@ Gather
         Filter: (a1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.205 ms
+~~END~~
+
 
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 8)
 go
@@ -135,6 +160,11 @@ Gather
         Filter: (a1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.203 ms
+~~END~~
+
 
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 16)
 go
@@ -145,6 +175,11 @@ Gather
   Workers Planned: 16
   ->  Parallel Seq Scan on babel_3294_t1 t1
         Filter: (a1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.151 ms
 ~~END~~
 
 

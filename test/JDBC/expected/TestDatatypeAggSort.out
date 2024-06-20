@@ -119,6 +119,11 @@ Result
                 Filter: (varchar_col <= 'xxx'::"varchar")
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 208.872 ms
+~~END~~
+
 SELECT MIN(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 go
 ~~START~~
@@ -130,6 +135,11 @@ Result
           ->  Index Scan using testdatatypeaggsort_char_idxtesfbaa28928b545e2adef99cfdad96bca2 on testdatatypeaggsort_tbl
                 Index Cond: (char_col IS NOT NULL)
                 Filter: (varchar_col <= 'xxx'::"varchar")
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 13.283 ms
 ~~END~~
 
 
@@ -145,6 +155,11 @@ Result
                 Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col <= 'xxx'::"varchar"))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
+~~END~~
+
 SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'ppp'
 go
 ~~START~~
@@ -155,6 +170,11 @@ Result
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_varchar_idx9ad0e932a2f10239b7debb0a3f366a92 on testdatatypeaggsort_tbl
                 Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col > 'ppp'::"varchar"))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 15.517 ms
 ~~END~~
 
 
@@ -170,6 +190,11 @@ Result
                 Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col <= '2020-12-31 23:59:59'::datetime))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
+~~END~~
+
 SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2010-12-31 23:59:59'
 go
 ~~START~~
@@ -180,6 +205,11 @@ Result
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_datetime_id059c1f40bc288b4812242508f8efa093 on testdatatypeaggsort_tbl
                 Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col > '2010-12-31 23:59:59'::datetime))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -195,6 +225,11 @@ Result
                 Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col <= '2020-12-31 23:59:59'::datetime2))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
+~~END~~
+
 SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2010-12-31 23:59:59'
 go
 ~~START~~
@@ -205,6 +240,11 @@ Result
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_datetime2_i1725d75058c0b3bc1047ac8734b677ec on testdatatypeaggsort_tbl
                 Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col > '2010-12-31 23:59:59'::datetime2))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -220,6 +260,11 @@ Result
                 Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col <= '2020-12-31 23:59:59 +00:00'::datetimeoffset))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
+~~END~~
+
 SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2010-12-31 23:59:59'
 go
 ~~START~~
@@ -230,6 +275,11 @@ Result
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_datetimeoffc266914d4bc72ff84892083238ed8c64 on testdatatypeaggsort_tbl
                 Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col > '2010-12-31 23:59:59 +00:00'::datetimeoffset))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -245,6 +295,11 @@ Result
                 Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col <= '2021-01-01 00:00:00'::smalldatetime))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
+~~END~~
+
 SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2010-12-31 23:59:59'
 go
 ~~START~~
@@ -255,6 +310,11 @@ Result
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_smalldateti2dc63bb7d48110e1d7497e0fb6e1aad7 on testdatatypeaggsort_tbl
                 Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col > '2011-01-01 00:00:00'::smalldatetime))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 

@@ -41,6 +41,11 @@ Gather
         Index Cond: (a1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 144.060 ms
+~~END~~
+
 
 /*
  * Run a SELECT query and give the hint to follow a sequential scan. 
@@ -55,6 +60,11 @@ Gather
   Workers Planned: 3
   ->  Parallel Seq Scan on babel_3291_t1
         Filter: (a1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
 ~~END~~
 
 

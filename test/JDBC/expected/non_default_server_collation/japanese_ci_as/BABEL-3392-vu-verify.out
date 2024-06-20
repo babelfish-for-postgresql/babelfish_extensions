@@ -777,6 +777,11 @@ Sort
                     ->  Result
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.200 ms
+~~END~~
+
 
 SELECT NULL
 UNION
@@ -803,6 +808,11 @@ Sort
               ->  Result
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.268 ms
+~~END~~
+
 
 SELECT cast('foo' as CHAR(3))
 UNION
@@ -823,6 +833,11 @@ Sort
               ->  Append
                     ->  Result
                     ->  Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.636 ms
 ~~END~~
 
 
