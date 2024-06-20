@@ -4588,11 +4588,11 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 	if (send_error)
 	{
 		ErrorData  *edata;
-		MemoryContext oldCtx = CurrentMemoryContext;
+		//MemoryContext oldCtx = CurrentMemoryContext;
 
-		MemoryContextSwitchTo(MessageContext);
+		//MemoryContextSwitchTo(MessageContext);
 		edata = CopyErrorData();
-		MemoryContextSwitchTo(oldCtx);
+		//MemoryContextSwitchTo(oldCtx);
 		latest_pg_error_code = edata->sqlerrcode;
 		if (!get_tsql_error_code(edata, &latest_error_code))
 			error_mapping_failed = true;
