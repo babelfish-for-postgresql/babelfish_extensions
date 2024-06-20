@@ -3418,7 +3418,7 @@ SetAttributesForColmetada(TdsColumnMetaData *col)
 	if (HeapTupleIsValid(tp))
 	{
 		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		col->attNotNull = att_tup->attnotnull;
+
 		if (att_tup->attgenerated != '\0')
 			col->attgenerated = true;
 
