@@ -1007,6 +1007,11 @@ Limit  (cost=26.61..26.62 rows=5 width=24)
         ->  Function Scan on bbf_pivot pvt  (cost=0.00..10.00 rows=1000 width=24)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 22.186 ms
+~~END~~
+
 SET BABELFISH_SHOWPLAN_ALL OFF;
 GO
 

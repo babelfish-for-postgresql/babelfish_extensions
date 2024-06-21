@@ -87,6 +87,11 @@ Query Text: EXEC babel_3939_vu_prepare_p1
               Filter: ((a)::bbf_varbinary <= '0xbaadf00d'::bbf_varbinary)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
+~~END~~
+
 
 exec babel_3939_vu_prepare_p2;
 GO
@@ -111,6 +116,11 @@ Query Text: EXEC babel_3939_vu_prepare_p2
   Query Text: select * from tab_varbinary where a <= cast(0xBAADF00D as  binary )
   ->  Seq Scan on tab_varbinary
         Filter: ((a)::bbf_varbinary <= '0xbaadf00d0000000000000000000000000000000000000000000000000000'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 14.261 ms
 ~~END~~
 
 

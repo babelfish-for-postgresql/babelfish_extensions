@@ -19,6 +19,11 @@ text
 Query Text: create table babel_2844_t1 (a1 int, b1 int);
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 64.545 ms
+~~END~~
+
 select * from babel_2844_t1 where b1 = 1;
 go
 ~~ERROR (Code: 33557097)~~
@@ -33,6 +38,11 @@ go
 text
 Query Text: select * from set_config('babelfishpg_tsql.explain_costs', 'off', false)
 Function Scan on set_config  (cost=0.00..0.01 rows=1 width=32)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 23.721 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -67,6 +77,11 @@ Insert on babel_2844_t1  (cost=0.00..0.01 rows=0 width=0)
   ->  Result  (cost=0.00..0.01 rows=1 width=8)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
+~~END~~
+
 insert into babel_2844_t2 select * from babel_2844_t1 where a1 = 1;
 go
 ~~START~~
@@ -75,6 +90,11 @@ Query Text: insert into babel_2844_t2 select * from babel_2844_t1 where a1 = 1;
 Insert on babel_2844_t2  (cost=0.00..38.25 rows=0 width=0)
   ->  Seq Scan on babel_2844_t1  (cost=0.00..38.25 rows=11 width=8)
         Filter: (a1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.385 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -104,6 +124,11 @@ Query Text: select 1
 Result  (cost=0.00..0.01 rows=1 width=4)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
 select * from babel_2844_t1 where b1 = 1;
 go
 ~~START~~
@@ -111,6 +136,11 @@ text
 Query Text: select * from babel_2844_t1 where b1 = 1
 Seq Scan on babel_2844_t1  (cost=0.00..38.25 rows=11 width=8)
   Filter: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -135,6 +165,11 @@ Seq Scan on babel_2844_t1  (cost=0.00..38.25 rows=11 width=8)
   Filter: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
+~~END~~
+
 set BABELFISH_SHOWPLAN_ALL OFF;
 go
 select set_config('babelfishpg_tsql.explain_format', 'json', false);
@@ -155,6 +190,11 @@ Seq Scan on babel_2844_t1  (cost=0.00..38.25 rows=11 width=8)
   Filter: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+[<newline>  "Babelfish T-SQL Batch Parsing Time": 0.109<newline>]
+~~END~~
+
 set BABELFISH_SHOWPLAN_ALL OFF;
 go
 select set_config('babelfishpg_tsql.explain_format', 'yaml', false);
@@ -172,6 +212,11 @@ text
 Query Text: select * from babel_2844_t1 where b1 = 1
 Seq Scan on babel_2844_t1  (cost=0.00..38.25 rows=11 width=8)
   Filter: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.188
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -204,6 +249,11 @@ Query Text: select * from babel_2844_t1
 Seq Scan on babel_2844_t1  (cost=0.00..32.60 rows=2260 width=8)
 Query Text: select * from babel_2844_t2
 Seq Scan on babel_2844_t2  (cost=0.00..32.60 rows=2260 width=8)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 9.801 ms
 ~~END~~
 
 
@@ -244,6 +294,11 @@ Query Text: EXEC    babel_2844_proc 3
         Filter: (a1 = 3)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 25.654 ms
+~~END~~
+
 set BABELFISH_SHOWPLAN_ALL OFF;
 go
 select * from babel_2844_t1;
@@ -267,6 +322,11 @@ text
 Query Text: EXEC SP_PREPARE @handle OUT, NULL, 'select * from babel_2844_t1'
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 26.762 ms
+~~END~~
+
 set BABELFISH_SHOWPLAN_ALL OFF;
 go
 
@@ -285,6 +345,11 @@ go
 text
 Query Text: select * from babel_2844_itvf(1)
 Function Scan on babel_2844_itvf  (cost=0.25..10.25 rows=1000 width=8)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -309,6 +374,11 @@ go
 text
 Query Text: select * from babel_2844_mstvf(1)
 Function Scan on babel_2844_mstvf  (cost=0.25..10.25 rows=1000 width=8)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -356,6 +426,11 @@ text
 Query Text: set BABELFISH_STATISTICS PROFILE ON;
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.514 ms
+~~END~~
+
 
 set BABELFISH_SHOWPLAN_ALL OfF;
 go
@@ -389,6 +464,11 @@ text
 Query Text: SELECT * INTO t3 FROM t1 WHERE t1.b = 1
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 29.681 ms
+~~END~~
+
 
 -- should fail with t3 does not exist because previous query was not executed
 INSERT INTO t3 VALUES (1, 1), (2, 1), (3, 1);
@@ -408,6 +488,11 @@ Insert on t1  (cost=0.00..0.04 rows=0 width=0)
   ->  Values Scan on "*VALUES*"  (cost=0.00..0.04 rows=3 width=8)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.147 ms
+~~END~~
+
 
 DELETE FROM t1 WHERE a = 3;
 GO
@@ -419,6 +504,11 @@ Delete on t1  (cost=0.15..8.17 rows=0 width=0)
         Index Cond: (a = 3)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 57.568 ms
+~~END~~
+
 
 UPDATE t1 SET a = 2 WHERE a = 1;
 GO
@@ -428,6 +518,11 @@ Query Text: UPDATE t1 SET a = 2 WHERE a = 1;
 Update on t1  (cost=0.15..8.17 rows=0 width=0)
   ->  Index Scan using t1_pkey on t1  (cost=0.15..8.17 rows=1 width=10)
         Index Cond: (a = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 46.423 ms
 ~~END~~
 
 
@@ -447,6 +542,11 @@ BEGIN
     DECLARE @TSQL NVARCHAR(MAX)
     RETURN @TSQL
 END
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 36.146 ms
 ~~END~~
 
 
