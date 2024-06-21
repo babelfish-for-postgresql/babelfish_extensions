@@ -1950,7 +1950,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 												   options,
 												   (scrollopt_null ? NULL : &scrollopt),
 												   (ccopt_null ? NULL : &ccopt),
-												   args->numargs, args->argtypes);
+												   args->numargs, args->argtypes, NULL);
 				}
 				PG_CATCH();
 				{

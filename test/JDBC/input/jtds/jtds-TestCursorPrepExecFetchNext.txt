@@ -1,0 +1,97 @@
+CREATE TABLE test_cursor_prep_exec_fetch_next(a INT, b SMALLINT, c BIGINT, d TINYINT, e BIT);
+INSERT INTO test_cursor_prep_exec_fetch_next values(0, 0, 0, 0, 0)
+INSERT INTO test_cursor_prep_exec_fetch_next values(NULL, NULL, NULL, NULL, NULL)
+INSERT INTO test_cursor_prep_exec_fetch_next values(1, 2, 3, 4, 1)
+INSERT INTO test_cursor_prep_exec_fetch_next values(211234, 9780, 891372401, 56, 1)
+
+# SET escape_hatch_session_settings to ignore CURSOR_CLOSE_ON_COMMIT
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore';
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next WHERE a > @a #!#INT|-|a|-|-2#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+cursor#!#fetch#!#next
+cursor#!#fetch#!#abs#!#2
+cursor#!#fetch#!#next
+cursor#!#fetch#!#first
+cursor#!#fetch#!#next
+cursor#!#close
+cursor#!#open#!#prepst#!#exec#!#INT|-|a|-|0#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#HOLD_CURSORS_OVER_COMMIT
+#cursor#!#fetch#!#last
+cursor#!#fetch#!#next
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+cursor#!#close
+DROP TABLE test_cursor_prep_exec_fetch_next
+
+CREATE TABLE test_cursor_prep_exec_fetch_next(a CHAR(30), b VARCHAR(30), c NCHAR(30), d NVARCHAR(30));
+INSERT INTO test_cursor_prep_exec_fetch_next values(' ', ' ', ' ', ' ')
+INSERT INTO test_cursor_prep_exec_fetch_next values(NULL, NULL, NULL, NULL)
+INSERT INTO test_cursor_prep_exec_fetch_next values('hello', 'from the', N'server', N'side 😆')
+INSERT INTO test_cursor_prep_exec_fetch_next values('Its', 'always', N'day', N'1')
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next WHERE a <> @a #!#CHAR|-|a|-|hello#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+cursor#!#fetch#!#abs#!#3
+cursor#!#fetch#!#next
+cursor#!#fetch#!#first
+cursor#!#fetch#!#next
+cursor#!#close
+cursor#!#open#!#prepst#!#exec#!#CHAR|-|a|-|Its#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+#cursor#!#fetch#!#last
+cursor#!#fetch#!#next
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+cursor#!#close
+DROP TABLE test_cursor_prep_exec_fetch_next
+
+CREATE TABLE test_cursor_prep_exec_fetch_next(a DATE, b DATETIME, c SMALLDATETIME);
+INSERT INTO test_cursor_prep_exec_fetch_next values('2000-12-13', '1900-02-28 23:59:59.989', '2000-12-13 12:58:23')
+INSERT INTO test_cursor_prep_exec_fetch_next values(NULL, NULL, NULL)
+INSERT INTO test_cursor_prep_exec_fetch_next values('1997-05-07', '1900-02-28 11:23:17.895', '2000-12-13 10:23:44')
+INSERT INTO test_cursor_prep_exec_fetch_next values('1876-08-07', '1980-02-05 16:11:45.215', '1987-10-01 07:55:24')
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next WHERE b > @b #!#DATETIME|-|b|-|1753-01-01 00:00:00.000#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+cursor#!#fetch#!#first
+cursor#!#fetch#!#abs#!#2
+cursor#!#fetch#!#next
+cursor#!#fetch#!#first
+cursor#!#fetch#!#next
+cursor#!#close
+cursor#!#open#!#prepst#!#exec#!#DATETIME|-|b|-|1947-01-01 11:23:17.374#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+#cursor#!#fetch#!#last
+cursor#!#fetch#!#next
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+cursor#!#close
+DROP TABLE test_cursor_prep_exec_fetch_next
+
+CREATE TABLE test_cursor_prep_exec_fetch_next(a FLOAT, b REAL, c MONEY, d SMALLMONEY);
+INSERT INTO test_cursor_prep_exec_fetch_next values(0, 0, '$0', '$0')
+INSERT INTO test_cursor_prep_exec_fetch_next values(NULL, NULL, NULL, NULL)
+INSERT INTO test_cursor_prep_exec_fetch_next values(241.7832, 1214.691236, '62,514.00', '690.817')
+INSERT INTO test_cursor_prep_exec_fetch_next values('32546', '980.709', '1,988,232.08', '$86,798')
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next WHERE b > @b #!#REAL|-|b|-|12.0834#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+cursor#!#fetch#!#next
+cursor#!#fetch#!#abs#!#3
+cursor#!#fetch#!#next
+cursor#!#fetch#!#first
+cursor#!#fetch#!#next
+cursor#!#close
+cursor#!#open#!#prepst#!#exec#!#REAL|-|b|-|1000.241#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+#cursor#!#fetch#!#last
+cursor#!#fetch#!#next
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+cursor#!#close
+DROP TABLE test_cursor_prep_exec_fetch_next

@@ -47,6 +47,8 @@ void		enable_sp_cursor_find_param_hook(void);
 void		disable_sp_cursor_find_param_hook(void);
 void		add_sp_cursor_param(char *name);
 void		reset_sp_cursor_params(void);
+InlineCodeBlockArgs *create_args(int numargs);
+void read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr);
 
 /* cursor information hashtab */
 typedef struct cursorhashent
@@ -1099,11 +1101,29 @@ execute_sp_cursoropen_old(int *cursor_handle, const char *stmt, int *pscrollopt,
 	return execute_sp_cursoropen_common(NULL, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, 0, NULL, values, nulls, true /* prepare */ , false /* save_plan */ , true /* execute */ );
 }
 
+/*
+ * Either nBindParams + boundParamsOidList or raw paramDef string can be passed by the caller.
+ */
 int
-execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *pscrollopt, int *pccopt, int nBindParams, Oid *boundParamsOidList)
+execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *pscrollopt, int *pccopt, int nBindParams, Oid *boundParamsOidList, const char* paramDef)
 {
 	/* TODO: options handling */
-	return execute_sp_cursoropen_common(stmt_handle, NULL, stmt, pscrollopt, pccopt, NULL, 0, nBindParams, boundParamsOidList, NULL, NULL, true /* prepare */ , true /* save_plan */ , false /* execute */ );
+	InlineCodeBlockArgs *args;
+	int nBindParamsPass;
+	Oid *boundParamsOidListPass;
+
+	if (paramDef)
+	{
+		args = create_args(0);
+		read_param_def(args, paramDef);
+		nBindParamsPass = args->numargs;
+		boundParamsOidListPass = args->argtypes;
+	} else {
+		nBindParamsPass = nBindParams;
+		boundParamsOidListPass = boundParamsOidList;
+	}
+
+	return execute_sp_cursoropen_common(stmt_handle, NULL, stmt, pscrollopt, pccopt, NULL, 0, nBindParamsPass, boundParamsOidListPass, NULL, NULL, true /* prepare */ , true /* save_plan */ , false /* execute */ );
 }
 
 int
@@ -1300,10 +1320,10 @@ execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pn
 	 */
 	if (SPI_processed > 0)
 		fetch_info_rownum = portal->portalPos - SPI_processed + 1;
-	else if (portal->atStart)
-		fetch_info_rownum = 0;
 	else if (portal->atEnd)
 		fetch_info_rownum = -1;
+	else if (portal->atStart)
+		fetch_info_rownum = 0;
 	else
 		fetch_info_rownum = portal->portalPos + 1;
 

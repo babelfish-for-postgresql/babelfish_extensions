@@ -2350,9 +2350,9 @@ static void
 HandleSPCursorOpenCommon(TDSRequestSP req)
 {
 	int			curoptions = 0;
-	int			ret,
-				i;
+	int			ret;
 	StringInfoData buf;
+	char		*paramdefstr;
 
 	TdsErrorContext->err_text = "Processing SP_CURSOROPEN Common Request";
 	/* fetch cursor options */
@@ -2395,24 +2395,18 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 																			NULL /* TODO row_count */ , req->nTotalParams, req->boundParamsData, req->boundParamsNullList);
 					break;
 				case SP_CURSORPREPARE:
-					for (i = 0; i < buf.len-2; i++)
-					{
-						if ('@' == buf.data[i] && 'P' == buf.data[i + 1])
-						{
-							buf.data[i] = ' ';
-							buf.data[i + 1] = '$';
-							// todo: fixme for @P9+
-							buf.data[i + 2] = buf.data[i + 2] + 1;
-						}
-					}
-
 					set_ps_display("active");
 					activity = psprintf("SP_CURSORPREPARE: %s", buf.data);
 					pgstat_report_activity(STATE_RUNNING, activity);
 					pfree(activity);
 
+					if (req->dataParameter->isNull || req->metaDataParameterValue->len == 0)
+						paramdefstr = NULL;
+					else
+						paramdefstr = req->metaDataParameterValue->data;
+
 					ret = pltsql_plugin_handler_ptr->sp_cursorprepare_callback((int *) &req->cursorPreparedHandle, buf.data, curoptions, &req->scrollopt, &req->ccopt,
-																			   (int) req->nTotalBindParams, req->boundParamsOidList);
+																			  0, NULL, paramdefstr);
 					break;
 				case SP_CURSORPREPEXEC:
 					set_ps_display("active");
@@ -3345,9 +3339,9 @@ GetRPCRequest(StringInfo message)
 		case SP_CURSORPREPARE:
 			{
 				/*
-				 * 1. Cursor prepared Handle parameter (mandatory) 2. query
-				 * parameter (mandatory) 3. ExtraArg1 = scrollopt 4. ExtraArg2
-				 * = ccopt
+				 * 1. Cursor prepared Handle parameter OUT (mandatory) 2. parameters
+				 * definition (mandatory) 3. query parameter (mandatory) 4. options
+				 * (mandatory) 5. ExtraArg1 = scrollopt 6. ExtraArg2 = ccopt
 				 */
 				TDSInstrumentation(INSTR_UNSUPPORTED_TDS_SP_CURSORPREPARE);
 				if (unlikely(parameterCount < 4))
@@ -3361,27 +3355,33 @@ GetRPCRequest(StringInfo message)
 							 errmsg("%s parameter should be of %s type", "Cursor prepared handle", "integer")));
 				request->cursorPreparedHandleParameter = request->parameter;
 
+				if (unlikely(!request->cursorPreparedHandleParameter->next))
+					ereport(ERROR,
+							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							 errmsg("%s parameter is mandatory", "Parameters definition")));
+				if (unlikely(FetchDataTypeNameFromParameter(request->cursorPreparedHandleParameter->next) != TDS_TYPE_NVARCHAR &&
+							 FetchDataTypeNameFromParameter(request->cursorPreparedHandleParameter->next) != TDS_TYPE_NCHAR &&
+							 FetchDataTypeNameFromParameter(request->cursorPreparedHandleParameter->next) != TDS_TYPE_NTEXT))
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("%s parameter should be of %s type", "Parameters definition", "NVARCHAR, NCHAR or NTEXT")));
+				request->dataParameter = request->cursorPreparedHandleParameter->next;
+
 				TdsReadUnicodeDataFromTokenCommon(message->data,
-												  request->cursorPreparedHandleParameter->next,
+												  request->dataParameter,
 												  request->metaDataParameterValue);
 
-				if (unlikely(!request->cursorPreparedHandleParameter->next->next))
+				if (unlikely(!request->dataParameter->next))
 					ereport(ERROR,
 							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 							 errmsg("%s parameter should not be null", "Query")));
-				if (unlikely(FetchDataTypeNameFromParameter(request->cursorPreparedHandleParameter->next->next) != TDS_TYPE_NVARCHAR &&
-							 FetchDataTypeNameFromParameter(request->cursorPreparedHandleParameter->next->next) != TDS_TYPE_NTEXT))
+				if (unlikely(FetchDataTypeNameFromParameter(request->dataParameter->next) != TDS_TYPE_NVARCHAR &&
+							 FetchDataTypeNameFromParameter(request->dataParameter->next) != TDS_TYPE_NCHAR &&
+							 FetchDataTypeNameFromParameter(request->dataParameter->next) != TDS_TYPE_NTEXT))
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("%s parameter should be of %s type", "Query", "NVARCHAR or NTEXT")));
-				request->queryParameter = request->cursorPreparedHandleParameter->next->next;
-
-				if (unlikely(FetchDataTypeNameFromParameter(request->queryParameter) != TDS_TYPE_NVARCHAR &&
-							 FetchDataTypeNameFromParameter(request->parameter) != TDS_TYPE_NCHAR &&
-							 FetchDataTypeNameFromParameter(request->parameter) != TDS_TYPE_NTEXT))
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("%s parameter should be of %s type", "Query", "NVARCHAR or NTEXT")));
+							 errmsg("%s parameter should be of %s type", "Query", "NVARCHAR, NCHAR or NTEXT")));
+				request->queryParameter = request->dataParameter->next;
 
 				request->cursorExtraArg1 = request->queryParameter->next;
 				if (unlikely(FetchDataTypeNameFromParameter(request->cursorExtraArg1) != TDS_TYPE_INTEGER))
@@ -3628,10 +3628,6 @@ ProcessRPCRequest(TDSRequest request)
 			HandleSPCursorOpenCommon(req);
 			break;
 		case SP_CURSORPREPARE:
-			// todo: fixme
-			req->boundParamsOidList = palloc0(sizeof(Oid) * 1);
-			req->boundParamsOidList[0] = 23;
-			req->nTotalBindParams = 1;
 			HandleSPCursorOpenCommon(req);
 			break;
 		case SP_CURSORFETCH:
