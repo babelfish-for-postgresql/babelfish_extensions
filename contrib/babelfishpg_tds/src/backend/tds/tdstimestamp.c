@@ -379,7 +379,8 @@ GetDatetimeFromDaysTicks(uint32 numDays, uint32 numTicks,
 	CalculateTargetDate(y1, &d2, &m2, &y2, numDays);
 
 	Assert((int) numTicks >= 0);
-	numMilli = (int) (3.33333333 * numTicks);
+	/* add 0.5 before casting to int to round the result up */
+	numMilli = (int) ((3.33333333 * numTicks) + 0.5);
 
 	*fsec = (numMilli % 1000) * 1000;
 	numMilli /= 1000;

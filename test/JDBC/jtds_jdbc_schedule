@@ -25,11 +25,7 @@ TestSmallInt
 TestTinyInt
 TestBigInt
 TestBIT
-# Failure: when 123.456 is inserted into decimal(5,2) column, Babelfish inserts
-# 123.46 with MSJDBC and 123.456 with jTDS, root cause is currently unclear,
-# received numeric data looks exactly the same with both MSJDBC and jTDS, parameter
-# set RPC calls look different though.
-# TestDecimal
+TestDecimal
 TestNumeric
 TestMoney
 TestFloat
@@ -39,9 +35,9 @@ TestReal
 jtds-TestDatetime
 # jTDS date handling differs with mssql-jdbc, behavior on MSSQL and Babelfish is the same
 jtds-TestDate
-# Failure: when '2016-10-23 12:45:37.12' is inserted into datetime2(6) column, Babelfish inserts
-# '2016-10-23 12:45:37.119' instead, root cause is currently unclear.
-# TestDatetime2
+# In TDS v7.1 datetime2 is inserted as datetime (so 3 is a max scale for fractional seconds)
+# and returned as nvarchar.
+jtds-TestDatetime2
 TestSmallDatetime
 # Nvarchar column type is returned for time columns on both MSSQL and Babelfish.
 jtds-TestTime
