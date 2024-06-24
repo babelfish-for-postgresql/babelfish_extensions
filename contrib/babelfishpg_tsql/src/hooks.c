@@ -4756,7 +4756,9 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		relid == namespace_ext_oid ||
 		relid == bbf_view_def_oid ||
 		relid == bbf_extended_properties_oid ||
-		relid == bbf_schema_perms_oid)
+		relid == bbf_schema_perms_oid ||
+		relid == bbf_partition_scheme_oid ||
+		relid == bbf_partition_depend_oid)
 	{
 		AttrNumber	attnum;
 
@@ -4787,6 +4789,25 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 			const char *owner = GetUserNameFromId(get_sa_role_oid(), false);
 
 			values[attnum - 1] = CStringGetDatum(owner);
+			nulls[attnum - 1] = false;
+		}
+	}
+
+	/*
+	 * Insert new scheme_id column value in babelfish_partition_scheme
+	 * if dump did not provide it.
+	 */
+	if (relid == bbf_partition_scheme_oid)
+	{
+		AttrNumber	attnum;
+
+		attnum = (AttrNumber) attnameAttNum(rel, "scheme_id", false);
+		Assert(attnum != InvalidAttrNumber);
+
+		if (nulls[attnum - 1])
+		{
+			int32 scheme_id = get_available_partition_scheme_id();
+			values[attnum - 1] = Int32GetDatum(scheme_id);
 			nulls[attnum - 1] = false;
 		}
 	}

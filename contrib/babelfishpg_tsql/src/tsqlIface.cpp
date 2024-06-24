@@ -121,6 +121,10 @@ PLtsql_stmt *makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, 
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
 PLtsql_stmt	*makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx);
+PLtsql_stmt	*makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx);
+PLtsql_stmt	*makeDropPartitionFunction(TSqlParser::Drop_partition_functionContext *ctx);
+PLtsql_stmt	*makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx);
+PLtsql_stmt	*makeDropPartitionScheme(TSqlParser::Drop_partition_schemeContext *ctx);
 PLtsql_stmt	*makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx);
 std::tuple<std::string, std::string, std::string> getDatabaseSchemaAndTableName(TSqlParser::Table_nameContext* tctx);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
@@ -881,6 +885,30 @@ public:
 	void enterKill_statement(TSqlParser::Kill_statementContext *ctx) override {
 		if (in_create_or_alter_function){
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'KILL' within a function.", 0, 0);
+		}
+	}
+
+	void enterCreate_partition_function(TSqlParser::Create_partition_functionContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'CREATE PARTITION FUNCTION' within a function.", 0, 0);
+		}
+	}
+
+	void enterDrop_partition_function(TSqlParser::Drop_partition_functionContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'DROP PARTITION FUNCTION' within a function.", 0, 0);
+		}
+	}
+
+	void enterCreate_partition_scheme(TSqlParser::Create_partition_schemeContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'CREATE PARTITION SCHEME' within a function.", 0, 0);
+		}
+	}
+
+	void enterDrop_partition_scheme(TSqlParser::Drop_partition_schemeContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'DROP PARTITION SCHEME' within a function.", 0, 0);
 		}
 	}
 
@@ -1813,6 +1841,22 @@ public:
 		{
 			stmt = makeDropFulltextIndexStmt(ctx->drop_fulltext_index());
 		}
+		else if (ctx->create_partition_function())
+		{
+			stmt = makeCreatePartitionFunction(ctx->create_partition_function());
+		}
+		else if (ctx->drop_partition_function())
+		{
+			stmt = makeDropPartitionFunction(ctx->drop_partition_function());
+		}
+		else if (ctx->create_partition_scheme())
+		{
+			stmt = makeCreatePartitionScheme(ctx->create_partition_scheme());
+		}
+		else if (ctx->drop_partition_scheme())
+		{
+			stmt = makeDropPartitionScheme(ctx->drop_partition_scheme());
+		}
 		else
 		{
 			stmt = makeSQL(ctx);
@@ -1840,6 +1884,11 @@ public:
 		if (ctx->drop_fulltext_index())
 		{
 			clear_rewritten_query_fragment();
+			return;
+		}
+		if (ctx->create_partition_function() || ctx->drop_partition_function()
+			 || ctx->create_partition_scheme() || ctx->drop_partition_scheme())
+		{
 			return;
 		}
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
@@ -7096,6 +7145,81 @@ getDatabaseSchemaAndTableName(TSqlParser::Table_nameContext* tctx)
 	return std::make_tuple(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true),
 	                        downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true),
 	                        downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
+}
+
+PLtsql_stmt *
+makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
+{
+	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc(sizeof(PLtsql_stmt_partition_function));
+	std::string typeStr = ::getFullText(ctx->data_type());
+	PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
+	
+	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
+	stmt->datatype = type;
+	stmt->lineno = getLineNo(ctx);
+	stmt->cmd_type = PLTSQL_STMT_PARTITION_FUNCTION;
+	stmt->is_create = true;
+	/* TODO: Support LEFT boundary option with partition function */
+	stmt->is_right = true; 
+
+	List *arg_list = NIL;
+	if (ctx->expression_list())
+	{
+		for (auto expr : ctx->expression_list()->exp)
+		{
+			arg_list = lappend(arg_list, makeTsqlExpr(expr, true));
+		}
+		
+	}
+	stmt->args = arg_list;
+
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+return (PLtsql_stmt *) stmt;
+}
+
+PLtsql_stmt *
+makeDropPartitionFunction(TSqlParser::Drop_partition_functionContext *ctx)
+{
+	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc(sizeof(PLtsql_stmt_partition_function));
+	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
+	stmt->lineno = getLineNo(ctx);
+	stmt->cmd_type = PLTSQL_STMT_PARTITION_FUNCTION;
+	stmt->is_create = false;
+
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
+}
+
+PLtsql_stmt *
+makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx)
+{
+	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc(sizeof(PLtsql_stmt_partition_scheme));
+	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()[0]).c_str());
+	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()[1]).c_str());
+	stmt->is_create = true;
+	stmt->lineno = getLineNo(ctx);
+	stmt->cmd_type = PLTSQL_STMT_PARTITION_SCHEME;
+
+	if (ctx->ALL())
+		stmt->filegroups = -1;
+	else
+		stmt->filegroups = ctx->filegroup_type().size();
+
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
+}
+
+PLtsql_stmt *
+makeDropPartitionScheme(TSqlParser::Drop_partition_schemeContext *ctx)
+{
+	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc(sizeof(PLtsql_stmt_partition_scheme));
+	stmt->is_create = false;
+	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
+	stmt->lineno = getLineNo(ctx);
+	stmt->cmd_type = PLTSQL_STMT_PARTITION_SCHEME;
+
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
 }
 
 PLtsql_stmt *
