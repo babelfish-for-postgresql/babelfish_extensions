@@ -1,0 +1,34 @@
+use master
+go
+drop database myschematest_mydb
+go
+use master
+go
+drop table tb_myschematest_master
+go
+drop type type_myschematest_master 
+go
+drop user user_myschematest_master 
+go
+drop schema myschema
+go
+use tempdb
+go
+drop table tb_myschematest_tempdb
+go
+drop type type_myschematest_tempdb 
+go
+drop user user_myschematest_tempdb 
+go
+drop schema myschema
+go
+use master
+go
+drop login login_myschematest_master 
+go
+drop login login_myschematest_tempdb
+go
+drop login login_myschematest_mydb 
+go
+
+

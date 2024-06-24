@@ -1579,6 +1579,87 @@ is_created_with_recompile(Oid objectId)
 	return recompile;
 }
 
+/*
+ * Check if a catalog name is a classic T-SQL catalog starting with 'sys' (e.g. sysobjects).
+ * Historically (dating back to the Sybase era) these catalogs were located in the
+ * 'dbo' schema but have since been relocated to the 'sys' schema.
+ * They can however still be referenced in the 'dbo' schema which is equivalent to using 'sys'.
+ * Note: newer catalogs do not normally start with 'sys', but some exceptions exist, such as
+ * 'system_sql_modules'. These newer cases are however not referencable via 'dbo'.
+ *
+ * The input parameter is a table/view name, from which enclosing double quotes or square brackets
+ * have been stripped.
+ */
+bool
+is_classic_catalog(const char *name)
+{
+	Assert(name);
+	if (strlen(name) <= 7) // sysusers,systypes,syslocks,sysfiles are shortest
+		return false;
+
+	if (pg_strncasecmp(name, "sys", 3) != 0)
+		return false;
+
+	return (
+		// Currently supported catalogs:
+
+	    // Instance-wide classic catalogs
+	    // NB: sysdatabases does not need its schema mapped from 'dbo' to 'sys',
+	    // but it is included here for completeness.
+	    (pg_strncasecmp(name, "sysdatabases", 12) == 0) ||
+	    (pg_strncasecmp(name, "syscharsets", 11) == 0) ||
+	    (pg_strncasecmp(name, "sysconfigures", 13) == 0) ||
+	    (pg_strncasecmp(name, "syscurconfigs", 13) == 0) ||
+	    (pg_strncasecmp(name, "syslanguages", 12) == 0) ||
+	    (pg_strncasecmp(name, "syslogins", 9) == 0) ||
+	    (pg_strncasecmp(name, "sysprocesses", 12) == 0) ||
+
+	    // DB-specific classic catalogs
+	    (pg_strncasecmp(name, "syscolumns", 10) == 0) ||
+	    (pg_strncasecmp(name, "sysforeignkeys", 14) == 0) ||
+	    (pg_strncasecmp(name, "sysindexes", 10) == 0) ||
+	    (pg_strncasecmp(name, "sysobjects", 10) == 0) ||
+	    (pg_strncasecmp(name, "systypes", 8) == 0) ||
+	    (pg_strncasecmp(name, "sysusers", 8) == 0)
+	);
+
+/*
+ * Additional T-SQL catalogs, not currently supported in Babelfish.
+ *
+ * When adding support for such a catalog, add it to the list above.
+ * We could include all of these in the list above, but that might
+ * impact performance.
+ *
+ * Instance-wide catalogs:
+		sysaltfiles
+		syscacheobjects
+		sysdevices
+		sysfilegroups
+		sysfiles
+		syslockinfo
+		syslocks
+		sysoledbusers
+		sysopentapes
+		sysperfinfo
+		sysremotelogins
+		sysservers
+
+ * DB-specific catalogs:
+		syscomments
+		sysconstraints
+		sysdepends
+		sysforeignkeys
+		sysfulltextcatalogs
+		sysindexkeys
+		sysmembers
+		sysmessages
+		syspermissions
+		sysprotects
+		sysreferences
+ *
+ */
+}
+
 /*****************************************
  *			SCHEMA
  *****************************************/
