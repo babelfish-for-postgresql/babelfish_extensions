@@ -38,7 +38,7 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 SET allow_system_table_mods = ON;
-CREATE INDEX babelfish_function_ext_name_idx ON sys.babelfish_function_ext (funcname, nspname, funcsignature);
+CREATE INDEX IF NOT EXISTS babelfish_function_ext_name_idx ON sys.babelfish_function_ext (funcname, nspname, funcsignature);
 RESET allow_system_table_mods;
 
 -- BBF_PARTITION_FUNCTION
