@@ -10360,3 +10360,13 @@ LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.bbf_get_context_info()
 RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql', 'bbf_get_context_info' LANGUAGE C STABLE;
+
+/*
+ * get_immediate_base_type_of_UDT()
+ * This function returns the Immediate base type for UDT.
+ * Returns NULL if given type is not an UDT
+ */
+CREATE OR REPLACE FUNCTION sys.get_immediate_base_type_of_UDT(OID)
+RETURNS OID
+AS 'babelfishpg_tsql', 'get_immediate_base_type_of_UDT'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

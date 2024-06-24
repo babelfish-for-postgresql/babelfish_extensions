@@ -921,12 +921,12 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
 }
 
 /*
- * getImmediateBaseTypeOfUDT()
+ * get_immediate_base_type_of_UDT_internal()
  * This function returns the Immediate base type for UDT.
  * Returns InvalidOid if given type is not an UDT
  */
 static Oid
-getImmediateBaseTypeOfUDT(Oid typeid)
+get_immediate_base_type_of_UDT_internal(Oid typeid)
 {
 	HeapTuple					tuple;
 	bool						isnull;
@@ -964,6 +964,20 @@ getImmediateBaseTypeOfUDT(Oid typeid)
 	ReleaseSysCache(tuple);
 
 	return base_type;
+}
+
+PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
+
+Datum
+get_immediate_base_type_of_UDT(PG_FUNCTION_ARGS)
+{
+	Oid			base_type;
+	
+	base_type = get_immediate_base_type_of_UDT_internal(PG_GETARG_OID(0));
+	if (!OidIsValid(base_type))
+		PG_RETURN_NULL();
+
+	PG_RETURN_OID(base_type);
 }
 
 /*
@@ -1014,7 +1028,7 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 		inputTypId = (input_typeids[i] == UNKNOWNOID) ? sys_varcharoid : input_typeids[i];
 
 		/* for UDT use its base type for input argument datatype validation */
-		baseTypeId = getImmediateBaseTypeOfUDT(inputTypId);
+		baseTypeId = get_immediate_base_type_of_UDT_internal(inputTypId);
 		if(OidIsValid(baseTypeId))
 		{
 			inputTypId = baseTypeId;
