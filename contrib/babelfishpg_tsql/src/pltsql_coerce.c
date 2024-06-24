@@ -928,13 +928,11 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
 static Oid
 getImmediateBaseTypeOfUDT(Oid typeid)
 {
-	Relation					relsetting;
 	HeapTuple					tuple;
-	ScanKeyData					scankey;
-	SysScanDesc					scan;
 	bool						isnull;
 	Datum						datum;
 	Datum                       tsql_typename;
+	Oid							base_type;
 	LOCAL_FCINFO(fcinfo, 1);
 
 	/* if common_utility_plugin_ptr is not initialised */
@@ -954,33 +952,25 @@ getImmediateBaseTypeOfUDT(Oid typeid)
 		return InvalidOid;
 
 	/* Get immediate base type id of given type id */
-	relsetting = table_open(TypeRelationId, AccessShareLock);
-	ScanKeyInit(&scankey,
-				Anum_pg_type_oid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(typeid));
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeid));
+	if (!HeapTupleIsValid(tuple))
+		return InvalidOid;
 
-	scan = systable_beginscan(relsetting, TypeOidIndexId, true, NULL, 1, &scankey);
-	tuple = systable_getnext(scan);
-	if (HeapTupleIsValid(tuple))
-	{
-		datum = heap_getattr(tuple, Anum_pg_type_typbasetype, RelationGetDescr(relsetting), &isnull);
-		if (!isnull)
-		{
-			return DatumGetObjectId(datum);
-		}
-	}
-	systable_endscan(scan);
-	table_close(relsetting, AccessShareLock);
+	datum = SysCacheGetAttr(TYPEOID, tuple, Anum_pg_type_typbasetype, &isnull);
+	if (isnull)
+		return InvalidOid;
 
-	return InvalidOid;
+	base_type = DatumGetObjectId(datum);
+	ReleaseSysCache(tuple);
+
+	return base_type;
 }
 
 /*
  * For a given function details, validate whether it is in special function list
  * and also validate the input argument data types.
  */
-static bool
+bool
 validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
 {
 	tsql_special_function_t    *special_func;
@@ -1079,13 +1069,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	char					   *proc_name;
 	bool						is_func_validated;
 	int							ncandidates;
-	Relation					relsetting;
-	HeapTuple					tuple;
-	ScanKeyData					scankey;
-	SysScanDesc					scan;
-	bool						isnull;
 	Oid							retType;
-	Datum						datum;
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
