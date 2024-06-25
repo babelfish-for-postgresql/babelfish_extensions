@@ -1829,7 +1829,7 @@ go
 
 -- test for correct resolution of 'object' and '.object' notation in case of a non-dbo default schema
 go
--- tsql user=login_myschematest_mydb password=MyB1gS3cret
+-- tsql user=login_myschematest_mydb password=12345678
 use myschematest_mydb
 go
 select db_name(), user_name(), suser_name()

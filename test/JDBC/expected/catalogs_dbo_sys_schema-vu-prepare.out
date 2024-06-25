@@ -2,11 +2,11 @@ use master
 go
 create database myschematest_mydb
 go
-create login login_myschematest_master with password = 'MyB1gS3cret'
+create login login_myschematest_master with password = '12345678'
 go
-create login login_myschematest_tempdb with password = 'MyB1gS3cret'
+create login login_myschematest_tempdb with password = '12345678'
 go
-create login login_myschematest_mydb with password = 'MyB1gS3cret'
+create login login_myschematest_mydb with password = '12345678'
 go
 
 use master
