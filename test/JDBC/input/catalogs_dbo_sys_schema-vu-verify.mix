@@ -351,55 +351,55 @@ select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from 
 go
 select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
 go
-select top 1 fkey from sysforeignkeys where fkey = 1  order by 1
+select 0 from sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .sysforeignkeys where fkey = 1  order by 1
+select 0 from .sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from ..sysforeignkeys where fkey = 1  order by 1
+select 0 from ..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from ...sysforeignkeys where fkey = 1  order by 1
+select 0 from ...sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from ..dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from ..dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from master.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .master.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from master.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from master.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .master.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from .master.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from master..sysforeignkeys where fkey = 1  order by 1
+select 0 from master..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .master..sysforeignkeys where fkey = 1  order by 1
+select 0 from .master..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from tempdb..sysforeignkeys where fkey = 1  order by 1
+select 0 from tempdb..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .tempdb..sysforeignkeys where fkey = 1  order by 1
+select 0 from .tempdb..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select 0 from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select 0 from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 select object_name(id) from sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
 go
@@ -970,55 +970,55 @@ select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from 
 go
 select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
 go
-select top 1 fkey from sysforeignkeys where fkey = 1  order by 1
+select 0 from sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .sysforeignkeys where fkey = 1  order by 1
+select 0 from .sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from ..sysforeignkeys where fkey = 1  order by 1
+select 0 from ..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from ...sysforeignkeys where fkey = 1  order by 1
+select 0 from ...sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from ..dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from ..dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from master.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .master.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from master.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from master.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .master.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from .master.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from master..sysforeignkeys where fkey = 1  order by 1
+select 0 from master..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .master..sysforeignkeys where fkey = 1  order by 1
+select 0 from .master..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from tempdb..sysforeignkeys where fkey = 1  order by 1
+select 0 from tempdb..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .tempdb..sysforeignkeys where fkey = 1  order by 1
+select 0 from .tempdb..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select 0 from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select 0 from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 select object_name(id) from sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
 go
@@ -1560,55 +1560,55 @@ select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from 
 go
 select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
 go
-select top 1 fkey from sysforeignkeys where fkey = 1  order by 1
+select 0 from sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .sysforeignkeys where fkey = 1  order by 1
+select 0 from .sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from ..sysforeignkeys where fkey = 1  order by 1
+select 0 from ..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from ...sysforeignkeys where fkey = 1  order by 1
+select 0 from ...sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from ..dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from ..dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from master.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .master.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from master.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from master.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .master.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from .master.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from master..sysforeignkeys where fkey = 1  order by 1
+select 0 from master..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .master..sysforeignkeys where fkey = 1  order by 1
+select 0 from .master..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from tempdb..sysforeignkeys where fkey = 1  order by 1
+select 0 from tempdb..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .tempdb..sysforeignkeys where fkey = 1  order by 1
+select 0 from .tempdb..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select 0 from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select 0 from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select 0 from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
-select top 1 fkey from .myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select 0 from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
 go
