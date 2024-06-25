@@ -2371,21 +2371,26 @@ public:
 		else
 			is_schema_specified = false;
 
-		// This flag is used exclusively in case of rewriting a cross-DB catalog reference
+		// The flag setSysSchema is used exclusively in case of rewriting a cross-DB catalog reference
 		// that uses 'dbo' as schema: this puts 'sys' in tsqlBuilder::schema_name, which ends up
 		// in (PLtsql_stmt_execsql *stmt)->schema_name; this is required for correct resolution
-		// of the catalog reference.
+		// of the catalog reference at run time.
 		setSysSchema = false;
 		tsqlCommonMutator::exitFull_object_name(ctx);
-		if (ctx && (ctx->DOT().size() <= 3) && ctx->database)
+		// When server is specified, the query is handed off to openquery_internal()
+		if (ctx && (!ctx->server))
 		{
-			db_name = stripQuoteFromId(ctx->database);
+			// 3 dots: cover the leading-dot case '.dbname.schema.object'
+			if (ctx && (ctx->DOT().size() <= 3) && ctx->database)
+			{
+				db_name = stripQuoteFromId(ctx->database);
 
-			if (!string_matches(db_name.c_str(), get_cur_db_name()))
-				is_cross_db = true;
+				if (!string_matches(db_name.c_str(), get_cur_db_name()))
+					is_cross_db = true;
 
-			if (setSysSchema)
-				schema_name = "sys";
+				if (setSysSchema)
+					schema_name = "sys";
+			}
 		}
 	}
 
@@ -3405,7 +3410,6 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
 		antlr4::tree::ParseTreeWalker firstPass;
 		firstPass.walk(mutator.get(), tree);
-
 		// for batch-level statement (i.e. create procedure), we don't need to create actual PLtsql_stmt* by tsqlBuilder.
 		// We can just relay the query string to backend parser via one PLtsql_stmt_execsql.
 		TSqlParser::Tsql_fileContext *tsql_file = dynamic_cast<TSqlParser::Tsql_fileContext *>(tree);
@@ -3446,6 +3450,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 
 		result.parseTreeCreated = parseTreeCreated;
 		result.success = true;
+
 		return result;
 	}
 	catch (PGErrorWrapperException &e)
@@ -8141,7 +8146,7 @@ rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getData
 		// db..object -> db.sys.object for classic catalogs
 		else if (database && !schema)
 		{
-			// To be fixed: for non-catalogs, this needs to use the executing user's default schema, which may not be 'dbo' (can be determined only at execution time)		
+			// To be fixed: for non-catalogs, this needs to use the executing user's default schema, which may not be 'dbo' (can be determined only at execution time)
 			return ::getFullText(database) + "." + (catalog_need_sys_schema ? "sys" : "dbo") + "." +  objName;
 		}
 
