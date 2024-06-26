@@ -1434,151 +1434,151 @@ dbo#!#tb_myschematest_mydb
 myschema#!#tb_myschematest_mydb
 ~~END~~
 
-select top 1 fkey from sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from ..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from ..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from ...sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from ...sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from ..dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from ..dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from master.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .master.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from master.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .master.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from master..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .master..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from tempdb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .tempdb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
@@ -3750,151 +3750,151 @@ dbo#!#tb_myschematest_mydb
 myschema#!#tb_myschematest_mydb
 ~~END~~
 
-select top 1 fkey from sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from ..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from ..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from ...sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from ...sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from ..dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from ..dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from master.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .master.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from master.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .master.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from master..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .master..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from tempdb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .tempdb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
@@ -5974,151 +5974,151 @@ dbo#!#tb_myschematest_mydb
 myschema#!#tb_myschematest_mydb
 ~~END~~
 
-select top 1 fkey from sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from ..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from ..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from ...sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from ...sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from ..dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from ..dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from master.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .master.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from master.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .master.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from master..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .master..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .tempdb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .tempdb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from tempdb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .tempdb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .myschematest_mydb.dbo.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .myschematest_mydb.sys.sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
 ~~END~~
 
-select top 1 fkey from .myschematest_mydb..sysforeignkeys where fkey = 1  order by 1
+select cast(0 as smallint) from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
