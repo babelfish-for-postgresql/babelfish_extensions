@@ -1270,7 +1270,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 							if (is_supported_case_sp_describe_undeclared_parameters)
 								fields = columnref->fields;
 
-							if (is_supported_case_sp_describe_undeclared_parameters && !(nodeTag(columnref) != T_ColumnRef && nodeTag(parsetree->stmt) != T_DeleteStmt))
+							if (is_supported_case_sp_describe_undeclared_parameters &&
+								!(nodeTag(columnref) != T_ColumnRef &&
+								nodeTag(parsetree->stmt) != T_DeleteStmt))
 							{
 								foreach(fieldcell, fields)
 								{
