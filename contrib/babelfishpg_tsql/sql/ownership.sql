@@ -41,11 +41,9 @@ CREATE TABLE sys.babelfish_function_ext (
 	create_date SYS.DATETIME NOT NULL,
 	modify_date SYS.DATETIME NOT NULL,
 	definition sys.NTEXT DEFAULT NULL,
-	PRIMARY KEY(nspname, funcsignature)
+	PRIMARY KEY(funcname, nspname, funcsignature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
-
-CREATE INDEX babelfish_function_ext_name_idx ON sys.babelfish_function_ext (funcname, nspname, funcsignature);
 
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
