@@ -66,6 +66,7 @@ BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
+BABEL-3147-before-16_3-or-15_7-or-14_12
 BABEL-3166
 BABEL-3192
 BABEL-3204
@@ -114,6 +115,7 @@ BABEL-3914
 BABEL-3938
 BABEL-3952
 BABEL-3953-datetrunc
+BABEL-404-before-15_7-or-16_3
 BABEL-405
 BABEL-4078
 BABEL-4098
@@ -122,6 +124,8 @@ BABEL-4516
 babel_417
 BABEL-493
 BABEL_539
+BABEL-621-before-15_7-or-16_3
+babel_726-before-14_12-or-15_7-or-16_3
 BABEL-728
 BABEL-733
 BABEL-741
@@ -243,6 +247,7 @@ msdb-dbo-syspolicy_configuration
 msdb-dbo-syspolicy_system_health_state
 nested_trigger_inside_proc
 nested_trigger_with_dml
+newid_before_14_12_or_15_7_or_16_3
 objectpropertyex
 openjson
 openquery_upgrd_before_15_4
@@ -319,7 +324,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name
+sys-host_name-before-15_7-or-16_3
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns
@@ -361,6 +366,8 @@ sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
 sys-sql_modules
+sys-sql_modules-before-15_7-or-14_12-dep
+sys-all_sql_modules-before-15_7-or-14_12-dep
 sys-stats
 sys-suser_sid
 sys-suser_sname
@@ -444,6 +451,7 @@ TestTableType
 TestText
 TestTime
 TestTinyInt
+TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 Test_user_from_win_login
 TestVarChar
@@ -494,6 +502,7 @@ pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
 TestDatatypeAggSort
+babel_index_nulls_order-15_5-or-15_6-or-16_1-or-16_2
 BABEL-2999
 BABEL-4606
 BABEL-4672
@@ -505,6 +514,21 @@ BABEL-730
 babel-4475
 babel-3254
 babel-4517
+GRANT_SCHEMA-before-15_7-16_3
+BABEL_3571-15_5-or-15_6-or-16_1-or-16_2
 BABEL_4817
+BABEL-4641-before-16_3-or-15_7-or-14_12
+trim-before-15_7-or-16_3
+ltrim-before-15_7-or-16_3
+rtrim-before-15_7-or-16_3
+left-before-15_7-or-16_3
+right-before-15_7-or-16_3
+BABEL-4863-before-16_3-or-15_7-or-14_12
+babel_test_int4_numeric_oper_before_16_3_or_15_7
+babel_test_int8_numeric_oper_before_16_3_or_15_7
+babel_test_int2_numeric_oper_before_16_3_or_15_7
 BABEL-4869
 BABEL-4815
+babel_4328_datetime-before-15_7
+babel_4328_datetime2-before-15_7
+babel_4328_datetimeoffset-before-15_7

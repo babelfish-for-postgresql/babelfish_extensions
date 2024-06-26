@@ -318,8 +318,8 @@ DECLARE
 BEGIN
     string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
     IF string_arg_datatype IS NULL THEN
-        -- for User Defined Datatype, use base type to check for argument datatype validation
-        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
         string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
     END IF;
 
@@ -370,8 +370,8 @@ DECLARE
 BEGIN
     string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
     IF string_arg_datatype IS NULL THEN
-        -- for User Defined Datatype, use base type to check for argument datatype validation
-        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
         string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
     END IF;
 
@@ -464,8 +464,8 @@ DECLARE
 BEGIN
     string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
     IF string_arg_datatype IS NULL THEN
-        -- for User Defined Datatype, use base type to check for argument datatype validation
-        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
         string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
     END IF;
 
@@ -559,8 +559,8 @@ DECLARE
 BEGIN
     string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
     IF string_arg_datatype IS NULL THEN
-        -- for User Defined Datatype, use base type to check for argument datatype validation
-        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
         string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
     END IF;
 
@@ -710,8 +710,8 @@ DECLARE
 BEGIN
     string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
     IF string_arg_datatype IS NULL THEN
-        -- for User Defined Datatype, use base type to check for argument datatype validation
-        SELECT typbasetype INTO string_basetype FROM pg_type WHERE oid = pg_typeof(string)::oid;
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
         string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
     END IF;
 
@@ -4848,6 +4848,11 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.get_immediate_base_type_of_UDT(OID)
+RETURNS OID
+AS 'babelfishpg_tsql', 'get_immediate_base_type_of_UDT'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
