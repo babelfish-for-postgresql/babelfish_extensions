@@ -324,7 +324,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name-before-15_7-or-16_3
+sys-host_name-before-15_8-or-16_4
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns
@@ -518,11 +518,11 @@ GRANT_SCHEMA-before-15_7-16_3
 BABEL_3571-15_5-or-15_6-or-16_1-or-16_2
 BABEL_4817
 BABEL-4641-before-16_3-or-15_7-or-14_12
-trim-before-15_7-or-16_3
-ltrim-before-15_7-or-16_3
-rtrim-before-15_7-or-16_3
-left-before-15_7-or-16_3
-right-before-15_7-or-16_3
+trim-before-15_8-or-16_4
+ltrim-before-15_8-or-16_4
+rtrim-before-15_8-or-16_4
+left-before-15_8-or-16_4
+right-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
 babel_test_int4_numeric_oper_before_16_3_or_15_7
 babel_test_int8_numeric_oper_before_16_3_or_15_7
