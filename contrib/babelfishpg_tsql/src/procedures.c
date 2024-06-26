@@ -592,6 +592,9 @@ handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_
 	A_Expr	   *xpr;
 	ColumnRef  *ref;
 
+	if (!is_sp_describe_undeclared_parameters)
+		return list;
+
 	foreach(lc, args)
 	{
 		Expr	   *arg = (Expr *) lfirst(lc);
@@ -636,6 +639,9 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 	String	   *field;
 	char	   *name;
 	int			attrno;
+
+	if (!is_sp_describe_undeclared_parameters)
+		return target_attnums;
 
 	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
@@ -734,6 +740,9 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 	String	   *field;
 	char	   *name;
 	int			attrno;
+
+	if (!is_sp_describe_undeclared_parameters)
+		return extra_restargets;
 
 	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
@@ -847,6 +856,9 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 	ColumnRef  *ref;
 	String	   *field;
 	ResTarget  *res;
+
+	if (!is_sp_describe_undeclared_parameters)
+		return extra_restargets;
 
 	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
@@ -1202,7 +1214,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						break;
 				}
 
-				if (!(list_length(values_list) > 1) && is_supported_case_sp_describe_undeclared_parameters)
+				if (is_supported_case_sp_describe_undeclared_parameters && !(list_length(values_list) > 1))
 				{
 					foreach(lc, values_list)
 					{
