@@ -1431,7 +1431,7 @@ dbo#!#tb_myschematest_mydb
 myschema#!#tb_myschematest_mydb
 ~~END~~
 
-select cast(0 as smallint) from .sysforeignkeys where 0 = 1 order by 1
+select cast(0 as smallint) from sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
@@ -3747,7 +3747,7 @@ dbo#!#tb_myschematest_mydb
 myschema#!#tb_myschematest_mydb
 ~~END~~
 
-select cast(0 as smallint) from .sysforeignkeys where 0 = 1 order by 1
+select cast(0 as smallint) from sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
@@ -5971,7 +5971,7 @@ dbo#!#tb_myschematest_mydb
 myschema#!#tb_myschematest_mydb
 ~~END~~
 
-select cast(0 as smallint) from .sysforeignkeys where 0 = 1 order by 1
+select cast(0 as smallint) from sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
 smallint
