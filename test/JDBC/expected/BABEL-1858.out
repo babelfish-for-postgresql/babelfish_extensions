@@ -171,6 +171,11 @@ Seq Scan on testnewid
   Filter: (uuid = newid())
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 28.970 ms
+~~END~~
+
 
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
@@ -205,6 +210,11 @@ text
 Query Text: SELECT * FROM TestNewId WHERE uuid=NEWID()
 Seq Scan on testnewid
   Filter: (uuid = newid())
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.216 ms
 ~~END~~
 
 

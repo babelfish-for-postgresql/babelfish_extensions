@@ -38,6 +38,11 @@ Index Scan using babel_3291_t1_pkey on babel_3291_t1
   Index Cond: (a1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 146.263 ms
+~~END~~
+
 
 /*
  * Run a SELECT query and give the hint to follow a sequential scan. 
@@ -50,6 +55,11 @@ text
 Query Text: select /*+SeqScan(babel_3291_t1)*/ * from babel_3291_t1 where a1 = 1
 Seq Scan on babel_3291_t1
   Filter: (a1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.305 ms
 ~~END~~
 
 
