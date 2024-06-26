@@ -308,3 +308,5 @@ ignore#!#babel_4328_datetimeoffset-before-16_3-vu-cleanup
 
 ignore#!#BABEL-3513_before_15_8_or_16_4-vu-prepare
 ignore#!#BABEL-3513_before_15_8_or_16_4-vu-verify
+
+ignore#!#catalogs_dbo_sys_schema-upgrade
