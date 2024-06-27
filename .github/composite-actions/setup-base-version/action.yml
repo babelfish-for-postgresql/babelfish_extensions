@@ -16,6 +16,10 @@ inputs:
     description: "Server collation name which need to be set in postgresql.conf"
     required: false
     default: "default"
+  dump_restore:
+    description: "Whether it is version upgrade or dump/restore"
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -62,7 +66,7 @@ runs:
     - name: Build vector Extension
       run: |
         cd ..
-        export VECTOR_VERSION="0.5.1"
+        export VECTOR_VERSION="0.7.2"
         sudo apt-get install wget
         wget https://github.com/pgvector/pgvector/archive/refs/tags/v${VECTOR_VERSION}.tar.gz 
         tar -xvzf v${VECTOR_VERSION}.tar.gz
@@ -147,8 +151,6 @@ runs:
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
-    - uses: actions/checkout@v2
-
     - name: Change migration mode to multi-db
       id: change-migration-mode
       if: ${{ inputs.migration_mode == 'multi-db' }} && always()
@@ -156,6 +158,15 @@ runs:
         sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
         sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
       shell: bash
+
+    - if: ${{ inputs.extension_branch != 'latest' && inputs.dump_restore == 'true' }}
+      uses: actions/checkout@v2
+      with:
+        repository: babelfish-for-postgresql/babelfish_extensions
+        ref: ${{ inputs.extension_branch }}
+
+    - if: ${{ inputs.extension_branch == 'latest' || inputs.dump_restore != 'true' }}
+      uses: actions/checkout@v2
 
     - name: Run JDBC Upgrade Tests
       id: jdbc-upgrade-tests
@@ -172,7 +183,7 @@ runs:
         if [[ "$migr_mode" == "multi-db" ]];then
           export isUpgradeTestMode=true
           base_dir=${{ matrix.upgrade-path.path[0] }}
-          if [[ "$base_dir" == *"latest"* ]]; then
+          if [[ "$base_dir" == *"latest"* || ${{ inputs.dump_restore }} == 'true' ]]; then
             base_dir="latest"
           fi
         else
@@ -195,6 +206,8 @@ runs:
         export scheduleFile=upgrade/$base_dir/schedule
         mvn test
       shell: bash
+
+    - uses: actions/checkout@v2
 
     - name: Install Python
       id: install-python
@@ -227,8 +240,15 @@ runs:
         python3 upgrade_validation.py
       shell: bash
 
+    - name: Run Babelfish metadata inconsistency check
+      id: check-babelfish-inconsistency
+      if: always() && steps.run-dependency-check.outcome == 'success'
+      uses: ./.github/composite-actions/check-babelfish-inconsistency
+      
     - name: Upload artifacts
-      if: always() && steps.run-dependency-check.outcome == 'failure'
+      if: |
+        always() && (steps.run-dependency-check.outcome == 'failure'
+        || steps.check-babelfish-inconsistency.outcome == 'failure')
       run: |
         mkdir -p ~/upgrade
         cp test/python/output/upgrade_validation/* ~/upgrade

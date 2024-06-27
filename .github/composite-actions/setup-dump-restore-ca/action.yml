@@ -40,6 +40,10 @@ runs:
           is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
           pg_old_dir=$(echo psql$(awk -F. '{print $1}' <<< $previous_installed_version))
           pg_new_dir=$(echo psql$(awk -F. '{print $1}' <<< $dump_restore_version))
+
+          if [[ "$previous_installed_version" == "$dump_restore_version" ]]; then
+            pg_new_dir=$(echo $pg_new_dir.$i)
+          fi
           uses_file=./.github/composite-actions/dump-restore-util
           temp="&& steps.dump-restore-version-$(($i-1)).outcome == 'success'"; [[ i -eq 1 ]] && temp=""
 

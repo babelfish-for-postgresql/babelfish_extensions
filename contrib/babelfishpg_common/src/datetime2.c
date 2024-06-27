@@ -13,6 +13,7 @@
 #include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/timestamp.h"
+#include "utils/guc.h"
 #include "libpq/pqformat.h"
 
 #include "miscadmin.h"
@@ -36,6 +37,215 @@ static void AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod);
 static Datum datetime2_in_str(char *str, int32 typmod);
 void		CheckDatetime2Range(const Timestamp time);
 
+bool
+tsql_decode_datetime2_fields(char *orig_str, char *str, char **field, int nf, int ftype[], 
+				bool contains_extra_spaces, struct pg_tm *tm,
+				bool *is_year_set, DateTimeContext context)
+{
+	int i, num_colons = 0, time_idx = nf, number_fields = 0;
+	bool 		date_exists = false;
+	bool 		contains_iso_time = false;
+	bool		contains_text_month = false, am_pm = false, contains_time = false;
+	bool		dump_restore = false;
+	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+
+	if (babelfish_dump_restore &&
+		 strncmp(babelfish_dump_restore, "on", 2) == 0)
+		 dump_restore = true;
+	/*
+	 * Modify time field to accept ':' as separator for
+	 * seconds and milliseconds.
+	 * Also, throw error if '.' is used as separator for
+	 * any other combination.
+	 */
+	for (i = 0; i < nf; i++)
+	{
+		char	*cp;
+
+		if (ftype[i] == DTK_NUMBER)
+		{
+			number_fields++;
+			continue;
+		}
+		else if (ftype[i] == DTK_DATE)
+			date_exists = true;
+
+		else if (ftype[i] == DTK_TIME)
+		{
+			contains_time = true;
+			time_idx = i;
+			cp = field[i];
+			strtoi64(cp, &cp, 10);
+			while (*cp == ':')
+			{
+				num_colons++;
+				if(num_colons == 3)
+				{
+					if (strlen(cp) > 4)
+							return 1;
+
+					*cp = '.';
+					break;
+				}
+				cp++;
+				strtoi64(cp, &cp, 10);
+			}
+
+			if (num_colons < 2 && cp != NULL && *cp == '.')
+				return 1;
+
+			break;
+		}
+	}
+
+	/*
+	 * Number of DATE fields can not be more than 3 in any case.
+	 */
+	if (context == DATE_TIME_2 && time_idx > 3)
+		return 1;
+
+	/*
+	 * If there is a text month in the input str, move it to the 
+	 * beginning of the DATE field.
+	 * Also, if it is in ISO 8601 format, we need to check whether
+	 * input str is matching 'YYYY-MM-DDThh:mm:ss[.mmm]' format.
+	 */
+	for (i = 0; i < time_idx; i++)
+	{
+		if (ftype[i] == DTK_STRING)
+		{
+			int j = i-1, temp_int;
+			char *temp;
+
+			ftype[i] = DecodeSpecial(i, field[i], &temp_int);
+
+			if ((pg_strcasecmp(field[i], "AM") == 0 ||
+				pg_strcasecmp(field[i], "PM") == 0))
+				am_pm = true;
+
+			if (ftype[i] == ISOTIME && (contains_extra_spaces || num_colons != 2))
+				return 1;
+			else if (ftype[i] == ISOTIME || (pg_strcasecmp(field[i], "z") == 0))
+				contains_iso_time = true;
+
+			if(ftype[i] != MONTH)
+			{
+				ftype[i] = DTK_STRING;
+				continue;
+			}
+
+			if(!check_regex_for_text_month(str, context))
+				return 1;
+
+			tm->tm_mon = temp_int;
+			contains_text_month = true;
+
+			while (j>=0)
+			{
+				/* Swap ftype entries */
+				temp_int = ftype[j];
+				ftype[j] = ftype[j+1];
+				ftype[j+1] = temp_int;
+
+				/* Swap field entries */
+				temp = field[j];
+				field[j] = field[j+1];
+				field[j+1] = temp;
+
+				j--;
+			}
+		}
+		else if (ftype[i] == DTK_NUMBER && !date_exists)
+		{
+			int field_len = strlen(field[i]);
+			if (time_idx > 2)
+				continue;
+
+			if (field_len == 4)
+			{
+				tm->tm_year = atoi(field[i]);
+				*is_year_set = true;
+			}
+			else if (field_len == 2 && time_idx == 2)
+			{
+				int temp = atoi(field[i]);
+				tm->tm_year = (temp < 50) ? (2000 + temp) : (1900 + temp);
+				*is_year_set = true;
+			}
+			else if (time_idx != 1 || (field_len != 8 && field_len != 6))
+				return 1;
+		}
+		else if (ftype[i] == DTK_DATE)
+		{
+			/*
+			 * Check whether the field contains any alphabet.
+			 * If yes, it might contain text month. 
+			 * If no alphabet are found, we need to check whether the
+			 * length of the DATE field is less than 10. Throw error if it
+			 * exceeds.
+			 */
+			char *cp = field[i];
+
+			while (cp != NULL && *cp != '\0' && !isalpha(*cp))
+				cp++;
+
+			if (cp != NULL && isalpha(*cp))
+				continue;
+
+			if (strlen(field[i]) > 10 && !dump_restore)
+				return 1;
+		}
+		/*
+		 * If there is a timezone field, there must be a time field.
+		 */
+		else if (context == DATE_TIME_OFFSET && ftype[i] == DTK_TZ && time_idx == nf)
+			return 1;
+	}
+
+	if (context == DATE_TIME_OFFSET && time_idx == nf && !contains_text_month && !contains_iso_time && nf > 1)
+		return 1;
+
+	/*
+	 * If the input is in ISO format, we need to check whether hours and minutes
+	 * in the TZ field are of 2 digits, else throw an error.
+	 */
+
+	for (i = time_idx; context == DATE_TIME_OFFSET && contains_iso_time && i < nf; i++)
+	{
+		int j = 0, curr_count = 0;
+
+		if (ftype[i] != DTK_TZ)
+			continue;
+
+		while (field[i][j] != '\0')
+		{
+			if (field[i][j] == ':' && curr_count != 2)
+				return 1;
+			else if (field[i][j] == ':')
+				curr_count = 0;
+			else if (isdigit(field[i][j]))
+				curr_count++;
+
+			j++;
+		}
+
+		if (curr_count != 2)
+			return 1;
+	}
+
+	/*
+	 * Date delimiter should not be a space ' '. ParseDateTime() allows
+	 * ' ' as a delimiter for DATE field. But, in T-SQL it should be blocked.
+	 * Hence, check the number of DTK_NUMBER fields.
+	 */
+	if (!am_pm || contains_time)
+		return (contains_text_month == true) ? (number_fields > 2) : (number_fields > 1);
+	else
+		return (contains_text_month == true) ? (number_fields > 3) : (number_fields > 1);
+
+	return 0;
+}
+
 /* datetime2_in_str()
  * Convert a string to internal form.
  * Most parts of this functions is same as timestamp_in(),
@@ -55,6 +265,9 @@ datetime2_in_str(char *str, int32 typmod)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+	bool		contains_extra_spaces = false;
+	bool		is_year_set = false;
+	char		*modified_str;
 
 	/* Set input to default '1900-01-01 00:00:00.* if empty string encountered */
 	if (*str == '\0')
@@ -65,8 +278,29 @@ datetime2_in_str(char *str, int32 typmod)
 		PG_RETURN_TIMESTAMP(result);
 	}
 
-	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+	tm->tm_year = 0;
+	tm->tm_mon = 0;
+	tm->tm_mday = 0;
+
+	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME_2);
+
+	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
+
+	if (tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
+								contains_extra_spaces, tm, &is_year_set, DATE_TIME_2))
+	{
+		if (modified_str)
+			pfree(modified_str);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
+	}
+
+	if (modified_str)
+		pfree(modified_str);
+
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
 
@@ -74,11 +308,14 @@ datetime2_in_str(char *str, int32 typmod)
 	 * dterr == 1 means that input is TIME format(e.g 12:34:59.123) initialize
 	 * other necessary date parts and accept input format
 	 */
-	if (dterr == 1)
+	if (dterr == 1 || is_year_set)
 	{
-		tm->tm_year = 1900;
-		tm->tm_mon = 1;
-		tm->tm_mday = 1;
+		if (!is_year_set)
+			tm->tm_year = 1900;
+		if (!tm->tm_mon)
+			tm->tm_mon = 1;
+		if (is_year_set || !tm->tm_mday)
+			tm->tm_mday = 1;
 		dterr = 0;
 	}
 

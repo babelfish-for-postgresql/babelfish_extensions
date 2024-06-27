@@ -214,7 +214,7 @@ select CAST('10000-01-01 00:00:00.000000' AS datetime2(5));
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetime2)~~
+~~ERROR (Message: invalid input syntax for type datetime2: "10000-01-01 00:00:00.000000")~~
 
 -- out of range
 select CAST('0000-12-31 23:59:59.9999' AS datetime2(1));
@@ -475,7 +475,7 @@ select cast('10000-00-00' as datetime2);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: date/time field value out of range: "10000-00-00")~~
+~~ERROR (Message: invalid input syntax for type datetime2: "10000-00-00")~~
 
 -- out of range
 select cast('0000-12-31 23:59:59.999999' as datetime2);
