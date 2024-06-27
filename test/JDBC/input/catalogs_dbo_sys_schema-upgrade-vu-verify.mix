@@ -1789,3 +1789,43 @@ select name from myschematest_mydb..sysusers where name like 'user_myschematest_
 go
 select name from .myschematest_mydb..sysusers where name like 'user_myschematest_%' order by 1
 go
+
+-- non-catalog table
+select * from master..tb_myschematest_master
+go
+select * from .master..tb_myschematest_master
+go
+go
+select * from master.dbo.tb_myschematest_master
+go
+select * from .master.dbo.tb_myschematest_master
+go
+
+select * from tempdb..tb_myschematest_tempdb
+go
+select * from .tempdb..tb_myschematest_tempdb
+go
+go
+select * from tempdb.dbo.tb_myschematest_tempdb
+go
+select * from .tempdb.dbo.tb_myschematest_tempdb
+go
+
+select * from myschematest_mydb..tb_myschematest_mydb
+go
+select * from .myschematest_mydb..tb_myschematest_mydb
+go
+go
+select * from myschematest_mydb.dbo.tb_myschematest_mydb
+go
+select * from .myschematest_mydb.dbo.tb_myschematest_mydb
+go
+
+-- negative tests
+select count(*) from master.myschema.sysobjects
+go
+select count(*) from tempdb.myschema.sysobjects
+go
+select count(*) from myschematest_mydb.myschema.sysobjects
+go
+
