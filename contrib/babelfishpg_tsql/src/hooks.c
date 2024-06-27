@@ -6486,11 +6486,6 @@ transformFunctionToRelationalExpr(ParseState *pstate, PLtsql_function *function,
 				++udfStmtCounter;
 				PLtsql_stmt *stmt = (PLtsql_stmt*) lfirst(bss);
 				if (stmt->cmd_type == PLTSQL_STMT_ASSIGN) {
-					PLtsql_stmt_assign *assignStmt = (PLtsql_stmt_assign *) stmt;
-					int funcVarNum = assignStmt->varno;
-					PLtsql_datum *d = function->datums[funcVarNum];
-					//assume for now that this datum is a variable.
-					PLtsql_var *local      = (PLtsql_var *)d;
 					curr->stmt = newUDFStmtNode(stmt, udfStmtCounter);
 	
 				} else if (stmt->cmd_type == PLTSQL_STMT_RETURN) {
