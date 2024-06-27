@@ -1,6 +1,7 @@
 #include "postgres.h"
 
 #include <unistd.h>
+#include <string.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -271,6 +272,8 @@ extern void pltsql_estate_setup(PLtsql_execstate *estate, PLtsql_function *func,
                                 ReturnSetInfo *rsi, EState *simple_eval_estate);
 extern void copy_pltsql_datums(PLtsql_execstate *estate, PLtsql_function *func);
 extern void pltsql_estate_cleanup(void );
+
+extern bool pltsql_enable_udf_inline;
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -5278,77 +5281,1316 @@ static Node * substitute_actual_srf_parameters_mutator(Node *node, substitute_ac
 									(void *) context);
 }
 
+typedef struct StringContainer {
+	char *content, *addEnd;
+	size_t  size, capacity;
+} RExpr;
+
+/*
+  The string container to contain the relational expression.
+  Initially the container size starts with 250 characters, expands everytime
+  after it is filled up.
+*/
+static RExpr* newRExpr() {
+	RExpr *expr = (RExpr *) malloc(sizeof(RExpr));
+	expr->content = (char* ) malloc(500);
+	expr->addEnd  = expr->content;
+	memset(expr->content, ' ', 500);
+	expr->size 	  = 0;
+	expr->capacity= 500;
+	return expr;
+}
+
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+
+// Only should be called when we know expr has
+// enough capacity to hold string.
+void addToRExpr(RExpr *expr, const char *str) {
+	strcpy(expr->addEnd, str);
+	expr->addEnd += strlen(str);
+	*(expr->addEnd) = ' ';
+	expr->addEnd++;
+	expr->size += strlen(str) + 1;
+}
+
+void reallocateRExpr(RExpr *expr, size_t newsize) {
+	char *buffer = (char*) malloc(newsize);
+	char *oldbuffer = expr->content;
+	strncpy(buffer, expr->content, expr->size);
+	expr->content = buffer;
+	expr->addEnd  = expr->content + expr->size;
+	expr->capacity = newsize;
+	//safe to free
+	free(oldbuffer);
+}
+
+// This is a helper method, which directly copies into the
+// target buffer, this eliminates the need of temporary buffers.
+void appendDTReferenceToRExpr(RExpr *expr, char *dt_alias, char *def_name) {
+	size_t alias_sz = strlen(dt_alias), name_sz = strlen(def_name);
+	size_t length 	= alias_sz + 1 + name_sz + 1;
+	if (length > expr->capacity) {
+		reallocateRExpr(expr, 2 * MAX(length, expr->size));
+	}
+	strcpy(expr->addEnd, dt_alias);
+	expr->addEnd += alias_sz;
+	*(expr->addEnd) = '.';
+	expr->addEnd++;
+	strcpy(expr->addEnd, def_name);
+	expr->addEnd += name_sz;
+	*(expr->addEnd) = ' ';
+	expr->addEnd++;
+	expr->size += length;
+}
+
+
+void appendToRExpr(RExpr *expr, const char *str) {
+	size_t newlength = expr->size + strlen(str) + 1; //1 for space
+	// reallocation necessary
+	if (newlength > expr->capacity) {
+		reallocateRExpr(expr, 2 * MAX(newlength, expr->size));
+	}
+	addToRExpr(expr, str);
+}
+
+void finalizeRExpr(RExpr *expr) {
+	*expr->addEnd = '\0';
+}
+
+// Simple struct to hold pltsql definitions.
+// We should not free the pointers in this struct.
+typedef struct UDFStmtNode {
+	PLtsql_stmt *plstmt;
+	int id;
+	PLtsql_stmt_type cmd_type;	
+} UDFStmtNode;
+
+typedef struct UDFDoublyLinkedList UDFList;
+
+typedef struct UDFDoublyLinkedList {
+	UDFStmtNode *stmt;
+	PLtsql_function *function;
+	UDFList *prev, *next;
+} UDFList;
+
+// Only free up what we allocate: in other words reduce the
+// reference counts for internal structures.
+static void cleanUpUDFList(UDFList *head) {
+	UDFList *curr = head, *ptr = NULL;
+	while (curr != NULL) {
+		ptr  = curr;
+		curr = curr->next;
+		//All references of UDF stmt are already deleted.
+		free(ptr->stmt);
+		free(ptr);
+	}
+}
+
+static UDFList* newUDFList(PLtsql_function *func) {
+	UDFList *node = (UDFList *) malloc(sizeof(UDFList));
+	node->stmt = NULL;
+	node->function = func;
+	node->next = node->prev = NULL;
+	return node;
+};
+
+static UDFStmtNode *newUDFStmtNode(PLtsql_stmt *stmt, int id) {
+	UDFStmtNode *node = (UDFStmtNode *) malloc(sizeof(UDFStmtNode));
+	node->plstmt = stmt;
+	node->id = id;
+	node->cmd_type = stmt->cmd_type;
+	return node;
+};
+
+// Supported statements in the UDF.
+typedef enum UDFResolvedStmtType {
+	declare_stmt = 0,
+	select_stmt	 = 1,
+	return_stmt  = 2,
+	control_stmt = 3
+} UDFResolvedStmtType;
+
+// Each statement must contain ResolvedStmtBase fields
+// to construct a RelationalExpr
+typedef struct ResolvedStmtBase {
+	char *def_name; /* The variable name that this statements defines. */
+	char *dt_alias; /* Alias of the Derived Table of statement. */
+	UDFResolvedStmtType stmt_type; /* Type of the statement */
+} ResolvedStmtBase;
+
+// Models the declare statement in the UDF.
+typedef struct UDFDeclareStmt {
+	char *def_name;
+	char *dt_alias;
+	UDFResolvedStmtType stmt_type;
+	/* End of Stmt Base*/
+	char *expression;
+} ResolvedDeclareStmt;
+
+static void freeDeclareStmt(ResolvedDeclareStmt *stmt) {
+	free(stmt->def_name);
+	free(stmt->dt_alias);
+	free(stmt->expression);
+}
+
+// Models the return statement in the UDF.
+typedef struct UDFReturnStmt {
+	char *def_name;
+	char *dt_alias;
+	UDFResolvedStmtType stmt_type;
+	/* End of Stmt Base*/
+	char *expression;
+} ResolvedReturnStmt;
+
+static void freeReturnStmt(ResolvedReturnStmt *stmt) {
+	free(stmt->def_name);
+	free(stmt->dt_alias);
+	free(stmt->expression);
+}
+
+// Models the select statement in the UDF.
+typedef struct UDFSelectStmt {
+	char *def_name;
+	char *dt_alias;
+	UDFResolvedStmtType stmt_type;
+	/* End of Stmt Base*/
+	char *projection_expression; /* projection expression in the select statement*/
+	char *select_clauses; /* clause string of select statement*/
+} ResolvedSelectStmt;
+
+static void freeSelectStmt(ResolvedSelectStmt *stmt) {
+	free(stmt->def_name);
+	free(stmt->dt_alias);
+	free(stmt->projection_expression);
+	free(stmt->select_clauses);
+};
+
+// Contain pointers to the statements in then or else block in the control flow
+// block.
+typedef struct ControlFlowExpressions {
+	ResolvedStmtBase *then_expr, *else_expr;
+} ExprPair;
+
+// Doubly linked list of resolved statements
+// in the control flow block.
+typedef struct ControlFlowExpList FlowExpList;
+
+// Phi node acts as the merging derived table which selects the values
+// based on the runtime control flow of the UDF.
+typedef struct phi_node {
+	char *then_dt_alias;
+	char *else_dt_alias;
+	char *def_name;
+	char *phi_node_alias;
+} phi_node;
+
+typedef struct phi_nodes_list phi_list;
+typedef struct phi_nodes_list {
+	phi_node *def;
+	phi_list *next;
+} phi_list;
+
+typedef struct ControlFlowExpList {
+	ExprPair *flow_expression;
+	FlowExpList *prev, *next;
+} FlowExpList;
+
+// Models the control flow statements in the UDF.
+typedef struct UDFControlStmt {
+	char *def_name;
+	char *dt_alias;
+	UDFResolvedStmtType stmt_type;
+	/*End of Stmt Base*/
+
+	FlowExpList *then_statements, *else_statements;
+	phi_list *phi;
+	char *predicate_expr;
+} ResolvedControlStmt;
+
+static void cleanUDFResolvedStmt(ResolvedStmtBase *rstmt);
+
+//Get a new flow expression list
+static FlowExpList* newFlowExp() {
+	FlowExpList *node = (FlowExpList *) malloc(sizeof(FlowExpList));
+	node->flow_expression = NULL;
+	node->prev = NULL;
+	node->next = NULL;
+	return node;
+}
+
+static phi_node* newPhi() {
+	phi_node *node = (phi_node *) malloc(sizeof(phi_node));
+	node->then_dt_alias = NULL;
+	node->else_dt_alias = NULL;
+	node->def_name 	 	= NULL;
+	node->phi_node_alias= NULL;
+	return node;
+}
+
+static phi_list* newPhiList() {
+	phi_list *node = (phi_list *) malloc(sizeof(phi_list));
+	node->def  = NULL;
+	node->next = NULL;
+	return node;
+}
+
+static void freeFlowExpList(FlowExpList *stmt_list) {
+	if (stmt_list == NULL)
+		return;
+	
+	FlowExpList *head = stmt_list, *temp;
+
+	ExprPair *exp;
+
+	while (head != NULL) {
+		exp = head->flow_expression;
+		cleanUDFResolvedStmt(exp->then_expr);
+		cleanUDFResolvedStmt(exp->else_expr);
+		free(exp);
+		temp = head;
+		head = head->next;
+		free(temp);
+	}
+};
+
+static void freeControlStmt(ResolvedControlStmt *stmt) {
+	free(stmt->def_name);
+	free(stmt->dt_alias);
+	freeFlowExpList(stmt->then_statements);
+	freeFlowExpList(stmt->else_statements);
+	free(stmt->predicate_expr);
+};
+
+
+// Doubly linked list of resolved statements
+// in the UDF.
+typedef struct ResolvedStmtList UDFRList;
+
+typedef struct ResolvedStmtList {
+	ResolvedStmtBase *resolved_stmt;
+	UDFRList *prev, *next;
+} UDFRList;
+
+// Helper struct for list.
+typedef struct UDFRListPair {
+	UDFRList *front, *rear;
+} UDFRptrs;
+
+static UDFRList* newUDFRListNode() {
+	UDFRList *node = (UDFRList *) malloc(sizeof(UDFRList));
+	node->resolved_stmt = NULL;
+	node->next = node->prev = NULL;
+	return node;
+};
+
+static void cleanUDFResolvedStmt(ResolvedStmtBase *rstmt) {
+	if (rstmt == NULL)
+		return;
+	if (rstmt->stmt_type == declare_stmt) {
+		freeDeclareStmt((ResolvedDeclareStmt *) rstmt);
+	} else if (rstmt->stmt_type == select_stmt) {
+		freeSelectStmt((ResolvedSelectStmt *) rstmt);
+	} else if (rstmt->stmt_type == return_stmt) {
+		freeReturnStmt((ResolvedReturnStmt *) rstmt);
+	} else if (rstmt->stmt_type == control_stmt) {
+		freeControlStmt((ResolvedControlStmt *) rstmt);
+	} else {
+		Assert (false && "Trying to free invalid resolved statement?");
+	}
+	free(rstmt);
+};
+
+// Deep clean of memory we allocated.
+// Must call this before cleanUpUDFList.
+static void cleanUpUDFRList(UDFRptrs ptr) {
+	UDFRList *curr = NULL, *next = NULL;
+	curr = ptr.front;
+	while (curr != NULL) {
+		next = curr->next;
+		cleanUDFResolvedStmt(curr->resolved_stmt);
+		free(curr);
+		curr = next;
+	}
+}
+
+// This is simply a linear list which maps variable verison
+// to the derived table alias.
+typedef struct varAliasPair{
+	char *var, *alias;
+} varAlias;
+
+typedef struct varAliasPairList vAlsList;
+
+typedef struct varAliasPairList {
+	varAlias* node;
+	vAlsList* next, *prev;
+} vAlsList;
+
+typedef struct DefinitionChain {
+	vAlsList *front, *rear;
+} Chain;
+
+static Chain* createChain() {
+	Chain* ptr = (Chain*) malloc(sizeof(Chain));
+	ptr->rear = ptr->front = NULL;
+	return ptr;
+}
+
+// Reference counting
+static void cleanUpChain(Chain *c) {
+	vAlsList *ptr = c->front, *curr = NULL;
+	while (ptr != NULL) {
+		curr = ptr->next;
+		free(ptr);
+		ptr  = curr;
+	}
+}
+
+// Append second chain ch2 into ch1.
+static void appendChainToChain(Chain *ch1, Chain *ch2) {
+	vAlsList *rear = ch1->rear;
+	Assert(ch1->rear && "Def chain rear node is null?");
+
+	vAlsList *list_to_append = ch1->rear;
+	varAlias *alias_node = ch1->rear->node;
+
+	if (alias_node == NULL) {
+		list_to_append = ch1->rear->prev;
+	}
+	ch2->front->prev     = list_to_append;
+	list_to_append->next = ch2->front;
+	ch1->rear = ch2->rear;
+}
+
+//Don't change the order clean up calls.
+static void freeUpMemAllocated(UDFList *head, UDFRptrs ptrs) {
+	cleanUpUDFRList(ptrs);
+	cleanUpUDFList(head);
+}
+
+//SplitExpression for SELECT statements.
+//We have something like this:
+// 		SELECT proj_expr FROM sql_expr -> SELECT proj_expr AS variable FROM sql_expr
+/* Questions:
+  1. what if the select project multiple rows, how the references to those actually works.
+*/
+void splitExpressionsIntoClauses(ResolvedSelectStmt *rstmt) {
+	char *expr = rstmt->projection_expression;
+	char *ptr  = (char *) malloc(strlen(expr));
+	char *curr = expr;
+	char *varName = ptr;
+	char *tmp = NULL;
+
+	//skip whitespaces.
+	while (*curr != '\0' && *curr == ' ')
+		curr++;
+	
+	//curr points to SELECT
+	while (*curr != '\0' && *curr != ' ') {
+		*ptr = *curr;
+		ptr++;
+		curr++;
+	}
+	//skip whitespaces
+	while (*curr != '\0' && *curr == ' ')
+		curr++;
+
+	*ptr = ' ';
+	ptr++; 
+	//collect variable name
+	while (*curr != '\0' && *curr != ' ') {
+		*ptr = *curr;
+		ptr++;
+		curr++;
+	}
+	*ptr = '\0';
+	
+	strcpy(rstmt->projection_expression, varName);
+	rstmt->projection_expression[strlen(varName) + 1] = '\0';
+
+	rstmt->select_clauses = (char *)malloc(strlen(curr));
+	tmp = rstmt->select_clauses;
+
+	while (*curr != '\0') {
+		if (*curr != '"') {
+			*tmp = *curr;
+			tmp++;
+		}
+		curr++;
+	}
+	*tmp = '\0';
+	return;
+}
+
+// Todo: Remove code duplication when try to search two chains.
+char* findDerivedTableName(char *var, Chain *c, Chain *ch) {
+	
+	char *res, *buf;
+	vAlsList *ptr;
+	varAlias *curr;
+    if (ch != NULL) {
+			ptr = ch->rear;
+			
+			while (ptr != NULL) {
+				curr = ptr->node;
+				if (strcmp(curr->var, var) == 0) {
+					int size = strlen(curr->alias) + 1 + strlen(curr->var) + 1;
+					char *v = (char *) malloc(size);
+					char *buffer = v;
+					strcpy(v, curr->alias);
+					v += strlen(curr->alias);
+					*v = '.';
+					v += 1;
+					strcpy(v, curr->var);
+					v += strlen(curr->var);
+					*v = '\0';
+					return buffer;
+				}
+				//ptr = ptr->next;
+				ptr = ptr->prev;
+			}
+	}
+
+	ptr = c->rear;
+	while (ptr != NULL) {
+		curr = ptr->node;
+		if (strcmp(curr->var, var) == 0) {
+			int size = strlen(curr->alias) + 1 + strlen(curr->var) + 1;
+			char *v = (char *) malloc(size);
+			char *buffer = v;
+			strcpy(v, curr->alias);
+			v += strlen(curr->alias);
+			*v = '.';
+			v += 1;
+			strcpy(v, curr->var);
+			v += strlen(curr->var);
+			*v = '\0';
+			return buffer;
+		}
+		//ptr = ptr->next;
+		ptr = ptr->prev;
+	}
+	//To delete.
+	res = (char*) malloc(strlen(var) + 1);
+	buf = res;
+	*buf = '@';
+	buf++;
+	strcpy(buf, var);
+	return res;
+}
+
+// we just need to find the tokens proceeded by @ and replace it by
+// DT.name
+static char* resolveDerivedTableReferences(char *query, Chain *c, Chain *ch1) {
+	
+	//we have to use RExpr struct here, but for now just use a simple char buffer
+	char *buffer = (char *) malloc(250);
+	char *ptr = query, *writer = buffer;
+
+	while (*ptr != '\0') {
+		if (*ptr != '@') {
+			*writer++ = *ptr;
+			ptr++;
+		} else { //it is reference.
+			const char *start;
+			char *var;
+			int length;
+			ptr++;
+			start = ptr;
+			while (*ptr != '\0' && *ptr != ' ') {
+				ptr++;
+			}
+			//variable - [start, ptr)
+			length = ptr - start;
+			var = (char *) malloc(length+1);
+			//check it correctly copies null-terminated string or not.
+			snprintf(var, length+1, "%.*s", length, start);
+			//this should not replace a function parameters.
+			char *newName = findDerivedTableName(var, c, ch1);
+			int sz = strlen(newName);
+			strncpy(writer, newName, sz);
+			writer += sz;
+			//safe to delete.
+			free(var);
+			//ptr points to one past of the word which is usually a space,
+			//must be added to the result query.
+		}
+	}
+	//put null char back.
+	*writer = '\0';
+	return buffer;
+}
+
+// Add the definition of the statement to end along with its derived table alias
+// to the chain.
+static void addDefToChain(Chain *c, ResolvedStmtBase *rstmt) {
+	vAlsList *def = (vAlsList*) malloc(sizeof(vAlsList));
+	def->node = (varAlias *) malloc(sizeof(varAlias));
+	def->node->var   = rstmt->def_name;
+	def->node->alias = rstmt->dt_alias;
+	def->next = def->prev = NULL;
+
+	if (c->rear == NULL && c->front == NULL) {
+		c->front = def;
+		c->rear  = def;
+	} else if (c->rear == NULL || c->front == NULL) {
+		Assert(false && "definition chain front and rear pointer out of sync?");
+	} else {
+		def->prev = c->rear;
+		c->rear->next = def;
+		c->rear = c->rear->next;
+	}
+}
+
+// Add the constructed phi nodes to the definition chain.
+static void addPhiDefToChain(Chain *c, phi_node *node) {
+	vAlsList *def = (vAlsList*) malloc(sizeof(vAlsList));
+	def->node = (varAlias *) malloc(sizeof(varAlias));
+	def->node->var   = node->def_name;
+	def->node->alias = node->phi_node_alias;
+	def->next = def->prev = NULL;
+
+	if (c->rear == NULL && c->front == NULL) {
+		c->front = def;
+		c->rear  = def;
+	} else if (c->rear == NULL || c->front == NULL) {
+		Assert(false && "definition chain front and rear pointer out of sync?");
+	} else {
+		def->prev = c->rear;
+		c->rear->next = def;
+		c->rear = c->rear->next;
+	}
+}
+
+
+/* Helper functions to resolve control flow block in the UDF*/
+// This assumes the query always begin the select keyword.
+char *skipSELECTKeyword(char *query) {
+	if (query == NULL)
+		return NULL;
+
+	char *reject = " ";
+	size_t pos = strcspn (query, reject);
+	return &query[pos];
+}
+
+// Must start searching from the rear end of the list. This is a 
+// must for correctness.
+char* findMatchingThenDef(Chain* ch, char *var) {
+	Chain *curr = ch;
+	vAlsList *ptr = curr->rear;
+	while (ptr != NULL && ptr->node != NULL) {
+		varAlias *node = ptr->node;
+		if (strcmp(node->var, var) == 0) {
+			return node->alias;
+		}
+		ptr = ptr->prev;
+	}
+	return NULL;
+}
+
+// ToDo:
+// Is it really ok to resolve substatements like this? Maybe factor out some code.
+static ResolvedDeclareStmt* resolveDeclarationAndAssignStmt(UDFStmtNode *stmt, Chain *c, PLtsql_function *func, bool substmt, Chain *ch1) {
+	PLtsql_stmt *plstmt = stmt->plstmt;
+	PLtsql_stmt_assign *assignStmt = (PLtsql_stmt_assign *) plstmt;
+	int funcVarNum    = assignStmt->varno;
+	PLtsql_datum *d   = func->datums[funcVarNum];
+	PLtsql_var *local = (PLtsql_var *) d;
+
+	ResolvedDeclareStmt *rstmt = (ResolvedDeclareStmt *) malloc(sizeof(ResolvedDeclareStmt));
+	char *varName, *query;
+
+	rstmt->stmt_type = declare_stmt;
+	//Set up variable name.
+	varName = local->refname;
+	if (*varName == '@')
+		varName++;
+	
+	int size = strlen(varName);
+	rstmt->def_name = (char *)malloc(size + 1);
+	strcpy(rstmt->def_name, varName);
+	rstmt->def_name[size] = '\0';
+
+	//Set up alias name only if it is not a substmt.
+	//array of 10 is more than enough.
+	if (!substmt) {
+		rstmt->dt_alias = (char *)malloc(10);
+		snprintf(rstmt->dt_alias, sizeof(rstmt->dt_alias), "DT%d", stmt->id);
+	}
+
+	//resolve the expression.
+	query = assignStmt->expr->query;
+	//we need to skip
+	if (substmt) {
+		query = skipSELECTKeyword(query);
+	}
+	rstmt->expression = resolveDerivedTableReferences(query, c, ch1);
+
+	//add definition to the def chain, only if it is not a
+	//sub statement inside other block.
+	if (!substmt)
+		addDefToChain(c, (ResolvedStmtBase *) rstmt);
+	return rstmt;
+}
+
+static ResolvedSelectStmt* resolveSelectStmt(UDFStmtNode *stmt, Chain *c, bool substmt, Chain *ch1) {
+	PLtsql_stmt_execsql *esql = (PLtsql_stmt_execsql *)stmt->plstmt;
+	PLtsql_variable *target   = esql->target;
+	PLtsql_var *target_var	  = (PLtsql_var *)target;
+	PLtsql_row *target_row 	  = (PLtsql_row *)target_var;
+	PLtsql_expr *expr 		  = esql->sqlstmt;
+
+	int nfields = target_row->nfields;
+	if (nfields > 1)
+		return NULL;
+
+	char *varName = target_row->fieldnames[nfields-1];
+	if (*varName == '@')
+		varName++;
+	
+	ResolvedSelectStmt *rstmt = (ResolvedSelectStmt *) malloc(sizeof(ResolvedSelectStmt));
+
+	int size = strlen(varName);
+	rstmt->def_name = (char *) malloc(size + 1);
+	strcpy(rstmt->def_name, varName);	
+	rstmt->def_name[size] = '\0';
+
+	if (!substmt) {
+		rstmt->dt_alias = (char *)malloc(10);
+		snprintf(rstmt->dt_alias, sizeof(rstmt->dt_alias), "DT%d", stmt->id);
+	}
+
+	rstmt->stmt_type = select_stmt;
+
+	char *query = expr->query;
+	
+	rstmt->projection_expression = resolveDerivedTableReferences(query, c, ch1);
+	splitExpressionsIntoClauses(rstmt);
+
+	//add definition to the def chain
+	if (!substmt)
+		addDefToChain(c, (ResolvedStmtBase *) rstmt);
+	return rstmt;
+}
+
+static ResolvedReturnStmt* resolveReturnStmt(UDFStmtNode *stmt, Chain *c) {
+	ResolvedReturnStmt *rstmt = (ResolvedReturnStmt *) malloc(sizeof(ResolvedReturnStmt));
+
+	PLtsql_stmt_return *pl_returnstmt = (PLtsql_stmt_return *) stmt->plstmt;
+
+	//Default name for the last return statement
+	rstmt->def_name = "returnVal";
+	
+	rstmt->dt_alias = (char *) malloc(10);
+	snprintf(rstmt->dt_alias, sizeof(rstmt->dt_alias), "DT%d", stmt->id);
+
+	rstmt->stmt_type = return_stmt;
+	
+	PLtsql_expr *expr = pl_returnstmt->expr;
+	char *query = expr->query;
+	rstmt->expression = resolveDerivedTableReferences(query, c, NULL);
+	//add definition to the def chain
+	addDefToChain(c, (ResolvedStmtBase *) rstmt);
+	return rstmt;
+}
+
+// Append definitions and DT to phi list.
+static phi_node* makePhiNode(char *then_alias, char *else_alias, char *name) {
+	phi_node *curr = newPhi();
+	curr->def_name = name;
+	curr->then_dt_alias  = then_alias;
+	curr->else_dt_alias   = else_alias;
+	curr->phi_node_alias = (char *) malloc(10);
+	return curr;
+}
+
+// we have a node for the entire control flow statement.
+// you have to recursively resolved each substatements.
+
+// Todo: Add phi nodes for uni-directional value flow.
+static ResolvedControlStmt* resolveControlStmt(UDFStmtNode *stmt, Chain *c, PLtsql_function *function) {
+	ResolvedControlStmt *rstmt = (ResolvedControlStmt *) malloc(sizeof(ResolvedControlStmt));
+	PLtsql_stmt_if *contl_stmt = (PLtsql_stmt_if *)stmt->plstmt;
+	PLtsql_expr *cond 			 = contl_stmt->cond;
+	PLtsql_stmt *thenstmt 		 = contl_stmt->then_body;
+	PLtsql_stmt *elsestmt 		 = contl_stmt->else_body;
+
+	PLtsql_stmt_block *thenBlock = (PLtsql_stmt_block *)thenstmt;
+	PLtsql_stmt_block *elseBlock = (PLtsql_stmt_block *)elsestmt;
+	
+	ListCell *bss = NULL;
+	PLtsql_stmt_assign *assignment = NULL;
+
+	rstmt->stmt_type = control_stmt;
+	//Construct the predicate expression of the control block
+	//emitter should emit the following string:
+	//SELECT CASE WHEN cond->query THEN 1 ELSE 0 AS def_name) dt_alias
+	rstmt->def_name = (char *) malloc(strlen("predVal"));
+
+	snprintf(rstmt->dt_alias, sizeof(rstmt->dt_alias), "%s", "predVal");
+	
+	rstmt->dt_alias = (char *)malloc(10);
+	snprintf(rstmt->dt_alias, sizeof(rstmt->dt_alias), "DT%d", stmt->id);
+	rstmt->predicate_expr = skipSELECTKeyword(cond->query);
+	rstmt->predicate_expr = resolveDerivedTableReferences(rstmt->predicate_expr, c, NULL);
+
+	int counter = 0;
+	rstmt->then_statements   = newFlowExp();
+	rstmt->else_statements = newFlowExp();
+
+	FlowExpList *curr = rstmt->then_statements;
+
+	//we have to create a new definition chain for then and else part of the block
+	//and then we have to merge the then part and else part into the main chain.
+	//then we have to generate phi nodes and then add into the main chain.
+	Chain *then_def = createChain();
+	Chain *else_def = createChain();
+	Chain *phi_def  = createChain();
+
+	foreach(bss, thenBlock->body) {
+		counter++;
+		PLtsql_stmt *s = (PLtsql_stmt *) lfirst(bss);
+		UDFStmtNode *subnode = newUDFStmtNode(s, counter);
+		ResolvedStmtBase *base_stmt;
+		curr->flow_expression = (ExprPair *) malloc(sizeof(ExprPair));
+
+		if (s->cmd_type == PLTSQL_STMT_ASSIGN) {
+			base_stmt = (ResolvedStmtBase *) resolveDeclarationAndAssignStmt(subnode, c, function, true /*sub stmt*/, then_def);
+			// this will be something like: var = expr.
+		} else if (s->cmd_type == PLTSQL_STMT_EXECSQL) {
+			base_stmt = (ResolvedStmtBase *) resolveSelectStmt(subnode, c, true, then_def);
+		} else {
+			Assert(false && "Unsupported statements in the if/else block");
+		}
+		//construct a DT alias name for this particular expression.
+		base_stmt->dt_alias = (char *) malloc(10);
+		snprintf(base_stmt->dt_alias, sizeof(base_stmt->dt_alias), "DT%d%d", stmt->id, counter);
+
+		curr->flow_expression->then_expr = base_stmt;
+		curr->flow_expression->else_expr = NULL;
+
+		//add it to the definition chain.
+		addDefToChain(then_def, curr->flow_expression->then_expr);
+
+		curr->next = newFlowExp();
+		curr->next->prev = curr;
+		curr = curr->next;
+	}
+
+	phi_list *phi = (phi_list *) malloc(sizeof(phi_list));
+	phi_list *phi_curr = phi;
+	curr = rstmt->else_statements;
+	
+	int phi_counter = 0;
+	foreach(bss, elseBlock->body) {
+		counter++;
+		phi_counter++;
+		PLtsql_stmt *s = (PLtsql_stmt *) lfirst(bss);
+		UDFStmtNode *subnode = newUDFStmtNode(s, counter);
+		ResolvedStmtBase *base_stmt;
+		curr->flow_expression = (ExprPair *) malloc(sizeof(ExprPair));
+
+		if (s->cmd_type == PLTSQL_STMT_ASSIGN) {
+			base_stmt = (ResolvedStmtBase *) resolveDeclarationAndAssignStmt(subnode, c, function, true /*sub stmt*/, else_def);
+		} else if (s->cmd_type == PLTSQL_STMT_EXECSQL) {
+			base_stmt = (ResolvedStmtBase *) resolveSelectStmt(subnode, c, true, else_def);
+		} else {
+			Assert(false && "Unsupported statements in the if/else block");
+		}
+		//construct a DT alias name for this particular expression.
+		base_stmt->dt_alias = (char *) malloc(10);
+		snprintf(base_stmt->dt_alias, sizeof(base_stmt->dt_alias), "DT%d%d", stmt->id, counter);
+
+		//Search the def chain of then part to find matching definitions
+		char *then_alias = findMatchingThenDef(then_def, base_stmt->def_name);
+
+		if (then_alias != NULL) {
+			phi_node *curr = makePhiNode(then_alias, base_stmt->dt_alias, base_stmt->def_name);
+			snprintf(curr->phi_node_alias, sizeof(curr->phi_node_alias), "DT%d%d%d", stmt->id, 0, phi_counter);
+			addPhiDefToChain(phi_def, curr);
+			phi_curr->def  = curr;
+			phi_curr->next = newPhiList();
+			phi_curr = phi_curr->next;
+		}
+		
+		curr->flow_expression->then_expr = NULL;
+		curr->flow_expression->else_expr = base_stmt;
+
+		//add it to the definition chain.
+		addDefToChain(else_def, curr->flow_expression->else_expr);
+
+		curr->next = newFlowExp();
+		curr->next->prev = curr;
+		curr = curr->next;
+	}
+
+	//Second pass 
+	rstmt->phi = phi;
+	//merge chains in order:
+	//1. Then
+	//2. Else
+	//3. PHI
+	appendChainToChain(c, then_def);
+	appendChainToChain(c, else_def);
+	appendChainToChain(c, phi_def);
+	return rstmt;
+}
+
+static ResolvedStmtBase* resolveUDFStmtNode(UDFStmtNode *stmt, Chain *c, PLtsql_function *func) {
+	ResolvedStmtBase *resolved = NULL;
+	switch (stmt->cmd_type) {
+		case PLTSQL_STMT_ASSIGN: {
+			/* Handle declaration and assignments. */
+			resolved = (ResolvedStmtBase *) resolveDeclarationAndAssignStmt(stmt, c, func, false, NULL);
+			break;
+		}
+		case PLTSQL_STMT_EXECSQL: {
+			resolved = (ResolvedStmtBase *) resolveSelectStmt(stmt, c, false, NULL);
+			break;
+		}
+		case PLTSQL_STMT_IF: {
+			resolved = (ResolvedStmtBase *) resolveControlStmt(stmt, c, func);
+			break;
+		}
+		case PLTSQL_STMT_RETURN: {
+			resolved = (ResolvedStmtBase *) resolveReturnStmt(stmt, c);
+			break;
+		}
+		default: {
+			Assert(false && "Trying to resolve unsupported UDF statement.");
+			break;
+		}
+	}
+	return resolved;
+}
+
+//Visit each stmt and call resolver.
+static UDFRptrs resolveUDFStatements(UDFList *head) {
+	UDFRList *resolvedHead = newUDFRListNode();
+	UDFRList *resolvedCurr = resolvedHead;
+	UDFRptrs pointers;
+
+	Chain *c = createChain();
+	UDFList *curr = head;
+
+	while (curr != NULL && curr->stmt != NULL) {
+		UDFStmtNode *stmt = curr->stmt;
+		resolvedCurr->resolved_stmt = resolveUDFStmtNode(stmt, c, curr->function);
+
+		//move next in the UDF list.
+		curr = curr->next;
+		//create a new node for next resolved UDF stmt.
+		resolvedCurr->next = newUDFRListNode();
+		resolvedCurr->next->prev = resolvedCurr;
+		resolvedCurr = resolvedCurr->next;
+	}
+	pointers.front  = resolvedHead;
+	pointers.rear	= resolvedCurr;
+	//no need for def chain anymore.
+	cleanUpChain(c);
+	return pointers;
+}
+
+// Basically a hacky way to generate the string:
+// SELECT DT.returnVal FROM
+void getReturnNameForUDF(UDFRptrs p, RExpr *expr) {
+	UDFRList *curr = p.rear;
+	char *str = NULL, *buf = NULL;
+	int sz;
+
+	if (curr == NULL)
+		Assert(false && "invalid rear pointer to the list?");
+	
+	//rear is one past the valid UDFR node
+	curr = curr->prev;
+	if (curr == NULL || curr->resolved_stmt == NULL) {
+		//Oops, something off.
+		Assert(false && "return stmt is not the last node in list?");
+	}
+
+	//we can get the return name.
+	appendToRExpr(expr, "SELECT");
+	
+	ResolvedStmtBase *stmt = curr->resolved_stmt;
+
+	appendDTReferenceToRExpr(expr, stmt->dt_alias, stmt->def_name);
+	appendToRExpr(expr, "from");
+}
+
+static void emitDeclareToRExpr(RExpr *expr, ResolvedDeclareStmt *declare_stmt) {
+	appendToRExpr(expr, "(");
+	appendToRExpr(expr, declare_stmt->expression);
+	appendToRExpr(expr, "AS");
+	appendToRExpr(expr, declare_stmt->def_name);
+	appendToRExpr(expr, ")");
+	appendToRExpr(expr, declare_stmt->dt_alias);
+}
+
+static void emitSelectToRExpr(RExpr *expr, ResolvedSelectStmt *select_stmt) {
+	appendToRExpr(expr, "(");
+	appendToRExpr(expr, select_stmt->projection_expression);
+	appendToRExpr(expr, "AS");
+	appendToRExpr(expr, select_stmt->def_name);
+	//inject clauses
+	appendToRExpr(expr, select_stmt->select_clauses);
+	appendToRExpr(expr, ")");
+	appendToRExpr(expr, select_stmt->dt_alias);
+}
+
+static void emitReturnToRExpr(RExpr *expr, ResolvedReturnStmt *return_stmt) {
+	appendToRExpr(expr, "(");
+	appendToRExpr(expr, return_stmt->expression);
+	appendToRExpr(expr, "AS");
+	appendToRExpr(expr, return_stmt->def_name);
+	appendToRExpr(expr, ")");
+	appendToRExpr(expr, return_stmt->dt_alias);
+}
+
+/* Helper to emit control block statements, this method will only 
+emit necessary fields to make valid a relational expression */
+
+static void emitSubStatement(RExpr *expr, ResolvedStmtBase *stmt) {
+	/* Just emit NULL because we have no statement in the UDF. */
+	if (stmt == NULL) {
+		return appendToRExpr(expr, "NULL");
+	}
+	switch (stmt->stmt_type) {
+		case declare_stmt: {
+			ResolvedDeclareStmt *declare = (ResolvedDeclareStmt *) stmt;
+			appendToRExpr(expr, declare->expression);
+			break;
+		}
+		case select_stmt: {
+			ResolvedSelectStmt *select = (ResolvedSelectStmt *) stmt;
+			appendToRExpr(expr, " ( ");
+			appendToRExpr(expr, select->projection_expression);
+			appendToRExpr(expr, select->select_clauses);
+			appendToRExpr(expr, " ) ");
+			break;
+		}
+		default: {
+			Assert(false && "Trying to emit unsupported statements in UDF?");
+			break;
+		}
+	}
+}
+
+static void emitSubStatementsInIfElseBlock(RExpr *expr, ResolvedControlStmt *control_stmt, bool then) {
+	char *name  = control_stmt->def_name;
+	char *alias = control_stmt->dt_alias;
+	size_t vlength = strlen(name);
+	size_t alength = strlen(alias);
+	size_t length = vlength + alength + 10;
+	FlowExpList *curr;
+	ResolvedStmtBase *valid_expr;
+	
+	char *predicateExpr = (char *) malloc(length);
+	char *pwrite = predicateExpr;
+	strcpy(pwrite, alias);
+	pwrite += alength;
+	*pwrite = '.';
+	pwrite ++;
+	strcpy(pwrite, name);
+	pwrite += vlength;
+	if (then)
+		strcpy(pwrite, " = 1");
+	else
+		strcpy(pwrite, " = 0");
+	
+	if (then)
+		curr = control_stmt->then_statements;
+	else
+		curr = control_stmt->else_statements;
+
+	while (curr != NULL && curr->flow_expression != NULL)
+	{
+		appendToRExpr(expr, "outer apply");
+		ExprPair *currStmt = curr->flow_expression;
+		appendToRExpr(expr, "( SELECT CASE WHEN");
+		appendToRExpr(expr, predicateExpr);
+		appendToRExpr(expr, "THEN");
+		//Invert the statements accordingly since we are inverting the predicate.
+		valid_expr = then ? currStmt->then_expr : currStmt->else_expr;
+		emitSubStatement(expr, valid_expr);
+		appendToRExpr(expr, "ELSE");
+		valid_expr = then ? currStmt->else_expr : currStmt->then_expr;
+		emitSubStatement(expr, valid_expr);
+		appendToRExpr(expr, "END AS");
+		
+		valid_expr = currStmt->then_expr != NULL ? currStmt->then_expr : currStmt->else_expr;
+		Assert(valid_expr && "Both flow expressions are null?");
+		
+		/* take a name from either of the statements*/
+		appendToRExpr(expr, valid_expr->def_name);
+		appendToRExpr(expr, " ) ");
+		appendToRExpr(expr, valid_expr->dt_alias);
+		
+		curr = curr->next;
+	}
+}
+
+static void emitIfElseToRExpr(RExpr *expr, ResolvedControlStmt *control_stmt) {
+	char *name  = control_stmt->def_name;
+	char *alias = control_stmt->dt_alias;
+	char *predicate = control_stmt->predicate_expr;
+	ResolvedStmtBase *valid_expr;
+
+	appendToRExpr(expr, "(");
+	appendToRExpr(expr, "SELECT CASE WHEN");
+	appendToRExpr(expr, predicate);
+	appendToRExpr(expr, "THEN");
+	appendToRExpr(expr, "1");
+	appendToRExpr(expr, "ELSE");
+	appendToRExpr(expr, "0");
+	appendToRExpr(expr, "END AS");
+	appendToRExpr(expr,  name);
+	appendToRExpr(expr, ")");
+	appendToRExpr(expr, alias);
+	//First emit the expressions for then block.
+	emitSubStatementsInIfElseBlock(expr, control_stmt, true /*then block*/);
+	//Emit expressions for else block.
+	emitSubStatementsInIfElseBlock(expr, control_stmt, false /*then block*/);
+
+	//emit expressions for phi nodes finally.
+	size_t vlength = strlen(name);
+	size_t alength = strlen(alias);
+	size_t length = vlength + alength + 10;
+	char *predicateExpr = (char *) malloc(length);
+	char *pwrite = predicateExpr;
+	strcpy(pwrite, alias);
+	pwrite += alength;
+	*pwrite = '.';
+	pwrite ++;
+	strcpy(pwrite, name);
+	pwrite += vlength;
+	strcpy(pwrite, " = 1");
+
+	phi_list *phi_curr = control_stmt->phi;
+
+	while (phi_curr != NULL && phi_curr->def != NULL) {
+		phi_node *def = phi_curr->def;
+		appendToRExpr(expr, "outer apply");
+		appendToRExpr(expr, "(");
+		appendToRExpr(expr, "SELECT CASE WHEN");
+		appendToRExpr(expr, predicateExpr);
+		appendToRExpr(expr, "THEN");
+		appendDTReferenceToRExpr(expr, def->then_dt_alias, def->def_name);
+		appendToRExpr(expr, "ELSE");
+		appendDTReferenceToRExpr(expr, def->else_dt_alias, def->def_name);
+		appendToRExpr(expr, "END AS");
+		
+		appendToRExpr(expr, def->def_name);
+		appendToRExpr(expr, ")");
+		appendToRExpr(expr, def->phi_node_alias);
+		phi_curr = phi_curr->next;
+	}
+}
+
+static void transformResolvedStmtToRExpr(RExpr *expr, ResolvedStmtBase *stmt) {
+	if (stmt == NULL)
+		return;
+
+	switch(stmt->stmt_type) {
+		case declare_stmt: {
+			emitDeclareToRExpr(expr, (ResolvedDeclareStmt *) stmt);
+			break;
+		}
+		case select_stmt: {
+			emitSelectToRExpr(expr, (ResolvedSelectStmt *) stmt);
+			break;
+		}
+		case return_stmt: {
+			emitReturnToRExpr(expr, (ResolvedReturnStmt *) stmt);
+			break;
+		}
+		case control_stmt: {
+			emitIfElseToRExpr(expr, (ResolvedControlStmt *) stmt);
+			break;
+		}
+		default:{
+			Assert(false && "Attempt to construct relational expression for unsupported statements");
+		}
+	}
+	return;
+}
+
+static RExpr* constructRelationalExpression(UDFRptrs p) {
+	RExpr *expr   = newRExpr();
+	UDFRList *curr = p.front;
+	if (curr == NULL || curr->resolved_stmt == NULL)
+		return NULL;
+
+	/*
+		Quick hack for getting return statement derived table alias
+		and return's result name. We really shouldn't be doing this,
+		find a better way. This only works if the function has only one
+		return statement that too at the end.
+	*/
+	getReturnNameForUDF(p, expr);
+	
+	transformResolvedStmtToRExpr(expr, curr->resolved_stmt);
+	curr = curr->next;
+
+	while (curr != NULL && curr->resolved_stmt != NULL) {
+		ResolvedStmtBase *stmt = curr->resolved_stmt;
+		appendToRExpr(expr, "outer apply");
+		transformResolvedStmtToRExpr(expr, stmt);
+		curr = curr->next;
+	}
+	finalizeRExpr(expr);
+	return expr;
+}
+
+// We need pltsql_expr to make parse_analyze_withcb call succeed.
+typedef struct RelaExpr {
+	RExpr *rexpression;
+	PLtsql_expr *pltsqlexpr;
+} RelaExpr;
+
+/*
+  Transforms the PLtsql_function to a relational expression.
+  Early function returns must be avoided to do a proper cleanup.
+*/
+static RelaExpr
+transformFunctionToRelationalExpr(ParseState *pstate, PLtsql_function *function, FuncExpr *expr) {
+	char *functionSignature = function->fn_signature;
+	int   numLocals = function->ndatums;
+	int   numArgs   = function->fn_nargs;
+
+	PLtsql_stmt_block *functionParseTree = function->action;
+	PLtsql_stmt_block *block;
+	UDFList *head = newUDFList(function);
+	UDFList *curr = head, *nextNode = NULL;
+	UDFRptrs ptrs;
+	RelaExpr result;
+	RExpr *rexpression;
+	int udfStmtCounter = 0;
+	//currentGlobalFunction = function;
+	// The parse tree should be arranged as a list of stmt_block for easier conversion.
+	
+	// Go over the list of statements in the block
+	ListCell *s = NULL;
+	foreach(s, functionParseTree->body) {
+		PLtsql_stmt *Outerstmt = (PLtsql_stmt *) lfirst(s);
+		switch (Outerstmt->cmd_type)
+		{
+		case PLTSQL_STMT_INIT:
+			/* code */
+			break;
+		case PLTSQL_STMT_BLOCK: ;
+			block = (PLtsql_stmt_block *) Outerstmt;
+			ListCell *bss = NULL;
+			//go through each element in the block.
+			foreach(bss, block->body) {
+				++udfStmtCounter;
+				PLtsql_stmt *stmt = (PLtsql_stmt*) lfirst(bss);
+				if (stmt->cmd_type == PLTSQL_STMT_ASSIGN) {
+					PLtsql_stmt_assign *assignStmt = (PLtsql_stmt_assign *) stmt;
+					int funcVarNum = assignStmt->varno;
+					PLtsql_datum *d = function->datums[funcVarNum];
+					//assume for now that this datum is a variable.
+					PLtsql_var *local      = (PLtsql_var *)d;
+					curr->stmt = newUDFStmtNode(stmt, udfStmtCounter);
+	
+				} else if (stmt->cmd_type == PLTSQL_STMT_RETURN) {
+					curr->stmt = newUDFStmtNode(stmt, udfStmtCounter);
+					
+					//hack to pass null reference?
+					PLtsql_stmt_return *returnStmt = (PLtsql_stmt_return *) stmt;
+					result.pltsqlexpr = returnStmt->expr;
+					result.pltsqlexpr->func = function;
+
+				} else if (stmt->cmd_type == PLTSQL_STMT_EXECSQL) {
+
+					curr->stmt = newUDFStmtNode(stmt, udfStmtCounter);
+
+				} else if (stmt->cmd_type == PLTSQL_STMT_IF) {
+
+					curr->stmt = newUDFStmtNode(stmt, udfStmtCounter);
+				
+				} else {
+					//For Unsupported Statements in the PLTsql compiled body, just bail out
+					result.rexpression = NULL;
+					result.pltsqlexpr = NULL;
+					cleanUpUDFList(head);
+					return result;
+				}
+				nextNode          = newUDFList(function);
+				curr->next        = nextNode;
+				nextNode->prev    = curr;
+				curr = nextNode;
+			}
+			break;
+		default:
+			result.rexpression = NULL;
+			result.pltsqlexpr = NULL;
+			cleanUpUDFList(head);
+			return result;
+		}
+	}
+	ptrs = resolveUDFStatements(head);
+	rexpression = constructRelationalExpression(ptrs);
+	freeUpMemAllocated(head, ptrs);
+	result.rexpression = rexpression;
+	return result;
+}
+
 static Node *
 pltsql_inline_scalar_udf(ParseState *pstate, PLtsql_function *function, FuncExpr *expr)
 {
-	ListCell *s = NULL;
-	Node *result = NULL;
+	RExpr *functionExpr = NULL;
+	RelaExpr res;
+	res = transformFunctionToRelationalExpr(pstate, function, expr);
+	functionExpr = res.rexpression;
+	if (!functionExpr || !functionExpr->content || !res.pltsqlexpr)
+		return NULL;
 
-	// KLTODO: this is a hack for this particular function
-	foreach(s, function->action->body)
-	{
-		PLtsql_stmt *stmt = (PLtsql_stmt *) lfirst(s);
-		if (stmt->cmd_type == PLTSQL_STMT_BLOCK)
-		{
-			PLtsql_stmt_block *innerblock = (PLtsql_stmt_block *) stmt;
-			ListCell *ss = NULL;
+	// Not tested after this point.
+	PLtsql_execstate estate;
+	List *raw_parsetree_list;
+	Query *querytree = NULL;
+	SubLink *sublink = NULL;
 
-			foreach(ss, innerblock->body)
-			{
+	raw_parsetree_list = pg_parse_query(functionExpr->content);
 
-				PLtsql_execstate estate;
-				List *raw_parsetree_list;
-				Query *querytree = NULL;
-				SubLink *sublink = NULL;
+	if (!raw_parsetree_list)
+		return NULL;
 
-				PLtsql_stmt *innerstmt = (PLtsql_stmt *) lfirst(ss);
-				PLtsql_stmt_return *return_stmt = (PLtsql_stmt_return *) innerstmt;
-				Assert(innerstmt->cmd_type == PLTSQL_STMT_RETURN);
+	// KLTODO: I dont think we should be calling pltsql_estate_setup here 
+	// because we are not executing it. This needs some investigation
+	pltsql_estate_setup(&estate, function, NULL, NULL);
+	estate.atomic = false;
+	copy_pltsql_datums(&estate, function);
 
-				raw_parsetree_list = pg_parse_query(return_stmt->expr->query);
-				Assert(list_length(raw_parsetree_list) == 1);
+	querytree = parse_analyze_withcb(linitial(raw_parsetree_list),
+										functionExpr->content,
+										(ParserSetupHook) pltsql_parser_setup,
+										(void *)res.pltsqlexpr, /* not sure what parserSetupArg is?*/
+										NULL);
 
-				Assert(!return_stmt->expr->func);
-				return_stmt->expr->func = function;
+	pltsql_estate_cleanup();
+	if (!querytree)
+		return NULL;
+	
+	Assert(querytree); // keep compiler happy
 
-				// KLTODO: I dont think we should be calling pltsql_estate_setup here 
-				// because we are not executing it. This needs some investigation
-				pltsql_estate_setup(&estate, function, NULL, NULL);
-				estate.atomic = false;
-				copy_pltsql_datums(&estate, function);
-
-				querytree = parse_analyze_withcb(linitial(raw_parsetree_list),
-												 return_stmt->expr->query,
-												 (ParserSetupHook) pltsql_parser_setup,
-												 (void *) return_stmt->expr,
-												 NULL);
-
-				pltsql_estate_cleanup();
-
-				Assert(querytree); // keep compiler happy
-				return_stmt->expr->func = NULL;
-				function->cur_estate = NULL;
-
-				// Substitute actual paramaters
-				querytree = substitute_actual_srf_parameters(querytree, function->fn_nargs, expr->args);
-				sublink = makeNode(SubLink);
-				sublink->subLinkType = EXPR_SUBLINK;
-				sublink->subLinkId = 0;
-				sublink->subselect = (Node *) querytree;
-				pstate->p_hasSubLinks = true; // KLTODO: This is hacky, cant do this.
-
-				return (Node *) sublink;
-
-			}
-		}
-	}
-
-	return result;
+	// Substitute actual paramaters
+	querytree = substitute_actual_srf_parameters(querytree, function->fn_nargs, expr->args);
+	sublink = makeNode(SubLink);
+	sublink->subLinkType = EXPR_SUBLINK;
+	sublink->subLinkId = 0;
+	sublink->subselect = (Node *) querytree;
+	pstate->p_hasSubLinks = true; // KLTODO: This is hacky, cant do this.
+	return (Node *) sublink;
 }
 
 Node *
 pltsql_compile_and_inline_scalar_udf(ParseState *pstate, FuncExpr *expr)
 {
+	if (!pltsql_enable_udf_inline)
+		return NULL;
+	
 	LOCAL_FCINFO(fake_fcinfo, 0);
 	FmgrInfo	flinfo;
 	PLtsql_function *func;

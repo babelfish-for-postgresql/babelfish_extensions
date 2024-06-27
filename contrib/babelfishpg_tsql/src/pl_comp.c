@@ -961,13 +961,13 @@ do_compile(FunctionCallInfo fcinfo,
 	pltsql_finish_datums(function);
 
 	/* Debug dump for completed functions */
-	if (pltsql_DumpExecTree || pltsql_trace_tree)
-		pltsql_dumptree(function);
+	//if (pltsql_DumpExecTree || pltsql_trace_tree)
+	pltsql_dumptree(function);
 
 	/*
 	 * add it to the hash table
 	 */
-	pltsql_HashTableInsert(function, hashkey);
+	//pltsql_HashTableInsert(function, hashkey);
 
 	/*
 	 * Pop the error context stack
@@ -1311,8 +1311,8 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	pltsql_finish_datums(function);
 
 	/* Debug dump for completed functions */
-	if (pltsql_DumpExecTree || pltsql_trace_tree)
-		pltsql_dumptree(function);
+	//if (pltsql_DumpExecTree || pltsql_trace_tree)
+	pltsql_dumptree(function);
 
 	/*
 	 * Pop the error context stack
