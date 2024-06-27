@@ -318,3 +318,33 @@ Select * from sourceTable
 Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
+
+
+Create table sourceTable (a int);
+Create table destinationTable(a int, check (a < 2))
+INSERT INTO sourceTable SELECT generate_series(1, 1000, 1);
+INSERT INTO sourceTable values (2);
+insertbulk#!#sourceTable#!#destinationTable
+Select count(*) from sourceTable
+select count(*) from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable (a int);
+Create table destinationTable(a int)
+INSERT INTO sourceTable SELECT generate_series(1, 1500, 1);
+insertbulk#!#sourceTable#!#destinationTable
+Select count(*) from sourceTable
+select count(*) from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+create table sourceTable(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
+create table destinationTable(c1 int PRIMARY KEY, c2 CHAR(1024))
+INSERT INTO destinationTable VALUES(1000, 'Foo')
+insertbulk#!#sourceTable#!#destinationTable
+Select count(*) from sourceTable
+select count(*) from destinationTable
+drop table sourceTable
+drop table destinationTable
