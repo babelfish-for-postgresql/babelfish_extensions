@@ -141,7 +141,7 @@ build_bbf() {
     cd $1/babelfish_extensions
     export PG_CONFIG=$2/postgres/bin/pg_config
     export PG_SRC=$1/postgresql_modified_for_babelfish
-    export cmake=$(which cmake)
+    export cmake=$(which cmake3)
     cd contrib/babelfishpg_money
     make clean && make && make install
     cd ../babelfishpg_common

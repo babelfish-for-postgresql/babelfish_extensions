@@ -69,6 +69,9 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 
+//UDF Inlining
+bool  		pltsql_enable_udf_inline = true;
+
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
 	{"xml", EXPLAIN_FORMAT_XML, false},
@@ -658,6 +661,16 @@ define_custom_variables(void)
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
+	/* UDF Inlining GUC*/
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_udf_inline",
+							 gettext_noop("enable UDF inlining using algebriac rules"),
+							 NULL,
+							 &pltsql_enable_udf_inline,
+							 true,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+	
 	/* temporary GUC until test is refactored properly */
 	DefineCustomBoolVariable("babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing",
 							 gettext_noop("GUC for internal testing - make antlr allow some of unsupported grammar"),
