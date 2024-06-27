@@ -6217,6 +6217,12 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	Oid				schema_oid;
 	ListCell		*cell;
 	const char		*logicalschema = NULL;
+
+	/*
+	 * BABEL-4390
+	 * List of procedure names that are not allowed to be dropped. These procedures 
+	 * are considered essential or restricted due to security or operational reasons.
+	 */
 	const char		*restricted_procedures[] = {
 		"xp_qv",
 		"xp_instance_regread",
