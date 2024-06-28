@@ -2478,6 +2478,71 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.dm_hadr_database_replica_states TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.partition_functions AS
+SELECT
+  partition_function_name as name,
+  function_id,
+  CAST('R' as sys.bpchar(2)) as type,
+  CAST('RANGE' as sys.nvarchar(60)) as type_desc,
+  CAST(ARRAY_LENGTH(range_values, 1)+1 as int) fanout,
+  CAST(partition_option as sys.bit) as boundary_value_on_right,
+  CAST(0 as sys.bit) as is_system,
+  create_date,
+  modify_date
+FROM
+  sys.babelfish_partition_function
+WHERE
+  dbid = sys.db_id();
+GRANT SELECT ON sys.partition_functions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.partition_range_values AS
+SELECT
+  function_id,
+  CAST(1 as int) as parameter_id,
+  CAST(t.boundary_id as int),
+  t.value
+FROM
+  sys.babelfish_partition_function,
+  unnest(range_values) WITH ORDINALITY as t(value, boundary_id)
+where
+  dbid = sys.db_id();
+GRANT SELECT ON sys.partition_range_values TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.partition_parameters AS
+SELECT
+  function_id,
+  cast(1 as int) as parameter_id,
+  st.system_type_id,
+  st.max_length,
+  st.precision,
+  st.scale,
+  st.collation_name,
+  st.user_type_id
+FROM
+  sys.babelfish_partition_function pf
+INNER JOIN
+  sys.types st on (pf.input_parameter_type = st.name and st.user_type_id = st.system_type_id)
+WHERE
+  dbid = sys.db_id();
+GRANT SELECT ON  sys.partition_parameters TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.partition_schemes AS
+SELECT
+  partition_scheme_name as name,
+  scheme_id as data_space_id,
+  CAST('PS' as sys.bpchar(2)) as type,
+  CAST('PARTITION_SCHEME' as sys.nvarchar(60)) as type_desc,
+  CAST(0 as sys.bit) as is_default,
+  CAST(0 as sys.bit) as is_system,
+  pf.function_id
+FROM
+  sys.babelfish_partition_scheme ps
+INNER JOIN
+  sys.babelfish_partition_function pf ON (pf.partition_function_name = ps.partition_function_name and ps.dbid = pf.dbid)
+WHERE
+  ps.dbid = sys.db_id();
+GRANT SELECT ON sys.partition_schemes TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.data_spaces
 AS
 SELECT 

@@ -1080,6 +1080,24 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 			}
 		}
 	}
+	if (ctx->create_partition_scheme())
+	{
+		auto ps_ctx = ctx->create_partition_scheme();
+		if (ps_ctx->ALL() && ps_ctx->filegroup_type().size() > 1)
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"Only a single filegroup can be specified while creating partition scheme using option ALL to specify all the filegroups.", getLineAndPos(ctx));
+		}
+		for (auto filegroup: ps_ctx->filegroup_type())
+		{
+			if(filegroup->id())
+				handle(INSTR_UNSUPPORTED_TSQL_FILEGROUP, "user filegroup", &st_escape_hatch_storage_options, getLineAndPos(ctx));
+		}
+	}
+	if (ctx->create_partition_function() && !(ctx->create_partition_function()->RIGHT()))
+	{
+		handle(INSTR_UNSUPPORTED_TSQL_PARTITION_FUNCTION, "PARTIION FUNCTION with LEFT option", getLineAndPos(ctx));
+	}
 	
 	/*
 	 * We have more than 100 DDLs but support a few of them.
@@ -1126,6 +1144,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->truncate_table()
 	 || ctx->enable_trigger()
 	 || ctx->disable_trigger()
+	 || ctx->create_partition_function()
+	 || ctx->drop_partition_function()
+	 || ctx->create_partition_scheme()
+	 || ctx->drop_partition_scheme()
 	 )
 	{
 		// supported DDL or DDL which need special handling
