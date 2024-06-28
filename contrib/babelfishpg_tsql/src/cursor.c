@@ -1265,7 +1265,7 @@ execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pn
 			*prownum = (int) hentry->fetch_info_rownum;
 			/* number of rows in cursor is not available in PG */
 			*pnrows = -1;
-			return 0;
+			break;
 		case SP_CURSOR_FETCH_RELATIVE:
 		case SP_CURSOR_FETCH_REFRESH:
 		case SP_CURSOR_FETCH_PREV_NOADJUST:
@@ -1274,70 +1274,74 @@ execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pn
 			Assert(0);
 	}
 
-	if (SPI_result != 0)
-		elog(ERROR, "error in SPI_scroll_cursor_fetch: %d", SPI_result);
-
-	/*
-	 * In case of FETCH_FIRST/FETCH_LAST with 0 nrows, we just moved cursor
-	 * and no actual fetch is called. SPI_tuptable can be NULL. skip storing
-	 * the result
-	 */
-	if (SPI_tuptable)
+	if (fetchtype != SP_CURSOR_FETCH_INFO)
 	{
-		/* store result in fetch buffer */
-		tuplestore_clear(hentry->fetch_buffer);
+		if (SPI_result != 0)
+			elog(ERROR, "error in SPI_scroll_cursor_fetch: %d", SPI_result);
 
-		oldcontext = MemoryContextSwitchTo(CursorHashtabContext);
-		for (rno = 0; rno < SPI_processed; ++rno)
-			tuplestore_puttuple(hentry->fetch_buffer, SPI_tuptable->vals[rno]);
-		MemoryContextSwitchTo(oldcontext);
+		/*
+		 * In case of FETCH_FIRST/FETCH_LAST with 0 nrows, we just moved cursor
+		 * and no actual fetch is called. SPI_tuptable can be NULL. skip storing
+		 * the result
+		 */
+		if (SPI_tuptable)
+		{
+			/* store result in fetch buffer */
+			tuplestore_clear(hentry->fetch_buffer);
 
-		tuplestore_rescan(hentry->fetch_buffer);
+			oldcontext = MemoryContextSwitchTo(CursorHashtabContext);
+			for (rno = 0; rno < SPI_processed; ++rno)
+				tuplestore_puttuple(hentry->fetch_buffer, SPI_tuptable->vals[rno]);
+			MemoryContextSwitchTo(oldcontext);
 
-		/* send result to DestRemote */
-		receiver = CreateDestReceiver(DestRemote);
-		SetRemoteDestReceiverParams(receiver, portal);
+			tuplestore_rescan(hentry->fetch_buffer);
 
-		slot = MakeSingleTupleTableSlot(hentry->tupdesc, &TTSOpsMinimalTuple);
-		receiver->rStartup(receiver, (int) CMD_SELECT, hentry->tupdesc);
-		while (tuplestore_gettupleslot(hentry->fetch_buffer, true, false, slot))
-			receiver->receiveSlot(slot, receiver);
-		receiver->rShutdown(receiver);
-	}
+			/* send result to DestRemote */
+			receiver = CreateDestReceiver(DestRemote);
+			SetRemoteDestReceiverParams(receiver, portal);
 
-	/**
-	 * Calculate rownum value for possible subsequnt FETCH_INFO calls.
-	 * 
-	 * SPI_scroll_cursor_fetch_dest call above has just read an
-	 * SPI_processed number of rows from portal and has sent these rows
-	 * to client. We need to return the 1-based portal index of the first
-	 * row of all rows that were sent to client.
-	 * 
-	 * If no rows were read by last SPI_scroll_cursor_fetch_dest call:
-	 *   if cursor is not open: 0 (currently not supported),
-	 *   if cursor is positioned before the result set: 0,
-   *   if cursor is positioned after the result set: -1.
-	 */
-	if (SPI_processed > 0)
-		fetch_info_rownum = portal->portalPos - SPI_processed + 1;
-	else if (portal->atEnd)
-		fetch_info_rownum = -1;
-	else if (portal->atStart)
-		fetch_info_rownum = 0;
-	else
-		fetch_info_rownum = portal->portalPos + 1;
+			slot = MakeSingleTupleTableSlot(hentry->tupdesc, &TTSOpsMinimalTuple);
+			receiver->rStartup(receiver, (int) CMD_SELECT, hentry->tupdesc);
+			while (tuplestore_gettupleslot(hentry->fetch_buffer, true, false, slot))
+				receiver->receiveSlot(slot, receiver);
+			receiver->rShutdown(receiver);
+		}
 
-	/* update cursor status */
-	pltsql_update_cursor_fetch_status(curname, SPI_processed == 0 ? -1 : 0);
-	pltsql_update_cursor_row_count(curname, SPI_processed);
-	pltsql_update_cursor_fetch_info_rownum(curname, fetch_info_rownum);
-	pltsql_update_cursor_last_operation(curname, 2);
+		/*
+		 * Calculate rownum value for possible subsequent FETCH_INFO calls.
+		 * 
+		 * SPI_scroll_cursor_fetch_dest call above has just read an
+		 * SPI_processed number of rows from portal and has sent these rows
+		 * to client. If FETCH_INFO call will follow, we will need to return
+		 * the 1-based portal index of the first row of all rows that were sent
+		 * to client.
+		 * 
+		 * If no rows were read by last SPI_scroll_cursor_fetch_dest call:
+		 *   if cursor is not open: 0 (currently not supported),
+		 *   if cursor is positioned before the result set: 0,
+		 *   if cursor is positioned after the result set: -1.
+		 */
+		if (SPI_processed > 0)
+			fetch_info_rownum = portal->portalPos - SPI_processed + 1;
+		else if (portal->atEnd)
+			fetch_info_rownum = -1;
+		else if (portal->atStart)
+			fetch_info_rownum = 0;
+		else
+			fetch_info_rownum = portal->portalPos + 1;
 
-	/* If AUTO_CLOSE is set and we fetched all the result, close the cursor */
-	if ((hentry->cursor_options & TSQL_CURSOR_OPT_AUTO_CLOSE) &&
-		portal->atEnd)
-	{
-		execute_sp_cursorclose(cursor_handle);
+		/* update cursor status */
+		pltsql_update_cursor_fetch_status(curname, SPI_processed == 0 ? -1 : 0);
+		pltsql_update_cursor_row_count(curname, SPI_processed);
+		pltsql_update_cursor_fetch_info_rownum(curname, fetch_info_rownum);
+		pltsql_update_cursor_last_operation(curname, 2);
+
+		/* If AUTO_CLOSE is set and we fetched all the result, close the cursor */
+		if ((hentry->cursor_options & TSQL_CURSOR_OPT_AUTO_CLOSE) &&
+			portal->atEnd)
+		{
+			execute_sp_cursorclose(cursor_handle);
+		}
 	}
 
 	if ((rc = SPI_finish()) != SPI_OK_FINISH)
