@@ -425,3 +425,15 @@ void
 -- tsql 
 drop login alter_proc_l4;
 go
+
+-- psql currentSchema=master_dbo,public
+
+-- Test psql procedures altered with security definer do not throw StartTransactionCommand: unexpected state STARTED error 
+CREATE PROCEDURE master_dbo.p1() AS $$ BEGIN SELECT 1; END $$ LANGUAGE plpgsql;
+go
+
+alter procedure master_dbo.p1 security definer;
+go
+
+drop procedure master_dbo.p1;
+go
