@@ -191,7 +191,7 @@ runs:
         fi
 
         export inputFilesPath=upgrade/$base_dir/preparation
-        mvn test
+        mvn -B -ntp test
 
         # Skip test BABEL-404 for previous versions while testing dump/restore since it specifies
         # contraint column ordering which is expected to fail after fix for BABEL-4888
@@ -211,7 +211,7 @@ runs:
           sed -i "s/\b$filename[ ]*\b$/$filename-vu-prepare/g" upgrade/$base_dir/schedule
         done
         export scheduleFile=upgrade/$base_dir/schedule
-        mvn test
+        mvn -B -ntp test
       shell: bash
 
     - uses: actions/checkout@v2
