@@ -191,7 +191,7 @@ runs:
         fi
 
         export inputFilesPath=upgrade/$base_dir/preparation
-        mvn test
+        mvn -B -ntp test
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 
             printf '%s\n' "ERROR: Cannot find Test file "$filename"-vu-prepare or "$filename"-vu-verify in input directory !!" >&2
@@ -204,7 +204,7 @@ runs:
           sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" upgrade/$base_dir/schedule
         done
         export scheduleFile=upgrade/$base_dir/schedule
-        mvn test
+        mvn -B -ntp test
       shell: bash
 
     - uses: actions/checkout@v2

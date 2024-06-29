@@ -65,7 +65,7 @@ jobs:
           cd test/JDBC/
           # set env variable serverCollationName to current server collation name
           export serverCollationName=${{ env.SERVER_COLLATION_NAME }}
-          mvn test
+          mvn -B -ntp test
           # reset env variable
           unset serverCollationName
 
