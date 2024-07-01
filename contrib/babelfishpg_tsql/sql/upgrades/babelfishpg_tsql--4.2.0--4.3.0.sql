@@ -1487,7 +1487,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
  * TABLES view
  */
 
-CREATE VIEW information_schema_tsql.tables AS
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
@@ -1521,7 +1521,7 @@ GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
  * TABLE_CONSTRAINTS view
  */
 
-CREATE VIEW information_schema_tsql.table_constraints AS
+CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
@@ -1559,7 +1559,7 @@ GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
  * CHECK_CONSTRAINTS view
  */
 
-CREATE VIEW information_schema_tsql.check_constraints AS
+CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
