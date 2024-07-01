@@ -2405,7 +2405,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_INTERNAL_ERROR),
-								errmsg("TSQL ALTER PROCEDURE is not supported from PSQL endpoint.")));
+								errmsg("TSQL ALTER PROCEDURE is not supported from PostgreSQL endpoint.")));
 					}
 
 					if (stmt->objtype != OBJECT_PROCEDURE)

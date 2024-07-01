@@ -448,7 +448,7 @@ ALTER PROCEDURE tsqlp1 as select 2
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: TSQL ALTER PROCEDURE is not supported from PSQL endpoint.
+~~ERROR (Message: ERROR: TSQL ALTER PROCEDURE is not supported from PostgreSQL endpoint.
     Server SQLState: XX000)~~
 
 
