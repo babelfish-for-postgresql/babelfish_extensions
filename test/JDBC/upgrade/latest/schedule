@@ -227,6 +227,7 @@ FULLTEXT_INDEX
 fts-contains
 fts-contains-utils
 BABEL-4785
+BABEL-4390
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -537,4 +538,5 @@ babel_4328_datetime2
 babel_4328_datetimeoffset
 babel_726
 BABEL-3401
+BABEL-3820
 PARTITION
