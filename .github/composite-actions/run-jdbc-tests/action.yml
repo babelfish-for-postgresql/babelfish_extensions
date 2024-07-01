@@ -16,5 +16,5 @@ runs:
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           export inputFilesPath=${{inputs.input_dir}}
           cd test/JDBC/
-          mvn test
+          mvn -B -ntp test
       shell: bash
