@@ -227,6 +227,7 @@ forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
 fts-contains
+BABEL-4390
 get_tds_id
 HAS_DBACCESS
 identity_function
