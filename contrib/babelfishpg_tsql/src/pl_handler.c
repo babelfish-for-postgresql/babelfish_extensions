@@ -2401,6 +2401,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					int 				origname_location = -1;
 					bool 				with_recompile = false;
 
+					if(!IS_TDS_CLIENT())
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("TSQL ALTER PROCEDURE is not supported from PSQL endpoint.")));
+					}
+
 					if (stmt->objtype != OBJECT_PROCEDURE)
 						break;
 

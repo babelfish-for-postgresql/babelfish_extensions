@@ -427,8 +427,8 @@ drop login alter_proc_l4;
 go
 
 -- psql currentSchema=master_dbo,public
-
 -- Test psql procedures altered with security definer do not throw StartTransactionCommand: unexpected state STARTED error 
+-- Test alter procedure using tsql dialect in PSQL port throws error
 CREATE PROCEDURE master_dbo.p1() AS $$ BEGIN SELECT 1; END $$ LANGUAGE plpgsql;
 go
 
@@ -437,3 +437,21 @@ go
 
 drop procedure master_dbo.p1;
 go
+
+set babelfishpg_tsql.sql_dialect = "tsql";
+GO
+
+CREATE PROCEDURE tsqlp1 as select 1
+go
+
+ALTER PROCEDURE tsqlp1 as select 2
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: TSQL ALTER PROCEDURE is not supported from PSQL endpoint.
+    Server SQLState: XX000)~~
+
+
+drop procedure tsqlp1
+go
+
