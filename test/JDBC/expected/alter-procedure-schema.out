@@ -449,7 +449,7 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: TSQL ALTER PROCEDURE is not supported from PostgreSQL endpoint.
-    Server SQLState: XX000)~~
+    Server SQLState: 0A000)~~
 
 
 drop procedure tsqlp1

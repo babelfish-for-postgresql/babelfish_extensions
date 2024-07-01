@@ -2379,9 +2379,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	{
 		case T_AlterFunctionStmt:
 			{
-				if(sql_dialect == SQL_DIALECT_TSQL)
+				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
-				   /*
+				       /*
 					* For ALTER PROC, we will:
 					* 1. Save important pg_proc metadata from the current proc (oid, proacl)
 					* 2. drop the current proc
@@ -2401,10 +2401,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					int 				origname_location = -1;
 					bool 				with_recompile = false;
 
-					if(!IS_TDS_CLIENT())
+					if (!IS_TDS_CLIENT())
 					{
 						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								errmsg("TSQL ALTER PROCEDURE is not supported from PostgreSQL endpoint.")));
 					}
 
@@ -2426,7 +2426,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							DefElem *defel = (DefElem *) lfirst(option);
 							if (strcmp(defel->defname, "location") == 0)
 							{
-								/*
+							       /*
 								* location is an implicit option in tsql dialect,
 								* we use this mechanism to store location of function
 								* name so that we can extract original input function
@@ -2438,7 +2438,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 							else if (strcmp(defel->defname, "recompile") == 0)
 							{
-								/*
+							       /*
 								* ALTER PROCEDURE ... WITH RECOMPILE
 								* Record RECOMPILE in catalog
 								*/
@@ -2467,7 +2467,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						/* Update function/procedure related metadata in babelfish catalog */
 						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
 						if (!isSameProc) {
-							/*
+						       /*
 							* When the signatures differ we need to manually update the 'function_args' column in 
 							* the 'bbf_schema_permissions' catalog
 							*/
