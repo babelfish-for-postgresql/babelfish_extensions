@@ -6479,8 +6479,8 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	Oid		sql_variant_type_oid;
 	Oid		input_type_oid;
 	ListCell	*elements;
-	Oid		partitioning_column_type_oid;
-	char		*partitioning_column_type_name;
+	Oid		partitioning_column_type_oid = InvalidOid;
+	char		*partitioning_column_type_name = NULL;
 	bool		is_binary_datatype = false;
 	int16		dbid = get_cur_db_id();
 	char		*partition_scheme_name = stmt->partspec->tsql_partition_scheme;
@@ -6971,7 +6971,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	PlannedStmt	*wrapper;
 	RenameStmt	*rename_partition_stmt = NULL;
 	List		*parsetree;
-	Relation	relation, rel;
+	Relation	relation;
 	SysScanDesc	scan;
 	ScanKeyData	key;
 	Oid		parentrelid;
@@ -7005,10 +7005,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	while ((tuple = systable_getnext(scan)) != NULL)
 	{
 		inhrelid = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
-		/* TODO: optimize this */
-		rel = RelationIdGetRelation(inhrelid);
-		list = lappend(list, pstrdup(RelationGetRelationName(rel)));
-		RelationClose(rel);
+		list = lappend(list, get_rel_name(inhrelid));
 	}
 	systable_endscan(scan);
 	table_close(relation, AccessShareLock);
