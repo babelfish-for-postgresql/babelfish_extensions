@@ -6600,7 +6600,6 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	range_values = palloc(nelems * sizeof(Datum));
 	for (int i = 0; i < nelems; i++)
 	{
-		bool isnull;
 		range_values[i] = pltsql_exec_tsql_cast_value(datum_values[i], &isnull,
 								sql_variant_type_oid, -1,
 								CSTRINGOID, -1);
@@ -6970,7 +6969,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	int16		dbid = get_cur_db_id();
 	char		*unique_hash;
 	PlannedStmt	*wrapper;
-	RenameStmt	*rename_partition_stmt;
+	RenameStmt	*rename_partition_stmt = NULL;
 	List		*parsetree;
 	Relation	relation, rel;
 	SysScanDesc	scan;
