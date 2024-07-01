@@ -591,6 +591,34 @@ SELECT * FROM GetPartitionedIndexListFromSysIndexesView
 GO
 
 
+---------------------------------------------------------------------------
+--- Run analyze on each table and enable query plan
+---------------------------------------------------------------------------
+
+-- psql
+ANALYZE master_dbo.partition_vu_prepare_int_table;
+ANALYZE master_dbo.partition_vu_prepare_bigint_table;
+ANALYZE master_dbo.partition_vu_prepare_smallint_table;
+ANALYZE master_dbo.partition_vu_prepare_tinyint_table;
+ANALYZE master_dbo.partition_vu_prepare_decimal_table;
+ANALYZE master_dbo.partition_vu_prepare_numeric_table;
+ANALYZE master_dbo.partition_vu_prepare_money_table;
+ANALYZE master_dbo.partition_vu_prepare_smallmoney_table;
+ANALYZE master_dbo.partition_vu_prepare_date_table;
+ANALYZE master_dbo.partition_vu_prepare_datetime_table;
+ANALYZE master_dbo.partition_vu_prepare_datetime2_table;
+ANALYZE master_dbo.partition_vu_prepare_smalldatetime_table;
+ANALYZE master_dbo.partition_vu_prepare_char_table;
+ANALYZE master_dbo.partition_vu_prepare_varchar_table;
+ANALYZE master_dbo.partition_vu_prepare_nvarchar_table;
+ANALYZE master_dbo.partition_vu_prepare_nchar_table;
+ANALYZE master_dbo.partition_vu_prepare_binary_table;
+ANALYZE master_dbo.partition_vu_prepare_varbinary_table;
+ANALYZE master_dbo.partition_vu_prepare_uniqueidentifier_table;
+ANALYZE master_dbo.partition_vu_prepare_sqlvariant_table;
+GO
+
+-- tsql
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 GO
 
@@ -598,7 +626,7 @@ SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
 ---------------------------------------------------------------------------
---- Query plan of select on partiitoned tables
+--- Query plan of select on partitioned tables
 ---------------------------------------------------------------------------
 
 SELECT * FROM partition_vu_prepare_int_table;
@@ -663,8 +691,18 @@ GO
 
 
 ---------------------------------------------------------------------------
---- Query plan of select on partiitoned tables with predicate
+--- Query plan of select on partiitoned tables with predicate and enforced index scan
 ---------------------------------------------------------------------------
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
 
 SELECT * FROM partition_vu_prepare_int_table WHERE Id >= 0 AND Id < 500;
 GO
@@ -727,4 +765,9 @@ SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS ch
 GO
 
 SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
 GO
