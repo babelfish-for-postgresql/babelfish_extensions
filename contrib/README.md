@@ -269,14 +269,26 @@ SELECT * FROM babelfishpg_unit.babelfishpg_unit_run_tests();
 
 # How to run the JDBC regression tests?
 1. Install Maven: https://maven.apache.org/install.html
-2. cd to test/JDBC
+2. Navigate to `test/JDBC`:
+
       ```
       cd test/JDBC
       ```
-3. run cleanup.sh, init.sh and mvn test
+3. Run the `cleanup.sh`, `init.sh` and `mvn test` commands:
+
       ```
       ./cleanup.sh
       ./init.sh
       mvn test
       ```
+   If you run into errors such as `psql: error: could not connect to server: No such file or directory` when invoking `init.sh` or `cleanup.sh`, try replacing the following line:
+      ```
+      psql -d postgres -U "$USER" << EOF
+      ```
+    with
+      ```
+      sudo ~/postgres/bin/psql -U "$USER" -d postgres -a << EOF
+      ```
+    in both scripts.
+
 For detailed instructions on how to write, add, and run tests in JDBC test framework, refer [to the online instructions](../test/JDBC/README.md).
