@@ -57,7 +57,7 @@ $$SELECT
 		THEN 1073741823
 		WHEN type = 'sysname'
 		THEN 128
-		WHEN type IN ('xml', 'vector', 'geometry', 'geography')
+		WHEN type IN ('xml', 'vector', 'halfvec', 'sparsevec', 'geometry', 'geography')
 		THEN -1
 		WHEN type = 'sql_variant'
 		THEN 0
