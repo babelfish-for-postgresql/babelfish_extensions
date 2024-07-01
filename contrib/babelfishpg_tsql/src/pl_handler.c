@@ -6492,6 +6492,8 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	char		*unique_hash;
 	char		*physical_schema_name;
 	char		*logical_schema_name;
+	ArrayType	*values;
+	bool		isnull;
 
 	/*
 	 * Get partition function name for the provided partition scheme,
@@ -6554,14 +6556,19 @@ bbf_create_partition_tables(CreateStmt *stmt)
 					false, NULL, 2, scanKey);
 
 	tuple = systable_getnext(scan);
-	if (HeapTupleIsValid(tuple))
+
+	if (!HeapTupleIsValid(tuple)) /* Sanity check. */
 	{
-		bool isnull;
-		ArrayType *values;
-		input_parameter_type = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_type, RelationGetDescr(rel), &isnull));
-		values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
-		deconstruct_array(values, sql_variant_type_oid, -1, false, 'i', &datum_values, &nulls, &nelems);
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("Partition function '%s' used for the specifed partition scheme '%s' does not exist.", partition_function_name, partition_scheme_name)));
 	}
+	
+	input_parameter_type = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_type, RelationGetDescr(rel), &isnull));
+	values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
+	deconstruct_array(values, sql_variant_type_oid, -1, false, 'i', &datum_values, &nulls, &nelems);
 
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
@@ -6671,7 +6678,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 static CreateStmt*
 create_partition_stmt(char *physical_schema_name, char *relname)
 {
-	CreateStmt	*partition_stmt;
+	CreateStmt	*partition_stmt = NULL;
 	const char	*old_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	List		*res;
 	StringInfoData	query;
@@ -7023,6 +7030,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		parsetree = raw_parser(query.data, RAW_PARSE_DEFAULT);
+		rename_partition_stmt = (RenameStmt *) parsetree_nth_stmt(parsetree, 0);
 	}
 	PG_FINALLY();
 	{
@@ -7031,8 +7039,6 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();
-	
-	rename_partition_stmt = (RenameStmt *) parsetree_nth_stmt(parsetree, 0);
 
 	/* Need to make a wrapper PlannedStmt. */
 	wrapper = makeNode(PlannedStmt);

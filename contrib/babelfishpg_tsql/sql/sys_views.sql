@@ -2170,7 +2170,7 @@ SELECT
 FROM
     pg_index i
     INNER JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
-    INNER JOIN pg_class c ON i.indrelid = c.oid
+    INNER JOIN pg_class c ON i.indexrelid = c.oid and (c.relkind = 'i' or c.relkind = 'I') and c.relispartition = false
     INNER JOIN pg_namespace nsp ON nsp.oid = c.relnamespace
     LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
     LEFT JOIN unnest(i.indkey) WITH ORDINALITY AS a(attnum, index_column_id) ON true
@@ -2178,7 +2178,28 @@ WHERE
     has_schema_privilege(c.relnamespace, 'USAGE') AND
     has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER') AND
     (nsp.nspname = 'sys' OR ext.nspname is not null) AND
-    i.indislive;
+    i.indislive
+UNION ALL
+-- For HEAP entries
+SELECT
+  CAST(t.oid as int) as object_id,
+  CAST(0 AS INT) AS index_id,
+  CAST(a.ordinal_position AS INT) AS index_column_id,
+  CAST(a.attnum AS INT) AS column_id,
+  CAST(0 AS SYS.TINYINT) AS key_ordinal,
+  CAST(a.ordinal_position AS SYS.TINYINT) AS partition_ordinal,
+  CAST(0 AS SYS.BIT) AS is_descending_key,
+  CAST(0 AS SYS.BIT) AS is_included_column
+FROM 
+    pg_class t
+    INNER JOIN pg_partitioned_table ppt ON ppt.partrelid = t.oid
+    INNER JOIN pg_namespace nsp ON nsp.oid = t.relnamespace
+    LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
+    LEFT JOIN unnest(ppt.partattrs) WITH ORDINALITY AS a(attnum, ordinal_position) ON true
+WHERE 
+    t.relkind = 'p'
+    AND has_schema_privilege(t.relnamespace, 'USAGE')
+    AND has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.index_columns TO PUBLIC;
 
 -- internal function that returns relevant info needed
