@@ -14,8 +14,9 @@
 
 %type <node> tsql_stmt
 
-%type <node> tsql_AlterFunctionStmt
+%type <node> tsql_AlterFunctionStmt tsql_CreatePartitionStmt
 %type <node> tsql_CreateFunctionStmt tsql_VariableSetStmt tsql_CreateTrigStmt tsql_TransactionStmt tsql_UpdateStmt tsql_DeleteStmt tsql_IndexStmt
+%type <partspec> tsql_PartitionSpec
 %type <node> tsql_DropIndexStmt tsql_InsertStmt
 %type <str> tsql_DropIndexStmtSchema
 %type <node> tsql_CreateLoginStmt tsql_AlterLoginStmt tsql_DropLoginStmt
@@ -47,6 +48,7 @@
 
 %type <node> tsql_ExecStmt tsql_output_ExecStmt
 %type <list> tsql_actual_args
+%type <list> tsql_opt_partition_scheme_or_filegroup
 %type <node> tsql_actual_arg
 %type <boolean> tsql_opt_output tsql_opt_readonly
 

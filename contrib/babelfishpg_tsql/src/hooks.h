@@ -32,6 +32,9 @@ extern void alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa,
 extern Oid  get_tsql_trigger_oid(List *object,
                                  const char *tsql_trigger_name,
                                  bool object_from_input);
+extern Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
+							 Oid valtype, int32 valtypmod,
+							 Oid reqtype, int32 reqtypmod);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
                     QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
 

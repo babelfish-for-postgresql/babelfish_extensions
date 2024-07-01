@@ -978,6 +978,7 @@ END AS TABLE_TYPE,
 CAST(NULL AS varchar(254)) AS remarks
 FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, sys.schemas AS t3
 WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','v','m') 
+AND t1.relispartition = false
 AND has_schema_privilege(t1.relnamespace, 'USAGE')
 AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;

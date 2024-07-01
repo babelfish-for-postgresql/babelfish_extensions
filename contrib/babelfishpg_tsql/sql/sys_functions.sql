@@ -2885,6 +2885,7 @@ BEGIN
                         AND (s.nspname IN (SELECT nspname FROM sys.babelfish_namespace_ext) OR s.nspname = 'sys')
                         -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
                         AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+                        AND c.relispartition = false
                         AND a.attnum > 0) = 1
                                 THEN 'column'
                     ELSE NULL

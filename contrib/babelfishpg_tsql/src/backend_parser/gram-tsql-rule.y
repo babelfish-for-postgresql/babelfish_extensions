@@ -2505,6 +2505,7 @@ tsql_stmt :
 			| CreatePLangStmt
 			| CreateSchemaStmt
 			| CreateSeqStmt
+			| tsql_CreatePartitionStmt
 			| CreateStmt
 			| CreateSubscriptionStmt
 			| CreateStatsStmt
@@ -2572,6 +2573,39 @@ tsql_stmt :
 			| tsql_alter_server_role
 			| /*EMPTY*/
 				{ $$ = NULL; }
+		;
+
+tsql_CreatePartitionStmt:
+			CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
+			OptInherit OptPartitionSpec table_access_method_clause OptWith
+			tsql_PartitionSpec
+				{
+					CreateStmt *n = makeNode(CreateStmt);
+					n->relation = $4;
+					n->tableElts = $6;
+					n->inhRelations = $8;
+					n->partspec = $12;
+					n->ofTypename = NULL;
+					n->constraints = NIL;
+					n->accessMethod = $10;
+					n->options = $11;
+					n->oncommit = ONCOMMIT_NOOP;
+					n->tablespacename = NULL;
+					n->if_not_exists = false;
+					$$ = (Node *) n;
+				}
+		;
+
+tsql_PartitionSpec:
+			ON ColId '(' part_params ')'
+				{
+					PartitionSpec *n = makeNode(PartitionSpec);
+					n->tsql_partition_scheme = $2;
+					n->strategy = PARTITION_STRATEGY_RANGE;
+					n->partParams = $4;
+					n->location = @1;
+					$$ = n;
+				}
 		;
 
 tsql_opt_INTO:
@@ -3245,7 +3279,7 @@ tsql_IndexStmt:
 			INDEX opt_concurrently opt_single_name
 			ON relation_expr access_method_clause '(' index_params ')'
 			opt_include where_clause opt_reloptions
-			tsql_opt_on_filegroup
+			tsql_opt_partition_scheme_or_filegroup
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -3258,7 +3292,7 @@ tsql_IndexStmt:
 					n->nulls_not_distinct = $2;
 					n->whereClause = $15;
 					n->options = $16;
-					n->excludeOpNames = NIL;
+					n->excludeOpNames = $17;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
 					n->oldNumber = InvalidOid;
@@ -3311,6 +3345,25 @@ tsql_on_filegroup: ON name {}
 tsql_opt_on_filegroup:
 			tsql_on_filegroup					    {}
 			| /*EMPTY*/				    {}
+		;
+
+/*
+ * TSQL support for partition scheme and filegroup
+ */
+
+tsql_opt_partition_scheme_or_filegroup:
+			ON ColId '(' ColId ')'
+				{
+					$$ =  list_make2(makeString($2), makeString($4));
+				}
+			| tsql_on_filegroup
+				{
+					$$ = NIL;
+				}
+			| /*EMPTY*/
+				{
+					$$ = NIL;
+				}
 		;
 
 /*

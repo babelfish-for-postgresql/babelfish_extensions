@@ -7046,8 +7046,12 @@ post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_exec
 		if (cctx->ON())
 		{
 			Assert(cctx->storage_partition_clause());
-			removeTokenStringFromQuery(stmt->sqlstmt, cctx->ON(), baseCtx);
-			removeCtxStringFromQuery(stmt->sqlstmt, cctx->storage_partition_clause(), baseCtx);
+			/* remove storage_partition_clause only if it's not partitioning clause */
+			if (cctx->storage_partition_clause()->id().size() != 2)
+			{
+				removeTokenStringFromQuery(stmt->sqlstmt, cctx->ON(), baseCtx);
+				removeCtxStringFromQuery(stmt->sqlstmt, cctx->storage_partition_clause(), baseCtx);
+			}
 		}
 		else if (cctx->TEXTIMAGE_ON())
 		{
@@ -7292,12 +7296,6 @@ makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
 static bool
 post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
-	if (ctx->storage_partition_clause())
-	{
-		removeTokenStringFromQuery(stmt->sqlstmt, ctx->ON().back(), baseCtx); /* remove last ON */
-		removeCtxStringFromQuery(stmt->sqlstmt, ctx->storage_partition_clause(), baseCtx);
-	}
-
 	if (ctx->clustered() && ctx->clustered()->CLUSTERED())
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->CLUSTERED(), baseCtx);
 	if (ctx->clustered() && ctx->clustered()->NONCLUSTERED())

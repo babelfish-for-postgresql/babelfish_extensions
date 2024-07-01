@@ -13,6 +13,12 @@ GO
 DROP VIEW GetPartitionSchemesMetadataView
 GO
 
+DROP VIEW GetPartitionedTableListFromSysTablesView
+GO
+
+DROP VIEW GetPartitionedIndexListFromSysIndexesView
+GO
+
 DROP FUNCTION PartitionFunctionContainsDuplicateName
 GO
 
@@ -24,6 +30,134 @@ GO
 
 DROP FUNCTION PartitionSchemeContainsDuplicateIDs
 GO
+
+--------------------------------------------------
+--- DROP Partitioned Index
+--------------------------------------------------
+DROP INDEX partition_vu_prepare_sqlvariant_index ON partition_vu_prepare_sqlvariant_table;
+GO
+
+DROP INDEX partition_vu_prepare_uniqueidentifier_index ON partition_vu_prepare_uniqueidentifier_table;
+GO
+
+DROP INDEX partition_vu_prepare_varbinary_index ON partition_vu_prepare_varbinary_table;
+GO
+
+DROP INDEX partition_vu_prepare_binary_index ON partition_vu_prepare_binary_table;
+GO
+
+DROP INDEX partition_vu_prepare_nchar_index ON partition_vu_prepare_nchar_table;
+GO
+
+DROP INDEX partition_vu_prepare_nvarchar_index ON partition_vu_prepare_nvarchar_table;
+GO
+
+DROP INDEX partition_vu_prepare_varchar_index ON partition_vu_prepare_varchar_table;
+GO
+
+DROP INDEX partition_vu_prepare_char_index ON partition_vu_prepare_char_table;
+GO
+
+DROP INDEX partition_vu_prepare_smalldatetime_index ON partition_vu_prepare_smalldatetime_table;
+GO
+
+DROP INDEX partition_vu_prepare_datetime2_index ON partition_vu_prepare_datetime2_table;
+GO
+
+DROP INDEX partition_vu_prepare_datetime_index ON partition_vu_prepare_datetime_table;
+GO
+
+DROP INDEX partition_vu_prepare_date_index ON partition_vu_prepare_date_table;
+GO
+
+DROP INDEX partition_vu_prepare_smallmoney_index ON partition_vu_prepare_smallmoney_table;
+GO
+
+DROP INDEX partition_vu_prepare_money_index ON partition_vu_prepare_money_table;
+GO
+
+DROP INDEX partition_vu_prepare_numeric_index ON partition_vu_prepare_numeric_table;
+GO
+
+DROP INDEX partition_vu_prepare_decimal_index ON partition_vu_prepare_decimal_table;
+GO
+
+DROP INDEX partition_vu_prepare_tinyint_index ON partition_vu_prepare_tinyint_table;
+GO
+
+DROP INDEX partition_vu_prepare_smallint_index ON partition_vu_prepare_smallint_table;
+GO
+
+DROP INDEX partition_vu_prepare_bigint_index ON partition_vu_prepare_bigint_table;
+GO
+
+DROP INDEX partition_vu_prepare_int_index ON partition_vu_prepare_int_table;
+GO
+
+--------------------------------------------------
+--- DROP Partitioned Table
+--------------------------------------------------
+DROP TABLE partition_vu_prepare_sqlvariant_table;
+GO
+
+DROP TABLE partition_vu_prepare_uniqueidentifier_table;
+GO
+
+DROP TABLE partition_vu_prepare_varbinary_table;
+GO
+
+DROP TABLE partition_vu_prepare_binary_table;
+GO
+
+DROP TABLE partition_vu_prepare_nchar_table;
+GO
+
+DROP TABLE partition_vu_prepare_nvarchar_table;
+GO
+
+DROP TABLE partition_vu_prepare_varchar_table;
+GO
+
+DROP TABLE partition_vu_prepare_char_table;
+GO
+
+DROP TABLE partition_vu_prepare_smalldatetime_table;
+GO
+
+DROP TABLE partition_vu_prepare_datetime2_table;
+GO
+
+DROP TABLE partition_vu_prepare_datetime_table;
+GO
+
+DROP TABLE partition_vu_prepare_date_table;
+GO
+
+DROP TABLE partition_vu_prepare_smallmoney_table;
+GO
+
+DROP TABLE partition_vu_prepare_money_table;
+GO
+
+DROP TABLE partition_vu_prepare_numeric_table;
+GO
+
+DROP TABLE partition_vu_prepare_decimal_table;
+GO
+
+DROP TABLE partition_vu_prepare_tinyint_table;
+GO
+
+DROP TABLE partition_vu_prepare_smallint_table;
+GO
+
+DROP TABLE partition_vu_prepare_bigint_table;
+GO
+
+DROP TABLE partition_vu_prepare_int_table;
+GO
+
+
 
 --------------------------------------------------
 --- DROP Partition Scheme
@@ -44,6 +178,12 @@ DROP PARTITION SCHEME DecimalPartitionScheme
 GO
 
 DROP PARTITION SCHEME NumericPartitionScheme
+GO
+
+DROP PARTITION SCHEME MoneyPartitionScheme
+GO
+
+DROP PARTITION SCHEME SmallMoneyPartitionScheme
 GO
 
 DROP PARTITION SCHEME DatePartitionScheme

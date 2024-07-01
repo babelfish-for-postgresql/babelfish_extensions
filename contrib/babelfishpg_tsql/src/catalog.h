@@ -449,7 +449,7 @@ extern int32	get_available_partition_scheme_id(void);
 extern void	add_entry_to_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name, const char *partition_function_name, bool next_used);
 extern void	remove_entry_from_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name);
 extern bool	partition_scheme_exists(int16 dbid, const char *partition_scheme_name);
-extern char	*get_partition_function(int16 dbid, const char *partition_scheme_name);
+extern char	*get_partition_function_name(int16 dbid, const char *partition_scheme_name);
 
 /*****************************************
  *			PARTITION_DEPEND
@@ -468,6 +468,10 @@ extern Oid	bbf_partition_depend_idx_oid;
 
 extern Oid	get_bbf_partition_depend_oid(void);
 extern Oid	get_bbf_partition_depend_idx_oid(void);
+extern void	add_entry_to_bbf_partition_depend(int16 dbid, char* partition_scheme_name, char *schema_name, char *table_name);
+extern void	remove_entry_from_bbf_partition_depend(int16 dbid, char *schema_name, char *table_name);
+extern bool	is_bbf_partitioned_table(int16 dbid, char *schema_name, char *table_name);
+extern char	*get_partition_scheme_for_partitioned_table(int16 dbid, char *schema_name, char *table_name);
 
 
 typedef struct FormData_bbf_extended_properties

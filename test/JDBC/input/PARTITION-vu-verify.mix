@@ -576,3 +576,155 @@ GO
 
 EXEC PartitionProcedureDropPartitionFunctionAndScheme
 GO
+
+---------------------------------------------------------------------------
+--- PARTITIONED TABLES test
+---------------------------------------------------------------------------
+
+SELECT * FROM GetPartitionedTableListFromSysTablesView
+GO
+
+---------------------------------------------------------------------------
+--- PARTITIONED INDEX test
+---------------------------------------------------------------------------
+SELECT * FROM GetPartitionedIndexListFromSysIndexesView
+GO
+
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+---------------------------------------------------------------------------
+--- Query plan of select on partiitoned tables
+---------------------------------------------------------------------------
+
+SELECT * FROM partition_vu_prepare_int_table;
+GO
+
+SELECT * FROM partition_vu_prepare_bigint_table;
+GO
+
+SELECT * FROM partition_vu_prepare_smallint_table;
+GO
+
+SELECT * FROM partition_vu_prepare_tinyint_table;
+GO
+
+SELECT * FROM partition_vu_prepare_decimal_table;
+GO
+
+SELECT * FROM partition_vu_prepare_numeric_table;
+GO
+
+SELECT * FROM partition_vu_prepare_money_table;
+GO
+
+SELECT * FROM partition_vu_prepare_smallmoney_table;
+GO
+
+SELECT * FROM partition_vu_prepare_date_table;
+GO
+
+SELECT * FROM partition_vu_prepare_datetime_table;
+GO
+
+SELECT * FROM partition_vu_prepare_datetime2_table;
+GO
+
+SELECT * FROM partition_vu_prepare_smalldatetime_table;
+GO
+
+SELECT * FROM partition_vu_prepare_char_table;
+GO
+
+SELECT * FROM partition_vu_prepare_varchar_table;
+GO
+
+SELECT * FROM partition_vu_prepare_nvarchar_table;
+GO
+
+SELECT * FROM partition_vu_prepare_nchar_table;
+GO
+
+SELECT * FROM partition_vu_prepare_binary_table;
+GO
+
+SELECT * FROM partition_vu_prepare_varbinary_table;
+GO
+
+SELECT * FROM partition_vu_prepare_uniqueidentifier_table;
+GO
+
+SELECT * FROM partition_vu_prepare_sqlvariant_table;
+GO
+
+
+---------------------------------------------------------------------------
+--- Query plan of select on partiitoned tables with predicate
+---------------------------------------------------------------------------
+
+SELECT * FROM partition_vu_prepare_int_table WHERE Id >= 0 AND Id < 500;
+GO
+
+SELECT * FROM partition_vu_prepare_bigint_table WHERE Id >= 0 AND Id < 100;
+GO
+
+SELECT * FROM partition_vu_prepare_smallint_table WHERE Id >= -32768 AND Id < 0;
+GO
+
+SELECT * FROM partition_vu_prepare_tinyint_table WHERE Id >= 0 AND Id < 128;
+GO
+
+SELECT * FROM partition_vu_prepare_decimal_table WHERE Id >= 0.0 AND Id < 100.0;
+GO
+
+SELECT * FROM partition_vu_prepare_numeric_table WHERE Id >= 0.0 AND Id < 10.0;
+GO
+
+SELECT * FROM partition_vu_prepare_money_table WHERE Id >= 2.56789 AND Id < 3.56789;
+GO
+
+SELECT * FROM partition_vu_prepare_smallmoney_table WHERE Id >= 2.56789 AND Id < 3.56789;
+GO
+
+SELECT * FROM partition_vu_prepare_date_table WHERE Id >= '2022-01-01' AND Id < '2022-07-01';
+GO
+
+SELECT * FROM partition_vu_prepare_datetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+
+SELECT * FROM partition_vu_prepare_datetime2_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+
+SELECT * FROM partition_vu_prepare_smalldatetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+
+SELECT * FROM partition_vu_prepare_char_table WHERE Id >= 'A' AND Id < 'B';
+GO
+
+SELECT * FROM partition_vu_prepare_varchar_table WHERE Id >= 'Apple' AND Id < 'Banana';
+GO
+
+SELECT * FROM partition_vu_prepare_nvarchar_table WHERE Id >= N'Apple' AND Id < N'Banana';
+GO
+
+SELECT * FROM partition_vu_prepare_nchar_table WHERE Id >= N'A' AND Id < N'B';
+GO
+
+SELECT * FROM partition_vu_prepare_binary_table WHERE Id >= 0x0000 AND Id < 0x0400;
+GO
+
+SELECT * FROM partition_vu_prepare_varbinary_table WHERE Id >= 0x0000000000000000 AND Id < 0x4000000000000000;
+GO
+
+SELECT * FROM partition_vu_prepare_uniqueidentifier_table WHERE Id >= '00000000-0000-0000-0000-000000000000' AND Id < '6F9619FF-8B86-D011-B42D-00C04FC964FF';
+GO
+
+SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10));
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO

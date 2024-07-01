@@ -11,6 +11,7 @@
 #include "utils/pg_locale.h"
 #include "access/xact.h"
 #include "access/relation.h"
+#include "access/reloptions.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
@@ -184,9 +185,6 @@ static bool bbf_check_rowcount_hook(int es_processed);
 
 static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 extern bool called_from_tsql_insert_exec();
-extern Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
-							 Oid valtype, int32 valtypmod,
-							 Oid reqtype, int32 reqtypmod);
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
@@ -203,6 +201,7 @@ static void logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot 
 static object_access_hook_type prev_object_access_hook = NULL;
 static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
 static void revoke_func_permission_from_public(Oid objectId);
+static bool is_partitioned_table_reloptions_allowed(Datum reloptions);
 
 /*****************************************
  * 			Planner Hook
@@ -264,6 +263,7 @@ static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_h
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
 static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_constraint_nulls_ordering_hook = NULL;
+static pltsql_partitioned_table_reloptions_hook_type prev_pltsql_partitioned_table_reloptions_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -455,6 +455,9 @@ InstallExtendedHooks(void)
 
 	prev_pltsql_unique_constraint_nulls_ordering_hook = pltsql_unique_constraint_nulls_ordering_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = unique_constraint_nulls_ordering;
+
+	prev_pltsql_partitioned_table_reloptions_hook = pltsql_partitioned_table_reloptions_hook;
+	pltsql_partitioned_table_reloptions_hook = is_partitioned_table_reloptions_allowed; 
 }
 
 void
@@ -5208,4 +5211,33 @@ unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 	}
 
 	return SORTBY_NULLS_DEFAULT;
+}
+
+/*
+ * is_partitioned_table_reloptions_allowed
+ * 	This function checks if the given reloptions are allowed or not for partitioned tables,
+ * 	returns true if allowed, false otherwise.
+ * 
+ * 	Only bbf_rel_create_date and bbf_original_rel_name reloption
+ * 	are allowed in TSQL dialect and while restoring babelfish database.
+ */
+static bool
+is_partitioned_table_reloptions_allowed(Datum reloptions)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL || babelfish_dump_restore)
+	{
+		List *options = untransformRelOptions(reloptions);
+		ListCell *cell;
+
+		foreach(cell, options)
+		{
+			DefElem  *defel = (DefElem *) lfirst(cell);
+
+			if (pg_strcasecmp(defel->defname, "bbf_rel_create_date") != 0 &&
+					pg_strcasecmp(defel->defname, "bbf_original_rel_name") != 0)
+				return false;
+
+		}
+	}
+	return true;
 }

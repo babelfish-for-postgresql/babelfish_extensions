@@ -542,8 +542,6 @@ void TsqlUnsupportedFeatureHandlerImpl::handle_storage_partition(TSqlParser::Sto
 
 	if (ctx->id().size() < 2) // filegroup
 		handle(INSTR_UNSUPPORTED_TSQL_FILEGROUP, "filegroup", &st_escape_hatch_storage_options, getLineAndPos(ctx));
-	else if (ctx->id().size() == 2) // partitioning
-		handle(INSTR_UNSUPPORTED_TSQL_PARTITION_SCHEME, "partition scheme", &st_escape_hatch_storage_on_partition, getLineAndPos(ctx));
 }
 
 void TsqlUnsupportedFeatureHandlerImpl::handle_for_replication(TSqlParser::For_replicationContext *ctx)
