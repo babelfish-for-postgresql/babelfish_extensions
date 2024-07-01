@@ -227,6 +227,7 @@ FULLTEXT_INDEX
 fts-contains
 fts-contains-utils
 BABEL-4785
+BABEL-4390
 get_tds_id
 HAS_DBACCESS
 identity_function
