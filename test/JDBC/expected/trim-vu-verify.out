@@ -1256,7 +1256,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of Trim function.)~~
+~~ERROR (Message: Argument data type geometry is invalid for argument 2 of Trim function.)~~
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @charSet VARCHAR(10) = '(1 2)';
 SELECT TRIM(@inputString FROM @inputString)
@@ -1271,7 +1271,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of Trim function.)~~
+~~ERROR (Message: Argument data type geography is invalid for argument 2 of Trim function.)~~
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @charSet VARCHAR(10) = '2';
 SELECT TRIM(@inputString FROM @inputString)
