@@ -2314,95 +2314,106 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	{
 		case T_AlterFunctionStmt:
 			{
-				/*
-				* For ALTER PROC, we will:
-				* 1. Save important pg_proc metadata from the current proc (oid, proacl)
-				* 2. drop the current proc
-				* 3. create the new proc
-				* 4. update the pg_proc entry for the new proc with metadata from the old proc
-				* 5. update the babelfish_function_ext entry for the existing proc with new metadata based on the new proc
-				*/
-				AlterFunctionStmt *stmt = (AlterFunctionStmt *) parsetree;
-				bool 				isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
-				bool 				needCleanup;
-				Oid					oldoid;
-				Acl					*proacl;
-				bool				isSameProc;
-				ObjectAddress 		address;
-				CreateFunctionStmt	*cfs;
-				ListCell 			*option, *location_cell = NULL;
-				int 				origname_location = -1;
-
-				if (stmt->objtype != OBJECT_PROCEDURE)
-					break;
-
-				/* All event trigger calls are done only when isCompleteQuery is true */
-				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
-
-				/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
-				PG_TRY();
+				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
-					StartTransactionCommand();
-					if (isCompleteQuery)
-						EventTriggerDDLCommandStart(parsetree);
+				       /*
+					* For ALTER PROC, we will:
+					* 1. Save important pg_proc metadata from the current proc (oid, proacl)
+					* 2. drop the current proc
+					* 3. create the new proc
+					* 4. update the pg_proc entry for the new proc with metadata from the old proc
+					* 5. update the babelfish_function_ext entry for the existing proc with new metadata based on the new proc
+					*/
+					AlterFunctionStmt *stmt = (AlterFunctionStmt *) parsetree;
+					bool 				isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+					bool 				needCleanup;
+					Oid					oldoid;
+					Acl					*proacl;
+					bool				isSameProc;
+					ObjectAddress 		address;
+					CreateFunctionStmt	*cfs;
+					ListCell 			*option, *location_cell = NULL;
+					int 				origname_location = -1;
 
-					foreach (option, stmt->actions)
+					if (!IS_TDS_CLIENT())
 					{
-						DefElem *defel = (DefElem *) lfirst(option);
-						if (strcmp(defel->defname, "location") == 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("TSQL ALTER PROCEDURE is not supported from PostgreSQL endpoint.")));
+					}
+
+					if (stmt->objtype != OBJECT_PROCEDURE)
+						break;
+
+					/* All event trigger calls are done only when isCompleteQuery is true */
+					needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+
+					/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
+					PG_TRY();
+					{
+						StartTransactionCommand();
+						if (isCompleteQuery)
+							EventTriggerDDLCommandStart(parsetree);
+
+						foreach (option, stmt->actions)
 						{
-							/*
-							* location is an implicit option in tsql dialect,
-							* we use this mechanism to store location of function
-							* name so that we can extract original input function
-							* name from queryString.
-							*/
-							origname_location = intVal((Node *) defel->arg);
-							location_cell = option;
-							pfree(defel);
+							DefElem *defel = (DefElem *) lfirst(option);
+							if (strcmp(defel->defname, "location") == 0)
+							{
+							       /*
+								* location is an implicit option in tsql dialect,
+								* we use this mechanism to store location of function
+								* name so that we can extract original input function
+								* name from queryString.
+								*/
+								origname_location = intVal((Node *) defel->arg);
+								location_cell = option;
+								pfree(defel);
+							}
 						}
+
+						/* delete location cell if it exists as it is for internal use only */
+						if (location_cell)
+							stmt->actions = list_delete_cell(stmt->actions, location_cell);
+
+						/* make a CreateFunctionStmt to pass into CreateFunction() */
+						cfs = makeNode(CreateFunctionStmt);
+						cfs->is_procedure = true;
+						cfs->replace = true;
+						cfs->funcname = stmt->func->objname;
+						cfs->parameters = stmt->func->objfuncargs;
+						cfs->returnType = NULL;
+						cfs->options = stmt->actions;
+
+						pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc);
+						if (!isSameProc) /* i.e. different signature */
+							RemoveFunctionById(oldoid);
+						address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
+						pg_proc_update_oid_acl(address, oldoid, proacl);
+						/* Update function/procedure related metadata in babelfish catalog */
+						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
+						if (!isSameProc) {
+						       /*
+							* When the signatures differ we need to manually update the 'function_args' column in 
+							* the 'bbf_schema_permissions' catalog
+							*/
+							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, OBJECT_PROCEDURE, oldoid);
+						}
+						/* Clean up table entries for the create function statement */
+						deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
+						deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
+						deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
+						CommitTransactionCommand();
 					}
-
-					/* delete location cell if it exists as it is for internal use only */
-					if (location_cell)
-						stmt->actions = list_delete_cell(stmt->actions, location_cell);
-
-					/* make a CreateFunctionStmt to pass into CreateFunction() */
-					cfs = makeNode(CreateFunctionStmt);
-					cfs->is_procedure = true;
-					cfs->replace = true;
-					cfs->funcname = stmt->func->objname;
-					cfs->parameters = stmt->func->objfuncargs;
-					cfs->returnType = NULL;
-					cfs->options = stmt->actions;
-
-					pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc);
-					if (!isSameProc) /* i.e. different signature */
-						RemoveFunctionById(oldoid);
-					address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
-					pg_proc_update_oid_acl(address, oldoid, proacl);
-					/* Update function/procedure related metadata in babelfish catalog */
-					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
-					if (!isSameProc) {
-						/*
-						 * When the signatures differ we need to manually update the 'function_args' column in 
-						 * the 'bbf_schema_permissions' catalog
-						 */
-						alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, OBJECT_PROCEDURE, oldoid);
+					PG_FINALLY();
+					{
+						if (needCleanup)
+							EventTriggerEndCompleteQuery();
 					}
-					/* Clean up table entries for the create function statement */
-					deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
-					deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
-					deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
-					CommitTransactionCommand();
+					PG_END_TRY();
+					return;
 				}
-				PG_FINALLY();
-				{
-					if (needCleanup)
-						EventTriggerEndCompleteQuery();
-				}
-				PG_END_TRY();
-				return;
+				break;
 			}
 		case T_AlterTableStmt:
 			{
