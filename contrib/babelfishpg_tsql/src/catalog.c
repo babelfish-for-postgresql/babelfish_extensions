@@ -1837,7 +1837,6 @@ static void alter_guest_schema_for_db(const char *dbname);
 static void rename_view_update_bbf_catalog(RenameStmt *stmt);
 static void rename_procfunc_update_bbf_catalog(RenameStmt *stmt);
 static void rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_type);
-static void rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt);
 
 static int get_privilege_of_object(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
 
@@ -2943,12 +2942,10 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 		 * have consistency with the new names.
 		 *
 		 * List of catalogs which are updated here:
-		 * babelfish_schema_permissions, babelfish_function_ext,
-		 * babelfish_view_def and babelfish_partition_depend.
+		 * babelfish_schema_permissions, babelfish_function_ext, babelfish_view_def
 		 */
 		case OBJECT_TABLE:
 			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
-			rename_table_update_bbf_partition_depend_catalog(stmt);
 			break;
 		case OBJECT_VIEW:
 			rename_view_update_bbf_catalog(stmt);
@@ -5349,7 +5346,7 @@ remove_entry_from_bbf_partition_depend(int16 dbid, char *schema_name, char *tabl
  * 	Updates table_name in sys.babelfish_partition_depend catalog for
  * 	RENAME TABLE command to have consistency with the new names.
  */
-static void
+void
 rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt)
 {
 	Relation	rel;
@@ -5366,9 +5363,13 @@ rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt)
 
 	/* Find the logical schema name and dbid from physical schema name. */
 	logical_schema_name = (char *) get_logical_schema_name(stmt->relation->schemaname, true);
-	dbid = get_dbid_from_physical_schema_name(stmt->relation->schemaname, true);
 
-	if (logical_schema_name && !is_bbf_partitioned_table(dbid, logical_schema_name, table_name))
+	if (!logical_schema_name) /* not a tsql schema */
+		return;
+
+	dbid = get_dbid_from_physical_schema_name(stmt->relation->schemaname, false);
+
+	if (!is_bbf_partitioned_table(dbid, logical_schema_name, table_name))
 	{
 		pfree(logical_schema_name);
 		return;

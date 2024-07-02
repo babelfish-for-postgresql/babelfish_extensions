@@ -157,6 +157,9 @@ GO
 DROP TABLE partition_vu_prepare_int_table;
 GO
 
+DROP TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
+GO
+
 
 
 --------------------------------------------------
@@ -321,7 +324,10 @@ GO
 DROP PROCEDURE PartitionProcedureCreatePartitionScheme
 GO
 
-DROP PROCEDURE PartitionProcedureCreatePartitionFunctionAndScheme
+DROP PROCEDURE PartitionProcedureCreatePartitionTable
+GO
+
+DROP PROCEDURE PartitionProcedureCreatePartitionFunctionSchemeAndTable
 GO
 
 DROP PROCEDURE PartitionProcedureDropPartitionFunction
@@ -330,7 +336,10 @@ GO
 DROP PROCEDURE PartitionProcedureDropPartitionScheme
 GO
 
-DROP PROCEDURE PartitionProcedureDropPartitionFunctionAndScheme
+DROP PROCEDURE PartitionProcedureDropPartitionTable
+GO
+
+DROP PROCEDURE PartitionProcedureDropPartitionFunctionSchemeAndTable
 GO
 
 
@@ -354,3 +363,14 @@ go
 
 DROP DATABASE PartitionDb
 go
+
+-- validate that catalogs don't have stale entries
+-- psql
+SELECT count(*) FROM sys.babelfish_partition_function;
+GO
+
+SELECT count(*) FROM sys.babelfish_partition_scheme
+GO
+
+SELECT count(*) FROM sys.babelfish_partition_depend
+GO

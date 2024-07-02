@@ -418,11 +418,17 @@ PARTITION PartitionDb_PartitionFunction
 ALL TO ([PRIMARY]);
 GO
 
+CREATE TABLE PartitionDb_PartitionTable (
+    Id INT,
+    Value sys.varchar(20)
+) ON PartitionDb_PartitionScheme(Id);
+GO
+
 USE MASTER
 go
 
 ---------------------------------------------------------------
---- CREATE/DROP Partition Function/Scheme inside Procedure
+--- CREATE/DROP Partition Function/Scheme/Table inside Procedure
 ---------------------------------------------------------------
 CREATE PROCEDURE PartitionProcedureCreatePartitionFunction AS
 BEGIN
@@ -439,14 +445,26 @@ ALL TO ([PRIMARY])
 END;
 GO
 
+CREATE PROCEDURE PartitionProcedureCreatePartitionTable AS
+BEGIN
+CREATE TABLE PartitionTableInsideProc1(
+    Id INT,
+    Value sys.varchar(20)
+) ON PartitionSchemeInsideProc1(Id);
+END;
+GO
 
-CREATE PROCEDURE PartitionProcedureCreatePartitionFunctionAndScheme AS
+CREATE PROCEDURE PartitionProcedureCreatePartitionFunctionSchemeAndTable AS
 BEGIN
 CREATE PARTITION FUNCTION PartitionFunctionInsideProc2 (int)
 AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
 CREATE PARTITION SCHEME PartitionSchemeInsideProc2 AS
 PARTITION PartitionFunctionInsideProc2
 ALL TO ([PRIMARY]);
+CREATE TABLE PartitionTableInsideProc2(
+    Id INT,
+    Value sys.varchar(20)
+) ON PartitionSchemeInsideProc2(Id);
 END;
 Go
 
@@ -462,8 +480,15 @@ DROP PARTITION SCHEME PartitionSchemeInsideProc1
 END;
 GO
 
-CREATE PROCEDURE PartitionProcedureDropPartitionFunctionAndScheme AS
+CREATE PROCEDURE PartitionProcedureDropPartitionTable AS
 BEGIN
+DROP TABLE PartitionTableInsideProc1
+END;
+GO
+
+CREATE PROCEDURE PartitionProcedureDropPartitionFunctionSchemeAndTable AS
+BEGIN
+DROP TABLE PartitionTableInsideProc2;
 DROP PARTITION SCHEME PartitionSchemeInsideProc2;
 DROP PARTITION FUNCTION PartitionFunctionInsideProc2;
 END;
@@ -612,6 +637,13 @@ CREATE TABLE partition_vu_prepare_sqlvariant_table (
     Id SQL_VARIANT,
     Value sys.varchar(20)
 ) ON SqlVariantPartitionScheme(Id);
+GO
+
+-- identifier length greater than 64
+CREATE TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (
+    Id INT,
+    Value sys.varchar(20)
+) ON IntPartitionScheme(Id);
 GO
 
 CREATE VIEW GetPartitionedTableListFromSysTablesView

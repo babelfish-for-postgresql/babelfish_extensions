@@ -472,6 +472,7 @@ extern void	add_entry_to_bbf_partition_depend(int16 dbid, char* partition_scheme
 extern void	remove_entry_from_bbf_partition_depend(int16 dbid, char *schema_name, char *table_name);
 extern bool	is_bbf_partitioned_table(int16 dbid, char *schema_name, char *table_name);
 extern char	*get_partition_scheme_for_partitioned_table(int16 dbid, char *schema_name, char *table_name);
+extern void rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt);
 
 
 typedef struct FormData_bbf_extended_properties

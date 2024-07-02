@@ -3735,10 +3735,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				else
 					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 											params, queryEnv, dest, qc);
+				
+				if (stmt->renameType == OBJECT_TABLE)
+				{
+					rename_table_update_bbf_partitions_name(stmt);
+					rename_table_update_bbf_partition_depend_catalog(stmt);
+				}
 				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
-					if (stmt->renameType == OBJECT_TABLE)
-						rename_table_update_bbf_partitions_name(stmt);
 					rename_update_bbf_catalog(stmt);
 					/* Clean up. Restore previous state. */
 					return;
@@ -7026,7 +7030,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	char		*logical_schema_name;
 	char		*table_name = stmt->relation->relname;
 	List		*list = NIL;
-	int16		dbid = get_cur_db_id();
+	int16		dbid;
 	char		*unique_hash;
 	PlannedStmt	*wrapper;
 	RenameStmt	*rename_partition_stmt = NULL;
@@ -7042,7 +7046,12 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	char		*partition_name;
 	char		*new_partition_name;
 
-	logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, false);
+	logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, true);
+
+	if (!logical_schema_name) /* not a tsql schema */
+		return;
+	
+	dbid = get_dbid_from_physical_schema_name(physical_schema_name, false);
 	
 	if (!is_bbf_partitioned_table(dbid, logical_schema_name, table_name))
 	{

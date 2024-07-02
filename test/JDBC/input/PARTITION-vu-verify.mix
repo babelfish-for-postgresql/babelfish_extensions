@@ -1,5 +1,5 @@
 --------------------------------------------------
---- CREATE PARTITION FUNCTION/SCHEME using procedure
+--- CREATE PARTITION FUNCTION/SCHEME/TABLE using procedure
 --------------------------------------------------
 EXEC PartitionProcedureCreatePartitionFunction
 GO
@@ -7,11 +7,14 @@ GO
 EXEC PartitionProcedureCreatePartitionScheme
 GO
 
-EXEC PartitionProcedureCreatePartitionFunctionAndScheme
+EXEC PartitionProcedureCreatePartitionTable
+GO
+
+EXEC PartitionProcedureCreatePartitionFunctionSchemeAndTable
 GO
 
 --------------------------------------------------
---- CREATE PARTITION FUNCTION/SCHEME inside Function
+--- CREATE PARTITION FUNCTION/SCHEME/TABLE inside Function
 --------------------------------------------------
 CREATE FUNCTION TestFunctionCreatePartitionFunction()
 RETURNS INT
@@ -48,6 +51,26 @@ RETURNS INT
 AS
 BEGIN
     DROP PARTITION SCHEME IntPartitionScheme;
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION TestFunctionCreatePartitionTable()
+RETURNS INT
+AS
+BEGIN
+    CREATE TABLE TestPartitionTable (
+    Id INT,
+    Value sys.varchar(20)
+    ) ON IntPartitionScheme(Id);
+END;
+GO
+
+CREATE FUNCTION TestFunctionDropPartitionTable()
+RETURNS INT
+AS
+BEGIN
+    DROP TABLE partition_vu_prepare_int_table;
     RETURN 1;
 END;
 GO
@@ -274,6 +297,12 @@ GO
 DROP PARTITION FUNCTION IntPartitionFunction
 GO
 
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Scheme when there is dependent Table on it
+-----------------------------------------------------------------------------------
+DROP PARTITION SCHEME IntPartitionScheme
+GO
+
 
 -----------------------------------------------
 --- Filegroup behaviour with Partition Scheme 
@@ -434,6 +463,11 @@ SELECT CURRENT_USER
 GO
 
 -- CREATE/DROP should throw permission error
+
+------------------------------------------------------------
+--- only db owner and logins which are member of sysadmin
+--- are allowed to create/drop partition function and scheme
+------------------------------------------------------------
 CREATE PARTITION FUNCTION TestPartitionFunction (int)
 AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
 Go
@@ -449,7 +483,9 @@ go
 DROP PARTITION SCHEME IntPartitionScheme
 go
 
--- but they can access the metadata 
+------------------------------------------
+--- all user can access the metadata
+------------------------------------------
 SELECT 
         name, type, type_desc, fanout, boundary_value_on_right, is_system
     FROM 
@@ -464,6 +500,40 @@ SELECT
         sys.partition_functions pf on (ps.function_id = pf.function_id)
 go
 
+------------------------------------------------------------
+--- all user can use the metadata of the partition scheme 
+--- to create table if they permission to create table
+------------------------------------------------------------
+
+-- grant create permission to user on schema so that it can create table
+-- psql
+GRANT CREATE ON SCHEMA partitiondb_dbo TO partitiondb_partition_u1;
+GO
+
+-- tsql     user=partition_l1 password=12345678
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+
+CREATE TABLE PartitionDb_TestPartitionTable (
+    Id INT,
+    Value sys.varchar(20)
+) ON PartitionDb_PartitionScheme(Id);
+GO
+
+DROP TABLE PartitionDb_TestPartitionTable
+GO
+
+-- revoke create permission from user on schema
+-- psql
+REVOKE CREATE ON SCHEMA partitiondb_dbo FROM partitiondb_partition_u1;
+GO
+
+-----------------------------------------------------------------------------------
+--- DB owner should be able to create/drop partition function and scheme
+----------------------------------------------------------------------------------
 -- make the user a DB owner
 -- tsql
 USE PartitionDb;
@@ -566,15 +636,18 @@ GO
 
 
 --------------------------------------------------
---- DROP PARTITION FUNCTION/SCHEME using procedure
+--- DROP PARTITION FUNCTION/SCHEME/TABLE using procedure
 --------------------------------------------------
+EXEC PartitionProcedureDropPartitionTable
+GO
+
 EXEC PartitionProcedureDropPartitionScheme
 GO
 
 EXEC PartitionProcedureDropPartitionFunction
 GO
 
-EXEC PartitionProcedureDropPartitionFunctionAndScheme
+EXEC PartitionProcedureDropPartitionFunctionSchemeAndTable
 GO
 
 ---------------------------------------------------------------------------
@@ -1070,4 +1143,38 @@ DROP TABLE TestPartitionedTable15
 GO
 
 DROP TABLE TestPartitionedTable17
+GO
+
+-------------------------------------------------------------------------------------------
+--- Rename Operation on Partitioned Tables should update name in babelfish_partition_depend
+--- and it should also update the name of all the partitions
+-------------------------------------------------------------------------------------------
+-- psql
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table';
+GO
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
+GO
+
+-- tsql
+-- trigger rename from TSQL endpoint
+EXEC sp_rename 'partition_vu_prepare_int_table', 'partition_vu_prepare_int_table_renamed', 'OBJECT'
+GO
+
+-- psql
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table_renamed';
+GO
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table_renamed')::regclass;
+GO
+
+-- trigger rename from PSQL endpoint
+ALTER TABLE master_dbo.partition_vu_prepare_int_table_renamed RENAME TO partition_vu_prepare_int_table;
+GO
+
+-- we should get orginal here 
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table';
+GO
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
 GO
