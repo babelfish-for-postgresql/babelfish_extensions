@@ -1247,7 +1247,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.801 ms
+Babelfish T-SQL Batch Parsing Time: 0.741 ms
 ~~END~~
 
 
@@ -1266,7 +1266,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -1284,7 +1284,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.104 ms
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
 ~~END~~
 
 
@@ -1302,7 +1302,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -1321,7 +1321,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -1340,7 +1340,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -1358,7 +1358,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -1376,7 +1376,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -1394,7 +1394,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -1412,7 +1412,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -1430,7 +1430,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -1448,7 +1448,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -1470,7 +1470,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.103 ms
 ~~END~~
 
 
@@ -1490,7 +1490,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -1510,7 +1510,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -1532,7 +1532,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -1551,7 +1551,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -1588,7 +1588,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -1608,14 +1608,14 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
 
----------------------------------------------------------------------------
---- Query plan of select on partiitoned tables with predicate and enforced index scan
----------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+--- Query plan of select on partitioned tables with predicate and enforced index scan
+-----------------------------------------------------------------------------------------
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
 
@@ -1648,7 +1648,7 @@ Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_idx" on "36386
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 36.075 ms
+Babelfish T-SQL Batch Parsing Time: 35.063 ms
 ~~END~~
 
 
@@ -1678,7 +1678,7 @@ Index Scan using "12025e103721b70925744c196ce004cd_partition_1_id_idx" on "12025
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.771 ms
+Babelfish T-SQL Batch Parsing Time: 7.701 ms
 ~~END~~
 
 
@@ -1693,7 +1693,7 @@ Index Scan using "61446d711d19b5970809387caa7fd3d3_partition_1_id_idx" on "61446
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.190 ms
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
 ~~END~~
 
 
@@ -1708,7 +1708,7 @@ Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.694 ms
+Babelfish T-SQL Batch Parsing Time: 6.720 ms
 ~~END~~
 
 
@@ -1723,7 +1723,7 @@ Index Scan using "57405760297bb338f333c148aac5f845_partition_1_id_idx" on "57405
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.177 ms
+Babelfish T-SQL Batch Parsing Time: 0.198 ms
 ~~END~~
 
 
@@ -1741,7 +1741,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.228 ms
+Babelfish T-SQL Batch Parsing Time: 0.239 ms
 ~~END~~
 
 
@@ -1759,7 +1759,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.157 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 
@@ -1774,7 +1774,7 @@ Index Scan using "4867824426e52acac5c93d9cbe8aa366_partition_1_id_idx" on "48678
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.893 ms
+Babelfish T-SQL Batch Parsing Time: 6.834 ms
 ~~END~~
 
 
@@ -1804,7 +1804,7 @@ Index Scan using "5ed003cf80dacbb8cce0b21e175f7f94_partition_1_id_idx" on "5ed00
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.164 ms
+Babelfish T-SQL Batch Parsing Time: 0.163 ms
 ~~END~~
 
 
@@ -1819,7 +1819,7 @@ Index Scan using b5c2e665ec4a1219ba8510e33e45379b_partition_1_id_idx on b5c2e665
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.159 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 
@@ -1834,7 +1834,7 @@ Index Scan using "5d20bd977eb6e6f1304dec45598c09f5_partition_1_id_idx" on "5d20b
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.166 ms
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
 ~~END~~
 
 
@@ -1849,7 +1849,7 @@ Index Scan using "933a5c7f0de13890324e53ee0711424b_partition_1_id_idx" on "933a5
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.199 ms
+Babelfish T-SQL Batch Parsing Time: 0.168 ms
 ~~END~~
 
 
@@ -1864,7 +1864,7 @@ Index Scan using "320465af1d1bd21f5b29c57f9f4e5c51_partition_1_id_idx" on "32046
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.165 ms
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -1896,7 +1896,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.161 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 
@@ -1922,7 +1922,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.925 ms
+Babelfish T-SQL Batch Parsing Time: 9.551 ms
 ~~END~~
 
 
@@ -1937,7 +1937,7 @@ Index Scan using "77718961234110c3a22a3c977bc252d8_partition_1_id_idx" on "77718
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.182 ms
+Babelfish T-SQL Batch Parsing Time: 0.232 ms
 ~~END~~
 
 
@@ -1952,7 +1952,7 @@ Index Scan using f3baf999c06d6ea82082a4c549baeb77_partition_1_id_idx on f3baf999
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.209 ms
+Babelfish T-SQL Batch Parsing Time: 0.204 ms
 ~~END~~
 
 
@@ -1967,7 +1967,7 @@ Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.280 ms
+Babelfish T-SQL Batch Parsing Time: 7.351 ms
 ~~END~~
 
 
@@ -1993,3 +1993,438 @@ text
 on
 ~~END~~
 
+
+
+
+-- psql
+------------------------------------------
+--- Blocked Operation For Partitioned Tables
+-------------------------------------------
+-- user should not be allowed to ATTACH/DETACH partition 
+-- for babelfish partitioned table from psql endpoint
+-- Attempt to detach
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot detach partition from babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- Attempt to detach using CONCURRENTLY option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+CONCURRENTLY;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot detach partition from babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- Attempt to detach using FINALIZE option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+FINALIZE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot detach partition from babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- Attempt to attach with Default value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable DEFAULT;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot attach partition to babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- Attempt to attach with random value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable FOR VALUES FROM (10) TO (20);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot attach partition to babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+
+-- user should not be allowed to modify partition 
+-- of babelfish partitioned table neither from psql nor tsql endpoint
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+ADD new_col int
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- tsql
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.)~~
+
+
+
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.)~~
+
+
+-- with explicity schema name
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.)~~
+
+
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.)~~
+
+
+--------------------------------------------------------------------
+--- Unsupported Option with CREATE TABLE with PARTITION SCHEME
+--------------------------------------------------------------------
+-- Computed column as partitioning column is not yet supported in babelfish
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value
+)
+ON IntPartitionScheme(computed_col);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot use generated column in partition key)~~
+
+
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value PERSISTED
+)
+ON IntPartitionScheme(computed_col);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot use generated column in partition key)~~
+
+
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+---------------------------------------------------------------
+-- Attempt to create with multiple columns as partitioning scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id, value);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ',' at line 10 and character position 24)~~
+
+
+-- Attempt to create with a partition scheme that doesn't exist and column that doesn't exist in the table
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(NonExistentColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "nonexistentcolumn" named in partition key does not exist)~~
+
+
+-- Attempt to create with a partition scheme that doesn't exist
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(id);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid partition scheme 'nonexistentpartitionscheme' specifed.)~~
+
+
+-- Attempt to use two part name with partition scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON master.IntPartitionScheme(id);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 7 and character position 9)~~
+
+
+-- Attempt to create with a unique constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT UNIQUE
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unique constraint on partitioned table must include all partitioning columns)~~
+
+
+-- Attempt to create with a primary key constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT PRIMARY KEY
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unique constraint on partitioned table must include all partitioning columns)~~
+
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+--- Attempt to create with an incompatible partition column data type
+---------------------------------------------------------------
+CREATE TABLE TestPartitionedTable1
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 2)
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'decimal' which is different from the partition function 'IntPartitionFunction' parameter data type 'int'.)~~
+
+
+CREATE TABLE TestPartitionedTable2
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON DatePartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'datetime' which is different from the partition function 'DatePartitionFunction' parameter data type 'date'.)~~
+
+
+CREATE TABLE TestPartitionedTable3
+(
+    Id INT,
+    PartitionColumn VARCHAR(10)
+)
+ON CharPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'varchar' which is different from the partition function 'CharPartitionFunction' parameter data type 'char'.)~~
+
+
+CREATE TABLE TestPartitionedTable4
+(
+    Id INT,
+    PartitionColumn VARBINARY(10)
+)
+ON BinaryPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'varbinary' which is different from the partition function 'BinaryPartitionFunction' parameter data type 'binary'.)~~
+
+
+CREATE TABLE TestPartitionedTable5
+(
+    Id INT,
+    PartitionColumn SMALLINT
+)
+ON BigIntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int2' which is different from the partition function 'BigIntPartitionFunction' parameter data type 'bigint'.)~~
+
+
+CREATE TABLE TestPartitionedTable6
+(
+    Id INT,
+    PartitionColumn TINYINT
+)
+ON SmallIntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+CREATE TABLE TestPartitionedTable7
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 5)
+)
+ON TinyIntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'decimal' which is different from the partition function 'TinyIntPartitionFunction' parameter data type 'tinyint'.)~~
+
+
+CREATE TABLE TestPartitionedTable8
+(
+    Id INT,
+    PartitionColumn NUMERIC(5, 2)
+)
+ON DecimalPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable9
+(
+    Id INT,
+    PartitionColumn MONEY
+)
+ON NumericPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'money' which is different from the partition function 'NumericPartitionFunction' parameter data type 'numeric'.)~~
+
+
+CREATE TABLE TestPartitionedTable10
+(
+    Id INT,
+    PartitionColumn SMALLMONEY
+)
+ON MoneyPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable11
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON SmallMoneyPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'datetime' which is different from the partition function 'SmallMoneyPartitionFunction' parameter data type 'smallmoney'.)~~
+
+
+CREATE TABLE TestPartitionedTable12
+(
+    Id INT,
+    PartitionColumn DATETIME2(3)
+)
+ON DateTimePartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'datetime2' which is different from the partition function 'DateTimePartitionFunction' parameter data type 'datetime'.)~~
+
+
+CREATE TABLE TestPartitionedTable13
+(
+    Id INT,
+    PartitionColumn SMALLDATETIME
+)
+ON DateTime2PartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'smalldatetime' which is different from the partition function 'DateTime2PartitionFunction' parameter data type 'datetime2'.)~~
+
+
+CREATE TABLE TestPartitionedTable14
+(
+    Id INT,
+    PartitionColumn NVARCHAR(10)
+)
+ON SmallDateTimePartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'nvarchar' which is different from the partition function 'SmallDateTimePartitionFunction' parameter data type 'smalldatetime'.)~~
+
+
+CREATE TABLE TestPartitionedTable15
+(
+    Id INT,
+    PartitionColumn VARCHAR(10)
+)
+ON NVarCharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable16
+(
+    Id INT,
+    PartitionColumn NCHAR(5)
+)
+ON VarCharPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'nchar' which is different from the partition function 'VarCharPartitionFunction' parameter data type 'varchar'.)~~
+
+
+CREATE TABLE TestPartitionedTable17
+(
+    Id INT,
+    PartitionColumn CHAR(5)
+)
+ON NCharPartitionScheme(PartitionColumn);
+GO
+
+DROP TABLE TestPartitionedTable8
+GO
+
+DROP TABLE TestPartitionedTable10
+GO
+
+DROP TABLE TestPartitionedTable15
+GO
+
+DROP TABLE TestPartitionedTable17
+GO

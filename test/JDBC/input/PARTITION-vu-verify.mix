@@ -690,9 +690,9 @@ SELECT * FROM partition_vu_prepare_sqlvariant_table;
 GO
 
 
----------------------------------------------------------------------------
---- Query plan of select on partiitoned tables with predicate and enforced index scan
----------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+--- Query plan of select on partitioned tables with predicate and enforced index scan
+-----------------------------------------------------------------------------------------
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
 
@@ -770,4 +770,304 @@ GO
 SELECT set_config('enable_seqscan', 'on', false);
 SELECT set_config('enable_bitmapscan', 'on', false);
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+GO
+
+
+------------------------------------------
+--- Blocked Operation For Partitioned Tables
+-------------------------------------------
+-- user should not be allowed to ATTACH/DETACH partition 
+-- for babelfish partitioned table from psql endpoint
+
+-- psql
+-- Attempt to detach
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+
+-- Attempt to detach using CONCURRENTLY option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+CONCURRENTLY;
+GO
+
+-- Attempt to detach using FINALIZE option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+FINALIZE;
+GO
+
+-- Attempt to attach with Default value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable DEFAULT;
+GO
+
+-- Attempt to attach with random value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable FOR VALUES FROM (10) TO (20);
+GO
+
+-- user should not be allowed to modify partition 
+-- of babelfish partitioned table neither from psql nor tsql endpoint
+
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+ADD new_col int
+GO
+
+
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+GO
+
+-- tsql
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+
+
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+
+-- with explicity schema name
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+
+--------------------------------------------------------------------
+--- Unsupported Option with CREATE TABLE with PARTITION SCHEME
+--------------------------------------------------------------------
+-- Computed column as partitioning column is not yet supported in babelfish
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value
+)
+ON IntPartitionScheme(computed_col);
+GO
+
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value PERSISTED
+)
+ON IntPartitionScheme(computed_col);
+GO
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+---------------------------------------------------------------
+
+-- Attempt to create with multiple columns as partitioning scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id, value);
+GO
+
+-- Attempt to create with a partition scheme that doesn't exist and column that doesn't exist in the table
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(NonExistentColumn);
+GO
+
+-- Attempt to create with a partition scheme that doesn't exist
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(id);
+GO
+
+-- Attempt to use two part name with partition scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON master.IntPartitionScheme(id);
+GO
+
+-- Attempt to create with a unique constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT UNIQUE
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+
+-- Attempt to create with a primary key constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT PRIMARY KEY
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+--- Attempt to create with an incompatible partition column data type
+---------------------------------------------------------------
+CREATE TABLE TestPartitionedTable1
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 2)
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable2
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON DatePartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable3
+(
+    Id INT,
+    PartitionColumn VARCHAR(10)
+)
+ON CharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable4
+(
+    Id INT,
+    PartitionColumn VARBINARY(10)
+)
+ON BinaryPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable5
+(
+    Id INT,
+    PartitionColumn SMALLINT
+)
+ON BigIntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable6
+(
+    Id INT,
+    PartitionColumn TINYINT
+)
+ON SmallIntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable7
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 5)
+)
+ON TinyIntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable8
+(
+    Id INT,
+    PartitionColumn NUMERIC(5, 2)
+)
+ON DecimalPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable9
+(
+    Id INT,
+    PartitionColumn MONEY
+)
+ON NumericPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable10
+(
+    Id INT,
+    PartitionColumn SMALLMONEY
+)
+ON MoneyPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable11
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON SmallMoneyPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable12
+(
+    Id INT,
+    PartitionColumn DATETIME2(3)
+)
+ON DateTimePartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable13
+(
+    Id INT,
+    PartitionColumn SMALLDATETIME
+)
+ON DateTime2PartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable14
+(
+    Id INT,
+    PartitionColumn NVARCHAR(10)
+)
+ON SmallDateTimePartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable15
+(
+    Id INT,
+    PartitionColumn VARCHAR(10)
+)
+ON NVarCharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable16
+(
+    Id INT,
+    PartitionColumn NCHAR(5)
+)
+ON VarCharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable17
+(
+    Id INT,
+    PartitionColumn CHAR(5)
+)
+ON NCharPartitionScheme(PartitionColumn);
+GO
+
+DROP TABLE TestPartitionedTable8
+GO
+
+DROP TABLE TestPartitionedTable10
+GO
+
+DROP TABLE TestPartitionedTable15
+GO
+
+DROP TABLE TestPartitionedTable17
 GO

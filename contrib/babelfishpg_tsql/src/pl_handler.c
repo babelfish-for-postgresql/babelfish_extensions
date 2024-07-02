@@ -2531,26 +2531,86 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 				}
-				else if (!babelfish_dump_restore && atstmt->relation->schemaname)
+				
+				if (!babelfish_dump_restore && atstmt->objtype == OBJECT_TABLE && 
+					(sql_dialect == SQL_DIALECT_TSQL || atstmt->relation->schemaname != NULL))
 				{
-					AlterTableCmd *cmd = (AlterTableCmd *) linitial(atstmt->cmds);
+					AlterTableCmd	*cmd = (AlterTableCmd *) linitial(atstmt->cmds);
+					char		*logical_schema_name;
+					int16		dbid;
+					
+					/*
+					 * Find default schema for current user when schema
+					 * is not explicitly specified for TSQL dialect.
+					 */
+					if (!atstmt->relation->schemaname)
+					{
+						char		*db_name = get_cur_db_name();
+						const char	*user = get_user_for_database(db_name);
+			
+						dbid = get_cur_db_id();
+						logical_schema_name = get_authid_user_ext_schema_name(db_name, user);
+						pfree(db_name);
+					}
+					else
+					{
+						logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
+						if (!logical_schema_name) /* not a tsql schema */
+							break;
+						
+						/* Find dbid from physical schema name for a tsql schema. */
+						dbid = get_dbid_from_physical_schema_name(atstmt->relation->schemaname, true);
+					}
+					
 					/*
 					 * For babelfish partitioned table, user should not be
-					 * allowed to modify partitions of a table directly.
+					 * allowed to attach/detach of table directly.
 					 */
-					if (cmd->subtype == AT_AttachPartition || cmd->subtype == AT_DetachPartition || cmd->subtype == AT_DetachPartitionFinalize)
+					if (cmd->subtype == AT_AttachPartition || cmd->subtype == AT_DetachPartition 
+						|| cmd->subtype == AT_DetachPartitionFinalize)
 					{
-						char *logical_schemaname = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
-						if (logical_schemaname)
-						{
-							int16 dbid = get_dbid_from_physical_schema_name(atstmt->relation->schemaname, true);
-							if (is_bbf_partitioned_table(dbid, logical_schemaname, atstmt->relation->relname))
-								ereport(ERROR, 
-									(errcode(ERRCODE_UNDEFINED_OBJECT), 
-										errmsg("Cannot modify the partitions of babelfish partitioned table '%s'.", atstmt->relation->relname)));
-							pfree(logical_schemaname);
-						}
+						if (is_bbf_partitioned_table(dbid, logical_schema_name, atstmt->relation->relname))
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
+									errmsg("Cannot %s babelfish partitioned table '%s'.",
+											cmd->subtype == AT_AttachPartition ? "attach partition to" : "detach partition from",
+											atstmt->relation->relname)));
 					}
+					/*
+					 * For partition of babelfish partitioned table, user should not
+					 * be allowed to modify the partition.
+					 */
+					else
+					{
+						Oid		relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
+						bool		is_partition_table = false;
+						HeapTuple	tuple;
+						char		*parent_table_name;
+
+						tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+						if (HeapTupleIsValid(tuple))
+						{
+							Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
+							is_partition_table = classForm->relispartition;
+							ReleaseSysCache(tuple);
+						}
+
+						if (!is_partition_table)
+						{
+							pfree(logical_schema_name);
+							break;
+						}
+
+						parent_table_name = get_rel_name(get_partition_parent(relid, true));
+
+						if (is_bbf_partitioned_table(dbid, logical_schema_name, parent_table_name))
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
+									errmsg("Cannot modify the partition '%s' of babelfish partitioned table '%s'.", 
+										atstmt->relation->relname, parent_table_name)));
+						pfree(parent_table_name);
+					}
+					pfree(logical_schema_name);
 				}
 				break;
 			}
@@ -6580,10 +6640,10 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	partitioning_column_type_oid = getBaseType(partitioning_column_type_oid);
 	
 	/*
-	 * Validate that type of partitioning columns is corecible
+	 * Validate that type of partitioning columns is same
 	 * to input parameter type of partition function.
 	 */
-	if (!IsBinaryCoercible(input_type_oid, partitioning_column_type_oid))
+	if (partitioning_column_type_oid != input_type_oid)
 	{
 		ereport(ERROR, 
 			(errcode(ERRCODE_UNDEFINED_OBJECT), 
