@@ -397,11 +397,11 @@ go
 
 ~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
 
-grant select on schema::non_existing_schema to guest; -- should fail 
+grant select on schema::babel_4344_d1_non_existing_schema to guest; -- should fail 
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "non_existing_schema" does not exist)~~
+~~ERROR (Message: schema "babel_4344_d1_babel_4344_d1_non_existing_schema" does not exist)~~
 
 -- grant statement via a procedure
 create procedure grant_perm_proc as begin exec('grant select on schema::[] to guest') end;
@@ -939,7 +939,7 @@ go
 
 -- psql
 -- grant object permission
-grant select on babel_4344_s1.babel_4344_t1_new to babel_4344_d1_babel_4344_u1;
+grant select on babel_4344_d1_babel_4344_s1.babel_4344_t1_new to babel_4344_d1_babel_4344_u1;
 go
 
 -- tsql
@@ -970,7 +970,7 @@ go
 
 -- psql
 -- revoke schema permission
-revoke select on all tables in schema babel_4344_s1 from babel_4344_d1_babel_4344_u1;
+revoke select on all tables in schema babel_4344_d1_babel_4344_s1 from babel_4344_d1_babel_4344_u1;
 go
 
 -- tsql user=babel_4344_l1 password=12345678
@@ -4638,4 +4638,20 @@ go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
 ~~END~~
+
+
+-- tsql
+-- should properly throw an error when schema does not exist
+GRANT SELECT on doesnt_exist.tbl TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "master_doesnt_exist" does not exist)~~
+
+
+grant execute on xyz.babel_4344_p to public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "master_xyz" does not exist)~~
 
