@@ -516,3 +516,4 @@ Test_alter_db_rename
 Test_sp_renamedb
 Test_sp_rename_database
 BABEL-4869
+BABEL-5071
