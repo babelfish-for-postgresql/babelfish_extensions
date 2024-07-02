@@ -2485,8 +2485,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							EventTriggerEndCompleteQuery();
 					}
 					PG_END_TRY();
+					return;
 				}
-				return;
+				break;
 			}
 		case T_AlterTableStmt:
 			{
