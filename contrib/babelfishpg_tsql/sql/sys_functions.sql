@@ -3145,7 +3145,7 @@ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 -- Additional handling is added for TRIM function with 2 arguments, 
 -- hence only following two definitions are required.
-CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NVARCHAR, characters sys.VARCHAR)
+CREATE OR REPLACE FUNCTION sys.TRIM(characters sys.VARCHAR, string sys.NVARCHAR)
 RETURNS sys.NVARCHAR
 AS 
 $BODY$
@@ -3155,7 +3155,7 @@ END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR, characters sys.VARCHAR)
+CREATE OR REPLACE FUNCTION sys.TRIM(characters sys.VARCHAR, string sys.VARCHAR)
 RETURNS sys.VARCHAR
 AS 
 $BODY$

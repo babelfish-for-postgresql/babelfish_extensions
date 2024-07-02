@@ -922,7 +922,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type "binary" is invalid for argument 2 of trim function.)~~
+~~ERROR (Message: Argument data type "binary" is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString VARBINARY(50) = 0x41424344, @charSet VARBINARY(2) = 0x4144
@@ -930,7 +930,7 @@ SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of Trim function.)~~
 
 
 -- input type UDT
@@ -957,7 +957,7 @@ SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_UDT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type image is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type image is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @charSet VARCHAR(10) = 'ab'
@@ -975,7 +975,7 @@ SELECT TRIM('12' FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type date is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type date is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @inputString date = '2016-12-21', @charSet VARCHAR(10) = '12';
@@ -983,7 +983,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type date is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type date is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @inputString date = '2016-12-21'
@@ -991,7 +991,7 @@ SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type date is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type date is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @date date = '12-21-16';  
@@ -1000,7 +1000,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetime is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type datetime is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @date date = '12-21-16';  
@@ -1009,7 +1009,7 @@ SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetime is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type datetime is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10', @charSet VARCHAR(10) = '12';
@@ -1017,7 +1017,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type smalldatetime is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
@@ -1025,7 +1025,7 @@ SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString time(4) = '12:10:05.1237', @charSet VARCHAR(10) = '10';
@@ -1033,7 +1033,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type time without time zone is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @inputString time(4) = '12:10:05.1237';
@@ -1041,7 +1041,7 @@ SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0', @charSet VARCHAR(10) = '23';
@@ -1049,7 +1049,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
@@ -1057,7 +1057,7 @@ SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237', @charSet VARCHAR(10) = '23';
@@ -1065,7 +1065,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type datetime2 is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
@@ -1073,7 +1073,7 @@ SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString decimal = 123456, @charSet decimal = 12;
@@ -1081,7 +1081,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type "decimal" is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type "decimal" is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString numeric = 12345.12, @charSet numeric = 12;
@@ -1089,7 +1089,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type numeric is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type numeric is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString float = 12345.1, @charSet float = 12;
@@ -1097,7 +1097,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type double precision is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type double precision is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString real = 12345.1, @charSet real = 12;
@@ -1105,7 +1105,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type real is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type real is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString bigint = 12345678, @charSet bigint = 12;
@@ -1113,7 +1113,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type bigint is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type bigint is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString int = 12345678, @charSet int = 12;
@@ -1121,7 +1121,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type integer is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type integer is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString smallint = 12356, @charSet smallint = 12;
@@ -1129,7 +1129,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smallint is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type smallint is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString tinyint = 235, @charSet tinyint = 12;
@@ -1137,7 +1137,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString money = 12356, @charSet money = 12;
@@ -1145,7 +1145,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type money is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type money is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString smallmoney = 12356, @charSet smallmoney = 12;
@@ -1153,7 +1153,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString bit = 1, @charSet bit = 1;
@@ -1161,7 +1161,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type "bit" is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type "bit" is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
@@ -1170,7 +1170,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 2 of Trim function.)~~
 
 DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
 DECLARE @charSet VARCHAR(10) = '6F';
@@ -1178,14 +1178,14 @@ SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of Trim function.)~~
 
 
 SELECT TRIM(a FROM a) FROM babel_4489_trim_image;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type image is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type image is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @charSet VARCHAR(10) = '6F';
@@ -1193,20 +1193,20 @@ SELECT TRIM(@charSet FROM a) from babel_4489_trim_image;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type image is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type image is invalid for argument 2 of Trim function.)~~
 
 
 SELECT TRIM(a FROM b) FROM babel_4489_trim_text
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type ntext is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type text is invalid for argument 1 of Trim function.)~~
 
 SELECT TRIM(b FROM a) FROM babel_4489_trim_text
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type text is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type ntext is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @charSet VARCHAR(20) = 'ab? '
@@ -1214,7 +1214,7 @@ SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_text
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type text is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type text is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @charSet VARCHAR(20) = 'ab? '
@@ -1222,7 +1222,7 @@ SELECT TRIM(@charSet FROM b) FROM babel_4489_trim_text
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type ntext is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type ntext is invalid for argument 2 of Trim function.)~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
@@ -1231,7 +1231,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 2 of Trim function.)~~
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 DECLARE @charSet VARCHAR(10) = '6F';
@@ -1239,7 +1239,7 @@ SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
@@ -1248,7 +1248,7 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @charSet VARCHAR(10) = '(1 2)';
@@ -1256,14 +1256,14 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of Trim function.)~~
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @charSet VARCHAR(10) = '(1 2)';
 SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @charSet VARCHAR(10) = '2';
@@ -1271,14 +1271,14 @@ SELECT TRIM(@charSet FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of Trim function.)~~
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @charSet VARCHAR(10) = '2';
 SELECT TRIM(@inputString FROM @inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of trim function.)~~
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of Trim function.)~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)

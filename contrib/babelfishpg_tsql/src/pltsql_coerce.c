@@ -395,13 +395,14 @@ typedef struct tsql_special_function
 {
 	const char             *nsp;                              /* namespace of special function */
 	const char             *funcname;                         /* name of special function */
+	const char			   *formatted_funcname;				  /* formatted name of special function */
 	int                     nargs;                            /* number of arguments of special function */
 	tsql_valid_arg_type_t   valid_arg_types[SFUNC_MAX_ARGS];  /* list for storing details of all the valid types supported for each arguments */
 } tsql_special_function_t;
 
 tsql_special_function_t tsql_special_function_list[] = 
 {
-	{"sys", "trim", 2, {{4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
+	{"sys", "trim", "Trim", 2, {{4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
 
 #define TOTAL_TSQL_SPECIAL_FUNCTION_COUNT (sizeof(tsql_special_function_list)/sizeof(tsql_special_function_list[0]))
@@ -1061,7 +1062,7 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("Argument data type %s is invalid for argument %d of %s function.", 
-				 		 format_type_be(inputTypId), i+1, special_func->funcname)));
+				 		 format_type_be(inputTypId), i+1, special_func->formatted_funcname)));
 		}
 	}
 
@@ -1101,16 +1102,16 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 
 	/* function based logic to decide return type */
 	expr_result_type = InvalidOid;
-	if (strlen(proc_name) == 4 && strcmp(proc_name,"trim") == 0)
+	if (strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0)
 	{
-		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[0])
-			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[0]))
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[1]))
 		{
 			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
 		}
-		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[0])
-				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[0])
-				|| input_typeids[0] == UNKNOWNOID)
+		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[1])
+				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[1])
+				|| input_typeids[1] == UNKNOWNOID)
 		{
 			expr_result_type = get_sys_varcharoid();
 		}
