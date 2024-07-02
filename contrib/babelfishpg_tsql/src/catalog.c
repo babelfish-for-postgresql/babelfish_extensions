@@ -632,7 +632,7 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 		if (!missingOk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("Could find logical schema name for: \"%s\"", physical_schema_name)));
+					 errmsg("Could find logical schema name for: \"%s\" because it does not exist.", physical_schema_name)));
 		return NULL;
 	}
 	datum = heap_getattr(tuple, Anum_namespace_ext_orig_name, dsc, &isnull);
@@ -1081,6 +1081,13 @@ get_authid_user_ext_schema_name(const char *db_name, const char *user)
 
 	table_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	if (schema_name == NULL)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Could find default schema name for the user: \"%s\"", user)));
+	}
 
 	return schema_name;
 }
