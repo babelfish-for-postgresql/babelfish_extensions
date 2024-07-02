@@ -4592,6 +4592,7 @@ _PG_init(void)
 	prev_get_func_language_oids_hook = get_func_language_oids_hook;
 	get_func_language_oids_hook = get_func_language_oids;
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
+	check_restricted_stored_procedure_hook = check_restricted_stored_procedure_hook_impl;
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
@@ -6229,22 +6230,6 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	ListCell		*cell;
 	const char		*logicalschema = NULL;
 
-	/*
-	 * BABEL-4390
-	 * List of procedure names that are not allowed to be dropped. These procedures 
-	 * are considered essential or restricted due to security or operational reasons.
-	 */
-	const char		*restricted_procedures[] = {
-		"xp_qv",
-		"xp_instance_regread",
-		"sp_addlinkedsrvlogin",
-		"sp_droplinkedsrvlogin",
-		"sp_dropserver",
-		"sp_enum_oledb_providers",
-		"sp_testlinkedserver"
-	};
-	const int		RESTRICTED_PROCEDURES_COUNT = sizeof(restricted_procedures) / sizeof(restricted_procedures[0]);
-
 	db_id = get_cur_db_id();
 
 	if (stmt->removeType == OBJECT_SCHEMA)
@@ -6357,22 +6342,6 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				schema_name = get_namespace_name(schema_oid);
 			if (schema_name != NULL)
 				logicalschema = get_logical_schema_name(schema_name, true);
-
-			/* Restrict dropping of extended stored procedures */
-			if (stmt->removeType == OBJECT_PROCEDURE && major_name)
-			{
-				int i;
-				for (i = 0; i < RESTRICTED_PROCEDURES_COUNT; i++)
-				{
-					if (pg_strcasecmp(major_name, restricted_procedures[i]) == 0)
-					{
-						ereport(ERROR,
-							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("Cannot drop the procedure \'%s\', because it does not exist or you do not have permission.", major_name)));
-						break;
-					}
-				}
-			}
 
 			if (schema_name && major_name)
 			{

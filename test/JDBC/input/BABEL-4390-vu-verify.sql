@@ -42,3 +42,16 @@ GO
 -- should fail
 EXEC babel_4390_prepare_p9;
 GO
+
+-- psql
+-- should fail
+DROP PROCEDURE dbo.xp_qv;
+GO
+
+-- should fail
+DROP PROCEDURE xp_qv;
+GO
+
+-- should fail
+DROP PROCEDURE dbo.sp_addlinkedsrvlogin;
+GO

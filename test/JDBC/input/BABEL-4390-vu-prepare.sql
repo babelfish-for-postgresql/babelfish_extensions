@@ -57,3 +57,18 @@ BEGIN
     EXEC('DROP PROCEDURE sp_testlinkedserver');
 END
 GO
+
+CREATE SCHEMA babel_4390_test_schema;
+GO
+
+CREATE PROCEDURE babel_4390_test_schema.xp_qv AS
+BEGIN
+    SELECT 1;
+END
+GO
+
+CREATE PROCEDURE babel_4390_test_schema.sp_addlinkedsrvlogin AS
+BEGIN
+    SELECT 1;
+END
+GO

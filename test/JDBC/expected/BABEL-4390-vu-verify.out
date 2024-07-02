@@ -82,3 +82,28 @@ GO
 
 ~~ERROR (Message: Cannot drop the procedure 'sp_testlinkedserver', because it does not exist or you do not have permission.)~~
 
+
+-- psql
+-- should fail
+DROP PROCEDURE dbo.xp_qv;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the procedure 'xp_qv', because it does not exist or you do not have permission.)~~
+
+
+-- should fail
+DROP PROCEDURE xp_qv;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the procedure 'xp_qv', because it does not exist or you do not have permission.)~~
+
+
+-- should fail
+DROP PROCEDURE dbo.sp_addlinkedsrvlogin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the procedure 'sp_addlinkedsrvlogin', because it does not exist or you do not have permission.)~~
+

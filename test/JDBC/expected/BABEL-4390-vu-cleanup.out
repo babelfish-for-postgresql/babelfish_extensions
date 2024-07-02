@@ -27,3 +27,12 @@ GO
 
 DROP PROCEDURE IF EXISTS babel_4390_prepare_p9;
 GO
+
+DROP PROCEDURE IF EXISTS babel_4390_test_schema.xp_qv;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_test_schema.sp_addlinkedsrvlogin;
+GO
+
+DROP SCHEMA IF EXISTS babel_4390_test_schema;
+GO
