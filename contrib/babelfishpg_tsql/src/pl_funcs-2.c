@@ -369,13 +369,13 @@ check_restricted_stored_procedure_hook_impl(Oid proc_id)
 		"sp_testlinkedserver"
 	};
 	const int		RESTRICTED_PROCEDURES_COUNT = sizeof(restricted_procedures) / sizeof(restricted_procedures[0]);
-	HeapTupl		proctup;
-	Form_pg_proc	procform;
+	HeapTuple		proctup;
+	Form_pg_proc		procform;
 	const char		*procname;
-	Oid				schema_oid = InvalidOid;
-	Oid				sys_oid = InvalidOid;
-	Oid				dbo_oid = InvalidOid;
-	bool			is_restricted = false;
+	Oid		schema_oid = InvalidOid;
+	Oid		sys_oid = InvalidOid;
+	Oid		dbo_oid = InvalidOid;
+	bool		is_restricted = false;
 
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_id));
 	if (!HeapTupleIsValid(proctup))
