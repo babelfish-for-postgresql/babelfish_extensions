@@ -369,28 +369,28 @@ check_restricted_stored_procedure_hook_impl(Oid proc_id)
 		"sp_testlinkedserver"
 	};
 	const int		RESTRICTED_PROCEDURES_COUNT = sizeof(restricted_procedures) / sizeof(restricted_procedures[0]);
-	HeapTuple		proctup;
-    Form_pg_proc	procform;
-    const char		*procname;
-    Oid				schema_oid = InvalidOid;
+	HeapTupl		proctup;
+	Form_pg_proc	procform;
+	const char		*procname;
+	Oid				schema_oid = InvalidOid;
 	Oid				sys_oid = InvalidOid;
 	Oid				dbo_oid = InvalidOid;
 	bool			is_restricted = false;
 
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_id));
-    if (!HeapTupleIsValid(proctup))
-    {
-        elog(ERROR, "cache lookup failed for procedure %u", proc_id);
-        return;
-    }
+	if (!HeapTupleIsValid(proctup))
+	{
+		elog(ERROR, "cache lookup failed for procedure %u", proc_id);
+		return;
+	}
 
-    procform = (Form_pg_proc) GETSTRUCT(proctup);
-    procname = pstrdup(NameStr(procform->proname));
-    schema_oid = procform->pronamespace;
+	procform = (Form_pg_proc) GETSTRUCT(proctup);
+	procname = pstrdup(NameStr(procform->proname));
+	schema_oid = procform->pronamespace;
 	sys_oid = get_namespace_oid("sys", true);
 	dbo_oid = get_namespace_oid("master_dbo", true);
 
-	if (schema_oid == sys_oid || schema_oid == dbo_oid)
+	if (OidIsValid(schema_oid) && (schema_oid == sys_oid || schema_oid == dbo_oid))
 	{
 		/* Check if the procedure name is in the restricted list */
 		for (int i = 0; i < RESTRICTED_PROCEDURES_COUNT; i++)
