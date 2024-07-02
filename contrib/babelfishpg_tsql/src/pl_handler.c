@@ -3808,7 +3808,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					ListCell   *lc;
 					ListCell	*lc1;
 					if (rv->schemaname != NULL)
-						logical_schema = get_logical_schema_name(rv->schemaname, true);
+						logical_schema = get_logical_schema_name(rv->schemaname, false);
 					else
 						logical_schema = get_authid_user_ext_schema_name(dbname, current_user);
 
