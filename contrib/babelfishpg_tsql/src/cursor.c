@@ -47,6 +47,8 @@ void		enable_sp_cursor_find_param_hook(void);
 void		disable_sp_cursor_find_param_hook(void);
 void		add_sp_cursor_param(char *name);
 void		reset_sp_cursor_params(void);
+InlineCodeBlockArgs *create_args(int numargs);
+void read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr);
 
 /* cursor information hashtab */
 typedef struct cursorhashent
@@ -57,6 +59,7 @@ typedef struct cursorhashent
 	int16		fetch_status;
 	int16		last_operation;
 	uint64		row_count;
+	int64		fetch_info_rownum;
 	int32		cursor_handle;
 	bool		api_cursor;		/* only used in cursor_list now. can be
 								 * deprecated once we supprot global cursor */
@@ -85,6 +88,7 @@ void		pltsql_delete_cursor_entry(char *curname, bool missing_ok);
 void		pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int *cursor_options);
 void		pltsql_update_cursor_fetch_status(char *curname, int fetch_status);
 void		pltsql_update_cursor_row_count(char *curname, int64 row_count);
+void		pltsql_update_cursor_fetch_info_rownum(char *curname, int64 rownum);
 void		pltsql_update_cursor_last_operation(char *curname, int last_operation);
 
 static const char *LOCAL_CURSOR_INFIX = "##sys_gen##";
@@ -503,6 +507,7 @@ pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_expr, int cursor
 	hentry->cursor_options = cursor_options;
 	hentry->fetch_status = -9;
 	hentry->row_count = 0;
+	hentry->fetch_info_rownum = 0;
 	hentry->last_operation = 0;
 	if (cursor_handle)			/* use given cursor_handle. mostly api cursor */
 		hentry->cursor_handle = *cursor_handle;
@@ -582,6 +587,16 @@ pltsql_update_cursor_row_count(char *curname, int64 row_count)
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry)
 		hentry->row_count = row_count;
+}
+
+void
+pltsql_update_cursor_fetch_info_rownum(char *curname, int64 rownum)
+{
+	CursorHashEnt *hentry;
+
+	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
+	if (hentry)
+		hentry->fetch_info_rownum = rownum;
 }
 
 void
@@ -1086,11 +1101,29 @@ execute_sp_cursoropen_old(int *cursor_handle, const char *stmt, int *pscrollopt,
 	return execute_sp_cursoropen_common(NULL, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, 0, NULL, values, nulls, true /* prepare */ , false /* save_plan */ , true /* execute */ );
 }
 
+/*
+ * Either nBindParams + boundParamsOidList or raw paramDef string can be passed by the caller.
+ */
 int
-execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *pscrollopt, int *pccopt, int nBindParams, Oid *boundParamsOidList)
+execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *pscrollopt, int *pccopt, int nBindParams, Oid *boundParamsOidList, const char* paramDef)
 {
 	/* TODO: options handling */
-	return execute_sp_cursoropen_common(stmt_handle, NULL, stmt, pscrollopt, pccopt, NULL, 0, nBindParams, boundParamsOidList, NULL, NULL, true /* prepare */ , true /* save_plan */ , false /* execute */ );
+	InlineCodeBlockArgs *args;
+	int nBindParamsPass;
+	Oid *boundParamsOidListPass;
+
+	if (paramDef)
+	{
+		args = create_args(0);
+		read_param_def(args, paramDef);
+		nBindParamsPass = args->numargs;
+		boundParamsOidListPass = args->argtypes;
+	} else {
+		nBindParamsPass = nBindParams;
+		boundParamsOidListPass = boundParamsOidList;
+	}
+
+	return execute_sp_cursoropen_common(stmt_handle, NULL, stmt, pscrollopt, pccopt, NULL, 0, nBindParamsPass, boundParamsOidListPass, NULL, NULL, true /* prepare */ , true /* save_plan */ , false /* execute */ );
 }
 
 int
@@ -1153,6 +1186,7 @@ execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pn
 	int			fetchtype;
 	int			rownum;
 	int			nrows;
+	int64 fetch_info_rownum;
 	DestReceiver *receiver;
 	TupleTableSlot *slot;
 	int			rno;
@@ -1224,56 +1258,90 @@ execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pn
 			/* fetch in forward direction */
 			SPI_scroll_cursor_fetch_dest(portal, FETCH_FORWARD, nrows, CreateDestReceiver(DestSPI));
 			break;
+		case SP_CURSOR_FETCH_INFO:
+			/* return fetch_info_rownum saved during the last fetch */
+			if (hentry->fetch_info_rownum > INT_MAX)
+				elog(ERROR, "fetch_info_rownum overflow: %ld", hentry->fetch_info_rownum);
+			*prownum = (int) hentry->fetch_info_rownum;
+			/* number of rows in cursor is not available in PG */
+			*pnrows = -1;
+			break;
 		case SP_CURSOR_FETCH_RELATIVE:
 		case SP_CURSOR_FETCH_REFRESH:
-		case SP_CURSOR_FETCH_INFO:
 		case SP_CURSOR_FETCH_PREV_NOADJUST:
 		case SP_CURSOR_FETCH_SKIP_UPDT_CNCY:
 		default:
 			Assert(0);
 	}
 
-	if (SPI_result != 0)
-		elog(ERROR, "error in SPI_scroll_cursor_fetch: %d", SPI_result);
-
-	/*
-	 * In case of FETCH_FIRST/FETCH_LAST with 0 nrows, we just moved cursor
-	 * and no actual fetch is called. SPI_tuptable can be NULL. skip storing
-	 * the result
-	 */
-	if (SPI_tuptable)
+	if (fetchtype != SP_CURSOR_FETCH_INFO)
 	{
-		/* store result in fetch buffer */
-		tuplestore_clear(hentry->fetch_buffer);
+		if (SPI_result != 0)
+			elog(ERROR, "error in SPI_scroll_cursor_fetch: %d", SPI_result);
 
-		oldcontext = MemoryContextSwitchTo(CursorHashtabContext);
-		for (rno = 0; rno < SPI_processed; ++rno)
-			tuplestore_puttuple(hentry->fetch_buffer, SPI_tuptable->vals[rno]);
-		MemoryContextSwitchTo(oldcontext);
+		/*
+		 * In case of FETCH_FIRST/FETCH_LAST with 0 nrows, we just moved cursor
+		 * and no actual fetch is called. SPI_tuptable can be NULL. skip storing
+		 * the result
+		 */
+		if (SPI_tuptable)
+		{
+			/* store result in fetch buffer */
+			tuplestore_clear(hentry->fetch_buffer);
 
-		tuplestore_rescan(hentry->fetch_buffer);
+			oldcontext = MemoryContextSwitchTo(CursorHashtabContext);
+			for (rno = 0; rno < SPI_processed; ++rno)
+				tuplestore_puttuple(hentry->fetch_buffer, SPI_tuptable->vals[rno]);
+			MemoryContextSwitchTo(oldcontext);
 
-		/* send result to DestRemote */
-		receiver = CreateDestReceiver(DestRemote);
-		SetRemoteDestReceiverParams(receiver, portal);
+			tuplestore_rescan(hentry->fetch_buffer);
 
-		slot = MakeSingleTupleTableSlot(hentry->tupdesc, &TTSOpsMinimalTuple);
-		receiver->rStartup(receiver, (int) CMD_SELECT, hentry->tupdesc);
-		while (tuplestore_gettupleslot(hentry->fetch_buffer, true, false, slot))
-			receiver->receiveSlot(slot, receiver);
-		receiver->rShutdown(receiver);
-	}
+			/* send result to DestRemote */
+			receiver = CreateDestReceiver(DestRemote);
+			SetRemoteDestReceiverParams(receiver, portal);
 
-	/* update cursor status */
-	pltsql_update_cursor_fetch_status(curname, SPI_processed == 0 ? -1 : 0);
-	pltsql_update_cursor_row_count(curname, SPI_processed);
-	pltsql_update_cursor_last_operation(curname, 2);
+			slot = MakeSingleTupleTableSlot(hentry->tupdesc, &TTSOpsMinimalTuple);
+			receiver->rStartup(receiver, (int) CMD_SELECT, hentry->tupdesc);
+			while (tuplestore_gettupleslot(hentry->fetch_buffer, true, false, slot))
+				receiver->receiveSlot(slot, receiver);
+			receiver->rShutdown(receiver);
+		}
 
-	/* If AUTO_CLOSE is set and we fetched all the result, close the cursor */
-	if ((hentry->cursor_options & TSQL_CURSOR_OPT_AUTO_CLOSE) &&
-		portal->atEnd)
-	{
-		execute_sp_cursorclose(cursor_handle);
+		/*
+		 * Calculate rownum value for possible subsequent FETCH_INFO calls.
+		 * 
+		 * SPI_scroll_cursor_fetch_dest call above has just read an
+		 * SPI_processed number of rows from portal and has sent these rows
+		 * to client. If FETCH_INFO call will follow, we will need to return
+		 * the 1-based portal index of the first row of all rows that were sent
+		 * to client.
+		 * 
+		 * If no rows were read by last SPI_scroll_cursor_fetch_dest call:
+		 *   if cursor is not open: 0 (currently not supported),
+		 *   if cursor is positioned before the result set: 0,
+		 *   if cursor is positioned after the result set: -1.
+		 */
+		if (SPI_processed > 0)
+			fetch_info_rownum = portal->portalPos - SPI_processed + 1;
+		else if (portal->atEnd)
+			fetch_info_rownum = -1;
+		else if (portal->atStart)
+			fetch_info_rownum = 0;
+		else
+			fetch_info_rownum = portal->portalPos + 1;
+
+		/* update cursor status */
+		pltsql_update_cursor_fetch_status(curname, SPI_processed == 0 ? -1 : 0);
+		pltsql_update_cursor_row_count(curname, SPI_processed);
+		pltsql_update_cursor_fetch_info_rownum(curname, fetch_info_rownum);
+		pltsql_update_cursor_last_operation(curname, 2);
+
+		/* If AUTO_CLOSE is set and we fetched all the result, close the cursor */
+		if ((hentry->cursor_options & TSQL_CURSOR_OPT_AUTO_CLOSE) &&
+			portal->atEnd)
+		{
+			execute_sp_cursorclose(cursor_handle);
+		}
 	}
 
 	if ((rc = SPI_finish()) != SPI_OK_FINISH)
@@ -1419,6 +1487,7 @@ execute_sp_cursorclose(int cursor_handle)
 	SPI_cursor_close(portal);
 
 	pltsql_update_cursor_row_count(curname, 0);
+	pltsql_update_cursor_fetch_info_rownum(curname, 0);
 	pltsql_update_cursor_last_operation(curname, 6);
 
 	pltsql_delete_cursor_entry(curname, false);
@@ -1681,6 +1750,7 @@ validate_and_get_sp_cursorfetch_params(int *fetchtype_in, int *rownum_in, int *n
 			case SP_CURSOR_FETCH_PREV:
 			case SP_CURSOR_FETCH_LAST:
 			case SP_CURSOR_FETCH_ABSOLUTE:
+			case SP_CURSOR_FETCH_INFO:
 				break;
 
 				/*
@@ -1691,7 +1761,6 @@ validate_and_get_sp_cursorfetch_params(int *fetchtype_in, int *rownum_in, int *n
 				 */
 			case SP_CURSOR_FETCH_RELATIVE:
 			case SP_CURSOR_FETCH_REFRESH:
-			case SP_CURSOR_FETCH_INFO:
 			case SP_CURSOR_FETCH_PREV_NOADJUST:
 			case SP_CURSOR_FETCH_SKIP_UPDT_CNCY:
 				elog(ERROR, "cursor fetch type %X not supported", *fetchtype_in);

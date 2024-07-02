@@ -11,11 +11,13 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -78,7 +80,11 @@ public class JDBCPreparedStatement {
             try{
                 /* TODO: Add more data types here as we support them */
                 if(parameter[2].equalsIgnoreCase("<NULL>")){
-                    pstmt.setNull(j - 1, CompareResults.SQLtoJDBCDataTypeMapping(parameter[0]));
+                    int sqlType = CompareResults.SQLtoJDBCDataTypeMapping(parameter[0]);
+                    if ("JtdsPreparedStatement".equals(pstmt.getClass().getSimpleName())) {
+                        sqlType = CompareResults.remapSQLTypeForJTDS(sqlType);
+                    }
+                    pstmt.setNull(j - 1, sqlType);
                 } else if (parameter[0].equalsIgnoreCase("int")) {
                     // if there is decimal point, remove everything after the point
                     if (parameter[2].indexOf('.') != -1) parameter[2] = parameter[2].substring(0, parameter[2].indexOf('.') - 1);
@@ -142,8 +148,12 @@ public class JDBCPreparedStatement {
                     pstmt = ssPstmt;
                 } else if (parameter[0].equalsIgnoreCase("text")
                         || parameter[0].equalsIgnoreCase("ntext")) {
-                    Reader r = new FileReader(parameter[2]);
-                    pstmt.setCharacterStream(j - 1, r);
+                    Path path = Paths.get(parameter[2]);
+                    byte[] bytes = Files.readAllBytes(path);
+                    String text = new String(bytes, StandardCharsets.UTF_8);
+                    Reader reader = new StringReader(text);
+                    // jTDS only suports older version of setCharacterStream() that requires int length
+                    pstmt.setCharacterStream(j - 1, reader, text.length());
                 } else if (parameter[0].equalsIgnoreCase("image")) {
                     File file = new File(parameter[2]);
                     BufferedImage bImage = ImageIO.read(file);
@@ -152,9 +162,13 @@ public class JDBCPreparedStatement {
                     byte [] byteArray = bos.toByteArray();
                     pstmt.setBytes(j - 1, byteArray);
                 } else if (parameter[0].equalsIgnoreCase("xml")) {
-                    SQLXML sqlxml = pstmt.getConnection().createSQLXML();
-                    sqlxml.setString(parameter[2]);
-                    pstmt.setSQLXML(j - 1, sqlxml);
+                    if ("JtdsPreparedStatement".equals(pstmt.getClass().getSimpleName())) {
+                        pstmt.setString(j - 1, parameter[2]);
+                    } else {
+                        SQLXML sqlxml = pstmt.getConnection().createSQLXML();
+                        sqlxml.setString(parameter[2]);
+                        pstmt.setSQLXML(j - 1, sqlxml);
+                    }
                 } else if (parameter[0].equalsIgnoreCase("tvp")) {
                     FileInputStream fstream = new FileInputStream(Paths.get(Paths.get("").toAbsolutePath().toString(), parameter[2]).toString());
                     DataInputStream in = new DataInputStream(fstream);
@@ -223,6 +237,10 @@ public class JDBCPreparedStatement {
                 logger.error("Parse Exception: " + e.getMessage(), e);
             } catch (NumberFormatException e) {
                 logger.error("Number Format Exception: " + e.getMessage(), e);
+            } catch (AbstractMethodError e) {
+                logger.error("Abstract Method Error: " + e.getMessage(), e);
+            } catch (NullPointerException e) {
+                logger.error("Null Pointer Exception: " + e.getMessage(), e);
             }
         }
     }

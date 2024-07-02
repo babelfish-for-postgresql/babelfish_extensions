@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "utils/builtins.h"		/* for pg_ultostr_zeropad() */
 #include "utils/datetime.h"
 
 #include "src/include/tds_timestamp.h"
@@ -378,7 +379,8 @@ GetDatetimeFromDaysTicks(uint32 numDays, uint32 numTicks,
 	CalculateTargetDate(y1, &d2, &m2, &y2, numDays);
 
 	Assert((int) numTicks >= 0);
-	numMilli = (int) (3.33333333 * numTicks);
+	/* add 0.5 before casting to int to round the result up */
+	numMilli = (int) ((3.33333333 * numTicks) + 0.5);
 
 	*fsec = (numMilli % 1000) * 1000;
 	numMilli /= 1000;
@@ -550,4 +552,198 @@ TdsGetTimestampFromDayTime(uint32 numDays, uint64 numMicro, int tz,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
+}
+
+char*
+TdsTimeGetDateAsString(Datum value)
+{
+	struct pg_tm ti,
+			   *tm = &ti;
+	char	*result;
+
+	memset(tm, '\0', sizeof(struct pg_tm));
+	GetDateFromDatum(value, tm);
+	/*
+	 * Adjust the timestamp converting it from Postgres' datetime where tm_mon
+	 * is counted from 1 and tm_year is relative to 1 BCE to POSIX datetime
+	 * where tm_mon counts from 0 and tm_year is relative to 1900.
+	 */
+	tm->tm_year -= 1900;
+	tm->tm_mon -= 1;
+
+	result = palloc(10 + 1);
+	if (!pg_strftime(result, 10 + 1, "%Y-%m-%d", tm))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range")));
+
+	return result;
+}
+
+/*
+ * Appends fractional seconds to specified str with a specified scale.
+ *
+ * Takes NULL-terminated string and appends (scale + 1) characters to it and 
+ * a NULL terminator. Does not modify input buf if scale is 0.
+ */
+static void
+AppendFractionalSeconds(char *st, fsec_t fsec, int scale)
+{
+	int		value,
+				oldval,
+				remainder,
+				idx;
+	char	buf[MAX_TIMESTAMP_PRECISION],
+				*cp;
+
+	if (scale <= 0)
+		return;
+
+	cp = st + (size_t) strlen(st);
+	*cp++ = '.';
+	value = abs(fsec);
+
+	for (idx = sizeof(buf) - 1; idx >= 0; idx--)
+	{
+		if (value > 0)
+		{
+			oldval = value;
+			value /= 10;
+			remainder = oldval - value * 10;
+			buf[idx] = '0' + remainder;
+		}
+		else
+			buf[idx] = '0';
+	}
+
+	for (idx = 0; idx < scale; idx++)
+	{
+		if (idx < sizeof(buf))
+			*cp++ = buf[idx]; 
+		else
+			*cp++ = '0'; 
+	}
+
+	*cp++ = '\0'; 
+}
+
+char*
+TdsTimeGetTimeAsString(TimeADT value, int scale)
+{
+	struct pg_tm tt,
+				*tm = &tt;
+	fsec_t		fsec;
+	char	   *buf;
+
+	memset(tm, '\0', sizeof(struct pg_tm));
+	time2tm(value, tm, &fsec);
+
+	buf = palloc0(16 + 1);
+	if (!pg_strftime(buf, 10 + 1, "%H:%M:%S", tm))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range")));
+
+	AppendFractionalSeconds(buf, fsec, scale);
+
+	return buf;
+}
+
+char*
+TdsTimeGetDatetime2AsString(Timestamp value, int scale)
+{
+	struct pg_tm tt,
+				*tm = &tt;
+	fsec_t		fsec;
+	char	   *buf;
+
+	memset(tm, '\0', sizeof(struct pg_tm));
+	if (TIMESTAMP_NOT_FINITE(value) ||
+		timestamp2tm(value, NULL, tm, &fsec, NULL, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	/*
+	 * Adjust the timestamp converting it from Postgres' datetime where tm_mon
+	 * is counted from 1 and tm_year is relative to 1 BCE to POSIX datetime
+	 * where tm_mon counts from 0 and tm_year is relative to 1900.
+	 */
+	tm->tm_year -= 1900;
+	tm->tm_mon -= 1;
+
+	buf = palloc0(27 + 1);
+	if (!pg_strftime(buf, 19 + 1, "%Y-%m-%d %H:%M:%S", tm))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("date out of range")));
+
+	AppendFractionalSeconds(buf, fsec, scale);
+
+	return buf;
+}
+
+/*
+ * Appends representation of a numeric timezone offset to str.
+ *
+ * Takes NULL-terminated string and appends 7 characters to it and 
+ * a NULL terminator.
+ */
+static void
+AppendTimezone(char *st, int tz)
+{
+	int			hour,
+				min;
+	char		*cp;
+
+	cp = st + (size_t) strlen(st);
+
+	min = abs(tz);
+	hour = min / MINS_PER_HOUR;
+	min -= hour * MINS_PER_HOUR;
+
+	*cp++ = ' ';
+	/* TZ is negated compared to sign we wish to display ... */
+	*cp++ = (tz <= 0 ? '+' : '-');
+
+	cp = pg_ultostr_zeropad(cp, hour, 2);
+	*cp++ = ':';
+	cp = pg_ultostr_zeropad(cp, min, 2);
+
+	*cp++ = '\0'; 
+}
+
+char*
+TdsTimeGetDatetimeoffsetAsString(tsql_datetimeoffset *value, int scale)
+{
+	struct pg_tm tt,
+				*tm = &tt;
+	fsec_t		fsec;
+	char	   *buf;
+
+	memset(tm, '\0', sizeof(struct pg_tm));
+	if (TIMESTAMP_NOT_FINITE(value->tsql_ts) ||
+		timestamp2tm(value->tsql_ts, NULL, tm, &fsec, NULL, NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("datetimeoffset out of range")));
+
+	/*
+	 * Adjust the timestamp converting it from Postgres' datetime where tm_mon
+	 * is counted from 1 and tm_year is relative to 1 BCE to POSIX datetime
+	 * where tm_mon counts from 0 and tm_year is relative to 1900.
+	 */
+	tm->tm_year -= 1900;
+	tm->tm_mon -= 1;
+
+	buf = palloc0(34 + 1);
+	if (!pg_strftime(buf, 19 + 1, "%Y-%m-%d %H:%M:%S", tm))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("datetimeoffset out of range")));
+
+	AppendFractionalSeconds(buf, fsec, scale);
+	AppendTimezone(buf, value->tsql_tz);
+
+	return buf;
 }

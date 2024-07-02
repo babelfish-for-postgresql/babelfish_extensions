@@ -1,0 +1,69 @@
+CREATE TABLE BINARY_dt(a BINARY(8), b VARBINARY(10));
+#inserting random values
+INSERT INTO BINARY_dt(a, b) values (1234, 12345);
+~~ROW COUNT: 1~~
+
+INSERT INTO BINARY_dt(a, b) values (NULL, NULL);
+~~ROW COUNT: 1~~
+
+#INSERT INTO BINARY_dt(a, b) values (0x31323334, 0x3132333435);
+SELECT * FROM BINARY_dt
+~~START~~
+binary#!#varbinary
+00000000000004D2#!#00003039
+<NULL>#!#<NULL>
+~~END~~
+
+#prepst#!# INSERT INTO BINARY_dt(a, b) values(@a, @b) #!#binary|-|a|-|1234#!#varbinary|-|b|-|12345
+DROP TABLE BINARY_dt
+
+
+CREATE TABLE BINARY_dt(a VARBINARY(max));
+INSERT INTO BINARY_dt(a) values (NULL);
+~~ROW COUNT: 1~~
+
+SELECT * FROM BINARY_dt;
+~~START~~
+image
+<NULL>
+~~END~~
+
+DROP TABLE BINARY_dt;
+
+create table BINARY_dt (a VARBINARY(max), b int, c int, d int, e int ,f int, g int, h int, i int);
+insert into BINARY_dt (a,b,c,d,e,f,g,h,i) values (NULL,1,2,3,4,5,6,7,8);
+~~ROW COUNT: 1~~
+
+select * from BINARY_dt;
+~~START~~
+image#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+<NULL>#!#1#!#2#!#3#!#4#!#5#!#6#!#7#!#8
+~~END~~
+
+drop table BINARY_dt;
+
+CREATE TABLE BINARY_dt(a BINARY(8), b VARBINARY(10));
+INSERT INTO BINARY_dt(a, b) values (1234, 12345);
+~~ROW COUNT: 1~~
+
+prepst#!# INSERT INTO BINARY_dt(a, b) values(?, ?) #!#binary|-|a|-|1234#!#varbinary|-|b|-|12345
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#binary|-|a|-|12345678#!#varbinary|-|b|-|12345
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#binary|-|a|-|1234#!#varbinary|-|b|-|123456789
+~~ROW COUNT: 1~~
+
+SELECT * FROM BINARY_dt;
+~~START~~
+binary#!#varbinary
+00000000000004D2#!#00003039
+3132333400000000#!#3132333435
+3132333435363738#!#3132333435
+3132333400000000#!#313233343536373839
+~~END~~
+
+DROP TABLE BINARY_dt;
+
+

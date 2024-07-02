@@ -1,0 +1,234 @@
+#1 CREATE TABLE with primary and unique keyword
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
+CREATE TABLE tmp(a int PRIMARY KEY, b int UNIQUE);
+INSERT INTO tmp(a,b) values(1,1);
+INSERT INTO tmp(a,b) values(2,2);
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#2 2 table with foreign key relation
+#CREATE TABLE tmp1(b int PRIMARY KEY);
+#CREATE TABLE tmp2(a int PRIMARY KEY, b int FOREIGN KEY REFERENCES tmp1(b));
+#INSERT INTO tmp1(b) VALUES (1);
+#INSERT INTO tmp2(a,b) values(1,1);
+#SELECT * FROM tmp1;
+#SELECT * FROM tmp2;
+#DROP TABLE tmp2;
+#DROP TABLE tmp1;
+
+#3 Repeated #2 with CONSTRAINT keyword
+#CREATE TABLE tmp1(b int PRIMARY KEY);
+#CREATE TABLE tmp2(a int, b int, PRIMARY KEY(a), CONSTRAINT FK_tmp FOREIGN KEY (b) REFERENCES tmp1(b));
+#INSERT INTO tmp1(b) VALUES (1);
+#INSERT INTO tmp2(a,b) values(1,1);
+#SELECT * FROM tmp1;
+#SELECT * FROM tmp2;
+#DROP TABLE tmp2;
+#DROP TABLE tmp1;
+
+#4 CREATE TABLE with NOT NULL column
+CREATE TABLE tmp(a int PRIMARY KEY,b int NOT NULL);
+INSERT INTO tmp(a,b) values(1,1);
+INSERT INTO tmp(a,b) values(2,1);
+#INSERT INTO tmp(a,b) values(2,NULL);
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#5 INSERTION and DELETION
+CREATE TABLE tmp(a int PRIMARY KEY);
+INSERT INTO tmp(a) VALUES(1);
+INSERT INTO tmp(a) VALUES(2);
+INSERT INTO tmp(a) VALUES(3);
+INSERT INTO tmp(a) VALUES(4);
+INSERT INTO tmp(a) VALUES(5);
+SELECT * FROM tmp;
+DELETE FROM tmp WHERE a>2;
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#6 IS NOT NULL condition in WHERE clause
+CREATE TABLE tmp(a int PRIMARY KEY,b int);
+INSERT INTO tmp(a,b) values(1,1);
+INSERT INTO tmp(a,b) values(2,1);
+INSERT INTO tmp(a,b) values(3,NULL);
+INSERT INTO tmp(a,b) values(4,NULL);
+SELECT * FROM tmp WHERE b IS NOT NULL;
+DROP TABLE tmp;
+
+#7 Add new column using ALTER TABLE
+CREATE TABLE tmp(a int PRIMARY KEY);
+INSERT INTO tmp(a) VALUES(1);
+INSERT INTO tmp(a) VALUES(2);
+SELECT * FROM tmp;
+ALTER TABLE tmp ADD b VARCHAR(20) NULL;
+SELECT * FROM tmp;
+INSERT INTO tmp(a,b) VALUES(4,'Dipesh');
+INSERT INTO tmp(a,b) VALUES(5,' Dipesh');
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#8 Repeated #8 with default value for newly added col
+CREATE TABLE tmp(a int PRIMARY KEY);
+INSERT INTO tmp(a) VALUES(1);
+INSERT INTO tmp(a) VALUES(2);
+SELECT * FROM tmp;
+ALTER TABLE tmp ADD b VARCHAR(20) DEFAULT 'Dipesj';
+SELECT * FROM tmp;
+INSERT INTO tmp(a,b) VALUES(4,'Dipesh');
+INSERT INTO tmp(a,b) VALUES(5,' Dipesh');
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#9 Change datatype of existing column using ALTER TABLE
+CREATE TABLE tmp(a int PRIMARY KEY,b int);
+INSERT INTO tmp(a,b) VALUES(1,1);
+INSERT INTO tmp(a,b) VALUES(2,2);
+SELECT * FROM tmp;
+ALTER TABLE tmp ALTER COLUMN b VARCHAR(10);
+SELECT * FROM tmp;
+INSERT INTO tmp(a,b) VALUES(4,'Dipesh');
+INSERT INTO tmp(a,b) VALUES(5,' Dipesh');
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#10 UPDATE TABLE with fancy condition
+CREATE TABLE tmp(a int PRIMARY KEY,b int);
+INSERT INTO tmp(a,b) VALUES(1,1);
+INSERT INTO tmp(a,b) VALUES(2,2);
+INSERT INTO tmp(a,b) VALUES(3,3);
+INSERT INTO tmp(a,b) VALUES(4,4);
+INSERT INTO tmp(a,b) VALUES(5,5);
+SELECT * FROM tmp;
+UPDATE tmp SET b=b+1 WHERE b>2;
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#11 DROP some column using ALTER TABLE
+CREATE TABLE tmp(a int PRIMARY KEY,b int);
+INSERT INTO tmp(a,b) VALUES(1,1);
+INSERT INTO tmp(a,b) VALUES(2,2);
+INSERT INTO tmp(a,b) VALUES(3,3);
+INSERT INTO tmp(a,b) VALUES(4,4);
+INSERT INTO tmp(a,b) VALUES(5,5);
+SELECT * FROM tmp;
+#ALTER TABLE tmp DROP COLUMN b;
+#INSERT INTO tmp(a) values (6);
+#SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#12 CREATE TABLE with fancy constraint
+CREATE TABLE tmp(a int PRIMARY KEY CHECK (a>10),b int);
+INSERT INTO tmp(a,b) VALUES(11,1);
+INSERT INTO tmp(a,b) VALUES(12,2);
+INSERT INTO tmp(a,b) VALUES(13,3);
+INSERT INTO tmp(a,b) VALUES(14,4);
+INSERT INTO tmp(a,b) VALUES(15,5);
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#CREATE PROCEDURE tmp AS
+#BEGIN
+#    CREATE TABLE dip(a int PRIMARY KEY CHECK (a>10),b int);
+#    INSERT INTO dip(a,b) VALUES(11,1);
+#    INSERT INTO dip(a,b) VALUES(12,2);
+#    INSERT INTO dip(a,b) VALUES(13,3);
+#    INSERT INTO dip(a,b) VALUES(14,4);
+#    INSERT INTO dip(a,b) VALUES(15,5);
+#    SELECT * FROM dip;
+#    DROP TABLE dip;
+#END;
+
+#13 invoke simple stored procedure using EXECUTE
+EXECUTE tmp;
+
+#14 invoke simple stored procedure using EXEC
+EXEC tmp;
+
+#DROP PROCEDURE tmp;
+
+#15 UPDATE rows in existing table
+CREATE TABLE tmp(a int PRIMARY KEY,b int);
+INSERT INTO tmp(a,b) VALUES(1,1),(2,2),(3,3),(4,4),(5,5);
+SELECT * FROM tmp;
+UPDATE tmp SET b=b*2+1 WHERE (a>2);
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#16 TRUNCATE table
+CREATE TABLE tmp(a int PRIMARY KEY,b int);
+INSERT INTO tmp(a,b) VALUES(1,1),(2,2),(3,3),(4,4),(5,5);
+SELECT * FROM tmp;
+TRUNCATE TABLE tmp;
+SELECT * FROM tmp;
+DROP TABLE tmp;
+
+CREATE TABLE temp1 (i INT,j INT,t TEXT);
+
+CREATE TABLE temp2 ( i INT,k INT);
+
+INSERT INTO temp1 VALUES (1, 4, 'one');
+INSERT INTO temp1 VALUES (2, 3, 'two');
+INSERT INTO temp1 VALUES (3, 2, 'three');
+INSERT INTO temp1 VALUES (4, 1, 'four');
+INSERT INTO temp1 VALUES (5, 0, 'five');
+INSERT INTO temp1 VALUES (6, 6, 'six');
+INSERT INTO temp1 VALUES (7, 7, 'seven');
+INSERT INTO temp1 VALUES (8, 8, 'eight');
+INSERT INTO temp1 VALUES (0, NULL, 'zero');
+INSERT INTO temp1 VALUES (NULL, NULL, NULL);
+INSERT INTO temp1 VALUES (NULL, 0, 'zero');
+
+INSERT INTO temp2 VALUES (1, -1);
+INSERT INTO temp2 VALUES (2, 2);
+INSERT INTO temp2 VALUES (3, -3);
+INSERT INTO temp2 VALUES (2, 4);
+INSERT INTO temp2 VALUES (5, -5);
+INSERT INTO temp2 VALUES (5, -5);
+INSERT INTO temp2 VALUES (0, NULL);
+INSERT INTO temp2 VALUES (NULL, NULL);
+INSERT INTO temp2 VALUES (NULL, 0);
+
+#17 CROSS JOIN
+SELECT * FROM temp1 CROSS JOIN temp2;
+
+#18 INNER JOIN
+SELECT temp1.i, temp1.j, temp1.t, temp2.k FROM temp1 INNER JOIN temp2 ON temp1.i=temp2.i ORDER BY temp1.i;
+SELECT temp1.i, temp1.j, temp1.t, temp2.k FROM temp1 JOIN temp2 ON temp1.i=temp2.i ORDER BY temp1.i;
+
+#19 LEFT JOIN
+SELECT * FROM temp1 LEFT OUTER JOIN temp2 ON temp1.i=temp2.k ORDER BY temp1.i;
+
+#20 RIGHT JOIN
+SELECT * FROM temp1 RIGHT OUTER JOIN temp2 ON temp1.i=temp2.i ORDER BY temp1.i, temp2.k;
+
+#21 FULL OUTER JOIN
+SELECT * FROM temp1,temp2;
+
+DROP TABLE temp1;
+DROP TABLE temp2;
+
+#22 dropping all columns
+CREATE TABLE tmp(a int PRIMARY KEY,b int);
+INSERT INTO tmp(a,b) VALUES(1,1);
+INSERT INTO tmp(a,b) VALUES(2,2);
+INSERT INTO tmp(a,b) VALUES(3,3);
+INSERT INTO tmp(a,b) VALUES(4,4);
+INSERT INTO tmp(a,b) VALUES(5,5);
+SELECT * FROM tmp;
+#ALTER TABLE tmp DROP COLUMN b;
+#ALTER TABLE tmp DROP COLUMN a;
+#SELECT * FROM tmp;
+DROP TABLE tmp;
+
+#23
+CREATE TABLE DATE_dt (a DATE);
+INSERT INTO DATE_dt(a) values('2000-12-13');
+INSERT INTO DATE_dt(a) values('1900-02-28');
+INSERT INTO DATE_dt(a) values('0001-01-01');
+INSERT INTO DATE_dt(a) values('9999-12-31');
+INSERT INTO DATE_dt(a) values(NULL);
+SELECT * FROM DATE_dt;
+ALTER TABLE DATE_dt ALTER COLUMN a DATETIME;
+SELECT * FROM DATE_dt;
+DROP TABLE DATE_dt;
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';

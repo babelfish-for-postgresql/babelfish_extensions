@@ -1,0 +1,94 @@
+# Schedule file for JDBC Test Framework running with jTDS driver instead of
+# mssql-jdbc driver. When 'useJTDSInsteadOfMSSQLJDBC' config option is set to
+# 'true' this file is used instead of 'jdbc_schedule' file.
+
+# About the test that were copied with "jtds-prefix":
+#
+# jTDS has different behaviour from mssql-jdbc when error happens in a batch with multiple statements.
+# If a batch contains multiple DML statements and one of them is causing an error (like constraint violation),
+# then with mssql-jdbc stmt.execute() returns successfully, number of updated rows can be read from
+# stmt.getUpdateCount() and the Exception is thrown on stmt.getMoreResults() only after all successful
+# update counts are read.
+#
+# With jTDS, if none of the statements return a result set (no selects in batch, only DML), then the Exception
+# is thrown on stmt.execute(). If this exception is caught and handled, then update counts from successul
+# DML statements can be read with stmt.getUpdateCount().
+# And if the successful batch statements return one or more result sets, then stmt.execute() succeeds,
+# and update counts and result sets can be read successfully up to the errored one. And the Exception
+# is thrown on rs.next() after the last successfull result set is exhausted.
+#
+# This jTDS behaviour is the same with both Babelfish and MSSQL.
+
+# datatypes
+TestInt
+TestSmallInt
+TestTinyInt
+TestBigInt
+TestBIT
+TestDecimal
+TestNumeric
+TestMoney
+TestFloat
+TestReal
+# jTDS reports out of range error on stmt.execute() instead of rs.next()
+# thus columns headers are not printed on error.
+jtds-TestDatetime
+# jTDS date handling differs with mssql-jdbc, behavior on MSSQL and Babelfish is the same
+jtds-TestDate
+# In TDS v7.1 datetime2 is inserted as datetime (so 3 is a max scale for fractional seconds)
+# and returned as nvarchar.
+jtds-TestDatetime2
+TestSmallDatetime
+# Nvarchar column type is returned for time columns on both MSSQL and Babelfish.
+jtds-TestTime
+# Nvarchar column type is returned for datetimeoffset/time/datetime2 columns on both MSSQL and Babelfish.
+jtds-TestDatetimeoffset-vu-prepare
+jtds-TestDatetimeoffset-vu-verify
+jtds-TestDatetimeoffset-vu-cleanup
+# Varchar(max) column type is reported as text and nvarchar(max) - as ntext,
+# this behaviour is consistent on both MSSQL and Babelfish.
+jtds-TestVarChar
+TestText
+TestChar
+# Image column type is returned for varbinary(max) on both MSSQL and Babelfish
+jtds-TestBinary
+TestImage-vu-prepare
+TestImage-vu-verify
+TestImage-vu-cleanup
+# There are two discrepancies with output: bit base type is returned by jTDS as "1", and datetime2
+# type is printed with fractional seconds having all trailing zeros according to scale (BTW scale is 
+# currently always set incorrectly to max value 7 - see #2638). With mssql-jdbs traling zeros are
+# not printed because resulting value is returned as java.sql.Timestamp, but with jTDS datetime2
+# value converted to nvarchar on server because of this trailing zero are preserved up to scale.
+# jTDS behaviour with both bit and datetime2 types are consistent between Babelfish and MSSQL.
+jtds-TestSQLVariant-vu-prepare
+jtds-TestSQLVariant-vu-verify
+jtds-TestSQLVariant-vu-cleanup
+# jTDS reports XML column as ntext in ResultSetMetaData, this behaviour is the same
+# with both MSSQL and Babelfish
+jtds-TestXML
+jtds-TestTableType-vu-prepare
+jtds-TestTableType-vu-verify
+jtds-TestTableType-vu-cleanup
+TestUniqueIdentifier
+
+# sqlBatch
+# jTDS reports column type as nvarchar instead of date, behavior on MSSQL and Babelfish is the same
+jtds-TestSQLQueries
+
+# errorHandling
+jtds-TestSimpleErrors
+jtds-TestErrorsWithTryCatch
+
+# storedProcedures
+# jTDS reports column type as nvarchar instead of date, behavior on MSSQL and Babelfish is the same
+jtds-TestStoredProcedures
+
+# cursors
+# cursor.last() is not supported in jTDS - it relies on cursor 'nrows' that is not available in Postgres
+jtds-TestCursorFetchNext
+jtds-TestCursorPrepExecFetchNext
+
+# transactions
+TestTransactionsSQLBatch
+jtds-TestTransactionSupportForProcedure

@@ -49,7 +49,16 @@ public class JDBCCursor {
         
         return new int[]{type, concur, holdability};
     }
-    
+
+    void setHoldabilityOnConnection(Connection conn, int holdability) throws SQLException {
+        if ("JtdsConnection".equals(conn.getClass().getSimpleName()) &&
+                ResultSet.CLOSE_CURSORS_AT_COMMIT == holdability) {
+            // CLOSE_CURSORS_AT_COMMIT option not supported in jTDS
+            return;
+        }
+        conn.setHoldability(holdability);
+    }
+
     void openCursor(Connection con_bbl, Logger logger, String[] result, String strLine, BufferedWriter bw) {
         logger.info("Opening Cursor");
         
@@ -85,7 +94,7 @@ public class JDBCCursor {
         String SQL = contentsArray[1];
         
         try {
-            con_bbl.setHoldability(holdability);
+            setHoldabilityOnConnection(con_bbl, holdability);
             if (!result[3].toLowerCase().startsWith("exec")) {
                 if (pstmt_bbl != null) pstmt_bbl.close();
                 pstmt_bbl = con_bbl.prepareStatement(SQL, type, concur);
@@ -99,6 +108,8 @@ public class JDBCCursor {
             handleSQLExceptionWithFile(e, bw, logger);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
+        } catch (NullPointerException e) {
+            logger.error("Null Pointer Exception: " + e.getMessage(), e);
         }
     }
 
@@ -113,7 +124,7 @@ public class JDBCCursor {
         Statement stmt_sql = null, stmt_bbl = null;
         
         try {
-            con_bbl.setHoldability(holdability);
+            setHoldabilityOnConnection(con_bbl, holdability);
             stmt_bbl = con_bbl.createStatement(type, concur);
             cursor_bbl = stmt_bbl.executeQuery(SQL);
             bw.write("~~SUCCESS~~");

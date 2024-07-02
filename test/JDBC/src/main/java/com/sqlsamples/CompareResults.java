@@ -1,7 +1,5 @@
 package com.sqlsamples;
 
-import org.junit.jupiter.api.Assertions;
-import org.opentest4j.AssertionFailedError;
 import microsoft.sql.DateTimeOffset;
 import org.apache.logging.log4j.Logger;
 
@@ -138,10 +136,14 @@ public class CompareResults {
     static void processResults(Statement stmt, BufferedWriter bw, int resultsProcessed, boolean resultSetExist, boolean warningExist, Logger logger) {
         int updateCount = -9;  // initialize to impossible value
 
-        while (true) {
+        outer: while (true) {
             boolean exceptionOccurred = true;
             do {
                 try {
+                    if (stmt.getConnection().isClosed()) {
+                        // prevent infinite loop if connection was closed
+                        break outer;
+                    }
                     if (resultsProcessed > 0) {
                         resultSetExist = stmt.getMoreResults();
                     }
@@ -169,6 +171,12 @@ public class CompareResults {
                     writeResultSetToFile(bw, rs, logger);
                 } catch (SQLException e) {
                     handleSQLExceptionWithFile(e, bw, logger);
+                } catch (StringIndexOutOfBoundsException e) {
+                    // can be thrown by JtdsResultSet.next()
+                    logger.error("StringIndexOutOfBoundsException: " + e.getMessage(), e);
+                    handleSQLExceptionWithFile(new SQLException(e), bw, logger);
+                    // need to go out of the loop, as result set cannot be read
+                    break;
                 }
             } else {
                 if (updateCount > 0) {
@@ -247,6 +255,15 @@ public class CompareResults {
         } else if (sqlDataType.equalsIgnoreCase("sqlvariant")) {
             return microsoft.sql.Types.SQL_VARIANT;
         } else return 0;
+    }
+
+    static int remapSQLTypeForJTDS(int type) {
+        switch (type) {
+            case NCHAR: return CHAR;
+            case NVARCHAR: return VARCHAR;
+            case LONGNVARCHAR: return LONGVARCHAR;
+            default: return type;
+        }
     }
 
     // function to parse SQL data type to Java data type

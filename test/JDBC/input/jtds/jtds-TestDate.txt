@@ -1,0 +1,14 @@
+CREATE TABLE DATE_dt (a DATE)
+prepst#!# INSERT INTO DATE_dt(a) values(@a) #!#DATE|-|a|-|2000-12-13
+prepst#!#exec#!#DATE|-|a|-|2000-02-28
+prepst#!#exec#!#DATE|-|a|-|0001-01-01
+prepst#!#exec#!#DATE|-|a|-|9999-12-31
+prepst#!#exec#!#DATE|-|a|-|<NULL>
+SELECT * FROM DATE_dt;
+INSERT INTO DATE_dt(a) values('2000-12-13')
+INSERT INTO DATE_dt(a) values('1900-02-28')
+INSERT INTO DATE_dt(a) values('0001-01-01')
+INSERT INTO DATE_dt(a) values('9999-12-31')
+INSERT INTO DATE_dt(a) values(NULL)
+SELECT * FROM DATE_dt;
+DROP TABLE DATE_dt;

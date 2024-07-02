@@ -1,0 +1,22 @@
+CREATE TABLE XML_dt (a XML)
+#prepst#!# INSERT INTO XML_dt values(@a) #!#XML|-|a|-|<NULL>
+#prepst#!# INSERT INTO XML_dt values(@a) #!#XML|-|a|-|<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+#prepst#!#exec#!#XML|-|a|-|
+SELECT * FROM XML_dt;
+INSERT INTO XML_dt values('<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>')
+INSERT INTO XML_dt values(NULL)
+#INSERT INTO XML_dt values('')
+INSERT INTO XML_dt values(<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone>)
+SELECT * FROM XML_dt;
+DROP TABLE XML_dt;
+
+CREATE TABLE [dbo].[notification_definition]([id] [bigint] NOT NULL,[name_tx] [nvarchar](200) NOT NULL,[description_tx] [nvarchar](max) NULL,[schedule_xml] [xml] NULL,[default_sender_tx] [nvarchar](200) NULL,[lock_id] [tinyint] NOT NULL,[settings_xml] [xml] NULL,[agency_id] [bigint] NULL)
+INSERT [dbo].[NOTIFICATION_DEFINITION] VALUES (13, N'INTRA_MSG', N'Intra-System Message', NULL, N'donotreply_OPMQA@ospreycompliancesuite.com', 63,N'<Settings><SubjectTemplateTypeCd>NTF_SUB_INTRA_MSG</SubjectTemplateTypeCd><MessageTemplateTypeCd>NTF_MSG_INTRA_MSG<MessageTemplateTypeCd><VariableRefDomainName>PolicyDocumentTemplateVars<VariableRefDomainName><ProcessDefinitionId>11</ProcessDefinitionId></Settings>', 1)
+SELECT ID,NAME_TX,LOCK_ID,DESCRIPTION_TX,N'' as emptystring, SCHEDULE_XML,DEFAULT_SENDER_TX,SETTINGS_XML,AGENCY_ID FROM NOTIFICATION_DEFINITION
+DROP TABLE [dbo].[notification_definition];
+
+CREATE TABLE [dbo].[notification_definition]([id] [bigint] NOT NULL,[name_tx] [nvarchar](200) NOT NULL,[description_tx] [nvarchar](max) NULL,[schedule_xml] [xml] NULL,[default_sender_tx] [nvarchar](200) NULL,[lock_id] [tinyint] NOT NULL,[settings_xml] [xml] NULL,[agency_id] [bigint] NULL)
+prepst#!# INSERT [dbo].[NOTIFICATION_DEFINITION] VALUES(@a, @b, @c, @d, @e, @f, @g, @h) #!#bigint|-|a|-|13#!#nvarchar|-|b|-|INTRA_MSG#!#nvarchar|-|c|-|Intra-System Message#!#XML|-|d|-|NULL#!#nvarchar|-|e|-|donotreply_OPMQA#!#tinyint|-|f|-|63#!#XML|-|g|-|<Settings><SubjectTemplateTypeCd>NTF_SUB_INTRA_MSG</SubjectTemplateTypeCd><MessageTemplateTypeCd>NTF_MSG_INTRA_MSG</MessageTemplateTypeCd><VariableRefDomainName>PolicyDocumentTemplateVars</VariableRefDomainName><ProcessDefinitionId>11</ProcessDefinitionId></Settings>#!#bigint|-|h|-|1
+#INSERT [dbo].[NOTIFICATION_DEFINITION] VALUES (13, N'INTRA_MSG', N'Intra-System Message', NULL, N'donotreply_OPMQA@ospreycompliancesuite.com', 63,N'<Settings><SubjectTemplateTypeCd>NTF_SUB_INTRA_MSG</SubjectTemplateTypeCd><MessageTemplateTypeCd>NTF_MSG_INTRA_MSG<MessageTemplateTypeCd><VariableRefDomainName>PolicyDocumentTemplateVars<VariableRefDomainName><ProcessDefinitionId>11</ProcessDefinitionId></Settings>', 1)
+SELECT ID,NAME_TX,LOCK_ID,DESCRIPTION_TX,N'' as emptystring, SCHEDULE_XML,DEFAULT_SENDER_TX,SETTINGS_XML,AGENCY_ID FROM NOTIFICATION_DEFINITION
+DROP TABLE [dbo].[notification_definition];

@@ -1,0 +1,264 @@
+CREATE TABLE test_cursor_prep_exec_fetch_next(a INT, b SMALLINT, c BIGINT, d TINYINT, e BIT);
+INSERT INTO test_cursor_prep_exec_fetch_next values(0, 0, 0, 0, 0)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values(NULL, NULL, NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values(1, 2, 3, 4, 1)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values(211234, 9780, 891372401, 56, 1)
+~~ROW COUNT: 1~~
+
+
+# SET escape_hatch_session_settings to ignore CURSOR_CLOSE_ON_COMMIT
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore';
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next WHERE a > ? #!#INT|-|a|-|-2#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+cursor#!#fetch#!#next
+~~START~~
+int#!#smallint#!#bigint#!#tinyint#!#bit
+0#!#0#!#0#!#0#!#false
+~~END~~
+
+cursor#!#fetch#!#abs#!#2
+~~START~~
+int#!#smallint#!#bigint#!#tinyint#!#bit
+1#!#2#!#3#!#4#!#true
+~~END~~
+
+cursor#!#fetch#!#next
+~~START~~
+int#!#smallint#!#bigint#!#tinyint#!#bit
+211234#!#9780#!#891372401#!#56#!#true
+~~END~~
+
+cursor#!#fetch#!#first
+~~START~~
+int#!#smallint#!#bigint#!#tinyint#!#bit
+0#!#0#!#0#!#0#!#false
+~~END~~
+
+cursor#!#fetch#!#next
+~~START~~
+int#!#smallint#!#bigint#!#tinyint#!#bit
+1#!#2#!#3#!#4#!#true
+~~END~~
+
+cursor#!#close
+~~SUCCESS~~
+cursor#!#open#!#prepst#!#exec#!#INT|-|a|-|0#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#HOLD_CURSORS_OVER_COMMIT
+~~SUCCESS~~
+#cursor#!#fetch#!#last
+cursor#!#fetch#!#next
+~~START~~
+int#!#smallint#!#bigint#!#tinyint#!#bit
+1#!#2#!#3#!#4#!#true
+~~END~~
+
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+cursor#!#close
+~~SUCCESS~~
+DROP TABLE test_cursor_prep_exec_fetch_next
+
+CREATE TABLE test_cursor_prep_exec_fetch_next(a CHAR(30), b VARCHAR(30), c NCHAR(30), d NVARCHAR(30));
+INSERT INTO test_cursor_prep_exec_fetch_next values(' ', ' ', ' ', ' ')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values(NULL, NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values('hello', 'from the', N'server', N'side 😆')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values('Its', 'always', N'day', N'1')
+~~ROW COUNT: 1~~
+
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next WHERE a <> ? #!#CHAR|-|a|-|hello#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+cursor#!#fetch#!#abs#!#3
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: No current row in the ResultSet.)~~
+
+cursor#!#fetch#!#next
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: No current row in the ResultSet.)~~
+
+cursor#!#fetch#!#first
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+                              #!# #!#                              #!# 
+~~END~~
+
+cursor#!#fetch#!#next
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+Its                           #!#always#!#day                           #!#1
+~~END~~
+
+cursor#!#close
+~~SUCCESS~~
+cursor#!#open#!#prepst#!#exec#!#CHAR|-|a|-|Its#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+#cursor#!#fetch#!#last
+cursor#!#fetch#!#next
+~~START~~
+char#!#varchar#!#nchar#!#nvarchar
+                              #!# #!#                              #!# 
+~~END~~
+
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+cursor#!#close
+~~SUCCESS~~
+DROP TABLE test_cursor_prep_exec_fetch_next
+
+CREATE TABLE test_cursor_prep_exec_fetch_next(a DATE, b DATETIME, c SMALLDATETIME);
+INSERT INTO test_cursor_prep_exec_fetch_next values('2000-12-13', '1900-02-28 23:59:59.989', '2000-12-13 12:58:23')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values(NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values('1997-05-07', '1900-02-28 11:23:17.895', '2000-12-13 10:23:44')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values('1876-08-07', '1980-02-05 16:11:45.215', '1987-10-01 07:55:24')
+~~ROW COUNT: 1~~
+
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next WHERE b > ? #!#DATETIME|-|b|-|1753-01-01 00:00:00.000#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+cursor#!#fetch#!#first
+~~START~~
+nvarchar#!#datetime#!#smalldatetime
+2000-12-13#!#1900-02-28 23:59:59.99#!#2000-12-13 12:58:00.0
+~~END~~
+
+cursor#!#fetch#!#abs#!#2
+~~START~~
+nvarchar#!#datetime#!#smalldatetime
+1997-05-07#!#1900-02-28 11:23:17.897#!#2000-12-13 10:24:00.0
+~~END~~
+
+cursor#!#fetch#!#next
+~~START~~
+nvarchar#!#datetime#!#smalldatetime
+1876-08-07#!#1980-02-05 16:11:45.217#!#1987-10-01 07:55:00.0
+~~END~~
+
+cursor#!#fetch#!#first
+~~START~~
+nvarchar#!#datetime#!#smalldatetime
+2000-12-13#!#1900-02-28 23:59:59.99#!#2000-12-13 12:58:00.0
+~~END~~
+
+cursor#!#fetch#!#next
+~~START~~
+nvarchar#!#datetime#!#smalldatetime
+1997-05-07#!#1900-02-28 11:23:17.897#!#2000-12-13 10:24:00.0
+~~END~~
+
+cursor#!#close
+~~SUCCESS~~
+cursor#!#open#!#prepst#!#exec#!#DATETIME|-|b|-|1947-01-01 11:23:17.374#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+#cursor#!#fetch#!#last
+cursor#!#fetch#!#next
+~~START~~
+nvarchar#!#datetime#!#smalldatetime
+1876-08-07#!#1980-02-05 16:11:45.217#!#1987-10-01 07:55:00.0
+~~END~~
+
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+cursor#!#close
+~~SUCCESS~~
+DROP TABLE test_cursor_prep_exec_fetch_next
+
+CREATE TABLE test_cursor_prep_exec_fetch_next(a FLOAT, b REAL, c MONEY, d SMALLMONEY);
+INSERT INTO test_cursor_prep_exec_fetch_next values(0, 0, '$0', '$0')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values(NULL, NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values(241.7832, 1214.691236, '62,514.00', '690.817')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursor_prep_exec_fetch_next values('32546', '980.709', '1,988,232.08', '$86,798')
+~~ROW COUNT: 1~~
+
+cursor#!#open#!#prepst#!#SELECT * FROM test_cursor_prep_exec_fetch_next WHERE b > ? #!#REAL|-|b|-|12.0834#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+cursor#!#fetch#!#next
+~~START~~
+float#!#real#!#money#!#smallmoney
+241.7832#!#1214.6913#!#62514.0000#!#690.8170
+~~END~~
+
+cursor#!#fetch#!#abs#!#3
+~~START~~
+float#!#real#!#money#!#smallmoney
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: No current row in the ResultSet.)~~
+
+cursor#!#fetch#!#next
+~~START~~
+float#!#real#!#money#!#smallmoney
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: No current row in the ResultSet.)~~
+
+cursor#!#fetch#!#first
+~~START~~
+float#!#real#!#money#!#smallmoney
+241.7832#!#1214.6913#!#62514.0000#!#690.8170
+~~END~~
+
+cursor#!#fetch#!#next
+~~START~~
+float#!#real#!#money#!#smallmoney
+32546.0#!#980.709#!#1988232.0800#!#86798.0000
+~~END~~
+
+cursor#!#close
+~~SUCCESS~~
+cursor#!#open#!#prepst#!#exec#!#REAL|-|b|-|1000.241#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+~~SUCCESS~~
+#cursor#!#fetch#!#last
+cursor#!#fetch#!#next
+~~START~~
+float#!#real#!#money#!#smallmoney
+241.7832#!#1214.6913#!#62514.0000#!#690.8170
+~~END~~
+
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+cursor#!#close
+~~SUCCESS~~
+DROP TABLE test_cursor_prep_exec_fetch_next

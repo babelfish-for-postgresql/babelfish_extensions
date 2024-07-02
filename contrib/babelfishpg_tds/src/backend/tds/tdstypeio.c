@@ -28,6 +28,7 @@
 #include "miscadmin.h"
 #include "parser/scansup.h"
 #include "utils/cash.h"
+#include "utils/datetime.h"
 #include "utils/hsearch.h"
 #include "utils/builtins.h"		/* for format_type_be() */
 #include "utils/guc.h"
@@ -2775,9 +2776,18 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 								 * store given string in given encoding. */
 				maxLen;			/* max size of given column in bytes */
 	char	   *destBuf,
-			   *buf = OutputFunctionCall(finfo, value);
+			   *buf;
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
+	/*
+	* If client being connected is using TDS version lower than or equal to
+	* 7.1 then TSQL treats varchar(max) as Text.
+	*/
+	if (GetClientTDSVersion() <= TDS_VERSION_7_1_1 && 
+			col->metaEntry.type3.tdsTypeId == TDS_TYPE_TEXT)
+		return TdsSendTypeText(finfo, value, vMetaData);
+
+	buf = OutputFunctionCall(finfo, value);
 	len = strlen(buf);
 
 	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
@@ -2835,11 +2845,21 @@ TdsSendTypeVarbinary(FmgrInfo *finfo, Datum value, void *vMetaData)
 	int			rc = EOF,
 				len = 0,
 				maxlen = 0;
-	bytea	   *vlena = DatumGetByteaPCopy(value);
-	char	   *buf = VARDATA_ANY(vlena);
+	bytea	   *vlena;
+	char	   *buf;
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
+	/*
+	* If client being connected is using TDS version lower than or equal to
+	* 7.1 then TSQL treats varbinary(max) as Image.
+	*/
+	if (GetClientTDSVersion() <= TDS_VERSION_7_1_1 && 
+			col->metaEntry.type8.tdsTypeId == TDS_TYPE_IMAGE)
+		return TdsSendTypeImage(finfo, value, vMetaData);
+
 	maxlen = col->metaEntry.type7.maxSize;
+	vlena = DatumGetByteaPCopy(value);
+	buf = VARDATA_ANY(vlena);
 	len = VARSIZE_ANY_EXHDR(vlena);
 
 	if (maxlen != 0xffff)
@@ -2957,10 +2977,19 @@ TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	int			rc,
 				maxlen;
-	char	   *out = OutputFunctionCall(finfo, value);
+	char	   *out;
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 	StringInfoData buf;
 
+	/*
+	* If client being connected is using TDS version lower than or equal to
+	* 7.1 then TSQL treats nvarchar(max) as NText.
+	*/
+	if (GetClientTDSVersion() <= TDS_VERSION_7_1_1 &&
+			col->metaEntry.type3.tdsTypeId == TDS_TYPE_NTEXT)
+		return TdsSendTypeNText(finfo, value, vMetaData);
+
+	out = OutputFunctionCall(finfo, value);
 	initStringInfo(&buf);
 	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
 	maxlen = col->metaEntry.type2.maxSize;
@@ -3309,6 +3338,33 @@ TdsSendTypeUniqueIdentifier(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
+static int
+TdsSendTimeAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc,
+				scale;
+	char	   *st;
+	TdsColumnMetaData *col;
+	StringInfoData buf;
+
+	col = (TdsColumnMetaData *) vMetaData;
+	scale = (int) col->atttypmod;
+	if (scale < 0)
+		scale = MAX_TIMESTAMP_PRECISION + 1;
+
+	st = TdsTimeGetTimeAsString((TimeADT) value, scale);
+
+	initStringInfo(&buf);
+	TdsUTF8toUTF16StringInfo(&buf, st, strlen(st));
+	pfree(st);
+
+	if ((rc = TdsPutInt16LE(buf.len)) == 0)
+		TdsPutbytes(buf.data, buf.len);
+
+	pfree(buf.data);
+	return rc;
+}
+
 int
 TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
@@ -3325,7 +3381,7 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * If client being connected is using TDS version lower than 7.3A then
 		 * TSQL treats TIME as NVARCHAR.
 		 */
-		return TdsSendTypeNVarchar(finfo, value, vMetaData);
+		return TdsSendTimeAsNVarcharHelper(finfo, value, vMetaData);
 
 	scale = col->metaEntry.type6.scale;
 
@@ -3355,6 +3411,33 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
+static int
+TdsSendDatetime2AsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc,
+				scale;
+	char	   *st;
+	TdsColumnMetaData *col;
+	StringInfoData buf;
+
+	col = (TdsColumnMetaData *) vMetaData;
+	scale = (int) col->atttypmod;
+	if (scale < 0)
+		scale = MAX_TIMESTAMP_PRECISION + 1;
+
+	st = TdsTimeGetDatetime2AsString((Timestamp) value, scale);
+
+	initStringInfo(&buf);
+	TdsUTF8toUTF16StringInfo(&buf, st, strlen(st));
+	pfree(st);
+
+	if ((rc = TdsPutInt16LE(buf.len)) == 0)
+		TdsPutbytes(buf.data, buf.len);
+
+	pfree(buf.data);
+	return rc;
+}
+
 int
 TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
@@ -3371,7 +3454,7 @@ TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * If client being connected is using TDS version lower than 7.3A then
 		 * TSQL treats DATETIME2 as NVARCHAR.
 		 */
-		return TdsSendTypeNVarchar(finfo, value, vMetaData);
+		return TdsSendDatetime2AsNVarcharHelper(finfo, value, vMetaData);
 
 	scale = col->metaEntry.type6.scale;
 
@@ -3772,6 +3855,48 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	PG_RETURN_BYTEA_P(result);
 }
 
+/*
+ * dataformat: totalLen(4B) + baseType(1B) + metadatalen(1B) +
+ * encodingLen(5B) + dataLen(2B) + data(dataLen)
+ */
+static int
+TdsSendTypeSqlvariantAsNVarcharHelper(const char *st)
+{				
+	int			rc = EOF,
+				totalLen = 0;
+	StringInfoData strbuf;
+	int			actualDataLen = 0;	/* Number of bytes that would be
+									* needed to store given string in
+									* given encoding. */
+
+	initStringInfo(&strbuf);
+	TdsUTF8toUTF16StringInfo(&strbuf, st, strlen(st));
+
+	actualDataLen = strbuf.len;
+	totalLen = actualDataLen + VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES;
+
+	rc = TdsPutUInt32LE(totalLen);
+	rc |= TdsPutInt8(VARIANT_TYPE_NVARCHAR);
+	rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_CHAR_DATATYPES);
+
+	/*
+	 * 5B of fixed collation TODO: [BABEL-1069] Remove collation related
+	 * hardcoding from sql_variant sender for char class basetypes
+	 */
+	rc |= TdsPutInt8(9);
+	rc |= TdsPutInt8(4);
+	rc |= TdsPutInt8(208);
+	rc |= TdsPutInt8(0);
+	rc |= TdsPutInt8(52);
+
+	rc |= TdsPutUInt16LE(actualDataLen);
+
+	rc |= TdsPutbytes(strbuf.data, actualDataLen);
+	pfree(strbuf.data);
+
+	return rc;
+}
+
 int
 TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
@@ -3785,7 +3910,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	bytea	   *vlena = DatumGetByteaPCopy(value);
 	char	   *buf = VARDATA(vlena),
 			   *decString = NULL,
-			   *out = NULL;
+			   *out = NULL,
+				 *dateStr = NULL,
+				 *timeStr = NULL,
+				 *datetime2Str = NULL;
 	bool		isBaseNum = false,
 				isBaseChar = false;
 	bool		isBaseBin = false,
@@ -3985,22 +4113,36 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	}
 	else if (isBaseDate)
 	{
-		/*
-		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 * data(3B)
-		 */
 
 		if (variantBaseType == VARIANT_TYPE_DATE)
 		{
 			memset(&dateval, 0, sizeof(dateval));
 			memcpy(&dateval, buf, sizeof(dateval));
-			numDays = TdsDayDifference(dateval);
-			dataLen = 3;
-			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATE;
-			rc = TdsPutUInt32LE(totalLen);
-			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATE);
-			rc |= TdsPutDate(numDays);
+
+			if (GetClientTDSVersion() <= TDS_VERSION_7_2)
+			{
+				/*
+				 * DATENTYPE type was introduced in TDS 7.3, with earlier protocol
+				 * versions date is sent as NVARCHARTYPE.
+				 */
+				dateStr = TdsTimeGetDateAsString(dateval);
+				rc = TdsSendTypeSqlvariantAsNVarcharHelper(dateStr);
+				pfree(dateStr);
+			}
+			else
+			{
+				/*
+				* dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
+				* data(3B)
+				*/
+				numDays = TdsDayDifference(dateval);
+				dataLen = 3;
+				totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATE;
+				rc = TdsPutUInt32LE(totalLen);
+				rc |= TdsPutInt8(variantBaseType);
+				rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATE);
+				rc |= TdsPutDate(numDays);
+			}
 		}
 
 		/*
@@ -4038,64 +4180,92 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		}
 		else if (variantBaseType == VARIANT_TYPE_TIME)
 		{
-			/*
-			 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-			 * scale(1B) + data(3B-5B)
-			 */
+			memcpy(&numMicro, buf, sizeof(numMicro));
+
 			if (scale == 0xff || scale < 0 || scale > 7)
 				scale = DATETIMEOFFSETMAXSCALE;
 
-			if (scale >= 0 && scale < 3)
-				dataLen = 3;
-			else if (scale >= 3 && scale < 5)
-				dataLen = 4;
-			else if (scale >= 5 && scale <= 7)
-				dataLen = 5;
-
-			memcpy(&numMicro, buf, sizeof(numMicro));
-			temp = scale;
-			if (scale == 7 || scale == 0xff)
-				numMicro *= 10;
-
-			while (temp < 6)
+			if (GetClientTDSVersion() <= TDS_VERSION_7_2)
 			{
-				numMicro /= 10;
-				temp++;
+				/*
+				 * TIMENTYPE type was introduced in TDS 7.3, with earlier protocol
+				 * versions time is sent as NVARCHARTYPE.
+				 */
+				timeStr = TdsTimeGetTimeAsString((TimeADT) numMicro, scale);
+				rc = TdsSendTypeSqlvariantAsNVarcharHelper(timeStr);
+				pfree(timeStr);
 			}
-			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_TIME;
-			rc = TdsPutUInt32LE(totalLen);
-			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_TIME);
-			rc |= TdsPutInt8(scale);
-			rc = TdsPutbytes(&numMicro, dataLen);
+			else
+			{
+				/*
+				 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
+				 * scale(1B) + data(3B-5B)
+				 */
+				if (scale >= 0 && scale < 3)
+					dataLen = 3;
+				else if (scale >= 3 && scale < 5)
+					dataLen = 4;
+				else if (scale >= 5 && scale <= 7)
+					dataLen = 5;
+
+				temp = scale;
+				if (scale == 7 || scale == 0xff)
+					numMicro *= 10;
+
+				while (temp < 6)
+				{
+					numMicro /= 10;
+					temp++;
+				}
+				totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_TIME;
+				rc = TdsPutUInt32LE(totalLen);
+				rc |= TdsPutInt8(variantBaseType);
+				rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_TIME);
+				rc |= TdsPutInt8(scale);
+				rc = TdsPutbytes(&numMicro, dataLen);
+			}
 		}
 		else if (variantBaseType == VARIANT_TYPE_DATETIME2)
 		{
-			/*
-			 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-			 * scale(1B) + data(6B-8B)
-			 */
+			memcpy(&timestamp, buf, sizeof(timestamp));
+
 			if (scale == 0xff || scale < 0 || scale > 7)
 				scale = DATETIMEOFFSETMAXSCALE;
 
-			if (scale >= 0 && scale < 3)
-				dataLen = 6;
-			else if (scale >= 3 && scale < 5)
-				dataLen = 7;
-			else if (scale >= 5 && scale <= 7)
-				dataLen = 8;
+			if (GetClientTDSVersion() <= TDS_VERSION_7_2)
+			{
+				/*
+				 * DATETIME2NTYPE type was introduced in TDS 7.3, with earlier protocol
+				 * versions datetime2 is sent as NVARCHARTYPE.
+				 */
+				datetime2Str = TdsTimeGetDatetime2AsString(timestamp, scale);
+				rc = TdsSendTypeSqlvariantAsNVarcharHelper(datetime2Str);
+				pfree(datetime2Str);
+			}
+			else
+			{
+				/*
+				 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
+				 * scale(1B) + data(6B-8B)
+				 */
+				if (scale >= 0 && scale < 3)
+					dataLen = 6;
+				else if (scale >= 3 && scale < 5)
+					dataLen = 7;
+				else if (scale >= 5 && scale <= 7)
+					dataLen = 8;
 
-			memcpy(&timestamp, buf, sizeof(timestamp));
-			TdsGetDayTimeFromTimestamp((Timestamp) timestamp, &numDays,
-									   &numMicro, scale);
+				TdsGetDayTimeFromTimestamp((Timestamp) timestamp, &numDays,
+											&numMicro, scale);
 
-			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATETIME2;
-			rc = TdsPutUInt32LE(totalLen);
-			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATETIME2);
-			rc |= TdsPutInt8(scale);
-			rc |= TdsPutbytes(&numMicro, dataLen - 3);
-			rc |= TdsPutDate(numDays);
+				totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATETIME2;
+				rc = TdsPutUInt32LE(totalLen);
+				rc |= TdsPutInt8(variantBaseType);
+				rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATETIME2);
+				rc |= TdsPutInt8(scale);
+				rc |= TdsPutbytes(&numMicro, dataLen - 3);
+				rc |= TdsPutDate(numDays);
+			}
 		}
 		else if (variantBaseType == VARIANT_TYPE_DATETIMEOFFSET)
 		{
@@ -4155,6 +4325,33 @@ TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken token)
 	return result;
 }
 
+static int
+TdsSendDatetimeoffsetAsNVarcharHelper(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc,
+				scale;
+	char	   *st;
+	TdsColumnMetaData *col;
+	StringInfoData buf;
+
+	col = (TdsColumnMetaData *) vMetaData;
+	scale = (int) col->atttypmod;
+	if (scale < 0)
+		scale = MAX_TIMESTAMP_PRECISION + 1;
+
+	st = TdsTimeGetDatetimeoffsetAsString((tsql_datetimeoffset *) value, scale);
+
+	initStringInfo(&buf);
+	TdsUTF8toUTF16StringInfo(&buf, st, strlen(st));
+	pfree(st);
+
+	if ((rc = TdsPutInt16LE(buf.len)) == 0)
+		TdsPutbytes(buf.data, buf.len);
+
+	pfree(buf.data);
+	return rc;
+}
+
 int
 TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
@@ -4175,7 +4372,7 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * If client being connected is using TDS version lower than 7.3A then
 		 * TSQL treats DATETIMEOFFSET as NVARCHAR.
 		 */
-		return TdsSendTypeNVarchar(finfo, value, vMetaData);
+		return TdsSendDatetimeoffsetAsNVarcharHelper(finfo, value, vMetaData);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_DATETIME_OFFSET);
 

@@ -1957,7 +1957,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 												   options,
 												   (scrollopt_null ? NULL : &scrollopt),
 												   (ccopt_null ? NULL : &ccopt),
-												   args->numargs, args->argtypes);
+												   args->numargs, args->argtypes, NULL);
 				}
 				PG_CATCH();
 				{
@@ -2512,6 +2512,28 @@ is_char_identpart(char c)
 			(c >= '0' && c <= '9'));
 }
 
+static List *
+rewrite_decimal_names_to_numeric(List *name_list)
+{
+	Node	*name_node;
+	char	*name_str;			
+	String	*numeric_string;
+
+	if(list_length(name_list) != 1)
+		return name_list;
+
+	name_node = (Node *) linitial(name_list);
+	name_str = strVal(name_node);
+	if (!strcmp("decimal", name_str))
+	{
+		numeric_string = makeString("numeric");
+		name_list = list_delete_first(name_list);
+		name_list = lcons(numeric_string, name_list);
+	}
+
+	return name_list;
+}
+
 /*
  * Read parameter definitions
  */
@@ -2582,6 +2604,13 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		 * error will be thrown in the parser itself.
 		 */
 		p->argType->names = rewrite_plain_name(p->argType->names);
+		/*
+		 * Typemod is ignored for decimal columns that can make input values
+		 * to be inserted with incorrect scale. Rewriting "decimal" to
+		 * "numeric" in paramdefs to look up numeric typeId instead of decimal.
+		 * See issue gh-2678 for details.
+		 */
+		p->argType->names = rewrite_decimal_names_to_numeric(p->argType->names);
 
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
 		i++;

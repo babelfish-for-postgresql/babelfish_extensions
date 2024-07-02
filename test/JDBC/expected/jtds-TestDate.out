@@ -1,0 +1,61 @@
+CREATE TABLE DATE_dt (a DATE)
+prepst#!# INSERT INTO DATE_dt(a) values(?) #!#DATE|-|a|-|2000-12-13
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#DATE|-|a|-|2000-02-28
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#DATE|-|a|-|0001-01-01
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Only dates between January 1, 1753 and December 31, 9999 are accepted.)~~
+
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#DATE|-|a|-|9999-12-31
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#DATE|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+SELECT * FROM DATE_dt;
+~~START~~
+nvarchar
+2000-12-13
+2000-02-28
+2000-02-28
+9999-12-31
+<NULL>
+~~END~~
+
+INSERT INTO DATE_dt(a) values('2000-12-13')
+~~ROW COUNT: 1~~
+
+INSERT INTO DATE_dt(a) values('1900-02-28')
+~~ROW COUNT: 1~~
+
+INSERT INTO DATE_dt(a) values('0001-01-01')
+~~ROW COUNT: 1~~
+
+INSERT INTO DATE_dt(a) values('9999-12-31')
+~~ROW COUNT: 1~~
+
+INSERT INTO DATE_dt(a) values(NULL)
+~~ROW COUNT: 1~~
+
+SELECT * FROM DATE_dt;
+~~START~~
+nvarchar
+2000-12-13
+2000-02-28
+2000-02-28
+9999-12-31
+<NULL>
+2000-12-13
+1900-02-28
+0001-01-01
+9999-12-31
+<NULL>
+~~END~~
+
+DROP TABLE DATE_dt;

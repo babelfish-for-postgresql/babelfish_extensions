@@ -33,6 +33,9 @@ extern void TdsTimeGetDatumFromDays(uint32 numDays, uint64 *val);
 extern void TdsTimeGetDatumFromDatetime(uint32 numDays, uint32 numTicks,
 										Timestamp *timestamp);
 extern uint32 TdsGetDayDifferenceHelper(int day, int mon, int year, bool isDateType);
+extern char* TdsTimeGetDateAsString(Datum value);
+extern char* TdsTimeGetTimeAsString(TimeADT value, int scale);
+extern char* TdsTimeGetDatetime2AsString(Timestamp value, int scale);
 
 /*
  *  structure for datatimeoffset support with separate time zone field
@@ -42,6 +45,8 @@ typedef struct tsql_datetimeoffset
 	int64		tsql_ts;
 	int16		tsql_tz;
 } tsql_datetimeoffset;
+
+extern char* TdsTimeGetDatetimeoffsetAsString(tsql_datetimeoffset *value, int scale);
 
 /* datetimeoffset macros */
 #define DATETIMEOFFSET_LEN MAXALIGN(sizeof(tsql_datetimeoffset))

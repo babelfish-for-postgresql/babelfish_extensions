@@ -4,6 +4,7 @@ import org.apache.logging.log4j.*;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.sql.DataTruncation;
 import java.sql.SQLException;
 
 import org.postgresql.util.PSQLException;
@@ -19,6 +20,12 @@ public class HandleException {
     static void handleSQLExceptionWithFile(SQLException e, BufferedWriter bw, Logger logger) {
         try {
             if (outputErrorCode) {
+
+                // DataTruncation is used by jTDS for error code 220
+                if (e instanceof DataTruncation && e.getNextException() != null) {
+                    e = e.getNextException();
+                }
+
                 bw.write("~~ERROR (Code: " + e.getErrorCode() + ")~~");
                 bw.newLine();
                 bw.newLine();
