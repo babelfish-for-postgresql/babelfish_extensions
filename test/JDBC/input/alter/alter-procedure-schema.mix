@@ -332,3 +332,6 @@ go
 drop procedure tsqlp1
 go
 
+-- Set dialect back to postgres
+select set_config('babelfishpg_tsql.sql_dialect', 'postgres', null);
+GO
