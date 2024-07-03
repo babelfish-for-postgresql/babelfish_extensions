@@ -420,7 +420,7 @@ GO
 
 CREATE TABLE PartitionDb_PartitionTable (
     Id INT,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON PartitionDb_PartitionScheme(Id);
 GO
 
@@ -449,7 +449,7 @@ CREATE PROCEDURE PartitionProcedureCreatePartitionTable AS
 BEGIN
 CREATE TABLE PartitionTableInsideProc1(
     Id INT,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON PartitionSchemeInsideProc1(Id);
 END;
 GO
@@ -463,7 +463,7 @@ PARTITION PartitionFunctionInsideProc2
 ALL TO ([PRIMARY]);
 CREATE TABLE PartitionTableInsideProc2(
     Id INT,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON PartitionSchemeInsideProc2(Id);
 END;
 Go
@@ -502,147 +502,147 @@ go
 -- int data type
 CREATE TABLE partition_vu_prepare_int_table (
     Id INT,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON IntPartitionScheme(Id);
 GO
 
 -- bigint data type
 CREATE TABLE partition_vu_prepare_bigint_table (
     Id BIGINT,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON BigIntPartitionScheme(Id);
 GO
 
 -- smallint data type
 CREATE TABLE partition_vu_prepare_smallint_table (
     Id SMALLINT,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON SmallIntPartitionScheme(Id);
 GO
 
 -- tinyint data type
 CREATE TABLE partition_vu_prepare_tinyint_table (
     Id TINYINT,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON TinyIntPartitionScheme(Id);
 GO
 
 -- decimal data type
 CREATE TABLE partition_vu_prepare_decimal_table (
     Id DECIMAL(10, 5),
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON DecimalPartitionScheme(Id);
 GO
 
 -- numeric data type
 CREATE TABLE partition_vu_prepare_numeric_table (
     Id NUMERIC(5, 2),
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON NumericPartitionScheme(Id);
 GO
 
 -- money data type
 CREATE TABLE partition_vu_prepare_money_table (
     Id MONEY,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON MoneyPartitionScheme(Id);
 GO
 
 -- smallmoney data type
 CREATE TABLE partition_vu_prepare_smallmoney_table (
     Id SMALLMONEY,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON SmallMoneyPartitionScheme(Id);
 GO
 
 -- date data type
 CREATE TABLE partition_vu_prepare_date_table (
     Id DATE,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON DatePartitionScheme(Id);
 GO
 
 -- datetime data type
 CREATE TABLE partition_vu_prepare_datetime_table (
     Id DATETIME,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON DateTimePartitionScheme(Id);
 GO
 
 -- datetime2 data type
 CREATE TABLE partition_vu_prepare_datetime2_table (
     Id DATETIME2(3),
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON DateTime2PartitionScheme(Id);
 GO
 
 -- smalldatetime data type
 CREATE TABLE partition_vu_prepare_smalldatetime_table (
     Id SMALLDATETIME,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON SmallDateTimePartitionScheme(Id);
 GO
 
 -- char data type
 CREATE TABLE partition_vu_prepare_char_table (
     Id CHAR(5),
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON CharPartitionScheme(Id);
 GO
 
 -- varchar data type
 CREATE TABLE partition_vu_prepare_varchar_table (
     Id VARCHAR(10),
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON VarCharPartitionScheme(Id);
 GO
 
 -- nvarchar data type
 CREATE TABLE partition_vu_prepare_nvarchar_table (
     Id NVARCHAR(10),
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON NVarCharPartitionScheme(Id);
 GO
 
 -- nchar data type
 CREATE TABLE partition_vu_prepare_nchar_table (
     Id NCHAR(5),
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON NCharPartitionScheme(Id);
 GO
 
 -- binary data type
 CREATE TABLE partition_vu_prepare_binary_table (
     Id BINARY(4),
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON BinaryPartitionScheme(Id);
 GO
 
 -- varbinary data type
 CREATE TABLE partition_vu_prepare_varbinary_table (
     Id VARBINARY(8),
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON VarBinaryPartitionScheme(Id);
 GO
 
 -- uniqueidentifier data type
 CREATE TABLE partition_vu_prepare_uniqueidentifier_table (
     Id UNIQUEIDENTIFIER,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON UniqueIdentifierPartitionScheme(Id);
 GO
 
 -- sql_variant data type
 CREATE TABLE partition_vu_prepare_sqlvariant_table (
     Id SQL_VARIANT,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON SqlVariantPartitionScheme(Id);
 GO
 
 -- identifier length greater than 64
 CREATE TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (
     Id INT,
-    Value sys.varchar(20)
+    Value sys.varchar(50)
 ) ON IntPartitionScheme(Id);
 GO
 
@@ -784,6 +784,7 @@ GO
 INSERT INTO partition_vu_prepare_int_table (Id, Value) VALUES (1, 'Value 1');
 INSERT INTO partition_vu_prepare_int_table (Id, Value) VALUES (100, 'Value 100');
 INSERT INTO partition_vu_prepare_int_table (Id, Value) VALUES (10000, 'Value 10000');
+INSERT INTO partition_vu_prepare_int_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_bigint_table
@@ -791,18 +792,21 @@ INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (1, 'Value 1');
 INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (100, 'Value 100');
 INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (10000, 'Value 10000');
 INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (1000000000, 'Value 1000000000');
+INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_smallint_table
 INSERT INTO partition_vu_prepare_smallint_table (Id, Value) VALUES (1, 'Value 1');
 INSERT INTO partition_vu_prepare_smallint_table (Id, Value) VALUES (-32768, 'Value -32768');
 INSERT INTO partition_vu_prepare_smallint_table (Id, Value) VALUES (32767, 'Value 32767');
+INSERT INTO partition_vu_prepare_smallint_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_tinyint_table
 INSERT INTO partition_vu_prepare_tinyint_table (Id, Value) VALUES (1, 'Value 1');
 INSERT INTO partition_vu_prepare_tinyint_table (Id, Value) VALUES (128, 'Value 128');
 INSERT INTO partition_vu_prepare_tinyint_table (Id, Value) VALUES (255, 'Value 255');
+INSERT INTO partition_vu_prepare_tinyint_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_decimal_table
@@ -810,6 +814,7 @@ INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (1.0, 'Value 1
 INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (100.0, 'Value 100.0');
 INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (200.0, 'Value 200.0');
 INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (300.0, 'Value 300.0');
+INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_numeric_table
@@ -817,42 +822,49 @@ INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (1.0, 'Value 1
 INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (10.0, 'Value 10.0');
 INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (20.0, 'Value 20.0');
 INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (30.0, 'Value 30.0');
+INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_money_table
 INSERT INTO partition_vu_prepare_money_table (Id, Value) VALUES (1.0, 'Value 1.0');
 INSERT INTO partition_vu_prepare_money_table (Id, Value) VALUES (2.56789, 'Value 2.56789');
 INSERT INTO partition_vu_prepare_money_table (Id, Value) VALUES (4.91, 'Value 4.91');
+INSERT INTO partition_vu_prepare_money_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_smallmoney_table
 INSERT INTO partition_vu_prepare_smallmoney_table (Id, Value) VALUES (1.0, 'Value 1.0');
 INSERT INTO partition_vu_prepare_smallmoney_table (Id, Value) VALUES (2.56789, 'Value 2.56789');
 INSERT INTO partition_vu_prepare_smallmoney_table (Id, Value) VALUES (4.91, 'Value 4.91');
+INSERT INTO partition_vu_prepare_smallmoney_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_date_table
 INSERT INTO partition_vu_prepare_date_table (Id, Value) VALUES ('2022-01-01', 'Value 2022-01-01');
 INSERT INTO partition_vu_prepare_date_table (Id, Value) VALUES ('2022-07-01', 'Value 2022-07-01');
 INSERT INTO partition_vu_prepare_date_table (Id, Value) VALUES ('2023-01-01', 'Value 2023-01-01');
+INSERT INTO partition_vu_prepare_date_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_datetime_table
 INSERT INTO partition_vu_prepare_datetime_table (Id, Value) VALUES ('2019-01-01', 'Value 2019-01-01');
 INSERT INTO partition_vu_prepare_datetime_table (Id, Value) VALUES ('2022-01-01', 'Value 2022-01-01');
 INSERT INTO partition_vu_prepare_datetime_table (Id, Value) VALUES ('2022-07-01', 'Value 2022-07-01');
+INSERT INTO partition_vu_prepare_datetime_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_datetime2_table
 INSERT INTO partition_vu_prepare_datetime2_table (Id, Value) VALUES ('2019-01-01 00:00:00.000', 'Value 2019-01-01 00:00:00.000');
 INSERT INTO partition_vu_prepare_datetime2_table (Id, Value) VALUES ('2022-01-01 00:00:00.000', 'Value 2022-01-01 00:00:00.000');
 INSERT INTO partition_vu_prepare_datetime2_table (Id, Value) VALUES ('2022-07-01 00:00:00.000', 'Value 2022-07-01 00:00:00.000');
+INSERT INTO partition_vu_prepare_datetime2_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_smalldatetime_table
 INSERT INTO partition_vu_prepare_smalldatetime_table (Id, Value) VALUES ('2019-01-01', 'Value 2019-01-01');
 INSERT INTO partition_vu_prepare_smalldatetime_table (Id, Value) VALUES ('2022-01-01', 'Value 2022-01-01');
 INSERT INTO partition_vu_prepare_smalldatetime_table (Id, Value) VALUES ('2022-07-01', 'Value 2022-07-01');
+INSERT INTO partition_vu_prepare_smalldatetime_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_char_table
@@ -860,6 +872,7 @@ INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES ('A', 'Value A');
 INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES ('K', 'Value K');
 INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES ('U', 'Value U');
 INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES ('D', 'Value D');
+INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_varchar_table
@@ -868,6 +881,7 @@ INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES ('Banana', 'Va
 INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES ('Mango', 'Value Mango');
 INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES ('Cherry', 'Value Cherry');
 INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES ('Date', 'Value Date');
+INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_nvarchar_table
@@ -876,6 +890,7 @@ INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (N'Banana', N
 INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (N'Mango', N'Value Mango');
 INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (N'Cherry', N'Value Cherry');
 INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (N'Date', N'Value Date');
+INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_nchar_table
@@ -883,6 +898,7 @@ INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (N'A', N'Value A
 INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (N'K', N'Value K');
 INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (N'U', N'Value U');
 INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (N'B', N'Value B');
+INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- BABEL-4957 needs to fixed first otherwise dump/restore will fail
@@ -891,6 +907,7 @@ GO
 -- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0400, 'Value 0x0400');
 -- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0800, 'Value 0x0800');
 -- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0C000, 'Value 0x0C000');
+-- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (NULL, 'Value NULL');
 -- GO
 
 -- Insert values into partition_vu_prepare_varbinary_table
@@ -898,12 +915,14 @@ INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (0x000000000
 INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (0x4000000000000000, 'Value 0x4000000000000000');
 INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (0x8000000000000000, 'Value 0x8000000000000000');
 INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (0xC000000000000000, 'Value 0xC000000000000000');
+INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_uniqueidentifier_table
 INSERT INTO partition_vu_prepare_uniqueidentifier_table (Id, Value) VALUES ('00000000-0000-0000-0000-000000000000', 'Value 00000000-0000-0000-0000-000000000000');
 INSERT INTO partition_vu_prepare_uniqueidentifier_table (Id, Value) VALUES ('6F9619FF-8B86-D011-B42D-00C04FC964FF', 'Value 6F9619FF-8B86-D011-B42D-00C04FC964FF');
 INSERT INTO partition_vu_prepare_uniqueidentifier_table (Id, Value) VALUES ('FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', 'Value FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF');
+INSERT INTO partition_vu_prepare_uniqueidentifier_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
 
 -- Insert values into partition_vu_prepare_sqlvariant_table
@@ -912,4 +931,5 @@ INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST(N'xyz
 INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST('Apple' AS VARCHAR(10)), 'Value Apple');
 INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST(N'Banana' AS NVARCHAR(10)), N'Value Banana');
 INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST('Some text' AS SQL_VARIANT), 'Value Some text');
+INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO

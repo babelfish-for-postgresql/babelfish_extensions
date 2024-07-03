@@ -183,7 +183,7 @@ static void bbf_create_partition_tables(CreateStmt *stmt);
 static void bbf_drop_partitioned_table(DropStmt *stmt);
 static bool bbf_validate_partitioned_index_alignment(IndexStmt *stmt);
 static char *construct_unique_hash(char *relation_name);
-static void set_partition_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx, int num_partitions, bool is_binary_datatype);
+static void set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx, int num_partitions, bool is_binary_datatype);
 static void set_node_value_from_datum(A_Const *node, Datum val, bool is_binary_datatype);
 static CreateStmt *create_partition_stmt(char *physical_schema_name, char *relname);
 static void rename_table_update_bbf_partitions_name(RenameStmt *stmt);
@@ -3848,9 +3848,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (rel->schemaname)
 					{
 						char *logical_schemaname = (char *) get_logical_schema_name(rel->schemaname, true);
-						if (logical_schemaname)
+						if (logical_schemaname) /* tsql schema */
 						{
-							int16 dbid = get_dbid_from_physical_schema_name(rel->schemaname, true);
+							int16 dbid = get_dbid_from_physical_schema_name(rel->schemaname, false);
 							if (is_bbf_partitioned_table(dbid, logical_schemaname, rel->relname));
 								ereport(ERROR, 
 									(errcode(ERRCODE_UNDEFINED_OBJECT), 
@@ -6755,7 +6755,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	{
 		char *partition_name =  psprintf("%s_partition_%d", unique_hash, i);
 		partition_stmt->relation->relname = partition_name;
-		set_partition_bounds(partition_stmt->partbound, range_values, i, nelems + 1, is_binary_datatype);
+		set_partition_range_bounds(partition_stmt->partbound, range_values, i, nelems + 1, is_binary_datatype);
 		ProcessUtility(wrapper,
 					"(CREATE PARTITION)",
 					false,
@@ -6852,42 +6852,48 @@ construct_unique_hash(char *relation_name)
 }
 
 /*
- * set_partition_bounds
- * 	Sets the lower and upper bounds for a partition based on its index and the number of partitions.
- * 	1. For the first partition, it sets the lower bound to minvalue.
- * 	2. For the last partition, it sets the upper bound to maxvalue.
- * 	3. For other partitions, it sets bound to the corresponding values in range_values.
+ * set_partition_range_bounds
+ * 	This function sets the lower and upper bounds for a range partition based on its index
+ * 	and the total number of partitions. It handles the following cases:
+ * 	1. For the first partition, it sets the lower bound to DEFAULT to absorb NULL values.
+ * 	2. For the last partition, it sets the upper bound to MAXVALUE.
+ * 	3. For other partitions, it sets the bounds to the corresponding values in the range_values array.
  */
 static void
-set_partition_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx, int num_partitions, bool is_binary_datatype)
+set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx, int num_partitions, bool is_binary_datatype)
 {
-	if (idx == 0)
+	
+	/* Set lower bound of partition. */
+	if (idx == 0) /* first partition */
 	{
-		ColumnRef  *node = makeNode(ColumnRef);
-		node->fields = list_make1(makeString("minvalue"));
-		node->location = -1;
-		partbound->lowerdatums = list_make1(node);
+		partbound->is_default = true;
+		partbound->location = -1;
+		return;
 	}
 	else
 	{
 		A_Const *node = makeNode(A_Const);
 		set_node_value_from_datum(node, range_values[idx-1], is_binary_datatype);
-		node->location = -1;
+		partbound->location = -1;
+		partbound->is_default = false;
 		partbound->lowerdatums = list_make1(node);
 	}
 
-	if (idx == num_partitions - 1)
+	/* Set upper bound of partition. */
+	if (idx == num_partitions - 1) /* last partition */
 	{
 		ColumnRef *node = makeNode(ColumnRef);
 		node->fields = list_make1(makeString("maxvalue"));
-		node->location = -1;
+		partbound->location = -1;
+		partbound->is_default = false;
 		partbound->upperdatums = list_make1(node);
 	}
 	else
 	{
 		A_Const *node = makeNode(A_Const);
 		set_node_value_from_datum(node, range_values[idx], is_binary_datatype);
-		node->location = -1;
+		partbound->location = -1;
+		partbound->is_default = false;
 		partbound->upperdatums = list_make1(node);
 	}
 }

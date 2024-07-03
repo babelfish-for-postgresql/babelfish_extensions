@@ -251,6 +251,15 @@ CREATE PARTITION FUNCTION PartitionFunctionWithLeft (int)
 AS RANGE FOR VALUES (10, 1000, 10000);
 GO
 
+-- NULL value is not supported in range values
+CREATE PARTITION FUNCTION PartitionFunctionWithNULL (int)
+AS RANGE RIGHT FOR VALUES (10, 1000, NULL);
+GO
+
+CREATE PARTITION FUNCTION PartitionFunctionWithNULL (int)
+AS RANGE RIGHT FOR VALUES (10, 1000, NULL, NULL);
+GO
+
 --------------------------------------------------
 --- Duplicate Create of Partition Function/Scheme
 --------------------------------------------------
@@ -507,7 +516,18 @@ go
 
 -- grant create permission to user on schema so that it can create table
 -- psql
-GRANT CREATE ON SCHEMA dbo TO partitiondb_partition_u1;
+DO $$
+DECLARE
+    schema_name TEXT;
+BEGIN
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := 'partitiondb_dbo';
+    ELSE
+        schema_name := 'dbo';
+    END IF;
+
+    EXECUTE 'GRANT CREATE ON SCHEMA ' || quote_ident(schema_name) || ' TO partitiondb_partition_u1';
+END$$;
 GO
 
 -- tsql     user=partition_l1 password=12345678
@@ -528,7 +548,18 @@ GO
 
 -- revoke create permission from user on schema
 -- psql
-REVOKE CREATE ON SCHEMA dbo FROM partitiondb_partition_u1;
+DO $$
+DECLARE
+    schema_name TEXT;
+BEGIN
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := 'partitiondb_dbo';
+    ELSE
+        schema_name := 'dbo';
+    END IF;
+
+    EXECUTE 'REVOKE CREATE ON SCHEMA ' || quote_ident(schema_name) || ' FROM partitiondb_partition_u1';
+END$$;
 GO
 
 -----------------------------------------------------------------------------------
