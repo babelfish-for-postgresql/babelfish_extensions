@@ -2333,3 +2333,11 @@ go
 -- should have no entries since the table is dropped
 select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where object_name = 'babel_4344_t1';
 go
+
+-- tsql
+-- should properly throw an error when schema does not exist
+GRANT SELECT on doesnt_exist.tbl TO public;
+GO
+
+grant execute on xyz.babel_4344_p to public;
+GO
