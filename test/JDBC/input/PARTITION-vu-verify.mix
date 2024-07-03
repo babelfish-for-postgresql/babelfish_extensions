@@ -880,10 +880,21 @@ GO
 ------------------------------------------
 --- Blocked Operation For Partitioned Tables
 -------------------------------------------
--- user should not be allowed to ATTACH/DETACH partition 
--- for babelfish partitioned table from psql endpoint
+-- user should not be allowed to CREATE/ATTACH/DETACH partition
+-- to babelfish partitioned table from psql endpoint
 
 -- psql
+-- Attempt to create new partition with random values
+CREATE TABLE NonExistentTable PARTITION OF master_dbo.partition_vu_prepare_int_table
+FOR VALUES FROM (0) TO (500);
+GO
+
+-- Attempt to create new partition with DEFAULT
+CREATE TABLE NonExistentTable PARTITION OF master_dbo.partition_vu_prepare_int_table
+DEFAULT
+GO
+
+
 -- Attempt to detach
 ALTER TABLE master_dbo.partition_vu_prepare_int_table 
 DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
@@ -1176,6 +1187,70 @@ GO
 DROP TABLE TestPartitionedTable17
 GO
 
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE Index with PARTITION SCHEME
+---------------------------------------------------------------
+CREATE TABLE TestPartitionedTable (
+    PartitionColumn INT,
+    NonPartitionColumn INT
+) ON IntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestNonPartitionedTable (
+    a INT,
+    b INT
+)
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonExistentColumn1)
+ON NonExistentPartitionScheme (NonExistentColumn2);
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON NonExistentPartitionScheme (NonExistentColumn2);
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON NonExistentPartitionScheme (NonPartitionColumn);
+GO
+
+-- scheme is different from the partition scheme used in the table
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON BigIntPartitionScheme (NonPartitionColumn);
+GO
+
+-- column specified with partition scheme is different
+-- from the partition column used in the table
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON IntPartitionScheme (NonPartitionColumn);
+GO
+
+-- should work
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON IntPartitionScheme (PartitionColumn);
+GO
+
+DROP INDEX TestPartitionIndex ON TestPartitionedTable
+GO
+
+-- usage of partition scheme on non-partitioned table (should fail)
+CREATE INDEX TestPartitionIndex
+ON TestNonPartitionedTable(a)
+ON IntPartitionScheme (a);
+GO
+
+
+DROP TABLE TestPartitionedTable
+GO
+
+DROP TABLE TestNonPartitionedTable
+GO
 -------------------------------------------------------------------------------------------
 --- Rename Operation on Partitioned Tables should update name in babelfish_partition_depend
 --- and it should also update the name of all the partitions

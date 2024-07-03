@@ -3924,7 +3924,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
-									errmsg("Unaligned Index is not suppported in babelfish.")));
+									errmsg("Un-aligned Index is not supported in Babelfish.")));
 						}
 						return;
 					}
@@ -6868,6 +6868,8 @@ set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, i
 	{
 		partbound->is_default = true;
 		partbound->location = -1;
+		partbound->lowerdatums = NIL;
+		partbound->upperdatums = NIL;
 		return;
 	}
 	else

@@ -424,6 +424,11 @@ CREATE TABLE PartitionDb_PartitionTable (
 ) ON PartitionDb_PartitionScheme(Id);
 GO
 
+CREATE INDEX PartitionDb_PartitionIndex
+ON PartitionDb_PartitionTable(Id)
+ON PartitionDb_PartitionScheme (Id);
+GO
+
 USE MASTER
 go
 
@@ -663,19 +668,21 @@ GO
 ---------------------------------------------------------------------------
 --- CREATE ALIGNED PARTITIONED INDEX with PARTITION SCHEME
 ---------------------------------------------------------------------------
+-- using schema name
 CREATE INDEX partition_vu_prepare_int_index
-ON partition_vu_prepare_int_table(Id)
+ON dbo.partition_vu_prepare_int_table(Id)
 ON IntPartitionScheme (Id);
 GO
 
+-- without explicit schema name
 CREATE INDEX partition_vu_prepare_bigint_index
 ON partition_vu_prepare_bigint_table(Id)
 ON BigIntPartitionScheme (Id);
 GO
 
+-- without partition scheme should also work
 CREATE INDEX partition_vu_prepare_smallint_index
 ON partition_vu_prepare_smallint_table(Id)
-ON SmallIntPartitionScheme (Id);
 GO
 
 CREATE INDEX partition_vu_prepare_tinyint_index
