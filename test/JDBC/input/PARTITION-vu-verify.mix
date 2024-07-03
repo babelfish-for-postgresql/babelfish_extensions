@@ -507,7 +507,7 @@ go
 
 -- grant create permission to user on schema so that it can create table
 -- psql
-GRANT CREATE ON SCHEMA partitiondb_dbo TO partitiondb_partition_u1;
+GRANT CREATE ON SCHEMA dbo TO partitiondb_partition_u1;
 GO
 
 -- tsql     user=partition_l1 password=12345678
@@ -528,7 +528,7 @@ GO
 
 -- revoke create permission from user on schema
 -- psql
-REVOKE CREATE ON SCHEMA partitiondb_dbo FROM partitiondb_partition_u1;
+REVOKE CREATE ON SCHEMA dbo FROM partitiondb_partition_u1;
 GO
 
 -----------------------------------------------------------------------------------
