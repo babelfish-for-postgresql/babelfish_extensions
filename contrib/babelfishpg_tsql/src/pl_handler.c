@@ -2564,7 +2564,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							pfree(db_name);
 						}
 						else
-							logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, false);
+						{
+							logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
+							if (!logical_schema_name) /* pg_temp schema */
+								return;
+						}
 						dbid = get_cur_db_id();
 					}
 					else if (atstmt->relation->schemaname) /* schema is explicitly specified for non TDS client */
