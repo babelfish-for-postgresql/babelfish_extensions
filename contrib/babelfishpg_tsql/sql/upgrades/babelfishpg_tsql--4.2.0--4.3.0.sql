@@ -42,7 +42,7 @@ LANGUAGE plpgsql;
 -- system tables so need to temporarily set allow_system_table_mods to update the primary key of babelfish_function_ext.
 SET allow_system_table_mods = ON;
 ALTER TABLE sys.babelfish_function_ext DROP CONSTRAINT babelfish_function_ext_pkey;
-ALTER TABLE sys.babelfish_function_ext ADD PRIMARY KEY (funcname, nspname, funcsignature);
+ALTER TABLE sys.babelfish_function_ext ADD CONSTRAINT babelfish_function_ext_pkey PRIMARY KEY (funcname, nspname, funcsignature);
 RESET allow_system_table_mods;
 
 -- BBF_PARTITION_FUNCTION
