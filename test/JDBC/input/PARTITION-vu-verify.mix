@@ -894,6 +894,20 @@ CREATE TABLE NonExistentTable PARTITION OF master_dbo.partition_vu_prepare_int_t
 DEFAULT
 GO
 
+-- Attempt to drop partition of babelfish partitioned table from psql endpoint
+DROP TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+
+-- Attempt to ADD storage parameter to babelfish partitioned table (not on the partitions)
+SET babelfishpg_tsql.sql_dialect = "tsql";
+GO
+
+ALTER TABLE master_dbo.partition_vu_prepare_int_table SET (autovacuum_enabled = false);
+GO
+
+RESET babelfishpg_tsql.sql_dialect;
+GO
+
 
 -- Attempt to detach
 ALTER TABLE master_dbo.partition_vu_prepare_int_table 
@@ -951,6 +965,10 @@ GO
 
 ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
 ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+
+-- Attempt to drop partition of babelfish partitioned table from tsql endpoint
+DROP TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
 GO
 
 --------------------------------------------------------------------

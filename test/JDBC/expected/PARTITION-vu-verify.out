@@ -1376,7 +1376,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.793 ms
+Babelfish T-SQL Batch Parsing Time: 0.756 ms
 ~~END~~
 
 
@@ -1395,7 +1395,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.126 ms
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
 ~~END~~
 
 
@@ -1413,7 +1413,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.105 ms
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 
@@ -1431,7 +1431,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 
@@ -1450,7 +1450,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -1469,7 +1469,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -1487,7 +1487,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -1505,7 +1505,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -1523,7 +1523,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -1541,7 +1541,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -1559,7 +1559,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -1577,7 +1577,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -1599,7 +1599,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -1619,7 +1619,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -1639,7 +1639,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -1661,7 +1661,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.125 ms
 ~~END~~
 
 
@@ -1680,7 +1680,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -1699,7 +1699,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -1717,7 +1717,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -1737,7 +1737,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -1777,7 +1777,7 @@ Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_idx" on "36386
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 34.819 ms
+Babelfish T-SQL Batch Parsing Time: 38.754 ms
 ~~END~~
 
 
@@ -1792,7 +1792,7 @@ Index Scan using "548bb344374ce8d65342b36428375873_partition_1_id_idx" on "548bb
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.237 ms
+Babelfish T-SQL Batch Parsing Time: 0.210 ms
 ~~END~~
 
 
@@ -1807,7 +1807,7 @@ Index Scan using "12025e103721b70925744c196ce004cd_partition_1_id_idx" on "12025
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.420 ms
+Babelfish T-SQL Batch Parsing Time: 7.501 ms
 ~~END~~
 
 
@@ -1822,7 +1822,7 @@ Index Scan using "61446d711d19b5970809387caa7fd3d3_partition_1_id_idx" on "61446
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -1837,7 +1837,7 @@ Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.652 ms
+Babelfish T-SQL Batch Parsing Time: 6.741 ms
 ~~END~~
 
 
@@ -1852,7 +1852,7 @@ Index Scan using "57405760297bb338f333c148aac5f845_partition_1_id_idx" on "57405
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.179 ms
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
 ~~END~~
 
 
@@ -1870,7 +1870,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.230 ms
+Babelfish T-SQL Batch Parsing Time: 0.232 ms
 ~~END~~
 
 
@@ -1888,7 +1888,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.163 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -1903,7 +1903,7 @@ Index Scan using "4867824426e52acac5c93d9cbe8aa366_partition_1_id_idx" on "48678
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.689 ms
+Babelfish T-SQL Batch Parsing Time: 6.822 ms
 ~~END~~
 
 
@@ -1918,7 +1918,7 @@ Index Scan using "751ce655481adf15600727bf291667f7_partition_1_id_idx" on "751ce
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.260 ms
+Babelfish T-SQL Batch Parsing Time: 0.193 ms
 ~~END~~
 
 
@@ -1933,7 +1933,7 @@ Index Scan using "5ed003cf80dacbb8cce0b21e175f7f94_partition_1_id_idx" on "5ed00
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.179 ms
 ~~END~~
 
 
@@ -1948,7 +1948,7 @@ Index Scan using b5c2e665ec4a1219ba8510e33e45379b_partition_1_id_idx on b5c2e665
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.164 ms
+Babelfish T-SQL Batch Parsing Time: 0.239 ms
 ~~END~~
 
 
@@ -1963,7 +1963,7 @@ Index Scan using "5d20bd977eb6e6f1304dec45598c09f5_partition_1_id_idx" on "5d20b
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.170 ms
+Babelfish T-SQL Batch Parsing Time: 0.263 ms
 ~~END~~
 
 
@@ -1978,7 +1978,7 @@ Index Scan using "933a5c7f0de13890324e53ee0711424b_partition_1_id_idx" on "933a5
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.164 ms
+Babelfish T-SQL Batch Parsing Time: 0.262 ms
 ~~END~~
 
 
@@ -1993,7 +1993,7 @@ Index Scan using "320465af1d1bd21f5b29c57f9f4e5c51_partition_1_id_idx" on "32046
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.165 ms
+Babelfish T-SQL Batch Parsing Time: 0.238 ms
 ~~END~~
 
 
@@ -2025,7 +2025,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.165 ms
+Babelfish T-SQL Batch Parsing Time: 0.166 ms
 ~~END~~
 
 
@@ -2051,7 +2051,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.281 ms
+Babelfish T-SQL Batch Parsing Time: 7.000 ms
 ~~END~~
 
 
@@ -2066,7 +2066,7 @@ Index Scan using "77718961234110c3a22a3c977bc252d8_partition_1_id_idx" on "77718
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.293 ms
+Babelfish T-SQL Batch Parsing Time: 0.185 ms
 ~~END~~
 
 
@@ -2081,7 +2081,7 @@ Index Scan using f3baf999c06d6ea82082a4c549baeb77_partition_1_id_idx on f3baf999
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.340 ms
+Babelfish T-SQL Batch Parsing Time: 0.214 ms
 ~~END~~
 
 
@@ -2096,7 +2096,7 @@ Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.388 ms
+Babelfish T-SQL Batch Parsing Time: 7.460 ms
 ~~END~~
 
 
@@ -2150,6 +2150,31 @@ GO
 ~~ERROR (Message: ERROR: Cannot create the partition of babelfish partitioned table 'partition_vu_prepare_int_table'.
     Server SQLState: 42704)~~
 
+
+-- Attempt to drop partition of babelfish partitioned table from psql endpoint
+DROP TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot drop the babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.
+    Server SQLState: 42704)~~
+
+
+-- Attempt to ADD storage parameter to babelfish partitioned table (not on the partitions)
+SET babelfishpg_tsql.sql_dialect = "tsql";
+GO
+
+ALTER TABLE master_dbo.partition_vu_prepare_int_table SET (autovacuum_enabled = false);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot specify storage parameters for a partitioned table
+  Hint: Specify storage parameters for its leaf partitions instead.
+    Server SQLState: 42809)~~
+
+
+RESET babelfishpg_tsql.sql_dialect;
+GO
 
 
 -- Attempt to detach
@@ -2259,6 +2284,14 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.)~~
+
+
+-- Attempt to drop partition of babelfish partitioned table from tsql endpoint
+DROP TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.)~~
 
 
 --------------------------------------------------------------------
