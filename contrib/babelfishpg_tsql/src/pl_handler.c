@@ -2543,35 +2543,41 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 				}
 				
-				if (!babelfish_dump_restore && atstmt->objtype == OBJECT_TABLE && 
-					(sql_dialect == SQL_DIALECT_TSQL || atstmt->relation->schemaname != NULL))
+				if (!babelfish_dump_restore && atstmt->objtype == OBJECT_TABLE)
 				{
 					AlterTableCmd	*cmd = (AlterTableCmd *) linitial(atstmt->cmds);
 					char		*logical_schema_name;
 					int16		dbid;
 					
-					/*
-					 * Find default schema for current user when schema
-					 * is not explicitly specified for TSQL dialect.
-					 */
-					if (!atstmt->relation->schemaname)
+					if (IS_TDS_CLIENT())
 					{
-						char		*db_name = get_cur_db_name();
-						const char	*user = get_user_for_database(db_name);
-			
+						/*
+						 * Find default schema for current user when schema
+						 * is not explicitly specified for TDS client.
+						 */
+						if (!atstmt->relation->schemaname)
+						{
+							char		*db_name = get_cur_db_name();
+							const char	*user = get_user_for_database(db_name);
+				
+							logical_schema_name = get_authid_user_ext_schema_name(db_name, user);
+							pfree(db_name);
+						}
+						else
+							logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, false);
 						dbid = get_cur_db_id();
-						logical_schema_name = get_authid_user_ext_schema_name(db_name, user);
-						pfree(db_name);
 					}
-					else
+					else if (atstmt->relation->schemaname) /* schema is explicitly specified for non TDS client */
 					{
 						logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
 						if (!logical_schema_name) /* not a tsql schema */
 							break;
 						
 						/* Find dbid from physical schema name for a tsql schema. */
-						dbid = get_dbid_from_physical_schema_name(atstmt->relation->schemaname, true);
+						dbid = get_dbid_from_physical_schema_name(atstmt->relation->schemaname, false);
 					}
+					else
+						break;
 					
 					/*
 					 * For babelfish partitioned table, user should not be
@@ -7072,7 +7078,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	char		*physical_schema_name = stmt->relation->schemaname;
 	char		*logical_schema_name;
 	char		*table_name = stmt->relation->relname;
-	List		*list = NIL;
+	List		*partition_names = NIL;
 	int16		dbid;
 	char		*unique_hash;
 	PlannedStmt	*wrapper;
@@ -7117,7 +7123,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	while ((tuple = systable_getnext(scan)) != NULL)
 	{
 		inhrelid = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
-		list = lappend(list, get_rel_name(inhrelid));
+		partition_names = lappend(partition_names, get_rel_name(inhrelid));
 	}
 	systable_endscan(scan);
 	table_close(relation, AccessShareLock);
@@ -7159,9 +7165,9 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	/* Construct hash based on new name. */
 	unique_hash = construct_unique_hash(stmt->newname);
 	
-	for (int i = 0; i < list_length(list); i++)
+	for (int i = 0; i < list_length(partition_names); i++)
 	{
-		partition_name = list_nth(list, i);
+		partition_name = list_nth(partition_names, i);
 		new_partition_name = pstrdup(partition_name);
 
 		/* Replace old hash in partition name with new hash. */
@@ -7187,6 +7193,9 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 		pfree(new_partition_name);
 	}
 
+	/* Free the allocated memory. */
+	if (partition_names)
+		list_free(partition_names);
 	pfree(logical_schema_name);
 	pfree(unique_hash);
 	pfree(query.data);
