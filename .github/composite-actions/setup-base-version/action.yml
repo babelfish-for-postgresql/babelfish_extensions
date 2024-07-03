@@ -192,6 +192,13 @@ runs:
 
         export inputFilesPath=upgrade/$base_dir/preparation
         mvn test
+
+        # Skip test BABEL-404 for previous versions while testing dump/restore since it specifies
+        # contraint column ordering which is expected to fail after fix for BABEL-4888
+        if [[ ${{ inputs.dump_restore }} == 'true' && inputs.extension_branch != 'latest' ]];then
+          sed -i "/BABEL-404\>/d" upgrade/$base_dir/schedule
+        fi
+
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 
             printf '%s\n' "ERROR: Cannot find Test file "$filename"-vu-prepare or "$filename"-vu-verify in input directory !!" >&2
