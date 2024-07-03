@@ -37,6 +37,9 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+
+-- Babelfish catalog tables are marked system tables and postgres does not normally allow modification on
+-- system tables so need to temporarily set allow_system_table_mods to update the primary key of babelfish_function_ext.
 SET allow_system_table_mods = ON;
 ALTER TABLE sys.babelfish_function_ext DROP CONSTRAINT babelfish_function_ext_pkey;
 ALTER TABLE sys.babelfish_function_ext ADD PRIMARY KEY (funcname, nspname, funcsignature);
