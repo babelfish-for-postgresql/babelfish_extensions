@@ -1376,7 +1376,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.756 ms
+Babelfish T-SQL Batch Parsing Time: 1.176 ms
 ~~END~~
 
 
@@ -1395,7 +1395,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.130 ms
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -1413,7 +1413,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.164 ms
 ~~END~~
 
 
@@ -1431,7 +1431,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.133 ms
+Babelfish T-SQL Batch Parsing Time: 0.158 ms
 ~~END~~
 
 
@@ -1450,7 +1450,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -1469,7 +1469,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.138 ms
 ~~END~~
 
 
@@ -1487,7 +1487,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 
@@ -1505,7 +1505,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.131 ms
 ~~END~~
 
 
@@ -1523,7 +1523,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
 ~~END~~
 
 
@@ -1541,7 +1541,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -1559,7 +1559,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -1577,7 +1577,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
 ~~END~~
 
 
@@ -1599,7 +1599,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -1619,7 +1619,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -1639,7 +1639,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -1661,7 +1661,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.125 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -1680,7 +1680,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -1699,7 +1699,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 
@@ -1717,7 +1717,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.128 ms
 ~~END~~
 
 
@@ -1737,7 +1737,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
 ~~END~~
 
 
@@ -1777,7 +1777,7 @@ Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_idx" on "36386
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 38.754 ms
+Babelfish T-SQL Batch Parsing Time: 35.683 ms
 ~~END~~
 
 
@@ -1792,7 +1792,7 @@ Index Scan using "548bb344374ce8d65342b36428375873_partition_1_id_idx" on "548bb
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.210 ms
+Babelfish T-SQL Batch Parsing Time: 0.225 ms
 ~~END~~
 
 
@@ -1807,7 +1807,7 @@ Index Scan using "12025e103721b70925744c196ce004cd_partition_1_id_idx" on "12025
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.501 ms
+Babelfish T-SQL Batch Parsing Time: 7.575 ms
 ~~END~~
 
 
@@ -1822,7 +1822,7 @@ Index Scan using "61446d711d19b5970809387caa7fd3d3_partition_1_id_idx" on "61446
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.169 ms
+Babelfish T-SQL Batch Parsing Time: 0.182 ms
 ~~END~~
 
 
@@ -1837,7 +1837,7 @@ Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.741 ms
+Babelfish T-SQL Batch Parsing Time: 10.710 ms
 ~~END~~
 
 
@@ -1852,7 +1852,7 @@ Index Scan using "57405760297bb338f333c148aac5f845_partition_1_id_idx" on "57405
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.192 ms
+Babelfish T-SQL Batch Parsing Time: 0.284 ms
 ~~END~~
 
 
@@ -1870,7 +1870,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.232 ms
+Babelfish T-SQL Batch Parsing Time: 0.355 ms
 ~~END~~
 
 
@@ -1888,7 +1888,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.250 ms
 ~~END~~
 
 
@@ -1903,7 +1903,7 @@ Index Scan using "4867824426e52acac5c93d9cbe8aa366_partition_1_id_idx" on "48678
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.822 ms
+Babelfish T-SQL Batch Parsing Time: 6.942 ms
 ~~END~~
 
 
@@ -1918,7 +1918,7 @@ Index Scan using "751ce655481adf15600727bf291667f7_partition_1_id_idx" on "751ce
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.193 ms
+Babelfish T-SQL Batch Parsing Time: 0.282 ms
 ~~END~~
 
 
@@ -1933,7 +1933,7 @@ Index Scan using "5ed003cf80dacbb8cce0b21e175f7f94_partition_1_id_idx" on "5ed00
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.179 ms
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
 ~~END~~
 
 
@@ -1948,7 +1948,7 @@ Index Scan using b5c2e665ec4a1219ba8510e33e45379b_partition_1_id_idx on b5c2e665
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.239 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 
@@ -1963,7 +1963,7 @@ Index Scan using "5d20bd977eb6e6f1304dec45598c09f5_partition_1_id_idx" on "5d20b
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.263 ms
+Babelfish T-SQL Batch Parsing Time: 0.181 ms
 ~~END~~
 
 
@@ -1978,7 +1978,7 @@ Index Scan using "933a5c7f0de13890324e53ee0711424b_partition_1_id_idx" on "933a5
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.262 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 
@@ -1993,7 +1993,7 @@ Index Scan using "320465af1d1bd21f5b29c57f9f4e5c51_partition_1_id_idx" on "32046
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.238 ms
+Babelfish T-SQL Batch Parsing Time: 0.164 ms
 ~~END~~
 
 
@@ -2025,7 +2025,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.166 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -2051,7 +2051,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.000 ms
+Babelfish T-SQL Batch Parsing Time: 7.011 ms
 ~~END~~
 
 
@@ -2066,7 +2066,7 @@ Index Scan using "77718961234110c3a22a3c977bc252d8_partition_1_id_idx" on "77718
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.185 ms
+Babelfish T-SQL Batch Parsing Time: 0.194 ms
 ~~END~~
 
 
@@ -2081,7 +2081,7 @@ Index Scan using f3baf999c06d6ea82082a4c549baeb77_partition_1_id_idx on f3baf999
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.214 ms
+Babelfish T-SQL Batch Parsing Time: 0.280 ms
 ~~END~~
 
 
@@ -2096,7 +2096,7 @@ Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.460 ms
+Babelfish T-SQL Batch Parsing Time: 7.339 ms
 ~~END~~
 
 
@@ -2475,13 +2475,13 @@ GO
 CREATE TABLE TestPartitionedTable6
 (
     Id INT,
-    PartitionColumn TINYINT
+    PartitionColumn DECIMAL(10, 2)
 )
 ON SmallIntPartitionScheme(PartitionColumn);
 GO
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'decimal' which is different from the partition function 'SmallIntPartitionFunction' parameter data type 'smallint'.)~~
 
 
 CREATE TABLE TestPartitionedTable7
@@ -2499,10 +2499,14 @@ GO
 CREATE TABLE TestPartitionedTable8
 (
     Id INT,
-    PartitionColumn NUMERIC(5, 2)
+    PartitionColumn BIGINT
 )
 ON DecimalPartitionScheme(PartitionColumn);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int8' which is different from the partition function 'DecimalPartitionFunction' parameter data type 'decimal'.)~~
+
 
 CREATE TABLE TestPartitionedTable9
 (
@@ -2519,10 +2523,14 @@ GO
 CREATE TABLE TestPartitionedTable10
 (
     Id INT,
-    PartitionColumn SMALLMONEY
+    PartitionColumn INT
 )
 ON MoneyPartitionScheme(PartitionColumn);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int4' which is different from the partition function 'MoneyPartitionFunction' parameter data type 'money'.)~~
+
 
 CREATE TABLE TestPartitionedTable11
 (
@@ -2575,10 +2583,14 @@ GO
 CREATE TABLE TestPartitionedTable15
 (
     Id INT,
-    PartitionColumn VARCHAR(10)
+    PartitionColumn INT
 )
 ON NVarCharPartitionScheme(PartitionColumn);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int4' which is different from the partition function 'NVarCharPartitionFunction' parameter data type 'nvarchar'.)~~
+
 
 CREATE TABLE TestPartitionedTable16
 (
@@ -2595,21 +2607,32 @@ GO
 CREATE TABLE TestPartitionedTable17
 (
     Id INT,
-    PartitionColumn CHAR(5)
+    PartitionColumn INT
 )
 ON NCharPartitionScheme(PartitionColumn);
 GO
+~~ERROR (Code: 33557097)~~
 
-DROP TABLE TestPartitionedTable8
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int4' which is different from the partition function 'NCharPartitionFunction' parameter data type 'nchar'.)~~
+
+
+-- using user defined type
+CREATE TYPE PartitionUserDefinedType FROM SMALLINT;
 GO
 
-DROP TABLE TestPartitionedTable10
+CREATE TABLE TestPartitionedTable18
+(
+    Id INT,
+    PartitionColumn PartitionUserDefinedType
+)
+ON BigIntPartitionScheme(PartitionColumn);
 GO
+~~ERROR (Code: 33557097)~~
 
-DROP TABLE TestPartitionedTable15
-GO
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'partitionuserdefinedtype' which is different from the partition function 'BigIntPartitionFunction' parameter data type 'bigint'.)~~
 
-DROP TABLE TestPartitionedTable17
+
+DROP TYPE PartitionUserDefinedType
 GO
 
 ---------------------------------------------------------------

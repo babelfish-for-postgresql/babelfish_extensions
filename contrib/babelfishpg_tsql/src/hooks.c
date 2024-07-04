@@ -521,6 +521,7 @@ UninstallExtendedHooks(void)
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
+	pltsql_partitioned_table_reloptions_hook = prev_pltsql_partitioned_table_reloptions_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -5215,10 +5216,10 @@ unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 
 /*
  * is_partitioned_table_reloptions_allowed
- * 	This function checks if the given reloptions are allowed or not for partitioned tables,
- * 	returns true if allowed, false otherwise.
+ * 	This function checks if the given reloptions are allowed or not for partitioned tables.
+ * 	Returns true if allowed, false otherwise.
  * 
- * 	Only bbf_rel_create_date and bbf_original_rel_name reloption
+ * 	Only bbf_rel_create_date and bbf_original_rel_name reloptions
  * 	are allowed in TSQL dialect and while restoring babelfish database.
  */
 static bool
@@ -5233,8 +5234,8 @@ is_partitioned_table_reloptions_allowed(Datum reloptions)
 		{
 			DefElem  *defel = (DefElem *) lfirst(cell);
 
-			if (pg_strcasecmp(defel->defname, "bbf_rel_create_date") != 0 &&
-					pg_strcasecmp(defel->defname, "bbf_original_rel_name") != 0)
+			if (pg_strcasecmp(defel->defname, ATTOPTION_BBF_TABLE_CREATE_DATE) != 0 &&
+					pg_strcasecmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) != 0)
 				return false;
 
 		}

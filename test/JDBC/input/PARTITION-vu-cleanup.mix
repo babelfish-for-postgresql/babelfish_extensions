@@ -94,6 +94,20 @@ GO
 DROP INDEX partition_vu_prepare_int_index ON partition_vu_prepare_int_table;
 GO
 
+DROP INDEX PARTITION_INDEXログインαιώνια ON PARTITION_TABLEログインαιώνια
+GO
+
+DROP INDEX [PARTITION_INDEX 유니코드스키마👻] ON [PARTITION_TABLE  유니코드스키마👻]
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+DROP INDEX "PARTITION_INDEX 😎$@ #123 🌍rder" ON "PARTITION_TABLE 😎$@ #123 🌍rder"
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+GO
 --------------------------------------------------
 --- DROP Partitioned Table
 --------------------------------------------------
@@ -160,6 +174,20 @@ GO
 DROP TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
 
+DROP TABLE PARTITION_TABLEログインαιώνια
+GO
+
+DROP TABLE [PARTITION_TABLE  유니코드스키마👻]
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+DROP TABLE "PARTITION_TABLE 😎$@ #123 🌍rder"
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+GO
 
 
 --------------------------------------------------

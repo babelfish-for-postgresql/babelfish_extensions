@@ -361,6 +361,20 @@ PARTITION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuv
 ALL TO ([PRIMARY]);
 GO
 
+-- CREATE SCHEMA PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+-- GO
+
+-- CREATE TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz (
+--     PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz INT,
+--     Value sys.varchar(50)
+-- ) ON PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz(PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
+-- GO
+
+-- CREATE INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+-- ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz(Value)
+-- ON PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
+-- GO
+
 --------------------------------------------------
 --- name identifiers test
 --------------------------------------------------
@@ -373,6 +387,17 @@ PARTITION PARTITION_FUNCTIONログインαιώνια
 ALL TO ([PRIMARY]);
 GO
 
+CREATE TABLE PARTITION_TABLEログインαιώνια (
+    PARTITION_COLUMNログインαιώνια INT,
+    Value sys.varchar(50)
+) ON PARTITION_SCHEMEログインαιώνια(PARTITION_COLUMNログインαιώνια);
+GO
+
+CREATE INDEX PARTITION_INDEXログインαιώνια
+ON PARTITION_TABLEログインαιώνια(Value)
+ON PARTITION_SCHEMEログインαιώνια(PARTITION_COLUMNログインαιώνια);
+GO
+
 CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻] (int)
 AS RANGE RIGHT FOR VALUES (0, 500, 1000);
 GO
@@ -382,6 +407,16 @@ PARTITION [PARTITION_FUNCTION  유니코드스키마👻]
 ALL TO ([PRIMARY]);
 GO
 
+CREATE TABLE [PARTITION_TABLE  유니코드스키마👻](
+    [PARTITION_COLUMN  유니코드스키마👻] INT,
+    Value sys.varchar(50)
+) ON [PARTITION_SCHEME  유니코드스키마👻]([PARTITION_COLUMN  유니코드스키마👻]);
+GO
+
+CREATE INDEX [PARTITION_INDEX 유니코드스키마👻]
+ON [PARTITION_TABLE  유니코드스키마👻](Value)
+ON [PARTITION_SCHEME  유니코드스키마👻]([PARTITION_COLUMN  유니코드스키마👻]);
+GO
 
 -- qouted identifer
 SET QUOTED_IDENTIFIER ON;
@@ -394,6 +429,18 @@ GO
 CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder" AS
 PARTITION "PARTITION_FUNCTION 😎$@ #123 🌍rder"
 ALL TO ([PRIMARY]);
+GO
+
+
+CREATE TABLE "PARTITION_TABLE 😎$@ #123 🌍rder" (
+    "PARTITION_COLUMN 😎$@ #123 🌍rder" INT,
+    Value sys.varchar(50)
+) ON "PARTITION_SCHEME 😎$@ #123 🌍rder" ("PARTITION_COLUMN 😎$@ #123 🌍rder");
+GO
+
+CREATE INDEX "PARTITION_INDEX 😎$@ #123 🌍rder"
+ON "PARTITION_TABLE 😎$@ #123 🌍rder" (Value)
+ON "PARTITION_SCHEME 😎$@ #123 🌍rder"("PARTITION_COLUMN 😎$@ #123 🌍rder");
 GO
 
 SET QUOTED_IDENTIFIER OFF;

@@ -4238,11 +4238,9 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 
 		/* raise error for null value */
 		if (isnull)
-		{
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					errmsg("NULL values are not allowed in partition function boundary values list.")));
-		}
 
 		/* 
 		 * implicitly convert range values to specified parameter type

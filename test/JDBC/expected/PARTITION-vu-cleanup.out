@@ -94,6 +94,28 @@ GO
 DROP INDEX partition_vu_prepare_int_index ON partition_vu_prepare_int_table;
 GO
 
+DROP INDEX PARTITION_INDEXログインαιώνια ON PARTITION_TABLEログインαιώνια
+GO
+
+DROP INDEX [PARTITION_INDEX 유니코드스키마👻] ON [PARTITION_TABLE  유니코드스키마👻]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: index "partition_index 유니코드스a620f0242f7b2ddba1318790f3d11bd5" does not exist)~~
+
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+DROP INDEX "PARTITION_INDEX 😎$@ #123 🌍rder" ON "PARTITION_TABLE 😎$@ #123 🌍rder"
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: index "partition_index 😎$@ #123 94981b33b98a9209284f965c2ab175c9" does not exist)~~
+
+
+SET QUOTED_IDENTIFIER OFF;
+GO
 --------------------------------------------------
 --- DROP Partitioned Table
 --------------------------------------------------
@@ -160,6 +182,28 @@ GO
 DROP TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
 
+DROP TABLE PARTITION_TABLEログインαιώνια
+GO
+
+DROP TABLE [PARTITION_TABLE  유니코드스키마👻]
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "partition_table  유니코드스키마👻" does not exist)~~
+
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+DROP TABLE "PARTITION_TABLE 😎$@ #123 🌍rder"
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "partition_table 😎$@ #123 🌍rder" does not exist)~~
+
+
+SET QUOTED_IDENTIFIER OFF;
+GO
 
 
 --------------------------------------------------

@@ -1100,7 +1100,7 @@ GO
 CREATE TABLE TestPartitionedTable6
 (
     Id INT,
-    PartitionColumn TINYINT
+    PartitionColumn DECIMAL(10, 2)
 )
 ON SmallIntPartitionScheme(PartitionColumn);
 GO
@@ -1116,7 +1116,7 @@ GO
 CREATE TABLE TestPartitionedTable8
 (
     Id INT,
-    PartitionColumn NUMERIC(5, 2)
+    PartitionColumn BIGINT
 )
 ON DecimalPartitionScheme(PartitionColumn);
 GO
@@ -1132,7 +1132,7 @@ GO
 CREATE TABLE TestPartitionedTable10
 (
     Id INT,
-    PartitionColumn SMALLMONEY
+    PartitionColumn INT
 )
 ON MoneyPartitionScheme(PartitionColumn);
 GO
@@ -1172,7 +1172,7 @@ GO
 CREATE TABLE TestPartitionedTable15
 (
     Id INT,
-    PartitionColumn VARCHAR(10)
+    PartitionColumn INT
 )
 ON NVarCharPartitionScheme(PartitionColumn);
 GO
@@ -1188,21 +1188,24 @@ GO
 CREATE TABLE TestPartitionedTable17
 (
     Id INT,
-    PartitionColumn CHAR(5)
+    PartitionColumn INT
 )
 ON NCharPartitionScheme(PartitionColumn);
 GO
 
-DROP TABLE TestPartitionedTable8
+-- using user defined type
+CREATE TYPE PartitionUserDefinedType FROM SMALLINT;
 GO
 
-DROP TABLE TestPartitionedTable10
+CREATE TABLE TestPartitionedTable18
+(
+    Id INT,
+    PartitionColumn PartitionUserDefinedType
+)
+ON BigIntPartitionScheme(PartitionColumn);
 GO
 
-DROP TABLE TestPartitionedTable15
-GO
-
-DROP TABLE TestPartitionedTable17
+DROP TYPE PartitionUserDefinedType
 GO
 
 ---------------------------------------------------------------

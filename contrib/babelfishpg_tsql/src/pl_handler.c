@@ -183,7 +183,8 @@ static void bbf_create_partition_tables(CreateStmt *stmt);
 static void bbf_drop_partitioned_table(DropStmt *stmt);
 static bool bbf_validate_partitioned_index_alignment(IndexStmt *stmt);
 static char *construct_unique_hash(char *relation_name);
-static void set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx, int num_partitions, bool is_binary_datatype);
+static void set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx,
+					int total_partitions, bool is_binary_datatype);
 static void set_node_value_from_datum(A_Const *node, Datum val, bool is_binary_datatype);
 static CreateStmt *create_partition_stmt(char *physical_schema_name, char *relname);
 static void rename_table_update_bbf_partitions_name(RenameStmt *stmt);
@@ -2563,7 +2564,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							logical_schema_name = get_authid_user_ext_schema_name(db_name, user);
 							pfree(db_name);
 						}
-						else
+						else /* Schema is explicitly specified for TDS client. */
 						{
 							logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
 							if (!logical_schema_name) /* pg_temp schema */
@@ -2571,7 +2572,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						dbid = get_cur_db_id();
 					}
-					else if (atstmt->relation->schemaname) /* schema is explicitly specified for non TDS client */
+					else if (atstmt->relation->schemaname) /* Schema is explicitly specified for non TDS client. */
 					{
 						logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
 						if (!logical_schema_name) /* not a tsql schema */
@@ -3909,7 +3910,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						List *partition_schemes = stmt->excludeOpNames;
 						stmt->excludeOpNames = NIL;
 
-						/* Create the index first so that columns and table name checks are done before. */
+						/*
+						 * Create the index first so that columns and table name
+						 * checks get done before index alignment check.
+						 */
 						if (prev_ProcessUtility)
 							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 										queryEnv, dest, qc);
@@ -6596,13 +6600,14 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	Oid		sql_variant_type_oid;
 	Oid		input_type_oid;
 	ListCell	*elements;
-	Oid		partitioning_column_type_oid = InvalidOid;
-	char		*partitioning_column_type_name = NULL;
+	Oid		partition_column_typoid = InvalidOid;
+	Oid		partition_column_basetypoid = InvalidOid;
+	char		*partition_column_typname = NULL;
 	bool		is_binary_datatype = false;
 	int16		dbid = get_cur_db_id();
 	char		*partition_scheme_name = stmt->partspec->tsql_partition_scheme;
 	char		*relname = stmt->relation->relname;
-	char		*colname = linitial_node(PartitionElem, stmt->partspec->partParams)->name;
+	char		*partition_colname = linitial_node(PartitionElem, stmt->partspec->partParams)->name;
 	char		*db_name = get_cur_db_name();
 	CreateStmt	*partition_stmt;
 	PlannedStmt	*wrapper;
@@ -6611,6 +6616,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	char		*logical_schema_name;
 	ArrayType	*values;
 	bool		isnull;
+	LOCAL_FCINFO(fcinfo, 1);
 
 	/*
 	 * Get partition function name for the provided partition scheme,
@@ -6637,13 +6643,14 @@ bbf_create_partition_tables(CreateStmt *stmt)
 
 		coldef = castNode(ColumnDef, element);
 
-		if (pg_strcasecmp(coldef->colname, colname) == 0)
+		if (pg_strcasecmp(coldef->colname, partition_colname) == 0)
 		{
 			Type ctype = LookupTypeName(NULL, coldef->typeName, NULL, true);
 			Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(ctype);
 
-			partitioning_column_type_oid = pg_type->oid;
-			partitioning_column_type_name = pstrdup(NameStr(pg_type->typname));
+			partition_column_typoid = pg_type->oid;
+			partition_column_basetypoid = pg_type->typbasetype;
+			partition_column_typname = pstrdup(NameStr(pg_type->typname));
 			ReleaseSysCache(ctype);
 			break;
 		}
@@ -6690,25 +6697,45 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
 
-	/* Get OID of input parameter type and find the base type of each types. */
+	/*
+	 * If the partition columns type is UDT type, then we need
+	 * to use the base type of that type while comparing with
+	 * input parameter type of partition function.
+	 *
+	 */
+	if (OidIsValid(partition_column_basetypoid))
+	{
+		Datum		tsql_typname;
+		/* Get the tsql typename from partition column type. */
+		InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+		fcinfo->args[0].value = ObjectIdGetDatum(partition_column_typoid);
+		fcinfo->args[0].isnull = false;
+		tsql_typname = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+
+		/* If the value of tsql_typname is NULL, it indicates that partitioning column is UDT type. */
+		if (!tsql_typname)
+		{
+			/* Substitute typoid with the base type to facilitate comparison. */
+			partition_column_typoid = partition_column_basetypoid;
+		}
+	}
+
 	input_type_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (input_parameter_type);
 
-	input_type_oid = getBaseType(input_type_oid);
-	partitioning_column_type_oid = getBaseType(partitioning_column_type_oid);
-	
 	/*
 	 * Validate that type of partitioning columns is same
 	 * to input parameter type of partition function.
 	 */
-	if (partitioning_column_type_oid != input_type_oid)
+	if (partition_column_typoid != input_type_oid)
 	{
 		ereport(ERROR, 
 			(errcode(ERRCODE_UNDEFINED_OBJECT), 
 				errmsg("Partition column '%s' has data type '%s' which is different from the partition function '%s' parameter data type '%s'.",
-				colname, partitioning_column_type_name, partition_function_name, input_parameter_type)));
+				partition_colname, partition_column_typname, partition_function_name, input_parameter_type)));
 	}
 
 	/* Check if the input parameter type is (var)binary datatype. */
+	input_type_oid = getBaseType(input_type_oid);
 	if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (input_type_oid) ||
 		(*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (input_type_oid))
 			is_binary_datatype = true;
@@ -6776,7 +6803,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	add_entry_to_bbf_partition_depend(dbid, partition_scheme_name, logical_schema_name, relname);
 
 	/* Free the allocated memory. */
-	pfree(partitioning_column_type_name);
+	pfree(partition_column_typname);
 	pfree(db_name);
 	pfree(physical_schema_name);
 	pfree(logical_schema_name);
@@ -6855,12 +6882,14 @@ construct_unique_hash(char *relation_name)
  * set_partition_range_bounds
  * 	This function sets the lower and upper bounds for a range partition based on its index
  * 	and the total number of partitions. It handles the following cases:
- * 	1. For the first partition, it sets the lower bound to DEFAULT to absorb NULL values.
+ * 	1. For the first partition, it sets the lower bound to DEFAULT to
+ * 		accommodate NULL values along with other values.
  * 	2. For the last partition, it sets the upper bound to MAXVALUE.
  * 	3. For other partitions, it sets the bounds to the corresponding values in the range_values array.
  */
 static void
-set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx, int num_partitions, bool is_binary_datatype)
+set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx,
+				int total_partitions, bool is_binary_datatype)
 {
 	
 	/* Set lower bound of partition. */
@@ -6882,7 +6911,7 @@ set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, i
 	}
 
 	/* Set upper bound of partition. */
-	if (idx == num_partitions - 1) /* last partition */
+	if (idx == total_partitions - 1) /* last partition */
 	{
 		ColumnRef *node = makeNode(ColumnRef);
 		node->fields = list_make1(makeString("maxvalue"));
@@ -7081,7 +7110,7 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 /*
  * rename_table_update_bbf_partitions_name
  *	For a rename operation on a babelfish partitioned table, it renames all partition
- *	of the table to the new name using hash based on the new parent name, so that
+ *	of the table to the new name using hash based on the new name, so that
  *	name of partitions of any partitioned table doesn't conflict.
  */
 static void
