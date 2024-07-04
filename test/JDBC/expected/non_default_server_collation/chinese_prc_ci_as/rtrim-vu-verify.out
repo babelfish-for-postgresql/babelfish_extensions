@@ -230,6 +230,26 @@ nvarchar
 ~~END~~
 
 
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x202061626364656667682020
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|  abcdefgh|
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x202061626364656667682020
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|  abcdefgh|
+~~END~~
+
+
 -- dependent objects
 SELECT * FROM babel_4489_rtrim_dep_view
 GO
@@ -261,6 +281,65 @@ GO
 nvarchar
 |  abc🙂defghi🙂🙂|
 ~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_1
+GO
+~~START~~
+nvarchar
+|  abc🙂defghi🙂🙂|
+|  比尔·拉莫斯|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_2
+GO
+~~START~~
+nvarchar
+|  abc🙂defghi🙂🙂|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_3
+GO
+~~START~~
+varchar
+|  abcdefghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_4
+GO
+~~START~~
+varchar
+|  abcdefghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_5
+GO
+~~START~~
+varchar
+|  abcd|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_6
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type text is invalid for argument 1 of rtrim function.)~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_7
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type ntext is invalid for argument 1 of rtrim function.)~~
 
 
 -- input type UDT

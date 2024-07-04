@@ -3079,7 +3079,7 @@ RETURNS sys.VARCHAR
 AS 
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.btrim(string::text);
+    RETURN PG_CATALOG.btrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3089,7 +3089,7 @@ RETURNS sys.VARCHAR
 AS 
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.btrim(string::text);
+    RETURN PG_CATALOG.btrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3099,7 +3099,7 @@ RETURNS sys.NVARCHAR
 AS 
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.btrim(string::text);
+    RETURN PG_CATALOG.btrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3109,7 +3109,7 @@ RETURNS sys.NVARCHAR
 AS 
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.btrim(string::text);
+    RETURN PG_CATALOG.btrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3138,7 +3138,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.btrim(string::text);
+    RETURN PG_CATALOG.btrim(string::sys.varchar);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3150,7 +3150,7 @@ RETURNS sys.NVARCHAR
 AS 
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.btrim(string::text, characters::text);
+    RETURN PG_CATALOG.btrim(string, characters);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3160,7 +3160,7 @@ RETURNS sys.VARCHAR
 AS 
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.btrim(string::text, characters::text);
+    RETURN PG_CATALOG.btrim(string, characters);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3190,7 +3190,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.ltrim(string::text);
+    RETURN PG_CATALOG.ltrim(string::sys.varchar);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3200,7 +3200,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.ltrim(string::text);
+    RETURN PG_CATALOG.ltrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3210,7 +3210,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.ltrim(string::text);
+    RETURN PG_CATALOG.ltrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3220,7 +3220,7 @@ RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.ltrim(string::text);
+    RETURN PG_CATALOG.ltrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3230,7 +3230,7 @@ RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.ltrim(string::text);
+    RETURN PG_CATALOG.ltrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3284,7 +3284,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.rtrim(string::text);
+    RETURN PG_CATALOG.rtrim(string::sys.varchar);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3294,7 +3294,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.rtrim(string::text);
+    RETURN PG_CATALOG.rtrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3304,7 +3304,7 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.rtrim(string::text);
+    RETURN PG_CATALOG.rtrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3314,7 +3314,7 @@ RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.rtrim(string::text);
+    RETURN PG_CATALOG.rtrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3324,7 +3324,7 @@ RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RETURN PG_CATALOG.rtrim(string::text);
+    RETURN PG_CATALOG.rtrim(string);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -3387,7 +3387,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.left(string::text, i);
+    RETURN PG_CATALOG.left(string::sys.varchar, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3409,7 +3409,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.left(string::text, i);
+    RETURN PG_CATALOG.left(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3431,7 +3431,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.left(string::text, i);
+    RETURN PG_CATALOG.left(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3453,7 +3453,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.left(string::text, i);
+    RETURN PG_CATALOG.left(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3475,7 +3475,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.left(string::text, i);
+    RETURN PG_CATALOG.left(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3537,7 +3537,7 @@ BEGIN
     IF string IS NULL THEN
         RETURN NULL;
     END IF;
-    RETURN PG_CATALOG.right(string::text, i);
+    RETURN PG_CATALOG.right(string::sys.varchar, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3559,7 +3559,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.right(string::text, i);
+    RETURN PG_CATALOG.right(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3581,7 +3581,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.right(string::text, i);
+    RETURN PG_CATALOG.right(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3603,7 +3603,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.right(string::text, i);
+    RETURN PG_CATALOG.right(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3625,7 +3625,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    RETURN PG_CATALOG.right(string::text, i);
+    RETURN PG_CATALOG.right(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

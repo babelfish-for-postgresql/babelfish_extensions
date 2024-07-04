@@ -104,6 +104,16 @@ DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    '
 SELECT '|' + LTRIM(@inputString) + '|'
 GO
 
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x202061626364656667682020
+SELECT '|' + LTRIM(@inputString) + '|'
+GO
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x202061626364656667682020
+SELECT '|' + LTRIM(@inputString) + '|'
+GO
+
 -- dependent objects
 SELECT * FROM babel_4489_ltrim_dep_view
 GO
@@ -115,6 +125,27 @@ SELECT * FROM babel_4489_ltrim_dep_func()
 GO
 
 SELECT * FROM babel_4489_ltrim_itvf_func()
+GO
+
+SELECT * FROM babel_4489_ltrim_dep_view_1
+GO
+
+SELECT * FROM babel_4489_ltrim_dep_view_2
+GO
+
+SELECT * FROM babel_4489_ltrim_dep_view_3
+GO
+
+SELECT * FROM babel_4489_ltrim_dep_view_4
+GO
+
+SELECT * FROM babel_4489_ltrim_dep_view_5
+GO
+
+SELECT * FROM babel_4489_ltrim_dep_view_6
+GO
+
+SELECT * FROM babel_4489_ltrim_dep_view_7
 GO
 
 -- input type UDT

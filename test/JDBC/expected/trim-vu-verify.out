@@ -502,6 +502,56 @@ nvarchar
 ~~END~~
 
 
+SELECT * FROM babel_4489_trim_dep_view_1
+GO
+~~START~~
+nvarchar
+|abc🙂defghi🙂🙂|
+|比尔·拉莫斯|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_2
+GO
+~~START~~
+nvarchar
+|abc🙂defghi🙂🙂|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_3
+GO
+~~START~~
+varchar
+|abcdefghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_4
+GO
+~~START~~
+varchar
+|abcdefghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_5
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of Trim function.)~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_6
+GO
+~~START~~
+varchar
+|cdefgh|
+~~END~~
+
+
 -- different datatypes of inputString and charSet
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab? '
 SELECT '|' + TRIM(@charSet FROM @inputString) + '|'

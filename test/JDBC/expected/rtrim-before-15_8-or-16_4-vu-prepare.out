@@ -15,6 +15,27 @@ GO
 ~~ROW COUNT: 1~~
 
 
+CREATE TABLE babel_4489_rtrim_t3(a CHAR(50))
+GO
+INSERT INTO babel_4489_rtrim_t3 VALUES('  abcdefghi    ')
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE babel_4489_rtrim_t4(a VARCHAR(50))
+GO
+INSERT INTO babel_4489_rtrim_t4 VALUES('  abcdefghi    ')
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE babel_4489_rtrim_t5(a VARBINARY(50))
+GO
+INSERT INTO babel_4489_rtrim_t5 VALUES(0x2020616263642020)
+GO
+~~ROW COUNT: 1~~
+
+
 CREATE TABLE babel_4489_rtrim_chinese_prc_ci_as(a VARCHAR(50) COLLATE CHINESE_PRC_CI_AS)
 GO
 INSERT INTO babel_4489_rtrim_chinese_prc_ci_as VALUES(N'  比尔·拉莫斯    ')
@@ -98,6 +119,34 @@ AS
 BEGIN
 RETURN (SELECT TOP 1 ('|' + RTRIM(a) + '|') FROM babel_4489_rtrim_t2)
 END
+GO
+
+CREATE VIEW babel_4489_rtrim_dep_view_1 AS
+    SELECT ('|' + RTRIM(a) + '|') as result FROM babel_4489_rtrim_t1
+GO
+
+CREATE VIEW babel_4489_rtrim_dep_view_2 AS
+    SELECT ('|' + RTRIM(a) + '|') as result FROM babel_4489_rtrim_t2
+GO
+
+CREATE VIEW babel_4489_rtrim_dep_view_3 AS
+    SELECT ('|' + RTRIM(a) + '|') as result FROM babel_4489_rtrim_t3
+GO
+
+CREATE VIEW babel_4489_rtrim_dep_view_4 AS
+    SELECT ('|' + RTRIM(a) + '|') as result FROM babel_4489_rtrim_t4
+GO
+
+CREATE VIEW babel_4489_rtrim_dep_view_5 AS
+    SELECT ('|' + RTRIM(a) + '|') as result FROM babel_4489_rtrim_t5
+GO
+
+CREATE VIEW babel_4489_rtrim_dep_view_6 AS
+    SELECT ('|' + RTRIM(a) + '|') as result FROM babel_4489_rtrim_text
+GO
+
+CREATE VIEW babel_4489_rtrim_dep_view_7 AS
+    SELECT ('|' + RTRIM(b) + '|') as result FROM babel_4489_rtrim_text
 GO
 
 CREATE FUNCTION babel_4489_rtrim_itvf_func()

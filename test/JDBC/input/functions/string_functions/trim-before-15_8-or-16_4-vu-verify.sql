@@ -221,6 +221,24 @@ GO
 SELECT * FROM babel_4489_trim_itvf_func()
 GO
 
+SELECT * FROM babel_4489_trim_dep_view_1
+GO
+
+SELECT * FROM babel_4489_trim_dep_view_2
+GO
+
+SELECT * FROM babel_4489_trim_dep_view_3
+GO
+
+SELECT * FROM babel_4489_trim_dep_view_4
+GO
+
+SELECT * FROM babel_4489_trim_dep_view_5
+GO
+
+SELECT * FROM babel_4489_trim_dep_view_6
+GO
+
 -- different datatypes of inputString and charSet
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab? '
 SELECT '|' + TRIM(@charSet FROM @inputString) + '|'

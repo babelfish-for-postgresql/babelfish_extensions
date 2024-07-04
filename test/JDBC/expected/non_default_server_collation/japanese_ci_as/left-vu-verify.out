@@ -365,6 +365,26 @@ abc🙂defghi🙂🙂
 ~~END~~
 
 
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT LEFT(@inputString, 4)
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT LEFT(@inputString, 4)
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
 -- dependent objects
 SELECT * FROM babel_4489_left_dep_view
 GO
@@ -396,6 +416,65 @@ GO
 nvarchar
 abc🙂d
 ~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_1
+GO
+~~START~~
+nvarchar
+abc🙂d
+比尔·拉莫
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_2
+GO
+~~START~~
+nvarchar
+abc🙂d
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_3
+GO
+~~START~~
+varchar
+  abc
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_4
+GO
+~~START~~
+varchar
+  abc
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_5
+GO
+~~START~~
+varchar
+  abc
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_6
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type text is invalid for argument 1 of left function.)~~
+
+
+SELECT * FROM babel_4489_left_dep_view_7
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type ntext is invalid for argument 1 of left function.)~~
 
 
 -- input type UDT

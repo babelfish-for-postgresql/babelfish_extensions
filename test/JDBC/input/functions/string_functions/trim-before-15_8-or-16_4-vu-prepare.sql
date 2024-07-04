@@ -9,6 +9,21 @@ GO
 INSERT INTO babel_4489_trim_t2 VALUES(N'  abc🙂defghi🙂🙂    ', N'ab🙂 ')
 GO
 
+CREATE TABLE babel_4489_trim_t3(a CHAR(50), b CHAR(20))
+GO
+INSERT INTO babel_4489_trim_t3 VALUES('  abcdefghi    ', 'abi ')
+GO
+
+CREATE TABLE babel_4489_trim_t4(a VARCHAR(50), b VARCHAR(20))
+GO
+INSERT INTO babel_4489_trim_t4 VALUES('  abcdefghi    ', 'abi ')
+GO
+
+CREATE TABLE babel_4489_trim_t5(a VARBINARY(50), b VARBINARY(50))
+GO
+INSERT INTO babel_4489_trim_t5 VALUES(0x61626364, 0x6164)
+GO
+
 CREATE TABLE babel_4489_trim_chinese_prc_ci_as(a VARCHAR(50) COLLATE CHINESE_PRC_CI_AS, b VARCHAR(20) COLLATE CHINESE_PRC_CI_AS)
 GO
 INSERT INTO babel_4489_trim_chinese_prc_ci_as VALUES(N'  比尔·拉莫斯    ', N'比拉斯 ')
@@ -74,6 +89,30 @@ AS
 BEGIN
 RETURN (SELECT TOP 1 ('|' + TRIM(b FROM a) + '|') FROM babel_4489_trim_t2)
 END
+GO
+
+CREATE VIEW babel_4489_trim_dep_view_1 AS
+    SELECT ('|' + TRIM(a) + '|') as result FROM babel_4489_trim_t1
+GO
+
+CREATE VIEW babel_4489_trim_dep_view_2 AS
+    SELECT ('|' + TRIM(a) + '|') as result FROM babel_4489_trim_t2
+GO
+
+CREATE VIEW babel_4489_trim_dep_view_3 AS
+    SELECT ('|' + TRIM(a) + '|') as result FROM babel_4489_trim_t3
+GO
+
+CREATE VIEW babel_4489_trim_dep_view_4 AS
+    SELECT ('|' + TRIM(a) + '|') as result FROM babel_4489_trim_t4
+GO
+
+CREATE VIEW babel_4489_trim_dep_view_5 AS
+    SELECT ('|' + TRIM(a) + '|') as result FROM babel_4489_trim_t5
+GO
+
+CREATE VIEW babel_4489_trim_dep_view_6 AS
+    SELECT ('|' + TRIM(b FROM a) + '|') as result FROM babel_4489_trim_t4
 GO
 
 CREATE FUNCTION babel_4489_trim_itvf_func()

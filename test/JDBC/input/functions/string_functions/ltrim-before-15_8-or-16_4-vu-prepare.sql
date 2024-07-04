@@ -9,6 +9,21 @@ GO
 INSERT INTO babel_4489_ltrim_t2 VALUES(N'  abc🙂defghi🙂🙂    ')
 GO
 
+CREATE TABLE babel_4489_ltrim_t3(a CHAR(50))
+GO
+INSERT INTO babel_4489_ltrim_t3 VALUES('  abcdefghi    ')
+GO
+
+CREATE TABLE babel_4489_ltrim_t4(a VARCHAR(50))
+GO
+INSERT INTO babel_4489_ltrim_t4 VALUES('  abcdefghi    ')
+GO
+
+CREATE TABLE babel_4489_ltrim_t5(a VARBINARY(50))
+GO
+INSERT INTO babel_4489_ltrim_t5 VALUES(0x2020616263642020)
+GO
+
 CREATE TABLE babel_4489_ltrim_chinese_prc_ci_as(a VARCHAR(50) COLLATE CHINESE_PRC_CI_AS)
 GO
 INSERT INTO babel_4489_ltrim_chinese_prc_ci_as VALUES(N'  比尔·拉莫斯    ')
@@ -74,6 +89,34 @@ AS
 BEGIN
 RETURN (SELECT TOP 1 ('|' + LTRIM(a) + '|') FROM babel_4489_ltrim_t2)
 END
+GO
+
+CREATE VIEW babel_4489_ltrim_dep_view_1 AS
+    SELECT ('|' + LTRIM(a) + '|') as result FROM babel_4489_ltrim_t1
+GO
+
+CREATE VIEW babel_4489_ltrim_dep_view_2 AS
+    SELECT ('|' + LTRIM(a) + '|') as result FROM babel_4489_ltrim_t2
+GO
+
+CREATE VIEW babel_4489_ltrim_dep_view_3 AS
+    SELECT ('|' + LTRIM(a) + '|') as result FROM babel_4489_ltrim_t3
+GO
+
+CREATE VIEW babel_4489_ltrim_dep_view_4 AS
+    SELECT ('|' + LTRIM(a) + '|') as result FROM babel_4489_ltrim_t4
+GO
+
+CREATE VIEW babel_4489_ltrim_dep_view_5 AS
+    SELECT ('|' + LTRIM(a) + '|') as result FROM babel_4489_ltrim_t5
+GO
+
+CREATE VIEW babel_4489_ltrim_dep_view_6 AS
+    SELECT ('|' + LTRIM(a) + '|') as result FROM babel_4489_ltrim_text
+GO
+
+CREATE VIEW babel_4489_ltrim_dep_view_7 AS
+    SELECT ('|' + LTRIM(b) + '|') as result FROM babel_4489_ltrim_text
 GO
 
 CREATE FUNCTION babel_4489_ltrim_itvf_func()

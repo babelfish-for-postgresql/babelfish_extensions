@@ -395,7 +395,7 @@ typedef struct tsql_special_function
 {
 	const char             *nsp;                              /* namespace of special function */
 	const char             *funcname;                         /* name of special function */
-	const char			   *formatted_funcname;				  /* formatted name of special function */
+	const char             *formatted_funcname;				  /* formatted name of special function */
 	int                     nargs;                            /* number of arguments of special function */
 	tsql_valid_arg_type_t   valid_arg_types[SFUNC_MAX_ARGS];  /* list for storing details of all the valid types supported for each arguments */
 } tsql_special_function_t;

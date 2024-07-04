@@ -148,6 +148,16 @@ DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
 SELECT RIGHT(@inputString, 50)
 GO
 
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT RIGHT(@inputString, 4)
+GO
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT RIGHT(@inputString, 4)
+GO
+
 -- dependent objects
 SELECT * FROM babel_4489_right_dep_view
 GO
@@ -159,6 +169,27 @@ SELECT * FROM babel_4489_right_dep_func()
 GO
 
 SELECT * FROM babel_4489_right_itvf_func()
+GO
+
+SELECT * FROM babel_4489_right_dep_view_1
+GO
+
+SELECT * FROM babel_4489_right_dep_view_2
+GO
+
+SELECT * FROM babel_4489_right_dep_view_3
+GO
+
+SELECT * FROM babel_4489_right_dep_view_4
+GO
+
+SELECT * FROM babel_4489_right_dep_view_5
+GO
+
+SELECT * FROM babel_4489_right_dep_view_6
+GO
+
+SELECT * FROM babel_4489_right_dep_view_7
 GO
 
 -- input type UDT

@@ -365,6 +365,26 @@ abc🙂defghi🙂🙂
 ~~END~~
 
 
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT LEFT(@inputString, 4)
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT LEFT(@inputString, 4)
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
 -- dependent objects
 SELECT * FROM babel_4489_left_dep_view
 GO
@@ -391,6 +411,63 @@ abc🙂d
 
 
 SELECT * FROM babel_4489_left_itvf_func()
+GO
+~~START~~
+text
+abc?d
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_1
+GO
+~~START~~
+text
+abc?d
+??·??
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_2
+GO
+~~START~~
+text
+abc?d
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_3
+GO
+~~START~~
+text
+  abc
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_4
+GO
+~~START~~
+text
+  abc
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_5
+GO
+~~START~~
+text
+0x202
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_6
+GO
+~~START~~
+text
+abc?d
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_7
 GO
 ~~START~~
 text
