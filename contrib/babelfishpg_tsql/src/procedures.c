@@ -591,6 +591,9 @@ handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_
 	A_Expr	   *xpr;
 	ColumnRef  *ref;
 
+	if (is_sp_describe_undeclared_parameters && !is_supported_case_sp_describe_undeclared_parameters)
+		return list;
+
 	foreach(lc, args)
 	{
 		Expr	   *arg = (Expr *) lfirst(lc);
@@ -635,6 +638,9 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 	String	   *field;
 	char	   *name;
 	int			attrno;
+
+	if (is_sp_describe_undeclared_parameters && !is_supported_case_sp_describe_undeclared_parameters)
+		return target_attnums;
 
 	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
@@ -733,6 +739,9 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 	String	   *field;
 	char	   *name;
 	int			attrno;
+
+	if (is_sp_describe_undeclared_parameters && !is_supported_case_sp_describe_undeclared_parameters)
+		return extra_restargets;
 
 	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
@@ -846,6 +855,9 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 	ColumnRef  *ref;
 	String	   *field;
 	ResTarget  *res;
+
+	if (is_sp_describe_undeclared_parameters && !is_supported_case_sp_describe_undeclared_parameters)
+		return extra_restargets;
 
 	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
@@ -1039,98 +1051,101 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				}
 			}
 
-			/*
-			 * Analyze the parsed statement to suggest types for undeclared
-			 * parameters
-			 */
-			switch (node_type)
+			if (is_supported_case_sp_describe_undeclared_parameters)
 			{
-				case T_InsertStmt:
-					rewrite_object_refs(parsetree->stmt);
-					sql_dialect = sql_dialect_value_old;
-					insert_stmt = (InsertStmt *) parsetree->stmt;
-					relation = insert_stmt->relation;
-					relid = RangeVarGetRelid(relation, NoLock, false);
-					r = relation_open(relid, AccessShareLock);
-					pstate = (ParseState *) palloc0(sizeof(ParseState));
-					pstate->p_target_relation = r;
-					cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
-					break;
-				case T_UpdateStmt:
-					rewrite_object_refs(parsetree->stmt);
-					sql_dialect = sql_dialect_value_old;
-					update_stmt = (UpdateStmt *) parsetree->stmt;
-					relation = update_stmt->relation;
-					relid = RangeVarGetRelid(relation, NoLock, false);
-					r = relation_open(relid, AccessShareLock);
-					pstate = (ParseState *) palloc0(sizeof(ParseState));
-					pstate->p_target_relation = r;
-					cols = list_copy(update_stmt->targetList);
+				/*
+				 * Analyze the parsed statement to suggest types for undeclared
+				 * parameters
+				 */
+				switch (node_type)
+				{
+					case T_InsertStmt:
+						rewrite_object_refs(parsetree->stmt);
+						sql_dialect = sql_dialect_value_old;
+						insert_stmt = (InsertStmt *) parsetree->stmt;
+						relation = insert_stmt->relation;
+						relid = RangeVarGetRelid(relation, NoLock, false);
+						r = relation_open(relid, AccessShareLock);
+						pstate = (ParseState *) palloc0(sizeof(ParseState));
+						pstate->p_target_relation = r;
+						cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
+						break;
+					case T_UpdateStmt:
+						rewrite_object_refs(parsetree->stmt);
+						sql_dialect = sql_dialect_value_old;
+						update_stmt = (UpdateStmt *) parsetree->stmt;
+						relation = update_stmt->relation;
+						relid = RangeVarGetRelid(relation, NoLock, false);
+						r = relation_open(relid, AccessShareLock);
+						pstate = (ParseState *) palloc0(sizeof(ParseState));
+						pstate->p_target_relation = r;
+						cols = list_copy(update_stmt->targetList);
 
-					/*
-					 * Add attnums to cols based on targetList
-					 */
-					foreach(lc, cols)
-					{
-						ResTarget  *col = (ResTarget *) lfirst(lc);
-						char	   *name = col->name;
-						int			attrno;
-
-						attrno = attnameAttNum(pstate->p_target_relation, name, false);
-						if (attrno == InvalidAttrNumber)
+						/*
+						 * Add attnums to cols based on targetList
+						 */
+						foreach(lc, cols)
 						{
-							ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_COLUMN),
-									 errmsg("column \"%s\" of relation \"%s\" does not exist",
-											name,
-											RelationGetRelationName(pstate->p_target_relation))));
+							ResTarget  *col = (ResTarget *) lfirst(lc);
+							char	   *name = col->name;
+							int			attrno;
+
+							attrno = attnameAttNum(pstate->p_target_relation, name, false);
+							if (attrno == InvalidAttrNumber)
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_UNDEFINED_COLUMN),
+										errmsg("column \"%s\" of relation \"%s\" does not exist",
+												name,
+												RelationGetRelationName(pstate->p_target_relation))));
+							}
+							target_attnums = lappend_int(target_attnums, attrno);
 						}
-						target_attnums = lappend_int(target_attnums, attrno);
-					}
-					target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums, true);
-					extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets, true);
+						target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums, true);
+						extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets, true);
 
-					cols = list_concat_copy(cols, extra_restargets);
-					break;
-				case T_DeleteStmt:
-					rewrite_object_refs(parsetree->stmt);
-					sql_dialect = sql_dialect_value_old;
-					delete_stmt = (DeleteStmt *) parsetree->stmt;
-					relation = delete_stmt->relation;
-					relid = RangeVarGetRelid(relation, NoLock, false);
-					r = relation_open(relid, AccessShareLock);
-					pstate = (ParseState *) palloc0(sizeof(ParseState));
-					pstate->p_target_relation = r;
-					cols = NIL;
+						cols = list_concat_copy(cols, extra_restargets);
+						break;
+					case T_DeleteStmt:
+						rewrite_object_refs(parsetree->stmt);
+						sql_dialect = sql_dialect_value_old;
+						delete_stmt = (DeleteStmt *) parsetree->stmt;
+						relation = delete_stmt->relation;
+						relid = RangeVarGetRelid(relation, NoLock, false);
+						r = relation_open(relid, AccessShareLock);
+						pstate = (ParseState *) palloc0(sizeof(ParseState));
+						pstate->p_target_relation = r;
+						cols = NIL;
 
-					/*
-					 * Add attnums to cols based on targetList
-					 */
-					foreach(lc, cols)
-					{
-						ResTarget  *col = (ResTarget *) lfirst(lc);
-						char	   *name = col->name;
-						int			attrno;
-
-						attrno = attnameAttNum(pstate->p_target_relation, name, false);
-						if (attrno == InvalidAttrNumber)
+						/*
+						 * Add attnums to cols based on targetList
+						 */
+						foreach(lc, cols)
 						{
-							ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_COLUMN),
-									 errmsg("column \"%s\" of relation \"%s\" does not exist",
-											name,
-											RelationGetRelationName(pstate->p_target_relation))));
-						}
-						target_attnums = lappend_int(target_attnums, attrno);
-					}
-					target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums, true);
-					extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets, true);
+							ResTarget  *col = (ResTarget *) lfirst(lc);
+							char	   *name = col->name;
+							int			attrno;
 
-					cols = list_concat_copy(cols, extra_restargets);
-					break;
-				default:
-					is_supported_case_sp_describe_undeclared_parameters = false;
-					break;
+							attrno = attnameAttNum(pstate->p_target_relation, name, false);
+							if (attrno == InvalidAttrNumber)
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_UNDEFINED_COLUMN),
+										errmsg("column \"%s\" of relation \"%s\" does not exist",
+												name,
+												RelationGetRelationName(pstate->p_target_relation))));
+							}
+							target_attnums = lappend_int(target_attnums, attrno);
+						}
+						target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums, true);
+						extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets, true);
+
+						cols = list_concat_copy(cols, extra_restargets);
+						break;
+					default:
+						is_supported_case_sp_describe_undeclared_parameters = false;
+						break;
+				}
 			}
 
 			if (is_supported_case_sp_describe_undeclared_parameters)
@@ -1198,7 +1213,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						break;
 				}
 
-				if (!(list_length(values_list) > 1) && is_supported_case_sp_describe_undeclared_parameters)
+				if (is_supported_case_sp_describe_undeclared_parameters && !(list_length(values_list) > 1))
 				{
 					foreach(lc, values_list)
 					{
@@ -1206,6 +1221,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						ListCell   *sublc;
 						int			numvalues = 0;
 						int			numtotalvalues = list_length(sublist);
+
+						if (!is_supported_case_sp_describe_undeclared_parameters)
+							break;
 
 						undeclaredparams->paramnames = (char **) palloc(sizeof(char *) * numtotalvalues);
 						undeclaredparams->paramindexes = (int *) palloc(sizeof(int) * numtotalvalues);
@@ -1247,8 +1265,13 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 								default:
 									break;
 							}
-							fields = columnref->fields;
-							if (!(nodeTag(columnref) != T_ColumnRef && nodeTag(parsetree->stmt) != T_DeleteStmt))
+
+							if (is_supported_case_sp_describe_undeclared_parameters)
+								fields = columnref->fields;
+
+							if (is_supported_case_sp_describe_undeclared_parameters &&
+								!(nodeTag(columnref) != T_ColumnRef &&
+								nodeTag(parsetree->stmt) != T_DeleteStmt))
 							{
 								foreach(fieldcell, fields)
 								{
