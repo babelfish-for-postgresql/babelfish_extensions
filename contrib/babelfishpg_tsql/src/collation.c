@@ -18,7 +18,7 @@
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
-#include <unicode/utrans.h>
+#include "utils/removeaccent.map"
 
 #include "pltsql.h"
 #include "src/collation.h"
@@ -26,25 +26,11 @@
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
 
-/* 
- * Rule applied to transliterate Latin and general category Nd character 
- * then convert the Latin (source) char to ASCII (destination) representation
- */
-#define TRANSFORMATION_RULE "[[:Latin:][:Nd:]]; Latin-ASCII"
-
-/*
- * The maximum number of bytes per character is 4 according 
- * to RFC3629 which limited the character table to U+10FFFF
- * Ref: https://www.rfc-editor.org/rfc/rfc3629#section-3
- */
-#define MAX_BYTES_PER_CHAR 4
-#define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
 static Oid remove_accents_internal_oid;
-static UTransliterator *cached_transliterator = NULL;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
@@ -460,125 +446,129 @@ get_remove_accents_internal_oid()
 	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
 }
 
-/*
- * Function responsible for obtaining unaccented version of input
- * string with the help of ICU provided APIs. 
- * We use a transformation rule to transliterate the string
- */
+static inline unsigned char *
+store_coded_char(unsigned char *dest, uint32 code)
+{
+	if (code & 0xff000000)
+	{
+		*dest++ = code >> 24;
+	}
+	if (code & 0x00ff0000)
+	{
+		*dest++ = code >> 16;
+	}
+	if (code & 0x0000ff00)
+	{
+		*dest++ = code >> 8;
+	}
+	if (code & 0x000000ff)
+	{
+		*dest++ = code;
+	}
+	return dest;
+}
+
+static int
+compare_remove_accent_map_pair(const void *p1, const void *p2)
+{
+	uint32		v1,
+				v2;
+
+	v1 = *(const uint32 *) p1;
+	v2 = ((const remove_accent_map_pair *) p2)->original_char;
+	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
+}
 
 PG_FUNCTION_INFO_V1(remove_accents_internal);
 Datum remove_accents_internal(PG_FUNCTION_ARGS)
 {
-	char *input_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	UChar *utf16_input, *utf16_res;
-	int32_t len_uinput, limit, capacity, len_result;
-	char *result;
-	UErrorCode status = U_ZERO_ERROR;
-	text *res_str;
+	unsigned char *input_str = (unsigned char *)text_to_cstring(PG_GETARG_TEXT_PP(0)),
+	              *result,
+	              *result_itr;
+	text          *return_result;
+	int           len = strlen((char *)input_str),
+	              l;
 
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
+	/* normalized value never takes more bytes than original char */
+	result = palloc0(len+1);
+	result_itr = result;
 
-#ifdef USE_ICU
-	// Check if transliterator is not yet cached
-	if (!cached_transliterator)
+	for (; len > 0; len -= l)
 	{
-		MemoryContext oldcontext;
-		UChar *rules;
-		int32_t len_uchar;
+		unsigned char b1 = 0;
+		unsigned char b2 = 0;
+		unsigned char b3 = 0;
+		unsigned char b4 = 0;
+		uint32 utf8_char;
+		uint32 utf8_normalized_char;
+		remove_accent_map_pair *pr;
 
-		// Switch to TopMemoryContext for allocating cached transliterator
-		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+		/* "break" cases all represent errors */
+		if (*input_str == '\0')
+			break;
 
-		// Load transliterator rules
-		len_uchar = icu_to_uchar(&rules, TRANSFORMATION_RULE, strlen(TRANSFORMATION_RULE));
+		l = pg_utf_mblen(input_str);
+		
+		if (len < l)
+			break;
 
-		// Open transliterator
-		cached_transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
-		if (U_FAILURE(status) || !cached_transliterator)
+		if (!pg_utf8_islegal(input_str, l))
+			break;
+
+		if (l == 1)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-						errmsg("Error opening transliterator: %s", u_errorName(status))));
+			*result_itr++ = *input_str++;
+			continue;
 		}
 
-		// Switch back to original memory context
-		MemoryContextSwitchTo(oldcontext);
+		/* collect coded char of length l */
+		if (l == 2)
+		{
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else if (l == 3)
+		{
+			b2 = *input_str++;
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else if (l == 4)
+		{
+			b1 = *input_str++;
+			b2 = *input_str++;
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else
+		{
+			elog(ERROR, "unsupported character length %d", l);
+		}
+
+		utf8_char = (b1 << 24 | b2 << 16 | b3 << 8 | b4);
+
+		pr = bsearch(&utf8_char, pltsql_remove_accent_map, lengthof(pltsql_remove_accent_map),
+							sizeof(remove_accent_map_pair), compare_remove_accent_map_pair);
+
+		if (pr && pr->normalized_char)
+			utf8_normalized_char = pr->normalized_char;
+		else
+			utf8_normalized_char = utf8_char;
+
+		result_itr = store_coded_char(result_itr, utf8_normalized_char);
 	}
 
-	/*
-	 * XXX: Currently, we are allowing length of input string upto 250MB bytes. For long term,
-	 * we should try to chunk the input string into smaller parts, remove the accents of that
-	 * part and concat back the final string.
-	 */
-	if (strlen(input_str) > MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS)
-	{
+	if (len > 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					errmsg("Input string of the length greater than 250MB is not supported by the function remove_accents_internal." \
-							" This function might be used internally by LIKE operator.")));
-	}
+			(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+			 errmsg("error while removing accents")));
 
-	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
+	*result_itr = '\0';
 
-	limit = len_uinput;
-	/* 
-	 * set the capacity (In UChar terms) to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
-	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can have maximum INT32_MAX
-	 * value which would be equivalent to 2GB UChar points and 2GB * sizeof(UChar) in byte terms.
-	 * XXX: It is assumed that this capacity should handle almost all the general input strings.
-	 */
-	capacity = (limit < (PG_INT32_MAX / MAX_BYTES_PER_CHAR)) ? (limit * MAX_BYTES_PER_CHAR) : PG_INT32_MAX;
-
-	/*
-	 * utrans_transUChars will modify input string in place so ensure that it has enough capacity to store
-	 * transformed string.
-	 */
-	utf16_res = (UChar *) palloc0(capacity * sizeof(UChar));
-	/*
-	 * utf16_input would have one NULL terminator at the end. Copy that too. Limiting memory copy to min of
-	 * (len_uinput + 1) * sizeof(UChar) and capacity * sizeof(UChar) in order to avoid buffer overwriting.
-	 */
-	memcpy(utf16_res, utf16_input, Min((len_uinput + 1) * sizeof(UChar), capacity * sizeof(UChar)));
-	pfree(utf16_input);
-	pfree(input_str);
-
-	utrans_transUChars(cached_transliterator,
-						utf16_res,
-						&len_uinput,
-						capacity,
-						0,
-						&limit,
-						&status);
-
-	/* Allocated capacity may not be enough to hold un-accented string. This shouldn't occur ideally but still defensive code. */
-	if (status == U_BUFFER_OVERFLOW_ERROR)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					errmsg("Buffer overflow occurred while normalising the string. Error: %s", u_errorName(status))));
-	}
-
-	if (U_FAILURE(status))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					errmsg("Error normalising the input string: %s", u_errorName(status))));
-	}
-
-	len_result = icu_from_uchar(&result, utf16_res, len_uinput);
-	pfree(utf16_res);
-
-	// Return result as NVARCHAR
-	res_str = cstring_to_text_with_len(result, len_result);
+	return_result = cstring_to_text((char *)result);
 	pfree(result);
-	PG_RETURN_VARCHAR_P(res_str);
-#else
-	ereport(ERROR,
-			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				errmsg("ICU library is required to be installed in order to use the function remove_accents_internal")));
-	PG_RETURN_NULL();
-#endif
+
+	PG_RETURN_VARCHAR_P(return_result);
 }
 
 static Node *
