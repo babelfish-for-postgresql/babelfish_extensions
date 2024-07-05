@@ -156,7 +156,7 @@ GO
 SELECT RTRIM(b) FROM babel_4489_rtrim_UDT
 GO
 
--- other different datatypes, all of these should be blocked
+-- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
 DECLARE @inputString date = '2016-12-21';
 SELECT RTRIM(@inputString)
 GO

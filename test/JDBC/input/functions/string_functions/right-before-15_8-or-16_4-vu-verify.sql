@@ -200,7 +200,7 @@ GO
 SELECT RIGHT(b, 3) FROM babel_4489_right_UDT
 GO
 
--- other different datatypes, all of these should not be allowed
+-- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
 DECLARE @inputString date = '2016-12-21';
 SELECT RIGHT(@inputString, 3)
 GO
