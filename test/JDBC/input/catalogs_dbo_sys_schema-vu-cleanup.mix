@@ -12,6 +12,8 @@ drop user user_myschematest_master
 go
 drop schema myschema
 go
+drop procedure p_myschematest
+go
 use tempdb
 go
 drop table tb_myschematest_tempdb
@@ -21,6 +23,8 @@ go
 drop user user_myschematest_tempdb 
 go
 drop schema myschema
+go
+drop procedure p_myschematest
 go
 use master
 go
