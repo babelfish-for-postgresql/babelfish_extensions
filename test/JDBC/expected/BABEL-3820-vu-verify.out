@@ -1,0 +1,120 @@
+-- Test strict mode where path does not exist
+-- Expect error
+exec openjson_3820_p1
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON object does not contain key "field")~~
+
+
+-- Test lax mode where path does not exist
+-- Expect empty result and no error
+exec openjson_3820_p2
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- Test strict mode where path does not exist
+-- Expect an error for no path
+exec openjson_3820_p3
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON object does not contain key "somePathWhichDoesNotExists")~~
+
+
+-- Test standard OPENJSON call
+-- Expect result
+exec openjson_3820_p4
+go
+~~START~~
+char
+1                   
+~~END~~
+
+
+-- Test strict mode where path does not exist
+-- Expect error in strict mode
+exec openjson_3820_p5
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON object does not contain key "field")~~
+
+
+-- Test lax mode where path does not exist
+-- Expect empty result because path does not exist
+exec openjson_3820_p6
+go
+~~START~~
+nvarchar#!#nvarchar
+~~END~~
+
+
+-- Test OPENJSON strict call where path exists
+-- Expect json result
+exec openjson_3820_p7
+go
+~~START~~
+nvarchar#!#nvarchar
+0#!#en-GB
+1#!#en-UK
+2#!#de-AT
+3#!#es-AR
+4#!#sr-Cyrl
+~~END~~
+
+
+-- Test OPENJSON strict call where path exists, strict is mixed case, 
+-- and no space between "strict" and the path. Expect json result
+exec openjson_3820_p8
+go
+~~START~~
+nvarchar#!#nvarchar
+0#!#en-GB
+1#!#en-UK
+2#!#de-AT
+3#!#es-AR
+4#!#sr-Cyrl
+~~END~~
+
+
+-- Test OPENJSON strict with incorrect path
+-- Expect error
+exec openjson_3820_p9
+go
+~~START~~
+nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON object does not contain key "path")~~
+
+
+-- Test OPENJSON with incorrect path
+-- Expect empty result
+exec openjson_3820_p10
+go
+~~START~~
+nvarchar#!#nvarchar
+~~END~~
+
+
+-- Test strict mode where path does not exist
+-- Expect error in strict mode
+exec openjson_3820_p11
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON object does not contain key "field")~~
+
