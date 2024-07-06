@@ -1253,6 +1253,156 @@ login_myschematest_mydb
 login_myschematest_tempdb
 ~~END~~
 
+select 0 from sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ...sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
 select object_name(id) from syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
 go
 ~~START~~
@@ -1434,154 +1584,154 @@ dbo#!#tb_myschematest_mydb
 myschema#!#tb_myschematest_mydb
 ~~END~~
 
-select cast(0 as smallint) from sysforeignkeys where 0 = 1 order by 1
+select 0 from sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .sysforeignkeys where 0 = 1 order by 1
+select 0 from .sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from ..sysforeignkeys where 0 = 1 order by 1
+select 0 from ..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from ...sysforeignkeys where 0 = 1 order by 1
+select 0 from ...sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from ..dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from ..dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from master.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .master.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from master.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .master.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from .master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from master..sysforeignkeys where 0 = 1 order by 1
+select 0 from master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .master..sysforeignkeys where 0 = 1 order by 1
+select 0 from .master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from tempdb..sysforeignkeys where 0 = 1 order by 1
+select 0 from tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .tempdb..sysforeignkeys where 0 = 1 order by 1
+select 0 from .tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+select 0 from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+select 0 from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
 select object_name(id) from sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
@@ -3569,6 +3719,156 @@ login_myschematest_mydb
 login_myschematest_tempdb
 ~~END~~
 
+select 0 from sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ...sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
 select object_name(id) from syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
 go
 ~~START~~
@@ -3750,154 +4050,154 @@ dbo#!#tb_myschematest_mydb
 myschema#!#tb_myschematest_mydb
 ~~END~~
 
-select cast(0 as smallint) from sysforeignkeys where 0 = 1 order by 1
+select 0 from sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .sysforeignkeys where 0 = 1 order by 1
+select 0 from .sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from ..sysforeignkeys where 0 = 1 order by 1
+select 0 from ..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from ...sysforeignkeys where 0 = 1 order by 1
+select 0 from ...sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from ..dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from ..dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from master.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .master.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from master.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .master.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from .master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from master..sysforeignkeys where 0 = 1 order by 1
+select 0 from master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .master..sysforeignkeys where 0 = 1 order by 1
+select 0 from .master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from tempdb..sysforeignkeys where 0 = 1 order by 1
+select 0 from tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .tempdb..sysforeignkeys where 0 = 1 order by 1
+select 0 from .tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+select 0 from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+select 0 from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
 select object_name(id) from sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
@@ -5786,6 +6086,156 @@ login_myschematest_mydb
 login_myschematest_tempdb
 ~~END~~
 
+select 0 from sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ...sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
 select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
 go
 ~~START~~
@@ -5974,154 +6424,154 @@ dbo#!#tb_myschematest_mydb
 myschema#!#tb_myschematest_mydb
 ~~END~~
 
-select cast(0 as smallint) from sysforeignkeys where 0 = 1 order by 1
+select 0 from sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .sysforeignkeys where 0 = 1 order by 1
+select 0 from .sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from ..sysforeignkeys where 0 = 1 order by 1
+select 0 from ..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from ...sysforeignkeys where 0 = 1 order by 1
+select 0 from ...sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from ..dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from ..dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from master.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .master.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .master.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from master.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .master.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from .master.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from master..sysforeignkeys where 0 = 1 order by 1
+select 0 from master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .master..sysforeignkeys where 0 = 1 order by 1
+select 0 from .master..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from tempdb..sysforeignkeys where 0 = 1 order by 1
+select 0 from tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .tempdb..sysforeignkeys where 0 = 1 order by 1
+select 0 from .tempdb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+select 0 from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+select 0 from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+select 0 from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
-select cast(0 as smallint) from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+select 0 from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
 go
 ~~START~~
-smallint
+int
 ~~END~~
 
 select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
