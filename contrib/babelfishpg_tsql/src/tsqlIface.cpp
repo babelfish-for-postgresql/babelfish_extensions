@@ -8093,10 +8093,12 @@ rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getData
 	if (getObject != nullptr)
 	{
 		std::string objNameStripped = "";
+		std::string schemaNameStripped = "";
 		objName = ::getFullText(getObject(ctx));
 		objNameStripped = stripQuoteFromId(objName);
-		schema_is_dbo_or_sys = (pg_strncasecmp(stripQuoteFromId(::getFullText(schema)).c_str(), "dbo", 3) == 0) ||
-		                       (pg_strncasecmp(stripQuoteFromId(::getFullText(schema)).c_str(), "sys", 3) == 0) ||
+		schemaNameStripped = stripQuoteFromId(::getFullText(schema));
+		schema_is_dbo_or_sys = (pg_strncasecmp(schemaNameStripped.c_str(), "dbo", schemaNameStripped.length()) == 0) ||
+		                       (pg_strncasecmp(schemaNameStripped.c_str(), "sys", schemaNameStripped.length()) == 0) ||
 		                       (!schema);
 		bool classic_catalog = is_classic_catalog(objNameStripped.c_str());
 

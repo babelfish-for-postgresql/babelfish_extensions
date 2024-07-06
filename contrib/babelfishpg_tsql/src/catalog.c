@@ -1593,8 +1593,10 @@ is_created_with_recompile(Oid objectId)
 bool
 is_classic_catalog(const char *name)
 {
+	size_t len;
 	Assert(name);
-	if (strlen(name) <= 7) // sysusers,systypes,syslocks,sysfiles are shortest
+	len = strlen(name);
+	if (len <= 7) // sysusers,systypes,syslocks,sysfiles are shortest
 		return false;
 
 	if (pg_strncasecmp(name, "sys", 3) != 0)
@@ -1606,21 +1608,21 @@ is_classic_catalog(const char *name)
 	    // Instance-wide classic catalogs
 	    // NB: sysdatabases does not need its schema mapped from 'dbo' to 'sys',
 	    // but it is included here for completeness.
-	    (pg_strncasecmp(name, "sysdatabases", 12) == 0) ||
-	    (pg_strncasecmp(name, "syscharsets", 11) == 0) ||
-	    (pg_strncasecmp(name, "sysconfigures", 13) == 0) ||
-	    (pg_strncasecmp(name, "syscurconfigs", 13) == 0) ||
-	    (pg_strncasecmp(name, "syslanguages", 12) == 0) ||
-	    (pg_strncasecmp(name, "syslogins", 9) == 0) ||
-	    (pg_strncasecmp(name, "sysprocesses", 12) == 0) ||
+	    (pg_strncasecmp(name, "sysdatabases", len) == 0) ||
+	    (pg_strncasecmp(name, "syscharsets", len) == 0) ||
+	    (pg_strncasecmp(name, "sysconfigures", len) == 0) ||
+	    (pg_strncasecmp(name, "syscurconfigs", len) == 0) ||
+	    (pg_strncasecmp(name, "syslanguages", len) == 0) ||
+	    (pg_strncasecmp(name, "syslogins", len) == 0) ||
+	    (pg_strncasecmp(name, "sysprocesses", len) == 0) ||
 
 	    // DB-specific classic catalogs
-	    (pg_strncasecmp(name, "syscolumns", 10) == 0) ||
-	    (pg_strncasecmp(name, "sysforeignkeys", 14) == 0) ||
-	    (pg_strncasecmp(name, "sysindexes", 10) == 0) ||
-	    (pg_strncasecmp(name, "sysobjects", 10) == 0) ||
-	    (pg_strncasecmp(name, "systypes", 8) == 0) ||
-	    (pg_strncasecmp(name, "sysusers", 8) == 0)
+	    (pg_strncasecmp(name, "syscolumns", len) == 0) ||
+	    (pg_strncasecmp(name, "sysforeignkeys", len) == 0) ||
+	    (pg_strncasecmp(name, "sysindexes", len) == 0) ||
+	    (pg_strncasecmp(name, "sysobjects", len) == 0) ||
+	    (pg_strncasecmp(name, "systypes", len) == 0) ||
+	    (pg_strncasecmp(name, "sysusers", len) == 0)
 	);
 
 /*
