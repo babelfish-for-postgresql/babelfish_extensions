@@ -4146,6 +4146,8 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	Oid			opfamily_oid;
 	Oid			cmpfunction_oid;
 	int			nargs;
+	HeapTuple		tuple;
+	Form_pg_type		typform;
 	int16			dbid = get_cur_db_id();
 	tsql_compare_context	cxt;
 	LOCAL_FCINFO(fcinfo, 1);
@@ -4182,17 +4184,38 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 				errmsg("There is already an object named '%s' in the database.", partition_function_name)));
 	}
 
-	/* get the tsql typename from the input type */
+	/*
+	 * Try to find the TSQL type name for the input type and if it fails
+	 * and input type is DOMAIN type created in sys schema then
+	 * find the TSQL type name using the base type of DOMAIN.
+	 */
 	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
 	fcinfo->args[0].value = ObjectIdGetDatum(typ->typoid);
 	fcinfo->args[0].isnull = false;
 	tsql_type_datum = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
-
 	if (tsql_type_datum)
 	{
 		tsql_typename = text_to_cstring(DatumGetTextPP(tsql_type_datum));
 	}
-
+	else
+	{
+		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typ->typoid));
+		typform = (Form_pg_type) GETSTRUCT(tuple);
+		if (OidIsValid(typform->typbasetype) && typform->typnamespace == get_namespace_oid("sys", false))
+		{
+			/* Input type is DOMAIN type created in sys schema. */
+			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			fcinfo->args[0].value = ObjectIdGetDatum(typform->typbasetype);
+			fcinfo->args[0].isnull = false;
+			tsql_type_datum = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+			if (tsql_type_datum)
+			{
+				tsql_typename = text_to_cstring(DatumGetTextPP(tsql_type_datum));
+			}
+		}
+		ReleaseSysCache(tuple);
+	}
+	
 	/*
 	 * Check if datatype is supported or not, if tsql_typename is NULL
 	 * then it implies that type is User Defined Type.
