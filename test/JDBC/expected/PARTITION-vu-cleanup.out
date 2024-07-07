@@ -116,6 +116,14 @@ GO
 
 SET QUOTED_IDENTIFIER OFF;
 GO
+
+DROP INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+GO
+
+DROP INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+GO
 --------------------------------------------------
 --- DROP Partitioned Table
 --------------------------------------------------
@@ -205,7 +213,14 @@ GO
 SET QUOTED_IDENTIFIER OFF;
 GO
 
+DROP TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+GO
 
+DROP TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+GO
+
+DROP SCHEMA PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+GO
 --------------------------------------------------
 --- DROP Partition Scheme
 --------------------------------------------------
@@ -287,7 +302,10 @@ Go
 SET QUOTED_IDENTIFIER OFF;
 GO
 
---------------------------------------------------
+DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+GO
+
+-------------------------------------------
 --- DROP Partition Function
 -------------------------------------------
 DROP PARTITION FUNCTION IntPartitionFunction 
@@ -362,6 +380,13 @@ GO
 DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻]
 GO
 
+DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+GO
+
+
+---------------------------
+--- DROP Procedures
+---------------------------
 DROP PROCEDURE PartitionProcedureCreatePartitionFunction
 GO
 

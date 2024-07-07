@@ -6605,7 +6605,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	char		*partition_column_typname = NULL;
 	bool		is_binary_datatype = false;
 	int16		dbid = get_cur_db_id();
-	char		*partition_scheme_name = stmt->partspec->tsql_partition_scheme;
+	char		*partition_scheme_name = pstrdup(stmt->partspec->tsql_partition_scheme);
 	char		*relname = stmt->relation->relname;
 	char		*partition_colname = linitial_node(PartitionElem, stmt->partspec->partParams)->name;
 	char		*db_name = get_cur_db_name();
@@ -6616,8 +6616,14 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	char		*logical_schema_name;
 	ArrayType	*values;
 	bool		isnull;
+	int		i;
 	LOCAL_FCINFO(fcinfo, 1);
 
+	/* Strip trailing whitespaces from provided partition scheme. */
+	i = strlen(partition_scheme_name);
+	while (i > 0 && isspace((unsigned char) partition_scheme_name[i - 1]))
+		partition_scheme_name[--i] = '\0';
+	
 	/*
 	 * Get partition function name for the provided partition scheme,
 	 * if provided partition scheme exists in current database.
@@ -6742,7 +6748,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 
 	/* Convert each sql_variant values to CString. */
 	range_values = palloc(nelems * sizeof(Datum));
-	for (int i = 0; i < nelems; i++)
+	for (i = 0; i < nelems; i++)
 	{
 		range_values[i] = pltsql_exec_tsql_cast_value(datum_values[i], &isnull,
 								sql_variant_type_oid, -1,
@@ -6778,7 +6784,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	/* Construct hash based on partitioned table name. */
 	unique_hash = construct_unique_hash(relname);
 
-	for (int i = 0; i < nelems + 1; i++)
+	for (i = 0; i < nelems + 1; i++)
 	{
 		char *partition_name =  psprintf("%s_partition_%d", unique_hash, i);
 		partition_stmt->relation->relname = partition_name;
@@ -6804,6 +6810,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 
 	/* Free the allocated memory. */
 	pfree(partition_column_typname);
+	pfree(partition_scheme_name);
 	pfree(db_name);
 	pfree(physical_schema_name);
 	pfree(logical_schema_name);
@@ -7020,7 +7027,7 @@ bbf_drop_partitioned_table(DropStmt *stmt)
 static bool
 bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 {
-	char		*partition_scheme_name = strVal(linitial(stmt->excludeOpNames));
+	char		*partition_scheme_name = pstrdup(strVal(linitial(stmt->excludeOpNames)));
 	char		*colname =  strVal(lsecond(stmt->excludeOpNames));
 	char		*relname = stmt->relation->relname;
 	char		*physical_schema_name;
@@ -7035,6 +7042,12 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 	PartitionKey	key;
 	int		partnatts;
 	int		i;
+
+
+	/* Strip trailing whitespaces from provided partition scheme. */
+	i = strlen(partition_scheme_name);
+	while (i > 0 && isspace((unsigned char) partition_scheme_name[i - 1]))
+		partition_scheme_name[--i] = '\0';
 
 	if (!stmt->relation->schemaname)
 	{
@@ -7083,6 +7096,9 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 	if (!partition_scheme_used_for_table ||
 			strcmp(partition_scheme_name, partition_scheme_used_for_table) != 0)
 	{
+		pfree(partition_scheme_name);
+		if (partition_scheme_used_for_table)
+			pfree(partition_scheme_used_for_table);
 		return false;
 	}
 
@@ -7101,6 +7117,11 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 	}
 
 	RelationClose(rel);
+
+
+	pfree(partition_scheme_name);
+	if (partition_scheme_used_for_table)
+		pfree(partition_scheme_used_for_table);
 
 	if (i == partnatts) /* not part of partitioning columns */
 		return false;

@@ -2597,7 +2597,7 @@ tsql_CreatePartitionStmt:
 		;
 
 tsql_PartitionSpec:
-			ON ColId '(' part_params ')'
+			ON tsql_partition_scheme_name '(' part_params ')'
 				{
 					PartitionSpec *n = makeNode(PartitionSpec);
 					n->tsql_partition_scheme = $2;
@@ -2607,6 +2607,37 @@ tsql_PartitionSpec:
 					$$ = n;
 				}
 		;
+
+tsql_partition_scheme_name:
+			IDENT
+				{
+					/*
+					 * If the length of the identifier ($1) is equal to NAMEDATALEN - 1,
+					 * which is the maximum allowed length for an identifier in PostgreSQL,
+					 * it means the identifier might have been truncated by the scanner
+					 * due to the length limit.
+					 */
+					if (strlen($1) == NAMEDATALEN - 1)
+					{
+						/*
+						 * Retrieve the "extra" information attached to the scanner
+						 * to access the input string (the string being parsed).
+						 */
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						/*
+						 * Extract the original, untruncated identifier from the input buffer.
+						 * @1 represents the start location of the identifier token and
+						 * yylloc is the end position of the identifier token.
+						 */
+						$$ = pnstrdup(yyextra->core_yy_extra.scanbuf + @1, yylloc - @1);
+					}
+					/*
+					 * Otherwise, it means that the identifier is not truncated,
+					 * so assign the current value.
+					 */
+					else
+						$$ = $1;
+	};
 
 tsql_opt_INTO:
 			INTO
@@ -3352,7 +3383,7 @@ tsql_opt_on_filegroup:
  */
 
 tsql_opt_partition_scheme_or_filegroup:
-			ON ColId '(' ColId ')'
+			ON tsql_partition_scheme_name '(' ColId ')'
 				{
 					$$ =  list_make2(makeString($2), makeString($4));
 				}
