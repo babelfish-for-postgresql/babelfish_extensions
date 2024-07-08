@@ -852,7 +852,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		estate->db_name = stmt->db_name;
 		if (user)
-			SetCurrentRoleId(GetSessionUserId(), false);
+		{
+			set_session_properties(db_name);
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
