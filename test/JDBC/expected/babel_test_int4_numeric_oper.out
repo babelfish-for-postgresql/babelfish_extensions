@@ -57,6 +57,11 @@ Aggregate
         Index Cond: (a IS NULL)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 174.537 ms
+~~END~~
+
 
 -- seq scan
 select count(*) from test_int_numeric where a <> 5.0;
@@ -69,6 +74,11 @@ Aggregate
         Filter: (a <> 5.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 9.861 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where 5.0 <> a;
 GO
@@ -78,6 +88,11 @@ Query Text: select count(*) from test_int_numeric where 5.0 <> a
 Aggregate
   ->  Seq Scan on test_int_numeric
         Filter: (5.0 <> a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.675 ms
 ~~END~~
 
 
@@ -92,6 +107,11 @@ Aggregate
         Index Cond: (a < 5.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.689 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where 5.0 > a;
 GO
@@ -101,6 +121,11 @@ Query Text: select count(*) from test_int_numeric where 5.0 > a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a < 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.143 ms
 ~~END~~
 
 
@@ -114,6 +139,11 @@ Aggregate
         Index Cond: (a < '-2147483648.0'::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 18.823 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where -2147483648.0 > a;
 GO
@@ -123,6 +153,11 @@ Query Text: select count(*) from test_int_numeric where -2147483648.0 > a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a < '-2147483648.0'::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.794 ms
 ~~END~~
 
 
@@ -136,6 +171,11 @@ Aggregate
         Index Cond: (a <= 5.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.264 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where 5.0 >= a;
 GO
@@ -145,6 +185,11 @@ Query Text: select count(*) from test_int_numeric where 5.0 >= a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a <= 5.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.185 ms
 ~~END~~
 
 
@@ -158,6 +203,11 @@ Aggregate
         Index Cond: (a > 999995.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.156 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where 999995.0 < a;
 GO
@@ -167,6 +217,11 @@ Query Text: select count(*) from test_int_numeric where 999995.0 < a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a > 999995.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.687 ms
 ~~END~~
 
 
@@ -180,6 +235,11 @@ Aggregate
         Index Cond: (a >= 999995.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.145 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where 999995.0 <= a;
 GO
@@ -189,6 +249,11 @@ Query Text: select count(*) from test_int_numeric where 999995.0 <= a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a >= 999995.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
 ~~END~~
 
 
@@ -202,6 +267,11 @@ Aggregate
         Index Cond: (a > 2147483647.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where 2147483647.0 < a;
 go
@@ -211,6 +281,11 @@ Query Text: select count(*) from test_int_numeric where 2147483647.0 < a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a > 2147483647.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 
@@ -225,6 +300,11 @@ Aggregate
         Filter: (a > 5.0)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where 5.0 < a;
 GO
@@ -234,6 +314,11 @@ Query Text: select count(*) from test_int_numeric where 5.0 < a
 Aggregate
   ->  Seq Scan on test_int_numeric
         Filter: (5.0 < a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 
@@ -248,6 +333,11 @@ Aggregate
         Index Cond: ((a >= 5.0) AND (a <= 10.0))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.527 ms
+~~END~~
+
 
 -- seq scan for BETWEEN
 select count(*) from test_int_numeric where a between 5.0 and 999999.0;
@@ -258,6 +348,11 @@ Query Text: select count(*) from test_int_numeric where a between 5.0 and 999999
 Aggregate
   ->  Seq Scan on test_int_numeric
         Filter: ((a >= 5.0) AND (a <= 999999.0))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
 ~~END~~
 
 
@@ -272,6 +367,11 @@ Aggregate
         Index Cond: ((a >= 5.0) AND (a <= 999999.0) AND (a = 10))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 17.313 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where a > 5.0 and a < 7;
 Go
@@ -283,6 +383,11 @@ Aggregate
         Index Cond: ((a > 5.0) AND (a < 7))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.250 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where 5.0 < a and 7 > a;
 Go
@@ -292,6 +397,11 @@ Query Text: select count(*) from test_int_numeric where 5.0 < a and 7 > a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: ((a > 5.0) AND (a < 7))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.625 ms
 ~~END~~
 
 
@@ -308,6 +418,11 @@ Aggregate
         Filter: (a <> 5)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.612 ms
+~~END~~
+
 
 -- index scan on < and >
 select count(*) from test_int_numeric where a < 5;
@@ -318,6 +433,11 @@ Query Text: select count(*) from test_int_numeric where a < 5
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a < 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.573 ms
 ~~END~~
 
 
@@ -331,6 +451,11 @@ Aggregate
         Index Cond: (a < '-2147483648'::integer)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.619 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where a <= 5;
 GO
@@ -340,6 +465,11 @@ Query Text: select count(*) from test_int_numeric where a <= 5
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a <= 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
 ~~END~~
 
 
@@ -353,6 +483,11 @@ Aggregate
         Index Cond: (a > 999995)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.621 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where a >= 999995;
 GO
@@ -364,6 +499,11 @@ Aggregate
         Index Cond: (a >= 999995)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.145 ms
+~~END~~
+
 
 select count(*) from test_int_numeric where a > 2147483647;
 go
@@ -373,6 +513,11 @@ Query Text: select count(*) from test_int_numeric where a > 2147483647
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a > 2147483647)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 
@@ -387,6 +532,11 @@ Aggregate
         Filter: (a > 5)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
 
 -- index scan for BETWEEN
 select count(*) from test_int_numeric where a between 5 and 10;
@@ -399,6 +549,11 @@ Aggregate
         Index Cond: ((a >= 5) AND (a <= 10))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.638 ms
+~~END~~
+
 
 -- seq scan for BETWEEN
 select count(*) from test_int_numeric where a between 5 and 999999;
@@ -409,6 +564,11 @@ Query Text: select count(*) from test_int_numeric where a between 5 and 999999
 Aggregate
   ->  Seq Scan on test_int_numeric
         Filter: ((a >= 5) AND (a <= 999999))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.149 ms
 ~~END~~
 
 

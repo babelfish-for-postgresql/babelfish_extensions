@@ -395,15 +395,14 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
  *
  * The buffer must be flushed before cleanup.
  * Code is copied from src/backend/commands/copyfrom.c
+ *
+ * For TSQL, this can be called in abort phase to cleanup.
  */
 static inline void
 CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
 							 CopyMultiInsertBuffer *buffer)
 {
 	int			i;
-
-	/* Ensure buffer was flushed. */
-	Assert(buffer->nused == 0);
 
 	/* Remove back-link to ourself. */
 	buffer->resultRelInfo->ri_CopyMultiInsertBuffer = NULL;
@@ -728,7 +727,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 		/*
 		 * If the target is a plain table, check the constraints of the tuple.
 		 */
-		if (cstate->resultRelInfo->ri_RelationDesc->rd_att->constr)
+		if (insert_bulk_check_constraints && cstate->resultRelInfo->ri_RelationDesc->rd_att->constr)
 			ExecConstraints(cstate->resultRelInfo, myslot, cstate->estate);
 
 		/*
@@ -943,12 +942,12 @@ BeginBulkCopy(Relation rel,
  * EndBulkCopy - Clean up storage and release resources for BULK COPY.
  */
 void
-EndBulkCopy(BulkCopyState cstate)
+EndBulkCopy(BulkCopyState cstate, bool aborted)
 {
 	if (cstate)
 	{
 		/* Flush any remaining bufferes out to the table. */
-		if (!CopyMultiInsertInfoIsEmpty(&cstate->multiInsertInfo))
+		if (!CopyMultiInsertInfoIsEmpty(&cstate->multiInsertInfo) && !aborted)
 			CopyMultiInsertInfoFlush(&cstate->multiInsertInfo, NULL);
 
 		if (cstate->bistate != NULL)

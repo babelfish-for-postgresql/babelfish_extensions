@@ -13,10 +13,24 @@ inputs:
     description: "Server collation name"
     required: false
     default: "default"
+  extension_branch:
+    description: "Extension Branch"
+    required: false
+    default: 'latest'
+  dump_restore:
+    description: "Whether it is version upgrade or dump/restore"
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
   steps:
+    - if: ${{ inputs.extension_branch != 'latest' && inputs.dump_restore == 'true' }}
+      uses: actions/checkout@v2
+      with:
+        repository: babelfish-for-postgresql/babelfish_extensions
+        ref: ${{ inputs.extension_branch }}
+
     - name: Run JDBC Verify Tests
       if: always()
       id: jdbc-verify-tests
@@ -35,10 +49,10 @@ runs:
         if [[ "$migr_mode" == "multi-db" ]];then
           base_dir=${{ matrix.upgrade-path.path[0] }}
           tar_dir=${{ matrix.upgrade-path.last_version }}
-          if [[ "$base_dir" == *"latest"* ]]; then
+          if [[ "$base_dir" == *"latest"* || ${{ inputs.dump_restore }} == 'true' ]]; then
             base_dir="latest"
           fi
-          if [[ "$tar_dir" == *"latest"* ]]; then
+          if [[ "$tar_dir" == *"latest"* || ${{ inputs.dump_restore }} == 'true' ]]; then
             tar_dir="latest"
           fi
           export inputFilesPath=upgrade/$tar_dir/verification_cleanup/$base_dir

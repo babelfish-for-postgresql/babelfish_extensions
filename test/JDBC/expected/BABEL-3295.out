@@ -39,6 +39,11 @@ Bitmap Heap Scan on babel_3295_t1
         Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 146.721 ms
+~~END~~
+
 
 select * from babel_3295_t1 where b1 = 1 option(table hint(babel_3295_t1, index(index_babel_3295_t1_b1)))
 go
@@ -49,6 +54,11 @@ Bitmap Heap Scan on babel_3295_t1
   Recheck Cond: (b1 = 1)
   ->  Bitmap Index Scan on index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7
         Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.779 ms
 ~~END~~
 
 
@@ -64,6 +74,11 @@ Hash Join
         ->  Seq Scan on babel_3295_t2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 28.882 ms
+~~END~~
+
 
 select * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2 option(merge join)
 go
@@ -75,6 +90,11 @@ Hash Join
   ->  Seq Scan on babel_3295_t1
   ->  Hash
         ->  Seq Scan on babel_3295_t2
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.621 ms
 ~~END~~
 
 
@@ -105,6 +125,11 @@ Index Scan using index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7
   Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.258 ms
+~~END~~
+
 
 select * from babel_3295_t1 where b1 = 1 option(table hint(babel_3295_t1, index(index_babel_3295_t1_b1)))
 go
@@ -113,6 +138,11 @@ text
 Query Text: select/*+ indexscan(babel_3295_t1 index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7) */ * from babel_3295_t1 where b1 = 1                                                                 
 Index Scan using index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7 on babel_3295_t1
   Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.204 ms
 ~~END~~
 
 
@@ -127,6 +157,11 @@ Merge Join
   ->  Index Scan using babel_3295_t2_pkey on babel_3295_t2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
+~~END~~
+
 
 select * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2 option(merge join)
 go
@@ -137,6 +172,11 @@ Merge Join
   Merge Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
   ->  Index Scan using babel_3295_t1_pkey on babel_3295_t1
   ->  Index Scan using babel_3295_t2_pkey on babel_3295_t2
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.264 ms
 ~~END~~
 
 

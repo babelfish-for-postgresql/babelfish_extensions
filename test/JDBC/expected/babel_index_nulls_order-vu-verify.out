@@ -127,6 +127,11 @@ Limit
         Index Cond: (a <= 5)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 142.308 ms
+~~END~~
+
 SELECT TOP 1 a FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_asc_idx_a)) WHERE a > 5 ORDER BY a ASC
 go
 ~~START~~
@@ -135,6 +140,11 @@ Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_or
 Limit
   ->  Index Scan using babel_index_nulls_order_asc_idxe9daa5ef2b0c11acbc565480994a3b5f on babel_index_nulls_order_tbl
         Index Cond: (a > 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 10.290 ms
 ~~END~~
 
 SELECT TOP 1 a FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_asc_idx_a)) WHERE a > 5 ORDER BY a
@@ -147,6 +157,11 @@ Limit
         Index Cond: (a > 5)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.389 ms
+~~END~~
+
 SELECT TOP 1 b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_desc_idx_b)) WHERE b <= 'sss' ORDER BY b DESC
 go
 ~~START~~
@@ -155,6 +170,11 @@ Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_or
 Limit
   ->  Index Scan using babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac on babel_index_nulls_order_tbl
         Index Cond: (b <= 'sss'::"varchar")
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.567 ms
 ~~END~~
 
 SELECT TOP 1 b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_desc_idx_b)) WHERE b > 'sss' ORDER BY b ASC
@@ -167,6 +187,11 @@ Limit
         Index Cond: (b > 'sss'::"varchar")
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.532 ms
+~~END~~
+
 SELECT TOP 1 b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_desc_idx_b)) WHERE b > 'sss' ORDER BY b
 go
 ~~START~~
@@ -175,6 +200,11 @@ Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_or
 Limit
   ->  Index Scan Backward using babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac on babel_index_nulls_order_tbl
         Index Cond: (b > 'sss'::"varchar")
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.208 ms
 ~~END~~
 
 SELECT TOP 1 a, b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_default_idx_ab)) WHERE (a = 3 AND b <= 'sss') ORDER BY b DESC
@@ -187,6 +217,11 @@ Limit
         Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 30.512 ms
+~~END~~
+
 SELECT TOP 1 a, b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_default_idx_ab)) WHERE (a = 3 AND b <= 'sss') ORDER BY b ASC
 go
 ~~START~~
@@ -197,6 +232,11 @@ Limit
         Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.259 ms
+~~END~~
+
 SELECT TOP 1 a, b FROM babel_index_nulls_order_tbl WITH (INDEX (babel_index_nulls_order_default_idx_ab))  WHERE (a = 3 AND b <= 'sss') ORDER BY b
 go
 ~~START~~
@@ -205,6 +245,11 @@ Query Text: SELECT/*+ indexscan(babel_index_nulls_order_tbl babel_index_nulls_or
 Limit
   ->  Index Scan using babel_index_nulls_order_default36696f80588c2802b7570cf53f8a7d93 on babel_index_nulls_order_tbl
         Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.264 ms
 ~~END~~
 
 
