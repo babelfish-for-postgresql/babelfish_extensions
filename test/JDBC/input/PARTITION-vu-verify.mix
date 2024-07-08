@@ -1,3 +1,5 @@
+-- parallel_query_expected
+
 --------------------------------------------------
 --- CREATE PARTITION FUNCTION/SCHEME/TABLE using procedure
 --------------------------------------------------

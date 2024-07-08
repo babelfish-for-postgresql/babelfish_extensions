@@ -138,6 +138,10 @@ GO
 --------------------------------------------------
 --- Supported Datatypes for Partition Function 
 --------------------------------------------------
+-- all datatypes should sort and store the values in ascending order by itself
+-- and input values should be implicit casted into specified type
+
+
 -- using local variable in args
 declare @a int = 0;
 declare @b int = 500;
@@ -146,9 +150,9 @@ CREATE PARTITION FUNCTION IntPartitionFunction (int)
 AS RANGE RIGHT FOR VALUES (@a, @b, @c);
 GO
 
--- all datatypes should sort and store the values in ascending order by itself
--- and input values should be implicit casted into specified type
-CREATE PARTITION FUNCTION BigIntPartitionFunction (bigint)
+
+-- explicit schema can also be specified with paramater type
+CREATE PARTITION FUNCTION BigIntPartitionFunction (sys.bigint)
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
 GO
 

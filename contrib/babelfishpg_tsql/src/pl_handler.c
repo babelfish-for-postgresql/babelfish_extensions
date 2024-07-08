@@ -6850,7 +6850,7 @@ create_partition_stmt(char *physical_schema_name, char *relname)
 	}
 	PG_FINALLY();
 	{
-		/* reset dialect back to original value */
+		/* Reset dialect back to original value. */
 		set_config_option("babelfishpg_tsql.sql_dialect", old_dialect, GUC_CONTEXT_CONFIG,
 					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		pfree(query.data);
@@ -7066,10 +7066,10 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 	pfree(physical_schema_name);
 	pfree(db_name);
 
-	/* search for the column specified with partition scheme in table's columns */
+	/* Search for the column specified with partition scheme in table's columns. */
 	tuple = SearchSysCacheAttName(relid, colname);
 
-	/* throw error if column specified with partition scheme doesn't exists in table */
+	/* Raise an error if column specified with partition scheme doesn't exists in table. */
 	if (!HeapTupleIsValid(tuple))
 	{
 		ereport(ERROR,
@@ -7080,7 +7080,7 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
 	ReleaseSysCache(tuple);
 
-	/* throw error if provided partition scheme doesn't exists in the current database */
+	/* Raise an error if provided partition scheme doesn't exists in the current database. */
 	if (!partition_scheme_exists(dbid, partition_scheme_name))
 	{
 		ereport(ERROR,
@@ -7088,7 +7088,7 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 					errmsg("Invalid object name '%s'.", partition_scheme_name)));
 	}
 
-	/* find the partition scheme used to create partitioned table */
+	/* Find the partition scheme used to create partitioned table. */
 	partition_scheme_used_for_table = get_partition_scheme_for_partitioned_table(dbid, logical_schema_name, relname);
 	pfree(logical_schema_name);
 
