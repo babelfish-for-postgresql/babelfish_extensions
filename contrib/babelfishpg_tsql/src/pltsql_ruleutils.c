@@ -859,7 +859,7 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 			char	   *str;
 
 			/* Fetch default positions */
-			arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+			arg_default_positions = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 													bbffunctuple,
 													Anum_bbf_function_ext_default_positions,
 													&isnull);
@@ -873,7 +873,7 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 				pfree(str);
 			}
 			else
-				ReleaseSysCache(bbffunctuple);
+				heap_freetuple(bbffunctuple);
 		}
 	}
 
@@ -979,7 +979,7 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 	}
 
 	if (default_positions_available)
-		ReleaseSysCache(bbffunctuple);
+		heap_freetuple(bbffunctuple);
 
 	return argsprinted;
 }
