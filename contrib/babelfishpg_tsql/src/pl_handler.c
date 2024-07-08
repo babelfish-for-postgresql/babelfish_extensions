@@ -6584,9 +6584,6 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	}
 }
 
-#define BBF_PARTITION_NAME(unique_hash, partition_number) \
-	psprintf("%s_partition_%d", unique_hash, partition_number)
-
 /*
  * bbf_create_partition_tables
  *	This function creates partitions of babelfish partitioned table
@@ -6799,7 +6796,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 
 	for (i = 0; i < nelems + 1; i++)
 	{
-		char *partition_name = BBF_PARTITION_NAME(unique_hash, i);
+		char *partition_name =  psprintf("%s_partition_%d", unique_hash, i);
 		partition_stmt->relation->relname = partition_name;
 		set_partition_range_bounds(partition_stmt->partbound, range_values, i, nelems + 1, is_binary_datatype);
 		ProcessUtility(wrapper,
