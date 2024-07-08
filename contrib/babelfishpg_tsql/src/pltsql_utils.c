@@ -1521,7 +1521,7 @@ babelfish_get_delimiter_pos(char *str)
 /*
  * Extract string from input of given length and remove delimited identifiers.
  */
-static char *
+char *
 remove_delimited_identifiers(char *str, int len)
 {
 

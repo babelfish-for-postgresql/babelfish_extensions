@@ -2608,36 +2608,35 @@ tsql_PartitionSpec:
 				}
 		;
 
+
+ /*
+  * TSQL untruncated identfiers:
+  *	This rule handles the parsing of untruncated identifiers in TSQL.
+  *	Unlike PostgreSQL, which truncates identifier when they exceeds the
+  *	maximum allowed length (NAMEDATALEN), while in TSQL, for certain cases we
+  *	want to parse identifiers with lengths exceeding such limit
+  *	
+  *	This rule extract the entire identifier string from the input buffer,
+  *	regardless of its length.
+  */
 tsql_untruncated_IDENT:
 			IDENT
 				{
 					/*
-					 * If the length of the identifier ($1) is equal to NAMEDATALEN - 1,
-					 * which is the maximum allowed length for an identifier in PostgreSQL,
-					 * it means the identifier might have been truncated by the scanner
-					 * due to the length limit.
+					 * Retrieve the "extra" information attached to the scanner
+					 * to access the input string (the string being parsed).
 					 */
-					if (strlen($1) == NAMEDATALEN - 1)
-					{
-						/*
-						 * Retrieve the "extra" information attached to the scanner
-						 * to access the input string (the string being parsed).
-						 */
-						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						/*
-						 * Extract the original, untruncated identifier from the input buffer.
-						 * @1 represents the start location of the identifier token and
-						 * yylloc is the end position of the identifier token.
-						 */
-						$$ = pnstrdup(yyextra->core_yy_extra.scanbuf + @1, yylloc - @1);
-					}
+					base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+
 					/*
-					 * Otherwise, it means that the identifier is not truncated,
-					 * so assign the current value.
+					 * Extract the original, untruncated identifier from the input buffer.
+					 * @1 represents the start location of the identifier token and
+					 * yylloc is the end position of the identifier token.
 					 */
-					else
-						$$ = $1;
-	};
+					$$ = pnstrdup(yyextra->core_yy_extra.scanbuf + @1, yylloc - @1);
+					
+				}
+		;
 
 tsql_opt_INTO:
 			INTO

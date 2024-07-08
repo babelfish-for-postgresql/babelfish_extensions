@@ -180,7 +180,7 @@ static void validateUserAndRole(char *name);
 
 static void bbf_ExecDropStmt(DropStmt *stmt);
 static void bbf_create_partition_tables(CreateStmt *stmt);
-static void bbf_drop_partitioned_table(DropStmt *stmt);
+static void bbf_drop_handle_partitioned_table(DropStmt *stmt);
 static bool bbf_validate_partitioned_index_alignment(IndexStmt *stmt);
 static char *construct_unique_hash(char *relation_name);
 static void set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx,
@@ -2544,6 +2544,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 				}
 				
+				/*
+				 * For babelfish partitioned table, user should not be
+				 * allowed to attach/detach partition to partitioned table 
+				 * and user should not be allowed to modify its partition.
+				 */
 				if (!babelfish_dump_restore && atstmt->objtype == OBJECT_TABLE)
 				{
 					AlterTableCmd	*cmd = (AlterTableCmd *) linitial(atstmt->cmds);
@@ -2567,18 +2572,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else /* Schema is explicitly specified for TDS client. */
 						{
 							logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
-							if (!logical_schema_name) /* pg_temp schema */
-								return;
+							if (!logical_schema_name) /* not a TSQL schema, might be pg_temp or non-existing schema */
+								break;
 						}
 						dbid = get_cur_db_id();
 					}
 					else if (atstmt->relation->schemaname) /* Schema is explicitly specified for non TDS client. */
 					{
 						logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
-						if (!logical_schema_name) /* not a tsql schema */
+						if (!logical_schema_name) /* not a TSQL schema */
 							break;
 						
-						/* Find dbid from physical schema name for a tsql schema. */
+						/* Find dbid from physical schema name for a TSQL schema. */
 						dbid = get_dbid_from_physical_schema_name(atstmt->relation->schemaname, false);
 					}
 					else
@@ -3608,7 +3613,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				DropStmt   *drop_stmt = (DropStmt *) parsetree;
 
 				if (drop_stmt->removeType == OBJECT_TABLE)
-					bbf_drop_partitioned_table(drop_stmt);
+					bbf_drop_handle_partitioned_table(drop_stmt);
 
 				if (drop_stmt->removeType != OBJECT_SCHEMA)
 				{
@@ -3849,7 +3854,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (rel->schemaname)
 					{
 						char *logical_schemaname = (char *) get_logical_schema_name(rel->schemaname, true);
-						if (logical_schemaname) /* tsql schema */
+						if (logical_schemaname) /* TSQL schema */
 						{
 							int16 dbid = get_dbid_from_physical_schema_name(rel->schemaname, false);
 							if (is_bbf_partitioned_table(dbid, logical_schemaname, rel->relname));
@@ -6605,10 +6610,10 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	char		*partition_column_typname = NULL;
 	bool		is_binary_datatype = false;
 	int16		dbid = get_cur_db_id();
-	char		*partition_scheme_name = pstrdup(stmt->partspec->tsql_partition_scheme);
+	char		*partition_scheme_input_name = pstrdup(stmt->partspec->tsql_partition_scheme);
+	char		*partition_scheme_name;
 	char		*relname = stmt->relation->relname;
 	char		*partition_colname = linitial_node(PartitionElem, stmt->partspec->partParams)->name;
-	char		*db_name = get_cur_db_name();
 	CreateStmt	*partition_stmt;
 	PlannedStmt	*wrapper;
 	char		*unique_hash;
@@ -6620,9 +6625,12 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	LOCAL_FCINFO(fcinfo, 1);
 
 	/* Strip trailing whitespaces from provided partition scheme. */
-	i = strlen(partition_scheme_name);
-	while (i > 0 && isspace((unsigned char) partition_scheme_name[i - 1]))
-		partition_scheme_name[--i] = '\0';
+	i = strlen(partition_scheme_input_name);
+	while (i > 0 && isspace((unsigned char) partition_scheme_input_name[i - 1]))
+		partition_scheme_input_name[--i] = '\0';
+	
+	/* Remove the delimited identifiers from input. */
+	partition_scheme_name = remove_delimited_identifiers(partition_scheme_input_name, strlen(partition_scheme_input_name));
 	
 	/*
 	 * Get partition function name for the provided partition scheme,
@@ -6712,7 +6720,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	if (OidIsValid(partition_column_basetypoid))
 	{
 		Datum		tsql_typname;
-		/* Get the tsql typename from partition column type. */
+		/* Get the TSQL typename from partition column type. */
 		InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
 		fcinfo->args[0].value = ObjectIdGetDatum(partition_column_typoid);
 		fcinfo->args[0].isnull = false;
@@ -6761,9 +6769,11 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	 */
 	if (!stmt->relation->schemaname)
 	{
+		char		*db_name = get_cur_db_name();
 		const char *user = get_user_for_database(db_name);
 		logical_schema_name = get_authid_user_ext_schema_name(db_name, user);
 		physical_schema_name = get_physical_schema_name(db_name, logical_schema_name);
+		pfree(db_name);
 	}
 	else
 	{
@@ -6811,7 +6821,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	/* Free the allocated memory. */
 	pfree(partition_column_typname);
 	pfree(partition_scheme_name);
-	pfree(db_name);
+	pfree(partition_scheme_input_name);
 	pfree(physical_schema_name);
 	pfree(logical_schema_name);
 	pfree(unique_hash);
@@ -6838,7 +6848,7 @@ create_partition_stmt(char *physical_schema_name, char *relname)
 	 * This will be executed using ProcessUtility().
 	 */
 	initStringInfo(&query);
-	appendStringInfo(&query, "CREATE TABLE %s.dummy PARTITION OF %s.%s"
+	appendStringInfo(&query, "CREATE TABLE \"%s\".dummy PARTITION OF \"%s\".\"%s\""
 				" FOR VALUES FROM ('dummy') TO ('dummy');",
 				physical_schema_name, physical_schema_name, relname);
 	PG_TRY();
@@ -6958,14 +6968,14 @@ set_node_value_from_datum(A_Const *node, Datum val, bool is_binary_datatype)
 }
 
 /*
- * bbf_drop_partitioned_table
+ * bbf_drop_handle_partitioned_table
  * 	When the table is being dropped is:
  * 	1. babelfish partitioned table, then it removes the entry from bbf_partition_depend catalog.
  * 	2. partition of babelfish partitioned table, then it throws an error.
  * 	3. other than above, then it does nothing.
  */
 static void
-bbf_drop_partitioned_table(DropStmt *stmt)
+bbf_drop_handle_partitioned_table(DropStmt *stmt)
 {
 	Relation		relation;
 	ListCell		*cell;
@@ -6991,7 +7001,7 @@ bbf_drop_partitioned_table(DropStmt *stmt)
 		dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
 		pfree(physical_schemaname);
 
-		if (!logical_schemaname) /* not a tsql schema */
+		if (!logical_schemaname) /* not a TSQL schema */
 		{
 			relation_close(relation, AccessShareLock);
 			continue;
@@ -7002,6 +7012,7 @@ bbf_drop_partitioned_table(DropStmt *stmt)
 			/* Raise error when parent table of partition is babelfish partitioned table. */
 			if (is_bbf_partitioned_table(dbid, logical_schemaname, get_rel_name(get_partition_parent(form->oid, true))))
 			{
+				relation_close(relation, AccessShareLock);
 				ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 						errmsg("Cannot drop the babelfish partition table '%s'.", relname)));
@@ -7027,7 +7038,8 @@ bbf_drop_partitioned_table(DropStmt *stmt)
 static bool
 bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 {
-	char		*partition_scheme_name = pstrdup(strVal(linitial(stmt->excludeOpNames)));
+	char		*partition_scheme_input_name = pstrdup(strVal(linitial(stmt->excludeOpNames)));
+	char		*partition_scheme_name;
 	char		*colname =  strVal(lsecond(stmt->excludeOpNames));
 	char		*relname = stmt->relation->relname;
 	char		*physical_schema_name;
@@ -7045,9 +7057,13 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 
 
 	/* Strip trailing whitespaces from provided partition scheme. */
-	i = strlen(partition_scheme_name);
-	while (i > 0 && isspace((unsigned char) partition_scheme_name[i - 1]))
-		partition_scheme_name[--i] = '\0';
+	i = strlen(partition_scheme_input_name);
+	while (i > 0 && isspace((unsigned char) partition_scheme_input_name[i - 1]))
+		partition_scheme_input_name[--i] = '\0';
+
+	/* Remove the delimited identifiers from input. */
+	partition_scheme_name = remove_delimited_identifiers(partition_scheme_input_name, strlen(partition_scheme_input_name));
+	pfree(partition_scheme_input_name);
 
 	if (!stmt->relation->schemaname)
 	{
@@ -7094,7 +7110,7 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 
 	/* partition_scheme_used_for_table will be null for non-partitioned table */
 	if (!partition_scheme_used_for_table ||
-			strcmp(partition_scheme_name, partition_scheme_used_for_table) != 0)
+			pg_strcasecmp(partition_scheme_name, partition_scheme_used_for_table) != 0)
 	{
 		pfree(partition_scheme_name);
 		if (partition_scheme_used_for_table)
@@ -7159,7 +7175,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 
 	logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, true);
 
-	if (!logical_schema_name) /* not a tsql schema */
+	if (!logical_schema_name) /* not a TSQL schema */
 		return;
 	
 	dbid = get_dbid_from_physical_schema_name(physical_schema_name, false);
@@ -7195,7 +7211,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	 * This will be executed using ProcessUtility().
 	 */
 	initStringInfo(&query);
-	appendStringInfo(&query, "ALTER TABLE %s.dummy RENAME TO dummy;", physical_schema_name);
+	appendStringInfo(&query, "ALTER TABLE \"%s\".dummy RENAME TO dummy;", physical_schema_name);
 
 	old_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 

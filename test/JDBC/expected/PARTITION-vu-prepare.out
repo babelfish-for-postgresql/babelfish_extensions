@@ -426,66 +426,50 @@ ON PARTITION_TABLEログインαιώνια(Value)
 ON PARTITION_SCHEMEログインαιώνια(PARTITION_COLUMNログインαιώνια);
 GO
 
-CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻] (int)
+CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻  ] (int)
 AS RANGE RIGHT FOR VALUES (0, 500, 1000);
 GO
 
-CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻] AS
-PARTITION [PARTITION_FUNCTION  유니코드스키마👻]
+CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ] AS
+PARTITION [PARTITION_FUNCTION  유니코드스키마👻  ]
 ALL TO ([PRIMARY]);
 GO
 
-CREATE TABLE [PARTITION_TABLE  유니코드스키마👻](
-    [PARTITION_COLUMN  유니코드스키마👻] INT,
+CREATE TABLE [PARTITION_TABLE  유니코드스키마👻  ](
+    [PARTITION_COLUMN  유니코드스키마👻  ] INT,
     Value sys.varchar(50)
-) ON [PARTITION_SCHEME  유니코드스키마👻]([PARTITION_COLUMN  유니코드스키마👻]);
+) ON [PARTITION_SCHEME  유니코드스키마👻  ]([PARTITION_COLUMN  유니코드스키마👻  ]);
 GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near "유니코드스키마👻")~~
-
-
-CREATE INDEX [PARTITION_INDEX 유니코드스키마👻]
-ON [PARTITION_TABLE  유니코드스키마👻](Value)
-ON [PARTITION_SCHEME  유니코드스키마👻]([PARTITION_COLUMN  유니코드스키마👻]);
+CREATE INDEX [PARTITION_INDEX 유니코드스키마👻  ]
+ON [PARTITION_TABLE  유니코드스키마👻  ](Value)
+ON [PARTITION_SCHEME  유니코드스키마👻  ]([PARTITION_COLUMN  유니코드스키마👻  ]);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "partition_table  유니코드스키마👻" does not exist)~~
-
 
 -- qouted identifer
 SET QUOTED_IDENTIFIER ON;
 GO
 
-CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder" (int)
+CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  " (int)
 AS RANGE RIGHT FOR VALUES (0, 500, 1000);
 GO
 
-CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder" AS
-PARTITION "PARTITION_FUNCTION 😎$@ #123 🌍rder"
+CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder  " AS
+PARTITION "PARTITION_FUNCTION 😎$@ #123 🌍rder  "
 ALL TO ([PRIMARY]);
 GO
 
 
-CREATE TABLE "PARTITION_TABLE 😎$@ #123 🌍rder" (
-    "PARTITION_COLUMN 😎$@ #123 🌍rder" INT,
+CREATE TABLE "PARTITION_TABLE 😎$@ #123 🌍rder  " (
+    "PARTITION_COLUMN 😎$@ #123 🌍rder  " INT,
     Value sys.varchar(50)
-) ON "PARTITION_SCHEME 😎$@ #123 🌍rder" ("PARTITION_COLUMN 😎$@ #123 🌍rder");
+) ON "PARTITION_SCHEME 😎$@ #123 🌍rder  " ("PARTITION_COLUMN 😎$@ #123 🌍rder  ");
 GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near "😎$")~~
-
-
-CREATE INDEX "PARTITION_INDEX 😎$@ #123 🌍rder"
-ON "PARTITION_TABLE 😎$@ #123 🌍rder" (Value)
-ON "PARTITION_SCHEME 😎$@ #123 🌍rder"("PARTITION_COLUMN 😎$@ #123 🌍rder");
+CREATE INDEX "PARTITION_INDEX 😎$@ #123 🌍rder  "
+ON "PARTITION_TABLE 😎$@ #123 🌍rder  " (Value)
+ON "PARTITION_SCHEME 😎$@ #123 🌍rder  "("PARTITION_COLUMN 😎$@ #123 🌍rder  ");
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "partition_table 😎$@ #123 🌍rder" does not exist)~~
-
 
 SET QUOTED_IDENTIFIER OFF;
 Go
