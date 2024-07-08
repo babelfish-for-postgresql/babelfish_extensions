@@ -64,6 +64,12 @@ runs:
         mvn test
         export inputFilesPath=input
 
+        # Skip test BABEL-404 for previous versions while testing dump/restore since it specifies
+        # contraint column ordering which is expected to fail after fix for BABEL-4888
+        if [[ "${{ inputs.dump_restore }}" == 'true' && "${{ inputs.extension_branch }}" != 'latest' ]];then
+          sed -i "/BABEL-404\>/d" upgrade/$base_dir/schedule
+        fi
+
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/$base_dir/schedule
         done

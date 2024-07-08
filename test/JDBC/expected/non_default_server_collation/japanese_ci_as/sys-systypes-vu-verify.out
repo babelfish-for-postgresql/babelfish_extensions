@@ -107,9 +107,10 @@ int
 
 SELECT count(*) FROM sys_systypes_db.dbo.systypes WHERE name = 'sys_systypes_type';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+~~START~~
+int
+1
+~~END~~
 
 
 CREATE TYPE sys_systypes_type FROM int;
@@ -142,9 +143,10 @@ sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 
 SELECT name, status, length, variable, allownulls, printfmt, collation FROM sys_systypes_db.dbo.systypes WHERE name = 'sys_systypes_type';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+~~START~~
+varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
+sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+~~END~~
 
 
 DROP TYPE sys_systypes_type;

@@ -91,6 +91,8 @@ extern "C"
 
 	/* To store the time spent in ANTLR parsing for the current batch */
 	extern instr_time antlr_parse_time;
+
+	extern bool is_classic_catalog(const char *name);
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -178,7 +180,7 @@ static bool is_compiling_create_function();
 static void process_query_specification(TSqlParser::Query_specificationContext *qctx, PLtsql_expr_query_mutator *mutator);
 static void process_select_statement(TSqlParser::Select_statementContext *selectCtx, PLtsql_expr_query_mutator *mutator);
 static void process_select_statement_standalone(TSqlParser::Select_statement_standaloneContext *standaloneCtx, PLtsql_expr_query_mutator *mutator, tsqlBuilder &builder);
-template <class T> static std::string rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema);
+template <class T> static std::string rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema, GetCtxFunc<T> getObject);
 template <class T> static std::string rewrite_information_schema_to_information_schema_tsql(T ctx, GetCtxFunc<T> getSchema);
 template <class T> static std::string rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, GetCtxFunc<T> getTableName);
 template <class T> static void rewrite_geospatial_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
@@ -211,6 +213,7 @@ static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
 static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
 static void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx);
 static void handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx);
+static bool setSysSchema = false;
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -351,6 +354,22 @@ stripQuoteFromId(TSqlParser::IdContext *ctx)
 		return val.substr(1, val.length()-2);
 	}
 	return getFullText(ctx);
+}
+
+std::string
+stripQuoteFromId(std::string s)
+{
+	if (s.front() == '[')
+	{
+		Assert(s.back() == ']');
+		return s.substr(1,s.length()-2);
+	}
+	else if (s.front() == '"')
+	{
+		Assert(s.back() == '"');
+		return s.substr(1,s.length()-2);
+	}
+	return s;
 }
 
 static int
@@ -991,7 +1010,8 @@ public:
 		{
 			GetCtxFunc<TSqlParser::Full_object_nameContext *> getDatabase = [](TSqlParser::Full_object_nameContext *o) { return o->database; };
 			GetCtxFunc<TSqlParser::Full_object_nameContext *> getSchema = [](TSqlParser::Full_object_nameContext *o) { return o->schema; };
-			std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+			GetCtxFunc<TSqlParser::Full_object_nameContext *> getObject = [](TSqlParser::Full_object_nameContext *o) { return o->object_name; };
+			std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema, getObject);
 			std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
 			if (!rewritten_name.empty())
 				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
@@ -1008,7 +1028,8 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Table_nameContext *> getDatabase = [](TSqlParser::Table_nameContext *o) { return o->database; };
 		GetCtxFunc<TSqlParser::Table_nameContext *> getSchema = [](TSqlParser::Table_nameContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		GetCtxFunc<TSqlParser::Table_nameContext *> getObject = [](TSqlParser::Table_nameContext *o) { return o->table; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema, getObject);
 		std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
@@ -1030,7 +1051,8 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Simple_nameContext *> getDatabase = [](TSqlParser::Simple_nameContext *o) { return nullptr; }; // can't exist
 		GetCtxFunc<TSqlParser::Simple_nameContext *> getSchema = [](TSqlParser::Simple_nameContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		GetCtxFunc<TSqlParser::Simple_nameContext *> getObject = [](TSqlParser::Simple_nameContext *o) { return o->name; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema, getObject);
 		std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
@@ -1046,8 +1068,9 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_schemaContext *o) { return nullptr; }; // can't exist
 		GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_schemaContext *o) { return o->schema; };
+		GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getObject = [](TSqlParser::Func_proc_name_schemaContext *o) { return o->procedure; };
 		std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
-		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema, getObject);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
 		if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
@@ -1060,7 +1083,8 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Func_proc_name_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_database_schemaContext *o) { return o->database; };
 		GetCtxFunc<TSqlParser::Func_proc_name_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_database_schemaContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		GetCtxFunc<TSqlParser::Func_proc_name_database_schemaContext *> getObject = [](TSqlParser::Func_proc_name_database_schemaContext *o) { return o->procedure; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema, getObject);
 		std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
@@ -1084,7 +1108,8 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
 		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getObject = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->procedure; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema, getObject);
 		std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
 		if (!rewritten_name.empty())
 		{
@@ -2345,13 +2370,27 @@ public:
 		}
 		else
 			is_schema_specified = false;
-		tsqlCommonMutator::exitFull_object_name(ctx);
-		if (ctx && (ctx->DOT().size() <= 2) && ctx->database)
-		{
-			db_name = stripQuoteFromId(ctx->database);
 
-			if (!string_matches(db_name.c_str(), get_cur_db_name()))
-				is_cross_db = true;
+		// The flag setSysSchema is used exclusively in case of rewriting a cross-DB catalog reference
+		// that uses 'dbo' as schema: this puts 'sys' in tsqlBuilder::schema_name, which ends up
+		// in (PLtsql_stmt_execsql *stmt)->schema_name; this is required for correct resolution
+		// of the catalog reference at run time.
+		setSysSchema = false;
+		tsqlCommonMutator::exitFull_object_name(ctx);
+		// When server is specified, the query is handed off to openquery_internal()
+		if (ctx && (!ctx->server))
+		{
+			// 3 dots: cover the leading-dot case '.dbname.schema.object'
+			if (ctx && (ctx->DOT().size() <= 3) && ctx->database)
+			{
+				db_name = stripQuoteFromId(ctx->database);
+
+				if (!string_matches(db_name.c_str(), get_cur_db_name()))
+					is_cross_db = true;
+
+				if (setSysSchema)
+					schema_name = "sys";
+			}
 		}
 	}
 
@@ -3371,7 +3410,6 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
 		antlr4::tree::ParseTreeWalker firstPass;
 		firstPass.walk(mutator.get(), tree);
-
 		// for batch-level statement (i.e. create procedure), we don't need to create actual PLtsql_stmt* by tsqlBuilder.
 		// We can just relay the query string to backend parser via one PLtsql_stmt_execsql.
 		TSqlParser::Tsql_fileContext *tsql_file = dynamic_cast<TSqlParser::Tsql_fileContext *>(tree);
@@ -3412,6 +3450,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 
 		result.parseTreeCreated = parseTreeCreated;
 		result.success = true;
+
 		return result;
 	}
 	catch (PGErrorWrapperException &e)
@@ -8041,16 +8080,50 @@ rewrite_information_schema_to_information_schema_tsql(T ctx, GetCtxFunc<T> getSc
 /* if no rewriting necessary, return empty string */
 template<class T>
 std::string
-rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema)
+rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema, GetCtxFunc<T> getObject)
 {
+	auto schema = getSchema(ctx);
+	std::string objName = "";
+	bool schema_is_dbo_or_sys = false;
+	bool catalog_need_sys_schema = false;
+	bool must_rewrite = false; // Handles case of .dbname..sometable for a non-catalog table
+
+	if (getObject != nullptr)
+	{
+		std::string objNameStripped = "";
+		std::string schemaNameStripped = "";
+		size_t schemaNameLen;
+		objName = ::getFullText(getObject(ctx));
+		objNameStripped = stripQuoteFromId(objName);
+		schemaNameStripped = stripQuoteFromId(::getFullText(schema));	
+		schemaNameLen = schemaNameStripped.length();		
+		schema_is_dbo_or_sys = ((schemaNameLen == 3) && (pg_strncasecmp(schemaNameStripped.c_str(), "dbo", schemaNameLen) == 0)) ||
+		                       ((schemaNameLen == 3) && (pg_strncasecmp(schemaNameStripped.c_str(), "sys", schemaNameLen) == 0)) ||
+		                       (!schema);
+		bool classic_catalog = is_classic_catalog(objNameStripped.c_str());
+
+		// Only need to rewrite with 'sys' schema when it's a classic-style catalog AND is currently
+		// using 'dbo' schema.
+		// Some cases with 'sys' schema also need to be rewritten (eg. '.master.sys.syslogins')
+		catalog_need_sys_schema = classic_catalog && schema_is_dbo_or_sys;
+
+		// Pass the flag to set the 'sys' schema in the final PLtsql_stmt_execsql struct
+		if (catalog_need_sys_schema)
+			setSysSchema = true;
+	}
+
 	if (ctx->DOT().size() == 1)
 	{
-		auto schema = getSchema(ctx);
+		// dbo.object -> sys.object for classic catalogs
+		// .object -> sys.object for classic catalogs
+		if (catalog_need_sys_schema)
+			return "sys." + objName;
 
-		// .object -> dbo.object
-		if (!schema)
-			return "dbo" + ::getFullText(ctx);
+		// .object -> object : executing user's default schema will be applied at run time
+		else if (!schema)
+			return objName;
 		else
+			// no rewrite needed
 			return "";
 	}
 	if (ctx->DOT().size() >= 2)
@@ -8058,31 +8131,51 @@ rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getData
 		std::string name = ::getFullText(ctx);
 		if (ctx->DOT().size() == 3)
 		{
-			// we can assume servername is null because unsupported-feature error should be thrown
-			// so we can remove the first leading dot. the remaining name should be handled with the same with two dots case
+			// We can assume servername is null (because tsqlCommonMutator::exitFull_object_name handles that case)
+			// so we can remove the first leading dot. The remaining name should be handled the same way as with two dots.
 			name = name.substr(1);
+			must_rewrite = true;  // Make sure to rewrite because we stripped off the initial dot
 		}
 
 		auto database = getDatabase(ctx);
-		auto schema = getSchema(ctx);
 
 		// ..object -> object
 		if (!database && !schema)
+			// ..object -> object : executing user's default schema will be applied at run time
 			return name.substr(2);
-		// db..object -> db.dbo.object
+
+		// db..object -> db.dbo.object --> though this should really use the defualt schema instead of dbo
+		// db..object -> db.sys.object for classic catalogs
 		else if (database && !schema)
 		{
-			size_t first_dot_index = name.find('.');
-			Assert(first_dot_index != std::string::npos);
-			Assert(name[first_dot_index+1] == '.'); /* next character should be also '.' */
-			return name.substr(0,first_dot_index + 1) + "dbo" + name.substr(first_dot_index + 1);
+			// To be fixed: for non-catalogs, this needs to use the executing user's default schema, which may not be 'dbo' (can be determined only at execution time)
+			return ::getFullText(database) + "." + (catalog_need_sys_schema ? "sys" : "dbo") + "." +  objName;
 		}
+
 		// .schema.object -> schema.object
 		else if (!database && schema)
-			return name.substr(1);
+		{
+			// .dbo.object -> sys.object for classic catalogs
+			if (catalog_need_sys_schema)
+				return "sys." + objName;
+			else
+				// remove the leading dot
+				return name.substr(1);
+		}
+
+		// database.dbo.object -> database.sys.object for classic catalogs
+		else if (database && catalog_need_sys_schema)
+		{
+			return ::getFullText(database) + ".sys." + objName;
+		}
+		else if (must_rewrite)
+			return name;
 		else
+			// no rewrite needed
 			return "";
 	}
+
+	// no rewrite needed
 	return "";
 }
 

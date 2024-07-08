@@ -277,6 +277,7 @@ extern Oid	get_bbf_function_ext_idx_oid(void);
 extern HeapTuple get_bbf_function_tuple_from_proctuple(HeapTuple proctuple);
 extern void clean_up_bbf_function_ext(int16 dbid);
 extern bool is_created_with_recompile(Oid objectId);
+extern bool is_classic_catalog(const char *name);
 
 typedef struct FormData_bbf_function_ext
 {
