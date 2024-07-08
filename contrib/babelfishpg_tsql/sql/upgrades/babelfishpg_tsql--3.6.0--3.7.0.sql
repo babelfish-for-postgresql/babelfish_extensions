@@ -38,6 +38,68 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+CREATE OR REPLACE VIEW sys.user_token AS
+SELECT
+CAST(Base.oid AS INT) AS principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
+CAST(CASE
+WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+WHEN Ext.type = 'R' THEN 'ROLE'
+ELSE 'SQL USER' END
+AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = sys.DB_NAME()
+AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR
+((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo' AND Ext.type = 'R' AND pg_has_role(current_user, Ext.rolname, 'MEMBER')))
+UNION ALL
+SELECT
+CAST(-1 AS INT) AS principal_id,
+CAST(CAST(-1 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
+CAST('ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
+WHERE (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo';
+
+GRANT SELECT ON sys.user_token TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
+RETURNS INT AS
+$$
+DECLARE
+    is_windows_grp boolean := (CHARINDEX('\', role) != 0);
+BEGIN
+    -- Always return 1 for 'public'
+    IF (role = 'public')
+    THEN RETURN 1;
+    END IF;
+
+    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role AND type != 'S') -- do not consider sql logins
+    THEN
+        IF ((EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type IN ('SERVER ROLE', 'SQL LOGIN'))) OR is_windows_grp) -- do not consider sql logins, server roles
+        THEN RETURN NULL; -- Also return NULL if session is not a windows auth session but argument is a windows group
+        ELSIF EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type NOT IN ('SERVER ROLE', 'SQL LOGIN'))
+        THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
+        ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
+        END IF;
+    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role)
+    THEN
+        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role)
+        THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
+        ELSIF (is_windows_grp)
+        THEN RETURN NULL; -- Return NULL if session is not a windows auth session but argument is a windows group
+        ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
+        END IF;
+    ELSE RETURN NULL; -- Return NULL if role/group does not exist
+    END IF;
+END;
+$$
+LANGUAGE plpgsql STRICT STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
