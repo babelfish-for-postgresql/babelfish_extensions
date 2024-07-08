@@ -2614,7 +2614,7 @@ tsql_PartitionSpec:
   *	This rule handles the parsing of untruncated identifiers in TSQL.
   *	Unlike PostgreSQL, which truncates identifier when they exceeds the
   *	maximum allowed length (NAMEDATALEN), while in TSQL, for certain cases we
-  *	want to parse identifiers with lengths exceeding such limit
+  *	want to parse identifiers with lengths exceeding such limit.
   *	
   *	This rule extract the entire identifier string from the input buffer,
   *	regardless of its length.
@@ -2630,10 +2630,9 @@ tsql_untruncated_IDENT:
 
 					/*
 					 * Extract the original, untruncated identifier from the input buffer.
-					 * @1 represents the start location of the identifier token and
-					 * yylloc is the end position of the identifier token.
+					 * Here, @1 represents the start location of the identifier token.
 					 */
-					$$ = pnstrdup(yyextra->core_yy_extra.scanbuf + @1, yylloc - @1);
+					$$ = extract_identifier(yyextra->core_yy_extra.scanbuf + @1);
 					
 				}
 		;

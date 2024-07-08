@@ -2108,6 +2108,9 @@ extern void pltsql_scanner_finish(void);
  */
 extern int	pltsql_yyparse(void);
 
+/* functions in hooks.c */
+extern char *extract_identifier(const char *start);
+
 /* functions in pltsql_utils.c */
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
 extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
@@ -2171,7 +2174,6 @@ extern Oid	tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id);
 extern Oid	tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id);
 extern Oid	tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
 extern char **split_object_name(char *name);
-extern char *remove_delimited_identifiers(char *str, int len);
 extern bool is_schema_from_db(Oid schema_oid, Oid db_id);
 extern void remove_trailing_spaces(char *name);
 extern Oid	tsql_get_proc_nsp_oid(Oid object_id);

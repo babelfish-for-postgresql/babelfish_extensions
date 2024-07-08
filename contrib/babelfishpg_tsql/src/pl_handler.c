@@ -6610,8 +6610,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	char		*partition_column_typname = NULL;
 	bool		is_binary_datatype = false;
 	int16		dbid = get_cur_db_id();
-	char		*partition_scheme_input_name = pstrdup(stmt->partspec->tsql_partition_scheme);
-	char		*partition_scheme_name;
+	char		*partition_scheme_name = stmt->partspec->tsql_partition_scheme;
 	char		*relname = stmt->relation->relname;
 	char		*partition_colname = linitial_node(PartitionElem, stmt->partspec->partParams)->name;
 	CreateStmt	*partition_stmt;
@@ -6624,14 +6623,6 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	int		i;
 	LOCAL_FCINFO(fcinfo, 1);
 
-	/* Strip trailing whitespaces from provided partition scheme. */
-	i = strlen(partition_scheme_input_name);
-	while (i > 0 && isspace((unsigned char) partition_scheme_input_name[i - 1]))
-		partition_scheme_input_name[--i] = '\0';
-	
-	/* Remove the delimited identifiers from input. */
-	partition_scheme_name = remove_delimited_identifiers(partition_scheme_input_name, strlen(partition_scheme_input_name));
-	
 	/*
 	 * Get partition function name for the provided partition scheme,
 	 * if provided partition scheme exists in current database.
@@ -6820,8 +6811,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 
 	/* Free the allocated memory. */
 	pfree(partition_column_typname);
-	pfree(partition_scheme_name);
-	pfree(partition_scheme_input_name);
+	pfree(partition_function_name);
 	pfree(physical_schema_name);
 	pfree(logical_schema_name);
 	pfree(unique_hash);
@@ -7038,8 +7028,7 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 static bool
 bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 {
-	char		*partition_scheme_input_name = pstrdup(strVal(linitial(stmt->excludeOpNames)));
-	char		*partition_scheme_name;
+	char		*partition_scheme_name = strVal(linitial(stmt->excludeOpNames));
 	char		*colname =  strVal(lsecond(stmt->excludeOpNames));
 	char		*relname = stmt->relation->relname;
 	char		*physical_schema_name;
@@ -7055,16 +7044,10 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 	int		partnatts;
 	int		i;
 
-
-	/* Strip trailing whitespaces from provided partition scheme. */
-	i = strlen(partition_scheme_input_name);
-	while (i > 0 && isspace((unsigned char) partition_scheme_input_name[i - 1]))
-		partition_scheme_input_name[--i] = '\0';
-
-	/* Remove the delimited identifiers from input. */
-	partition_scheme_name = remove_delimited_identifiers(partition_scheme_input_name, strlen(partition_scheme_input_name));
-	pfree(partition_scheme_input_name);
-
+	/*
+	 * Find default schema for current user when schema
+	 * is not explicitly specified for TDS client.
+	 */
 	if (!stmt->relation->schemaname)
 	{
 		const char *user = get_user_for_database(db_name);
@@ -7112,7 +7095,6 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 	if (!partition_scheme_used_for_table ||
 			pg_strcasecmp(partition_scheme_name, partition_scheme_used_for_table) != 0)
 	{
-		pfree(partition_scheme_name);
 		if (partition_scheme_used_for_table)
 			pfree(partition_scheme_used_for_table);
 		return false;
@@ -7134,8 +7116,6 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 
 	RelationClose(rel);
 
-
-	pfree(partition_scheme_name);
 	if (partition_scheme_used_for_table)
 		pfree(partition_scheme_used_for_table);
 

@@ -17,7 +17,6 @@ void pre_wrapper_pgstat_init_function_usage(const char *);
 pg_locale_t *collation_cache_entry_hook_function(Oid ,pg_locale_t *);
 extern bool output_update_transformation;
 extern bool output_into_insert_transformation;
-extern char *extract_identifier(const char *start);
 extern char *gen_func_arg_list(Oid objectId);
 extern char * gen_func_arg_list_from_params(List* parameters);
 extern void pltsql_store_func_default_positions(ObjectAddress address,
