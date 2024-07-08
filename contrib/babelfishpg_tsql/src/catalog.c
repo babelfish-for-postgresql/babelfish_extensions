@@ -1608,6 +1608,89 @@ is_created_with_recompile(Oid objectId)
 	return recompile;
 }
 
+/*
+ * Check if a catalog name is a classic T-SQL catalog starting with 'sys' (e.g. sysobjects).
+ * Historically (dating back to the Sybase era) these catalogs were located in the
+ * 'dbo' schema but have since been relocated to the 'sys' schema.
+ * They can however still be referenced in the 'dbo' schema which is equivalent to using 'sys'.
+ * Note: newer catalogs do not normally start with 'sys', but some exceptions exist, such as
+ * 'system_sql_modules'. These newer cases are however not referencable via 'dbo'.
+ *
+ * The input parameter is a table/view name, from which enclosing double quotes or square brackets
+ * have been stripped.
+ */
+bool
+is_classic_catalog(const char *name)
+{
+	size_t len;
+	Assert(name);
+	len = strlen(name);
+	if (len <= 7) // sysusers,systypes,syslocks,sysfiles are shortest
+		return false;
+
+	if ((len == 3) && pg_strncasecmp(name, "sys", 3) != 0)
+		return false;
+
+	return (
+		// Currently supported catalogs:
+
+	    // Instance-wide classic catalogs
+	    // NB: sysdatabases does not need its schema mapped from 'dbo' to 'sys',
+	    // but it is included here for completeness.
+	    ((len == 12) &&  (pg_strncasecmp(name, "sysdatabases", len) == 0)) ||
+	    ((len == 11) &&  (pg_strncasecmp(name, "syscharsets", len) == 0)) ||
+	    ((len == 13) &&  (pg_strncasecmp(name, "sysconfigures", len) == 0)) ||
+	    ((len == 13) &&  (pg_strncasecmp(name, "syscurconfigs", len) == 0)) ||
+	    ((len == 12) &&  (pg_strncasecmp(name, "syslanguages", len) == 0)) ||
+	    ((len ==  9) &&  (pg_strncasecmp(name, "syslogins", len) == 0)) ||
+	    ((len == 12) &&  (pg_strncasecmp(name, "sysprocesses", len) == 0)) ||
+                         
+	    // DB-specific classic catalogs
+	    ((len ==  10) && (pg_strncasecmp(name, "syscolumns", len) == 0)) ||
+	    ((len ==  14) && (pg_strncasecmp(name, "sysforeignkeys", len) == 0)) ||
+	    ((len ==  10) && (pg_strncasecmp(name, "sysindexes", len) == 0)) ||
+	    ((len ==  10) && (pg_strncasecmp(name, "sysobjects", len) == 0)) ||
+	    ((len ==   8) && (pg_strncasecmp(name, "systypes", len) == 0)) ||
+	    ((len ==   8) && (pg_strncasecmp(name, "sysusers", len) == 0))
+	);
+	    
+/*
+ * Additional T-SQL catalogs, not currently supported in Babelfish.
+ *
+ * When adding support for such a catalog, add it to the list above.
+ * We could include all of these in the list above, but that might
+ * impact performance.
+ *
+ * Instance-wide catalogs:
+		sysaltfiles
+		syscacheobjects
+		sysdevices
+		sysfilegroups
+		sysfiles
+		syslockinfo
+		syslocks
+		sysoledbusers
+		sysopentapes
+		sysperfinfo
+		sysremotelogins
+		sysservers
+
+ * DB-specific catalogs:
+		syscomments
+		sysconstraints
+		sysdepends
+		sysforeignkeys
+		sysfulltextcatalogs
+		sysindexkeys
+		sysmembers
+		sysmessages
+		syspermissions
+		sysprotects
+		sysreferences
+ *
+ */
+}
+
 /*****************************************
  *			SCHEMA
  *****************************************/
