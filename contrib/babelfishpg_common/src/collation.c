@@ -21,6 +21,8 @@
 #include "typecode.h"
 #include "sqlvariant.h"
 
+#include "commands/dbcommands.h"
+
 #define NOT_FOUND -1
 
 #define DATABASE_DEFAULT "database_default"
@@ -648,6 +650,14 @@ translate_collation(const char *collname, bool check_for_server_collation_name_g
 	 */
 	if (!check_for_server_collation_name_guc && (pg_strcasecmp(collname, DATABASE_DEFAULT) == 0 || pg_strcasecmp(collname, CATALOG_DEFAULT) == 0))
 	{
+		if (database_collation_name)
+		{
+			idx = translate_collation_utility(database_collation_name);
+			if (idx == NOT_FOUND)
+				idx = find_collation(database_collation_name);
+			return idx;
+		}
+
 		init_server_collation_name();
 		if (server_collation_name)
 		{
@@ -1011,8 +1021,13 @@ get_server_collation_collidx(void)
 {
 	init_server_collation_name();
 	if (NOT_FOUND == server_collation_collidx)
-		server_collation_collidx = find_any_collation(server_collation_name, false);
-
+	{
+		if (database_collation_name)
+			server_collation_collidx = find_any_collation(database_collation_name, false);
+		else
+			server_collation_collidx = find_any_collation(server_collation_name, false);
+	}
+	
 	return server_collation_collidx;
 }
 
@@ -1167,6 +1182,19 @@ get_collation_oid_internal(char *collation_name)
 Oid
 get_server_collation_oid_internal(bool missingOk)
 {
+	if (database_collation_name)
+	{
+		Oid db_coll_oid = get_collation_oid_internal(database_collation_name);
+		if (OidIsValid(db_coll_oid))
+		{
+			db_collation_is_CI_AS = collation_is_CI_AS(db_coll_oid);
+			server_collation_collidx = get_server_collation_collidx();
+			return db_coll_oid;
+		}
+	}
+	
+	elog(DEBUG2, "Shameem collation %s not found", database_collation_name);
+		
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
 
@@ -1205,11 +1233,11 @@ BABELFISH_CLUSTER_COLLATION_OID()
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
-		get_server_collation_oid_internal(false);	/* set and cache
+		PG_RETURN_OID(get_server_collation_oid_internal(false));	/* set and cache
 													 * server_collation_oid */
 
-		if (OidIsValid(server_collation_oid))
-			return server_collation_oid;
+		// if (OidIsValid(server_collation_oid))
+		// 	return server_collation_oid;
 	}
 	return DEFAULT_COLLATION_OID;
 }
@@ -1257,12 +1285,12 @@ collation_is_CI_AS(Oid colloid)
 	 * colStrength secondary, or level2, corresponds to a CI_AS collation,
 	 * unless colCaseLevel=yes, or kc-true, is also specified.
 	 */
-	if (strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) &&
+	if ((strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) || strstr(lowerstr(collcollate), lowerstr("colStrength=primary"))) &&
          0 == strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")))    /* without a colCaseLevel - not CS_AI */
 	         return true;
 	 
 	/* Starting from PG16, locale string is canonicalized to a language tag. */
-	if (0 != strstr(lowerstr(collcollate), "level2") &&    /* CI_AS */
+	if ((0 != strstr(lowerstr(collcollate), "level2") || 0 != strstr(lowerstr(collcollate), "level1"))  &&    /* CI_AS */
 		0 == strstr(lowerstr(collcollate), "kc-true"))
 		return true;
 
@@ -1338,7 +1366,7 @@ is_valid_server_collation_name(const char *collname)
 		collation_is_case_insensitive_and_accent_sensitive(collidx))
 		return true;
 
-	return false;
+	return true;
 }
 
 Oid

@@ -263,13 +263,7 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 
 		if (strcmp(defel->defname, "collate") == 0)
 		{
-			const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
-
-			if (server_collation_name && strcmp(server_collation_name, defGetString(defel)))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("only \"%s\" supported for default collation", server_collation_name),
-						 parser_errposition(pstate, defel->location)));
+			database_collation_name = pstrdup(defGetString(defel));
 		}
 		else
 			ereport(ERROR,
@@ -277,6 +271,9 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 					 errmsg("option \"%s\" not recognized", defel->defname),
 					 parser_errposition(pstate, defel->location)));
 	}
+
+	if (!database_collation_name)
+		database_collation_name = pstrdup((char*)GetConfigOption("babelfishpg_tsql.server_collation_name", false, false));
 
 	return do_create_bbf_db(stmt->dbname, stmt->options, owner);
 }

@@ -23,6 +23,9 @@
 #include "pltsql.h"
 #include "src/collation.h"
 
+#include "commands/dbcommands.h"
+#include "catalog.h"
+
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
 
@@ -1165,4 +1168,20 @@ has_ilike_node_and_ci_as_coll(Node *expr)
 		}
 	}
 	return false;
+}
+
+void
+set_db_collation(int16 db_id)
+{
+	HeapTuple	tuple;
+	Form_sysdatabases sysdb;
+
+	tuple = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(db_id));
+
+	if (!HeapTupleIsValid(tuple))
+		return;
+
+	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	database_collation_name = sysdb->default_collation.data;
+	ReleaseSysCache(tuple);
 }

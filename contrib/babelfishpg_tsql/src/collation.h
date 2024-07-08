@@ -104,6 +104,8 @@ extern Node *pltsql_planner_node_transformer(PlannerInfo *root,
 											 int kind);
 extern Node *pltsql_predicate_transformer(Node *expr);
 
+extern void set_db_collation(int16 db_id);
+
 /* Expression kind codes for preprocess_expression */
 #define EXPRKIND_QUAL				0
 #define EXPRKIND_TARGET				1

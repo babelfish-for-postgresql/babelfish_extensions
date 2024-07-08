@@ -18,6 +18,7 @@
 #include "pltsql.h"
 #include "guc.h"
 #include "storage/shm_toc.h"
+#include "collation.h"
 
 /* Core Session Properties */
 
@@ -156,6 +157,9 @@ set_cur_user_db_and_path(const char *db_name)
 
 	/* set search path */
 	set_search_path_for_user_schema(db_name, user);
+
+	/* set database level collation */
+	set_db_collation(db_id);
 }
 
 static void
