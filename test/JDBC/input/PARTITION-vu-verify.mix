@@ -974,6 +974,22 @@ DROP TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
 GO
 
 --------------------------------------------------------------------
+--- Unsupported Option: Insert Bulk To Partitioned Table
+--------------------------------------------------------------------
+CREATE TABLE TestPartitionSourceTable(Id BIGINT, Value sys.varchar(50));
+GO
+
+INSERT INTO TestPartitionSourceTable (Id, Value) VALUES (1, 'Value 1');
+GO
+
+-- should throw error
+insertbulk#!#TestPartitionSourceTable#!#partition_vu_prepare_bigint_table
+go
+
+DROP TABLE TestPartitionSourceTable
+GO
+
+--------------------------------------------------------------------
 --- Unsupported Option with CREATE TABLE with PARTITION SCHEME
 --------------------------------------------------------------------
 -- Computed column as partitioning column is not yet supported in babelfish

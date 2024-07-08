@@ -1,3 +1,4 @@
+
 --------------------------------------------------
 --- CREATE PARTITION FUNCTION/SCHEME/TABLE using procedure
 --------------------------------------------------
@@ -192,7 +193,7 @@ AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The type 'geometry' is not valid for this operation.)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 
 CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOGRAPHY)
@@ -200,7 +201,7 @@ AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The type 'geography' is not valid for this operation.)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 
 -- to test rowversion and timestamp
@@ -1383,7 +1384,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.780 ms
+Babelfish T-SQL Batch Parsing Time: 0.782 ms
 ~~END~~
 
 
@@ -1402,7 +1403,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.121 ms
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 
@@ -1420,7 +1421,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.131 ms
 ~~END~~
 
 
@@ -1438,7 +1439,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 
@@ -1457,7 +1458,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
 ~~END~~
 
 
@@ -1494,7 +1495,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
 ~~END~~
 
 
@@ -1512,7 +1513,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
 ~~END~~
 
 
@@ -1530,7 +1531,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 
@@ -1548,7 +1549,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -1606,7 +1607,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -1626,7 +1627,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
 ~~END~~
 
 
@@ -1646,7 +1647,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 
@@ -1668,7 +1669,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -1687,7 +1688,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -1706,7 +1707,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -1724,7 +1725,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
 ~~END~~
 
 
@@ -1744,7 +1745,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 
@@ -1784,7 +1785,7 @@ Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_idx" on "36386
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 34.681 ms
+Babelfish T-SQL Batch Parsing Time: 34.743 ms
 ~~END~~
 
 
@@ -1799,7 +1800,7 @@ Index Scan using "548bb344374ce8d65342b36428375873_partition_1_id_idx" on "548bb
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.209 ms
+Babelfish T-SQL Batch Parsing Time: 0.201 ms
 ~~END~~
 
 
@@ -1814,7 +1815,7 @@ Index Scan using "12025e103721b70925744c196ce004cd_partition_1_id_idx" on "12025
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.540 ms
+Babelfish T-SQL Batch Parsing Time: 7.419 ms
 ~~END~~
 
 
@@ -1829,7 +1830,7 @@ Index Scan using "61446d711d19b5970809387caa7fd3d3_partition_1_id_idx" on "61446
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
 ~~END~~
 
 
@@ -1844,7 +1845,7 @@ Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.758 ms
+Babelfish T-SQL Batch Parsing Time: 6.571 ms
 ~~END~~
 
 
@@ -1859,7 +1860,7 @@ Index Scan using "57405760297bb338f333c148aac5f845_partition_1_id_idx" on "57405
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.180 ms
+Babelfish T-SQL Batch Parsing Time: 0.237 ms
 ~~END~~
 
 
@@ -1877,7 +1878,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.336 ms
+Babelfish T-SQL Batch Parsing Time: 0.223 ms
 ~~END~~
 
 
@@ -1895,7 +1896,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.262 ms
+Babelfish T-SQL Batch Parsing Time: 0.154 ms
 ~~END~~
 
 
@@ -1910,7 +1911,7 @@ Index Scan using "4867824426e52acac5c93d9cbe8aa366_partition_1_id_idx" on "48678
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.703 ms
+Babelfish T-SQL Batch Parsing Time: 6.603 ms
 ~~END~~
 
 
@@ -1925,7 +1926,7 @@ Index Scan using "751ce655481adf15600727bf291667f7_partition_1_id_idx" on "751ce
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.185 ms
+Babelfish T-SQL Batch Parsing Time: 0.184 ms
 ~~END~~
 
 
@@ -1940,7 +1941,7 @@ Index Scan using "5ed003cf80dacbb8cce0b21e175f7f94_partition_1_id_idx" on "5ed00
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -1955,7 +1956,7 @@ Index Scan using b5c2e665ec4a1219ba8510e33e45379b_partition_1_id_idx on b5c2e665
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.238 ms
+Babelfish T-SQL Batch Parsing Time: 0.226 ms
 ~~END~~
 
 
@@ -1985,7 +1986,7 @@ Index Scan using "933a5c7f0de13890324e53ee0711424b_partition_1_id_idx" on "933a5
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.166 ms
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
 ~~END~~
 
 
@@ -2000,7 +2001,7 @@ Index Scan using "320465af1d1bd21f5b29c57f9f4e5c51_partition_1_id_idx" on "32046
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.165 ms
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 
@@ -2032,7 +2033,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.162 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -2058,7 +2059,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.871 ms
+Babelfish T-SQL Batch Parsing Time: 6.824 ms
 ~~END~~
 
 
@@ -2073,7 +2074,7 @@ Index Scan using "77718961234110c3a22a3c977bc252d8_partition_1_id_idx" on "77718
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.188 ms
+Babelfish T-SQL Batch Parsing Time: 0.166 ms
 ~~END~~
 
 
@@ -2088,7 +2089,7 @@ Index Scan using f3baf999c06d6ea82082a4c549baeb77_partition_1_id_idx on f3baf999
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.212 ms
+Babelfish T-SQL Batch Parsing Time: 0.188 ms
 ~~END~~
 
 
@@ -2103,7 +2104,7 @@ Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.324 ms
+Babelfish T-SQL Batch Parsing Time: 7.191 ms
 ~~END~~
 
 
@@ -2300,6 +2301,28 @@ GO
 
 ~~ERROR (Message: Cannot drop the babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.)~~
 
+
+--------------------------------------------------------------------
+--- Unsupported Option: Insert Bulk To Partitioned Table
+--------------------------------------------------------------------
+CREATE TABLE TestPartitionSourceTable(Id BIGINT, Value sys.varchar(50));
+GO
+
+INSERT INTO TestPartitionSourceTable (Id, Value) VALUES (1, 'Value 1');
+GO
+~~ROW COUNT: 1~~
+
+
+insertbulk#!#TestPartitionSourceTable#!#partition_vu_prepare_bigint_table
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot bulk copy to partitioned-table "partition_vu_prepare_bigint_table")~~
+
+-- should throw error
+go
+
+DROP TABLE TestPartitionSourceTable
+GO
 
 --------------------------------------------------------------------
 --- Unsupported Option with CREATE TABLE with PARTITION SCHEME

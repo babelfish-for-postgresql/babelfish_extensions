@@ -561,7 +561,6 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 	 */
 	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION &&
 		cstate->rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
-		cstate->rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
 		!(cstate->rel->trigdesc &&
 		  cstate->rel->trigdesc->trig_insert_instead_row))
 	{
@@ -579,6 +578,11 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot bulk copy to sequence \"%s\"",
+							RelationGetRelationName(cstate->rel))));
+		else if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot bulk copy to partitioned-table \"%s\"",
 							RelationGetRelationName(cstate->rel))));
 		else
 			ereport(ERROR,
