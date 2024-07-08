@@ -1,0 +1,19 @@
+SELECT CHARINDEX('Æ','AAAAAE' COLLATE Latin1_General_CI_AI)
+SELECT CHARINDEX('Æ','AeAAAaE' COLLATE Latin1_General_CI_AI, 2)
+SELECT CHARINDEX('Æ', 'AAAAAABBBBBBBEEEEEEAAAAA' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+int
+5
+~~END~~
+
+~~START~~
+int
+6
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+

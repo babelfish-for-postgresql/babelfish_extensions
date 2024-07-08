@@ -78,6 +78,9 @@
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
 
+#include "unicode/ucol.h"
+#include "unicode/usearch.h"
+
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
@@ -209,6 +212,11 @@ static void revoke_func_permission_from_public(Oid objectId);
  *****************************************/
 static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 
+/*****************************************
+ * 			Collation Hooks
+ *****************************************/
+static int pltsql_strpos_non_determinstic(text *t1, text *t2, Oid collid);
+
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
@@ -264,6 +272,7 @@ static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_h
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
 static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_constraint_nulls_ordering_hook = NULL;
+static pltsql_strpos_non_determinstic_hook_type prev_pltsql_strpos_non_determinstic_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -455,6 +464,9 @@ InstallExtendedHooks(void)
 
 	prev_pltsql_unique_constraint_nulls_ordering_hook = pltsql_unique_constraint_nulls_ordering_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = unique_constraint_nulls_ordering;
+
+	prev_pltsql_strpos_non_determinstic_hook = pltsql_strpos_non_determinstic_hook;
+	pltsql_strpos_non_determinstic_hook = pltsql_strpos_non_determinstic;
 }
 
 void
@@ -518,6 +530,7 @@ UninstallExtendedHooks(void)
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
+	pltsql_strpos_non_determinstic_hook = prev_pltsql_strpos_non_determinstic_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -5208,4 +5221,73 @@ unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 	}
 
 	return SORTBY_NULLS_DEFAULT;
+}
+
+static int
+pltsql_strpos_non_determinstic(text *t1, text *t2, Oid collid)
+{
+	pg_locale_t mylocale = 0;
+
+	if (!lc_collate_is_c(collid))
+		mylocale = pg_newlocale_from_collation(collid);
+
+	if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
+	{
+		int32_t len1 = VARSIZE_ANY_EXHDR(t1);
+		int32_t len2 = VARSIZE_ANY_EXHDR(t2);
+		UErrorCode	status = U_ZERO_ERROR;
+		UStringSearch *usearch;
+		UChar *uchar1, *uchar2;
+		int32_t ulen1, ulen2;
+		int32_t u16_pos, u8_pos = 0;
+
+		ulen1 = icu_to_uchar(&uchar1, VARDATA_ANY(t1), len1);
+		ulen2 = icu_to_uchar(&uchar2, VARDATA_ANY(t2), len2);
+
+		usearch = usearch_openFromCollator(uchar2, /* needle */
+										ulen2,
+										uchar1, /* haystack */
+										ulen1,
+										mylocale->info.icu.ucol,
+										NULL,
+										&status);
+		if (U_FAILURE(status))
+			elog(ERROR, "failed to start search: %s", u_errorName(status));
+		else
+		{
+			u16_pos = usearch_first(usearch, &status);
+			if (!U_FAILURE(status) && u16_pos != USEARCH_DONE)
+			{
+				int32_t u16_idx = 0, u8_offset = 0;
+				UChar32 c;
+
+				/*
+				 * pos is in UTF-16 code units, with surrogate pairs counting as two,
+				 * transform position to corresponding UTF8
+				 */
+				Assert(GetDatabaseEncoding() == PG_UTF8);
+
+				while (u16_idx < u16_pos)
+				{
+					U16_NEXT(uchar1, u16_idx, ulen1, c);
+					U8_NEXT(VARDATA_ANY(t1), u8_offset, len1, c);
+					u8_pos++;
+				}
+			}
+			else
+				u8_pos = -1;
+		}
+
+		pfree(uchar1);
+		pfree(uchar2);
+		usearch_close(usearch);
+
+		if (U_FAILURE(status))
+			elog(ERROR, "failed to perform ICU search: %s", u_errorName(status));
+
+		/* return 0 if not found or the 1-based position of txt2 inside txt1 */
+		return u8_pos + 1;
+	}
+
+	return -1;
 }
