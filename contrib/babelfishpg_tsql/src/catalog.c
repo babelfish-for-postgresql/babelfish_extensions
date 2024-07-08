@@ -1599,7 +1599,7 @@ is_classic_catalog(const char *name)
 	if (len <= 7) // sysusers,systypes,syslocks,sysfiles are shortest
 		return false;
 
-	if (pg_strncasecmp(name, "sys", 3) != 0)
+	if ((len == 3) && pg_strncasecmp(name, "sys", 3) != 0)
 		return false;
 
 	return (
@@ -1608,23 +1608,23 @@ is_classic_catalog(const char *name)
 	    // Instance-wide classic catalogs
 	    // NB: sysdatabases does not need its schema mapped from 'dbo' to 'sys',
 	    // but it is included here for completeness.
-	    (pg_strncasecmp(name, "sysdatabases", len) == 0) ||
-	    (pg_strncasecmp(name, "syscharsets", len) == 0) ||
-	    (pg_strncasecmp(name, "sysconfigures", len) == 0) ||
-	    (pg_strncasecmp(name, "syscurconfigs", len) == 0) ||
-	    (pg_strncasecmp(name, "syslanguages", len) == 0) ||
-	    (pg_strncasecmp(name, "syslogins", len) == 0) ||
-	    (pg_strncasecmp(name, "sysprocesses", len) == 0) ||
-
+	    ((len == 12) &&  (pg_strncasecmp(name, "sysdatabases", len) == 0)) ||
+	    ((len == 11) &&  (pg_strncasecmp(name, "syscharsets", len) == 0)) ||
+	    ((len == 13) &&  (pg_strncasecmp(name, "sysconfigures", len) == 0)) ||
+	    ((len == 13) &&  (pg_strncasecmp(name, "syscurconfigs", len) == 0)) ||
+	    ((len == 12) &&  (pg_strncasecmp(name, "syslanguages", len) == 0)) ||
+	    ((len ==  9) &&  (pg_strncasecmp(name, "syslogins", len) == 0)) ||
+	    ((len == 12) &&  (pg_strncasecmp(name, "sysprocesses", len) == 0)) ||
+                         
 	    // DB-specific classic catalogs
-	    (pg_strncasecmp(name, "syscolumns", len) == 0) ||
-	    (pg_strncasecmp(name, "sysforeignkeys", len) == 0) ||
-	    (pg_strncasecmp(name, "sysindexes", len) == 0) ||
-	    (pg_strncasecmp(name, "sysobjects", len) == 0) ||
-	    (pg_strncasecmp(name, "systypes", len) == 0) ||
-	    (pg_strncasecmp(name, "sysusers", len) == 0)
+	    ((len ==  10) && (pg_strncasecmp(name, "syscolumns", len) == 0)) ||
+	    ((len ==  14) && (pg_strncasecmp(name, "sysforeignkeys", len) == 0)) ||
+	    ((len ==  10) && (pg_strncasecmp(name, "sysindexes", len) == 0)) ||
+	    ((len ==  10) && (pg_strncasecmp(name, "sysobjects", len) == 0)) ||
+	    ((len ==   8) && (pg_strncasecmp(name, "systypes", len) == 0)) ||
+	    ((len ==   8) && (pg_strncasecmp(name, "sysusers", len) == 0))
 	);
-
+	    
 /*
  * Additional T-SQL catalogs, not currently supported in Babelfish.
  *
