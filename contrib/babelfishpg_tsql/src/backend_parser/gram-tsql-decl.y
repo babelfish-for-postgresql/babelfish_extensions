@@ -73,7 +73,7 @@
 
 %type <typnam> TSQL_Typename TSQL_SimpleTypename TSQL_GenericType
 
-%type <str> datepart_arg datediff_arg dateadd_arg tsql_partition_scheme_name
+%type <str> datepart_arg datediff_arg dateadd_arg tsql_untruncated_IDENT
 %type <str> tsql_type_function_name
 %type <list> tsql_createproc_args tsql_createfunc_args
 %type <list> tsql_triggername tsql_trigger_list

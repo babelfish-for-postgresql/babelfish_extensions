@@ -2597,7 +2597,7 @@ tsql_CreatePartitionStmt:
 		;
 
 tsql_PartitionSpec:
-			ON tsql_partition_scheme_name '(' part_params ')'
+			ON tsql_untruncated_IDENT '(' part_params ')'
 				{
 					PartitionSpec *n = makeNode(PartitionSpec);
 					n->tsql_partition_scheme = $2;
@@ -2608,7 +2608,7 @@ tsql_PartitionSpec:
 				}
 		;
 
-tsql_partition_scheme_name:
+tsql_untruncated_IDENT:
 			IDENT
 				{
 					/*
@@ -3383,7 +3383,7 @@ tsql_opt_on_filegroup:
  */
 
 tsql_opt_partition_scheme_or_filegroup:
-			ON tsql_partition_scheme_name '(' ColId ')'
+			ON tsql_untruncated_IDENT '(' ColId ')'
 				{
 					$$ =  list_make2(makeString($2), makeString($4));
 				}

@@ -738,6 +738,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_table(TSqlParser::C
 	{
 		if (cctx->TEXTIMAGE_ON() || cctx->FILESTREAM_ON())
 			handle_storage_partition(cctx->storage_partition_clause());
+		/* handle storage_partition_clause only if it's not partitioning clause */
 		if (cctx->ON() && cctx->storage_partition_clause()->id().size() < 2)
 			handle_storage_partition(cctx->storage_partition_clause());
 	}
@@ -810,6 +811,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_table(TSqlParser::Al
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_index(TSqlParser::Create_indexContext *ctx)
 {
+	/* handle storage_partition_clause only if it's not partitioning clause */
 	if (ctx->storage_partition_clause() && ctx->storage_partition_clause()->id().size() < 2)
 		handle_storage_partition(ctx->storage_partition_clause());
 
