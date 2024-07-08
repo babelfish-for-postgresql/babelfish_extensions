@@ -2628,7 +2628,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							break;
 						}
 
-						parent_table_name = get_rel_name(get_partition_parent(relid, true));
+						parent_table_name = get_rel_name(get_partition_parent(relid, false));
 
 						if (is_bbf_partitioned_table(dbid, logical_schema_name, parent_table_name))
 							ereport(ERROR,
@@ -6584,6 +6584,9 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	}
 }
 
+#define BBF_PARTITION_NAME(unique_hash, partition_number) \
+	psprintf("%s_partition_%d", unique_hash, partition_number)
+
 /*
  * bbf_create_partition_tables
  *	This function creates partitions of babelfish partitioned table
@@ -6796,7 +6799,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 
 	for (i = 0; i < nelems + 1; i++)
 	{
-		char *partition_name =  psprintf("%s_partition_%d", unique_hash, i);
+		char *partition_name = BBF_PARTITION_NAME(unique_hash, i);
 		partition_stmt->relation->relname = partition_name;
 		set_partition_range_bounds(partition_stmt->partbound, range_values, i, nelems + 1, is_binary_datatype);
 		ProcessUtility(wrapper,
@@ -7010,7 +7013,7 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 		if (form->relispartition) /* relation is partition of table */
 		{
 			/* Raise error when parent table of partition is babelfish partitioned table. */
-			if (is_bbf_partitioned_table(dbid, logical_schemaname, get_rel_name(get_partition_parent(form->oid, true))))
+			if (is_bbf_partitioned_table(dbid, logical_schemaname, get_rel_name(get_partition_parent(form->oid, false))))
 			{
 				relation_close(relation, AccessShareLock);
 				ereport(ERROR,
