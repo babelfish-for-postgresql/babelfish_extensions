@@ -632,6 +632,8 @@ select name from .myschematest_mydb..sysusers where name like 'user_myschematest
 go
 exec p_myschematest
 go
+select name from vw_myschematest order by 1
+go
 
 -- non-catalog table
 select * from master..tb_myschematest_master
@@ -1274,6 +1276,8 @@ go
 select name from .myschematest_mydb..sysusers where name like 'user_myschematest_%' order by 1
 go
 exec p_myschematest
+go
+select name from vw_myschematest order by 1
 go
 
 -- non-catalog table
@@ -1944,6 +1948,8 @@ go
 select name from .myschematest_mydb..sysusers where name like 'user_myschematest_%' order by 1
 go
 exec p_myschematest
+go
+select name from vw_myschematest order by 1
 go
 
 -- non-catalog table

@@ -14,6 +14,8 @@ drop schema myschema
 go
 drop procedure p_myschematest
 go
+drop view vw_myschematest
+go
 use tempdb
 go
 drop table tb_myschematest_tempdb
@@ -25,6 +27,8 @@ go
 drop schema myschema
 go
 drop procedure p_myschematest
+go
+drop view vw_myschematest
 go
 use master
 go

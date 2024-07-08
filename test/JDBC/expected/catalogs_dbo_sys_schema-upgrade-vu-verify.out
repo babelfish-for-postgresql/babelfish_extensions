@@ -2489,6 +2489,13 @@ text
 myschematest_mydb
 ~~END~~
 
+select name from vw_myschematest order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
 
 -- non-catalog table
 select * from master..tb_myschematest_master
@@ -4979,6 +4986,13 @@ text
 myschematest_mydb
 ~~END~~
 
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from vw_myschematest order by 1
+go
 ~~START~~
 text
 myschematest_mydb
@@ -7592,6 +7606,13 @@ text
 myschematest_mydb
 ~~END~~
 
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from vw_myschematest order by 1
+go
 ~~START~~
 text
 myschematest_mydb
