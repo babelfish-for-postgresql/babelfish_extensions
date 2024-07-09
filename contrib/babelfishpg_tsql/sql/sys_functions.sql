@@ -1554,6 +1554,17 @@ $$
 $$
 LANGUAGE SQL VOLATILE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.is_collated_ci_ai_internal(IN input_string TEXT) RETURNS BOOL
+AS 'babelfishpg_tsql', 'is_collated_ci_ai_internal'
+LANGUAGE C VOLATILE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.is_collated_ci_ai(IN input_string TEXT)
+RETURNS BOOL AS
+$$
+ SELECT sys.is_collated_ci_ai_internal(input_string);
+$$
+LANGUAGE SQL VOLATILE PARALLEL SAFE;
+
 create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
 $body$
 declare
@@ -3451,6 +3462,8 @@ begin
        return null;
    elsif pattern = '' then
        return input_string;
+   elsif sys.is_collated_ci_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
    elsif sys.is_collated_ci_as(input_string) then
        return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
    else

@@ -56,6 +56,8 @@ typedef struct collation_callbacks
 
 	Datum		(*is_collated_ci_as_internal) (PG_FUNCTION_ARGS);
 
+	Datum		(*is_collated_ci_ai_internal) (PG_FUNCTION_ARGS);
+
 	int			(*collationproperty_helper) (const char *collationaname, const char *property);
 
 	bytea	   *(*tdscollationproperty_helper) (const char *collationaname, const char *property);
@@ -84,6 +86,7 @@ extern collation_callbacks *collation_callbacks_ptr;
 extern Oid	tsql_get_server_collation_oid_internal(bool missingOk);
 extern Datum tsql_collation_list_internal(PG_FUNCTION_ARGS);
 extern Datum tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS);
+extern Datum tsql_is_collated_ci_ai_internal(PG_FUNCTION_ARGS);
 extern int	tsql_collationproperty_helper(const char *collationaname, const char *property);
 extern bytea *tsql_tdscollationproperty_helper(const char *collationaname, const char *property);
 extern bool tsql_is_server_collation_CI_AS(void);

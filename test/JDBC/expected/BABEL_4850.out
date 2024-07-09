@@ -17,3 +17,23 @@ int
 0
 ~~END~~
 
+
+SELECT REPLACE ('aaaaaaÆaaaaaaÆaaaa','AE' collate Latin1_General_CI_AI, '!---!')
+SELECT REPLACE ('ÆAEaaaaaaÆ','AE' collate Latin1_General_CI_AI, '!---!')
+SELECT REPLACE ('eeeeeeeeeAAAAAA','AE' collate Latin1_General_CI_AI, '!---!')
+GO
+~~START~~
+text
+aaaaaa!---!aaaaaa!---!aaaa
+~~END~~
+
+~~START~~
+text
+!---!!---!aaaaaa!---!
+~~END~~
+
+~~START~~
+text
+eeeeeeeeeAAAAAA
+~~END~~
+

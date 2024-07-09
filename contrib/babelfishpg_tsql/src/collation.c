@@ -69,6 +69,7 @@ PG_FUNCTION_INFO_V1(init_collid_trans_tab);
 PG_FUNCTION_INFO_V1(init_like_ilike_table);
 PG_FUNCTION_INFO_V1(get_server_collation_oid);
 PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
+PG_FUNCTION_INFO_V1(is_collated_ci_ai_internal);
 
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation);
@@ -117,6 +118,12 @@ Datum
 is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(tsql_is_collated_ci_as_internal(fcinfo));
+}
+
+Datum
+is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_DATUM(tsql_is_collated_ci_ai_internal(fcinfo));
 }
 
 /* init_like_ilike_table - this function is no longer needed and is only a placeholder for upgrade script */
@@ -1029,6 +1036,15 @@ tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 	init_and_check_collation_callbacks();
 
 	return (*collation_callbacks_ptr->is_collated_ci_as_internal) (fcinfo);
+}
+
+Datum
+tsql_is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
+{
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	return (*collation_callbacks_ptr->is_collated_ci_ai_internal) (fcinfo);
 }
 
 bytea *
