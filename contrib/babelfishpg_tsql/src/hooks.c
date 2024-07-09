@@ -5338,7 +5338,7 @@ pltsql_replace_non_determinstic(text *t1, text *t2, text *t3, Oid collid, text *
 
 		for (int pos = usearch_first(usearch, &status);
 		     pos != USEARCH_DONE;
-             pos = usearch_next(usearch, &status))
+		     pos = usearch_next(usearch, &status))
 		{
 			const char *txt1_nextptr;
 
