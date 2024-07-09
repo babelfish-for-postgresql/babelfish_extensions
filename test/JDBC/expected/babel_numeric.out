@@ -121,3 +121,344 @@ numeric
 
 drop table t1;
 go
+
+select cast(1.23 as decimal(18,2))
+union all
+select cast(1.23 as decimal(7,2))
+go
+~~START~~
+numeric
+1.23
+1.23
+~~END~~
+
+
+select cast(NULL as decimal(18,2))
+union all
+select cast(1.23 as decimal(7,2))
+go
+~~START~~
+numeric
+<NULL>
+1.23
+~~END~~
+
+
+select cast(9999999999999999.99 as decimal(18,2))
+union all
+select cast(99999.99 as decimal(7,2))
+go
+~~START~~
+numeric
+9999999999999999.99
+99999.99
+~~END~~
+
+
+create type decimal_18_2 from decimal(18,2);
+go
+
+create type decimal_7_2 from decimal(7,2);
+go
+
+select cast(1.23 as decimal_18_2)
+union all
+select cast(1.23 as decimal_7_2)
+go
+~~START~~
+numeric
+1.23
+1.23
+~~END~~
+
+
+select cast(1.23 as decimal_18_2)
+union all
+select cast(NULL as decimal_7_2)
+go
+~~START~~
+numeric
+1.23
+<NULL>
+~~END~~
+
+
+select cast(9999999999999999.99 as decimal_18_2)
+union all
+select cast(99999.99 as decimal_7_2)
+go
+~~START~~
+numeric
+9999999999999999.99
+99999.99
+~~END~~
+
+
+create table babel_5086_t1 (a decimal(18,2), b decimal(7,2), c decimal_18_2, d decimal_7_2);
+go
+
+insert into babel_5086_t1 values (1.23, 1.23, 1.23, 1.23);
+insert into babel_5086_t1 values (9999999999999999.99, NULL, 9999999999999999.99, NULL);
+insert into babel_5086_t1 values (NULL, 99999.99, NULL, 99999.99);
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from 
+(
+    select a as col from babel_5086_t1
+    union all
+    select b as col from babel_5086_t1
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+1.23
+1.23
+99999.99
+9999999999999999.99
+~~END~~
+
+
+select * from 
+(
+    select c as col from babel_5086_t1
+    union all
+    select d as col from babel_5086_t1
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+1.23000000
+1.23000000
+99999.99000000
+9999999999999999.99000000
+~~END~~
+
+
+select * from 
+(
+    select a as col from babel_5086_t1
+    union all
+    select b as col from babel_5086_t1
+    union all
+    select c as col from babel_5086_t1
+    union all
+    select d as col from babel_5086_t1
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+1.23
+1.23
+1.23
+1.23
+99999.99
+99999.99
+9999999999999999.99
+9999999999999999.99
+~~END~~
+
+
+select * from 
+(
+    select a as col from babel_5086_t1
+    union all
+    select c as col from babel_5086_t1
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+1.23
+1.23
+9999999999999999.99
+9999999999999999.99
+~~END~~
+
+
+select * from 
+(
+    select b as col from babel_5086_t1
+    union all
+    select d as col from babel_5086_t1
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+1.23
+1.23
+99999.99
+99999.99
+~~END~~
+
+
+create type numeric_18_2 from numeric(18,2);
+go
+
+create type numeric_7_2 from numeric(7,2);
+go
+
+select cast(1.23 as numeric_18_2)
+union all
+select cast(1.23 as numeric_7_2)
+go
+~~START~~
+numeric
+1.23
+1.23
+~~END~~
+
+
+ select cast(12344.234 as numeric_18_2)
+union all
+select cast(1.23 as numeric_7_2)
+go
+~~START~~
+numeric
+12344.23
+1.23
+~~END~~
+
+
+create table babel_5086_t2 (a numeric(18,2), b numeric(7,2), c numeric_18_2, d numeric_7_2);
+go
+
+insert into babel_5086_t2 values (1.23, 1.23, 1.23, 1.23);
+insert into babel_5086_t2 values (9999999999999999.99, NULL, 9999999999999999.99, NULL);
+insert into babel_5086_t2 values (NULL, 99999.99, NULL, 99999.99);
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from 
+(
+    select a as col from babel_5086_t2 
+    union all
+    select b as col from babel_5086_t2
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+1.23
+1.23
+99999.99
+9999999999999999.99
+~~END~~
+
+
+select * from 
+(
+    select c as col from babel_5086_t2
+    union all
+    select d as col from babel_5086_t2
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+1.23000000
+1.23000000
+99999.99000000
+9999999999999999.99000000
+~~END~~
+
+
+select * from 
+(
+    select a as col from babel_5086_t2
+    union all
+    select b as col from babel_5086_t2
+    union all
+    select c as col from babel_5086_t2
+    union all
+    select d as col from babel_5086_t2
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+1.23
+1.23
+1.23
+1.23
+99999.99
+99999.99
+9999999999999999.99
+9999999999999999.99
+~~END~~
+
+
+select * from 
+(
+    select a as col from babel_5086_t2
+    union all
+    select c as col from babel_5086_t2
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+1.23
+1.23
+9999999999999999.99
+9999999999999999.99
+~~END~~
+
+
+
+select * from 
+(
+    select b as col from babel_5086_t2
+    union all
+    select d as col from babel_5086_t2
+) dummy order by col;
+go
+~~START~~
+numeric
+<NULL>
+<NULL>
+1.23
+1.23
+99999.99
+99999.99
+~~END~~
+
+
+drop  table babel_5086_t1;
+go
+
+drop  table babel_5086_t2;
+go
+
+drop type decimal_18_2;
+drop type decimal_7_2;
+drop type numeric_18_2;
+drop type numeric_7_2;
+go
