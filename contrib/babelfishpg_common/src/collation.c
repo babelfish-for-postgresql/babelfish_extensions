@@ -1304,9 +1304,9 @@ is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 Datum
 is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
 {
-	Oid			colloid = PG_GET_COLLATION();
+	Oid  		colloid = PG_GET_COLLATION();
 	HeapTuple	tp;
-	char	   *collcollate = NULL;
+	char		*collcollate = NULL;
 	char		collprovider;
 	bool		collisdeterministic;
 	Datum		datum;
@@ -1336,10 +1336,10 @@ is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	if (strstr(lowerstr(collcollate), lowerstr("colStrength=primary")))
-	         PG_RETURN_BOOL(true);
+		PG_RETURN_BOOL(true);
 
 	/* Starting from PG16, locale string is canonicalized to a language tag. */
-	if (0 != strstr(lowerstr(collcollate), "level1") &&    /* CI_AS */
+	if (0 != strstr(lowerstr(collcollate), "level1") &&    /* CI_AI */
 		0 == strstr(lowerstr(collcollate), "kc-true"))
 		PG_RETURN_BOOL(true);
 
