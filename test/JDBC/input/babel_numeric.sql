@@ -62,19 +62,28 @@ go
 drop table t1;
 go
 
-select cast(1.23 as decimal(18,2))
-union all
-select cast(1.23 as decimal(7,2))
+select * from 
+(
+    select cast(1.23 as decimal(18,2)) as col
+    union all
+    select cast(1.23 as decimal(7,2)) as col
+) dummy order by col;
 go
 
-select cast(NULL as decimal(18,2))
-union all
-select cast(1.23 as decimal(7,2))
+select * from 
+(
+    select cast(NULL as decimal(18,2)) as col
+    union all
+    select cast(1.23 as decimal(7,2)) as col
+) dummy order by col;
 go
 
-select cast(9999999999999999.99 as decimal(18,2))
-union all
-select cast(99999.99 as decimal(7,2))
+select * from 
+(
+    select cast(9999999999999999.99 as decimal(18,2)) as col
+    union all
+    select cast(99999.99 as decimal(7,2)) as col
+) dummy order by col;
 go
 
 create type decimal_18_2 from decimal(18,2);
@@ -83,19 +92,28 @@ go
 create type decimal_7_2 from decimal(7,2);
 go
 
-select cast(1.23 as decimal_18_2)
-union all
-select cast(1.23 as decimal_7_2)
+select * from 
+(
+    select cast(1.23 as decimal_18_2) as col
+    union all
+    select cast(1.23 as decimal_7_2) as col
+) dummy order by col;
 go
 
-select cast(1.23 as decimal_18_2)
-union all
-select cast(NULL as decimal_7_2)
+select * from 
+(
+    select cast(1.23 as decimal_18_2) as col
+    union all
+    select cast(NULL as decimal_7_2) as col
+) dummy order by col;
 go
 
-select cast(9999999999999999.99 as decimal_18_2)
-union all
-select cast(99999.99 as decimal_7_2)
+select * from 
+(
+    select cast(9999999999999999.99 as decimal_18_2) as col
+    union all
+    select cast(99999.99 as decimal_7_2) as col
+) dummy order by col;
 go
 
 create table babel_5086_t1 (a decimal(18,2), b decimal(7,2), c decimal_18_2, d decimal_7_2);
@@ -156,14 +174,20 @@ go
 create type numeric_7_2 from numeric(7,2);
 go
 
-select cast(1.23 as numeric_18_2)
-union all
-select cast(1.23 as numeric_7_2)
+select * from 
+(
+    select cast(1.23 as numeric_18_2) as col
+    union all
+    select cast(1.23 as numeric_7_2) as col
+) dummy order by col;
 go
 
- select cast(12344.234 as numeric_18_2)
-union all
-select cast(1.23 as numeric_7_2)
+select * from 
+(
+    select cast(12344.234 as numeric_18_2) as col
+    union all
+    select cast(1.23 as numeric_7_2) as col
+) dummy order by col;
 go
 
 create table babel_5086_t2 (a numeric(18,2), b numeric(7,2), c numeric_18_2, d numeric_7_2);
