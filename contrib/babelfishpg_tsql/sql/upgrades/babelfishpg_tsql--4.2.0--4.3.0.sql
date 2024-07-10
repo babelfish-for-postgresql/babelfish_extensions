@@ -38,6 +38,13 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+-- Babelfish catalog tables are marked system tables and postgres does not normally allow modification on
+-- system tables so need to temporarily set allow_system_table_mods to update the primary key of babelfish_function_ext.
+SET allow_system_table_mods = ON;
+ALTER TABLE sys.babelfish_function_ext DROP CONSTRAINT babelfish_function_ext_pkey;
+ALTER TABLE sys.babelfish_function_ext ADD CONSTRAINT babelfish_function_ext_pkey PRIMARY KEY (funcname, nspname, funcsignature);
+RESET allow_system_table_mods;
+
 -- BBF_PARTITION_FUNCTION
 -- This catalog stores the metadata of partition funtions.
 CREATE TABLE sys.babelfish_partition_function

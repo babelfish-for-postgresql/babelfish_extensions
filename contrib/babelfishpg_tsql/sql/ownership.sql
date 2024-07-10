@@ -41,7 +41,7 @@ CREATE TABLE sys.babelfish_function_ext (
 	create_date SYS.DATETIME NOT NULL,
 	modify_date SYS.DATETIME NOT NULL,
 	definition sys.NTEXT DEFAULT NULL,
-	PRIMARY KEY(nspname, funcsignature)
+	PRIMARY KEY(funcname, nspname, funcsignature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 

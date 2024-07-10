@@ -37,8 +37,6 @@ static bool is_select_for_json(SelectStmt *stmt);
 static void select_json_modify(SelectStmt *stmt);
 static bool is_for_json(FuncCall *fc);
 static bool get_array_wrapper(List *for_json_args);
-static void set_schemaname_dbo_to_sys(RangeVar *rv);
-
 
 
 /*************************************************************
@@ -707,13 +705,6 @@ rewrite_relation_walker(Node *node, void *context)
 	if (IsA(node, RangeVar))
 	{
 		RangeVar   *rv = (RangeVar *) node;
-
-		/*
-		 * For the list of catalog names if the schema name
-		 * specified is 'dbo' then replace with 'sys'.
-		 */
-		set_schemaname_dbo_to_sys(rv);
-
 		rewrite_rangevar(rv);
 		return false;
 	}
@@ -972,51 +963,6 @@ rewrite_rangevar(RangeVar *rv)
 }
 
 static void
-set_schemaname_dbo_to_sys(RangeVar *rv)
-{
-	/*
-	 * list_of_dbo_catalog
-	 * 		Contains the list of sys% views which are not database specific
-	 *
-	 * list_of_dbo_catalog_not_supported_for_cross_db
-	 * 		Contains the list of sys% views which are database specific
-	 *
-	 * NOTE: While adding the sys% views to list check whether view is an database specific or not.
-	 *
-	 */
-	char* list_of_dbo_catalog[6]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages", "syslogins"};
-	char* list_of_dbo_catalog_not_supported_for_cross_db[6]= {"syscolumns", "sysforeignkeys", "sysindexes", "sysobjects", "systypes", "sysusers"};
-	if (rv->schemaname && strcmp(rv->schemaname, "dbo") == 0)
-	{
-		for (int i = 0; i < (sizeof(list_of_dbo_catalog)/sizeof(list_of_dbo_catalog[0])); i++)
-		{
-			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog[i]) == 0)
-			{
-				rv->schemaname = pstrdup("sys");
-				break;
-			}
-		}
-		for (int i = 0; i < (sizeof(list_of_dbo_catalog_not_supported_for_cross_db)/sizeof(list_of_dbo_catalog_not_supported_for_cross_db[0])); i++)
-		{
-			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog_not_supported_for_cross_db[i]) == 0)
-			{
-				/* Throw error for dbo catalog which does not support cross-db */
-				if (rv->catalogname && strcmp(get_cur_db_name(), rv->catalogname) != 0) 
-				{
-					ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("Cross-DB system view query is not currently supported in Babelfish.")));
-				}
-				else
-				{
-					rv->schemaname = pstrdup("sys");
-					break;
-				}
-			}
-		}
-	}
-}
-static void
 rewrite_objectwithargs(ObjectWithArgs *obj)
 {
 	obj->objname = rewrite_plain_name(obj->objname);
@@ -1034,12 +980,12 @@ rewrite_plain_name(List *name)
 				String	   *new_schema;
 
 				if (is_shared_schema(strVal(schema)))
-					break;		/* do not thing for shared schemas */
+					break;		/* do nothing for shared schemas */
 
 				new_schema = makeString(get_physical_schema_name(cur_db, strVal(schema)));
 
 				/*
-				 * ignoring the return value sinece list is valid and cannot
+				 * ignoring the return value since list is valid and cannot
 				 * be empty
 				 */
 				name = list_delete_first(name);
@@ -1062,7 +1008,7 @@ rewrite_plain_name(List *name)
 					new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
 
 					/*
-					 * ignoring the return value sinece list is valid and
+					 * ignoring the return value since list is valid and
 					 * cannot be empty
 					 */
 					name = list_delete_first(name);
@@ -1101,7 +1047,7 @@ is_shared_schema(const char *name)
 {
 	if ((strcmp("sys", name) == 0)
 		|| (strcmp("information_schema_tsql", name) == 0))
-		return true;			/* babelfish shared schema */
+		return true;			/* Babelfish shared schema */
 	else if ((strcmp("public", name) == 0)
 			 || (strcmp("pg_catalog", name) == 0)
 			 || (strcmp("pg_toast", name) == 0)
@@ -1275,7 +1221,7 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 	}
 
 	/*
-	 * Parser guarantees identifier will alsways be truncated to 64B. Schema
+	 * Parser guarantees identifier will always be truncated to 64B. Schema
 	 * name that comes from other source (e.g scheam_id function) needs one
 	 * more truncate function call
 	 */
@@ -1356,7 +1302,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 	truncate_tsql_identifier(new_user_name);
 
 	/*
-	 * All the role and user names are prefixed. Historically, dbo and
+	 * All role and user names are prefixed. Historically, dbo and
 	 * db_owner in single-db mode were unprefixed These are two exceptions to
 	 * the naming convention
 	 */
@@ -1509,15 +1455,14 @@ physical_schema_name_exists(char *phys_schema_name)
 }
 
 /*
-* Assume the database already exists and it is not a built in database
-*/
+ * Assume the database already exists and it is not a built-in database
+ */
 bool
 is_user_database_singledb(const char *dbname)
 {
 	Assert(DbidIsValid(get_db_id(dbname)));
 	return !is_builtin_database(dbname) && physical_schema_name_exists("dbo");
 }
-
 
 /*************************************************************
  * 					Helper Functions
