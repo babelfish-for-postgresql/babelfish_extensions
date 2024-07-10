@@ -1367,7 +1367,7 @@ SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('partition_vu
 GO
 ~~START~~
 int
-3
+2
 ~~END~~
 
 
@@ -1415,7 +1415,7 @@ SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME
 GO
 ~~START~~
 int
-3
+2
 ~~END~~
 
 
@@ -1423,7 +1423,7 @@ SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = 'par
 GO
 ~~START~~
 int
-2
+1
 ~~END~~
 
 
