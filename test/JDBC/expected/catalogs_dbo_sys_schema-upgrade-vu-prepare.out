@@ -1,0 +1,295 @@
+use master
+go
+create database myschematest_mydb
+go
+create login login_myschematest_master with password = '12345678'
+go
+create login login_myschematest_tempdb with password = '12345678'
+go
+create login login_myschematest_mydb with password = '12345678'
+go
+
+use master
+go
+create table tb_myschematest_master(col_master int)
+go
+create type type_myschematest_master from int
+go
+create user user_myschematest_master for login login_myschematest_master
+go
+create schema myschema
+go
+create procedure p_myschematest
+as
+select name from sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .sysdatabases where name = 'myschematest_mydb' order by 1
+select name from ..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from ...sysdatabases where name = 'myschematest_mydb' order by 1
+select name from dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from ..dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from master..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .master..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+create view vw_myschematest
+as
+select name from sysdatabases where name = 'myschematest_mydb'
+union
+select name from .sysdatabases where name = 'myschematest_mydb'
+union
+select name from ..sysdatabases where name = 'myschematest_mydb'
+union
+select name from ...sysdatabases where name = 'myschematest_mydb'
+union
+select name from dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from ..dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from master.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .master.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from master.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .master.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from master..sysdatabases where name = 'myschematest_mydb'
+union
+select name from .master..sysdatabases where name = 'myschematest_mydb'
+union
+select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from tempdb..sysdatabases where name = 'myschematest_mydb'
+union
+select name from .tempdb..sysdatabases where name = 'myschematest_mydb'
+union
+select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb'
+union
+select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb'
+go
+
+use tempdb
+go
+create table tb_myschematest_tempdb(col_tempdb int)
+go
+create type type_myschematest_tempdb from int
+go
+create user user_myschematest_tempdb for login login_myschematest_tempdb
+go
+create schema myschema
+go
+create procedure p_myschematest
+as
+select name from sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .sysdatabases where name = 'myschematest_mydb' order by 1
+select name from ..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from ...sysdatabases where name = 'myschematest_mydb' order by 1
+select name from dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from ..dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from master..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .master..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+create view vw_myschematest
+as
+select name from sysdatabases where name = 'myschematest_mydb'
+union
+select name from .sysdatabases where name = 'myschematest_mydb'
+union
+select name from ..sysdatabases where name = 'myschematest_mydb'
+union
+select name from ...sysdatabases where name = 'myschematest_mydb'
+union
+select name from dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from ..dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from master.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .master.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from master.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .master.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from master..sysdatabases where name = 'myschematest_mydb'
+union
+select name from .master..sysdatabases where name = 'myschematest_mydb'
+union
+select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from tempdb..sysdatabases where name = 'myschematest_mydb'
+union
+select name from .tempdb..sysdatabases where name = 'myschematest_mydb'
+union
+select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb'
+union
+select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb'
+go
+
+use myschematest_mydb
+go
+create table dbo.tb_myschematest_mydb(col_mydb varchar(40))
+insert dbo.tb_myschematest_mydb values ('dbo.tb_myschematest_mydb')
+go
+~~ROW COUNT: 1~~
+
+grant select on dbo.tb_myschematest_mydb to public
+go
+create type type_myschematest_mydb from int
+go
+create schema myschema
+go
+create table myschema.tb_myschematest_mydb(col_myschema varchar(40))
+insert myschema.tb_myschematest_mydb values ('myschema.tb_myschematest_mydb')
+go
+~~ROW COUNT: 1~~
+
+grant select on myschema.tb_myschematest_mydb to public
+go
+create user user_myschematest_mydb for login login_myschematest_mydb with default_schema = myschema
+go
+create procedure p_myschematest
+as
+select name from sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .sysdatabases where name = 'myschematest_mydb' order by 1
+select name from ..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from ...sysdatabases where name = 'myschematest_mydb' order by 1
+select name from dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from ..dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from master..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .master..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+create view vw_myschematest
+as
+select name from sysdatabases where name = 'myschematest_mydb'
+union
+select name from .sysdatabases where name = 'myschematest_mydb'
+union
+select name from ..sysdatabases where name = 'myschematest_mydb'
+union
+select name from ...sysdatabases where name = 'myschematest_mydb'
+union
+select name from dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from ..dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from master.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .master.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from master.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .master.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from master..sysdatabases where name = 'myschematest_mydb'
+union
+select name from .master..sysdatabases where name = 'myschematest_mydb'
+union
+select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from tempdb..sysdatabases where name = 'myschematest_mydb'
+union
+select name from .tempdb..sysdatabases where name = 'myschematest_mydb'
+union
+select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb'
+union
+select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb'
+union
+select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb'
+union
+select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb'
+go
