@@ -224,7 +224,6 @@ Build babelfishpg_unit extension if you want to run/add unit tests (Optional):
     CREATE EXTENSION IF NOT EXISTS "babelfishpg_tds" CASCADE;
     GRANT ALL ON SCHEMA sys to babelfish_user;
     ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';
-    ALTER SYSTEM SET babelfishpg_tds.set_db_session_property = true;
     ALTER DATABASE babelfish_db SET babelfishpg_tsql.migration_mode = 'single-db'|'multi-db';
     SELECT pg_reload_conf();
     CALL SYS.INITIALIZE_BABELFISH('babelfish_user');
