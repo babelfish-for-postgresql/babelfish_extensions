@@ -18,6 +18,7 @@
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
+#include <unicode/utrans.h>
 #include "utils/removeaccent.map"
 
 #include "pltsql.h"
@@ -25,6 +26,20 @@
 
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
+
+/*
+ * Rule applied to transliterate Latin and general category Nd character
+ * then convert the Latin (source) char to ASCII (destination) representation
+ */
+#define TRANSFORMATION_RULE "[[:Latin:][:Nd:]]; Latin-ASCII"
+
+/*
+ * The maximum number of bytes per character is 4 according
+ * to RFC3629 which limited the character table to U+10FFFF
+ * Ref: https://www.rfc-editor.org/rfc/rfc3629#section-3
+ */
+#define MAX_BYTES_PER_CHAR 4
+#define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
 
 
 Oid			server_collation_oid = InvalidOid;
@@ -446,7 +461,7 @@ get_remove_accents_internal_oid()
 	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
 }
 
-static inline unsigned char *
+static inline void
 store_coded_char(unsigned char *dest, uint32 code)
 {
 	if (code & 0xff000000)
@@ -465,7 +480,8 @@ store_coded_char(unsigned char *dest, uint32 code)
 	{
 		*dest++ = code;
 	}
-	return dest;
+	*dest = '\0';
+	return;
 }
 
 static int
@@ -482,16 +498,14 @@ compare_remove_accent_map_pair(const void *p1, const void *p2)
 PG_FUNCTION_INFO_V1(remove_accents_internal);
 Datum remove_accents_internal(PG_FUNCTION_ARGS)
 {
-	unsigned char *input_str = (unsigned char *)text_to_cstring(PG_GETARG_TEXT_PP(0)),
-	              *result,
-	              *result_itr;
+	unsigned char *input_str = (unsigned char *)text_to_cstring(PG_GETARG_TEXT_PP(0));
 	text          *return_result;
 	int           len = strlen((char *)input_str),
 	              l;
+	StringInfoData result;
+	unsigned char *c = palloc(5 * sizeof(char)); /* tempory UTF-8 character storage */
 
-	/* normalized value never takes more bytes than original char */
-	result = palloc0(len+1);
-	result_itr = result;
+	initStringInfo(&result);
 
 	for (; len > 0; len -= l)
 	{
@@ -500,7 +514,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 		unsigned char b3 = 0;
 		unsigned char b4 = 0;
 		uint32 utf8_char;
-		uint32 utf8_normalized_char;
+		uint32 utf8_normalized_str;
 		remove_accent_map_pair *pr;
 
 		/* "break" cases all represent errors */
@@ -517,7 +531,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 
 		if (l == 1)
 		{
-			*result_itr++ = *input_str++;
+			appendBinaryStringInfo(&result, input_str++, 1);
 			continue;
 		}
 
@@ -551,11 +565,13 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 							sizeof(remove_accent_map_pair), compare_remove_accent_map_pair);
 
 		if (pr && pr->normalized_char)
-			utf8_normalized_char = pr->normalized_char;
+			utf8_normalized_str = pr->normalized_char;
 		else
-			utf8_normalized_char = utf8_char;
+			utf8_normalized_str = utf8_char;
 
-		result_itr = store_coded_char(result_itr, utf8_normalized_char);
+		store_coded_char(c, utf8_normalized_str);
+
+		appendBinaryStringInfo(&result, c, strlen((const char *) c));
 	}
 
 	if (len > 0)
@@ -563,12 +579,98 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 			(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
 			 errmsg("error while removing accents")));
 
-	*result_itr = '\0';
-
-	return_result = cstring_to_text((char *)result);
-	pfree(result);
+	return_result = cstring_to_text_with_len(result.data, result.len);
+	pfree(result.data);
 
 	PG_RETURN_VARCHAR_P(return_result);
+}
+
+/*
+ * Function responsible for obtaining unaccented version of input
+ * string with the help of ICU provided APIs.
+ * We use a transformation rule to transliterate the string
+ */
+
+PG_FUNCTION_INFO_V1(remove_accents_internal_using_icu);
+Datum remove_accents_internal_using_icu(PG_FUNCTION_ARGS)
+{
+	char *input_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char *result;
+	text *res_str;
+	UChar *utf16_input, *utf16_res, *rules;
+	int32_t    len_uinput, limit, capacity, len_result, len_uchar;
+	UErrorCode status = U_ZERO_ERROR;
+	UTransliterator *cached_transliterator = NULL;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+#ifdef USE_ICU
+	// Load transliterator rules
+	len_uchar = icu_to_uchar(&rules, TRANSFORMATION_RULE, strlen(TRANSFORMATION_RULE));
+
+	// Open transliterator
+	cached_transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
+	if (U_FAILURE(status) || !cached_transliterator)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+					errmsg("Error opening transliterator: %s", u_errorName(status))));
+	}
+
+	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
+
+	limit = len_uinput;
+	/*
+	 * set the capacity (In UChar terms) to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
+	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can have maximum INT32_MAX
+	 * value which would be equivalent to 2GB UChar points and 2GB * sizeof(UChar) in byte terms.
+	 * XXX: It is assumed that this capacity should handle almost all the general input strings.
+	 */
+	capacity = (limit < (PG_INT32_MAX / MAX_BYTES_PER_CHAR)) ? (limit * MAX_BYTES_PER_CHAR) : PG_INT32_MAX;
+
+	/*
+	 * utrans_transUChars will modify input string in place so ensure that it has enough capacity to store
+	 * transformed string.
+	 */
+	utf16_res = (UChar *) palloc0(capacity * sizeof(UChar));
+	/*
+	 * utf16_input would have one NULL terminator at the end. Copy that too. Limiting memory copy to min of
+	 * (len_uinput + 1) * sizeof(UChar) and capacity * sizeof(UChar) in order to avoid buffer overwriting.
+	 */
+	memcpy(utf16_res, utf16_input, Min((len_uinput + 1) * sizeof(UChar), capacity * sizeof(UChar)));
+	pfree(utf16_input);
+	pfree(input_str);
+
+	utrans_transUChars(cached_transliterator,
+						utf16_res,
+						&len_uinput,
+						capacity,
+						0,
+						&limit,
+						&status);
+
+	/* Allocated capacity may not be enough to hold un-accented string. This shouldn't occur ideally but still defensive code. */
+	if (U_FAILURE(status))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("Error normalising the input string: %s", u_errorName(status))));
+	}
+
+	len_result = icu_from_uchar(&result, utf16_res, len_uinput);
+	pfree(utf16_res);
+
+	// Return result as NVARCHAR
+	res_str = cstring_to_text_with_len(result, len_result);
+	pfree(result);
+	PG_RETURN_VARCHAR_P(res_str);
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("ICU library is required to be installed in order to use the function remove_accents_internal")));
+	PG_RETURN_NULL();
+#endif
 }
 
 static Node *

@@ -201,8 +201,12 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'vietnamese_cs_as', N'Vietnames
 INSERT INTO sys.babelfish_helpcollation VALUES (N'vietnamese_ci_as', N'Vietnamese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'vietnamese_ci_ai', N'Vietnamese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
 
-create or replace function sys.remove_accents_internal(IN TEXT) RETURNS sys.NVARCHAR
+CREATE OR REPLACE FUNCTION sys.remove_accents_internal(IN TEXT) RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'remove_accents_internal'
 LANGUAGE C
 IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.remove_accents_internal_using_icu(IN TEXT) RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'remove_accents_internal_using_icu'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;

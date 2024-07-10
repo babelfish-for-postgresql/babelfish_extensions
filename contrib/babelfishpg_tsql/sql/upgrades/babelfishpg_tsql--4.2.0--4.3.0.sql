@@ -231,6 +231,11 @@ WHERE
   ps.dbid = sys.db_id();
 GRANT SELECT ON sys.partition_schemes TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.remove_accents_internal_using_icu(IN TEXT) RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'remove_accents_internal_using_icu'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
