@@ -1311,6 +1311,7 @@ partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e
 partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6
 partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9
 partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046
+partition_vu_prepare_int_table_unique
 partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee
 partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1
 partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963
@@ -1323,6 +1324,205 @@ partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb
 partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf
 partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386
 partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08
+~~END~~
+
+
+
+----------------------------------------------------------------------------------------------
+--- System views should list only metadata of Partitioned table(not of the partitions)
+----------------------------------------------------------------------------------------------
+SELECT count(*) from sys.tables where name = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT count(*) from sys.all_objects where name = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+---------------------------------------------------------
+--- System views should not list metadata of Partitions
+---------------------------------------------------------
+SELECT count(*) from sys.tables where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.all_objects where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
 ~~END~~
 
 

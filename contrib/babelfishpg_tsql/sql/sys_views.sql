@@ -876,7 +876,7 @@ select
   , cast(0 as sys.tinyint) as type
   , cast('HEAP' as sys.nvarchar(60)) as type_desc
   , cast(0 as sys.bit) as is_unique
-  , cast(case when ps.scheme_id is null then 1 else ps.scheme_id end as int) as data_space_id
+  , cast(1 as int) as data_space_id
   , cast(0 as sys.bit) as ignore_dup_key
   , cast(0 as sys.bit) as is_primary_key
   , cast(0 as sys.bit) as is_unique_constraint
@@ -893,10 +893,6 @@ select
 from pg_class t
 inner join pg_namespace nsp on nsp.oid = t.relnamespace
 left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
-left join sys.babelfish_partition_depend pd on
-  (ext.orig_name = pd.schema_name COLLATE sys.database_default
-   and t.relname = pd.table_name COLLATE sys.database_default and pd.dbid = sys.db_id())
-left join sys.babelfish_partition_scheme ps on (ps.partition_scheme_name = pd.partition_scheme_name and ps.dbid = sys.db_id())
 where (t.relkind = 'r' or t.relkind = 'p')
 and t.relispartition = false
 -- filter to get all the objects that belong to sys or babelfish schemas
@@ -2178,28 +2174,7 @@ WHERE
     has_schema_privilege(c.relnamespace, 'USAGE') AND
     has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER') AND
     (nsp.nspname = 'sys' OR ext.nspname is not null) AND
-    i.indislive
-UNION ALL
--- For HEAP entries
-SELECT
-  CAST(t.oid as int) as object_id,
-  CAST(0 AS INT) AS index_id,
-  CAST(a.ordinal_position AS INT) AS index_column_id,
-  CAST(a.attnum AS INT) AS column_id,
-  CAST(0 AS SYS.TINYINT) AS key_ordinal,
-  CAST(a.ordinal_position AS SYS.TINYINT) AS partition_ordinal,
-  CAST(0 AS SYS.BIT) AS is_descending_key,
-  CAST(0 AS SYS.BIT) AS is_included_column
-FROM 
-    pg_class t
-    INNER JOIN pg_partitioned_table ppt ON ppt.partrelid = t.oid
-    INNER JOIN pg_namespace nsp ON nsp.oid = t.relnamespace
-    LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
-    LEFT JOIN unnest(ppt.partattrs) WITH ORDINALITY AS a(attnum, ordinal_position) ON true
-WHERE 
-    t.relkind = 'p'
-    AND has_schema_privilege(t.relnamespace, 'USAGE')
-    AND has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+    i.indislive;
 GRANT SELECT ON sys.index_columns TO PUBLIC;
 
 -- internal function that returns relevant info needed

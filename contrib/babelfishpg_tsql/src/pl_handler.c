@@ -6879,7 +6879,7 @@ construct_unique_hash(char *relation_name)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("constructing unique hash name failed for relation \"%s\": %s", relation_name, errstr)));
+				 errmsg("Constructing unique partition name failed for relation \"%s\": %s.", relation_name, errstr)));
 	}
 
 	return md5;
@@ -6912,7 +6912,6 @@ set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, i
 	{
 		A_Const *node = makeNode(A_Const);
 		set_node_value_from_datum(node, range_values[idx-1], is_binary_datatype);
-		partbound->location = -1;
 		partbound->is_default = false;
 		partbound->lowerdatums = list_make1(node);
 	}
@@ -6922,7 +6921,6 @@ set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, i
 	{
 		ColumnRef *node = makeNode(ColumnRef);
 		node->fields = list_make1(makeString("maxvalue"));
-		partbound->location = -1;
 		partbound->is_default = false;
 		partbound->upperdatums = list_make1(node);
 	}
@@ -6930,7 +6928,6 @@ set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, i
 	{
 		A_Const *node = makeNode(A_Const);
 		set_node_value_from_datum(node, range_values[idx], is_binary_datatype);
-		partbound->location = -1;
 		partbound->is_default = false;
 		partbound->upperdatums = list_make1(node);
 	}

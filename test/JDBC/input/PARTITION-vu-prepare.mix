@@ -586,6 +586,13 @@ CREATE TABLE partition_vu_prepare_int_table (
 ) ON IntPartitionScheme(Id);
 GO
 
+-- add constraint
+ALTER TABLE partition_vu_prepare_int_table ADD CONSTRAINT check_value_not_null CHECK(value IS NOT NULL);
+GO
+
+ALTER TABLE partition_vu_prepare_int_table ADD CONSTRAINT partition_vu_prepare_int_table_unique UNIQUE (Id, Value);
+GO
+
 -- bigint data type
 CREATE TABLE partition_vu_prepare_bigint_table (
     Id BIGINT,

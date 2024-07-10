@@ -697,6 +697,85 @@ SELECT * FROM GetPartitionedIndexListFromSysIndexesView
 GO
 
 
+----------------------------------------------------------------------------------------------
+--- System views should list only metadata of Partitioned table(not of the partitions)
+----------------------------------------------------------------------------------------------
+SELECT count(*) from sys.tables where name = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.all_objects where name = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+---------------------------------------------------------
+--- System views should not list metadata of Partitions
+---------------------------------------------------------
+SELECT count(*) from sys.tables where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.all_objects where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+
 ---------------------------------------------------------------------------
 --- Run analyze on each table and enable query plan
 ---------------------------------------------------------------------------

@@ -556,7 +556,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 	Assert(list_length(cstate->range_table) == 1);
 
 	/*
-	 * The target must be a plain, foreign, or partitioned relation, or have
+	 * The target must be a plain, or foreign relation, or have
 	 * an INSTEAD OF INSERT row trigger.
 	 */
 	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION &&
