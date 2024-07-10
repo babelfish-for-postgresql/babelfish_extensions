@@ -27,20 +27,19 @@
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
 
-/*
- * Rule applied to transliterate Latin and general category Nd character
+/* 
+ * Rule applied to transliterate Latin and general category Nd character 
  * then convert the Latin (source) char to ASCII (destination) representation
  */
 #define TRANSFORMATION_RULE "[[:Latin:][:Nd:]]; Latin-ASCII"
 
 /*
- * The maximum number of bytes per character is 4 according
+ * The maximum number of bytes per character is 4 according 
  * to RFC3629 which limited the character table to U+10FFFF
  * Ref: https://www.rfc-editor.org/rfc/rfc3629#section-3
  */
 #define MAX_BYTES_PER_CHAR 4
 #define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
-
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
@@ -587,7 +586,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 
 /*
  * Function responsible for obtaining unaccented version of input
- * string with the help of ICU provided APIs.
+ * string with the help of ICU provided APIs. 
  * We use a transformation rule to transliterate the string
  */
 
@@ -621,7 +620,7 @@ Datum remove_accents_internal_using_icu(PG_FUNCTION_ARGS)
 	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));
 
 	limit = len_uinput;
-	/*
+	/* 
 	 * set the capacity (In UChar terms) to limit * MAX_BYTES_PER_CHAR if it is less than INT32_MAX
 	 * else set it to INT32_MAX as capacity is of int32_t datatype so it can have maximum INT32_MAX
 	 * value which would be equivalent to 2GB UChar points and 2GB * sizeof(UChar) in byte terms.
