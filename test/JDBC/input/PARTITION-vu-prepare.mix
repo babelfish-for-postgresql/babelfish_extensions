@@ -581,16 +581,13 @@ go
 ---------------------------------------------------------------------------
 -- int data type
 CREATE TABLE partition_vu_prepare_int_table (
-    Id INT,
+    Id INT UNIQUE,
     Value sys.varchar(50)
 ) ON IntPartitionScheme(Id);
 GO
 
 -- add constraint
 ALTER TABLE partition_vu_prepare_int_table ADD CONSTRAINT check_value_not_null CHECK(value IS NOT NULL);
-GO
-
-ALTER TABLE partition_vu_prepare_int_table ADD CONSTRAINT partition_vu_prepare_int_table_unique UNIQUE (ID);
 GO
 
 -- bigint data type
@@ -752,7 +749,7 @@ GO
 ---------------------------------------------------------------------------
 -- using schema name
 CREATE INDEX partition_vu_prepare_int_index
-ON dbo.partition_vu_prepare_int_table(Id)
+ON dbo.partition_vu_prepare_int_table(Value)
 ON IntPartitionScheme (Id);
 GO
 

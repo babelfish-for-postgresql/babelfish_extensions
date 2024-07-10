@@ -1979,7 +1979,7 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_int_table WHERE Id >= 0 AND Id < 500
-Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_idx" on "363863941f079adaa9aa733200e57c9f_partition_1" partition_vu_prepare_int_table
+Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_key" on "363863941f079adaa9aa733200e57c9f_partition_1" partition_vu_prepare_int_table
   Index Cond: ((id >= 0) AND (id < 500))
 ~~END~~
 
