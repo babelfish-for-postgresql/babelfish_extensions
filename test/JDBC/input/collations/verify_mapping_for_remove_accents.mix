@@ -30,3 +30,6 @@ GO
 
 DROP TABLE all_utf8_chars
 GO
+
+select * from pg_collation where collname like '%bbf_unicode_cp1_ci_as%';
+GO

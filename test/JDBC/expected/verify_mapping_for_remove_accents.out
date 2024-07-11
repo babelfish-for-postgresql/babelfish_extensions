@@ -844,3 +844,11 @@ text
 
 DROP TABLE all_utf8_chars
 GO
+
+select * from pg_collation where collname like '%bbf_unicode_cp1_ci_as%';
+GO
+~~START~~
+oid#!#name#!#oid#!#oid#!#char#!#bool#!#int4#!#text#!#text#!#text#!#text#!#text
+16858#!#bbf_unicode_cp1_ci_as#!#16398#!#10#!#i#!#f#!#-1#!#<NULL>#!#<NULL>#!#und-u-ks-level2#!#<NULL>#!#58.0.6.50
+~~END~~
+
