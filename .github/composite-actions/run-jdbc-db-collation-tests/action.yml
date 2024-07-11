@@ -14,6 +14,7 @@ runs:
       run: |
           echo $pwd
           ls
+          export PATH=/opt/mssql-tools/bin:$PATH
           sqlcmd -S localhost -U "jdbc_user" -P 12345678 -i .github/scripts/db_collation.sql
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
