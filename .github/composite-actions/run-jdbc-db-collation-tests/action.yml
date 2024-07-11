@@ -14,7 +14,7 @@ runs:
       run: |
           echo $pwd
           ls
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -p ${{inputs.psql_port}}  user="jdbc_user"  db="jdbc_testdb"  migration_mode=${{inputs.migration_mode}}  tsql_port=${{inputs.tsql_port}}  parallel_query_mode=${{inputs.parallel_query_mode}} -f .github/scripts/db_collation.sql
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/db_collation.sql
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           export inputFilesPath=${{inputs.input_dir}}
