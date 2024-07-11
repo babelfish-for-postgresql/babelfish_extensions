@@ -456,7 +456,7 @@ DROP LOGIN login1;
 GO
 
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+-- ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 GO
 SELECT pg_reload_conf();
 GO
@@ -704,7 +704,7 @@ DROP USER lgn_3232;
 GO
 
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+-- ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
 GO
 -- Wait to sync with another session
 SELECT pg_sleep(1);

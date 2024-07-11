@@ -59,6 +59,8 @@ static Oid	do_create_bbf_db(const char *dbname, List *options, const char *owner
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
 
+bool is_new_db = false;
+
 static Oid
 get_sys_babelfish_db_seq_oid()
 {
@@ -275,6 +277,7 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 	if (!database_collation_name)
 		database_collation_name = pstrdup((char*)GetConfigOption("babelfishpg_tsql.server_collation_name", false, false));
 
+	is_new_db = true;
 	return do_create_bbf_db(stmt->dbname, stmt->options, owner);
 }
 
@@ -406,8 +409,8 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* TODO: Extract options */
 
-	if (strcmp(dbname, "master") == 0)
-		database_collation_name = pstrdup("bbf_unicode_cp1_ci_ai");
+	// if (strcmp(dbname, "master") == 0)
+	// 	database_collation_name = pstrdup("bbf_unicode_cp1_ci_ai");
 
 	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_server_collation_oid_internal(false)));
 	if (!HeapTupleIsValid(tuple))
@@ -595,6 +598,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
+		is_new_db = false;
 	}
 	PG_END_TRY();
 }

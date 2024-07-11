@@ -1006,7 +1006,7 @@ init_and_check_collation_callbacks(void)
 Oid
 tsql_get_server_collation_oid_internal(bool missingOk)
 {
-	if (OidIsValid(server_collation_oid))
+	if (OidIsValid(server_collation_oid) && !is_new_db)
 		return server_collation_oid;
 
 	/* Initialise collation callbacks */

@@ -1192,8 +1192,6 @@ get_server_collation_oid_internal(bool missingOk)
 			return db_coll_oid;
 		}
 	}
-	
-	elog(DEBUG2, "Shameem collation %s not found", database_collation_name);
 		
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
