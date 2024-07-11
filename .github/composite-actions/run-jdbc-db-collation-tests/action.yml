@@ -14,7 +14,7 @@ runs:
       run: |
           echo $pwd
           ls
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/db_collation.sql
+          sqlcmd -S localhost -U "jdbc_user" -P 12345678 -i .github/scripts/db_collation.sql
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           export inputFilesPath=${{inputs.input_dir}}
