@@ -1,0 +1,56 @@
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p1;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p2;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p3;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p4;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_test_proc;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p5;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p6;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p7;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p8;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p9;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_test_schema_s1.xp_qv;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_test_schema_s1.sp_addlinkedsrvlogin;
+GO
+
+DROP SCHEMA IF EXISTS babel_4390_test_schema_s1;
+GO
+
+-- multi-db mode
+SELECT set_config('role', 'jdbc_user', false);
+GO
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_test_schema_s2.xp_qv;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_test_schema_s2.sp_addlinkedsrvlogin;
+GO
+
+DROP SCHEMA IF EXISTS babel_4390_test_schema_s2;
+GO
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
+GO

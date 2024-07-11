@@ -58,17 +58,41 @@ BEGIN
 END
 GO
 
-CREATE SCHEMA babel_4390_test_schema;
+CREATE SCHEMA babel_4390_test_schema_s1;
 GO
 
-CREATE PROCEDURE babel_4390_test_schema.xp_qv AS
+CREATE PROCEDURE babel_4390_test_schema_s1.xp_qv AS
 BEGIN
     SELECT 1;
 END
 GO
 
-CREATE PROCEDURE babel_4390_test_schema.sp_addlinkedsrvlogin AS
+CREATE PROCEDURE babel_4390_test_schema_s1.sp_addlinkedsrvlogin AS
 BEGIN
     SELECT 1;
 END
+GO
+
+-- multi-db mode
+SELECT set_config('role', 'jdbc_user', false);
+GO
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
+GO
+
+CREATE SCHEMA babel_4390_test_schema_s2;
+GO
+
+CREATE PROCEDURE babel_4390_test_schema_s2.xp_qv AS
+BEGIN
+    SELECT 1;
+END
+GO
+
+CREATE PROCEDURE babel_4390_test_schema_s2.sp_addlinkedsrvlogin AS
+BEGIN
+    SELECT 1;
+END
+GO
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
 GO

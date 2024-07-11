@@ -31,7 +31,7 @@ TestSmallMoney
 TestSQLVariant
 TestText
 TestTime
-BABEL-4390
+restricted_procedures
 TestTinyInt
 TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier

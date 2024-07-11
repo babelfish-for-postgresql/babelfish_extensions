@@ -1,0 +1,75 @@
+-- should throw error
+EXEC babel_4390_prepare_p1;
+GO
+
+EXEC babel_4390_prepare_p3;
+GO
+
+EXEC babel_4390_prepare_p4;
+GO
+
+BEGIN TRANSACTION;
+EXEC babel_4390_prepare_p1;
+ROLLBACK;
+GO
+
+DROP PROCEDURE dbo.xp_qv;
+GO
+
+EXEC babel_4390_prepare_p5;
+GO
+
+EXEC babel_4390_prepare_p6;
+GO
+
+EXEC babel_4390_prepare_p7;
+GO
+
+EXEC babel_4390_prepare_p8;
+GO
+
+EXEC babel_4390_prepare_p9;
+GO
+
+-- should pass
+EXEC babel_4390_prepare_p2;
+GO
+
+-- psql
+-- should throw error
+DROP PROCEDURE master_dbo.xp_qv;
+GO
+
+DROP PROCEDURE master_dbo.sp_addlinkedsrvlogin;
+GO
+
+-- tsql
+-- multi-db mode
+SELECT set_config('role', 'jdbc_user', false);
+GO
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
+GO
+
+-- should throw error
+EXEC babel_4390_prepare_p1;
+GO
+
+EXEC babel_4390_prepare_p3;
+GO
+
+EXEC babel_4390_prepare_p4;
+GO
+
+BEGIN TRANSACTION;
+EXEC babel_4390_prepare_p1;
+ROLLBACK;
+GO
+
+DROP PROCEDURE dbo.xp_qv;
+GO
+
+DROP PROCEDURE dbo.sp_addlinkedsrvlogin;
+GO
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
+GO

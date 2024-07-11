@@ -3504,6 +3504,34 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					if (sql_dialect == SQL_DIALECT_TSQL)
 						bbf_ExecDropStmt(drop_stmt);
+					/*
+					 * Prevent dropping of restricted stored procedures from PSQL dialect
+					 */
+					else if (drop_stmt->removeType == OBJECT_PROCEDURE)
+					{
+						ListCell		*cell;
+						Node			*object;
+						Relation		relation;
+						ObjectAddress	address;
+						foreach(cell, drop_stmt->objects)
+						{
+							object = lfirst(cell);
+							relation = NULL;
+
+							/* Get an ObjectAddress for the object. */
+							address = get_object_address(drop_stmt->removeType,
+														object,
+														&relation,
+														AccessShareLock,
+														drop_stmt->missing_ok);
+
+
+							if (!OidIsValid(address.objectId))
+								continue;
+							else
+								check_restricted_stored_procedure(address.objectId);
+						}
+					}
 					break;
 				}
 
@@ -4592,7 +4620,6 @@ _PG_init(void)
 	prev_get_func_language_oids_hook = get_func_language_oids_hook;
 	get_func_language_oids_hook = get_func_language_oids;
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
-	check_restricted_stored_procedure_hook = check_restricted_stored_procedure_hook_impl;
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
@@ -6316,6 +6343,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			Assert(relation == NULL);
 			if (!OidIsValid(address.objectId))
 				continue;
+			else
+				check_restricted_stored_procedure(address.objectId);
 
 			/* Get major_name */
 			relation = table_open(address.classId, AccessShareLock);

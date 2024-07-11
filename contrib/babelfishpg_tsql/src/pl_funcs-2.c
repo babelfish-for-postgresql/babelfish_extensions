@@ -352,14 +352,20 @@ coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
 }
 
 void
-check_restricted_stored_procedure_hook_impl(Oid proc_id)
+check_restricted_stored_procedure(Oid proc_id)
 {
+	HeapTuple		proctup;
+	Form_pg_proc		procform;
+	const char		*procname;
+	Oid		schema_oid = InvalidOid;
+	Oid		dbo_oid = InvalidOid;
+	bool		is_restricted = false;
+
 	/*
-	 * BABEL-4390
 	 * List of procedure names that are not allowed to be dropped. These procedures 
 	 * are considered essential or restricted due to security or operational reasons.
 	 */
-	const char		*restricted_procedures[] = {
+	static const char	*restricted_procedures[] = {
 		"xp_qv",
 		"xp_instance_regread",
 		"sp_addlinkedsrvlogin",
@@ -368,29 +374,16 @@ check_restricted_stored_procedure_hook_impl(Oid proc_id)
 		"sp_enum_oledb_providers",
 		"sp_testlinkedserver"
 	};
-	const int		RESTRICTED_PROCEDURES_COUNT = sizeof(restricted_procedures) / sizeof(restricted_procedures[0]);
-	HeapTuple		proctup;
-	Form_pg_proc		procform;
-	const char		*procname;
-	Oid		schema_oid = InvalidOid;
-	Oid		sys_oid = InvalidOid;
-	Oid		dbo_oid = InvalidOid;
-	bool		is_restricted = false;
+	static const int	RESTRICTED_PROCEDURES_COUNT = sizeof(restricted_procedures) / sizeof(restricted_procedures[0]);
 
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_id));
-	if (!HeapTupleIsValid(proctup))
-	{
-		elog(ERROR, "cache lookup failed for procedure %u", proc_id);
-		return;
-	}
 
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 	procname = pstrdup(NameStr(procform->proname));
 	schema_oid = procform->pronamespace;
-	sys_oid = get_namespace_oid("sys", true);
 	dbo_oid = get_namespace_oid("master_dbo", true);
 
-	if (OidIsValid(schema_oid) && (schema_oid == sys_oid || schema_oid == dbo_oid))
+	if (OidIsValid(schema_oid) && OidIsValid(dbo_oid) && schema_oid == dbo_oid)
 	{
 		/* Check if the procedure name is in the restricted list */
 		for (int i = 0; i < RESTRICTED_PROCEDURES_COUNT; i++)
@@ -408,7 +401,7 @@ check_restricted_stored_procedure_hook_impl(Oid proc_id)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Cannot drop the procedure \'%s\', because it does not exist or you do not have permission.", procname)));
+				 errmsg("must be owner of procedure \'%s\'", procname)));
 	}
 }
 
