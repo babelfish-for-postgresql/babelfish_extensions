@@ -1,5 +1,5 @@
 name: JDBC Tests DB COLLATION
-on: [workflow_call]
+on: [push, pull_request]
 
 jobs:
   run-babelfish-jdbc-tests:
