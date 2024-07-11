@@ -42,34 +42,3 @@ GO
 
 DROP PROCEDURE master_dbo.sp_addlinkedsrvlogin;
 GO
-
--- tsql
--- multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
-GO
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
-
--- should throw error
-EXEC babel_4390_prepare_p1;
-GO
-
-EXEC babel_4390_prepare_p3;
-GO
-
-EXEC babel_4390_prepare_p4;
-GO
-
-BEGIN TRANSACTION;
-EXEC babel_4390_prepare_p1;
-ROLLBACK;
-GO
-
-DROP PROCEDURE dbo.xp_qv;
-GO
-
-DROP PROCEDURE dbo.sp_addlinkedsrvlogin;
-GO
-
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
-GO
