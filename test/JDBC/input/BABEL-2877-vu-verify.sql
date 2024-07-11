@@ -77,6 +77,18 @@ FROM sys.babelfish_function_ext
 	AND funcname NOT LIKE '%ansi%' ORDER BY funcname;
 GO
 
+-- Need to rename the function to fix the orig_name for existing function
+EXEC sp_rename 'BABEL-2877-vu-prepare_FUNC_Schema.BABEL-2877-vu-prepare_FUNC', 'BABEL-2877-vu-prepare_FUNC2', 'OBJECT'
+GO
+
+EXEC sp_rename '"BABEL-2877-vu-prepare Schema . WITH .. DOTS"."BABEL-2877-vu-prepare Function . WITH .. DOTS"', 'BABEL-2877-vu-prepare Function . WITH .. DOTS2', 'OBJECT'
+GO
+
+-- create a new function with name which is prefix of schema name to verify new behavior
+CREATE FUNCTION [BABEL-2877-vu-prepare_FUNC_Schema]  .  [BABEL-2877-vu-prepare_FUNC] (@a int)
+RETURNS INT AS BEGIN RETURN 1; END;
+GO
+
 SELECT orig_name,
 	CASE flag_validity & 1
 		WHEN 0
@@ -99,4 +111,7 @@ SELECT orig_name,
 			END
 	END AS quoted_identifier
 FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORDER BY funcname;
+GO
+
+DROP FUNCTION [BABEL-2877-vu-prepare_FUNC_Schema]  .  [BABEL-2877-vu-prepare_FUNC2]
 GO

@@ -448,9 +448,15 @@ CREATE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
-			 CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
-                  ELSE c.relname END
-			 AS sys._ci_sysname) AS "TABLE_NAME",
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+				c.relname)
+        	AS sys._ci_sysname) AS "TABLE_NAME",
 
 		   CAST(
 			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'

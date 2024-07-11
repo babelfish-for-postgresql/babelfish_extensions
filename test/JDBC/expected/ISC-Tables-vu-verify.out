@@ -1,14 +1,33 @@
-SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'isc_tables_vu_prepare_t1'
-SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'ISC_TABLES_VU_PREPARE_T1'
+-- Need to rename the relation to fix the bbf_original_rel_name for existing table
+EXEC sp_rename 'ISC_TABLES_TABLE_SCHEMA.ISC_TABLES_TABLE', 'ISC_TABLES_TABLE2', 'OBJECT'
+GO
+
+EXEC sp_rename '"ISC_TABLES SCHEMA . WITH .. DOTS"."ISC_TABLES TABLE . WITH .. DOTS"', 'ISC_TABLES TABLE . WITH .. DOTS2', 'OBJECT'
+GO
+
+-- create a new table with name which is prefix of schema name to verify new behavior
+CREATE TABLE [ISC_TABLES_TABLE_SCHEMA]  .  [ISC_TABLES_TABLE] (a INT, b INT)
+GO
+
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE 'isc_tables%' ORDER BY TABLE_NAME
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE 'ISC_TABLES%' ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#ISC_TABLES SCHEMA . WITH .. DOTS#!#ISC_TABLES TABLE . WITH .. DOTS2#!#BASE TABLE
+master#!#ISC_TABLES_TABLE_SCHEMA#!#ISC_TABLES_TABLE#!#BASE TABLE
+master#!#ISC_TABLES_TABLE_SCHEMA#!#ISC_TABLES_TABLE2#!#BASE TABLE
 master#!#dbo#!#isc_tables_vu_prepare_t1#!#BASE TABLE
+master#!#dbo#!#isc_tables_vu_prepare_v1#!#VIEW
 ~~END~~
 
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#ISC_TABLES SCHEMA . WITH .. DOTS#!#ISC_TABLES TABLE . WITH .. DOTS2#!#BASE TABLE
+master#!#ISC_TABLES_TABLE_SCHEMA#!#ISC_TABLES_TABLE#!#BASE TABLE
+master#!#ISC_TABLES_TABLE_SCHEMA#!#ISC_TABLES_TABLE2#!#BASE TABLE
 master#!#dbo#!#isc_tables_vu_prepare_t1#!#BASE TABLE
+master#!#dbo#!#isc_tables_vu_prepare_v1#!#VIEW
 ~~END~~
 
 
@@ -62,19 +81,34 @@ SELECT * FROM isc_tables_vu_prepare_f2()
 GO
 ~~START~~
 int
-1
+5
 ~~END~~
 
 ~~START~~
 int
-1
+5
 ~~END~~
 
+
+-- Drop and re-create isc_tables_vu_prepare_v1 as it might be dependent upon
+-- the deprecated version of information_schema.tables view.
+DROP VIEW isc_tables_vu_prepare_v1
+GO
+CREATE VIEW isc_tables_vu_prepare_v1 AS
+    SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE 'ISC_TABLES%' ORDER BY TABLE_NAME
+GO
 
 SELECT * FROM isc_tables_vu_prepare_v1
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#ISC_TABLES SCHEMA . WITH .. DOTS#!#ISC_TABLES TABLE . WITH .. DOTS2#!#BASE TABLE
+master#!#ISC_TABLES_TABLE_SCHEMA#!#ISC_TABLES_TABLE#!#BASE TABLE
+master#!#ISC_TABLES_TABLE_SCHEMA#!#ISC_TABLES_TABLE2#!#BASE TABLE
 master#!#dbo#!#isc_tables_vu_prepare_t1#!#BASE TABLE
+master#!#dbo#!#isc_tables_vu_prepare_v1#!#VIEW
 ~~END~~
 
+
+DROP TABLE [ISC_TABLES_TABLE_SCHEMA]  .  [ISC_TABLES_TABLE2]
+GO

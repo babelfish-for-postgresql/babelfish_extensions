@@ -192,6 +192,7 @@ Function sys.babelfish_sp_verify_schedule(integer,character varying,smallint,int
 Function sys.babelfish_sp_verify_schedule_identifiers(character varying,character varying,character varying,integer,character,integer,integer)
 Function sys.babelfish_sp_xml_preparedocument(text)
 Function sys.babelfish_sp_xml_removedocument(bigint)
+Function sys.babelfish_split_identifier(character varying)
 Function sys.babelfish_split_object_name(text)
 Function sys.babelfish_strpos3(text,text,integer)
 Function sys.babelfish_timezone_mapping(text)
