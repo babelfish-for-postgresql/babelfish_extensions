@@ -946,7 +946,7 @@ tsql_func_select_candidate(int nargs,
 }
 
 static Node *
-tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
+tsql_coerce_string_literal_hook(Oid targetTypeId,
 								int32 targetTypeMod, int32 baseTypeMod,
 								Const *newcon, char *value,
 								CoercionContext ccontext, CoercionForm cformat,
@@ -1061,8 +1061,6 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 														false,
 														false));
 							errFunc = makeFuncExpr(errFuncOid, targetTypeId, args, 0, 0, COERCE_EXPLICIT_CALL);
-
-							cancel_parser_errposition_callback(pcbstate);
 
 							result = (Node *) errFunc;
 
