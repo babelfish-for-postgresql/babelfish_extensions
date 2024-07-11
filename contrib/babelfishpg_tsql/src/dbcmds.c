@@ -406,6 +406,9 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* TODO: Extract options */
 
+	if (strcmp(dbname, "master") == 0)
+		database_collation_name = pstrdup("bbf_unicode_cp1_ci_ai");
+
 	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_server_collation_oid_internal(false)));
 	if (!HeapTupleIsValid(tuple))
 	{
