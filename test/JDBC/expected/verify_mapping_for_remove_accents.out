@@ -20,28 +20,11 @@ BEGIN
     END LOOP;
 END;         
 $$;
--- Generate using cache
-SELECT COUNT(*) FROM all_utf8_chars WHERE col2 != sys.remove_accents_internal(col2);
-GO
-~~START~~
-int8
-811
-~~END~~
-
--- Generate using ICU transliterate function
-SELECT COUNT(*) FROM all_utf8_chars WHERE col2 != sys.remove_accents_internal_using_icu(col2);
-GO
-~~START~~
-int8
-811
-~~END~~
-
-
 -- Generate a mapping for every required character
 -- ex:  /* Æ */    {0xc386, 0x4145}    /* AE */
-SELECT REPLACE(FORMAT('/* %s */    {%s, %s},    /* %s */',col2, col1, cast(sys.remove_accents_internal(col2) as bytea), sys.remove_accents_internal(col2)), '\', '0')
+SELECT REPLACE(FORMAT('/* %s */    {%s, %s},    /* %s */',col2, col1, cast(sys.remove_accents_internal_using_icu(col2) as bytea), sys.remove_accents_internal_using_icu(col2)), '\', '0')
     FROM all_utf8_chars
-    WHERE col2 != sys.remove_accents_internal(col2);
+    WHERE col2 != sys.remove_accents_internal_using_icu(col2);
 GO
 ~~START~~
 text

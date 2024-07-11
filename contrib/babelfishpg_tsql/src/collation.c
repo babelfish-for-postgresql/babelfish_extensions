@@ -497,13 +497,12 @@ compare_remove_accent_map_pair(const void *p1, const void *p2)
 PG_FUNCTION_INFO_V1(remove_accents_internal);
 Datum remove_accents_internal(PG_FUNCTION_ARGS)
 {
-	unsigned char *input_str = (unsigned char *)text_to_cstring(PG_GETARG_TEXT_PP(0));
+	unsigned char *input_str = (unsigned char *) text_to_cstring(PG_GETARG_TEXT_PP(0));
 	text          *return_result;
 	int           len = strlen((char *)input_str),
 	              l;
 	StringInfoData result;
-	unsigned char *c = palloc(5 * sizeof(char)); /* tempory UTF-8 character storage */
-
+	unsigned char *c = (unsigned char *) palloc(sizeof(uint32) + 1);
 	initStringInfo(&result);
 
 	for (; len > 0; len -= l)
@@ -563,6 +562,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 		pr = bsearch(&utf8_char, pltsql_remove_accent_map, lengthof(pltsql_remove_accent_map),
 							sizeof(remove_accent_map_pair), compare_remove_accent_map_pair);
 
+		/* Use the mapping if availaible or else the character */
 		if (pr && pr->normalized_char)
 			utf8_normalized_str = pr->normalized_char;
 		else
