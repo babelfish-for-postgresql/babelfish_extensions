@@ -6343,7 +6343,9 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			Assert(relation == NULL);
 			if (!OidIsValid(address.objectId))
 				continue;
-			else
+				
+			/* Restrict dropping of extended stored procedures */
+			if (stmt->removeType == OBJECT_PROCEDURE)
 				check_restricted_stored_procedure(address.objectId);
 
 			/* Get major_name */
