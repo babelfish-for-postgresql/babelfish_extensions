@@ -32,7 +32,7 @@ public class Config {
     static String testFileRoot = properties.getProperty("testFileRoot");
     static boolean isUpgradeTestMode =  Boolean.parseBoolean(properties.getProperty("isUpgradeTestMode"));
     static long defaultSLA = Long.parseLong(properties.getProperty("defaultSLA"));
-    static boolean isdbCollationMode = properties.getProperty("databaseCollationName").equals("default");
+    static boolean isdbCollationMode = properties.getProperty("databaseCollationName").equals("default") != 0 ? true : false;
     static String dbCollationIgnoreFileName = "./db_collation_jdbc_schedule";
     static boolean checkDbCollationExpected = false;
 
