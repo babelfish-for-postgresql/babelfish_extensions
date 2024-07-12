@@ -38,6 +38,154 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+-- Rename functions for dependencies
+DO $$
+DECLARE
+  exception_message text;
+BEGIN
+  -- Rename REPLICATE for dependencies
+  ALTER FUNCTION sys.REPLICATE(TEXT, INTEGER) RENAME TO replicate_deprecated_in_3_7_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+  GET STACKED DIAGNOSTICS
+  exception_message = MESSAGE_TEXT;
+  RAISE WARNING '%', exception_message;
+END;
+$$;
+
+-- wrapper functions for replicate
+CREATE OR REPLACE FUNCTION sys.replicate(string ANYELEMENT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype text;
+    string_basetype oid;
+BEGIN
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := (SELECT typbasetype FROM pg_type WHERE oid = pg_typeof(string)::oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for replicate function
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of replicate function.', string_arg_datatype;
+    END IF;
+
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string::sys.varchar, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.replicate(string sys.BPCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.replicate(string sys.VARCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.replicate(string sys.NCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.replicate(string sys.NVARCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Adding following definition will make sure that replicate with text input
+-- will use following definition instead of PG replicate
+CREATE OR REPLACE FUNCTION sys.replicate(string TEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Adding following definition will make sure that replicate with ntext input
+-- will use following definition instead of PG replicate
+CREATE OR REPLACE FUNCTION sys.replicate(string NTEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- DROP deprecated function of replicate (if exists)
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- DROP replicate_deprecated_in_3_7_0_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_deprecated_in_3_7_0_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
