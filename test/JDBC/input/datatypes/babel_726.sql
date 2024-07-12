@@ -290,6 +290,16 @@ go
 select coalesce(CAST('x'AS VARBINARY), CAST('x' AS NVARCHAR(4000)), 'x')
 go
 
+-- check that duplicate view with varbinary cast does not cause crash (#2693)
+create view babel_726_v1 as select cast('a' as varbinary)
+go
+
+create view babel_726_v1 as select cast('a' as varbinary)
+go
+
+drop view babel_726_v1
+go
+
 drop table babel_726_t1
 go
 
