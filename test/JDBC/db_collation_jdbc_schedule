@@ -5,4 +5,4 @@
 # 4. Keyword "all" is equivalent to running all test files in input folder
 # 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 
-ignore#!#ATTTIMEZONE
+ignore#!#ATTIMEZONE
