@@ -10,6 +10,7 @@ import static com.sqlsamples.Statistics.exec_times;
 import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
 import static com.sqlsamples.Config.checkParallelQueryExpected;
+import static com.sqlsamples.Config.checkParallelQueryExpected;
 
 public class batch_run {
 
@@ -297,6 +298,12 @@ public class batch_run {
                         checkParallelQueryExpected = true;
                         continue;
                     }
+
+                    if (strLine.toLowerCase().startsWith("-- db_collation_expected")){
+                        checkDbCollationExpected = true;
+                        continue;
+                    }
+
                     // execute statement as a normal SQL statement
                     if (isSQLFile) {
                         if (!strLine.equalsIgnoreCase("GO")) {

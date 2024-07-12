@@ -266,18 +266,23 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 		if (strcmp(defel->defname, "collate") == 0)
 		{
 			database_collation_name = pstrdup(defGetString(defel));
+			is_new_db = true;
 		}
 		else
+		{
+			is_new_db = false;
 			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("option \"%s\" not recognized", defel->defname),
-					 parser_errposition(pstate, defel->location)));
+			 (errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("option \"%s\" not recognized", defel->defname),
+				 parser_errposition(pstate, defel->location)));
+		}
 	}
 
-	if (!database_collation_name)
+	if (!is_new_db)
 		database_collation_name = pstrdup((char*)GetConfigOption("babelfishpg_tsql.server_collation_name", false, false));
 
 	is_new_db = true;
+	
 	return do_create_bbf_db(stmt->dbname, stmt->options, owner);
 }
 

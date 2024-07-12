@@ -21,5 +21,6 @@ runs:
           export inputFilesPath=${{inputs.input_dir}}
           cd test/JDBC/
           sudo sed -i "s/databaseName = master/databaseName = test_db_collation/g" src/main/resources/config.txt
+          sudo sed -i "s/databaseCollationName = default/databaseName = bbf_unicode_cp1_ci_ai/g" src/main/resources/config.txt
           mvn test
       shell: bash

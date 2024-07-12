@@ -42,6 +42,9 @@ isParallelQueryMode = false
 # WHETHER TEST MODE HAS NON-DEFAULT-SERVER-COLLATION-NAME
 serverCollationName = default
 
+# WHETHER TEST IS RUN FOR DB LEVEL COLLATION
+databaseCollationName = default
+
 # Where to find the input, output, expected, etc.
 testFileRoot = ./
 
