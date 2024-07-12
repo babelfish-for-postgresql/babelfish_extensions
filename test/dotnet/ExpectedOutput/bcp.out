@@ -660,3 +660,72 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #!##!#
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#Create table sourceTable (a int);
+#Q#Create table destinationTable(a int, check (a < 2))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1);
+#Q#INSERT INTO sourceTable values (2);
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select count(*) from sourceTable
+#D#int
+1001
+#Q#select count(*) from destinationTable
+#D#int
+1001
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable (a int);
+#Q#Create table destinationTable(a int)
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1500, 1);
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select count(*) from sourceTable
+#D#int
+1500
+#Q#select count(*) from destinationTable
+#D#int
+1500
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#create table sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
+#Q#create table destinationTable(c1 int PRIMARY KEY, c2 CHAR(1024))
+#Q#INSERT INTO destinationTable VALUES(1000, 'Foo')
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select count(*) from sourceTable
+#D#int
+1000
+#Q#select count(*) from destinationTable
+#D#int
+1
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable (a int);
+#Q#Create table destinationTable(a int, check (a < 2))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1);
+#Q#INSERT INTO sourceTable values (2);
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp -h "CHECK_CONSTRAINTS"#!#in#!#bcp_source#!#destinationTable
+#Q#Select count(*) from sourceTable
+#D#int
+1001
+#Q#select count(*) from destinationTable
+#D#int
+0
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#create table sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
+#Q#create table destinationTable(c1 int PRIMARY KEY, c2 CHAR(1024))
+#Q#INSERT INTO destinationTable VALUES(1000, 'Foo')
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp -h "CHECK_CONSTRAINTS"#!#in#!#bcp_source#!#destinationTable
+#Q#Select count(*) from sourceTable
+#D#int
+1000
+#Q#select count(*) from destinationTable
+#D#int
+1
+#Q#drop table sourceTable
+#Q#drop table destinationTable

@@ -178,6 +178,11 @@ Seq Scan on babel_4923_newid_tab3
   Filter: (uuid = newid())
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 18.842 ms
+~~END~~
+
 
 SELECT * FROM babel_4923_newid_tab4 WHERE uuid=NEWSEQUENTIALID()
 GO
@@ -186,6 +191,11 @@ text
 Query Text: SELECT * FROM babel_4923_newid_tab4 WHERE uuid=NEWSEQUENTIALID()
 Seq Scan on babel_4923_newid_tab4
   Filter: (uuid = newsequentialid())
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 

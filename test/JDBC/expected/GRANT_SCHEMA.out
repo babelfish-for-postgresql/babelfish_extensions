@@ -4639,3 +4639,19 @@ go
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
 ~~END~~
 
+
+-- tsql
+-- should properly throw an error when schema does not exist
+GRANT SELECT on doesnt_exist.tbl TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "master_doesnt_exist" does not exist)~~
+
+
+grant execute on xyz.babel_4344_p to public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "master_xyz" does not exist)~~
+

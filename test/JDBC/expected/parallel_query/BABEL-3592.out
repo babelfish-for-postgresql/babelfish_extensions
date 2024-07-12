@@ -95,6 +95,11 @@ Query Text: EXEC babel_3592_insert_multiline
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.050 ms
+~~END~~
+
 
 EXEC babel_3592_insert_singleline
 GO
@@ -105,6 +110,11 @@ Query Text: EXEC babel_3592_insert_singleline
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.073 ms
 ~~END~~
 
 
@@ -173,6 +183,11 @@ Query Text: EXEC babel_3592_insert_multiline
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.048 ms
+~~END~~
+
 
 EXEC babel_3592_updates_singleline
 GO
@@ -183,6 +198,11 @@ Query Text: EXEC babel_3592_updates_singleline
   ->  Update on babel_3592_t1
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.073 ms
 ~~END~~
 
 
@@ -252,6 +272,11 @@ Query Text: EXEC babel_3592_insert_multiline
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.064 ms
+~~END~~
+
 
 EXEC babel_3592_delete_singleline
 GO
@@ -262,6 +287,11 @@ Query Text: EXEC babel_3592_delete_singleline
   ->  Delete on babel_3592_t1
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
 ~~END~~
 
 
@@ -412,6 +442,11 @@ babel_3592_t2 select * from babel_3592_t1 where b1 = 1
               ->  Materialize
                     ->  Index Scan using index_babel_3592_t2_b2babel_359155b730148d8fcf0167f32edb84e3f7d on babel_3592_t2
                           Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.078 ms
 ~~END~~
 
 

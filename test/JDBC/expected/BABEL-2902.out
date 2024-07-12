@@ -69,6 +69,11 @@ text
 Query Text: PRINT 'hi'
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.773 ms
+~~END~~
+
 PRINT 10
 GO
 ~~START~~
@@ -76,11 +81,21 @@ text
 Query Text: PRINT 10
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
+~~END~~
+
 PRINT 12.023
 GO
 ~~START~~
 text
 Query Text: PRINT 12.023
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
 ~~END~~
 
 
@@ -92,6 +107,11 @@ text
 Query Text: PRINT pg_backend_pid()
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.367 ms
+~~END~~
+
 
 --Expression
 PRINT 20 + 20
@@ -99,6 +119,11 @@ GO
 ~~START~~
 text
 Query Text: PRINT 20 + 20
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 20.322 ms
 ~~END~~
 
 
@@ -115,6 +140,11 @@ Query Text: ASSIGN @a = SELECT 100
 Query Text: PRINT @a
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 14.813 ms
+~~END~~
+
 
 -- Exceptions
 PRINT 1/0
@@ -122,6 +152,11 @@ GO
 ~~START~~
 text
 Query Text: PRINT 1/0
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 9.002 ms
 ~~END~~
 
 
@@ -148,6 +183,11 @@ Query Text: ASSIGN @a = SELECT @a + 1
   ->  Result
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 139.054 ms
+~~END~~
+
 
 --Invalid statements
 PRINT SELECT 1
@@ -170,6 +210,11 @@ Seq Scan on babel_2902_ma1
 Query Text: USE DATABASE babel_2902_testdb_1
 Query Text: SELECT * FROM babel_2902_t1
 Seq Scan on babel_2902_t1
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.482 ms
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -198,6 +243,11 @@ Aggregate
 Query Text: USE DATABASE babel_2902_testdb_3
 Query Text: SELECT * FROM babel_2902_t3
 Seq Scan on babel_2902_t3
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.407 ms
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -244,6 +294,11 @@ Seq Scan on babel_2902_t3
 Query Text: USE DATABASE babel_2902_testdb_2
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.852 ms
+~~END~~
+
 SET babelfish_showplan_all off
 SELECT DB_NAME() -- should still be master
 GO
@@ -275,6 +330,11 @@ Query Text: USE DATABASE master
 Query Text: USE DATABASE babel_2902_testdb_1
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
+~~END~~
+
 SET babelfish_showplan_all off
 SELECT DB_NAME() -- should still be master
 GO
@@ -297,6 +357,11 @@ text
 Query Text: USE DATABASE master
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
+~~END~~
+
 SET babelfish_showplan_all off
 SELECT DB_NAME() -- should still be babel_2902_testdb_1
 GO
@@ -317,6 +382,11 @@ text
 Query Text: PRINT 10
 Query Text: USE DATABASE master
 Query Text: USE DATABASE babel_2902_testdb_2
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.294 ms
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -456,12 +526,22 @@ text
 Query Text: RAISERROR (N'TEST %s %d.',1,1,N'testing',9)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 17.921 ms
+~~END~~
+
 --system error message, note message code validation is NOT done during explain--
 RAISERROR (10000,1,1,N'testing',9);
 GO
 ~~START~~
 text
 Query Text: RAISERROR (10000,1,1,N'testing',9)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 --variables, note that variable substitution is NOT done during explain --
@@ -477,6 +557,11 @@ Query Text: ASSIGN @testmsg = SELECT 'a: %s b: %s c :%s'
 Query Text: RAISERROR (@testMsg,1,1,'a','b','c')
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.878 ms
+~~END~~
+
 
 -- TEST THROW --
 -- Throw is similar to RAISERROR in that during explain it is lax in enforcement of validation
@@ -488,6 +573,11 @@ GO
 ~~START~~
 text
 Query Text: THROW 51000, 'test', 1
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 9.202 ms
 ~~END~~
 
 -- invalid argument types --
