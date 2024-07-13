@@ -28,12 +28,14 @@
 #define DATABASE_DEFAULT "database_default"
 #define CATALOG_DEFAULT "catalog_default"
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int	server_collation_collidx = NOT_FOUND;
 static Oid	server_collation_oid = InvalidOid;
 static bool db_collation_is_CI_AS = true;
+
+static char* database_collation_name = NULL;
 
 /*
  * Below two vars are defined to store the value of the babelfishpg_tsql.server_collation_name
@@ -1563,6 +1565,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.find_collation_internal = &find_collation;
 		collation_callbacks_var.has_ilike_node = &has_ilike_node;
 		collation_callbacks_var.translate_bbf_collation_to_tsql_collation = &translate_bbf_collation_to_tsql_collation;
+		collation_callbacks_var.set_db_collation = &set_db_collation;
 	}
 	return &collation_callbacks_var;
 }
@@ -1649,4 +1652,16 @@ void bbf_set_like_collation(Oid collation)
 Oid bbf_get_like_collation(void)
 {
 	return like_cid;
+}
+
+void
+set_db_collation(char *collname)
+{
+	MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+
+	if (database_collation_name)
+		pfree(database_collation_name);
+
+	database_collation_name = pstrdup(collname);
+	MemoryContextSwitchTo(oldcontext);
 }

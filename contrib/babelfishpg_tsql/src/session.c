@@ -159,7 +159,7 @@ set_cur_user_db_and_path(const char *db_name)
 	set_search_path_for_user_schema(db_name, user);
 
 	/* set database level collation */
-	set_db_collation(db_id);
+	set_db_collation_internal(db_id);
 }
 
 static void

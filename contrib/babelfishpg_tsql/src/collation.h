@@ -76,6 +76,8 @@ typedef struct collation_callbacks
 
 	const char *(*translate_bbf_collation_to_tsql_collation) (const char *collname);
 
+	void		(*set_db_collation) (char *collname);
+
 } collation_callbacks;
 
 extern collation_callbacks *collation_callbacks_ptr;
@@ -95,7 +97,6 @@ like_ilike_info_t tsql_lookup_like_ilike_table_internal(Oid opno);
 int			tsql_find_cs_as_collation_internal(int collidx);
 int			tsql_find_collation_internal(const char *collation_name);
 extern const char *tsql_translate_bbf_collation_to_tsql_collation(const char *collname);
-extern bool is_new_db;
 
 /* Utility functions */
 extern bool has_ilike_node_and_ci_as_coll(Node *expr);
@@ -105,7 +106,10 @@ extern Node *pltsql_planner_node_transformer(PlannerInfo *root,
 											 int kind);
 extern Node *pltsql_predicate_transformer(Node *expr);
 
-extern void set_db_collation(int16 db_id);
+extern void set_db_collation_internal(int16 db_id);
+extern bool is_new_db;
+extern void tsql_set_db_collation(void);
+extern char* database_collation_name;
 
 /* Expression kind codes for preprocess_expression */
 #define EXPRKIND_QUAL				0

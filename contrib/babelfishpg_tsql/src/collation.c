@@ -1171,7 +1171,17 @@ has_ilike_node_and_ci_as_coll(Node *expr)
 }
 
 void
-set_db_collation(int16 db_id)
+tsql_set_db_collation()
+{
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	(*collation_callbacks_ptr->set_db_collation) (database_collation_name);
+	return;
+}
+
+void
+set_db_collation_internal(int16 db_id)
 {
 	HeapTuple	tuple;
 	Form_sysdatabases sysdb;
@@ -1182,6 +1192,7 @@ set_db_collation(int16 db_id)
 		return;
 
 	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
-	database_collation_name = sysdb->default_collation.data;
+	database_collation_name = pstrdup(sysdb->default_collation.data);
 	ReleaseSysCache(tuple);
+	tsql_set_db_collation();
 }

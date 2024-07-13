@@ -44,6 +44,8 @@
 
 Oid sys_babelfish_db_seq_oid = InvalidOid;
 
+char *database_collation_name = NULL;
+
 static Oid get_sys_babelfish_db_seq_oid(void);
 static List *gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
@@ -58,6 +60,8 @@ static List *gen_dropdb_subcmds(const char *schema,
 static Oid	do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
+// char default_collation_buffer[NAMEDATALEN];
+bool is_new_db = false;
 
 bool is_new_db = false;
 
@@ -265,21 +269,28 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 
 		if (strcmp(defel->defname, "collate") == 0)
 		{
+			MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 			database_collation_name = pstrdup(defGetString(defel));
 			is_new_db = true;
+			MemoryContextSwitchTo(oldcontext);
 		}
 		else
 		{
 			is_new_db = false;
 			ereport(ERROR,
-			 (errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("option \"%s\" not recognized", defel->defname),
-				 parser_errposition(pstate, defel->location)));
-		}
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("option \"%s\" not recognized", defel->defname),
+					 parser_errposition(pstate, defel->location)));
+		}	
 	}
 
 	if (!is_new_db)
+	{
+		MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 		database_collation_name = pstrdup((char*)GetConfigOption("babelfishpg_tsql.server_collation_name", false, false));
+		is_new_db = true;
+		MemoryContextSwitchTo(oldcontext);
+	}
 
 	is_new_db = true;
 	
@@ -426,7 +437,19 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("OID corresponding to collation \"%s\" does not exist", server_collation_name)));
 	}
-	default_collation = ((Form_pg_collation) GETSTRUCT(tuple))->collname;
+	// strncpy(default_collation_buffer, database_collation_name, strlen(database_collation_name));
+    // default_collation_buffer[strlen(database_collation_name)] = '\0';
+	// memcpy(default_collation.data, default_collation_buffer, strlen(database_collation_name));
+
+	if (database_collation_name)
+	{
+		memcpy(default_collation.data, database_collation_name, strlen(database_collation_name));
+		default_collation.data[strlen(database_collation_name)] = '\0';
+	}
+	else
+		default_collation = ((Form_pg_collation) GETSTRUCT(tuple))->collname;
+
+
 	ReleaseSysCache(tuple);
 
 	/* single-db mode check. IDs 1-4 are reserved for native system databases */
