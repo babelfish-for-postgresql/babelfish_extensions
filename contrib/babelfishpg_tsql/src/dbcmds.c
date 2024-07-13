@@ -42,9 +42,11 @@
 #include "pltsql.h"
 #include "extendedproperty.h"
 
+#define NOT_FOUND -1
+
 Oid sys_babelfish_db_seq_oid = InvalidOid;
 
-char *database_collation_name = NULL;
+const char *database_collation_name = NULL;
 
 static Oid get_sys_babelfish_db_seq_oid(void);
 static List *gen_createdb_subcmds(const char *schema,
@@ -60,7 +62,6 @@ static List *gen_dropdb_subcmds(const char *schema,
 static Oid	do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
-// char default_collation_buffer[NAMEDATALEN];
 bool is_new_db = false;
 
 
@@ -268,10 +269,21 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 
 		if (strcmp(defel->defname, "collate") == 0)
 		{
-			MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 			database_collation_name = pstrdup(defGetString(defel));
+			if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
+			{
+				if (tsql_find_collation_internal(tsql_translate_bbf_collation_to_tsql_collation(database_collation_name)) == NOT_FOUND)
+				{
+					database_collation_name = NULL;
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Invalid collation \"%s\"", defGetString(defel)),
+							parser_errposition(pstate, defel->location)));
+				}
+				else
+					database_collation_name = pstrdup(tsql_translate_bbf_collation_to_tsql_collation(defGetString(defel)));
+			}
 			is_new_db = true;
-			MemoryContextSwitchTo(oldcontext);
 		}
 		else
 		{
@@ -285,13 +297,9 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 
 	if (!is_new_db)
 	{
-		MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-		database_collation_name = pstrdup((char*)GetConfigOption("babelfishpg_tsql.server_collation_name", false, false));
+		database_collation_name = NULL;
 		is_new_db = true;
-		MemoryContextSwitchTo(oldcontext);
 	}
-
-	is_new_db = true;
 	
 	return do_create_bbf_db(stmt->dbname, stmt->options, owner);
 }
@@ -424,9 +432,6 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* TODO: Extract options */
 
-	// if (strcmp(dbname, "master") == 0)
-	// 	database_collation_name = pstrdup("bbf_unicode_cp1_ci_ai");
-
 	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_server_collation_oid_internal(false)));
 	if (!HeapTupleIsValid(tuple))
 	{
@@ -436,17 +441,17 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("OID corresponding to collation \"%s\" does not exist", server_collation_name)));
 	}
-	// strncpy(default_collation_buffer, database_collation_name, strlen(database_collation_name));
-    // default_collation_buffer[strlen(database_collation_name)] = '\0';
-	// memcpy(default_collation.data, default_collation_buffer, strlen(database_collation_name));
 
-	if (database_collation_name)
+	if (database_collation_name && is_new_db)
 	{
 		memcpy(default_collation.data, database_collation_name, strlen(database_collation_name));
 		default_collation.data[strlen(database_collation_name)] = '\0';
 	}
 	else
+	{
 		default_collation = ((Form_pg_collation) GETSTRUCT(tuple))->collname;
+		database_collation_name = pstrdup(default_collation.data);
+	}
 
 
 	ReleaseSysCache(tuple);
@@ -625,8 +630,8 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
-		is_new_db = false;
 	}
+	is_new_db = false;
 	PG_END_TRY();
 }
 

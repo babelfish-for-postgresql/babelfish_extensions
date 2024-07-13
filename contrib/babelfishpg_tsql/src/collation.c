@@ -22,8 +22,6 @@
 
 #include "pltsql.h"
 #include "src/collation.h"
-
-#include "commands/dbcommands.h"
 #include "catalog.h"
 
 #define NOT_FOUND -1

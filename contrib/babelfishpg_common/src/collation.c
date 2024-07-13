@@ -21,8 +21,6 @@
 #include "typecode.h"
 #include "sqlvariant.h"
 
-#include "commands/dbcommands.h"
-
 #define NOT_FOUND -1
 
 #define DATABASE_DEFAULT "database_default"
@@ -35,7 +33,7 @@ static int	server_collation_collidx = NOT_FOUND;
 static Oid	server_collation_oid = InvalidOid;
 static bool db_collation_is_CI_AS = true;
 
-static char* database_collation_name = NULL;
+static char *database_collation_name = NULL;
 
 /*
  * Below two vars are defined to store the value of the babelfishpg_tsql.server_collation_name
@@ -530,6 +528,9 @@ find_collation(const char *collation_name)
 	int			middle = 37;	/* optimization: usually it's the default
 								 * collation (first + last) / 2; */
 	int			compare;
+
+	if (!collation_name)
+		return NOT_FOUND;
 
 	while (first <= last)
 	{
@@ -1233,11 +1234,11 @@ BABELFISH_CLUSTER_COLLATION_OID()
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
-		PG_RETURN_OID(get_server_collation_oid_internal(false));	/* set and cache
+		Oid db_coll = get_server_collation_oid_internal(false);	/* set and cache
 													 * server_collation_oid */
 
-		// if (OidIsValid(server_collation_oid))
-		// 	return server_collation_oid;
+		if (OidIsValid(db_coll))
+			return db_coll;
 	}
 	return DEFAULT_COLLATION_OID;
 }
@@ -1283,6 +1284,7 @@ collation_is_CI_AS(Oid colloid)
 
 	/*
 	 * colStrength secondary, or level2, corresponds to a CI_AS collation,
+	 * colStrength primary, or level1, corresponds to a CI_AI collation,
 	 * unless colCaseLevel=yes, or kc-true, is also specified.
 	 */
 	if ((strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) || strstr(lowerstr(collcollate), lowerstr("colStrength=primary"))) &&
@@ -1290,7 +1292,7 @@ collation_is_CI_AS(Oid colloid)
 	         return true;
 	 
 	/* Starting from PG16, locale string is canonicalized to a language tag. */
-	if ((0 != strstr(lowerstr(collcollate), "level2") || 0 != strstr(lowerstr(collcollate), "level1"))  &&    /* CI_AS */
+	if ((0 != strstr(lowerstr(collcollate), "level2") || 0 != strstr(lowerstr(collcollate), "level1"))  &&    /* CI_AS OR CI_AI */
 		0 == strstr(lowerstr(collcollate), "kc-true"))
 		return true;
 
@@ -1366,7 +1368,7 @@ is_valid_server_collation_name(const char *collname)
 		collation_is_case_insensitive_and_accent_sensitive(collidx))
 		return true;
 
-	return true;
+	return false;
 }
 
 Oid
@@ -1655,13 +1657,9 @@ Oid bbf_get_like_collation(void)
 }
 
 void
-set_db_collation(char *collname)
+set_db_collation(const char *collname)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-
-	if (database_collation_name)
-		pfree(database_collation_name);
-
 	database_collation_name = pstrdup(collname);
 	MemoryContextSwitchTo(oldcontext);
 }

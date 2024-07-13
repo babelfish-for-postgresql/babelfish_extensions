@@ -76,7 +76,7 @@ typedef struct collation_callbacks
 
 	const char *(*translate_bbf_collation_to_tsql_collation) (const char *collname);
 
-	void		(*set_db_collation) (char *collname);
+	void		(*set_db_collation) (const char *collname);
 
 } collation_callbacks;
 
@@ -106,10 +106,10 @@ extern Node *pltsql_planner_node_transformer(PlannerInfo *root,
 											 int kind);
 extern Node *pltsql_predicate_transformer(Node *expr);
 
-extern void set_db_collation_internal(int16 db_id);
+void set_db_collation_internal(int16 db_id);
 extern bool is_new_db;
-extern void tsql_set_db_collation(void);
-extern char* database_collation_name;
+void tsql_set_db_collation(void);
+extern const char *database_collation_name;
 
 /* Expression kind codes for preprocess_expression */
 #define EXPRKIND_QUAL				0
