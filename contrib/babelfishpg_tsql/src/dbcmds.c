@@ -63,7 +63,6 @@ static void drop_related_bbf_namespace_entries(int16 dbid);
 // char default_collation_buffer[NAMEDATALEN];
 bool is_new_db = false;
 
-bool is_new_db = false;
 
 static Oid
 get_sys_babelfish_db_seq_oid()
