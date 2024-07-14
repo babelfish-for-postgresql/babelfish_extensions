@@ -1072,7 +1072,7 @@ SELECT
 FROM
     pg_index i
     INNER JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
-    INNER JOIN pg_class c ON i.indexrelid = c.oid and (c.relkind = 'i' or c.relkind = 'I') and c.relispartition = false
+    INNER JOIN pg_class c ON i.indrelid = c.oid and c.relispartition = false
     INNER JOIN pg_namespace nsp ON nsp.oid = c.relnamespace
     LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
     LEFT JOIN unnest(i.indkey) WITH ORDINALITY AS a(attnum, index_column_id) ON true

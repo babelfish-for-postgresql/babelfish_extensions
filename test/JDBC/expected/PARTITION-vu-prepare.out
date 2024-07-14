@@ -594,7 +594,8 @@ GO
 CREATE TABLE partition_vu_prepare_bigint_table (
     Id BIGINT,
     Value sys.varchar(50)
-) ON BigIntPartitionScheme(Id);
+) ON BigIntPartitionScheme--this is comment should get ignored
+(Id);
 GO
 
 -- smallint data type
@@ -761,7 +762,8 @@ GO
 
 -- without partition scheme should also work
 CREATE INDEX partition_vu_prepare_smallint_index
-ON partition_vu_prepare_smallint_table(Id)
+ON partition_vu_prepare_smallint_table--this is comment should get ignored
+(Id)
 GO
 
 CREATE INDEX partition_vu_prepare_tinyint_index

@@ -2545,11 +2545,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				
 				/*
-				 * For babelfish partitioned table, user should not be
-				 * allowed to attach/detach partition to partitioned table 
-				 * and user should not be allowed to modify its partition.
+				 * For Babelfish partitioned tables, non-superusers should not be permitted
+				 * to attach or detach partitions from the partitioned table, and they
+				 * should also be restricted from modifying the partitions.
 				 */
-				if (!babelfish_dump_restore && atstmt->objtype == OBJECT_TABLE)
+				if (!babelfish_dump_restore && atstmt->objtype == OBJECT_TABLE && !superuser())
 				{
 					AlterTableCmd	*cmd = (AlterTableCmd *) linitial(atstmt->cmds);
 					char		*logical_schema_name;
@@ -3845,10 +3845,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					create_stmt->tsql_tabletype = true;
 
 				/*
-				 * For babelfish partitioned table, user should not be
+				 * For babelfish partitioned table, non-superusers should not be
 				 * allowed to create new partitions of a table directly.
 				 */
-				if (!babelfish_dump_restore && sql_dialect == SQL_DIALECT_PG && create_stmt->partbound)
+				if (!babelfish_dump_restore && create_stmt->partbound && !superuser())
 				{
 					rel = linitial(create_stmt->inhRelations);
 					if (rel->schemaname)
@@ -6774,6 +6774,13 @@ bbf_create_partition_tables(CreateStmt *stmt)
 
 	partition_stmt = create_partition_stmt(physical_schema_name, relname);
 
+	if (!partition_stmt) /* Sanity Check. */
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Failed to construct partitions for relation \"%s\".", relname)));
+	}
+
 	/* Make a wrapper PlannedStmt. */
 	wrapper = makeNode(PlannedStmt);
 	wrapper->commandType = CMD_UTILITY;
@@ -6787,10 +6794,10 @@ bbf_create_partition_tables(CreateStmt *stmt)
 
 	for (i = 0; i < nelems + 1; i++)
 	{
-		char *partition_name =  psprintf("%s_partition_%d", unique_hash, i);
+		char *partition_name =  BBF_GET_PARTITION_NAME(unique_hash, i);
 		partition_stmt->relation->relname = partition_name;
 		set_partition_range_bounds(partition_stmt->partbound, range_values, i, nelems + 1, is_binary_datatype);
-		ProcessUtility(wrapper,
+		standard_ProcessUtility(wrapper,
 					"(CREATE PARTITION)",
 					false,
 					PROCESS_UTILITY_SUBCOMMAND,
@@ -6835,7 +6842,7 @@ create_partition_stmt(char *physical_schema_name, char *relname)
 
 	/*
 	 * We prepare the following query to CREATE PARTITION of partitioned table.
-	 * This will be executed using ProcessUtility().
+	 * This will be executed using standard_ProcessUtility().
 	 */
 	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE TABLE \"%s\".dummy PARTITION OF \"%s\".\"%s\""
@@ -6996,8 +7003,8 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 
 		if (form->relispartition) /* relation is partition of table */
 		{
-			/* Raise error when parent table of partition is babelfish partitioned table. */
-			if (is_bbf_partitioned_table(dbid, logical_schemaname, get_rel_name(get_partition_parent(form->oid, false))))
+			/* Prevent non-superusers from droping partitions of Babelfish partitioned tables. */
+			if (!superuser() && is_bbf_partitioned_table(dbid, logical_schemaname, get_rel_name(get_partition_parent(form->oid, false))))
 			{
 				relation_close(relation, AccessShareLock);
 				ereport(ERROR,
@@ -7135,7 +7142,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	char		*table_name = stmt->relation->relname;
 	List		*partition_names = NIL;
 	int16		dbid;
-	char		*unique_hash;
+	char		*new_hash;
 	PlannedStmt	*wrapper;
 	RenameStmt	*rename_partition_stmt = NULL;
 	List		*parsetree;
@@ -7185,7 +7192,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 
 	/*
 	 * We prepare the following query to rename the partitions of partitioned table.
-	 * This will be executed using ProcessUtility().
+	 * This will be executed using standard_ProcessUtility().
 	 */
 	initStringInfo(&query);
 	appendStringInfo(&query, "ALTER TABLE \"%s\".dummy RENAME TO dummy;", physical_schema_name);
@@ -7209,6 +7216,13 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	}
 	PG_END_TRY();
 
+	if (!rename_partition_stmt) /* Sanity Check. */
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Failed to rename partitions of relation \"%s\".", table_name)));
+	}
+
 	/* Need to make a wrapper PlannedStmt. */
 	wrapper = makeNode(PlannedStmt);
 	wrapper->commandType = CMD_UTILITY;
@@ -7218,22 +7232,21 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	wrapper->stmt_len = 0;
 
 	/* Construct hash based on new name. */
-	unique_hash = construct_unique_hash(stmt->newname);
+	new_hash = construct_unique_hash(stmt->newname);
 	
 	for (int i = 0; i < list_length(partition_names); i++)
 	{
 		partition_name = list_nth(partition_names, i);
-		new_partition_name = pstrdup(partition_name);
 
-		/* Replace old hash in partition name with new hash. */
-		memcpy(new_partition_name, unique_hash, MD5_HASH_LEN);
+		/* Generate new partition name by replacing hash with new hash. */
+		new_partition_name = BBF_GET_NEW_PARTITION_NAME(partition_name, new_hash);
 		
 		/* Set the names in RENAME statment. */
 		rename_partition_stmt->relation->relname = partition_name;
 		rename_partition_stmt->newname = new_partition_name;
 
 		/* Execute the rename statment. */
-		ProcessUtility(wrapper,
+		standard_ProcessUtility(wrapper,
 					"(RENAME PARTITION)",
 					false,
 					PROCESS_UTILITY_SUBCOMMAND,
@@ -7252,7 +7265,7 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	if (partition_names)
 		list_free(partition_names);
 	pfree(logical_schema_name);
-	pfree(unique_hash);
+	pfree(new_hash);
 	pfree(query.data);
 }
 

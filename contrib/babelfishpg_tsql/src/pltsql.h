@@ -64,8 +64,28 @@
 
 #define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
 
- /* Max number of partitions allowed for babelfish partitioned tables. */
+/* Max number of partitions allowed for babelfish partitioned tables. */
 #define MAX_PARTITIONS_LIMIT 15000
+
+/*
+ * This macro constructs a partition name with the provided hash
+ * and partition number. The hash will be unique based on the
+ * name of partitioned table.
+ */
+#define BBF_GET_PARTITION_NAME(hash, partition_number)  \
+	psprintf("%s_partition_%d", hash, partition_number)
+
+/*
+ * This macro constructs a new partition name by replacing the
+ * hash portion of an existing partition name with a new hash value.
+ */
+#define BBF_GET_NEW_PARTITION_NAME(partition_name, hash)  \
+({ \
+	char *__new_partition_name = pstrdup(partition_name); \
+	memcpy(__new_partition_name, hash, MD5_HASH_LEN); \
+	__new_partition_name; \
+})
+
 
 /*
  * Compiler's namespace item types
