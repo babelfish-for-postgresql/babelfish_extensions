@@ -1520,7 +1520,14 @@ CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) 
 -- sys.varchar has default length of 1, so we have to pass in 'number' to be the
 -- type modifier.
 BEGIN
-	EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
+    IF number < 0 THEN
+        result := NULL;
+    ELSEIF number = 0 THEN
+        result := '';
+    ELSE
+        result := PG_CATALOG.repeat(' ',number);
+	-- EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
+    END IF;
 END;
 $$
 STRICT

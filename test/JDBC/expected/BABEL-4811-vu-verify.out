@@ -1,0 +1,152 @@
+-- test SPACE function
+select SPACE(NULL);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+select SPACE(2);
+GO
+~~START~~
+varchar
+  
+~~END~~
+
+
+select LEN(SPACE(5));
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select DATALENGTH(SPACE(5));
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+select SPACE(-10);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+select SPACE(0);
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+select LEN(SPACE(-10));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select DATALENGTH(SPACE(-10));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select LEN(SPACE(0));
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select DATALENGTH(SPACE(0));
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select * from babel_4811_vu_prepare_f1(5);
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+select * from babel_4811_vu_prepare_f1(-10);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select * from babel_4811_vu_prepare_f1(0);
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+EXEC babel_4811_vu_prepare_p1 @number = 5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+EXEC babel_4811_vu_prepare_p1 @number = -10;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+EXEC babel_4811_vu_prepare_p1 @number = 0;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select * from babel_4811_vu_prepare_v1;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+select * from babel_4811_vu_prepare_v2;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select * from babel_4811_vu_prepare_v3;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
