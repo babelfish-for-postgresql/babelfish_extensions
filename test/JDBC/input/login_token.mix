@@ -8,6 +8,12 @@ go
 create user login_token2;
 go
 
+create role login_token_role
+go
+
+alter role login_token_role add member login_token2
+go
+
 create login login_token3 with password = '12345678'
 go
 
@@ -41,6 +47,12 @@ select name, type, usage from sys.user_token;
 go
 
 -- tsql
+alter role login_token_role drop member login_token2
+go
+
+drop role login_token_role
+go
+
 drop user login_token2;
 go
 
