@@ -232,6 +232,22 @@ WHERE
 GRANT SELECT ON sys.partition_schemes TO PUBLIC;
 
 
+CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
+-- sys.varchar has default length of 1, so we have to pass in 'number' to be the
+-- type modifier.
+BEGIN
+    IF number < 0 THEN
+        result := NULL;
+    ELSEIF number = 0 THEN
+        result := '';
+    ELSE
+        result := PG_CATALOG.repeat(' ',number);
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

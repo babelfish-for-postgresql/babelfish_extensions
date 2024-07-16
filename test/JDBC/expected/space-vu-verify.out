@@ -1,0 +1,256 @@
+-- test SPACE function
+SELECT SPACE(NULL);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT SPACE(2);
+GO
+~~START~~
+varchar
+  
+~~END~~
+
+
+SELECT LEN(SPACE(5));
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATALENGTH(SPACE(5));
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT SPACE(-10);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT SPACE(0);
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SELECT LEN(SPACE(-10));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATALENGTH(SPACE(-10));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT LEN(SPACE(0));
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATALENGTH(SPACE(0));
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_f1(5);
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_f1(-10);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_f1(0);
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_f2(5);
+GO
+~~START~~
+varchar
+|     |
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_f2(-10);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_f2(0);
+GO
+~~START~~
+varchar
+||
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_f3();
+GO
+~~START~~
+varchar
+|     |
+~~END~~
+
+
+EXEC babel_4811_vu_prepare_p1 @number = 5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+EXEC babel_4811_vu_prepare_p1 @number = -10;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+EXEC babel_4811_vu_prepare_p1 @number = 0;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+EXEC babel_4811_vu_prepare_p2 @number = 5;
+GO
+~~START~~
+varchar
+|     |
+~~END~~
+
+
+EXEC babel_4811_vu_prepare_p2 @number = -10;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+EXEC babel_4811_vu_prepare_p2 @number = 0;
+GO
+~~START~~
+varchar
+||
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_v1;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_v2;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_v3;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_v4;
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_v5;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_v6;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_v7;
+GO
+~~START~~
+varchar
+|          |
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_v8;
+GO
+~~START~~
+varchar
+||
+~~END~~
+
+
+SELECT * from babel_4811_vu_prepare_v9;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+

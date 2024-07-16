@@ -1526,7 +1526,6 @@ BEGIN
         result := '';
     ELSE
         result := PG_CATALOG.repeat(' ',number);
-	-- EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
     END IF;
 END;
 $$
