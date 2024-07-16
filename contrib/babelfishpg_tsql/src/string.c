@@ -30,6 +30,7 @@ PG_FUNCTION_INFO_V1(quotename);
 PG_FUNCTION_INFO_V1(string_escape);
 PG_FUNCTION_INFO_V1(formatmessage);
 PG_FUNCTION_INFO_V1(tsql_varchar_substr);
+PG_FUNCTION_INFO_V1(tsql_varbinary_substr);
 PG_FUNCTION_INFO_V1(float_str);
 
 /*
@@ -497,12 +498,21 @@ prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 Datum
 tsql_varchar_substr(PG_FUNCTION_ARGS)
 {
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
-		PG_RETURN_NULL();
-
-	return DirectFunctionCall3(text_substr, PG_GETARG_DATUM(0),
+	PG_RETURN_VARCHAR_P(DirectFunctionCall3(text_substr, PG_GETARG_DATUM(0),
 											PG_GETARG_INT32(1),
-											PG_GETARG_INT32(2));
+											PG_GETARG_INT32(2)));
+}
+
+/*
+ * tsql_varbinary_substr()
+ * Return a substring starting at the specified position.
+ */
+Datum
+tsql_varbinary_substr(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BYTEA_P(DirectFunctionCall3(bytea_substr, PG_GETARG_DATUM(0),
+											PG_GETARG_INT32(1),
+											PG_GETARG_INT32(2)));
 }
 
 /*
