@@ -679,8 +679,8 @@ d
 SELECT * FROM babel_3658_substring_dep_view_5
 GO
 ~~START~~
-varbinary
-62
+varchar
+0
 ~~END~~
 
 
@@ -695,16 +695,16 @@ varchar
 SELECT * FROM babel_3658_substring_dep_view_7
 GO
 ~~START~~
-nvarchar
-🙂
+varchar
+?
 ~~END~~
 
 
 SELECT * FROM babel_3658_substring_dep_view_8
 GO
 ~~START~~
-varbinary
-62
+varchar
+0
 ~~END~~
 
 

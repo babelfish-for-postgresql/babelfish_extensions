@@ -197,7 +197,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 varchar
-??
+拉莫
 ~~END~~
 
 ~~START~~
@@ -224,7 +224,7 @@ SELECT substring(@inputString, 2, 15) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 varchar
-??
+拉莫
 ~~END~~
 
 ~~START~~
@@ -279,7 +279,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 varchar
-??
+拉莫
 ~~END~~
 
 ~~START~~
@@ -463,7 +463,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 nvarchar
-??
+拉莫
 ~~END~~
 
 ~~START~~
@@ -679,8 +679,8 @@ d
 SELECT * FROM babel_3658_substring_dep_view_5
 GO
 ~~START~~
-varbinary
-62
+varchar
+0
 ~~END~~
 
 
@@ -695,16 +695,16 @@ varchar
 SELECT * FROM babel_3658_substring_dep_view_7
 GO
 ~~START~~
-nvarchar
-🙂
+varchar
+?
 ~~END~~
 
 
 SELECT * FROM babel_3658_substring_dep_view_8
 GO
 ~~START~~
-varbinary
-62
+varchar
+0
 ~~END~~
 
 

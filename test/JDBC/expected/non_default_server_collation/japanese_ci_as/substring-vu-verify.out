@@ -206,7 +206,7 @@ SELECT substring(@inputString, 4, 2)
 GO
 ~~START~~
 varchar
-??
+拉莫
 ~~END~~
 
 DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
@@ -237,7 +237,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 varchar
-?·???          
+尔·拉莫斯          
 ~~END~~
 
 
@@ -246,7 +246,7 @@ SELECT substring(@inputString, 4, 2) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 varchar
-??
+拉莫
 ~~END~~
 
 DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
@@ -277,7 +277,7 @@ SELECT substring(@inputString, 2, 15) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 varchar
-?·???          
+尔·拉莫斯          
 ~~END~~
 
 
@@ -327,7 +327,7 @@ SELECT substring(@inputString, 4, 2)
 GO
 ~~START~~
 varchar
-??
+拉莫
 ~~END~~
 
 DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
@@ -358,7 +358,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 varchar
-?·???
+尔·拉莫斯
 ~~END~~
 
 
@@ -550,7 +550,7 @@ SELECT substring(@inputString, 4, 2)
 GO
 ~~START~~
 nvarchar
-??
+拉莫
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
@@ -581,7 +581,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 nvarchar
-?·???          
+尔·拉莫斯          
 ~~END~~
 
 
