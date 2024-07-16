@@ -66,8 +66,8 @@ select name, type, usage from sys.user_token order by name;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-login_token2#!#SQL USER#!#GRANT OR DENY
 login_token_role#!#ROLE#!#GRANT OR DENY
+login_token2#!#SQL USER#!#GRANT OR DENY
 public#!#ROLE#!#GRANT OR DENY
 ~~END~~
 
