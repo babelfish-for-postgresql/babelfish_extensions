@@ -244,7 +244,7 @@ static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
 static pass_pivot_data_to_fcinfo_hook_type pre_pass_pivot_data_to_fcinfo_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
-static called_for_tsql_itvf_func_hook_type pre_called_for_tsql_itvf_func_hook = NULL;
+static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
 static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_constraint_nulls_ordering_hook = NULL;
@@ -420,7 +420,7 @@ InstallExtendedHooks(void)
 	pre_called_from_tsql_insert_exec_hook = called_from_tsql_insert_exec_hook;
 	called_from_tsql_insert_exec_hook = called_from_tsql_insert_exec;
 
-	pre_called_for_tsql_itvf_func_hook = called_for_tsql_itvf_func_hook;
+	prev_called_for_tsql_itvf_func_hook = called_for_tsql_itvf_func_hook;
 	called_for_tsql_itvf_func_hook = called_for_tsql_itvf_func;
 
 	pre_exec_tsql_cast_value_hook = exec_tsql_cast_value_hook;
@@ -498,7 +498,7 @@ UninstallExtendedHooks(void)
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
-	called_for_tsql_itvf_func_hook = pre_called_for_tsql_itvf_func_hook;
+	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
 

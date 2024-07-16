@@ -47,7 +47,6 @@
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
 extern func_select_candidate_hook_type func_select_candidate_hook;
-extern func_select_candidate_for_special_func_hook_type func_select_candidate_for_special_func_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
@@ -57,6 +56,8 @@ extern bool babelfish_dump_restore;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
+PG_FUNCTION_INFO_V1(init_special_function_list);
+PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
@@ -967,8 +968,6 @@ get_immediate_base_type_of_UDT_internal(Oid typeid)
 	return base_type;
 }
 
-PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
-
 Datum
 get_immediate_base_type_of_UDT(PG_FUNCTION_ARGS)
 {
@@ -981,6 +980,33 @@ get_immediate_base_type_of_UDT(PG_FUNCTION_ARGS)
 	PG_RETURN_OID(base_type);
 }
 
+Datum
+init_special_function_list(PG_FUNCTION_ARGS)
+{
+	/* if common_utility_plugin_ptr is not initialised */
+	if (common_utility_plugin_ptr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to find common utility plugin.")));
+
+	for (int i = 0; i < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; i++)
+	{
+		for (int j = 0; j < tsql_special_function_list[i].nargs; j++)
+		{
+			for (int k = 0; k < tsql_special_function_list[i].valid_arg_types[j].len; k++)
+			{
+				if (!OidIsValid(tsql_special_function_list[i].valid_arg_types[j].valid_types_oid[k]))
+				{
+					tsql_special_function_list[i].valid_arg_types[j].valid_types_oid[k] = 
+							(*common_utility_plugin_ptr->get_tsql_datatype_oid)(tsql_special_function_list[i].valid_arg_types[j].valid_types[k]);
+				}
+			}
+		}
+	}
+
+	PG_RETURN_INT32(0);
+}
+
 /*
  * For a given function details, validate whether it is in special function list
  * and also validate the input argument data types.
@@ -990,7 +1016,7 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 {
 	tsql_special_function_t    *special_func;
 	bool                        type_match;
-	Oid                         inputTypId, validTypId, baseTypeId;
+	Oid                         input_type_id, valid_type_id, base_type_id;
 	Oid                         sys_varcharoid;
 
 	/* Sanity checks */
@@ -1022,36 +1048,24 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 		return false;
 
 	sys_varcharoid = get_sys_varcharoid();
+
 	/* Report error in case of invalid argument datatype */
 	for (int i = 0; i < special_func->nargs; i++)
 	{
 		/* for unknown literals consider its type as sys.VARCHAR */
-		inputTypId = (input_typeids[i] == UNKNOWNOID) ? sys_varcharoid : input_typeids[i];
+		input_type_id = (input_typeids[i] == UNKNOWNOID) ? sys_varcharoid : input_typeids[i];
 
 		/* for UDT use its base type for input argument datatype validation */
-		baseTypeId = get_immediate_base_type_of_UDT_internal(inputTypId);
-		if(OidIsValid(baseTypeId))
-		{
-			inputTypId = baseTypeId;
-		}
+		base_type_id = get_immediate_base_type_of_UDT_internal(input_type_id);
+		if(OidIsValid(base_type_id))
+			input_type_id = base_type_id;
 
 		type_match = false;
 		for (int j = 0; j < special_func->valid_arg_types[i].len; j++)
 		{
-			if (!OidIsValid(special_func->valid_arg_types[i].valid_types_oid[j]))
-			{
-				/* if common_utility_plugin_ptr is not initialised */
-				if (common_utility_plugin_ptr == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("Failed to find common utility plugin.")));
+			valid_type_id = special_func->valid_arg_types[i].valid_types_oid[j];
 
-				special_func->valid_arg_types[i].valid_types_oid[j] = (*common_utility_plugin_ptr->get_tsql_datatype_oid)(special_func->valid_arg_types[i].valid_types[j]);
-			}
-
-			validTypId = special_func->valid_arg_types[i].valid_types_oid[j];
-
-			if (inputTypId == validTypId)
+			if (input_type_id == valid_type_id)
 			{
 				type_match = true;
 				break;
@@ -1062,7 +1076,7 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("Argument data type %s is invalid for argument %d of %s function.", 
-				 		 format_type_be(inputTypId), i+1, special_func->formatted_funcname)));
+				 		 format_type_be(input_type_id), i+1, special_func->formatted_funcname)));
 		}
 	}
 
@@ -1084,7 +1098,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	char					   *proc_name;
 	bool						is_func_validated;
 	int							ncandidates;
-	Oid							retType;
+	Oid							rettype;
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
@@ -1127,8 +1141,8 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			current_candidate != NULL;
 			current_candidate = current_candidate->next)
 	{
-		retType = get_func_rettype(current_candidate->oid);
-		if (expr_result_type == retType)
+		rettype = get_func_rettype(current_candidate->oid);
+		if (expr_result_type == rettype)
 		{
 			best_candidate = current_candidate;
 			ncandidates++;
@@ -1143,16 +1157,21 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 }
 
 static FuncCandidateList
-tsql_func_select_candidate(int nargs,
+tsql_func_select_candidate(List *names,
+						   int nargs,
 						   Oid *input_typeids,
 						   FuncCandidateList candidates,
-						   bool unknowns_resolved)
+						   bool unknowns_resolved,
+						   bool is_special)
 {
 	FuncCandidateList new_candidates;
 	FuncCandidateList current_candidate;
 	FuncCandidateList another_candidate;
 	int			i;
 	bool			  candidates_are_opers = false;
+
+	if (is_special)
+		return tsql_func_select_candidate_for_special_func(names, nargs, input_typeids, candidates);
 
 	if (unknowns_resolved)
 	{
@@ -1728,7 +1747,6 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	/* Register Hooks */
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
 	func_select_candidate_hook = tsql_func_select_candidate;
-	func_select_candidate_for_special_func_hook = tsql_func_select_candidate_for_special_func;
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
 	select_common_type_hook = tsql_select_common_type_hook;
 	select_common_typmod_hook = tsql_select_common_typmod_hook;

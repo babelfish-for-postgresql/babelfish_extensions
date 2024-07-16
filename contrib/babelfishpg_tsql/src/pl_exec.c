@@ -491,11 +491,12 @@ extern int
 static void
 pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, ErrorContextCallback *plerrcontext);
 
-bool		called_for_tsql_itvf_function = false;
+static bool	called_for_tsql_itvf_function = false;
 bool  		called_for_tsql_itvf_func(void);
 
 
-bool called_for_tsql_itvf_func()
+bool
+called_for_tsql_itvf_func()
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return false;
