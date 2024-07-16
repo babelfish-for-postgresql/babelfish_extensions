@@ -638,6 +638,20 @@ x
 ~~END~~
 
 
+-- check that duplicate view with varbinary cast does not cause crash (#2693)
+create view babel_726_v1 as select cast('a' as varbinary)
+go
+
+create view babel_726_v1 as select cast('a' as varbinary)
+go
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "babel_726_v1" already exists)~~
+
+
+drop view babel_726_v1
+go
+
 drop table babel_726_t1
 go
 

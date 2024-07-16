@@ -8,6 +8,12 @@ go
 create user login_token2;
 go
 
+create role login_token_role
+go
+
+alter role login_token_role add member login_token2
+go
+
 create login login_token3 with password = '12345678'
 go
 
@@ -61,6 +67,7 @@ go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
 login_token2#!#SQL USER#!#GRANT OR DENY
+login_token_role#!#ROLE#!#GRANT OR DENY
 public#!#ROLE#!#GRANT OR DENY
 ~~END~~
 
@@ -69,6 +76,7 @@ go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
 login_token2#!#SQL USER#!#GRANT OR DENY
+login_token_role#!#ROLE#!#GRANT OR DENY
 public#!#ROLE#!#GRANT OR DENY
 ~~END~~
 
@@ -91,6 +99,12 @@ dbo#!#SQL USER#!#GRANT OR DENY
 
 
 -- tsql
+alter role login_token_role drop member login_token2
+go
+
+drop role login_token_role
+go
+
 drop user login_token2;
 go
 
