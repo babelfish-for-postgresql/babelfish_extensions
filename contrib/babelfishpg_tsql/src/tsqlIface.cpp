@@ -2852,6 +2852,9 @@ public:
 				{
 					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
 					{
+						if (ctx->function_arg_list()->expression().size() != 3)
+							ereport(ERROR, (errcode(ERRCODE_UNDEFINED_FUNCTION), errmsg("The substring function requires 3 argument(s).")));
+
 						auto first_arg = ctx->function_arg_list()->expression().front();
 						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
 							ereport(ERROR, (errcode(ERRCODE_SUBSTRING_ERROR), errmsg("Argument data type NULL is invalid for argument 1 of substring function")));

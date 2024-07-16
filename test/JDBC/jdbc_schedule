@@ -253,6 +253,11 @@ ignore#!#BABEL-621-after-14_12-before-15-vu-prepare
 ignore#!#BABEL-621-after-14_12-before-15-vu-verify
 ignore#!#BABEL-621-after-14_12-before-15-vu-cleanup
 
+# These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
+ignore#!#substring-before-15_8-or-16_4-vu-prepare
+ignore#!#substring-before-15_8-or-16_4-vu-verify
+ignore#!#substring-before-15_8-or-16_4-vu-cleanup
+
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
 ignore#!#BABEL-4279-vu-verify

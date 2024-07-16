@@ -156,6 +156,43 @@ END;
 $$
 LANGUAGE plpgsql STRICT STABLE;
 
+CREATE OR REPLACE FUNCTION sys.substring(string NTEXT, i INTEGER, j INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.BPCHAR, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARBINARY, i INTEGER, j INTEGER)
+RETURNS sys.VARBINARY
+AS 'babelfishpg_tsql', 'tsql_varbinary_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string ANYELEMENT, i INTEGER, j INTEGER)
+RETURNS sys.VARBINARY
+AS
+$BODY$
+DECLARE
+    string_arg_datatype text;
+    string_basetype oid;
+BEGIN
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := (SELECT typbasetype FROM pg_type WHERE oid = pg_typeof(string)::oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for substring function
+    IF string_arg_datatype NOT IN ('varchar', 'char', 'nchar', 'nvarchar', 'binary', 'varbinary', 'image') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of substring function.', string_arg_datatype;
+    END IF;
+
+    RETURN sys.substring(string::sys.VARBINARY, i, j);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
