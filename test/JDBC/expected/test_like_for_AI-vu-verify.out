@@ -1747,7 +1747,7 @@ Hi café
 SELECT UPPER((SELECT col FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE '%oNo'));
 GO
 ~~START~~
-text
+nvarchar
 TELÉFONO
 ~~END~~
 
@@ -4357,7 +4357,7 @@ Hi café
 SELECT UPPER((SELECT col FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE '%no'));
 GO
 ~~START~~
-text
+nvarchar
 JALAPEÑO
 ~~END~~
 
