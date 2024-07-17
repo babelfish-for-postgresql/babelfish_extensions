@@ -349,6 +349,119 @@ END;
 $$
 LANGUAGE plpgsql STRICT STABLE;
 
+CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
+	SELECT c.oid AS "TABLE_OID",
+			CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+				c.relname)
+			AS sys.nvarchar(128)) AS "TABLE_NAME",
+
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19)
+						ELSE NULL
+						END, ',')
+					FROM unnest(a.attoptions) AS option),
+				a.attname)
+			AS sys.nvarchar(128)) AS "COLUMN_NAME",
+
+			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
+			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
+			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
+				AS varchar(3))
+				AS "IS_NULLABLE",
+
+			CAST(
+				CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype)
+				WHEN tsql_type_name.tsql_type_name IS NULL THEN format_type(t.oid, NULL::integer)
+				ELSE tsql_type_name END
+				AS sys.nvarchar(128))
+				AS "DATA_TYPE",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_max_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_MAXIMUM_LENGTH",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_OCTET_LENGTH",
+
+			CAST(
+				/* Handle Tinyint separately */
+				information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, true_typid, true_typmod)
+				AS sys.tinyint)
+				AS "NUMERIC_PRECISION",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, true_typid, true_typmod)
+				AS smallint)
+				AS "NUMERIC_PRECISION_RADIX",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, true_typid, true_typmod)
+				AS int)
+				AS "NUMERIC_SCALE",
+
+			CAST(
+				information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
+				AS smallint)
+				AS "DATETIME_PRECISION",
+
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
+			/*
+			 * TODO: We need to first create mapping of collation name to char-set name;
+			 * Until then return null.
+			 */
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_CATALOG",
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+
+			/* Returns Babelfish specific collation name. */
+			CAST(co.collname AS sys.nvarchar(128)) AS "COLLATION_NAME",
+
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN nc.dbname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN ext.orig_name ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN t.typname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
+
+	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
+		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
+		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
+		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+		LEFT JOIN pg_collation co on co.oid = a.attcollation
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
+		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
+		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
+		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
+
+	WHERE (NOT pg_is_other_temp_schema(nc.oid))
+		AND a.attnum > 0 AND NOT a.attisdropped
+		AND c.relkind IN ('r', 'v', 'p')
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_column_privilege(c.oid, a.attnum,
+									'SELECT, INSERT, UPDATE, REFERENCES'))
+		AND ext.dbid =sys.db_id();
+
 CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
@@ -361,7 +474,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 						END, ',')
 					FROM unnest(c.reloptions) AS option),
 				c.relname)
-        	AS sys._ci_sysname) AS "TABLE_NAME",
+			AS sys._ci_sysname) AS "TABLE_NAME",
 
 		   CAST(
 			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'

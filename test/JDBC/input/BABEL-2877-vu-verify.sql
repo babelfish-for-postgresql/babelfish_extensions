@@ -77,7 +77,7 @@ FROM sys.babelfish_function_ext
 	AND funcname NOT LIKE '%ansi%' ORDER BY funcname;
 GO
 
--- Need to rename the function to fix the orig_name for existing function
+-- Rename the existing functions to fix the originally stored incorrect orig_name
 EXEC sp_rename 'BABEL-2877-vu-prepare_FUNC_Schema.BABEL-2877-vu-prepare_FUNC', 'BABEL-2877-vu-prepare_FUNC2', 'OBJECT'
 GO
 

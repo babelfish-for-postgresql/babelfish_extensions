@@ -1,4 +1,4 @@
--- Need to rename the relation to fix the bbf_original_rel_name for existing table
+-- Rename the existing tables to fix the originally stored incorrect bbf_original_rel_name
 EXEC sp_rename 'ISC_TABLES_TABLE_SCHEMA.ISC_TABLES_TABLE', 'ISC_TABLES_TABLE2', 'OBJECT'
 GO
 
