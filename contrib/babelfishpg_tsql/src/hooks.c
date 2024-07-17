@@ -5213,13 +5213,20 @@ unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 	return SORTBY_NULLS_DEFAULT;
 }
 
+/*
+ * For a given string and position in UTF-16 and return
+ * the corresponding position in UTF-8 string. UTF-16
+ * string considers surrogate pairs as two chars while
+ * in UTF-8 they are 1, which is why we need to translate
+ */
+
 static int32_t
-translate_char_pos(const char* str,
-				   int32_t str_len,
-				   const UChar* str_utf16,
-				   int32_t u16_len, 		/* in 16-bit code units */
-				   int32_t u16_pos,
-				   const char **p_str)
+translate_char_pos(const char* str,		/* UTF-8 string */
+				   int32_t str_len,		/* length of UTF-8 string */
+				   const UChar* str_utf16, 		/* UTF-16 string */
+				   int32_t u16_len,		/* length of UTF-16 string */
+				   int32_t u16_pos,		/* position to translare in UTF-16 string */
+				   const char **p_str)		/* character at same position in UTF-8 string */
 {
 	UChar32 c;
 	int32_t u16_idx = 0;
@@ -5242,7 +5249,7 @@ translate_char_pos(const char* str,
 }
 
 static bool
-pltsql_strpos_non_determinstic(text *t1, text *t2, Oid collid, int *r)
+pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, int *r)
 {
 	pg_locale_t mylocale = 0;
 
@@ -5251,21 +5258,21 @@ pltsql_strpos_non_determinstic(text *t1, text *t2, Oid collid, int *r)
 
 	if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
 	{
-		int32_t len1 = VARSIZE_ANY_EXHDR(t1);
-		int32_t len2 = VARSIZE_ANY_EXHDR(t2);
+		int32_t src_len_utf8 = VARSIZE_ANY_EXHDR(src_text);
+		int32_t substr_len_utf8 = VARSIZE_ANY_EXHDR(substr_text);
+		int32_t src_ulen, substr_ulen;
+		int32_t u16_pos, u8_pos = 0;
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
-		UChar *uchar1, *uchar2;
-		int32_t ulen1, ulen2;
-		int32_t u16_pos, u8_pos = 0;
+		UChar *src_uchar, *substr_uchar;
 
-		ulen1 = icu_to_uchar(&uchar1, VARDATA_ANY(t1), len1);
-		ulen2 = icu_to_uchar(&uchar2, VARDATA_ANY(t2), len2);
+		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len_utf8);
+		substr_ulen = icu_to_uchar(&substr_uchar, VARDATA_ANY(substr_text), substr_len_utf8);
 
-		usearch = usearch_openFromCollator(uchar2, /* needle */
-										ulen2,
-										uchar1, /* haystack */
-										ulen1,
+		usearch = usearch_openFromCollator(substr_uchar,
+										substr_ulen,
+										src_uchar,
+										src_ulen,
 										mylocale->info.icu.ucol,
 										NULL,
 										&status);
@@ -5275,21 +5282,21 @@ pltsql_strpos_non_determinstic(text *t1, text *t2, Oid collid, int *r)
 		{
 			u16_pos = usearch_first(usearch, &status);
 			if (!U_FAILURE(status) && u16_pos != USEARCH_DONE)
-				u8_pos = translate_char_pos(VARDATA_ANY(t1), len1,
-											uchar1, ulen1, u16_pos,
+				u8_pos = translate_char_pos(VARDATA_ANY(src_text), src_len_utf8,
+											src_uchar, src_ulen, u16_pos,
 											NULL);
 			else
 				u8_pos = -1;
 		}
 
-		pfree(uchar1);
-		pfree(uchar2);
+		pfree(src_uchar);
+		pfree(substr_uchar);
 		usearch_close(usearch);
 
 		if (U_FAILURE(status))
 			elog(ERROR, "failed to perform ICU search: %s", u_errorName(status));
 
-		/* return 0 if not found or the 1-based position of txt2 inside txt1 */
+		/* return 0 if not found or the 1-based position of substr_text inside src_text */
 		*r = u8_pos + 1;
 		return true;
 	}
@@ -5298,7 +5305,7 @@ pltsql_strpos_non_determinstic(text *t1, text *t2, Oid collid, int *r)
 }
 
 static bool
-pltsql_replace_non_determinstic(text *t1, text *t2, text *t3, Oid collid, text **r)
+pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, Oid collid, text **r)
 {
 	pg_locale_t mylocale = 0;
 
@@ -5307,26 +5314,26 @@ pltsql_replace_non_determinstic(text *t1, text *t2, text *t3, Oid collid, text *
 
 	if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
 	{
-		const char *txt1_currptr = VARDATA_ANY(t1);
-		const char* txt1_startptr = VARDATA_ANY(t1);
-		int32_t len1 = VARSIZE_ANY_EXHDR(t1);
-		int32_t len2 = VARSIZE_ANY_EXHDR(t2);
-		int32_t len3 = VARSIZE_ANY_EXHDR(t3);
+		const char *src_text_currptr = VARDATA_ANY(src_text);
+		const char* src_text_startptr = VARDATA_ANY(src_text);
+		int32_t src_len = VARSIZE_ANY_EXHDR(src_text);
+		int32_t from_str_len = VARSIZE_ANY_EXHDR(from_text);
+		int32_t to_str_len = VARSIZE_ANY_EXHDR(to_text);
 		int32_t previous_pos;
-		int32_t ulen1, ulen2;		/* in utf-16 units */
+		int32_t src_ulen, from_ulen;		/* in utf-16 units */
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
-		UChar *uchar1, *uchar2;
+		UChar *src_uchar, *from_uchar;
 		text *result;
 		StringInfoData resbuf;
 
-		ulen1 = icu_to_uchar(&uchar1, VARDATA_ANY(t1), len1);
-		ulen2 = icu_to_uchar(&uchar2, VARDATA_ANY(t2), len2);
+		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len);
+		from_ulen = icu_to_uchar(&from_uchar, VARDATA_ANY(from_text), from_str_len);
 
-		usearch = usearch_openFromCollator(uchar2, /* needle */
-										ulen2,
-										uchar1, /* haystack */
-										ulen1,
+		usearch = usearch_openFromCollator(from_uchar, /* needle */
+										from_ulen,
+										src_uchar, /* haystack */
+										src_ulen,
 										mylocale->info.icu.ucol,
 										NULL,
 										&status);
@@ -5340,35 +5347,35 @@ pltsql_replace_non_determinstic(text *t1, text *t2, text *t3, Oid collid, text *
 		     pos != USEARCH_DONE;
 		     pos = usearch_next(usearch, &status))
 		{
-			const char *txt1_nextptr;
+			const char *src_text_nextptr;
 
 			if (U_FAILURE(status))
 				elog(ERROR, "failed to perform ICU search: %s", u_errorName(status));
 
 			/* copy the segment before the match */
 			translate_char_pos(
-				txt1_currptr,
-				len1 - (txt1_currptr - txt1_startptr),
-				uchar1 + previous_pos,
-				len1 - previous_pos,
+				src_text_currptr,
+				src_len - (src_text_currptr - src_text_startptr),
+				src_uchar + previous_pos,
+				src_ulen - previous_pos,
 				pos - previous_pos,
-				&txt1_nextptr);
+				&src_text_nextptr);
 
 			appendBinaryStringInfo(&resbuf,
-								txt1_currptr,
-								txt1_nextptr - txt1_currptr);
+								src_text_currptr,
+								src_text_nextptr - src_text_currptr);
 
 			/* compute the length of the replaced text in txt1 */
 			translate_char_pos(
-				txt1_nextptr,
-				len1 - (txt1_nextptr - txt1_startptr),
-				uchar1 + pos,
+				src_text_nextptr,
+				src_len - (src_text_nextptr - src_text_startptr),
+				src_uchar + pos,
 				usearch_getMatchedLength(usearch),
 				usearch_getMatchedLength(usearch),
-				&txt1_currptr);
+				&src_text_currptr);
 
 			/* append the replacement text */
-			appendBinaryStringInfo(&resbuf, VARDATA_ANY(t3), len3);
+			appendBinaryStringInfo(&resbuf, VARDATA_ANY(to_text), to_str_len);
 
 			previous_pos = pos + usearch_getMatchedLength(usearch);
 		}
@@ -5376,11 +5383,11 @@ pltsql_replace_non_determinstic(text *t1, text *t2, text *t3, Oid collid, text *
 		/* copy the segment after the last match */
 		if (previous_pos)
 		{
-			if (len1 - (txt1_currptr - txt1_startptr) > 0)
+			if (src_len - (src_text_currptr - src_text_startptr) > 0)
 			{
 				appendBinaryStringInfo(&resbuf,
-									txt1_currptr,
-									len1 - (txt1_currptr - txt1_startptr));
+									src_text_currptr,
+									src_len - (src_text_currptr - src_text_startptr));
 			}
 			result = cstring_to_text_with_len(resbuf.data, resbuf.len);
 			pfree(resbuf.data);
@@ -5390,11 +5397,11 @@ pltsql_replace_non_determinstic(text *t1, text *t2, text *t3, Oid collid, text *
 			/*
 			* The substring is not found: return the original string
 			*/
-			result = t1;
+			result = src_text;
 		}
 
-		pfree(uchar1);
-		pfree(uchar2);
+		pfree(src_uchar);
+		pfree(from_uchar);
 
 		if (usearch != NULL)
 			usearch_close(usearch);

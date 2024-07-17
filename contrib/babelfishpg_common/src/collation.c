@@ -1328,20 +1328,21 @@ is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	}
 	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colliculocale, &isnull);
+
 	if (!isnull)
-		collcollate = pstrdup(TextDatumGetCString(datum));
-	ReleaseSysCache(tp);
+	{
+		collcollate = TextDatumGetCString(datum);
+		ReleaseSysCache(tp);
 
-	if (isnull)
-		PG_RETURN_BOOL(false);
+		if (0 != strstr(lowerstr(collcollate), "level1") &&    /* CI_AI */
+			0 == strstr(lowerstr(collcollate), "kc-true"))
+		{
+			pfree(collcollate);
+			PG_RETURN_BOOL(true);
+		}
 
-	if (strstr(lowerstr(collcollate), lowerstr("colStrength=primary")))
-		PG_RETURN_BOOL(true);
-
-	/* Starting from PG16, locale string is canonicalized to a language tag. */
-	if (0 != strstr(lowerstr(collcollate), "level1") &&    /* CI_AI */
-		0 == strstr(lowerstr(collcollate), "kc-true"))
-		PG_RETURN_BOOL(true);
+		pfree(collcollate);
+	}
 
 	PG_RETURN_BOOL(false);
 }
