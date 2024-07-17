@@ -40,7 +40,6 @@ BABEL-1994-VARCHAR
 BABEL-2086
 BABEL-2170
 BABEL-2203
-BABEL-4390
 BABEL-2208
 BABEL-2257
 BABEL-2449
@@ -124,7 +123,6 @@ BABEL-4214
 BABEL-4516
 babel_417
 BABEL-493
-BABEL-4888
 BABEL_539
 BABEL-621
 BABEL-728
@@ -519,10 +517,6 @@ BABEL-730
 babel-4475
 babel-3254
 babel-4517
-BABEL-4815
-Test_alter_db_rename
-Test_sp_renamedb
-Test_sp_rename_database
 babel_table_type
 alter-procedure
 1_GRANT_SCHEMA
@@ -541,4 +535,3 @@ babel_4328_datetime2
 babel_4328_datetimeoffset
 babel_726
 BABEL-3401
-BABEL-5071
