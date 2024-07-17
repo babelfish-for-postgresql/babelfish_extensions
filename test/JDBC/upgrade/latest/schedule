@@ -123,6 +123,7 @@ BABEL-4214
 BABEL-4516
 babel_417
 BABEL-493
+BABEL-4888
 BABEL_539
 BABEL-621
 BABEL-728
@@ -491,6 +492,7 @@ kill
 set_tran_isolvl
 with_recompile
 alter_proc_recompile
+catalogs_dbo_sys_schema-upgrade
 BABEL-4217
 Test_ISNULL
 BABEL-4270
@@ -540,3 +542,4 @@ babel_726
 BABEL-3401
 BABEL-3820
 PARTITION
+BABEL-5071

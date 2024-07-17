@@ -93,9 +93,10 @@ int
 
 SELECT count(*) FROM db1.dbo.SySInDeXes where id=OBJECT_ID('t1');
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+~~START~~
+int
+0
+~~END~~
 
 
 -- clean up

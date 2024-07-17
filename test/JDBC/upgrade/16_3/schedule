@@ -122,6 +122,7 @@ BABEL-4214
 BABEL-4516
 babel_417
 BABEL-493
+BABEL-4888
 BABEL_539
 BABEL-728
 BABEL-733
@@ -516,3 +517,4 @@ Test_alter_db_rename
 Test_sp_renamedb
 Test_sp_rename_database
 BABEL-4869
+BABEL-5071

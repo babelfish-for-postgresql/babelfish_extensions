@@ -96,9 +96,9 @@ ORDER BY indexdef
 GO
 ~~START~~
 text
-CREATE UNIQUE INDEX babel_3571_1_id1_key ON master_dbo.babel_3571_1 USING btree (id1) NULLS NOT DISTINCT
-CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree (id2) NULLS NOT DISTINCT
-CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1, id2) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_1_id1_key ON master_dbo.babel_3571_1 USING btree (id1 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_1_id2_key ON master_dbo.babel_3571_1 USING btree (id2 NULLS FIRST) NULLS NOT DISTINCT
+CREATE UNIQUE INDEX babel_3571_2_id1_id2_key ON master_dbo.babel_3571_2 USING btree (id1 NULLS FIRST, id2 NULLS FIRST) NULLS NOT DISTINCT
 CREATE UNIQUE INDEX babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce ON master_dbo.babel_3571_3 USING btree (id1 NULLS FIRST, id2 NULLS FIRST) NULLS NOT DISTINCT
 ~~END~~
 
