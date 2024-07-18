@@ -1,5 +1,5 @@
 -- psql
-SHOW "babelfishpg_tsql.migration_mode"; -- make sure it is single-db mode
+SHOW "babelfishpg_tsql.migration_mode"; -- make sure it is multi-db mode
 GO
 
 -- tsql

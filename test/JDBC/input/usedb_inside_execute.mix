@@ -1,8 +1,3 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-
 -- tsql
 --aborts the transaction when database is not found
 use db1;
@@ -75,8 +70,3 @@ go
 
 drop database db3;
 go
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO

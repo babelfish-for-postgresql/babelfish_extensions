@@ -54,8 +54,6 @@ GO
 -- test multi-db mode
 SELECT set_config('role', 'jdbc_user', false);
 GO
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
 
 CREATE DATABASE db1;
 GO
@@ -87,7 +85,4 @@ GO
 SELECT COUNT(*) FROM pg_auth_members
 WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'db2_guest')
 AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db2_db_owner');
-GO
-
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
 GO

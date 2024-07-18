@@ -39,9 +39,6 @@ GO
 SELECT set_config('role', 'jdbc_user', false)
 GO
 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false)
-GO
-
 SELECT current_setting('babelfishpg_tsql.migration_mode')
 GO
 
@@ -113,9 +110,6 @@ GO
 SELECT set_config('role', 'jdbc_user', false)
 GO
 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false)
-GO
-
 SELECT current_setting('babelfishpg_tsql.migration_mode')
 GO
 
@@ -124,9 +118,6 @@ USE babelfish_migration_mode_db2
 GO
 
 SELECT set_config('role', 'jdbc_user', false)
-GO
-
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false)
 GO
 
 SELECT current_setting('babelfishpg_tsql.migration_mode')
@@ -149,9 +140,6 @@ DROP DATABASE babelfish_migration_mode_db2
 GO
 
 SELECT set_config('role', 'jdbc_user', false)
-GO
-
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false)
 GO
 
 SELECT current_setting('babelfishpg_tsql.migration_mode')

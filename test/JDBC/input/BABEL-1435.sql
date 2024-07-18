@@ -78,9 +78,6 @@ END
 GO
 
 -- test multi-db mode 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
-
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 
@@ -111,7 +108,4 @@ DROP DATABASE db2;
 GO
 
 SELECT name FROM sys.sysdatabases ORDER BY name;
-GO
-
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
 GO

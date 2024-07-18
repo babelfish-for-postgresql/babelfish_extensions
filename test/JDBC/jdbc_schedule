@@ -10,13 +10,6 @@
 
 all
 
-# disabling the tests which use multi-db, may cause unnecessary test failures
-ignore#!#BABEL-1454
-ignore#!#BABEL-3655
-ignore#!#BABEL-SYS-DATABASES
-ignore#!#ISC-Table_Constraints
-ignore#!#usedb_inside_execute
-
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
