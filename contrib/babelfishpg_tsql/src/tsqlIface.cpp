@@ -906,6 +906,31 @@ public:
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
 		handleGeospatialFunctionsInFunctionCall(ctx);
+
+		if (ctx->func_proc_name_server_database_schema())
+		{
+			if (ctx->func_proc_name_server_database_schema()->procedure)
+			{
+				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+
+				if (pg_strcasecmp(proc_name.c_str(), "trim") == 0 
+					&& !(ctx->func_proc_name_server_database_schema()->server)
+					&& !(ctx->func_proc_name_server_database_schema()->database)
+					&& !(ctx->func_proc_name_server_database_schema()->schema))
+				{
+					rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx->func_proc_name_server_database_schema()), "sys.trim")));
+				}
+			}
+		}
+	}
+
+	void exitTRIM(TSqlParser::TRIMContext *ctx) override
+	{
+		if (ctx->trim_from())
+		{	
+			rewritten_query_fragment.emplace(std::make_pair(ctx->trim_from()->start->getStartIndex(), std::make_pair(::getFullText(ctx->trim_from()), "  , ")));
+		}
+		rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx->TRIM()), "sys.TRIM")));
 	}
 
 	/* We are adding handling for CLR_UDT Types in:
@@ -2231,6 +2256,15 @@ public:
 	{
 		handleOrderByOffsetFetch(ctx);
 	}
+
+	void exitTRIM(TSqlParser::TRIMContext *ctx) override
+	{
+		if (ctx->trim_from())
+		{	
+			rewritten_query_fragment.emplace(std::make_pair(ctx->trim_from()->start->getStartIndex(), std::make_pair(::getFullText(ctx->trim_from()), "  , ")));
+		}
+		rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx->TRIM()), "sys.TRIM")));
+	}
   
 	// NB: the following are copied in tsqlMutator
 	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
@@ -2446,6 +2480,14 @@ public:
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
 						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
+				}
+
+				if (pg_strcasecmp(proc_name.c_str(), "trim") == 0 
+					&& !(ctx->func_proc_name_server_database_schema()->server)
+					&& !(ctx->func_proc_name_server_database_schema()->database)
+					&& !(ctx->func_proc_name_server_database_schema()->schema))
+				{
+					rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx->func_proc_name_server_database_schema()), "sys.trim")));
 				}
 			}
 		}
