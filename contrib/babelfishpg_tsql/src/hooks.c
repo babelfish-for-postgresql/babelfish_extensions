@@ -2959,6 +2959,9 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 
 	if (access == OAT_POST_CREATE && classId == ProcedureRelationId)
 		revoke_func_permission_from_public(objectId);
+
+	if (access == OAT_POST_CREATE)
+		change_object_owner_if_db_owner();
 }
 
 static void

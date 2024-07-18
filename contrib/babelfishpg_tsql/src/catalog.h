@@ -91,6 +91,7 @@ typedef FormData_authid_login_ext *Form_authid_login_ext;
 
 extern int16 get_db_id(const char *dbname);
 extern char *get_db_name(int16 dbid);
+extern char *get_db_owner_role_name(const char *dbname);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
 extern bool guest_has_dbaccess(const char *db_name);

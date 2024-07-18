@@ -2518,3 +2518,237 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 	table_close(rel, AccessShareLock);
 	PG_RETURN_INT32(0);
 }
+
+/*
+ * Helper function to generate "ALTER ROLE db_owner ADD MEMBER ..." subcommands.
+ */
+static List
+*gen_alter_dbowner_add_subcmds(const char *rolname, const char* dbname)
+{
+	StringInfoData query;
+	List	   *stmt_list;
+	Node	   *stmt;
+	int			expected_stmts = 7;
+	int			i = 0;
+	const char *db_owner_role = get_db_owner_role_name(dbname);
+	StringInfoData rolname_obj;
+
+	initStringInfo(&query);
+	initStringInfo(&rolname_obj);
+
+	appendStringInfoString(&rolname_obj, rolname);
+	appendStringInfoString(&rolname_obj, "_obj");
+
+	appendStringInfoString(&query, "CREATE ROLE dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+
+	/* Replace dummy elements in parsetree with real values */
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_CreateRoleStmt(stmt, rolname_obj.data, NULL, NULL);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname_obj.data, db_owner_role);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_ReassignOwnedStmt(stmt, rolname, rolname_obj.data);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname_obj.data, rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname, db_owner_role);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, db_owner_role, rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, get_dbo_role_name(dbname), rolname);
+
+	pfree(query.data);
+	pfree(rolname_obj.data);
+
+	return stmt_list;
+}
+
+/*
+ * Helper function to generate "ALTER ROLE db_owner DROP MEMBER ..." subcommands.
+ */
+static List
+*gen_alter_dbowner_drop_subcmds(const char *rolname, const char* dbname)
+{
+	StringInfoData query;
+	List	   *stmt_list;
+	Node	   *stmt;
+	int			expected_stmts = 6;
+	int			i = 0;
+	const char *db_owner_role = get_db_owner_role_name(dbname);
+	StringInfoData rolname_obj;
+
+	initStringInfo(&query);
+	initStringInfo(&rolname_obj);
+
+	appendStringInfoString(&rolname_obj, rolname);
+	appendStringInfoString(&rolname_obj, "_obj");
+
+	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
+	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
+	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy; ");
+	appendStringInfoString(&query, "DROP ROLE dummy; ");
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+
+	/* Replace dummy elements in parsetree with real values */
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, get_dbo_role_name(dbname), rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, db_owner_role, rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname, db_owner_role);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname_obj.data, rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_ReassignOwnedStmt(stmt, rolname_obj.data, rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropRoleStmt(stmt, rolname_obj.data);
+
+	pfree(query.data);
+	pfree(rolname_obj.data);
+
+	return stmt_list;
+}
+
+/*
+ * Helper function to execute "ALTER ROLE db_owner ADD/DROP MEMBER ..."
+ * subcommands using ProcessUtility(). Caller should make sure
+ * their inputs are sanitized to prevent unexpected behaviour.
+ */
+void
+exec_alter_dbowner_subcmds(GrantRoleStmt *stmt)
+{
+	List		*parsetree_list;
+	ListCell	*parsetree_item;
+	RoleSpec	*grantee = linitial(stmt->grantee_roles);
+
+	const char *rolname = grantee->rolename;
+	const char *dbname = get_cur_db_name();
+
+	if (stmt->is_grant)
+		parsetree_list = gen_alter_dbowner_add_subcmds(rolname, dbname);
+	else
+		parsetree_list = gen_alter_dbowner_drop_subcmds(rolname, dbname);
+
+	/* Run all subcommands */
+	foreach(parsetree_item, parsetree_list)
+	{
+		Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+		PlannedStmt *wrapper;
+
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
+
+		/* do this step */
+		ProcessUtility(wrapper,
+					"(ALTER ROLE ADD )",
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+	}
+}
+
+bool
+is_grantee_role_db_owner(GrantRoleStmt *stmt)
+{
+	if ((list_length(stmt->grantee_roles) == 1) && (list_length(stmt->granted_roles) == 1))
+	{
+		AccessPriv *granted = linitial(stmt->granted_roles);
+
+		if (strcmp(granted->priv_name, get_db_owner_role_name(get_cur_db_name())) == 0)
+			return true;
+	}
+
+	return false;
+}
+
+void
+change_object_owner_if_db_owner()
+{
+	Oid dbo_id = InvalidOid;
+	char* query;
+	char *rolname = NULL;
+	int			rc = 0;
+	Oid role_oid = GetUserId();
+
+	/* TSQL specific behavior */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	rolname = GetUserNameFromId(role_oid, true);
+
+	if (!rolname)
+		return;
+
+	if (!is_user(role_oid))
+		return;
+
+	dbo_id = get_role_oid(get_dbo_role_name(get_cur_db_name()), true);
+
+	if (role_oid == dbo_id || dbo_id == InvalidOid)
+		return;
+
+	if (!is_member_of_role(role_oid, get_role_oid(get_db_owner_name(get_cur_db_name()), true)))
+		return;
+
+	query = psprintf("REASSIGN OWNED BY \"%s\" TO \"%s_obj\";", rolname, rolname);
+
+	PG_TRY();
+	{
+		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_execute(query, false, 0)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+
+		pfree(query);
+	}
+	PG_CATCH();
+	{
+		pfree(query);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+}

@@ -1,0 +1,575 @@
+create login l1 with password = '123'
+go
+create user u1 for login l1
+go
+create login l2 with password = '123'
+go
+create user u2 for login l2
+go
+create schema s1 authorization u1
+go
+create schema s2 authorization u2
+go
+create table dbo.t0 (x int)
+go
+create function dbo.f0() returns int as begin return 10 end
+go
+create procedure dbo.p0 as select 20
+go
+
+-- tsql user=l1 password=123
+create table s1.t1 (a int)
+go
+create function s1.f1() returns int as begin return 11 end
+go
+create procedure s1.p1 as select 21
+go
+
+-- tsql user=l2 password=123
+create table s2.t2 (a int)
+go
+create function s2.f2() returns int as begin return 12 end
+go
+create procedure s2.p2 as select 22
+go
+
+-- tsql
+alter role db_owner add member u1
+go
+
+-- tsql user=l1 password=123
+select * from dbo.t0
+go
+~~START~~
+int
+~~END~~
+
+select dbo.f0()
+go
+~~START~~
+int
+10
+~~END~~
+
+exec dbo.p0
+go
+~~START~~
+int
+20
+~~END~~
+
+select * from s1.t1
+go
+~~START~~
+int
+~~END~~
+
+select s1.f1()
+go
+~~START~~
+int
+11
+~~END~~
+
+exec s1.p1
+go
+~~START~~
+int
+21
+~~END~~
+
+select * from s2.t2
+go
+~~START~~
+int
+~~END~~
+
+select s2.f2()
+go
+~~START~~
+int
+12
+~~END~~
+
+exec s2.p2
+go
+~~START~~
+int
+22
+~~END~~
+
+create table s1.t11 (a int)
+go
+create schema s3 authorization u1
+go
+create table s3.t3 (a int)
+go
+create function s3.f3() returns int as begin return 13 end
+go
+create procedure s3.p3 as select 23
+go
+
+-- tsql user=l2 password=123
+select * from dbo.t0
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t0)~~
+
+select dbo.f0()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f0)~~
+
+exec dbo.p0
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p0)~~
+
+select * from s1.t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+select s1.f1()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+exec s1.p1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+select * from s2.t2
+go
+~~START~~
+int
+~~END~~
+
+select s2.f2()
+go
+~~START~~
+int
+12
+~~END~~
+
+exec s2.p2
+go
+~~START~~
+int
+22
+~~END~~
+
+select * from s1.t11
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t11)~~
+
+select * from s3.t3
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t3)~~
+
+select s3.f3()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f3)~~
+
+exec s3.p3
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p3)~~
+
+
+-- psql
+-- Procedure/function owners should be master_u1_obj
+SELECT proname,
+       proowner::regrole
+FROM pg_proc
+WHERE pronamespace::regnamespace::text = 'master_s1'
+OR pronamespace::regnamespace::text = 'master_s3'
+ORDER BY proname;
+GO
+~~START~~
+name#!#regrole
+f1#!#master_u1_obj
+f3#!#master_u1_obj
+p1#!#master_u1_obj
+p3#!#master_u1_obj
+~~END~~
+
+
+-- Table owners should be master_u1_obj
+SELECT
+    n.nspname AS schema,
+    c.relname AS table,
+    CASE c.relkind
+        WHEN 'r' THEN 'table'
+        WHEN 'v' THEN 'view'
+        WHEN 'm' THEN 'materialized view'
+        WHEN 'i' THEN 'index'
+        WHEN 'S' THEN 'sequence'
+        WHEN 's' THEN 'special'
+        WHEN 'f' THEN 'foreign table'
+    END AS type,
+    pg_catalog.pg_get_userbyid(c.relowner) AS owner
+FROM pg_catalog.pg_class c
+LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+WHERE (n.nspname = 'master_s1' OR n.nspname = 'master_s3')
+AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
+ORDER BY n.nspname, c.relkind, c.relname;
+GO
+~~START~~
+name#!#name#!#text#!#name
+master_s1#!#t1#!#table#!#master_u1_obj
+master_s1#!#t11#!#table#!#master_u1_obj
+master_s3#!#t3#!#table#!#master_u1_obj
+~~END~~
+
+
+-- Schema owners should be master_u1_obj
+SELECT
+    r.rolname AS schema_owner,
+    ns.nspname
+FROM
+    pg_namespace ns
+JOIN
+    pg_roles r 
+ON
+    ns.nspowner = r.oid
+WHERE
+    ns.nspname = 'master_s1'
+OR
+    ns.nspname = 'master_s3'
+ORDER BY ns.nspname;
+GO
+~~START~~
+name#!#name
+master_u1_obj#!#master_s1
+master_u1_obj#!#master_s3
+~~END~~
+
+
+-- tsql
+select * from dbo.t0
+go
+~~START~~
+int
+~~END~~
+
+select dbo.f0()
+go
+~~START~~
+int
+10
+~~END~~
+
+exec dbo.p0
+go
+~~START~~
+int
+20
+~~END~~
+
+select * from s1.t1
+go
+~~START~~
+int
+~~END~~
+
+select s1.f1()
+go
+~~START~~
+int
+11
+~~END~~
+
+exec s1.p1
+go
+~~START~~
+int
+21
+~~END~~
+
+select * from s2.t2
+go
+~~START~~
+int
+~~END~~
+
+select s2.f2()
+go
+~~START~~
+int
+12
+~~END~~
+
+exec s2.p2
+go
+~~START~~
+int
+22
+~~END~~
+
+select * from s1.t11
+go
+~~START~~
+int
+~~END~~
+
+select * from s3.t3
+go
+~~START~~
+int
+~~END~~
+
+select s3.f3()
+go
+~~START~~
+int
+13
+~~END~~
+
+exec s3.p3
+go
+~~START~~
+int
+23
+~~END~~
+
+alter role db_owner drop member u1
+go
+
+-- tsql user=l1 password=123
+select * from dbo.t0
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t0)~~
+
+select dbo.f0()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f0)~~
+
+exec dbo.p0
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p0)~~
+
+select * from s1.t1
+go
+~~START~~
+int
+~~END~~
+
+select s1.f1()
+go
+~~START~~
+int
+11
+~~END~~
+
+exec s1.p1
+go
+~~START~~
+int
+21
+~~END~~
+
+select * from s2.t2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t2)~~
+
+select s2.f2()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f2)~~
+
+exec s2.p2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p2)~~
+
+select * from s1.t11
+go
+~~START~~
+int
+~~END~~
+
+select * from s3.t3
+go
+~~START~~
+int
+~~END~~
+
+select s3.f3()
+go
+~~START~~
+int
+13
+~~END~~
+
+exec s3.p3
+go
+~~START~~
+int
+23
+~~END~~
+
+
+-- psql
+-- Procedure/function owners should be master_u1
+SELECT proname,
+       proowner::regrole
+FROM pg_proc
+WHERE pronamespace::regnamespace::text = 'master_s1'
+OR pronamespace::regnamespace::text = 'master_s3'
+ORDER BY proname;
+GO
+~~START~~
+name#!#regrole
+f1#!#master_u1
+f3#!#master_u1
+p1#!#master_u1
+p3#!#master_u1
+~~END~~
+
+
+-- Table owners should be master_u1
+SELECT
+    n.nspname AS schema,
+    c.relname AS table,
+    CASE c.relkind
+        WHEN 'r' THEN 'table'
+        WHEN 'v' THEN 'view'
+        WHEN 'm' THEN 'materialized view'
+        WHEN 'i' THEN 'index'
+        WHEN 'S' THEN 'sequence'
+        WHEN 's' THEN 'special'
+        WHEN 'f' THEN 'foreign table'
+    END AS type,
+    pg_catalog.pg_get_userbyid(c.relowner) AS owner
+FROM pg_catalog.pg_class c
+LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+WHERE (n.nspname = 'master_s1' OR n.nspname = 'master_s3')
+AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
+ORDER BY n.nspname, c.relkind, c.relname;
+GO
+~~START~~
+name#!#name#!#text#!#name
+master_s1#!#t1#!#table#!#master_u1
+master_s1#!#t11#!#table#!#master_u1
+master_s3#!#t3#!#table#!#master_u1
+~~END~~
+
+
+-- Schema owners should be master_u1
+SELECT
+    r.rolname AS schema_owner,
+    ns.nspname
+FROM
+    pg_namespace ns
+JOIN
+    pg_roles r 
+ON
+    ns.nspowner = r.oid
+WHERE
+    ns.nspname = 'master_s1'
+OR
+    ns.nspname = 'master_s3'
+ORDER BY ns.nspname;
+GO
+~~START~~
+name#!#name
+master_u1#!#master_s1
+master_u1#!#master_s3
+~~END~~
+
+
+-- tsql
+drop table dbo.t0
+go
+drop function dbo.f0
+go
+drop procedure dbo.p0
+go
+drop table s1.t1
+go
+drop function s1.f1
+go
+drop procedure s1.p1
+go
+drop table s2.t2
+go
+drop function s2.f2
+go
+drop procedure s2.p2
+go
+drop table s1.t11
+go
+drop table s3.t3
+go
+drop function s3.f3
+go
+drop procedure s3.p3
+go
+drop schema s1
+go
+drop schema s2
+go
+drop schema s3
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop user u1
+go
+drop user u2
+go
+drop login l1
+go
+drop login l2
+go

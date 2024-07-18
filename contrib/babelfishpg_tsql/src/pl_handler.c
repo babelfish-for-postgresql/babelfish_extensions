@@ -3739,13 +3739,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 					PG_TRY();
 					{
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-												queryEnv, dest, qc);
+						if (is_grantee_role_db_owner(grant_role) && strcmp(queryString, "(ALTER ROLE ADD )") != 0)
+						{
+							exec_alter_dbowner_subcmds(grant_role);
+						}
 						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+						{
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
-
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+														queryEnv, dest, qc);
+						}
 					}
 					PG_FINALLY();
 					{
