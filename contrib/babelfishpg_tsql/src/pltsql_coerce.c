@@ -1150,7 +1150,19 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	}
 
 	/* Only one definition should exists per return type for special function */
-	Assert(ncandidates == 1);
+	if (ncandidates == 0)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("function %s.%s with return type %s does not exists.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+	}
+	else if (ncandidates > 1)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+	}
+
 	if (best_candidate != NULL)
 		best_candidate->next = NULL;
 	return best_candidate;
