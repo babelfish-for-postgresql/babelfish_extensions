@@ -79,7 +79,7 @@ int
 ~~END~~
 
 
-SELECT * from babel_4811_vu_prepare_f1(5);
+SELECT dbo.babel_4811_vu_prepare_f1(5);
 GO
 ~~START~~
 int
@@ -87,7 +87,7 @@ int
 ~~END~~
 
 
-SELECT * from babel_4811_vu_prepare_f1(-10);
+SELECT dbo.babel_4811_vu_prepare_f1(-10);
 GO
 ~~START~~
 int
@@ -95,7 +95,7 @@ int
 ~~END~~
 
 
-SELECT * from babel_4811_vu_prepare_f1(0);
+SELECT dbo.babel_4811_vu_prepare_f1(0);
 GO
 ~~START~~
 int
@@ -103,7 +103,7 @@ int
 ~~END~~
 
 
-SELECT * from babel_4811_vu_prepare_f2(5);
+SELECT dbo.babel_4811_vu_prepare_f2(5);
 GO
 ~~START~~
 varchar
@@ -111,7 +111,7 @@ varchar
 ~~END~~
 
 
-SELECT * from babel_4811_vu_prepare_f2(-10);
+SELECT dbo.babel_4811_vu_prepare_f2(-10);
 GO
 ~~START~~
 varchar
@@ -119,7 +119,7 @@ varchar
 ~~END~~
 
 
-SELECT * from babel_4811_vu_prepare_f2(0);
+SELECT dbo.babel_4811_vu_prepare_f2(0);
 GO
 ~~START~~
 varchar

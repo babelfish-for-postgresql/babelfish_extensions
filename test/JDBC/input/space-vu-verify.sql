@@ -29,22 +29,22 @@ GO
 SELECT DATALENGTH(SPACE(0));
 GO
 
-SELECT * from babel_4811_vu_prepare_f1(5);
+SELECT dbo.babel_4811_vu_prepare_f1(5);
 GO
 
-SELECT * from babel_4811_vu_prepare_f1(-10);
+SELECT dbo.babel_4811_vu_prepare_f1(-10);
 GO
 
-SELECT * from babel_4811_vu_prepare_f1(0);
+SELECT dbo.babel_4811_vu_prepare_f1(0);
 GO
 
-SELECT * from babel_4811_vu_prepare_f2(5);
+SELECT dbo.babel_4811_vu_prepare_f2(5);
 GO
 
-SELECT * from babel_4811_vu_prepare_f2(-10);
+SELECT dbo.babel_4811_vu_prepare_f2(-10);
 GO
 
-SELECT * from babel_4811_vu_prepare_f2(0);
+SELECT dbo.babel_4811_vu_prepare_f2(0);
 GO
 
 SELECT * from babel_4811_vu_prepare_f3();

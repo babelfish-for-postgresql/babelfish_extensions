@@ -350,13 +350,9 @@ $$
 LANGUAGE plpgsql STRICT STABLE;
 
 CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
--- sys.varchar has default length of 1, so we have to pass in 'number' to be the
--- type modifier.
 BEGIN
     IF number < 0 THEN
         result := NULL;
-    ELSEIF number = 0 THEN
-        result := '';
     ELSE
         result := PG_CATALOG.repeat(' ',number);
     END IF;
