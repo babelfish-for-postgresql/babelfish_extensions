@@ -108,7 +108,6 @@ extern Datum init_collid_trans_tab(PG_FUNCTION_ARGS);
 extern Datum init_like_ilike_table(PG_FUNCTION_ARGS);
 extern Datum init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS);
-extern Datum init_special_function_list(PG_FUNCTION_ARGS);
 extern Datum init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS);
 extern PLtsql_execstate *get_current_tsql_estate(void);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
@@ -4400,7 +4399,7 @@ _PG_init(void)
 
 	init_tsql_coerce_hash_tab(fcinfo);
 	init_tsql_datatype_precedence_hash_tab(fcinfo);
-	init_special_function_list(fcinfo);
+	init_special_function_list();
 	init_tsql_cursor_hash_tab(fcinfo);
 	RegisterXactCallback(pltsql_xact_cb, NULL);
 	RegisterSubXactCallback(pltsql_subxact_cb, NULL);

@@ -56,7 +56,6 @@ extern bool babelfish_dump_restore;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
-PG_FUNCTION_INFO_V1(init_special_function_list);
 PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr);
@@ -405,6 +404,8 @@ tsql_special_function_t tsql_special_function_list[] =
 {
 	{"sys", "trim", "Trim", 2, {{4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
+
+static bool		inited_tsql_special_function_list = false;
 
 #define TOTAL_TSQL_SPECIAL_FUNCTION_COUNT (sizeof(tsql_special_function_list)/sizeof(tsql_special_function_list[0]))
 
@@ -980,14 +981,19 @@ get_immediate_base_type_of_UDT(PG_FUNCTION_ARGS)
 	PG_RETURN_OID(base_type);
 }
 
-Datum
-init_special_function_list(PG_FUNCTION_ARGS)
+void
+init_special_function_list()
 {
+	Oid			type_id;
+
 	/* if common_utility_plugin_ptr is not initialised */
 	if (common_utility_plugin_ptr == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("Failed to find common utility plugin.")));
+
+	/* mark the special function list initialised */
+	inited_tsql_special_function_list = true;
 
 	for (int special_func_idx = 0; special_func_idx < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; special_func_idx++)
 	{
@@ -997,14 +1003,21 @@ init_special_function_list(PG_FUNCTION_ARGS)
 			{
 				if (!OidIsValid(tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types_oid[valid_type_idx]))
 				{
-					tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types_oid[valid_type_idx] = 
-							(*common_utility_plugin_ptr->get_tsql_datatype_oid)(tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types[valid_type_idx]);
+					type_id = (*common_utility_plugin_ptr->get_tsql_datatype_oid)(tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types[valid_type_idx]);
+
+					if (OidIsValid(type_id))
+					{
+						tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types_oid[valid_type_idx] = type_id;
+					}
+					else
+					{
+						/* type id is not loaded. wait for next scan */
+						inited_tsql_special_function_list = false;
+					}
 				}
 			}
 		}
 	}
-
-	PG_RETURN_INT32(0);
 }
 
 /*
@@ -1030,6 +1043,12 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 	if (func_nsname != NULL &&
 		(strlen(func_nsname) != 3 || strncmp(func_nsname, "sys", 3) != 0))
 		return false;
+
+	/* Initialise T-SQL special function argument type id list if not already done */
+	if (!inited_tsql_special_function_list)
+	{
+		init_special_function_list();
+	}
 
 	/* Get Special function details */
 	special_func = NULL;
