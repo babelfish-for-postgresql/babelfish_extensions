@@ -45,6 +45,7 @@ Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
 static Oid remove_accents_internal_oid;
+static UTransliterator *cached_transliterator = NULL;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
@@ -604,27 +605,53 @@ PG_FUNCTION_INFO_V1(remove_accents_internal_using_icu);
 Datum remove_accents_internal_using_icu(PG_FUNCTION_ARGS)
 {
 	char *input_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	UChar *utf16_input, *utf16_res;
+	int32_t len_uinput, limit, capacity, len_result;
 	char *result;
-	text *res_str;
-	UChar *utf16_input, *utf16_res, *rules;
-	int32_t    len_uinput, limit, capacity, len_result, len_uchar;
 	UErrorCode status = U_ZERO_ERROR;
-	UTransliterator *cached_transliterator = NULL;
+	text *res_str;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
 #ifdef USE_ICU
-	// Load transliterator rules
-	len_uchar = icu_to_uchar(&rules, TRANSFORMATION_RULE, strlen(TRANSFORMATION_RULE));
+	// Check if transliterator is not yet cached
+	if (!cached_transliterator)
+	{
+		MemoryContext oldcontext;
+		UChar *rules;
+		int32_t len_uchar;
 
-	// Open transliterator
-	cached_transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
-	if (U_FAILURE(status) || !cached_transliterator)
+		// Switch to TopMemoryContext for allocating cached transliterator
+		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+
+		// Load transliterator rules
+		len_uchar = icu_to_uchar(&rules, TRANSFORMATION_RULE, strlen(TRANSFORMATION_RULE));
+
+		// Open transliterator
+		cached_transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
+		if (U_FAILURE(status) || !cached_transliterator)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+						errmsg("Error opening transliterator: %s", u_errorName(status))));
+		}
+
+		// Switch back to original memory context
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/*
+	 * XXX: Currently, we are allowing length of input string upto 250MB bytes. For long term,
+	 * we should try to chunk the input string into smaller parts, remove the accents of that
+	 * part and concat back the final string.
+	 */
+	if (strlen(input_str) > MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS)
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-					errmsg("Error opening transliterator: %s", u_errorName(status))));
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("Input string of the length greater than 250MB is not supported by the function remove_accents_internal." \
+							" This function might be used internally by LIKE operator.")));
 	}
 
 	len_uinput = icu_to_uchar(&utf16_input, input_str, strlen(input_str));

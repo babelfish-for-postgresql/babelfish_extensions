@@ -1,5 +1,5 @@
 -- psql
--- Insert all possible UNICODE and UTF-8 valid characters
+-- Insert all possible UNICODE/UTF-8 valid characters
 CREATE TABLE all_utf8_chars(col1 BYTEA, col2 TEXT)
 GO
 
