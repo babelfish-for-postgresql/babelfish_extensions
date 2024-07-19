@@ -1,0 +1,237 @@
+
+/* CHARINDEX WITH CI_AI COLLATIONS */
+SELECT CHARINDEX('Æ','AAAAAE' COLLATE Latin1_General_CI_AI)
+SELECT CHARINDEX('Æ','AeAAAaE' COLLATE Latin1_General_CI_AI, 2)
+SELECT CHARINDEX('Æ', 'AAAAAABBBBBBBEEEEEEAAAAA' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+int
+5
+~~END~~
+
+~~START~~
+int
+6
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+/* BASIC TEST CASES */
+/* These should find a result */
+SELECT CHARINDEX('cat', 'The cat is on the mat' COLLATE Latin1_General_CI_AI, 1);
+SELECT CHARINDEX('cafe', 'The café is cozy' COLLATE Latin1_General_CI_AI, 1);
+/* These should not find a result */
+SELECT CHARINDEX('dog', 'The cat is on the mat' COLLATE Latin1_General_CI_AI, 1);
+SELECT CHARINDEX('caé', 'The café is cozy' COLLATE Latin1_General_CI_AI, 1);
+GO
+~~START~~
+int
+5
+~~END~~
+
+~~START~~
+int
+5
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+
+SELECT CHARINDEX('', 'The café is cozy' COLLATE Latin1_General_CI_AI, 1);
+SELECT CHARINDEX('café', '' COLLATE Latin1_General_CI_AI, 1);
+SELECT CHARINDEX('', '' COLLATE Latin1_General_CI_AI, 1)
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: failed to perform ICU search: U_ILLEGAL_ARGUMENT_ERROR)~~
+
+
+SELECT CHARINDEX('tHe Cať', 'Where is The càt ???' COLLATE Latin1_General_CI_AI);
+SELECT CHARINDEX('CaT', 'The cat̤ is on the mat' COLLATE Latin1_General_CI_AI);
+GO
+~~START~~
+int
+10
+~~END~~
+
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT CHARINDEX('cat', 'The cat is on the mat cat' COLLATE Latin1_General_CI_AI, 6)
+SELECT CHARINDEX('cat', 'The cat is on the mat' COLLATE Latin1_General_CI_AI, 30)
+GO
+~~START~~
+int
+23
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: failed to perform ICU search: U_ILLEGAL_ARGUMENT_ERROR)~~
+
+
+
+/* REPLACE WITH CI_AI COLLATIONS */
+/* BASIC TEST CASES */
+/* These should find a result */
+SELECT REPLACE('This café is cozy.', 'café', 'coffee' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE('The café is open for business.', 'café is', 'coffee shops are' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE('This café is cozy.', 'tea', 'coffee' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE('The café serves café au lait.', 'café', 'coffee' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+text
+This coffee is cozy.
+~~END~~
+
+~~START~~
+text
+The coffee shops are open for business.
+~~END~~
+
+~~START~~
+text
+This café is cozy.
+~~END~~
+
+~~START~~
+text
+The coffee serves coffee au lait.
+~~END~~
+
+
+SELECT REPLACE('café is cozy.', 'café', 'coffee' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE('The café is good.', 'is', 'was' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+text
+coffee is cozy.
+~~END~~
+
+~~START~~
+text
+The café was good.
+~~END~~
+
+
+SELECT REPLACE(REPLACE('The café is open.', 'café', 'coffee' COLLATE Latin1_General_CI_AI), 'open', 'closed' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+text
+The coffee is closed.
+~~END~~
+
+
+SELECT REPLACE('The café is great.', 'gřeat', N'>>>>>>' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE('This café is cozy.', 'café', N'cAfë' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+text
+The café is >>>>>>.
+~~END~~
+
+~~START~~
+text
+This cAfë is cozy.
+~~END~~
+
+
+SELECT REPLACE('This café is cozy.', '', 'coffee' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE('', '', 'coffee' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE('This café is cozy.', 'café', '' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+text
+This café is cozy.
+~~END~~
+
+~~START~~
+text
+
+~~END~~
+
+~~START~~
+text
+This  is cozy.
+~~END~~
+
+
+SELECT REPLACE('This café is cozy.', 'CAFÉ', 'coffee' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+text
+This coffee is cozy.
+~~END~~
+
+
+SELECT REPLACE('This café is café.', 'café', 'coffee' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+text
+This coffee is coffee.
+~~END~~
+
+
+SELECT REPLACE('This café is !.', '!', 'coffee' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+text
+This café is coffee.
+~~END~~
+
+
+SELECT REPLACE('This café is cozy.', ' ', ' ' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE(N'The café is!.', '!', '@@' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+text
+This café is cozy.
+~~END~~
+
+~~START~~
+text
+The café is@@.
+~~END~~
+
+
+
+SELECT REPLACE ('aaaaaaÆaaaaaaÆaaaa','AE' collate Latin1_General_CI_AI, '!---!')
+SELECT REPLACE ('ÆAEaaaaaaÆ','AE' collate Latin1_General_CI_AI, '!---!')
+SELECT REPLACE ('eeeeeeeeeAAAAAA','AE' collate Latin1_General_CI_AI, '!---!')
+GO
+~~START~~
+text
+aaaaaa!---!aaaaaa!---!aaaa
+~~END~~
+
+~~START~~
+text
+!---!!---!aaaaaa!---!
+~~END~~
+
+~~START~~
+text
+eeeeeeeeeAAAAAA
+~~END~~
+
