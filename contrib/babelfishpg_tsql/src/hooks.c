@@ -263,7 +263,7 @@ static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_h
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
 static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_constraint_nulls_ordering_hook = NULL;
-static pltsql_partitioned_table_reloptions_hook_type prev_pltsql_partitioned_table_reloptions_hook = NULL;
+static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -456,8 +456,8 @@ InstallExtendedHooks(void)
 	prev_pltsql_unique_constraint_nulls_ordering_hook = pltsql_unique_constraint_nulls_ordering_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = unique_constraint_nulls_ordering;
 
-	prev_pltsql_partitioned_table_reloptions_hook = pltsql_partitioned_table_reloptions_hook;
-	pltsql_partitioned_table_reloptions_hook = is_partitioned_table_reloptions_allowed; 
+	prev_pltsql_is_partitioned_table_reloptions_allowed_hook = pltsql_is_partitioned_table_reloptions_allowed_hook;
+	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed; 
 }
 
 void
@@ -521,7 +521,7 @@ UninstallExtendedHooks(void)
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
-	pltsql_partitioned_table_reloptions_hook = prev_pltsql_partitioned_table_reloptions_hook;
+	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
