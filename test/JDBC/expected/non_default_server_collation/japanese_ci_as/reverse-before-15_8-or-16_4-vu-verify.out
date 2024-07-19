@@ -7,6 +7,15 @@ varchar
 ~~END~~
 
 
+-- empty string
+SELECT reverse('')
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
 -- input type char
 DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
 SELECT reverse(@inputString)

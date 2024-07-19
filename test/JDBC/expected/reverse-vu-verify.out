@@ -7,6 +7,15 @@ varchar
 ~~END~~
 
 
+-- empty string
+SELECT reverse('')
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
 -- input type char
 DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
 SELECT reverse(@inputString)
@@ -554,7 +563,7 @@ SELECT reverse(@inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of reverse function.)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
@@ -562,7 +571,7 @@ SELECT reverse(@inputString)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of reverse function.)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
@@ -586,8 +595,7 @@ varchar
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT reverse(CAST(@inputString AS VARCHAR(50)))
 GO
-~~START~~
-varchar
-)2 1(TNIOP
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 

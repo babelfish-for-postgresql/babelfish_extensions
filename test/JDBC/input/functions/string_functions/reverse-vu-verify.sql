@@ -2,6 +2,10 @@
 SELECT reverse(NULL)
 GO
 
+-- empty string
+SELECT reverse('')
+GO
+
 -- input type char
 DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
 SELECT reverse(@inputString)
