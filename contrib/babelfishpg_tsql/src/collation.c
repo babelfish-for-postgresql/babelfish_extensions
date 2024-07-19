@@ -457,7 +457,17 @@ get_remove_accents_internal_oid()
 	if (OidIsValid(remove_accents_internal_oid))
 		return;
 
-	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
+#ifdef USE_ICU
+	if (U_ICU_VERSION_MAJOR_NUM == 60 && U_ICU_VERSION_MINOR_NUM ==2)
+	{
+		elog(LOG, "Using cached mappings to remove accents");
+		remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
+		return;
+	}
+#else
+#endif
+	elog(LOG, "Using ICU function to remove accents");
+	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal_using_icu")), -1, funcargtypes, true);
 }
 
 static inline void

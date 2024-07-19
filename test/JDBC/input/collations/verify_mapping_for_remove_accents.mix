@@ -1,5 +1,5 @@
 -- sla 100000
--- Insert all possible UNICODE and UTF-8 valid characters
+-- Insert all possible UNICODE/UTF-8 valid characters
 -- psql
 CREATE TABLE all_utf8_chars(col1 BYTEA, col2 TEXT)
 GO
@@ -21,15 +21,9 @@ BEGIN
 END;         
 $$;
 
--- Generate a mapping for every required character
--- ex:  /* Æ */    {0xc386, 0x4145}    /* AE */
-SELECT REPLACE(FORMAT('/* %s */    {%s, %s},    /* %s */',col2, col1, cast(sys.remove_accents_internal_using_icu(col2) as bytea), sys.remove_accents_internal_using_icu(col2)), '\', '0')
-    FROM all_utf8_chars
-    WHERE col2 != sys.remove_accents_internal_using_icu(col2);
+SELECT COUNT(*) FROM all_utf8_chars
+    WHERE sys.remove_accents_internal(col2) != sys.remove_accents_internal_using_icu(col2);
 GO
 
 DROP TABLE all_utf8_chars
-GO
-
-select * from pg_collation where collname like '%bbf_unicode_cp1_ci_as%';
 GO
