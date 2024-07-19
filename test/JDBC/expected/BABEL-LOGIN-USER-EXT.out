@@ -1434,9 +1434,6 @@ babel_4935_no_sysadmin2
 db_owner
 dbo
 guest
-INFORMATION_SCHEMA
-public
-sys
 ~~END~~
 
 
@@ -1451,9 +1448,6 @@ babel_4935_no_sysadmin2
 db_owner
 dbo
 guest
-INFORMATION_SCHEMA
-public
-sys
 ~~END~~
 
 
@@ -1467,9 +1461,6 @@ babel_4935_no_sysadmin1
 db_owner
 dbo
 guest
-INFORMATION_SCHEMA
-public
-sys
 ~~END~~
 
 
@@ -1482,9 +1473,6 @@ varchar
 db_owner
 dbo
 guest
-INFORMATION_SCHEMA
-public
-sys
 ~~END~~
 
 
