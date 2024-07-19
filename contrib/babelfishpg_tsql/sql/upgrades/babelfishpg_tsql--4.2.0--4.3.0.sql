@@ -106,19 +106,16 @@ CREATE OR REPLACE PROCEDURE sys.sp_tables (
     "@table_name" sys.nvarchar(384) = NULL,
     "@table_owner" sys.nvarchar(384) = NULL, 
     "@table_qualifier" sys.sysname = NULL,
-    "@table_type" sys.nvarchar(100) = NULL,
+    "@table_type" sys.varchar(100) = NULL,
     "@fusepattern" sys.bit = '1')
 AS $$
-	DECLARE @opt_table sys.varchar(16) = '';
-	DECLARE @opt_view sys.varchar(16) = '';
 BEGIN
 
-	-- Handle special case: Enumerate all databases when no filters are applied
+	-- Handle special case: Enumerate all databases when name and owner are blank but qualifier is '%'
 	IF (@table_qualifier = '%' AND @table_owner = '' AND @table_name = '')
 	BEGIN
-		-- Enumerate all databases when owner and name are blank
 		SELECT
-			CAST(d.name AS sys.sysname) AS TABLE_QUALIFIER,
+			d.name AS TABLE_QUALIFIER,
 			CAST(NULL AS sys.sysname) AS TABLE_OWNER,
 			CAST(NULL AS sys.sysname) AS TABLE_NAME,
 			CAST(NULL AS sys.varchar(32)) AS TABLE_TYPE,

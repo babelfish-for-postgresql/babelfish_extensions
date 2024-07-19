@@ -1,6 +1,3 @@
-USE master;
-GO
-
 CREATE DATABASE babel_5010_vu_prepare_db1;
 GO
 

@@ -92,6 +92,39 @@ GO
 EXEC [sys].sp_tables;
 GO
 
+-- NULL value tests
+
+-- case 1: when table name is NULL
+-- should return matching objects
+EXEC [sys].sp_tables @table_owner = 'dbo', @table_qualifier = 'babel_5010_vu_prepare_db1', @table_type = "'TABLE'";
+GO
+
+EXEC [sys].sp_tables @table_owner = 'dbo', @table_qualifier = 'babel_5010_vu_prepare_db1', @table_type = "'VIEW'";
+GO
+
+EXEC [sys].sp_tables @table_owner = 'dbo', @table_qualifier = 'babel_5010_vu_prepare_db1', @table_type = "'TABLE','VIEW'";
+GO
+
+-- case 2: when table owner is NULL
+-- should return matching objects
+EXEC [sys].sp_tables @table_name = 'babel_5010_vu_prepare_t1', @table_qualifier = 'babel_5010_vu_prepare_db1', @table_type = "'TABLE'";
+GO
+
+EXEC [sys].sp_tables @table_name = 'babel_5010_vu_prepare_v1', @table_qualifier = 'babel_5010_vu_prepare_db1', @table_type = "'VIEW'";
+GO
+
+-- should return empty set
+EXEC [sys].sp_tables @table_name = 'babel_5010_vu_prepare_v1', @table_qualifier = 'babel_5010_vu_prepare_db1', @table_type = "'TABLE'";
+GO
+
+-- case 3: when table qualifier is NULL
+-- should return matching objects
+EXEC [sys].sp_tables @table_name = 'babel_5010_vu_prepare_t1', @table_owner = 'dbo', @table_type = "'TABLE'";
+GO
+
+EXEC [sys].sp_tables @table_name = 'babel_5010_vu_prepare_v1', @table_owner = 'dbo', @table_type = "'VIEW'";
+GO
+
 SET NOCOUNT OFF;
 GO
 
