@@ -459,18 +459,20 @@ get_remove_accents_internal_oid()
 		return;
 
 #ifdef USE_ICU
-	if (U_ICU_VERSION_MAJOR_NUM == 60 && U_ICU_VERSION_MINOR_NUM ==2)
+	if (U_ICU_VERSION_MAJOR_NUM == 60 && U_ICU_VERSION_MINOR_NUM == 2)
 	{
 		elog(LOG, "Using cached mappings to remove accents");
-		remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
+		remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal_using_cache")), -1, funcargtypes, true);
 		return;
 	}
-#else
 #endif
 	elog(LOG, "Using ICU function to remove accents");
-	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal_using_icu")), -1, funcargtypes, true);
+	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
 }
 
+/*
+ * store 32bit character representation into multibyte stream
+ */
 static inline void
 store_coded_char(unsigned char *dest, uint32 code)
 {
@@ -505,8 +507,8 @@ compare_remove_accent_map_pair(const void *p1, const void *p2)
 	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
 }
 
-PG_FUNCTION_INFO_V1(remove_accents_internal);
-Datum remove_accents_internal(PG_FUNCTION_ARGS)
+PG_FUNCTION_INFO_V1(remove_accents_internal_using_cache);
+Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 {
 	unsigned char *input_str = (unsigned char *) text_to_cstring(PG_GETARG_TEXT_PP(0));
 	text          *return_result;
@@ -601,8 +603,8 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
  * We use a transformation rule to transliterate the string
  */
 
-PG_FUNCTION_INFO_V1(remove_accents_internal_using_icu);
-Datum remove_accents_internal_using_icu(PG_FUNCTION_ARGS)
+PG_FUNCTION_INFO_V1(remove_accents_internal);
+Datum remove_accents_internal(PG_FUNCTION_ARGS)
 {
 	char *input_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	UChar *utf16_input, *utf16_res;
