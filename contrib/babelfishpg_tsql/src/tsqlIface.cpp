@@ -206,6 +206,7 @@ static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
 static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
 static void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx);
 static void handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx);
+static void rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -909,16 +910,15 @@ public:
 
 		if (ctx->func_proc_name_server_database_schema())
 		{
-			if (ctx->func_proc_name_server_database_schema()->procedure)
-			{
-				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+			auto fpnsds = ctx->func_proc_name_server_database_schema();
 
-				if (pg_strcasecmp(proc_name.c_str(), "trim") == 0 
-					&& !(ctx->func_proc_name_server_database_schema()->server)
-					&& !(ctx->func_proc_name_server_database_schema()->database)
-					&& !(ctx->func_proc_name_server_database_schema()->schema))
+			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
+			{
+				auto id = fpnsds->id().back();
+
+				if (id->keyword()->TRIM())
 				{
-					rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx->func_proc_name_server_database_schema()), "sys.trim")));
+					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
 				}
 			}
 		}
@@ -926,11 +926,7 @@ public:
 
 	void exitTRIM(TSqlParser::TRIMContext *ctx) override
 	{
-		if (ctx->trim_from())
-		{	
-			rewritten_query_fragment.emplace(std::make_pair(ctx->trim_from()->start->getStartIndex(), std::make_pair(::getFullText(ctx->trim_from()), "  , ")));
-		}
-		rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx->TRIM()), "sys.TRIM")));
+		rewrite_function_trim_to_sys_trim(ctx);
 	}
 
 	/* We are adding handling for CLR_UDT Types in:
@@ -2259,11 +2255,7 @@ public:
 
 	void exitTRIM(TSqlParser::TRIMContext *ctx) override
 	{
-		if (ctx->trim_from())
-		{	
-			rewritten_query_fragment.emplace(std::make_pair(ctx->trim_from()->start->getStartIndex(), std::make_pair(::getFullText(ctx->trim_from()), "  , ")));
-		}
-		rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx->TRIM()), "sys.TRIM")));
+		rewrite_function_trim_to_sys_trim(ctx);
 	}
   
 	// NB: the following are copied in tsqlMutator
@@ -2465,7 +2457,11 @@ public:
                                               }
                                       }
                               }
-
+				
+				if (id->keyword()->TRIM())
+				{
+					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
+				}
 			}
 
 			if (ctx->func_proc_name_server_database_schema()->procedure)
@@ -2480,14 +2476,6 @@ public:
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
 						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
-				}
-
-				if (pg_strcasecmp(proc_name.c_str(), "trim") == 0 
-					&& !(ctx->func_proc_name_server_database_schema()->server)
-					&& !(ctx->func_proc_name_server_database_schema()->database)
-					&& !(ctx->func_proc_name_server_database_schema()->schema))
-				{
-					rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx->func_proc_name_server_database_schema()), "sys.trim")));
 				}
 			}
 		}
@@ -7988,6 +7976,20 @@ rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, Get
 			return name.substr(1);
 	}
 	return "";
+}
+
+/*
+ * In this function we Rewrite the Query for Trim function as follows
+ * TRIM '(' expression from expression ')' -> sys.TRIM '(' expression , expression ')'
+ */
+static void
+rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx)
+{
+	if (ctx->trim_from())
+	{	
+		rewritten_query_fragment.emplace(std::make_pair(ctx->trim_from()->start->getStartIndex(), std::make_pair(::getFullText(ctx->trim_from()), " , ")));
+	}
+	rewritten_query_fragment.emplace(std::make_pair(ctx->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TRIM()), "sys.trim")));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

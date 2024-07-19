@@ -989,16 +989,16 @@ init_special_function_list(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("Failed to find common utility plugin.")));
 
-	for (int i = 0; i < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; i++)
+	for (int special_func_idx = 0; special_func_idx < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; special_func_idx++)
 	{
-		for (int j = 0; j < tsql_special_function_list[i].nargs; j++)
+		for (int arg_idx = 0; arg_idx < tsql_special_function_list[special_func_idx].nargs; arg_idx++)
 		{
-			for (int k = 0; k < tsql_special_function_list[i].valid_arg_types[j].len; k++)
+			for (int valid_type_idx = 0; valid_type_idx < tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].len; valid_type_idx++)
 			{
-				if (!OidIsValid(tsql_special_function_list[i].valid_arg_types[j].valid_types_oid[k]))
+				if (!OidIsValid(tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types_oid[valid_type_idx]))
 				{
-					tsql_special_function_list[i].valid_arg_types[j].valid_types_oid[k] = 
-							(*common_utility_plugin_ptr->get_tsql_datatype_oid)(tsql_special_function_list[i].valid_arg_types[j].valid_types[k]);
+					tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types_oid[valid_type_idx] = 
+							(*common_utility_plugin_ptr->get_tsql_datatype_oid)(tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types[valid_type_idx]);
 				}
 			}
 		}
@@ -1057,7 +1057,7 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 
 		/* for UDT use its base type for input argument datatype validation */
 		base_type_id = get_immediate_base_type_of_UDT_internal(input_type_id);
-		if(OidIsValid(base_type_id))
+		if (OidIsValid(base_type_id))
 			input_type_id = base_type_id;
 
 		type_match = false;
