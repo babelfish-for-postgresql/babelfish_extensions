@@ -493,4 +493,15 @@ elif [ "$1" == "build_coverage" ]; then
 elif [ "$1" == "sum_coverage" ]; then
     sum_coverage $TARGET_WS
     exit 0
+elif [ "$1" == "bechanges" ]; then
+    build_bbf $TARGET_WS $TARGET_WS
+    init_db $TARGET_WS
+    $TARGET_WS/babelfish_extensions/test/JDBC/init.sh
+    exit 0
+elif [ "$1" == "pgchanges" ]; then
+    init_pg $TARGET_WS $TARGET_WS
+    build_bbf $TARGET_WS $TARGET_WS
+    init_db $TARGET_WS
+    $TARGET_WS/babelfish_extensions/test/JDBC/init.sh
+    exit 0
 fi

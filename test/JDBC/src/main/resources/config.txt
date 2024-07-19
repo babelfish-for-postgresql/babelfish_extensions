@@ -1,8 +1,10 @@
 # SET THIS CONNECTION STRING TO GENERATE THE EXPECTED OUTPUT FILE
-URL = localhost
+URL = persist-rohitbgt-sql.c6zg45pwga7u.us-west-2.rds.amazonaws.com
+#URL = localhost
 tsql_port = 1433
 psql_port = 5432
-databaseName = master
+databaseName = tanyagp
+#databaseName = master
 physicalDatabaseName = jdbc_testdb
 user = jdbc_user
 password = 12345678
