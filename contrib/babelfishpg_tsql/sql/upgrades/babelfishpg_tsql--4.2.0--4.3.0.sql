@@ -106,7 +106,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_tables (
     "@table_name" sys.nvarchar(384) = NULL,
     "@table_owner" sys.nvarchar(384) = NULL, 
     "@table_qualifier" sys.sysname = NULL,
-    "@table_type" sys.varchar(100) = NULL,
+    "@table_type" sys.nvarchar(100) = NULL,
     "@fusepattern" sys.bit = '1')
 AS $$
 BEGIN
