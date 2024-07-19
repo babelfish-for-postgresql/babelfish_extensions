@@ -732,17 +732,22 @@ RETURNS BOOLEAN AS $$
 DECLARE
     has_inconsistent_metadata BOOLEAN;
     num_rows INT;
+    eh_setting TEXT;
 BEGIN
-    has_inconsistent_metadata := FALSE;
+    eh_setting = (SELECT s.setting FROM pg_catalog.pg_settings s WHERE NAME = 'babelfishpg_tsql.escape_hatch_metadata_inconsistency_check');
+    
+    IF eh_setting = 'strict' THEN
+      -- Count the number of inconsistent metadata rows from Babelfish catalogs
+      SELECT COUNT(*) INTO num_rows
+      FROM sys.babelfish_inconsistent_metadata();
 
-    -- Count the number of inconsistent metadata rows from Babelfish catalogs
-    SELECT COUNT(*) INTO num_rows
-    FROM sys.babelfish_inconsistent_metadata();
+      has_inconsistent_metadata := num_rows > 0;
 
-    has_inconsistent_metadata := num_rows > 0;
-
-    -- Additional checks can be added here to update has_inconsistent_metadata accordingly
-
+      -- Additional checks can be added here to update has_inconsistent_metadata accordingly
+    ELSE
+      has_inconsistent_metadata := FALSE;
+    END IF;
+    
     RETURN has_inconsistent_metadata;
 END;
 $$

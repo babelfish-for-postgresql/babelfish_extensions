@@ -2016,6 +2016,7 @@ babelfishpg_tsql.escape_hatch_login_misc_options#!#strict#!#escape hatch for log
 babelfishpg_tsql.escape_hatch_login_old_password#!#strict#!#escape hatch for login old passwords
 babelfishpg_tsql.escape_hatch_login_password_must_change#!#strict#!#escape hatch for login passwords must_change option
 babelfishpg_tsql.escape_hatch_login_password_unlock#!#strict#!#escape hatch for login passwords unlock option
+babelfishpg_tsql.escape_hatch_metadata_inconsistency_check#!#strict#!#escape hatch for babelfish metadata inconsistency check
 babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table add
 babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table on exsiting constraint
 babelfishpg_tsql.escape_hatch_query_hints#!#ignore#!#escape hatch for query hints
@@ -2085,6 +2086,7 @@ babelfishpg_tsql.escape_hatch_login_misc_options#!#strict#!#escape hatch for log
 babelfishpg_tsql.escape_hatch_login_old_password#!#strict#!#escape hatch for login old passwords
 babelfishpg_tsql.escape_hatch_login_password_must_change#!#strict#!#escape hatch for login passwords must_change option
 babelfishpg_tsql.escape_hatch_login_password_unlock#!#strict#!#escape hatch for login passwords unlock option
+babelfishpg_tsql.escape_hatch_metadata_inconsistency_check#!#strict#!#escape hatch for babelfish metadata inconsistency check
 babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table add
 babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table on exsiting constraint
 babelfishpg_tsql.escape_hatch_query_hints#!#ignore#!#escape hatch for query hints
@@ -2135,6 +2137,7 @@ babelfishpg_tsql.escape_hatch_login_misc_options#!#strict#!#escape hatch for log
 babelfishpg_tsql.escape_hatch_login_old_password#!#strict#!#escape hatch for login old passwords
 babelfishpg_tsql.escape_hatch_login_password_must_change#!#strict#!#escape hatch for login passwords must_change option
 babelfishpg_tsql.escape_hatch_login_password_unlock#!#strict#!#escape hatch for login passwords unlock option
+babelfishpg_tsql.escape_hatch_metadata_inconsistency_check#!#strict#!#escape hatch for babelfish metadata inconsistency check
 babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table add
 babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table on exsiting constraint
 babelfishpg_tsql.escape_hatch_query_hints#!#ignore#!#escape hatch for query hints
