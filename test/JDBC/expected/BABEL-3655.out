@@ -1,20 +1,4 @@
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
 SHOW "babelfishpg_tsql.migration_mode";
 GO
 ~~START~~
@@ -50,26 +34,10 @@ DROP DATABASE babel_3655_test_db
 GO
 
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
 SHOW "babelfishpg_tsql.migration_mode";
 GO
 ~~START~~
 text
-single-db
+multi-db
 ~~END~~
 

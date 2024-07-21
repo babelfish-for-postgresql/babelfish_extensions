@@ -31,12 +31,9 @@ GO
 CREATE DATABASE db1;
 GO
 
-SELECT COUNT(*) FROM pg_roles where rolname = 'dbo';
-SELECT COUNT(*) FROM pg_roles where rolname = 'db_owner';
-SELECT COUNT(*) FROM pg_namespace where nspname = 'dbo';
-GO
-
-CREATE DATABASE db2;
+SELECT COUNT(*) FROM pg_roles where rolname = 'db1_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'db1_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'db1_dbo';
 GO
 
 USE db1;
@@ -49,10 +46,6 @@ USE master;
 GO
 
 SELECT (case when db_id() = db_id('master') then 'true' else 'false' end) result;
-GO
-
--- test error
-USE db2;
 GO
 
 DROP DATABASE db1;
@@ -77,7 +70,6 @@ BEGIN
 END
 GO
 
--- test multi-db mode 
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 
@@ -99,6 +91,9 @@ GO
 SELECT COUNT(*) FROM pg_roles where rolname = 'db2_dbo';
 SELECT COUNT(*) FROM pg_roles where rolname = 'db2_db_owner';
 SELECT COUNT(*) FROM pg_namespace where nspname = 'db2_dbo';
+GO
+
+USE master;
 GO
 
 DROP DATABASE db1;

@@ -33,13 +33,13 @@ EXEC sp_column_privileges
 GO
 
 -- psql
-REVOKE SELECT ON dbo.t2 FROM dbo;
+REVOKE SELECT ON db1_dbo.t2 FROM db1_dbo;
 GO
 
-REVOKE UPDATE ON dbo.t2 FROM dbo;
+REVOKE UPDATE ON db1_dbo.t2 FROM db1_dbo;
 GO
 
-REVOKE INSERT ON dbo.t3 FROM dbo;
+REVOKE INSERT ON db1_dbo.t3 FROM db1_dbo;
 GO
 
 -- tsql
@@ -57,7 +57,7 @@ EXEC sp_column_privileges 't1', 'dbo', 'db1', 'a'
 GO
 
 -- psql
-GRANT SELECT (c) ON dbo.t2 TO dbo;
+GRANT SELECT (c) ON db1_dbo.t2 TO db1_dbo;
 GO
 
 -- tsql

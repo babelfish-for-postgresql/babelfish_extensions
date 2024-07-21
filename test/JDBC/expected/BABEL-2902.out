@@ -1,15 +1,5 @@
--- psql
--- Test setup --
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
 -- tsql
+-- Test setup --
 USE master
 GO
 
@@ -71,7 +61,7 @@ Query Text: PRINT 'hi'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.773 ms
+Babelfish T-SQL Batch Parsing Time: 9.769 ms
 ~~END~~
 
 PRINT 10
@@ -83,7 +73,7 @@ Query Text: PRINT 10
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.178 ms
+Babelfish T-SQL Batch Parsing Time: 0.163 ms
 ~~END~~
 
 PRINT 12.023
@@ -95,7 +85,7 @@ Query Text: PRINT 12.023
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
 ~~END~~
 
 
@@ -109,7 +99,7 @@ Query Text: PRINT pg_backend_pid()
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.367 ms
+Babelfish T-SQL Batch Parsing Time: 0.319 ms
 ~~END~~
 
 
@@ -123,7 +113,7 @@ Query Text: PRINT 20 + 20
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 20.322 ms
+Babelfish T-SQL Batch Parsing Time: 24.862 ms
 ~~END~~
 
 
@@ -142,7 +132,7 @@ Query Text: PRINT @a
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 14.813 ms
+Babelfish T-SQL Batch Parsing Time: 18.620 ms
 ~~END~~
 
 
@@ -156,7 +146,7 @@ Query Text: PRINT 1/0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.002 ms
+Babelfish T-SQL Batch Parsing Time: 11.053 ms
 ~~END~~
 
 
@@ -185,7 +175,7 @@ Query Text: ASSIGN @a = SELECT @a + 1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 139.054 ms
+Babelfish T-SQL Batch Parsing Time: 115.283 ms
 ~~END~~
 
 
@@ -214,7 +204,7 @@ Seq Scan on babel_2902_t1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.482 ms
+Babelfish T-SQL Batch Parsing Time: 1.915 ms
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -247,7 +237,7 @@ Seq Scan on babel_2902_t3
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.407 ms
+Babelfish T-SQL Batch Parsing Time: 0.249 ms
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -296,7 +286,7 @@ Query Text: USE DATABASE babel_2902_testdb_2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.852 ms
+Babelfish T-SQL Batch Parsing Time: 0.726 ms
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -332,7 +322,7 @@ Query Text: USE DATABASE babel_2902_testdb_1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.165 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -359,7 +349,7 @@ Query Text: USE DATABASE master
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.055 ms
+Babelfish T-SQL Batch Parsing Time: 0.047 ms
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -386,7 +376,7 @@ Query Text: USE DATABASE babel_2902_testdb_2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.294 ms
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -528,7 +518,7 @@ Query Text: RAISERROR (N'TEST %s %d.',1,1,N'testing',9)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 17.921 ms
+Babelfish T-SQL Batch Parsing Time: 21.779 ms
 ~~END~~
 
 --system error message, note message code validation is NOT done during explain--
@@ -541,7 +531,7 @@ Query Text: RAISERROR (10000,1,1,N'testing',9)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.109 ms
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
 ~~END~~
 
 --variables, note that variable substitution is NOT done during explain --
@@ -559,7 +549,7 @@ Query Text: RAISERROR (@testMsg,1,1,'a','b','c')
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.878 ms
+Babelfish T-SQL Batch Parsing Time: 10.629 ms
 ~~END~~
 
 
@@ -577,7 +567,7 @@ Query Text: THROW 51000, 'test', 1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.202 ms
+Babelfish T-SQL Batch Parsing Time: 11.862 ms
 ~~END~~
 
 -- invalid argument types --
@@ -642,12 +632,3 @@ DROP DATABASE IF EXISTS babel_2902_testdb_1
 DROP DATABASE IF EXISTS babel_2902_testdb_2
 DROP DATABASE IF EXISTS babel_2902_testdb_3
 GO
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-

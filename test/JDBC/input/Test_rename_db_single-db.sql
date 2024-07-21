@@ -14,7 +14,7 @@ go
 
 -- sanity checks for metadata stored in babelfish catalog
 select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1');
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('rename_db_database1_dbo', 'rename_db_database1_guest', 'rename_db_database1_rename_db_schema1');
 select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%';
 select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
 go
@@ -33,7 +33,7 @@ go
 
 -- should return updated rows
 select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1');
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('rename_db_database2_dbo', 'rename_db_database2_guest', 'rename_db_database2_rename_db_schema1');
 select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%';
 select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
 go
@@ -52,7 +52,7 @@ go
 
 -- should return updated rows
 select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1');
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('rename_db_database1_dbo', 'rename_db_database1_guest', 'rename_db_database1_rename_db_schema1');
 select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%';
 select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
 go
@@ -71,7 +71,7 @@ go
 
 -- should return updated rows
 select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1');
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('rename_db_database2_dbo', 'rename_db_database2_guest', 'rename_db_database2_rename_db_schema1');
 select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%';
 select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
 go
