@@ -113,7 +113,7 @@ GO
 SELECT current_setting('babelfishpg_tsql.migration_mode')
 GO
 
--- should fail
+-- should success
 USE babelfish_migration_mode_db2
 GO
 

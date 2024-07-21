@@ -27,10 +27,10 @@ go
 
 --providing usage privilege to user via psql on as grant on type to user is not currently supported in babelfish
 -- psql
-grant create on schema dbo to jira_babel_3504_dbone_jira_babel_3504_usr1;
+grant create on schema jira_babel_3504_dbone_dbo to jira_babel_3504_dbone_jira_babel_3504_usr1;
 go
 
-grant usage on type dbo.jira_babel_3504_bigint2 to jira_babel_3504_dbone_jira_babel_3504_usr1;
+grant usage on type jira_babel_3504_dbone_dbo.jira_babel_3504_bigint2 to jira_babel_3504_dbone_jira_babel_3504_usr1;
 go
 
 -- tsql user=jira_babel_3504_log1 password=123456789

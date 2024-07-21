@@ -566,7 +566,7 @@ go
 
 -- psql
 -- grant object permission
-grant select on babel_4344_s1.babel_4344_t1_new to babel_4344_d1_babel_4344_u1;
+grant select on babel_4344_d1_babel_4344_s1.babel_4344_t1_new to babel_4344_d1_babel_4344_u1;
 go
 
 -- tsql
@@ -588,7 +588,7 @@ go
 
 -- psql
 -- revoke schema permission
-revoke select on all tables in schema babel_4344_s1 from babel_4344_d1_babel_4344_u1;
+revoke select on all tables in schema babel_4344_d1_babel_4344_s1 from babel_4344_d1_babel_4344_u1;
 go
 
 -- tsql user=babel_4344_l1 password=12345678

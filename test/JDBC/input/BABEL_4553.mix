@@ -10,7 +10,7 @@ CREATE TABLE [dbo].my_table (
 GO
 
 -- psql
-CREATE TABLE IF NOT EXISTS dbo."my_Table"
+CREATE TABLE IF NOT EXISTS dms_test_target_db_dbo."my_Table"
 (
     mycol CHARACTER VARYING(4) 
 );
@@ -24,7 +24,7 @@ EXEC sys.sp_columns_100 'my_table', 'dbo', NULL, NULL;
 GO
 
 -- psql
-DROP TABLE dbo."my_Table", dbo.my_table;
+DROP TABLE dms_test_target_db_dbo."my_Table", dms_test_target_db_dbo.my_table;
 GO
 
 -- tsql
@@ -71,20 +71,20 @@ GO
 SET psql_logical_babelfish_db_name = 'dms_test_target_db';
 GO
 
-CREATE TABLE dbo."bAbel_4544_1" (col_1_psql int)
+CREATE TABLE dms_test_target_db_dbo."bAbel_4544_1" (col_1_psql int)
 GO
 
-CREATE TABLE dbo."Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa" (
+CREATE TABLE dms_test_target_db_dbo."Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa" (
     col_int_63_psql INT, col_varchar_63_psql sys.VARCHAR(97), col_datetime_63_psql sys.DATETIME2(4)
     );
 GO
 
-CREATE TABLE dbo."BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa" (
+CREATE TABLE dms_test_target_db_dbo."BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa" (
     col_int_64_psql INT, col_varchar_64_psql sys.VARCHAR(98), col_datetime_64_psql sys.DATETIME2(5)
 );
 GO
 
-CREATE TABLE dbo."BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" (
+CREATE TABLE dms_test_target_db_dbo."BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" (
     col_int_128_psql INT, col_varchar_128_psql sys.VARCHAR(99), col_datetime_128_psql sys.DATETIME2(6)
 );
 GO
