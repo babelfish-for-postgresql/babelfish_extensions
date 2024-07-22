@@ -2575,6 +2575,13 @@ tsql_stmt :
 				{ $$ = NULL; }
 		;
 
+/*
+ * The Opt clauses are included in the tsql_CreatePartitionStmt rule
+ * to resolve a shift-reduce conflict with the CreateStmt rule.
+ * Although semantically it is not required for TSQL partitioned table creation,
+ * its inclusion ensures that the parser can unambiguously distinguish
+ * between regular table creation and TSQL partitioned table creation statements.
+ */
 tsql_CreatePartitionStmt:
 			CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 			OptInherit OptPartitionSpec table_access_method_clause OptWith
@@ -2583,12 +2590,12 @@ tsql_CreatePartitionStmt:
 					CreateStmt *n = makeNode(CreateStmt);
 					n->relation = $4;
 					n->tableElts = $6;
-					n->inhRelations = $8;
+					n->inhRelations = NIL;
 					n->partspec = $12;
 					n->ofTypename = NULL;
 					n->constraints = NIL;
-					n->accessMethod = $10;
-					n->options = $11;
+					n->accessMethod = NULL;
+					n->options = NIL;
 					n->oncommit = ONCOMMIT_NOOP;
 					n->tablespacename = NULL;
 					n->if_not_exists = false;
