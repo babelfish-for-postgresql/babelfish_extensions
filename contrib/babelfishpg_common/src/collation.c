@@ -1329,26 +1329,24 @@ is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
 	}
 	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colliculocale, &isnull);
 
-	if (!isnull)
+	if (isnull)
 	{
-		collcollate = TextDatumGetCString(datum);
 		ReleaseSysCache(tp);
-
-		if (strstr(lowerstr(collcollate), lowerstr("colStrength=primary")))
-		{
-			pfree(collcollate);
-			PG_RETURN_BOOL(true);
-		}
-
-		if (0 != strstr(lowerstr(collcollate), "level1") &&    /* CI_AI */
-			0 == strstr(lowerstr(collcollate), "kc-true"))
-		{
-			pfree(collcollate);
-			PG_RETURN_BOOL(true);
-		}
-
-		pfree(collcollate);
+		PG_RETURN_BOOL(false);
 	}
+
+	collcollate = TextDatumGetCString(datum);
+	ReleaseSysCache(tp);
+
+	if ((strstr(lowerstr(collcollate), lowerstr("colStrength=primary"))) ||
+		(0 != strstr(lowerstr(collcollate), "level1") &&    /* CI_AI */
+		 0 == strstr(lowerstr(collcollate), "kc-true")))
+	{
+		pfree(collcollate);
+		PG_RETURN_BOOL(true);
+	}
+
+	pfree(collcollate);
 
 	PG_RETURN_BOOL(false);
 }
