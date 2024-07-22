@@ -38,6 +38,103 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
+	in_table_name sys.nvarchar(384) = NULL,
+	in_table_owner sys.nvarchar(384) = NULL, 
+	in_table_qualifier sys.sysname = NULL,
+	in_table_type sys.varchar(100) = NULL,
+	in_fusepattern sys.bit = '1')
+	RETURNS TABLE (
+		out_table_qualifier sys.sysname,
+		out_table_owner sys.sysname,
+		out_table_name sys.sysname,
+		out_table_type sys.varchar(32),
+		out_remarks sys.varchar(254)
+	)
+	AS $$
+		DECLARE opt_table sys.varchar(16) = '';
+		DECLARE opt_view sys.varchar(16) = '';
+		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
+	BEGIN
+		IF upper(cs_as_in_table_type) LIKE '%''TABLE''%' THEN
+			opt_table = 'TABLE';
+		END IF;
+		IF upper(cs_as_in_table_type) LIKE '%''VIEW''%' THEN
+			opt_view = 'VIEW';
+		END IF;
+		IF in_fusepattern = 1 THEN
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE (in_table_name IS NULL OR table_name LIKE in_table_name collate sys.database_default)
+			AND (in_table_owner IS NULL OR table_owner LIKE in_table_owner collate sys.database_default)
+			AND (in_table_qualifier IS NULL OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
+			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		ELSE 
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE (in_table_name IS NULL OR table_name = in_table_name collate sys.database_default)
+			AND (in_table_owner IS NULL OR table_owner = in_table_owner collate sys.database_default)
+			AND (in_table_qualifier IS NULL OR table_qualifier = in_table_qualifier collate sys.database_default)
+			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		END IF;
+	END;
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE PROCEDURE sys.sp_tables (
+    "@table_name" sys.nvarchar(384) = NULL,
+    "@table_owner" sys.nvarchar(384) = NULL, 
+    "@table_qualifier" sys.sysname = NULL,
+    "@table_type" sys.nvarchar(100) = NULL,
+    "@fusepattern" sys.bit = '1')
+AS $$
+BEGIN
+
+	-- Handle special case: Enumerate all databases when name and owner are blank but qualifier is '%'
+	IF (@table_qualifier = '%' AND @table_owner = '' AND @table_name = '')
+	BEGIN
+		SELECT
+			d.name AS TABLE_QUALIFIER,
+			CAST(NULL AS sys.sysname) AS TABLE_OWNER,
+			CAST(NULL AS sys.sysname) AS TABLE_NAME,
+			CAST(NULL AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(NULL AS sys.varchar(254)) AS REMARKS
+		FROM sys.databases d ORDER BY TABLE_QUALIFIER;
+		
+		RETURN;
+	END;
+
+	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	SELECT
+	CAST(out_table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+	CAST(out_table_owner AS sys.sysname) AS TABLE_OWNER,
+	CAST(out_table_name AS sys.sysname) AS TABLE_NAME,
+	CAST(out_table_type AS sys.varchar(32)) AS TABLE_TYPE,
+	CAST(out_remarks AS sys.varchar(254)) AS REMARKS
+	FROM sys.sp_tables_internal(@table_name, @table_owner, @table_qualifier, CAST(@table_type AS varchar(100)), @fusepattern);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
+
 -- Update deprecated object_id function(s) since left function now restricts TEXT datatype
 DO $$
 BEGIN
