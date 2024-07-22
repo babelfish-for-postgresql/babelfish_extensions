@@ -48,6 +48,21 @@ int#!#varchar#!#int
 ~~END~~
 
 
+ALTER TABLE #t1 DROP COLUMN a
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot drop a column used by a generated column)~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#<NULL>#!#2
+~~END~~
+
+
 ALTER TABLE #t1 DROP COLUMN b
 GO
 
