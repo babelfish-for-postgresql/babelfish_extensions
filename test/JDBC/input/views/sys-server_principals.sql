@@ -11,6 +11,11 @@ FROM sys.server_principals
 WHERE name =  'sysadmin';
 GO
 
+SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
+FROM sys.server_principals 
+WHERE name =  'public';
+GO
+
 CREATE LOGIN serv_principal_test WITH PASSWORD = 'test';
 GO
 

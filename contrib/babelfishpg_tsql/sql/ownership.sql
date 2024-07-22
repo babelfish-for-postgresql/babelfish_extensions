@@ -366,10 +366,33 @@ CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
 WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
-OR Ext.orig_loginname = suser_name()
-OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
-OR Ext.type = 'R')
-AND Ext.type != 'Z';
+  OR Ext.orig_loginname = suser_name()
+  OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+  OR Ext.type = 'R')
+  AND Ext.type != 'Z'
+UNION ALL
+SELECT
+CAST(name AS SYS.SYSNAME) AS name,
+CAST(2 AS INT) AS principal_id,
+CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
+CAST(type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN type = 'S' THEN 'SQL_LOGIN'
+    WHEN type = 'R' THEN 'SERVER_ROLE'
+    WHEN type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(0 AS INT) AS is_disabled,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(NULL AS SYS.SYSNAME) AS default_database_name,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(NULL AS INT) AS credential_id,
+CAST(1 AS INT) AS owning_principal_id,
+CAST(0 AS sys.BIT) AS is_fixed_role
+FROM (VALUES ('public', 'R')) as dummy_principals(name, type);
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
