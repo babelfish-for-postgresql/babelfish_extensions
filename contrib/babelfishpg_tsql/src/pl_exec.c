@@ -10283,7 +10283,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 					*old_search_path = flatten_search_path(path_oids);
 					list_free(path_oids);
 				}
-				new_search_path = psprintf("%s, %s, %s", quote_identifier(physical_schema), quote_identifier(dbo_schema), *old_search_path);
+				new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
 
 				/*
 				 * Add the schema where the object is referenced and dbo
@@ -10332,7 +10332,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 						*old_search_path = flatten_search_path(path_oids);
 						list_free(path_oids);
 					}
-					new_search_path = psprintf("%s, %s, %s", quote_identifier(physical_schema), quote_identifier(dbo_schema), *old_search_path);
+					new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
 
 					/*
 					 * Add the schema where the object is referenced and dbo
@@ -10361,7 +10361,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 			*old_search_path = flatten_search_path(path_oids);
 			list_free(path_oids);
 		}
-		new_search_path = psprintf("%s, %s, %s", quote_identifier(physical_schema), quote_identifier(dbo_schema), *old_search_path);
+		new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
 
 		/*
 		 * Add the schema where the object is referenced and dbo schema to the
