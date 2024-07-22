@@ -4612,6 +4612,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	/* fetch current search_path */
 	char	   *old_search_path = NULL;
+	bool		ro_func = (estate->func->fn_prokind == PROKIND_FUNCTION) &&
+						  (estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER) &&
+						  (strcmp(estate->func->fn_signature, "inline_code_block") != 0);
 
 	if (stmt->original_query)
 		original_query_string = stmt->original_query;
@@ -4786,7 +4789,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * tsql_select_assign_stmt (select @a=1). with ANTLR=off, it is
 		 * handled in PLtsql_stmt_query_set.
 		 */
-		if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || stmt->mod_stmt_tablevar)
+		if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || ro_func)
 			enable_txn_in_triggers = false;
 
 		if (enable_txn_in_triggers)
