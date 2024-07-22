@@ -245,23 +245,23 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 				COALESCE(
 					(SELECT string_agg(
 						CASE
-						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23)
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23 /* prefix length */)
 						ELSE NULL
 						END, ',')
 					FROM unnest(c.reloptions) AS option),
-				c.relname)
-			AS sys.nvarchar(128)) AS "TABLE_NAME",
+					c.relname)
+				AS sys.nvarchar(128)) AS "TABLE_NAME",
 
 			CAST(
 				COALESCE(
 					(SELECT string_agg(
 						CASE
-						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19)
+						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
 						ELSE NULL
 						END, ',')
 					FROM unnest(a.attoptions) AS option),
-				a.attname)
-			AS sys.nvarchar(128)) AS "COLUMN_NAME",
+					a.attname)
+				AS sys.nvarchar(128)) AS "COLUMN_NAME",
 
 			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
 			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",

@@ -10363,4 +10363,4 @@ RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql', 'bbf_get_context_info' LANGUAG
 
 CREATE OR REPLACE FUNCTION sys.babelfish_split_identifier(IN identifier VARCHAR, OUT value VARCHAR)
 RETURNS SETOF VARCHAR AS 'babelfishpg_tsql', 'split_identifier_internal'
-LANGUAGE C IMMUTABLE PARALLEL SAFE RETURNS NULL ON NULL INPUT;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

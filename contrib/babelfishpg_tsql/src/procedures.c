@@ -3962,7 +3962,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	{
 		case OBJECT_TABLE:
 			appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
-			appendStringInfo(&query, "ALTER TABLE dummy SET (bbf_original_rel_name = 'dummy'); ");
+			appendStringInfo(&query, "ALTER TABLE dummy SET (dummy = 'dummy'); ");
 			break;
 		case OBJECT_VIEW:
 			appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");

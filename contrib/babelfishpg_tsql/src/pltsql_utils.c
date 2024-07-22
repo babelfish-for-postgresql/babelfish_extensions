@@ -1587,38 +1587,42 @@ split_identifier_internal(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		char        	*input;
-		char        	**splited_object_name;
 		int         	num_parts = 0;
-		int         	i, j = 0;
 		MemoryContext	oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-		input = text_to_cstring(PG_GETARG_TEXT_P(0));
-		splited_object_name = split_object_name(input);
-
-		for (i = 0; i < 4; i++)
+		if (!PG_ARGISNULL(0))
 		{
-			if (strlen(splited_object_name[i]) > 0)
-				num_parts++;
-		}
+			char	*input;
+			char	**splited_object_name;
+			int 	i, j = 0;
 
-		funcctx->max_calls = num_parts;
-		if (num_parts > 0)
-		{
-			split_parts = (char **) palloc(num_parts * sizeof(char *));
+			input = text_to_cstring(PG_GETARG_TEXT_P(0));
+			splited_object_name = split_object_name(input);
 
 			for (i = 0; i < 4; i++)
 			{
-				if (i >= (4 - num_parts))
-					split_parts[j++] = splited_object_name[i];
-				else
-					pfree(splited_object_name[i]);
+				if (strlen(splited_object_name[i]) > 0)
+					num_parts++;
 			}
+
+			if (num_parts > 0)
+			{
+				split_parts = (char **) palloc(num_parts * sizeof(char *));
+
+				for (i = 0; i < 4; i++)
+				{
+					if (i >= (4 - num_parts))
+						split_parts[j++] = splited_object_name[i];
+					else
+						pfree(splited_object_name[i]);
+				}
+			}
+			pfree(splited_object_name);
 		}
 
-		pfree(splited_object_name);
+		funcctx->max_calls = num_parts;
 		funcctx->user_fctx = split_parts;
 		MemoryContextSwitchTo(oldcontext);
 	}

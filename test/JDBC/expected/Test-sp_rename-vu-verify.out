@@ -826,3 +826,20 @@ GO
 
 ~~ERROR (Message: Feature not supported: renaming object type Statistics)~~
 
+
+IF OBJECT_ID('babelfish_split_identifier_view') IS NULL
+BEGIN
+    EXEC sp_executesql N'
+        CREATE VIEW babelfish_split_identifier_view AS SELECT * FROM sys.babelfish_split_identifier(''ABC.DEF.GHI'')';
+END
+GO
+
+SELECT * FROM babelfish_split_identifier_view;
+GO
+~~START~~
+varchar
+ABC
+DEF
+GHI
+~~END~~
+
