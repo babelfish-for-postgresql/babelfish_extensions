@@ -10,6 +10,9 @@
 
 all
 
+# Ignoring this currently, should be removed once fix for BABEL-5111 comes in
+ignore#!#BABEL-4279
+
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
