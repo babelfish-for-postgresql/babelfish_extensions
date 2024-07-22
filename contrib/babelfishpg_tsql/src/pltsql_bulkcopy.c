@@ -581,9 +581,8 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 							RelationGetRelationName(cstate->rel))));
 		else if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot bulk copy to partitioned-table \"%s\"",
-							RelationGetRelationName(cstate->rel))));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Bulk Copy to partitioned-table is not yet supported in Babelfish.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),

@@ -181,6 +181,8 @@ static void validateUserAndRole(char *name);
 static void bbf_ExecDropStmt(DropStmt *stmt);
 static void bbf_create_partition_tables(CreateStmt *stmt);
 static void bbf_drop_handle_partitioned_table(DropStmt *stmt);
+static void bbf_drop_handle_partitioned_table(DropStmt *stmt);
+static void bbf_alter_handle_partitioned_table(AlterTableStmt *stmt);
 static bool bbf_validate_partitioned_index_alignment(IndexStmt *stmt);
 static char *construct_unique_hash(char *relation_name);
 static void set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx,
@@ -2545,99 +2547,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				
 				/*
-				 * For Babelfish partitioned tables, non-superusers should not be permitted
-				 * to attach or detach partitions from the partitioned table, and they
-				 * should also be restricted from modifying the partitions.
+				 * Babelfish partitioned tables have specific security requirements to maintain data integrity.
+				 * Non-superusers should not be permitted to attach, detach, or modify partitions of these tables.
 				 */
 				if (!babelfish_dump_restore && atstmt->objtype == OBJECT_TABLE && !superuser())
 				{
-					AlterTableCmd	*cmd = (AlterTableCmd *) linitial(atstmt->cmds);
-					char		*logical_schema_name;
-					int16		dbid;
-					
-					if (IS_TDS_CLIENT())
-					{
-						/*
-						 * Find default schema for current user when schema
-						 * is not explicitly specified for TDS client.
-						 */
-						if (!atstmt->relation->schemaname)
-						{
-							char		*db_name = get_cur_db_name();
-							const char	*user = get_user_for_database(db_name);
-				
-							logical_schema_name = get_authid_user_ext_schema_name(db_name, user);
-							pfree(db_name);
-						}
-						else /* Schema is explicitly specified for TDS client. */
-						{
-							logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
-							if (!logical_schema_name) /* not a TSQL schema, might be pg_temp or non-existing schema */
-								break;
-						}
-						dbid = get_cur_db_id();
-					}
-					else if (atstmt->relation->schemaname) /* Schema is explicitly specified for non TDS client. */
-					{
-						logical_schema_name = (char *) get_logical_schema_name(atstmt->relation->schemaname, true);
-						if (!logical_schema_name) /* not a TSQL schema */
-							break;
-						
-						/* Find dbid from physical schema name for a TSQL schema. */
-						dbid = get_dbid_from_physical_schema_name(atstmt->relation->schemaname, false);
-					}
-					else
-						break;
-					
-					/*
-					 * For babelfish partitioned table, user should not be
-					 * allowed to attach/detach of table directly.
-					 */
-					if (cmd->subtype == AT_AttachPartition || cmd->subtype == AT_DetachPartition 
-						|| cmd->subtype == AT_DetachPartitionFinalize)
-					{
-						if (is_bbf_partitioned_table(dbid, logical_schema_name, atstmt->relation->relname))
-							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
-									errmsg("Cannot %s babelfish partitioned table '%s'.",
-											cmd->subtype == AT_AttachPartition ? "attach partition to" : "detach partition from",
-											atstmt->relation->relname)));
-					}
-					/*
-					 * For partition of babelfish partitioned table, user should not
-					 * be allowed to modify the partition.
-					 */
-					else
-					{
-						Oid		relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
-						bool		is_partition_table = false;
-						HeapTuple	tuple;
-						char		*parent_table_name;
-
-						tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
-						if (HeapTupleIsValid(tuple))
-						{
-							Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
-							is_partition_table = classForm->relispartition;
-							ReleaseSysCache(tuple);
-						}
-
-						if (!is_partition_table)
-						{
-							pfree(logical_schema_name);
-							break;
-						}
-
-						parent_table_name = get_rel_name(get_partition_parent(relid, false));
-
-						if (is_bbf_partitioned_table(dbid, logical_schema_name, parent_table_name))
-							ereport(ERROR,
-									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
-									errmsg("Cannot modify the partition '%s' of babelfish partitioned table '%s'.", 
-										atstmt->relation->relname, parent_table_name)));
-						pfree(parent_table_name);
-					}
-					pfree(logical_schema_name);
+					bbf_alter_handle_partitioned_table(atstmt);
 				}
 				break;
 			}
@@ -3843,29 +3758,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				if (restore_tsql_tabletype)
 					create_stmt->tsql_tabletype = true;
-
-				/*
-				 * For babelfish partitioned table, non-superusers should not be
-				 * allowed to create new partitions of a table directly.
-				 */
-				if (!babelfish_dump_restore && create_stmt->partbound && !superuser())
-				{
-					rel = linitial(create_stmt->inhRelations);
-					if (rel->schemaname)
-					{
-						char *logical_schemaname = (char *) get_logical_schema_name(rel->schemaname, true);
-						if (logical_schemaname) /* TSQL schema */
-						{
-							int16 dbid = get_dbid_from_physical_schema_name(rel->schemaname, false);
-							if (is_bbf_partitioned_table(dbid, logical_schemaname, rel->relname));
-								ereport(ERROR, 
-									(errcode(ERRCODE_UNDEFINED_OBJECT), 
-										errmsg("Cannot create the partition of babelfish partitioned table '%s'.", rel->relname)));
-							
-							pfree(logical_schemaname);
-						}
-					}
-				}
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -6621,8 +6513,14 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	ArrayType	*values;
 	bool		isnull;
 	int		i;
-	LOCAL_FCINFO(fcinfo, 1);
+	char		*partition_name;
 
+	/* Partitioning is not supported for tempopary tables. */
+	if (stmt->relation->relpersistence == RELPERSISTENCE_TEMP)
+		ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Creation of tempopary partitioned tables is not supported in Babelfish.")));
+	
 	/*
 	 * Get partition function name for the provided partition scheme,
 	 * if provided partition scheme exists in current database.
@@ -6706,19 +6604,14 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	 * If the partition columns type is UDT type, then we need
 	 * to use the base type of that type while comparing with
 	 * input parameter type of partition function.
-	 *
 	 */
 	if (OidIsValid(partition_column_basetypoid))
 	{
-		Datum		tsql_typname;
-		/* Get the TSQL typename from partition column type. */
-		InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-		fcinfo->args[0].value = ObjectIdGetDatum(partition_column_typoid);
-		fcinfo->args[0].isnull = false;
-		tsql_typname = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+		/* Get the TSQL typoid from partitioning column type name. */
+		Oid tsql_typoid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (partition_column_typname);
 
 		/* If the value of tsql_typname is NULL, it indicates that partitioning column is UDT type. */
-		if (!tsql_typname)
+		if (!OidIsValid(tsql_typoid))
 		{
 			/* Substitute typoid with the base type to facilitate comparison. */
 			partition_column_typoid = partition_column_basetypoid;
@@ -6794,9 +6687,18 @@ bbf_create_partition_tables(CreateStmt *stmt)
 
 	for (i = 0; i < nelems + 1; i++)
 	{
-		char *partition_name =  BBF_GET_PARTITION_NAME(unique_hash, i);
+		/*
+		 * Construct partition name with unique hash based
+		 * on partitioned table name and partition number.
+		 * And Set the name in CREATE PARTITION statment.
+		 */
+		partition_name = psprintf("%s_partition_%d", unique_hash, i);
 		partition_stmt->relation->relname = partition_name;
+
+		/* Set the range boundaries in CREATE PARTITION statment. */
 		set_partition_range_bounds(partition_stmt->partbound, range_values, i, nelems + 1, is_binary_datatype);
+
+		/* Execute the CREATE PARTITION statment. */
 		standard_ProcessUtility(wrapper,
 					"(CREATE PARTITION)",
 					false,
@@ -7238,8 +7140,12 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	{
 		partition_name = list_nth(partition_names, i);
 
-		/* Generate new partition name by replacing hash with new hash. */
-		new_partition_name = BBF_GET_NEW_PARTITION_NAME(partition_name, new_hash);
+		/*
+		 * Generate new partition name by replacing the hash portion
+		 * of existing partition name with new hash value.
+		 */
+		new_partition_name = pstrdup(partition_name);
+		memcpy(new_partition_name, new_hash, MD5_HASH_LEN);
 		
 		/* Set the names in RENAME statment. */
 		rename_partition_stmt->relation->relname = partition_name;
@@ -7267,6 +7173,97 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	pfree(logical_schema_name);
 	pfree(new_hash);
 	pfree(query.data);
+}
+
+/*
+ * For Babelfish partitioned tables, non-superusers should not be permitted
+ * to attach or detach partitions from the partitioned table, and they
+ * should also be restricted from modifying the partitions from both
+ * TSQL as well as PG endpoint.
+ * 
+ * NOTE: We are only blocking operation on Babelfish partitioned tables i.e.
+ * partitioned tables created from the TSQL endpoint. Existing users who have
+ * created partitioned tables from the PostgreSQL endpoint can continue to modify, 
+ * attach, and detach partitions as usual.
+ */
+static void
+bbf_alter_handle_partitioned_table(AlterTableStmt *stmt)
+{
+	AlterTableCmd		*cmd = (AlterTableCmd *) linitial(stmt->cmds);
+	int16			dbid;
+	char			*physical_schemaname;
+	char			*logical_schemaname;
+	Form_pg_class		form;
+	Oid			nsp_oid;
+	HeapTuple		tuple;
+	bool			is_partition_table, is_partitioned_table;
+	Oid			relid = RangeVarGetRelid(stmt->relation, NoLock, true);
+
+	if (!OidIsValid(relid))
+		return;
+
+	/* Get the namespace OID and rekind type of the table. */
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
+	if (!HeapTupleIsValid(tuple)) /* Sanity check. */
+		return;
+
+	form = (Form_pg_class) GETSTRUCT(tuple);
+	is_partition_table = form->relispartition;
+	is_partitioned_table = (form->relkind == 'p');
+	nsp_oid = form->relnamespace;
+	ReleaseSysCache(tuple);
+
+	/* Proceed further only if table is a partition or partitioned table. */
+	if (!is_partition_table && !is_partitioned_table)
+		return;
+
+	/* Get the schema name from namespace OID. */
+	physical_schemaname = get_namespace_name(nsp_oid);
+
+	/* Find dbid logical schema name physical schema name. */
+	logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
+	if (!logical_schemaname) /* not a TSQL schema */
+	{
+		pfree(physical_schemaname);
+		return;
+	}
+
+	/* Find dbid from physical schema name for a TSQL schema. */
+	dbid = get_dbid_from_physical_schema_name(physical_schemaname, false);
+
+	/*
+	 * For babelfish partitioned table, user should not be
+	 * allowed to attach/detach of table directly.
+	 * These commands can be executed only from PG endpoint.
+	 */
+	if (is_partitioned_table && (cmd->subtype == AT_AttachPartition || 
+		cmd->subtype == AT_DetachPartition || cmd->subtype == AT_DetachPartitionFinalize))
+	{
+		if (is_bbf_partitioned_table(dbid, logical_schemaname, stmt->relation->relname))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
+					errmsg("Cannot %s babelfish partitioned table '%s'.",
+							cmd->subtype == AT_AttachPartition ? "attach partition to" : "detach partition from",
+							stmt->relation->relname)));
+	}
+	/*
+	 * For partition of babelfish partitioned table, user should not
+	 * be allowed to modify the partition.
+	 * These will blocked from both TSQL and PG endpoint.
+	 */
+	else if (is_partition_table)
+	{
+		char	*parent_table_name = get_rel_name(get_partition_parent(relid, false));
+		if (is_bbf_partitioned_table(dbid, logical_schemaname, parent_table_name))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
+					errmsg("Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.")));
+		pfree(parent_table_name);
+	}
+
+	pfree(physical_schemaname);
+	pfree(logical_schemaname);
 }
 
 static int

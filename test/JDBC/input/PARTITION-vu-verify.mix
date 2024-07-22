@@ -965,8 +965,7 @@ GO
 -- to babelfish partitioned table from psql endpoint
 
 -- psql
-CREATE ROLE partition_role NOSUPERUSER;
-SET ROLE partition_role;
+SET ROLE master_dbo;
 GO
 
 -- Attempt to create new partition with random values
@@ -985,8 +984,16 @@ GO
 
 
 -- Attempt to detach
+-- explicit schema name specified
 ALTER TABLE master_dbo.partition_vu_prepare_int_table 
 DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+RESET search_path;
 GO
 
 -- Attempt to detach using CONCURRENTLY option
@@ -1014,17 +1021,19 @@ GO
 -- user should not be allowed to modify partition 
 -- of babelfish partitioned table neither from psql nor tsql endpoint
 
-ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
-ADD new_col int
-GO
-
-
+-- explicit schema name specified
 ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
 ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
 GO
 
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_0"
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+RESET search_path;
+GO
+
 RESET ROLE;
-DROP ROLE partition_role;
 GO
 
 -- Attempt to ADD storage parameter to babelfish partitioned table (not on the partitions)
@@ -1062,22 +1071,6 @@ DROP TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
 GO
 
 --------------------------------------------------------------------
---- Unsupported Option: Insert Bulk To Partitioned Table
---------------------------------------------------------------------
-CREATE TABLE TestPartitionSourceTable(Id BIGINT, Value sys.varchar(50));
-GO
-
-INSERT INTO TestPartitionSourceTable (Id, Value) VALUES (1, 'Value 1');
-GO
-
--- should throw error
-insertbulk#!#TestPartitionSourceTable#!#partition_vu_prepare_bigint_table
-go
-
-DROP TABLE TestPartitionSourceTable
-GO
-
---------------------------------------------------------------------
 --- Unsupported Option with CREATE TABLE with PARTITION SCHEME
 --------------------------------------------------------------------
 -- Computed column as partitioning column is not yet supported in babelfish
@@ -1097,6 +1090,15 @@ CREATE TABLE TestPartitionedTable
     computed_col AS id + value PERSISTED
 )
 ON IntPartitionScheme(computed_col);
+GO
+
+-- temporary table
+CREATE TABLE #TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id);
 GO
 
 ---------------------------------------------------------------

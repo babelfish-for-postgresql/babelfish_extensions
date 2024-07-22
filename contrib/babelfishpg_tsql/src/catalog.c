@@ -5473,31 +5473,19 @@ rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt)
 	char		*table_name = stmt->relation->relname;
 	int16		dbid;
 
-	/* Find the logical schema name and dbid from physical schema name. */
+	/* Find the logical schema name from physical schema name. */
 	logical_schema_name = (char *) get_logical_schema_name(stmt->relation->schemaname, true);
 
-	if (!logical_schema_name) /* not a tsql schema */
+	if (!logical_schema_name) /* not a TSQL schema */
 		return;
 
+	/* Find the dbid from physical schema name. */
 	dbid = get_dbid_from_physical_schema_name(stmt->relation->schemaname, false);
-
-	if (!is_bbf_partitioned_table(dbid, logical_schema_name, table_name))
-	{
-		pfree(logical_schema_name);
-		return;
-	}
-
-	/* Build a tuple to insert. */
-	MemSet(new_record, 0, sizeof(new_record));
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_replace, false, sizeof(new_record_replace));
 
 	/* Open the catalog table. */
 	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
 
-	dsc = RelationGetDescr(rel);
-
-	/* Search for the row for update which needs to be updated. */
+	/* Search for the row which needs to be updated. */
 	ScanKeyInit(&scanKey[0],
 				Anum_bbf_partition_depend_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
@@ -5517,22 +5505,36 @@ rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt)
 
 	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
 					false, NULL, 3, scanKey);
-	
+
 	tuple = systable_getnext(scan);
 
 	/* Update the table name of the found row. */
 	if (HeapTupleIsValid(tuple))
 	{
+		/* Get the descriptor of the table. */
+		dsc = RelationGetDescr(rel);
+
+		/* Build a tuple to insert. */
+		MemSet(new_record, 0, sizeof(new_record));
+		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+		MemSet(new_record_replace, false, sizeof(new_record_replace));
+
 		new_record[Anum_bbf_partition_depend_table_name - 1] = CStringGetTextDatum(stmt->newname);
 		new_record_replace[Anum_bbf_partition_depend_table_name - 1] = true;
 		new_tuple = heap_modify_tuple(tuple, dsc, new_record, new_record_nulls, new_record_replace);
+
+		/* Perform the actual catalog update. */
 		CatalogTupleUpdate(rel, &new_tuple->t_self, new_tuple);
+
+		/* Free the allocated tuple. */
 		heap_freetuple(new_tuple);
 	}
 
 	systable_endscan(scan);
 	/* Close the catalog table. */
 	table_close(rel, RowExclusiveLock);
+
+	/* Free the allocated memory. */
 	pfree(logical_schema_name);
 }
 

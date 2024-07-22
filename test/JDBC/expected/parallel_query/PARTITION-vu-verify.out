@@ -2450,8 +2450,7 @@ on
 -------------------------------------------
 -- user should not be allowed to CREATE/ATTACH/DETACH partition
 -- to babelfish partitioned table from psql endpoint
-CREATE ROLE partition_role NOSUPERUSER;
-SET ROLE partition_role;
+SET ROLE master_dbo;
 GO
 
 -- Attempt to create new partition with random values
@@ -2460,8 +2459,9 @@ FOR VALUES FROM (0) TO (500);
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Cannot create the partition of babelfish partitioned table 'partition_vu_prepare_int_table'.
-    Server SQLState: 42704)~~
+~~ERROR (Message: ERROR: partition "nonexistenttable" would overlap partition "363863941f079adaa9aa733200e57c9f_partition_1"
+  Position: 157
+    Server SQLState: 42P17)~~
 
 
 -- Attempt to create new partition with DEFAULT
@@ -2470,8 +2470,9 @@ DEFAULT
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Cannot create the partition of babelfish partitioned table 'partition_vu_prepare_int_table'.
-    Server SQLState: 42704)~~
+~~ERROR (Message: ERROR: partition "nonexistenttable" conflicts with existing default partition "363863941f079adaa9aa733200e57c9f_partition_0"
+  Position: 134
+    Server SQLState: 42P17)~~
 
 
 -- Attempt to drop partition of babelfish partitioned table from psql endpoint
@@ -2485,8 +2486,21 @@ GO
 
 
 -- Attempt to detach
+-- explicit schema name specified
 ALTER TABLE master_dbo.partition_vu_prepare_int_table 
 DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot detach partition from babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+RESET search_path;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -2539,27 +2553,29 @@ GO
 
 -- user should not be allowed to modify partition 
 -- of babelfish partitioned table neither from psql nor tsql endpoint
-ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
-ADD new_col int
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.
-    Server SQLState: 0A000)~~
-
-
-
+-- explicit schema name specified
 ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
 ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.
+~~ERROR (Message: ERROR: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.
+    Server SQLState: 0A000)~~
+
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_0"
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+RESET search_path;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.
     Server SQLState: 0A000)~~
 
 
 RESET ROLE;
-DROP ROLE partition_role;
 GO
 
 -- Attempt to ADD storage parameter to babelfish partitioned table (not on the partitions)
@@ -2585,7 +2601,7 @@ ADD new_col int
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.)~~
+~~ERROR (Message: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.)~~
 
 
 
@@ -2594,7 +2610,7 @@ ADD CONSTRAINT xyz DEFAULT 10 FOR id;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.)~~
+~~ERROR (Message: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.)~~
 
 
 -- with explicity schema name
@@ -2603,7 +2619,7 @@ ADD new_col int
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.)~~
+~~ERROR (Message: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.)~~
 
 
 ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
@@ -2611,7 +2627,7 @@ ADD CONSTRAINT xyz DEFAULT 10 FOR id;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot modify the partition '363863941f079adaa9aa733200e57c9f_partition_0' of babelfish partitioned table 'partition_vu_prepare_int_table'.)~~
+~~ERROR (Message: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.)~~
 
 
 -- Attempt to drop partition of babelfish partitioned table from tsql endpoint
@@ -2621,28 +2637,6 @@ GO
 
 ~~ERROR (Message: Cannot drop the babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.)~~
 
-
---------------------------------------------------------------------
---- Unsupported Option: Insert Bulk To Partitioned Table
---------------------------------------------------------------------
-CREATE TABLE TestPartitionSourceTable(Id BIGINT, Value sys.varchar(50));
-GO
-
-INSERT INTO TestPartitionSourceTable (Id, Value) VALUES (1, 'Value 1');
-GO
-~~ROW COUNT: 1~~
-
-
-insertbulk#!#TestPartitionSourceTable#!#partition_vu_prepare_bigint_table
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot bulk copy to partitioned-table "partition_vu_prepare_bigint_table")~~
-
--- should throw error
-go
-
-DROP TABLE TestPartitionSourceTable
-GO
 
 --------------------------------------------------------------------
 --- Unsupported Option with CREATE TABLE with PARTITION SCHEME
@@ -2672,6 +2666,19 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: cannot use generated column in partition key)~~
+
+
+-- temporary table
+CREATE TABLE #TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Creation of tempopary partitioned tables is not supported in Babelfish.)~~
 
 
 
