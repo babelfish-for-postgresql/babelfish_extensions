@@ -938,6 +938,11 @@ get_immediate_base_type_of_UDT_internal(Oid typeid)
 	Oid							base_type;
 	LOCAL_FCINFO(fcinfo, 1);
 
+	if (!OidIsValid(typeid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("typeid is invalid!")));
+
 	/* if common_utility_plugin_ptr is not initialised */
 	if (common_utility_plugin_ptr == NULL)
 		ereport(ERROR,
