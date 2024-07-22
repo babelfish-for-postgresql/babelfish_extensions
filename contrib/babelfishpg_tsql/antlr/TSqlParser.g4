@@ -1172,7 +1172,12 @@ alter_partition_scheme
     ;
 
 create_partition_scheme
-    : CREATE PARTITION SCHEME partition_scheme_name=id AS PARTITION partition_function_name=id ALL? TO LR_BRACKET id (COMMA id)* RR_BRACKET
+    : CREATE PARTITION SCHEME partition_scheme_name=id AS PARTITION partition_function_name=id ALL? TO LR_BRACKET filegroup_type (COMMA filegroup_type)* RR_BRACKET
+    ;
+
+filegroup_type
+    : PRIMARY_SQBRACKET // primary filegroup
+    | id // user filegroup
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-remote-service-binding-transact-sql
@@ -2117,7 +2122,8 @@ file_table_option
 
 storage_partition_clause
     : id (LR_BRACKET id RR_BRACKET)?
-    | char_string  // can be "DEFAULT"
+    | PRIMARY_SQBRACKET
+    | DEFAULT_DOUBLE_QUOTE
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms187956.aspx

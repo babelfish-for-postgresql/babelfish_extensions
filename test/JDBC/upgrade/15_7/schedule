@@ -38,6 +38,7 @@ BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
+BABEL-4390
 BABEL-2170
 BABEL-2203
 BABEL-2208
@@ -90,7 +91,7 @@ BABEL-3402
 BABEL-3474
 BABEL-3478
 BABEL-3486
-BABEL-3513
+BABEL-3513_before_15_8_or_16_4
 BABEL-3556
 BABEL-3588
 BABEL-3614
@@ -123,6 +124,7 @@ BABEL-4214
 BABEL-4516
 babel_417
 BABEL-493
+BABEL-4888
 BABEL_539
 BABEL-621
 BABEL-728
@@ -245,7 +247,7 @@ msdb-dbo-syspolicy_configuration
 msdb-dbo-syspolicy_system_health_state
 nested_trigger_inside_proc
 nested_trigger_with_dml
-newid
+newid_before_15_8_or_16_4
 objectpropertyex
 openjson
 openquery_upgrd_before_15_4
@@ -517,11 +519,8 @@ babel_test_int2_numeric_oper
 BABEL_3571
 test_like_for_AI
 BABEL-4869
-test_conv_string_to_date
-test_conv_string_to_datetime
-test_conv_string_to_datetime2
-test_conv_string_to_datetimeoffset
-test_conv_string_to_smalldatetime
-test_conv_string_to_time
+babel_4328_datetime
+babel_4328_datetime2
+babel_4328_datetimeoffset
 BABEL-3401
 babel_726

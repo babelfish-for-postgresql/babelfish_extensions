@@ -30,6 +30,7 @@ BABEL-1654
 BABEL-1683
 BABEL-1715
 BABEL-1756
+BABEL-4390
 BABEL-1756-dep
 BABEL-1963
 BABEL-1994-CHAR
@@ -360,9 +361,6 @@ babel_test_int4_numeric_oper_before_16_3
 babel_test_int8_numeric_oper_before_16_3
 babel_test_int2_numeric_oper_before_16_3
 BABEL-4869
-test_conv_string_to_date-before-16_3
-test_conv_string_to_datetime-before-14_6
-test_conv_string_to_datetime2-before-14_5
-test_conv_string_to_datetimeoffset-before-16_3
-test_conv_string_to_smalldatetime-before-14_6
-test_conv_string_to_time-before-16_3
+babel_4328_datetime-before-16_3
+babel_4328_datetime2-before-16_3
+babel_4328_datetimeoffset-before-16_3

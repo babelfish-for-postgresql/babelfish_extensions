@@ -37,6 +37,7 @@ BABEL-1953
 BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
+BABEL-4390
 BABEL-2086
 BABEL-2170
 BABEL-2203
@@ -87,11 +88,11 @@ BABEL-3380
 BABEL-3392
 BABEL-3402
 BABEL-3478
-BABEL-3486-before-16_3
-BABEL-3513
+BABEL-3486
+BABEL-3513_before_15_8_or_16_4
 BABEL-3556
 BABEL-3588
-BABEL-3614-before-16_3
+BABEL-3614
 BABEL-3640
 BABEL-3646
 BABEL-3655
@@ -408,7 +409,7 @@ Test-Computed-Columns
 TestDate
 TestDatetime
 TestDatetime2
-TestDatetime-numeric-dateaddfunction-before-16_3
+TestDatetime-numeric-dateaddfunction
 TestDatetime-numeric-representation
 TestDecimal
 TestFloat
@@ -505,9 +506,6 @@ BABEL_3571-15_5-or-15_6-or-16_1-or-16_2
 BABEL-4641-before-16_3-or-15_7-or-14_12
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
-test_conv_string_to_date-before-16_3
-test_conv_string_to_datetime-before-16_3
-test_conv_string_to_datetime2-before-16_3
-test_conv_string_to_datetimeoffset-before-16_3
-test_conv_string_to_smalldatetime
-test_conv_string_to_time-before-16_3
+babel_4328_datetime-before-16_3
+babel_4328_datetime2-before-16_3
+babel_4328_datetimeoffset-before-16_3

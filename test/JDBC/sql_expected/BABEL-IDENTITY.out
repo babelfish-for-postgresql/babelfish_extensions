@@ -761,6 +761,11 @@ Index Scan using test_id_index_pkey on test_id_index
   Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 14.214 ms
+~~END~~
+
 
 SELECT id, mycol FROM dbo.test_id_index WHERE scope_identity() = id;
 go
@@ -769,6 +774,11 @@ text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE scope_identity() = id
 Index Scan using test_id_index_pkey on test_id_index
   Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.005 ms
 ~~END~~
 
 
@@ -781,6 +791,11 @@ Index Scan using test_id_index_pkey on test_id_index
   Index Cond: (id = ((babelfish_get_last_identity())::numeric(38,0))::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 11.694 ms
+~~END~~
+
 
 SELECT id, mycol FROM dbo.test_id_index WHERE dbo.test_id_index.id = scope_identity();
 go
@@ -789,6 +804,11 @@ text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE dbo.test_id_index.id = scope_identity()
 Index Scan using test_id_index_pkey on test_id_index
   Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 67.645 ms
 ~~END~~
 
 
@@ -803,6 +823,11 @@ Bitmap Heap Scan on test_id_index
         Index Cond: (id > ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.888 ms
+~~END~~
+
 
 SELECT id, mycol FROM dbo.test_id_index WHERE id != scope_identity();
 go
@@ -811,6 +836,11 @@ text
 Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE id != scope_identity()
 Seq Scan on test_id_index
   Filter: (id <> ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.746 ms
 ~~END~~
 
 
@@ -825,6 +855,11 @@ Bitmap Heap Scan on test_id_index
         Index Cond: (id > ((babelfish_get_last_identity())::numeric(38,0))::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.471 ms
+~~END~~
+
 
 SELECT id, mycol FROM dbo.test_id_index WHERE mycol = 10 AND id = scope_identity();
 go
@@ -834,6 +869,11 @@ Query Text: SELECT id, mycol FROM dbo.test_id_index WHERE mycol = 10 AND id = sc
 Index Scan using test_id_index_pkey on test_id_index
   Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
   Filter: (mycol = 10)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.360 ms
 ~~END~~
 
 
@@ -846,6 +886,11 @@ Seq Scan on test_id_index
   Filter: ((id <= ((babelfish_get_scope_identity())::numeric(38,0))::numeric) OR (mycol = 11))
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.401 ms
+~~END~~
+
 
 SELECT id, mycol FROM dbo.test_id_index_tinyint WHERE id = scope_identity()
 go
@@ -854,6 +899,11 @@ text
 Query Text: SELECT id, mycol FROM dbo.test_id_index_tinyint WHERE id = scope_identity()
 Index Scan using test_id_index_tinyint_pkey on test_id_index_tinyint
   Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.229 ms
 ~~END~~
 
 
@@ -866,6 +916,11 @@ Index Scan using test_id_index_smallint_pkey on test_id_index_smallint
   Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
+~~END~~
+
 
 SELECT id, mycol FROM dbo.test_id_index_bigint WHERE id = scope_identity()
 go
@@ -876,6 +931,11 @@ Index Scan using test_id_index_bigint_pkey on test_id_index_bigint
   Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
+~~END~~
+
 
 SELECT id, mycol FROM dbo.test_id_index_numeric WHERE id = scope_identity()
 go
@@ -884,6 +944,11 @@ text
 Query Text: SELECT id, mycol FROM dbo.test_id_index_numeric WHERE id = scope_identity()
 Index Scan using test_id_index_numeric_pkey on test_id_index_numeric
   Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
 ~~END~~
 
 
@@ -905,6 +970,11 @@ text
 Query Text: SELECT num_index, mycol FROM dbo.test_numeric_index_no_id WHERE num_index = scope_identity()
 Index Scan using test_numeric_index_no_id_pkey on test_numeric_index_no_id
   Index Cond: (num_index = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -1122,6 +1192,11 @@ Index Only Scan using babel_3384_test_pkey on babel_3384_test
   Index Cond: (id = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.187 ms
+~~END~~
+
 select id from babel_3384_test WHERE id = @@IDENTITY
 GO
 ~~START~~
@@ -1129,6 +1204,11 @@ text
 Query Text: select id from babel_3384_test WHERE id = @@IDENTITY
 Index Only Scan using babel_3384_test_pkey on babel_3384_test
   Index Cond: (id = ((babelfish_get_last_identity())::numeric(38,0))::numeric)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 

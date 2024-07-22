@@ -261,16 +261,8 @@ go
 -- trigger
 CREATE TRIGGER .tr2455 on t2455_base AFTER INSERT AS print 'triggered';
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot create trigger 'dbo.tr2455' because its schema is different from the schema of the target table or view.)~~
-
 DROP TRIGGER .tr2455;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: trigger "dbo.tr2455" does not exist)~~
-
 
 CREATE TRIGGER ..tr2455 on t2455_base AFTER INSERT AS print 'triggered';
 go

@@ -3423,9 +3423,35 @@ LANGUAGE C STABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
 $$
-	SELECT sys.is_rolemember_internal(role, NULL);
+DECLARE
+    is_windows_grp boolean := (CHARINDEX('\', role) != 0);
+BEGIN
+    -- Always return 1 for 'public'
+    IF (role = 'public')
+    THEN RETURN 1;
+    END IF;
+
+    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role AND type != 'S') -- do not consider sql logins
+    THEN
+        IF ((EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type IN ('SERVER ROLE', 'SQL LOGIN'))) OR is_windows_grp) -- do not consider sql logins, server roles
+        THEN RETURN NULL; -- Also return NULL if session is not a windows auth session but argument is a windows group
+        ELSIF EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type NOT IN ('SERVER ROLE', 'SQL LOGIN'))
+        THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
+        ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
+        END IF;
+    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role)
+    THEN
+        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role)
+        THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
+        ELSIF (is_windows_grp)
+        THEN RETURN NULL; -- Return NULL if session is not a windows auth session but argument is a windows group
+        ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
+        END IF;
+    ELSE RETURN NULL; -- Return NULL if role/group does not exist
+    END IF;
+END;
 $$
-LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
+LANGUAGE plpgsql STRICT STABLE;
 
 CREATE OR REPLACE FUNCTION sys.is_rolemember(IN role sys.SYSNAME)
 RETURNS INT AS
@@ -4039,8 +4065,8 @@ BEGIN
     ELSE
         -- Round datetime to fixed bins (e.g. .000, .003, .007)
         IF date_arg_datatype = 'sys.datetime'::regtype THEN
-            date := sys.babelfish_conv_string_to_datetime_v2('DATETIME', date::TEXT)::sys.datetime;
-            origin := sys.babelfish_conv_string_to_datetime_v2('DATETIME', origin::TEXT)::sys.datetime;
+            date := sys.babelfish_conv_string_to_datetime('DATETIME', date::TEXT)::sys.datetime;
+            origin := sys.babelfish_conv_string_to_datetime('DATETIME', origin::TEXT)::sys.datetime;
         END IF;
         -- when datepart is {year, quarter, month} make use of AGE() function to find number of buckets
         IF datepart IN ('year', 'quarter', 'month') THEN

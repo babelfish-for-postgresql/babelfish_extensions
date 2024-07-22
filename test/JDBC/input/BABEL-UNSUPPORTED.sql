@@ -1317,9 +1317,6 @@ EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_schemabinding_%', 'ig
 GO
 
 -- test automatically generated message for unsupported DDL
-CREATE PARTITION FUNCTION f_unsupported_1(datetime) AS RANGE RIGHT FOR VALUES (N'2017-07-11T00:00:00.000', N'2017-07-12T00:00:00.000', N'2017-07-13T00:00:00.000');
-GO
-
 ALTER AUTHORIZATION ON a1 TO SCHEMA OWNER;
 GO
 

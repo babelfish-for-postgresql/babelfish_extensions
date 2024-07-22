@@ -518,22 +518,28 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				relid = RangeVarGetRelid(stmt->relation, NoLock, false);
 
 				/*
-				 * Insert new dbid and owner columns value in babelfish catalog
-				 * if dump did not provide it.
+				 * Insert new dbid, owner, function_id and scheme_id column values
+				 * in babelfish catalog if dump did not provide it.
 				 */
 				if (relid == sysdatabases_oid ||
 					relid == namespace_ext_oid ||
 					relid == bbf_view_def_oid ||
 					relid == bbf_extended_properties_oid ||
-					relid == bbf_schema_perms_oid)
+					relid == bbf_schema_perms_oid ||
+					relid == bbf_partition_function_oid ||
+					relid == bbf_partition_scheme_oid ||
+					relid == bbf_partition_depend_oid)
 				{
 					ResTarget	*col = NULL;
 					A_Const 	*dbidValue = NULL;
 					A_Const 	*ownerValue = NULL;
 					bool    	dbid_found = false;
 					bool    	owner_found = false;
+					bool    	function_id_found = false;
+					bool    	scheme_id_found = false;
 
-					/* Skip if dbid and owner column already exists */
+
+					/* Skip if dbid, owner, function_id and scheme_id column already exists */
 					foreach(lc, stmt->cols)
 					{
 						ResTarget  *col1 = (ResTarget *) lfirst(lc);
@@ -543,8 +549,16 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						if (relid == sysdatabases_oid &&
 							pg_strcasecmp(col1->name, "owner") == 0)
 							owner_found = true;
+						if (relid == bbf_partition_function_oid &&
+							pg_strcasecmp(col1->name, "function_id") == 0)
+							function_id_found = true;
+						if (relid == bbf_partition_scheme_oid &&
+							pg_strcasecmp(col1->name, "scheme_id") == 0)
+							scheme_id_found = true;
 					}
-					if (dbid_found && (owner_found || relid != sysdatabases_oid))
+					if (dbid_found && (owner_found || relid != sysdatabases_oid)
+							&& (function_id_found || relid != bbf_partition_function_oid)
+							&& (scheme_id_found || relid != bbf_partition_scheme_oid))
 						break;
 
 					/*
@@ -591,6 +605,38 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						stmt->cols = lappend(stmt->cols, col);
 					}
 
+					/*
+					 * Populate function_id column in babelfish_partition_function catalog with
+					 * new one.
+					 */
+					if (!function_id_found && relid == bbf_partition_function_oid)
+					{
+						/* function_id column to store into InsertStmt's target list */
+						col = makeNode(ResTarget);
+						col->name = "function_id";
+						col->name_location = -1;
+						col->indirection = NIL;
+						col->val = NULL;
+						col->location = -1;
+						stmt->cols = lappend(stmt->cols, col);
+					}
+
+					/*
+					 * Populate scheme_id column in babelfish_partition_scheme catalog with
+					 * new one.
+					 */
+					if (!scheme_id_found && relid == bbf_partition_scheme_oid)
+					{
+						/* scheme_id column to store into InsertStmt's target list */
+						col = makeNode(ResTarget);
+						col->name = "scheme_id";
+						col->name_location = -1;
+						col->indirection = NIL;
+						col->val = NULL;
+						col->location = -1;
+						stmt->cols = lappend(stmt->cols, col);
+					}
+
 					foreach(lc, selectStmt->valuesLists)
 					{
 						List	   *sublist = (List *) lfirst(lc);
@@ -599,6 +645,28 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 							sublist = lappend(sublist, dbidValue);
 						if (!owner_found && relid == sysdatabases_oid)
 							sublist = lappend(sublist, ownerValue);
+						/*
+						 * For babelfish_partition_function and babelfish_partition_scheme catalog,
+						 * new ID needs to be added for each value in values clause.
+						 */
+						if (!function_id_found && relid == bbf_partition_function_oid)
+						{
+							/* const value node to store into value clause */
+							A_Const *functionidValue = makeNode(A_Const);
+							functionidValue->val.ival.type = T_Integer;
+							functionidValue->location = -1;
+							functionidValue->val.ival.ival = get_available_partition_function_id();
+							sublist = lappend(sublist, functionidValue);
+						}
+						if (!scheme_id_found && relid == bbf_partition_scheme_oid)
+						{
+							/* const value node to store into value clause */
+							A_Const *schemeidValue = makeNode(A_Const);
+							schemeidValue->val.ival.type = T_Integer;
+							schemeidValue->location = -1;
+							schemeidValue->val.ival.ival = get_available_partition_scheme_id();
+							sublist = lappend(sublist, schemeidValue);
+						}
 					}
 				}
 				break;
@@ -2311,95 +2379,115 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	{
 		case T_AlterFunctionStmt:
 			{
-				/*
-				* For ALTER PROC, we will:
-				* 1. Save important pg_proc metadata from the current proc (oid, proacl)
-				* 2. drop the current proc
-				* 3. create the new proc
-				* 4. update the pg_proc entry for the new proc with metadata from the old proc
-				* 5. update the babelfish_function_ext entry for the existing proc with new metadata based on the new proc
-				*/
-				AlterFunctionStmt *stmt = (AlterFunctionStmt *) parsetree;
-				bool 				isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
-				bool 				needCleanup;
-				Oid					oldoid;
-				Acl					*proacl;
-				bool				isSameProc;
-				ObjectAddress 		address;
-				CreateFunctionStmt	*cfs;
-				ListCell 			*option, *location_cell = NULL;
-				int 				origname_location = -1;
-
-				if (stmt->objtype != OBJECT_PROCEDURE)
-					break;
-
-				/* All event trigger calls are done only when isCompleteQuery is true */
-				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
-
-				/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
-				PG_TRY();
+				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
-					StartTransactionCommand();
-					if (isCompleteQuery)
-						EventTriggerDDLCommandStart(parsetree);
+				       /*
+					* For ALTER PROC, we will:
+					* 1. Save important pg_proc metadata from the current proc (oid, proacl)
+					* 2. drop the current proc
+					* 3. create the new proc
+					* 4. update the pg_proc entry for the new proc with metadata from the old proc
+					* 5. update the babelfish_function_ext entry for the existing proc with new metadata based on the new proc
+					*/
+					AlterFunctionStmt *stmt = (AlterFunctionStmt *) parsetree;
+					bool 				isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+					bool 				needCleanup;
+					Oid					oldoid;
+					Acl					*proacl;
+					bool				isSameProc;
+					ObjectAddress 		address;
+					CreateFunctionStmt	*cfs;
+					ListCell 			*option, *location_cell = NULL;
+					int 				origname_location = -1;
+					bool 				with_recompile = false;
 
-					foreach (option, stmt->actions)
+					if (!IS_TDS_CLIENT())
 					{
-						DefElem *defel = (DefElem *) lfirst(option);
-						if (strcmp(defel->defname, "location") == 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("TSQL ALTER PROCEDURE is not supported from PostgreSQL endpoint.")));
+					}
+
+					if (stmt->objtype != OBJECT_PROCEDURE)
+						break;
+
+					/* All event trigger calls are done only when isCompleteQuery is true */
+					needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+
+					/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
+					PG_TRY();
+					{
+						StartTransactionCommand();
+						if (isCompleteQuery)
+							EventTriggerDDLCommandStart(parsetree);
+
+						foreach (option, stmt->actions)
 						{
-							/*
-							* location is an implicit option in tsql dialect,
-							* we use this mechanism to store location of function
-							* name so that we can extract original input function
-							* name from queryString.
-							*/
-							origname_location = intVal((Node *) defel->arg);
-							location_cell = option;
-							pfree(defel);
+							DefElem *defel = (DefElem *) lfirst(option);
+							if (strcmp(defel->defname, "location") == 0)
+							{
+							       /*
+								* location is an implicit option in tsql dialect,
+								* we use this mechanism to store location of function
+								* name so that we can extract original input function
+								* name from queryString.
+								*/
+								origname_location = intVal((Node *) defel->arg);
+								location_cell = option;
+								pfree(defel);
+							}
+							else if (strcmp(defel->defname, "recompile") == 0)
+							{
+							       /*
+								* ALTER PROCEDURE ... WITH RECOMPILE
+								* Record RECOMPILE in catalog
+								*/
+								with_recompile = true;
+							}
 						}
+
+						/* delete location cell if it exists as it is for internal use only */
+						if (location_cell)
+							stmt->actions = list_delete_cell(stmt->actions, location_cell);
+
+						/* make a CreateFunctionStmt to pass into CreateFunction() */
+						cfs = makeNode(CreateFunctionStmt);
+						cfs->is_procedure = true;
+						cfs->replace = true;
+						cfs->funcname = stmt->func->objname;
+						cfs->parameters = stmt->func->objfuncargs;
+						cfs->returnType = NULL;
+						cfs->options = stmt->actions;
+
+						pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc);
+						if (!isSameProc) /* i.e. different signature */
+							RemoveFunctionById(oldoid);
+						address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
+						pg_proc_update_oid_acl(address, oldoid, proacl);
+						/* Update function/procedure related metadata in babelfish catalog */
+						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
+						if (!isSameProc) {
+						       /*
+							* When the signatures differ we need to manually update the 'function_args' column in 
+							* the 'bbf_schema_permissions' catalog
+							*/
+							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, OBJECT_PROCEDURE, oldoid);
+						}
+						/* Clean up table entries for the create function statement */
+						deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
+						deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
+						deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
+						CommitTransactionCommand();
 					}
-
-					/* delete location cell if it exists as it is for internal use only */
-					if (location_cell)
-						stmt->actions = list_delete_cell(stmt->actions, location_cell);
-
-					/* make a CreateFunctionStmt to pass into CreateFunction() */
-					cfs = makeNode(CreateFunctionStmt);
-					cfs->is_procedure = true;
-					cfs->replace = true;
-					cfs->funcname = stmt->func->objname;
-					cfs->parameters = stmt->func->objfuncargs;
-					cfs->returnType = NULL;
-					cfs->options = stmt->actions;
-
-					pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc);
-					if (!isSameProc) /* i.e. different signature */
-						RemoveFunctionById(oldoid);
-					address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
-					pg_proc_update_oid_acl(address, oldoid, proacl);
-					/* Update function/procedure related metadata in babelfish catalog */
-					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
-					if (!isSameProc) {
-						/*
-						 * When the signatures differ we need to manually update the 'function_args' column in 
-						 * the 'bbf_schema_permissions' catalog
-						 */
-						alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, OBJECT_PROCEDURE, oldoid);
+					PG_FINALLY();
+					{
+						if (needCleanup)
+							EventTriggerEndCompleteQuery();
 					}
-					/* Clean up table entries for the create function statement */
-					deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
-					deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
-					deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
-					CommitTransactionCommand();
+					PG_END_TRY();
+					return;
 				}
-				PG_FINALLY();
-				{
-					if (needCleanup)
-						EventTriggerEndCompleteQuery();
-				}
-				PG_END_TRY();
-				return;
+				break;
 			}
 		case T_AlterTableStmt:
 			{
@@ -3731,7 +3819,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					ListCell   *lc;
 					ListCell	*lc1;
 					if (rv->schemaname != NULL)
-						logical_schema = get_logical_schema_name(rv->schemaname, true);
+						logical_schema = get_logical_schema_name(rv->schemaname, false);
 					else
 						logical_schema = get_authid_user_ext_schema_name(dbname, current_user);
 
@@ -6139,7 +6227,23 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	Relation		relation = NULL;
 	Oid				schema_oid;
 	ListCell		*cell;
-	const char *logicalschema = NULL;
+	const char		*logicalschema = NULL;
+
+	/*
+	 * BABEL-4390
+	 * List of procedure names that are not allowed to be dropped. These procedures 
+	 * are considered essential or restricted due to security or operational reasons.
+	 */
+	const char		*restricted_procedures[] = {
+		"xp_qv",
+		"xp_instance_regread",
+		"sp_addlinkedsrvlogin",
+		"sp_droplinkedsrvlogin",
+		"sp_dropserver",
+		"sp_enum_oledb_providers",
+		"sp_testlinkedserver"
+	};
+	const int		RESTRICTED_PROCEDURES_COUNT = sizeof(restricted_procedures) / sizeof(restricted_procedures[0]);
 
 	db_id = get_cur_db_id();
 
@@ -6253,6 +6357,22 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				schema_name = get_namespace_name(schema_oid);
 			if (schema_name != NULL)
 				logicalschema = get_logical_schema_name(schema_name, true);
+
+			/* Restrict dropping of extended stored procedures */
+			if (stmt->removeType == OBJECT_PROCEDURE && major_name)
+			{
+				int i;
+				for (i = 0; i < RESTRICTED_PROCEDURES_COUNT; i++)
+				{
+					if (pg_strcasecmp(major_name, restricted_procedures[i]) == 0)
+					{
+						ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("Cannot drop the procedure \'%s\', because it does not exist or you do not have permission.", major_name)));
+						break;
+					}
+				}
+			}
 
 			if (schema_name && major_name)
 			{

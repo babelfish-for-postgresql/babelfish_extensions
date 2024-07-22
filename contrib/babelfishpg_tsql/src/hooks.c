@@ -2590,7 +2590,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 						char	   *str;
 
 						/* Fetch default positions */
-						arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+						arg_default_positions = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 																bbffunctuple,
 																Anum_bbf_function_ext_default_positions,
 																&isnull);
@@ -2604,7 +2604,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 							pfree(str);
 						}
 						else
-							ReleaseSysCache(bbffunctuple);
+							heap_freetuple(bbffunctuple);
 					}
 				}
 
@@ -2684,7 +2684,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 
 				if (default_positions_available)
 				{
-					ReleaseSysCache(bbffunctuple);
+					heap_freetuple(bbffunctuple);
 				}
 				pfree(langname);
 			}
@@ -2697,7 +2697,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 						parser_errposition(pstate, location));
 			}
 		}
-		ReleaseSysCache(tup);
+		heap_freetuple(tup);
 	}
 }
 
@@ -3250,7 +3250,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
  * Updates the existing catalog entry if it already exists.
  */
 void
-pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location)
+pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location, bool with_recompile)
 {
 	Relation	bbf_function_ext_rel;
 	TupleDesc	bbf_function_ext_rel_dsc;
@@ -3261,7 +3261,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 				proctup,
 				oldtup;
 	Form_pg_proc form_proctup;
-	NameData   *schema_name_NameData, *objname_data;
+	NameData   *schema_name_NameData;
 	char	   *physical_schemaname;
 	char	   *func_signature;
 	char	   *original_name = NULL;
@@ -3271,8 +3271,6 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	uint64		flag_values = 0,
 				flag_validity = 0;
 	char	   *original_query = get_original_query_string();
-	ScanKeyData		key[2];
-	TableScanDesc	tblscan;
 
 	/* Disallow extended catalog lookup during restore */
 	if (babelfish_dump_restore)
@@ -3376,11 +3374,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	}
 
 	/*
-	 * To store certain flag, Set corresponding bit in flag_validity which
+	 * To store a certain flag, set the corresponding bit in flag_validity which
 	 * tracks currently supported flag bits and then set/unset flag_values bit
 	 * according to flag settings. Used !Transform_null_equals instead of
 	 * pltsql_ansi_nulls because NULL is being inserted in catalog if it is
-	 * used. Currently, Only two flags are supported.
+	 * used. Currently, Only three flags are supported.
 	 */
 	flag_validity |= FLAG_IS_ANSI_NULLS_ON;
 	if (!Transform_null_equals)
@@ -3388,6 +3386,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	flag_validity |= FLAG_USES_QUOTED_IDENTIFIER;
 	if (pltsql_quoted_identifier)
 		flag_values |= FLAG_USES_QUOTED_IDENTIFIER;
+
+	flag_validity |= FLAG_CREATED_WITH_RECOMPILE;	
+	if (with_recompile)	
+		flag_values |= FLAG_CREATED_WITH_RECOMPILE;		
 
 	schema_name_NameData = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(schema_name_NameData->data, NAMEDATALEN, "%s", physical_schemaname);
@@ -3419,22 +3421,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		new_record_nulls[Anum_bbf_function_ext_definition - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
-	ScanKeyInit(&key[0],
-				Anum_bbf_function_ext_nspname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(schema_name_NameData));
-	objname_data = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(objname_data->data, NAMEDATALEN, "%s", NameStr(form_proctup->proname));
-	ScanKeyInit(&key[1],
-				Anum_bbf_function_ext_funcname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(objname_data));
-	
-	// scan
-	tblscan = table_beginscan_catalog(bbf_function_ext_rel, 2, key);
-
-	// get the scan result -> original tuple
-	oldtup = heap_getnext(tblscan, ForwardScanDirection);
+	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
 
 	if (HeapTupleIsValid(oldtup))
 	{
@@ -3442,6 +3429,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 								  new_record, new_record_nulls,
 								  new_record_replaces);
 		CatalogTupleUpdate(bbf_function_ext_rel, &tuple->t_self, tuple);
+		heap_freetuple(oldtup);
 	}
 	else
 	{
@@ -3462,11 +3450,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		recordDependencyOn(&address, &index, DEPENDENCY_NORMAL);
 	}
 
-	pfree(physical_schemaname);
 	pfree(func_signature);
+	pfree(physical_schemaname);
+	pfree(schema_name_NameData);
 	ReleaseSysCache(proctup);
 	heap_freetuple(tuple);
-	heap_endscan(tblscan);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 
@@ -3605,7 +3593,7 @@ pltsql_drop_func_default_positions(Oid objectId)
 		CatalogTupleDelete(bbf_function_ext_rel,
 						   &bbffunctuple->t_self);
 		table_close(bbf_function_ext_rel, RowExclusiveLock);
-		ReleaseSysCache(bbffunctuple);
+		heap_freetuple(bbffunctuple);
 	}
 
 	ReleaseSysCache(proctuple);
@@ -3715,7 +3703,7 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 				bool		isnull;
 
 				/* Fetch default positions */
-				arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+				arg_default_positions = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 														bbffunctuple,
 														Anum_bbf_function_ext_default_positions,
 														&isnull);
@@ -3742,12 +3730,12 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 					/* we could not find defaults for some arguments. */
 					if (idx < pronargs)
 					{
-						ReleaseSysCache(bbffunctuple);
+						heap_freetuple(bbffunctuple);
 						return false;
 					}
 				}
 
-				ReleaseSysCache(bbffunctuple);
+				heap_freetuple(bbffunctuple);
 			}
 		}
 	}
@@ -3895,7 +3883,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 			}
 
 			/* Fetch default positions */
-			arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+			arg_default_positions = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 													bbffunctuple,
 													Anum_bbf_function_ext_default_positions,
 													&isnull);
@@ -3911,7 +3899,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 				pfree(str);
 			}
 			else
-				ReleaseSysCache(bbffunctuple);
+				heap_freetuple(bbffunctuple);
 		}
 
 		for (pp = numposargs; pp < pronargs; pp++)
@@ -3968,7 +3956,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 		}
 
 		if (default_positions_available)
-			ReleaseSysCache(bbffunctuple);
+			heap_freetuple(bbffunctuple);
 
 		if (!match_found)
 			return false;
@@ -4061,7 +4049,7 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 		int		   position,i,j;
 
 		/* Fetch default positions */
-		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+		arg_default_positions = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 												bbffunctuple,
 												Anum_bbf_function_ext_default_positions,
 												&isnull);
@@ -4143,7 +4131,7 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 			}
 			++i;
 		}
-		ReleaseSysCache(bbffunctuple);
+		heap_freetuple(bbffunctuple);
 
 		return ret;
 	}
@@ -4177,7 +4165,7 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 		bool		isnull;
 
 		/* Fetch default positions */
-		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+		arg_default_positions = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 												bbffunctuple,
 												Anum_bbf_function_ext_default_positions,
 												&isnull);
@@ -4202,7 +4190,7 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 			}
 		}
 
-		ReleaseSysCache(bbffunctuple);
+		heap_freetuple(bbffunctuple);
 	}
 	else
 	{
@@ -4280,7 +4268,7 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 		char	   *str;
 
 		/* Fetch default positions */
-		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+		arg_default_positions = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 												bbffunctuple,
 												Anum_bbf_function_ext_default_positions,
 												&isnull);
@@ -4294,7 +4282,7 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 			pfree(str);
 		}
 		else
-			ReleaseSysCache(bbffunctuple);
+			heap_freetuple(bbffunctuple);
 	}
 
 	/* Check for special treatment of ordered-set aggregates */
@@ -4420,7 +4408,7 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 	}
 
 	if (default_positions_available)
-		ReleaseSysCache(bbffunctuple);
+		heap_freetuple(bbffunctuple);
 
 	return argsprinted;
 }
@@ -4768,7 +4756,9 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		relid == namespace_ext_oid ||
 		relid == bbf_view_def_oid ||
 		relid == bbf_extended_properties_oid ||
-		relid == bbf_schema_perms_oid)
+		relid == bbf_schema_perms_oid ||
+		relid == bbf_partition_scheme_oid ||
+		relid == bbf_partition_depend_oid)
 	{
 		AttrNumber	attnum;
 
@@ -4799,6 +4789,25 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 			const char *owner = GetUserNameFromId(get_sa_role_oid(), false);
 
 			values[attnum - 1] = CStringGetDatum(owner);
+			nulls[attnum - 1] = false;
+		}
+	}
+
+	/*
+	 * Insert new scheme_id column value in babelfish_partition_scheme
+	 * if dump did not provide it.
+	 */
+	if (relid == bbf_partition_scheme_oid)
+	{
+		AttrNumber	attnum;
+
+		attnum = (AttrNumber) attnameAttNum(rel, "scheme_id", false);
+		Assert(attnum != InvalidAttrNumber);
+
+		if (nulls[attnum - 1])
+		{
+			int32 scheme_id = get_available_partition_scheme_id();
+			values[attnum - 1] = Int32GetDatum(scheme_id);
 			nulls[attnum - 1] = false;
 		}
 	}

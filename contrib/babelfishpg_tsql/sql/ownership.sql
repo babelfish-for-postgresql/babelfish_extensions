@@ -41,7 +41,7 @@ CREATE TABLE sys.babelfish_function_ext (
 	create_date SYS.DATETIME NOT NULL,
 	modify_date SYS.DATETIME NOT NULL,
 	definition sys.NTEXT DEFAULT NULL,
-	PRIMARY KEY(nspname, funcsignature)
+	PRIMARY KEY(funcname, nspname, funcsignature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
@@ -290,6 +290,8 @@ BEGIN
 	EXECUTE format('GRANT %I to bbf_role_admin WITH ADMIN TRUE;', sa_name);
 	EXECUTE format('CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE %I', sa_name);
 	EXECUTE format('GRANT sysadmin TO bbf_role_admin WITH ADMIN TRUE');
+	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_function_seq TO sysadmin WITH GRANT OPTION');
+	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_scheme_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_db_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT CREATE, CONNECT, TEMPORARY ON DATABASE %s TO sysadmin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = true', CURRENT_DATABASE());
@@ -312,6 +314,8 @@ BEGIN
 	CALL sys.babel_drop_all_logins();
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = false', CURRENT_DATABASE());
 	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_function_seq RESTART';
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_scheme_seq RESTART';
 	DROP OWNED BY sysadmin;
 	DROP ROLE sysadmin;
 	DROP OWNED BY bbf_role_admin;
@@ -431,6 +435,8 @@ ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME()
+  AND (Ext.orig_username IN ('dbo', 'db_owner', 'guest') -- system users should always be visible
+  OR pg_has_role(Ext.rolname, 'MEMBER')) -- Current user should be able to see users it has permission of
 UNION ALL
 SELECT
 CAST(name AS SYS.SYSNAME) AS name,
@@ -493,6 +499,7 @@ CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
 CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
 CAST(CASE
 WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+WHEN Ext.type = 'R' THEN 'ROLE'
 ELSE 'SQL USER' END
 AS SYS.NVARCHAR(128)) AS TYPE,
 CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
@@ -501,8 +508,8 @@ ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = sys.DB_NAME()
-AND Ext.rolname = CURRENT_USER
-AND Ext.type in ('S','U')
+AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR
+((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo' AND Ext.type = 'R' AND pg_has_role(current_user, Ext.rolname, 'MEMBER')))
 UNION ALL
 SELECT
 CAST(-1 AS INT) AS principal_id,

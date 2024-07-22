@@ -40,6 +40,7 @@ sys-assembly_types
 sys-database_mirroring
 sys-databases
 sys-numbered_procedures
+BABEL-4390
 BABEL-3121
 sys-events
 sys-suser_sid
@@ -134,9 +135,9 @@ BABEL-3116
 BABEL-3117
 BABEL-3118
 BABEL-3249
-BABEL-3486-before-16_3
+BABEL-3486
 BABEL-3474
-BABEL-3614-before-16_3
+BABEL-3614
 BABEL-3646
 BABEL-3748
 BABEL-383
@@ -350,7 +351,7 @@ sys-all_parameters-dep
 BABEL-3556
 BABEL-3588
 BABEL-3268
-BABEL-3513
+BABEL-3513_before_15_8_or_16_4
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795
@@ -434,13 +435,10 @@ BABEL-4863
 babel_test_int4_numeric_oper_before_16_3
 babel_test_int8_numeric_oper_before_16_3
 babel_test_int2_numeric_oper_before_16_3
-newid
+newid_before_15_8_or_16_4
 BABEL-4869
+babel_4328_datetime
+babel_4328_datetime2
+babel_4328_datetimeoffset
 babel_726
-test_conv_string_to_date-before-16_3
-test_conv_string_to_datetime-before-16_3
-test_conv_string_to_datetime2-before-16_3
-test_conv_string_to_datetimeoffset-before-16_3
-test_conv_string_to_smalldatetime
-test_conv_string_to_time-before-16_3
 BABEL-3401

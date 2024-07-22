@@ -729,6 +729,7 @@ PREDICATE:                                       P R E D I C A T E;
 PREDICT:                                         P R E D I C T;
 PRIMARY:                                         P R I M A R Y;
 PRIMARY_ROLE:                                    P R I M A R Y  UNDERLINE  R O L E;
+PRIMARY_SQBRACKET:                               '[' P R I M A R Y ']';
 PRINT:                                           P R I N T;
 PRIOR:                                           P R I O R;
 PRIORITY:                                        P R I O R I T Y;

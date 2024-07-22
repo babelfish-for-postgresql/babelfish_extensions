@@ -23,7 +23,8 @@ extern char * gen_func_arg_list_from_params(List* parameters);
 extern void pltsql_store_func_default_positions(ObjectAddress address,
                                                 List *parameters,
                                                 const char *queryString,
-                                                int origname_location);
+                                                int origname_location,
+                                                bool with_recompile);
 extern void alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, 
                                                     List *parameters,
                                                     int objtypeInt,

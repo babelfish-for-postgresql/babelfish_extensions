@@ -34,11 +34,6 @@ bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
 
-bool		is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
-bool		is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
-bool		is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
-bool		is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
-bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 
 bool
@@ -176,6 +171,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 	Node *trigStmt = NULL;
 	ObjectAddress tbltyp;
 	int origname_location = -1;
+	bool with_recompile = false;
 
 	pstate->p_sourcetext = queryString;
 
@@ -272,6 +268,14 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 					location_cell = option;
 					pfree(defel);
 				}
+				else if (strcmp(defel->defname, "recompile") == 0)
+				{
+					/*
+					 * CREATE PROCEDURE ... WITH RECOMPILE
+					 * Record RECOMPILE in catalog
+					 */
+					with_recompile = true;
+				}					
 			}
 
 			/* delete location cell if it exists as it is for internal use only */
@@ -312,7 +316,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			address = CreateFunction(pstate, stmt);
 
 			/* Store function/procedure related metadata in babelfish catalog */
-			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location);
+			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location, with_recompile);
 
 			if (tbltypStmt || restore_tsql_tabletype)
 			{
@@ -1256,7 +1260,7 @@ flatten_search_path(List *oid_list)
 	return pathbuf.data;
 }
 
-const char *
+char *
 get_pltsql_function_signature_internal(const char *funcname,
 									   int nargs, const Oid *argtypes)
 {
@@ -1292,7 +1296,6 @@ get_pltsql_function_signature_internal(const char *funcname,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();
-
 	return argbuf.data;			/* return palloc'd string buffer */
 }
 

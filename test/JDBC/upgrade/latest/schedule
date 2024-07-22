@@ -123,6 +123,7 @@ BABEL-4214
 BABEL-4516
 babel_417
 BABEL-493
+BABEL-4888
 BABEL_539
 BABEL-621
 BABEL-728
@@ -227,6 +228,7 @@ FULLTEXT_INDEX
 fts-contains
 fts-contains-utils
 BABEL-4785
+BABEL-4390
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -488,6 +490,9 @@ sp_who
 BABEL_4330
 kill
 set_tran_isolvl
+with_recompile
+alter_proc_recompile
+catalogs_dbo_sys_schema-upgrade
 BABEL-4217
 Test_ISNULL
 BABEL-4270
@@ -529,12 +534,12 @@ babel_test_int8_numeric_oper
 babel_test_int2_numeric_oper
 login_token-dep
 test_like_for_AI
-babel_726
 BABEL-4869
-test_conv_string_to_date
-test_conv_string_to_datetime
-test_conv_string_to_datetime2
-test_conv_string_to_datetimeoffset
-test_conv_string_to_smalldatetime
-test_conv_string_to_time
+babel_4328_datetime
+babel_4328_datetime2
+babel_4328_datetimeoffset
+babel_726
 BABEL-3401
+BABEL-3820
+PARTITION
+BABEL-5071

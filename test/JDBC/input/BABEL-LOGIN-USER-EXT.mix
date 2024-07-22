@@ -715,3 +715,83 @@ GO
 
 SELECT pg_sleep(1);
 GO
+
+-- tsql
+CREATE DATABASE babel_4935_db
+GO
+
+USE babel_4935_db
+GO
+
+-- Login that is member sysadmin
+CREATE LOGIN babel_4935_sysadmin WITH PASSWORD = '123'
+GO
+
+ALTER ROLE sysadmin ADD MEMBER babel_4935_sysadmin
+GO
+
+-- Logins that are not a member of sysadmin but have users associated
+CREATE LOGIN babel_4935_no_sysadmin1 WITH PASSWORD = '123'
+CREATE LOGIN babel_4935_no_sysadmin2 WITH PASSWORD = '123'
+GO
+
+CREATE USER babel_4935_no_sysadmin1
+CREATE USER babel_4935_no_sysadmin2
+GO
+
+-- Login that is not a member of sysadmin and has no user associated
+CREATE LOGIN babel_4935_guest WITH PASSWORD = '123'
+GO
+
+GRANT CONNECT TO guest
+GO
+
+-- jdbc_user is superuser so should see all the users
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+
+-- tsql user=babel_4935_sysadmin password=123 database=babel_4935_db
+-- login is member of sysadmin so should see all the users
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+
+-- tsql user=babel_4935_no_sysadmin1 password=123 database=babel_4935_db
+-- login is not member of sysadmin so should see all the system users and only it's own user
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+
+-- tsql user=babel_4935_guest password=123 database=babel_4935_db
+-- login is not member of sysadmin and no user associated so should only see system users
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4935_sysadmin' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4935_no_sysadmin1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4935_guest' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+USE master
+GO
+
+DROP DATABASE babel_4935_db
+GO
+
+DROP LOGIN babel_4935_sysadmin
+DROP LOGIN babel_4935_no_sysadmin1
+DROP LOGIN babel_4935_no_sysadmin2
+DROP LOGIN babel_4935_guest
+GO

@@ -1,0 +1,1127 @@
+--------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME using procedure
+--------------------------------------------------
+EXEC PartitionProcedureCreatePartitionFunction
+GO
+
+EXEC PartitionProcedureCreatePartitionScheme
+GO
+
+EXEC PartitionProcedureCreatePartitionFunctionAndScheme
+GO
+
+--------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME inside Function
+--------------------------------------------------
+CREATE FUNCTION TestFunctionCreatePartitionFunction()
+RETURNS INT
+AS
+BEGIN
+    CREATE PARTITION FUNCTION TestPartitionFunction (int)
+    AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+    RETURN 1;
+END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'CREATE PARTITION FUNCTION' within a function.)~~
+
+
+CREATE FUNCTION TestFunctionDropPartitionFunction()
+RETURNS INT
+AS
+BEGIN
+    DROP PARTITION FUNCTION IntPartitionFunction;
+    RETURN 1;
+END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'DROP PARTITION FUNCTION' within a function.)~~
+
+
+CREATE FUNCTION TestFunctionCreatePartitionScheme()
+RETURNS INT
+AS
+BEGIN
+    CREATE PARTITION SCHEME TestPartitionScheme AS
+    PARTITION IntPartitionFunction
+    ALL TO ([PRIMARY]);
+    RETURN 1;
+END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'CREATE PARTITION SCHEME' within a function.)~~
+
+
+CREATE FUNCTION TestFunctionDropPartitionScheme()
+RETURNS INT
+AS
+BEGIN
+    DROP PARTITION SCHEME IntPartitionScheme;
+    RETURN 1;
+END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'DROP PARTITION SCHEME' within a function.)~~
+
+
+
+---------------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME using 2-part name
+---------------------------------------------------------
+CREATE PARTITION FUNCTION [TestDb].[TwoPartParitionFunction](DATE)
+AS RANGE RIGHT FOR VALUES ('20230101', '20230201', '20230301', '20230401');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 4 and character position 34)~~
+
+
+CREATE PARTITION SCHEME [TestDb].[TwoPartParitionScheme]
+AS PARTITION [TestDb].[TwoPartPF]
+TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 32)~~
+
+
+--------------------------------------------------
+--- Unsupported Datatypes for Partition Function 
+--------------------------------------------------
+CREATE PARTITION FUNCTION VarcharMaxPartitionFunction (VARCHAR(MAX)) 
+AS RANGE RIGHT FOR VALUES ('A', 'B', 'C', 'D');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'varchar(max)' is not valid for this operation.)~~
+
+
+CREATE PARTITION FUNCTION NVarcharMaxPartitionFunction (NVARCHAR(MAX)) 
+AS RANGE RIGHT FOR VALUES (N'A', N'B', N'C', N'D');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'nvarchar(max)' is not valid for this operation.)~~
+
+
+CREATE PARTITION FUNCTION VarbinaryMaxPartitionFunction (VARBINARY(MAX)) 
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'varbinary(max)' is not valid for this operation.)~~
+
+
+CREATE PARTITION FUNCTION BinaryMaxPartitionFunction (BINARY(MAX))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near the keyword 'binary'.)~~
+
+
+CREATE PARTITION FUNCTION TextPartitionFunction (text)
+AS RANGE RIGHT FOR VALUES ('a', 'b', 'c');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'text' is not valid for this operation.)~~
+
+
+CREATE PARTITION FUNCTION NTextPartitionFunction (ntext)
+AS RANGE RIGHT FOR VALUES (N'a', N'b', N'c');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'ntext' is not valid for this operation.)~~
+
+
+CREATE PARTITION FUNCTION ImagePartitionFunction (image)
+AS RANGE RIGHT FOR VALUES (0x123456, 0x789ABC, 0xDEF012);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'image' is not valid for this operation.)~~
+
+
+CREATE PARTITION FUNCTION XmlPartitionFunction (xml)
+AS RANGE RIGHT FOR VALUES ('<a>1</a>', '<b>2</b>', '<c>3</c>');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'xml' is not valid for this operation.)~~
+
+
+CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOMETRY)
+AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'geometry' is not valid for this operation.)~~
+
+
+CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOGRAPHY)
+AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'geography' is not valid for this operation.)~~
+
+
+-- to test rowversion and timestamp
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_rowversion', 'ignore', 'false')
+go
+~~START~~
+text
+ignore
+~~END~~
+
+
+CREATE PARTITION FUNCTION RowVersionPartitionFunction (ROWVERSION)
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x0000000000000001, 0x0000000000000002);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'rowversion' is not valid for this operation.)~~
+
+
+CREATE PARTITION FUNCTION TimestampPartitionFunction (TIMESTAMP)
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x0000000000000001, 0x0000000000000002);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'timestamp' is not valid for this operation.)~~
+
+
+-- reset back the escape hatch
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_rowversion', 'strict', 'true')
+go
+~~START~~
+text
+strict
+~~END~~
+
+
+-- user defined type
+CREATE TYPE PartitionUserDefinedType FROM VARCHAR(10);
+GO
+
+CREATE PARTITION FUNCTION UdtPartitionFunction (PartitionUserDefinedType)
+AS RANGE RIGHT FOR VALUES ('a', 'b', 'c');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'partitionuserdefinedtype' is not valid for this operation.)~~
+
+
+DROP type PartitionUserDefinedType
+GO
+
+------------------------------------------------------------------------------
+--- Duplicate range values for all supported datatypes in Partition Function 
+------------------------------------------------------------------------------
+CREATE PARTITION FUNCTION IntPartitionFunctionContainsDuplicateValue (int) 
+AS RANGE RIGHT FOR VALUES (0, 100, 1000, 100);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION BigIntPartitionFunctionContainsDuplicateValue (bigint)
+AS RANGE RIGHT FOR VALUES (0, 500, 100, 500, 1000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION SmallIntPartitionFunctionContainsDuplicateValue (smallint) 
+AS RANGE RIGHT FOR VALUES (32767, 10, -32768, 0, 10);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION TinyIntPartitionFunctionContainsDuplicateValue (tinyint)
+AS RANGE RIGHT FOR VALUES (0, 255, 128, 255);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION DecimalPartitionFunctionContainsDuplicateValue (decimal(10, 5))
+AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 100.0, 300.0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION NumericPartitionFunctionContainsDuplicateValue (numeric(5, 2))
+AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 20.0, 30.0);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION DatePartitionFunctionContainsDuplicateValue (date) 
+AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','2023-01-01','2022-01-01');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION DateTimePartitionFunctionContainsDuplicateValue (datetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', '2019-01-01 00:00:00', '2022-01-01');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION DateTime2PartitionFunctionContainsDuplicateValue (datetime2(3))
+AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', '2019-01-01 00:00:00.000', '2022-07-01 00:00:00.000');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION SmallDateTimePartitionFunctionContainsDuplicateValue (smalldatetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', '2019-01-01', '2022-07-01');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION CharPartitionFunctionContainsDuplicateValue (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', 'D', 'K');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION VarCharPartitionFunctionContainsDuplicateValue (varchar(10))
+AS RANGE RIGHT FOR VALUES ('Apple', 'Banana', 'Mango', 'Cherry', 'Date', 'Banana');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION NVarCharPartitionFunctionContainsDuplicateValue (nvarchar(10))
+AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Mango', N'Cherry', N'Date', N'Banana');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION NCharPartitionFunctionContainsDuplicateValue (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', N'B',  N'K');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION BinaryPartitionFunctionContainsDuplicateValue (binary(4))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000, 0x800);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION VarBinaryPartitionFunctionContainsDuplicateValue (varbinary(8))
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 0xC000000000000000, 0x8000000000000000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION UniqueIdentifierPartitionFunctionContainsDuplicateValue (uniqueidentifier)
+AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', '6F9619FF-8B86-D011-B42D-00C04FC964FF', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', '6F9619FF-8B86-D011-B42D-00C04FC964FF');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
+AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'), 'abc');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+-- duplicate value with different basetype 
+CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
+AS RANGE RIGHT FOR VALUES (1, cast('abc' as varchar(10)), CONVERT(DATETIME, '2023-05-01'), cast('abc' as nvarchar(10)));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
+
+
+--------------------------------------------------
+--- Unsupported Options with Partition Function 
+--------------------------------------------------
+-- LEFT option is not supported in Babelfish
+CREATE PARTITION FUNCTION PartitionFunctionWithLeft (int)
+AS RANGE LEFT FOR VALUES (10, 1000, 10000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'PARTIION FUNCTION with LEFT option' is not currently supported in Babelfish)~~
+
+
+-- by default it is LEFT and it should throw error
+CREATE PARTITION FUNCTION PartitionFunctionWithLeft (int)
+AS RANGE FOR VALUES (10, 1000, 10000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'PARTIION FUNCTION with LEFT option' is not currently supported in Babelfish)~~
+
+
+--------------------------------------------------
+--- Duplicate Create of Partition Function/Scheme
+--------------------------------------------------
+CREATE PARTITION FUNCTION IntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is already an object named 'IntPartitionFunction' in the database.)~~
+
+
+-- duplicate partition function with invalid args
+CREATE PARTITION FUNCTION IntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES ('xyz', CONVERT(DATETIME, '2023-05-01'), 0x789ABC);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is already an object named 'IntPartitionFunction' in the database.)~~
+
+
+CREATE PARTITION SCHEME IntPartitionScheme AS
+PARTITION IntPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is already an object named 'IntPartitionScheme' in the database.)~~
+
+
+-- duplicate partition scheme with invalid Partition function
+CREATE PARTITION SCHEME IntPartitionScheme AS
+PARTITION PartitionFunctionDoesNotExists 
+ALL TO ([PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid object name 'PartitionFunctionDoesNotExists'.)~~
+
+
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Function/Scheme when it does not exists
+-----------------------------------------------------------------------------------
+DROP PARTITION FUNCTION PartitionFunctionDoesNotExists
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the partition function 'PartitionFunctionDoesNotExists', because it does not exist or you do not have permission.)~~
+
+
+DROP PARTITION SCHEME PartitionSchemeDoesNotExists
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the partition scheme 'PartitionSchemeDoesNotExists', because it does not exist or you do not have permission.)~~
+
+
+-----------------------------------------------------------------------------------
+--- Create of Partition Scheme when provided partition function doesn't exists
+-----------------------------------------------------------------------------------
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION PartitionFunctionDoesNotExists
+ALL TO ([PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid object name 'PartitionFunctionDoesNotExists'.)~~
+
+
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Function when there is dependent Partition Scheme
+-----------------------------------------------------------------------------------
+DROP PARTITION FUNCTION IntPartitionFunction
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition function 'IntPartitionFunction' is being used by one or more partition schemes.)~~
+
+
+
+
+-----------------------------------------------
+--- Filegroup behaviour with Partition Scheme 
+-----------------------------------------------
+-- by default user filegroup will be treated as PRIMARY filegroup
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO (user_filegroup);
+GO
+
+DROP PARTITION SCHEME TestPartitionScheme
+GO
+
+-- User can configure the "escape_hatch_storage_options" to STRICT to disallow user filegroups
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_storage_options', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+
+
+-- should throw error
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO (user_filegroup);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'user filegroup' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
+
+
+-- reset it back
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_storage_options', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+-- when more than one filegroup are specified with ALL option
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO ([PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only a single filegroup can be specified while creating partition scheme using option ALL to specify all the filegroups.)~~
+
+
+-- when partition function generates more partition than specified filegroups
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+TO ([PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The associated partition function 'IntPartitionFunction' generates more partitions than there are file groups mentioned in the scheme 'TestPartitionScheme'.)~~
+
+
+
+---------------------------------
+--- Metadata Related Tests
+---------------------------------
+SELECT * FROM GetPartitionFunctionMetadataView
+GO
+~~START~~
+nvarchar#!#char#!#nvarchar#!#int#!#bit#!#bit
+BigIntPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
+BinaryPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
+CharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
+DatePartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+DateTime2PartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+DateTimePartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+DecimalPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
+IntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+MoneyPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+NCharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
+NumericPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
+NVarCharPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
+PARTITION_FUNCTION  유니코드스키마👻#!#R #!#RANGE#!#4#!#1#!#0
+PARTITION_FUNCTION 😎$@ #123 🌍rder#!#R #!#RANGE#!#4#!#1#!#0
+PARTITION_FUNCTIONログインαιώνια#!#R #!#RANGE#!#4#!#1#!#0
+PartitionFunctionHavingDifferentCollationInput#!#R #!#RANGE#!#5#!#1#!#0
+PartitionFunctionInsideProc1#!#R #!#RANGE#!#4#!#1#!#0
+PartitionFunctionInsideProc2#!#R #!#RANGE#!#4#!#1#!#0
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#R #!#RANGE#!#5#!#1#!#0
+SmallDateTimePartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+SmallIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+SmallMoneyPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+SqlVariantPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
+TinyIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+UniqueIdentifierPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+VarBinaryPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
+VarCharPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
+~~END~~
+
+
+SELECT * FROM GetRangeMetadataView
+GO
+~~START~~
+nvarchar#!#int#!#int#!#sql_variant
+BigIntPartitionFunction#!#1#!#1#!#0
+BigIntPartitionFunction#!#1#!#2#!#100
+BigIntPartitionFunction#!#1#!#3#!#1000
+BigIntPartitionFunction#!#1#!#4#!#10000
+CharPartitionFunction#!#1#!#1#!#A    
+CharPartitionFunction#!#1#!#2#!#D    
+CharPartitionFunction#!#1#!#3#!#F    
+CharPartitionFunction#!#1#!#4#!#K    
+CharPartitionFunction#!#1#!#5#!#P    
+CharPartitionFunction#!#1#!#6#!#U    
+CharPartitionFunction#!#1#!#7#!#Z    
+DatePartitionFunction#!#1#!#1#!#2022-01-01
+DatePartitionFunction#!#1#!#2#!#2022-07-01
+DatePartitionFunction#!#1#!#3#!#2023-01-01
+DateTime2PartitionFunction#!#1#!#1#!#2019-01-01 00:00:00.0
+DateTime2PartitionFunction#!#1#!#2#!#2022-01-01 00:00:00.0
+DateTime2PartitionFunction#!#1#!#3#!#2022-07-01 00:00:00.0
+DateTimePartitionFunction#!#1#!#1#!#2019-01-01 00:00:00.0
+DateTimePartitionFunction#!#1#!#2#!#2022-01-01 00:00:00.0
+DateTimePartitionFunction#!#1#!#3#!#2022-07-01 00:00:00.0
+DecimalPartitionFunction#!#1#!#1#!#0.00000
+DecimalPartitionFunction#!#1#!#2#!#100.00000
+DecimalPartitionFunction#!#1#!#3#!#200.00000
+DecimalPartitionFunction#!#1#!#4#!#300.00000
+IntPartitionFunction#!#1#!#1#!#0
+IntPartitionFunction#!#1#!#2#!#500
+IntPartitionFunction#!#1#!#3#!#1000
+MoneyPartitionFunction#!#1#!#1#!#2.5679
+MoneyPartitionFunction#!#1#!#2#!#3.5679
+MoneyPartitionFunction#!#1#!#3#!#4.9100
+NCharPartitionFunction#!#1#!#1#!#A    
+NCharPartitionFunction#!#1#!#2#!#B    
+NCharPartitionFunction#!#1#!#3#!#F    
+NCharPartitionFunction#!#1#!#4#!#K    
+NCharPartitionFunction#!#1#!#5#!#P    
+NCharPartitionFunction#!#1#!#6#!#U    
+NCharPartitionFunction#!#1#!#7#!#Z    
+NumericPartitionFunction#!#1#!#1#!#0.00
+NumericPartitionFunction#!#1#!#2#!#10.00
+NumericPartitionFunction#!#1#!#3#!#20.00
+NumericPartitionFunction#!#1#!#4#!#30.00
+NVarCharPartitionFunction#!#1#!#1#!#Apple
+NVarCharPartitionFunction#!#1#!#2#!#Banana
+NVarCharPartitionFunction#!#1#!#3#!#Cherry
+NVarCharPartitionFunction#!#1#!#4#!#Date
+NVarCharPartitionFunction#!#1#!#5#!#Mango
+PARTITION_FUNCTION  유니코드스키마👻#!#1#!#1#!#0
+PARTITION_FUNCTION  유니코드스키마👻#!#1#!#2#!#500
+PARTITION_FUNCTION  유니코드스키마👻#!#1#!#3#!#1000
+PARTITION_FUNCTION 😎$@ #123 🌍rder#!#1#!#1#!#0
+PARTITION_FUNCTION 😎$@ #123 🌍rder#!#1#!#2#!#500
+PARTITION_FUNCTION 😎$@ #123 🌍rder#!#1#!#3#!#1000
+PARTITION_FUNCTIONログインαιώνια#!#1#!#1#!#0
+PARTITION_FUNCTIONログインαιώνια#!#1#!#2#!#500
+PARTITION_FUNCTIONログインαιώνια#!#1#!#3#!#1000
+PartitionFunctionHavingDifferentCollationInput#!#1#!#1#!#châu phố
+PartitionFunctionHavingDifferentCollationInput#!#1#!#2#!#Jane Smith
+PartitionFunctionHavingDifferentCollationInput#!#1#!#3#!#John Doe
+PartitionFunctionHavingDifferentCollationInput#!#1#!#4#!#Müller GmbH
+PartitionFunctionInsideProc1#!#1#!#1#!#500
+PartitionFunctionInsideProc1#!#1#!#2#!#1000
+PartitionFunctionInsideProc1#!#1#!#3#!#10000
+PartitionFunctionInsideProc2#!#1#!#1#!#500
+PartitionFunctionInsideProc2#!#1#!#2#!#1000
+PartitionFunctionInsideProc2#!#1#!#3#!#10000
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#1#!#0
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#2#!#100
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#3#!#1000
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#4#!#10000
+SmallDateTimePartitionFunction#!#1#!#1#!#2019-01-01 00:00:00.0
+SmallDateTimePartitionFunction#!#1#!#2#!#2022-01-01 00:00:00.0
+SmallDateTimePartitionFunction#!#1#!#3#!#2022-07-01 00:00:00.0
+SmallIntPartitionFunction#!#1#!#1#!#-32768
+SmallIntPartitionFunction#!#1#!#2#!#0
+SmallIntPartitionFunction#!#1#!#3#!#32767
+SmallMoneyPartitionFunction#!#1#!#1#!#2.5679
+SmallMoneyPartitionFunction#!#1#!#2#!#3.5679
+SmallMoneyPartitionFunction#!#1#!#3#!#4.9100
+SqlVariantPartitionFunction#!#1#!#1#!#abc  
+SqlVariantPartitionFunction#!#1#!#2#!#Apple
+SqlVariantPartitionFunction#!#1#!#3#!#Banana
+SqlVariantPartitionFunction#!#1#!#4#!#Some text
+SqlVariantPartitionFunction#!#1#!#5#!#xyz  
+TinyIntPartitionFunction#!#1#!#1#!#0
+TinyIntPartitionFunction#!#1#!#2#!#128
+TinyIntPartitionFunction#!#1#!#3#!#255
+UniqueIdentifierPartitionFunction#!#1#!#1#!#00000000-0000-0000-0000-000000000000
+UniqueIdentifierPartitionFunction#!#1#!#2#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
+UniqueIdentifierPartitionFunction#!#1#!#3#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
+VarCharPartitionFunction#!#1#!#1#!#Apple
+VarCharPartitionFunction#!#1#!#2#!#Banana
+VarCharPartitionFunction#!#1#!#3#!#Cherry
+VarCharPartitionFunction#!#1#!#4#!#Date
+VarCharPartitionFunction#!#1#!#5#!#Mango
+~~END~~
+
+
+SELECT * FROM GetRangeMetadataVarBinaryFunctionView
+GO
+~~START~~
+nvarchar#!#int#!#int#!#varbinary
+BinaryPartitionFunction#!#1#!#1#!#00000000
+BinaryPartitionFunction#!#1#!#2#!#04000000
+BinaryPartitionFunction#!#1#!#3#!#08000000
+BinaryPartitionFunction#!#1#!#4#!#C0000000
+VarBinaryPartitionFunction#!#1#!#1#!#0000000000000000
+VarBinaryPartitionFunction#!#1#!#2#!#4000000000000000
+VarBinaryPartitionFunction#!#1#!#3#!#8000000000000000
+VarBinaryPartitionFunction#!#1#!#4#!#C000000000000000
+~~END~~
+
+
+SELECT * FROM GetParameterMetadataView
+GO
+~~START~~
+nvarchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar
+BigIntPartitionFunction#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
+BinaryPartitionFunction#!#binary#!#1#!#8000#!#0#!#0#!#<NULL>
+CharPartitionFunction#!#char#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+DatePartitionFunction#!#date#!#1#!#3#!#10#!#0#!#<NULL>
+DateTime2PartitionFunction#!#datetime2#!#1#!#8#!#26#!#6#!#<NULL>
+DateTimePartitionFunction#!#datetime#!#1#!#8#!#23#!#3#!#<NULL>
+DecimalPartitionFunction#!#decimal#!#1#!#17#!#38#!#38#!#<NULL>
+IntPartitionFunction#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+MoneyPartitionFunction#!#money#!#1#!#8#!#19#!#4#!#<NULL>
+NCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+NumericPartitionFunction#!#numeric#!#1#!#17#!#38#!#38#!#<NULL>
+NVarCharPartitionFunction#!#nvarchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+PARTITION_FUNCTION  유니코드스키마👻#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+PARTITION_FUNCTION 😎$@ #123 🌍rder#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+PARTITION_FUNCTIONログインαιώνια#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+PartitionFunctionHavingDifferentCollationInput#!#nvarchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+PartitionFunctionInsideProc1#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+PartitionFunctionInsideProc2#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
+SmallDateTimePartitionFunction#!#smalldatetime#!#1#!#4#!#16#!#0#!#<NULL>
+SmallIntPartitionFunction#!#smallint#!#1#!#2#!#5#!#0#!#<NULL>
+SmallMoneyPartitionFunction#!#smallmoney#!#1#!#4#!#10#!#4#!#<NULL>
+SqlVariantPartitionFunction#!#sql_variant#!#1#!#8016#!#0#!#0#!#chinese_prc_ci_as
+TinyIntPartitionFunction#!#tinyint#!#1#!#1#!#3#!#0#!#<NULL>
+UniqueIdentifierPartitionFunction#!#uniqueidentifier#!#1#!#16#!#0#!#0#!#<NULL>
+VarBinaryPartitionFunction#!#varbinary#!#1#!#8000#!#0#!#0#!#<NULL>
+VarCharPartitionFunction#!#varchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+~~END~~
+
+
+SELECT * FROM GetPartitionSchemesMetadataView
+GO
+~~START~~
+nvarchar#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit
+BigIntPartitionScheme#!#BigIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+BinaryPartitionScheme#!#BinaryPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+CharPartitionScheme#!#CharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+DatePartitionScheme#!#DatePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+DateTime2PartitionScheme#!#DateTime2PartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+DateTimePartitionScheme#!#DateTimePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+DecimalPartitionScheme#!#DecimalPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+IntPartitionScheme#!#IntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+NCharPartitionScheme#!#NCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+NumericPartitionScheme#!#NumericPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+NVarCharPartitionScheme#!#NVarCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PARTITION_SCHEME  유니코드스키마👻#!#PARTITION_FUNCTION  유니코드스키마👻#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PARTITION_SCHEME 😎$@ #123 🌍rder#!#PARTITION_FUNCTION 😎$@ #123 🌍rder#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PARTITION_SCHEMEログインαιώνια#!#PARTITION_FUNCTIONログインαιώνια#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PartitionSchemeInsideProc1#!#PartitionFunctionInsideProc1#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PartitionSchemeInsideProc2#!#PartitionFunctionInsideProc2#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#PS#!#PARTITION_SCHEME#!#0#!#0
+SmallDateTimePartitionScheme#!#SmallDateTimePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+SmallIntPartitionScheme#!#SmallIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+SqlVariantPartitionScheme#!#SqlVariantPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+TinyIntPartitionScheme#!#TinyIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+UniqueIdentifierPartitionScheme#!#UniqueIdentifierPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+VarBinaryPartitionScheme#!#VarBinaryPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+VarCharPartitionScheme#!#VarCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+~~END~~
+
+
+SELECT * FROM PartitionFunctionContainsDuplicateName()
+GO
+~~START~~
+nvarchar
+~~END~~
+
+
+SELECT * FROM PartitionFunctionContainsDuplicateIDs()
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT * FROM PartitionSchemeContainsDuplicateName()
+GO
+~~START~~
+nvarchar
+~~END~~
+
+
+SELECT * FROM PartitionSchemeContainsDuplicateIDs()
+GO
+~~START~~
+int
+~~END~~
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------
+--- Test Partition Function Argument Limit
+--------------------------------------------------
+-- create with max allowed limit
+DECLARE @partition_count INT = 14998;
+DECLARE @partition_interval INT = 1000;
+DECLARE @partition_function_definition VARCHAR(MAX) = 'CREATE PARTITION FUNCTION PartitionFunctionWith14999Arg (int) AS RANGE RIGHT FOR VALUES (';
+-- Build the partition function definition
+DECLARE @i INT = 1;
+WHILE @i <= @partition_count
+BEGIN
+    SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ', '
+    SET @i = @i + 1;
+END
+SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ')'
+-- Execute the partition function creation
+EXEC (@partition_function_definition)
+GO
+
+SELECT fanout FROM sys.partition_functions WHERE name = 'PartitionFunctionWith14999Arg'
+GO
+~~START~~
+int
+15000
+~~END~~
+
+
+DROP PARTITION FUNCTION PartitionFunctionWith14999Arg
+GO
+
+
+
+
+
+
+
+-- create when arg > max allowed limit should throw error
+DECLARE @partition_count INT = 14999;
+DECLARE @partition_interval INT = 1000;
+DECLARE @partition_function_definition VARCHAR(MAX) = 'CREATE PARTITION FUNCTION PartitionFunctionWith15000Arg (int) AS RANGE RIGHT FOR VALUES (';
+-- Build the partition function definition
+DECLARE @i INT = 1;
+WHILE @i <= @partition_count
+BEGIN
+    SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ', '
+    SET @i = @i + 1;
+END
+SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ')'
+-- Execute the partition function creation
+EXEC (@partition_function_definition)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: CREATE/ALTER partition function failed as only a maximum of 15000 partitions can be created.)~~
+
+
+
+--------------------------------------------------
+--- Test Partition Function/Scheme Name Limit 
+--------------------------------------------------
+CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz (bigint)
+AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The identifier that starts with 'PartitionFunctionNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmno' is too long. Maximum length is 128.)~~
+
+
+CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz AS
+PARTITION PartitionFunctionDoesNotExists 
+ALL TO ([PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The identifier that starts with 'PartitionSchemeNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopq' is too long. Maximum length is 128.)~~
+
+
+
+--------------------------------------------------
+--- TO test Permission
+--------------------------------------------------
+USE PartitionDb;
+GO
+
+CREATE LOGIN partition_l1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER partition_u1 FOR LOGIN partition_l1;
+GO
+
+-- tsql     user=partition_l1 password=12345678
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+partition_u1
+~~END~~
+
+
+-- CREATE/DROP should throw permission error
+CREATE PARTITION FUNCTION TestPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION PartitionFunctionDoesNotExists
+ALL TO ([PRIMARY]);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+DROP PARTITION FUNCTION IntPartitionFunction
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the partition function 'IntPartitionFunction', because it does not exist or you do not have permission.)~~
+
+
+DROP PARTITION SCHEME IntPartitionScheme
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the partition scheme 'IntPartitionScheme', because it does not exist or you do not have permission.)~~
+
+
+-- but they can access the metadata 
+SELECT 
+        name, type, type_desc, fanout, boundary_value_on_right, is_system
+    FROM 
+        sys.partition_functions
+go
+~~START~~
+nvarchar#!#char#!#nvarchar#!#int#!#bit#!#bit
+PartitionDb_PartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+~~END~~
+
+
+SELECT 
+       ps.name as scheme_name, pf.name as function_name, ps.type, ps.type_desc, ps.is_default, ps.is_system
+    FROM 
+        sys.partition_schemes ps
+    INNER JOIN 
+        sys.partition_functions pf on (ps.function_id = pf.function_id)
+go
+~~START~~
+nvarchar#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit
+PartitionDb_PartitionScheme#!#PartitionDb_PartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+~~END~~
+
+
+-- tsql
+-- make the user a DB owner
+USE PartitionDb;
+GO
+
+DROP USER partition_u1;
+GO
+
+execute sp_changedbowner 'partition_l1'
+GO
+
+-- tsql     user=partition_l1 password=12345678
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+--  CREATE/DROP should work now
+CREATE PARTITION FUNCTION TestPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+Go
+
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION TestPartitionFunction
+ALL TO ([PRIMARY]);
+GO
+
+DROP PARTITION SCHEME TestPartitionScheme
+go
+
+DROP PARTITION FUNCTION TestPartitionFunction
+go
+
+-- tsql
+USE master
+GO
+
+
+------------------------------------------------------------------------------------------------------------
+--- Test error during Implicit Conversion of range values in Partition Function for each datatypes
+------------------------------------------------------------------------------------------------------------
+CREATE PARTITION FUNCTION NewIntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, cast('xyz' as varchar));
+-- having duplicates also, but first it should try to convert and fail
+CREATE PARTITION FUNCTION NewBigIntPartitionFunction (bigint)
+AS RANGE RIGHT FOR VALUES (1000,  1000, 1000, cast('xyz' as varchar), 1000, 1000);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewSmallIntPartitionFunction (smallint) 
+AS RANGE RIGHT FOR VALUES ('xyz', 32767, -32768);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 1 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewTinyIntPartitionFunction (tinyint)
+AS RANGE RIGHT FOR VALUES (0, 255, cast('xyz' as varchar));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewDecimalPartitionFunction (decimal(10, 5))
+AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 4 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewNumericPartitionFunction (numeric(5, 2))
+AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 4 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewDatePartitionFunction (date) 
+AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewDateTimePartitionFunction (datetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewDateTime2PartitionFunction (datetime2(3))
+AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewSmallDateTimePartitionFunction (smalldatetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewCharPartitionFunction (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 7 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewNCharPartitionFunction (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', cast(0x123 as binary(4)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 7 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewBinaryPartitionFunction (binary(4))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 4 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewVarBinaryPartitionFunction (varbinary(8))
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 'xyz');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 4 to partition function parameter type.)~~
+
+
+CREATE PARTITION FUNCTION NewUniqueIdentifierPartitionFunction (uniqueidentifier)
+AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', 123);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not implicitly convert range values type specified at ordinal 3 to partition function parameter type.)~~
+
+
+
+--------------------------------------------------
+--- DROP PARTITION FUNCTION/SCHEME using procedure
+--------------------------------------------------
+EXEC PartitionProcedureDropPartitionScheme
+GO
+
+EXEC PartitionProcedureDropPartitionFunction
+GO
+
+EXEC PartitionProcedureDropPartitionFunctionAndScheme
+GO

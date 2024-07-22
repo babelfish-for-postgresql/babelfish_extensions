@@ -64,6 +64,9 @@
 
 #define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
 
+ /* Max number of partitions allowed for babelfish partitioned tables. */
+#define MAX_PARTITIONS_LIMIT 15000
+
 /*
  * Compiler's namespace item types
  */
@@ -198,7 +201,9 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_DBCC,
 	PLTSQL_STMT_ALTER_DB,
 	PLTSQL_STMT_FULLTEXTINDEX,
-	PLTSQL_STMT_GRANTSCHEMA
+	PLTSQL_STMT_GRANTSCHEMA,
+	PLTSQL_STMT_PARTITION_FUNCTION,
+	PLTSQL_STMT_PARTITION_SCHEME
 } PLtsql_stmt_type;
 
 /*
@@ -1093,6 +1098,34 @@ typedef struct PLtsql_stmt_grantschema
 	char		*schema_name;	/* schema name */
 } PLtsql_stmt_grantschema;
 
+
+/*
+ * Partition Function
+ */
+typedef struct PLtsql_stmt_partition_function
+{
+	PLtsql_stmt_type	cmd_type;
+	int			lineno;
+	char			*function_name;
+	bool			is_create;
+	bool			is_right;
+	PLtsql_type		*datatype;
+	List			*args;		/* the arguments (list of exprs) */
+} PLtsql_stmt_partition_function;
+
+/*
+ * Partition Scheme
+ */
+typedef struct PLtsql_stmt_partition_scheme
+{
+	PLtsql_stmt_type	cmd_type;
+	int			lineno;
+	char			*scheme_name;
+	bool			is_create;
+	char			*function_name;
+	int			filegroups;	/* filegroups count, -1 indicates ALL is specified */
+} PLtsql_stmt_partition_scheme;
+
 /*
  * ASSERT statement
  */
@@ -1828,6 +1861,19 @@ typedef struct tsql_identity_insert_fields
 	Oid			schema_oid;
 } tsql_identity_insert_fields;
 
+/* 
+ * It is modified version of compare_context, which is used to
+ * provide extra arg during sort operation to compare function.
+ * Please check tsql_compare_values() and exec_stmt_partition_function()
+ * for more details.
+ */
+typedef struct tsql_compare_context
+{
+	Oid function_oid; /* oid of comparator operator */
+	Oid colloid; /* collation which needs to used during comparison */
+	bool contains_duplicate; /* true if the array contains duplicate values */
+} tsql_compare_context;
+
 extern tsql_identity_insert_fields tsql_identity_insert;
 extern check_lang_as_clause_hook_type check_lang_as_clause_hook;
 extern write_stored_proc_probin_hook_type write_stored_proc_probin_hook;
@@ -2118,7 +2164,7 @@ extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool 
 extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
-extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
+extern char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 extern void report_info_or_warning(int elevel, char *message);
 extern void init_and_check_common_utility(void);
 extern Oid	tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id);
@@ -2134,6 +2180,11 @@ extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
 extern Oid get_sysadmin_oid(void);
+extern bool is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
+extern bool is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
+extern bool is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
+extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
+extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
 
 typedef struct
 {
