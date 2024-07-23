@@ -3130,7 +3130,7 @@ BEGIN
     END IF;
 
     -- restricting arguments with invalid datatypes for trim function
-    IF string_arg_datatype NOT IN ('char', 'varchar', 'nchar', 'nvarchar') THEN
+    IF string_arg_datatype NOT IN ('char', 'varchar', 'nchar', 'nvarchar', 'text', 'ntext') THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of Trim function.', string_arg_datatype;
     END IF;
 
@@ -3242,22 +3242,22 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RAISE EXCEPTION 'Argument data type text is invalid for argument 1 of ltrim function.';
+    RETURN PG_CATALOG.ltrim(string);
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Adding following definition will make sure that ltrim with ntext input
 -- will use following definition instead of PG ltrim
 CREATE OR REPLACE FUNCTION sys.LTRIM(string NTEXT)
-RETURNS sys.VARCHAR
+RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RAISE EXCEPTION 'Argument data type ntext is invalid for argument 1 of ltrim function.';
+    RETURN PG_CATALOG.ltrim(string);
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- wrapper functions for RTRIM
 CREATE OR REPLACE FUNCTION sys.RTRIM(string ANYELEMENT)
@@ -3336,22 +3336,22 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-    RAISE EXCEPTION 'Argument data type text is invalid for argument 1 of rtrim function.';
+    RETURN PG_CATALOG.rtrim(string);
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Adding following definition will make sure that rtrim with ntext input
 -- will use following definition instead of PG rtrim
 CREATE OR REPLACE FUNCTION sys.RTRIM(string NTEXT)
-RETURNS sys.VARCHAR
+RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-    RAISE EXCEPTION 'Argument data type ntext is invalid for argument 1 of rtrim function.';
+    RETURN PG_CATALOG.rtrim(string);
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 
 -- wrapper functions for LEFT
@@ -3487,7 +3487,19 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-   RAISE EXCEPTION 'Argument data type text is invalid for argument 1 of left function.';
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3495,11 +3507,23 @@ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 -- Adding following definition will make sure that left with ntext input
 -- will use following definition instead of PG left
 CREATE OR REPLACE FUNCTION sys.LEFT(string NTEXT, i INTEGER)
-RETURNS sys.VARCHAR
+RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-   RAISE EXCEPTION 'Argument data type ntext is invalid for argument 1 of left function.';
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3637,7 +3661,19 @@ RETURNS sys.VARCHAR
 AS
 $BODY$
 BEGIN
-   RAISE EXCEPTION 'Argument data type text is invalid for argument 1 of right function.';
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -3645,11 +3681,23 @@ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 -- Adding following definition will make sure that right with ntext input
 -- will use following definition instead of PG right
 CREATE OR REPLACE FUNCTION sys.RIGHT(string NTEXT, i INTEGER)
-RETURNS sys.VARCHAR
+RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
-   RAISE EXCEPTION 'Argument data type ntext is invalid for argument 1 of right function.';
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string, i);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

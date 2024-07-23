@@ -434,18 +434,16 @@ SELECT * FROM babel_4489_right_dep_view_6
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type text is invalid for argument 1 of right function.)~~
+ghi??
+~~END~~
 
 
 SELECT * FROM babel_4489_right_dep_view_7
 GO
 ~~START~~
-varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type ntext is invalid for argument 1 of right function.)~~
+nvarchar
+ghi🙂🙂
+~~END~~
 
 
 -- input type UDT
@@ -645,19 +643,17 @@ SELECT RIGHT(a, 5) FROM babel_4489_right_text
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type text is invalid for argument 1 of right function.)~~
+ghi??
+~~END~~
 
 
 -- input datatype ntext
 SELECT RIGHT(b, 5) FROM babel_4489_right_text
 GO
 ~~START~~
-varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type ntext is invalid for argument 1 of right function.)~~
+nvarchar
+ghi🙂🙂
+~~END~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)

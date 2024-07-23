@@ -1247,31 +1247,35 @@ GO
 
 SELECT TRIM(a FROM b) FROM babel_4489_trim_text
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+nvarchar
 
-~~ERROR (Message: Argument data type text is invalid for argument 1 of Trim function.)~~
+~~END~~
 
 SELECT TRIM(b FROM a) FROM babel_4489_trim_text
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+nvarchar
 
-~~ERROR (Message: Argument data type ntext is invalid for argument 1 of Trim function.)~~
+~~END~~
 
 
 DECLARE @charSet VARCHAR(20) = 'ab? '
 SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_text
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type text is invalid for argument 2 of Trim function.)~~
+~~START~~
+nvarchar
+c🙂defghi🙂🙂
+~~END~~
 
 
 DECLARE @charSet VARCHAR(20) = 'ab? '
 SELECT TRIM(@charSet FROM b) FROM babel_4489_trim_text
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type ntext is invalid for argument 2 of Trim function.)~~
+~~START~~
+nvarchar
+c🙂defghi🙂🙂
+~~END~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)

@@ -672,19 +672,17 @@ SELECT LEFT(a, 5) FROM babel_4489_left_text
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type text is invalid for argument 1 of left function.)~~
+abc?d
+~~END~~
 
 
 -- input datatype ntext
 SELECT LEFT(b, 5) FROM babel_4489_left_text
 GO
 ~~START~~
-varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type ntext is invalid for argument 1 of left function.)~~
+nvarchar
+abc🙂d
+~~END~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)

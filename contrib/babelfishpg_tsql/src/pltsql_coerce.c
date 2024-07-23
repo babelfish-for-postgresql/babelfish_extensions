@@ -380,7 +380,7 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 
 /* Following constants value are defined based on the special function list */
 #define SFUNC_MAX_ARGS 2			/* maximum number of args special function in special function list can have */
-#define SFUNC_MAX_VALID_TYPES 4		/* maximum number of valid types supported argument of function in special function list can have */
+#define SFUNC_MAX_VALID_TYPES 6		/* maximum number of valid types supported argument of function in special function list can have */
 
 /* struct to store details of valid types supported for a argument */
 typedef struct tsql_valid_arg_type
@@ -402,7 +402,7 @@ typedef struct tsql_special_function
 
 tsql_special_function_t tsql_special_function_list[] = 
 {
-	{"sys", "trim", "Trim", 2, {{4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"char","varchar","nchar","nvarchar"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
+	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
 
 static bool		inited_tsql_special_function_list = false;
