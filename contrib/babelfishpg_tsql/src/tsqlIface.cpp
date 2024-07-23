@@ -1798,7 +1798,7 @@ public:
 			{
 				throw PGErrorWrapperException(ERROR,
 						ERRCODE_FEATURE_NOT_SUPPORTED,
-						"cross-db 'SELECT INTO' statement is not supported in Babelfish",
+						"cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.",
 						getLineAndPos(ctx->select_statement_standalone()));
 			}
 		}
