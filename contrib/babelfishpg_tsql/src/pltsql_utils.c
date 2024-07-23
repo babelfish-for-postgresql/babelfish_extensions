@@ -206,13 +206,21 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			Oid func_oid = InvalidOid;
 			char *schemaname = NULL;
 			char *funcname = NULL;
+			char *dbname = get_cur_db_name();
+			char *cur_schema_name = pstrdup(get_dbo_schema_name(dbname));
 
 			func = makeNode(ObjectWithArgs);
-			func->objname = stmt->funcname;
-			func->args_unspecified = true;
 
 			/* Get the schema name and function name. */
 			DeconstructQualifiedName(stmt->funcname, &schemaname, &funcname);
+
+			/* If schema name is not specified, use the current default schema */
+			if (schemaname == NULL || !strlen(schemaname)) {
+				func->objname = list_make2(makeString(cur_schema_name), makeString(funcname));
+			} else {
+				func->objname = stmt->funcname;
+			}
+			func->args_unspecified = true;
 
 			/* function, procedure */
 			func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
