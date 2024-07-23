@@ -40,7 +40,7 @@ GO
 DROP FUNCTION [BABEL-2877-vu-prepare_FUNC_Schema].[BABEL-2877-vu-prepare_FUNC];
 GO
 
-DROP FUNCTION [BABEL-2877-vu-prepare Schema . WITH .. DOTS].[BABEL-2877-vu-prepare Function . WITH .. DOTS];
+DROP FUNCTION [BABEL-2877-vu-prepare Schema . WITH .. DOTS].[BABEL-2877-vu-prepare Function . WITH .. DOTS2];
 GO
 
 DROP SCHEMA [BABEL-2877-vu-prepare_FUNC_Schema];

@@ -13,7 +13,7 @@ extern void UninstallExtendedHooks(void);
 
 extern bool output_update_transformation;
 extern bool output_into_insert_transformation;
-extern char *extract_identifier(const char *start);
+extern char *extract_identifier(const char *start, int *last_pos);
 extern void pltsql_store_func_default_positions(ObjectAddress address,
 												List *parameters,
 												const char *queryString,

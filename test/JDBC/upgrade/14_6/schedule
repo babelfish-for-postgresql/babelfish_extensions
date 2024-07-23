@@ -231,7 +231,7 @@ sys-sql_modules-before-14_12-dep
 sys-all_sql_modules-before-14_12-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
-BABEL-2877
+BABEL-2877-before-15-5-or-14-10
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK

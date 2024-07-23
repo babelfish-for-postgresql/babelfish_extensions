@@ -5,6 +5,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
+#include "funcapi.h"
 #include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/parse_type.h"
 #include "mb/pg_wchar.h"

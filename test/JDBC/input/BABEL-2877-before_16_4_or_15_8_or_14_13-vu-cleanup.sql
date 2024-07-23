@@ -40,7 +40,7 @@ GO
 DROP FUNCTION [BABEL-2877-vu-prepare_FUNC_Schema].[BABEL-2877-vu-prepare_FUNC];
 GO
 
-DROP FUNCTION [BABEL-2877-vu-prepare Schema . WITH .. DOTS].[BABEL-2877-vu-prepare Function . WITH .. DOTS];
+DROP FUNCTION [BABEL-2877-vu-prepare Schema . WITH .. DOTS].[BABEL-2877-vu-prepare Function . WITH .. DOTS2];
 GO
 
 DROP SCHEMA [BABEL-2877-vu-prepare_FUNC_Schema];
@@ -52,7 +52,3 @@ GO
 -- babelfish_function_ext entry should have been removed after dropping all these functions/procedure
 SELECT * FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel_2877_vu_prepare%';
 GO
-~~START~~
-varchar#!#varchar#!#nvarchar#!#text#!#text#!#bigint#!#bigint#!#datetime#!#datetime#!#ntext
-~~END~~
-

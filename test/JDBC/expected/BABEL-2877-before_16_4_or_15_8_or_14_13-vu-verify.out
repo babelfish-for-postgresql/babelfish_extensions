@@ -2,7 +2,7 @@ SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func1' as regproc));
 GO
 ~~START~~
 text
-CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func1("@a" integer, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func1("@a" integer, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline> STABLE<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
 ~~END~~
 
 
@@ -10,7 +10,7 @@ SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func2' as regproc));
 GO
 ~~START~~
 text
-CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func2("@a" integer DEFAULT 10, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money DEFAULT 5, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func2("@a" integer DEFAULT 10, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money DEFAULT 5, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline> STABLE<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
 ~~END~~
 
 
@@ -18,7 +18,7 @@ SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func3' as regproc));
 GO
 ~~START~~
 text
-CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func3("@a" integer, "@b" "varchar", "@c" money, "@d" double precision)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func3("@a" integer, "@b" "varchar", "@c" money, "@d" double precision)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline> STABLE<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
 ~~END~~
 
 
@@ -223,11 +223,61 @@ FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORD
 GO
 ~~START~~
 nvarchar#!#int#!#int
-BABEL-2877-vu-prepare Function . WITH .. DOTS#!#1#!#1
-BABEL-2877-vu-prepare_FUNC#!#1#!#1
+BABEL-2877-vu-prepare Schema . WITH .. DOTS#!#1#!#1
+BABEL-2877-vu-prepare_FUNC_Schema#!#1#!#1
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDOFF#!#0#!#0
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDON#!#0#!#1
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDOFF#!#1#!#0
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDON#!#1#!#1
 ~~END~~
 
+
+-- Rename the existing functions to fix the originally stored incorrect orig_name
+EXEC sp_rename 'BABEL-2877-vu-prepare_FUNC_Schema.BABEL-2877-vu-prepare_FUNC', 'BABEL-2877-vu-prepare_FUNC2', 'OBJECT'
+GO
+
+EXEC sp_rename '"BABEL-2877-vu-prepare Schema . WITH .. DOTS"."BABEL-2877-vu-prepare Function . WITH .. DOTS"', 'BABEL-2877-vu-prepare Function . WITH .. DOTS2', 'OBJECT'
+GO
+
+-- create a new function with name which is prefix of schema name to verify new behavior
+CREATE FUNCTION [BABEL-2877-vu-prepare_FUNC_Schema]  .  [BABEL-2877-vu-prepare_FUNC] (@a int)
+RETURNS INT AS BEGIN RETURN 1; END;
+GO
+
+SELECT orig_name,
+	CASE flag_validity & 1
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 1
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS ansi_null,
+	CASE flag_validity & 2
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 2
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS quoted_identifier
+FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORDER BY funcname;
+GO
+~~START~~
+nvarchar#!#int#!#int
+BABEL-2877-vu-prepare Function . WITH .. DOTS2#!#1#!#1
+BABEL-2877-vu-prepare_FUNC#!#1#!#1
+BABEL-2877-vu-prepare_FUNC2#!#1#!#1
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDOFF#!#0#!#0
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDON#!#0#!#1
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDOFF#!#1#!#0
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDON#!#1#!#1
+~~END~~
+
+
+DROP FUNCTION [BABEL-2877-vu-prepare_FUNC_Schema]  .  [BABEL-2877-vu-prepare_FUNC2]
+GO
