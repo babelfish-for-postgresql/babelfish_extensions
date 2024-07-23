@@ -189,7 +189,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 									'SELECT, INSERT, UPDATE, REFERENCES'))
 		AND ext.dbid =sys.db_id();
 
-CREATE VIEW information_schema_tsql.tables AS
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
