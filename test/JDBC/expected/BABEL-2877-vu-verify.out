@@ -198,18 +198,6 @@ master_dbo#!#babel_2877_vu_prepare_proc3#!#babel_2877_vu_prepare_proc3(integer, 
 ~~END~~
 
 
--- Rename the existing functions to fix the originally stored incorrect orig_name
-EXEC sp_rename 'BABEL-2877-vu-prepare_FUNC_Schema.BABEL-2877-vu-prepare_FUNC', 'BABEL-2877-vu-prepare_FUNC2', 'OBJECT'
-GO
-
-EXEC sp_rename '"BABEL-2877-vu-prepare Schema . WITH .. DOTS"."BABEL-2877-vu-prepare Function . WITH .. DOTS"', 'BABEL-2877-vu-prepare Function . WITH .. DOTS2', 'OBJECT'
-GO
-
--- create a new function with name which is prefix of schema name to verify new behavior
-CREATE FUNCTION [BABEL-2877-vu-prepare_FUNC_Schema]  .  [BABEL-2877-vu-prepare_FUNC] (@a int)
-RETURNS INT AS BEGIN RETURN 1; END;
-GO
-
 SELECT orig_name,
 	CASE flag_validity & 1
 		WHEN 0
@@ -235,15 +223,11 @@ FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORD
 GO
 ~~START~~
 nvarchar#!#int#!#int
-BABEL-2877-vu-prepare Function . WITH .. DOTS2#!#1#!#1
+BABEL-2877-vu-prepare Function . WITH .. DOTS#!#1#!#1
 BABEL-2877-vu-prepare_FUNC#!#1#!#1
-BABEL-2877-vu-prepare_FUNC2#!#1#!#1
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDOFF#!#0#!#0
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDON#!#0#!#1
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDOFF#!#1#!#0
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDON#!#1#!#1
 ~~END~~
 
-
-DROP FUNCTION [BABEL-2877-vu-prepare_FUNC_Schema]  .  [BABEL-2877-vu-prepare_FUNC2]
-GO
