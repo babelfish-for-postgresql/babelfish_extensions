@@ -511,6 +511,7 @@ PG_FUNCTION_INFO_V1(remove_accents_internal_using_cache);
 Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 {
 	unsigned char *input_str = (unsigned char *) text_to_cstring(PG_GETARG_TEXT_PP(0));
+	unsigned char *input_str_start = input_str;
 	text          *return_result;
 	int           len = strlen((char *)input_str),
 	              l;
@@ -593,6 +594,7 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 
 	return_result = cstring_to_text_with_len(result.data, result.len);
 	pfree(result.data);
+	pfree(input_str_start);
 	pfree(c);
 
 	PG_RETURN_VARCHAR_P(return_result);
