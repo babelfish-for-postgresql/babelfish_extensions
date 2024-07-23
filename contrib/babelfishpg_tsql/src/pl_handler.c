@@ -3502,36 +3502,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				if (drop_stmt->removeType != OBJECT_SCHEMA)
 				{
-					if (sql_dialect == SQL_DIALECT_TSQL)
-						bbf_ExecDropStmt(drop_stmt);
-					/*
-					 * Prevent dropping of restricted stored procedures from PSQL dialect
-					 */
-					else if (drop_stmt->removeType == OBJECT_PROCEDURE)
-					{
-						ListCell		*cell;
-						Node			*object;
-						Relation		relation;
-						ObjectAddress	address;
-						foreach(cell, drop_stmt->objects)
-						{
-							object = lfirst(cell);
-							relation = NULL;
-
-							/* Get an ObjectAddress for the object. */
-							address = get_object_address(drop_stmt->removeType,
-														object,
-														&relation,
-														AccessShareLock,
-														drop_stmt->missing_ok);
-
-
-							if (!OidIsValid(address.objectId))
-								continue;
-							else
-								check_restricted_stored_procedure(address.objectId);
-						}
-					}
+					bbf_ExecDropStmt(drop_stmt);
 					break;
 				}
 
@@ -6256,10 +6227,11 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	Oid				schema_oid;
 	ListCell		*cell;
 	const char		*logicalschema = NULL;
+	bool			is_missing = sql_dialect == SQL_DIALECT_TSQL ? true : stmt->missing_ok;
 
 	db_id = get_cur_db_id();
 
-	if (stmt->removeType == OBJECT_SCHEMA)
+	if (stmt->removeType == OBJECT_SCHEMA && sql_dialect == SQL_DIALECT_TSQL)
 	{
 		foreach(cell, stmt->objects)
 		{
@@ -6283,7 +6255,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 										 lfirst(cell),
 										 &relation,
 										 AccessShareLock,
-										 true);
+										 is_missing);
 
 			if (!relation)
 				continue;
@@ -6296,34 +6268,37 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			if (schema_name != NULL)
-				logicalschema = get_logical_schema_name(schema_name, true);
-
-			if (schema_name && major_name)
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				if (stmt->removeType == OBJECT_TABLE)
+				if (schema_name != NULL)
+					logicalschema = get_logical_schema_name(schema_name, true);
+
+				if (schema_name && major_name)
 				{
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
-					delete_extended_property(db_id, type, schema_name,
-											 major_name, NULL);
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
-					delete_extended_property(db_id, type, schema_name,
-											 major_name, NULL);
+					if (stmt->removeType == OBJECT_TABLE)
+					{
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
+						delete_extended_property(db_id, type, schema_name,
+												major_name, NULL);
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+						delete_extended_property(db_id, type, schema_name,
+												major_name, NULL);
+					}
+					else if (stmt->removeType == OBJECT_VIEW)
+					{
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
+						delete_extended_property(db_id, type, schema_name,
+												major_name, NULL);
+					}
+					else if (stmt->removeType == OBJECT_SEQUENCE)
+					{
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
+						delete_extended_property(db_id, type, schema_name,
+												major_name, NULL);
+					}
 				}
-				else if (stmt->removeType == OBJECT_VIEW)
-				{
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
-					delete_extended_property(db_id, type, schema_name,
-											 major_name, NULL);
-				}
-				else if (stmt->removeType == OBJECT_SEQUENCE)
-				{
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
-					delete_extended_property(db_id, type, schema_name,
-											 major_name, NULL);
-				}
+				clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 			}
-			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 	else if (stmt->removeType == OBJECT_PROCEDURE ||
@@ -6339,7 +6314,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 										 lfirst(cell),
 										 &relation,
 										 AccessShareLock,
-										 true);
+										 is_missing);
 			Assert(relation == NULL);
 			if (!OidIsValid(address.objectId))
 				continue;
@@ -6371,22 +6346,26 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			if (schema_name != NULL)
-				logicalschema = get_logical_schema_name(schema_name, true);
 
-			if (schema_name && major_name)
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				if (stmt->removeType == OBJECT_PROCEDURE)
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
-				else if (stmt->removeType == OBJECT_FUNCTION)
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
-				else if (stmt->removeType == OBJECT_TYPE)
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
+				if (schema_name != NULL)
+					logicalschema = get_logical_schema_name(schema_name, true);
 
-				delete_extended_property(db_id, type, schema_name, major_name,
-										 NULL);
+				if (schema_name && major_name)
+				{
+					if (stmt->removeType == OBJECT_PROCEDURE)
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
+					else if (stmt->removeType == OBJECT_FUNCTION)
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
+					else if (stmt->removeType == OBJECT_TYPE)
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
+
+					delete_extended_property(db_id, type, schema_name, major_name,
+											NULL);
+				}
+				clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 			}
-			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 }
