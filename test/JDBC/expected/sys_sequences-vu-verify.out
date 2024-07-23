@@ -1,0 +1,41 @@
+SELECT * FROM sys.sequences
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#tinyint#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
+~~END~~
+
+
+SELECT * FROM sys_sequences_test_view
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#tinyint#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
+~~END~~
+
+
+EXEC sys_sequences_test_proc
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#tinyint#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
+~~END~~
+
+
+SELECT sys_sequences_test_func()
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT
+SCHEMA_NAME(seq.schema_id) AS [Schema],
+seq.name AS [Name]
+FROM
+sys.sequences AS seq
+ORDER BY
+[Schema] ASC,[Name] ASC
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
