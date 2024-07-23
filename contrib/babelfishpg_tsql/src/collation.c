@@ -593,6 +593,7 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 
 	return_result = cstring_to_text_with_len(result.data, result.len);
 	pfree(result.data);
+	pfree(c);
 
 	PG_RETURN_VARCHAR_P(return_result);
 }
