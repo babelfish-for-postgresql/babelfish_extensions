@@ -2942,7 +2942,7 @@ BEGIN
 	DECLARE @subname sys.nvarchar(776) = '';
 	DECLARE @schemaname sys.nvarchar(776) = '';
 	DECLARE @dbname sys.nvarchar(776) = '';
-	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
+	SELECT @name_count = COUNT(*) FROM sys.babelfish_split_identifier(@objname);
 	IF @name_count > 3
 		BEGIN
 			THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
@@ -2951,7 +2951,7 @@ BEGIN
 		BEGIN
 			WITH myTableWithRows AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
+				FROM sys.babelfish_split_identifier(@objname))
 			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
 			IF @dbname != sys.db_name()
 				BEGIN
@@ -2959,22 +2959,22 @@ BEGIN
 				END
 			WITH myTableWithRows AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
+				FROM sys.babelfish_split_identifier(@objname))
 			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
 			WITH myTableWithRows AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
+				FROM sys.babelfish_split_identifier(@objname))
 			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
 		END
 	IF @name_count = 2
 		BEGIN
 			WITH myTableWithRows AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
+				FROM sys.babelfish_split_identifier(@objname))
 			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
 			WITH myTableWithRows AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
+				FROM sys.babelfish_split_identifier(@objname))
 			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
 		END
 	IF @name_count = 1

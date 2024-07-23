@@ -227,3 +227,13 @@ GO
 -- Trigger
 EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig2', 'OBJECT';
 GO
+
+IF OBJECT_ID('babelfish_split_identifier_view') IS NULL
+BEGIN
+    EXEC sp_executesql N'
+        CREATE VIEW babelfish_split_identifier_view AS SELECT * FROM sys.babelfish_split_identifier(''ABC.DEF.GHI'')';
+END
+GO
+
+SELECT * FROM babelfish_split_identifier_view;
+GO

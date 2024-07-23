@@ -76,3 +76,13 @@ CREATE TRIGGER sp_rename_vu_trig1 ON sp_rename_vu_table2
 AFTER INSERT, UPDATE AS 
 RAISERROR ('Testing sp_rename', 16, 10);
 GO
+
+-- Dependency test for function babelfish_split_identifier
+-- Create a view which depends upon babelfish_split_identifier function only
+-- if the function exists.
+IF OBJECT_ID('sys.babelfish_split_identifier') IS NOT NULL
+BEGIN
+    EXEC sp_executesql N'
+        CREATE VIEW babelfish_split_identifier_view AS SELECT * FROM sys.babelfish_split_identifier(''ABC.DEF.GHI'')';
+END
+GO
