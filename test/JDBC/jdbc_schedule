@@ -312,3 +312,10 @@ ignore#!#BABEL-3513_before_15_8_or_16_4-vu-verify
 ignore#!#catalogs_dbo_sys_schema-upgrade-vu-prepare
 ignore#!#catalogs_dbo_sys_schema-upgrade-vu-verify
 ignore#!#catalogs_dbo_sys_schema-upgrade-vu-cleanup
+
+ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-prepare
+ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-verify
+ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-cleanup
+ignore#!#BABEL-2877-before_16_4_or_15_8_or_14_13-vu-prepare
+ignore#!#BABEL-2877-before_16_4_or_15_8_or_14_13-vu-verify
+ignore#!#BABEL-2877-before_16_4_or_15_8_or_14_13-vu-cleanup
