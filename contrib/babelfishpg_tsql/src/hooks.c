@@ -1230,7 +1230,7 @@ check_insert_row(List *icolumns, List *exprList, Oid relid)
 }
 
 char *
-extract_identifier(const char *start)
+extract_identifier(const char *start, int *last_pos)
 {
 	/*
 	 * We will extract original identifier from source query string. 'start'
@@ -1283,6 +1283,8 @@ extract_identifier(const char *start)
 				original_name = palloc(i + 1);
 				memcpy(original_name, start, i);
 				original_name[i] = '\0';
+				if (last_pos)
+					*last_pos = i;
 				return original_name;
 			}
 		}
@@ -1300,6 +1302,8 @@ extract_identifier(const char *start)
 
 			if (!valid)
 			{
+				if (last_pos)
+					*last_pos = i + 1;
 				if (!found_escaped_in_dq)
 				{
 					/* no escaped character. copy whole string at once */
@@ -1345,6 +1349,8 @@ extract_identifier(const char *start)
 
 			if (!valid)
 			{
+				if (last_pos)
+					*last_pos = i + 1;
 				if (!found_escaped_in_sq)
 				{
 					/* no escaped character. copy whole string at once */
@@ -1386,6 +1392,8 @@ extract_identifier(const char *start)
 											 * bracket */
 				memcpy(original_name, start + 1, i - 1);
 				original_name[i - 1] = '\0';
+				if (last_pos)
+					*last_pos = i + 1;
 				return original_name;
 			}
 		}
@@ -1394,6 +1402,42 @@ extract_identifier(const char *start)
 	}
 
 	return NULL;
+}
+
+/*
+ * extract_multipart_identifier_name
+ *    Return name of a multipart SQL identifier, whose starting position
+ *    is given as 'start'. This helper function basically returns the
+ *    last part of the multipart identifier.
+ */
+static char *
+extract_multipart_identifier_name(const char *start)
+{
+	int 	identifier_len = strlen(start);
+	int 	last_pos = 0;
+	char	*name = extract_identifier(start, &last_pos);
+
+	/* Loop until we find the last part of the identifier */
+	while (last_pos < identifier_len)
+	{
+		int cur_pos = 0;
+		if (isspace(start[last_pos]))
+		{
+			last_pos++;
+			continue;
+		}
+		if (start[last_pos] != '.')
+			break;
+
+		last_pos++;
+		while (isspace(start[last_pos]))
+			last_pos++;
+		pfree(name);
+		name = extract_identifier(start + last_pos, &cur_pos);
+		last_pos += cur_pos;
+	}
+
+	return name;
 }
 
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
@@ -1415,7 +1459,7 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, 
 	 * string.
 	 */
 	const char *column_name_start = pstate->p_sourcetext + column->location;
-	char	   *original_name = extract_identifier(column_name_start);
+	char	   *original_name = extract_identifier(column_name_start, NULL);
 
 	if (original_name == NULL)
 		ereport(ERROR,
@@ -1455,8 +1499,7 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 	 * string.
 	 */
 	char	   *table_name_start,
-			   *original_name,
-			   *temp;
+			   *original_name;
 
 	/*
 	 * Skip during restore since reloptions are also dumped using separate
@@ -1467,24 +1510,7 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 
 	table_name_start = (char *) pstate->p_sourcetext + relation->location;
 
-	/*
-	 * Could be the case that the fully qualified name is included, so just
-	 * find the text after '.' in the identifier. We need to be careful as
-	 * there can be '.' in the table name itself, so we will break the loop if
-	 * current string matches with actual relname.
-	 */
-	temp = strpbrk(table_name_start, ". ");
-	while (temp && temp[0] != ' ' &&
-		   strncasecmp(relname, table_name_start, strlen(relname)) != 0 &&
-		   strncasecmp(relname, table_name_start + 1, strlen(relname)) != 0)	/* match after skipping
-																				 * delimiter */
-	{
-		temp += 1;
-		table_name_start = temp;
-		temp = strpbrk(table_name_start, ". ");
-	}
-
-	original_name = extract_identifier(table_name_start);
+	original_name = extract_multipart_identifier_name(table_name_start);
 	if (original_name == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
@@ -1827,7 +1853,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			}
 
 			/* To extract the identifier name from the query.*/
-			original_name = extract_identifier(colname_start);
+			original_name = extract_identifier(colname_start, NULL);
 			actual_alias_len = strlen(original_name);
 
 			/* Maximum alias_len can be 63 after truncation. If alias_len is smaller than actual_alias_len,
@@ -3145,30 +3171,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		 * To get original function name, utilize location of original name
 		 * and query string.
 		 */
-		char	   *func_name_start,
-				   *temp;
-		const char *funcname = NameStr(form_proctup->proname);
+		char	   *func_name_start;
 
 		func_name_start = (char *) queryString + origname_location;
 
-		/*
-		 * Could be the case that the fully qualified name is included, so
-		 * just find the text after '.' in the identifier. We need to be
-		 * careful as there can be '.' in the function name itself, so we will
-		 * break the loop if current string matches with actual funcname.
-		 */
-		temp = strpbrk(func_name_start, ". ");
-		while (temp && temp[0] != ' ' &&
-			   strncasecmp(funcname, func_name_start, strlen(funcname)) != 0 &&
-			   strncasecmp(funcname, func_name_start + 1, strlen(funcname)) != 0)	/* match after skipping
-																					 * delimiter */
-		{
-			temp += 1;
-			func_name_start = temp;
-			temp = strpbrk(func_name_start, ". ");
-		}
-
-		original_name = extract_identifier(func_name_start);
+		original_name = extract_multipart_identifier_name(func_name_start);
 		if (original_name == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),

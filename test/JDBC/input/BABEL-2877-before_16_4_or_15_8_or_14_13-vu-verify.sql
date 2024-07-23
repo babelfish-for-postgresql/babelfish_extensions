@@ -77,6 +77,30 @@ FROM sys.babelfish_function_ext
 	AND funcname NOT LIKE '%ansi%' ORDER BY funcname;
 GO
 
+SELECT orig_name,
+	CASE flag_validity & 1
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 1
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS ansi_null,
+	CASE flag_validity & 2
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 2
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS quoted_identifier
+FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORDER BY funcname;
+GO
+
 -- Rename the existing functions to fix the originally stored incorrect orig_name
 EXEC sp_rename 'BABEL-2877-vu-prepare_FUNC_Schema.BABEL-2877-vu-prepare_FUNC', 'BABEL-2877-vu-prepare_FUNC2', 'OBJECT'
 GO

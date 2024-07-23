@@ -198,6 +198,40 @@ master_dbo#!#babel_2877_vu_prepare_proc3#!#babel_2877_vu_prepare_proc3(integer, 
 ~~END~~
 
 
+SELECT orig_name,
+	CASE flag_validity & 1
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 1
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS ansi_null,
+	CASE flag_validity & 2
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 2
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS quoted_identifier
+FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORDER BY funcname;
+GO
+~~START~~
+nvarchar#!#int#!#int
+BABEL-2877-vu-prepare Schema . WITH .. DOTS#!#1#!#1
+BABEL-2877-vu-prepare_FUNC_Schema#!#1#!#1
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDOFF#!#0#!#0
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDON#!#0#!#1
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDOFF#!#1#!#0
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDON#!#1#!#1
+~~END~~
+
+
 -- Rename the existing functions to fix the originally stored incorrect orig_name
 EXEC sp_rename 'BABEL-2877-vu-prepare_FUNC_Schema.BABEL-2877-vu-prepare_FUNC', 'BABEL-2877-vu-prepare_FUNC2', 'OBJECT'
 GO
