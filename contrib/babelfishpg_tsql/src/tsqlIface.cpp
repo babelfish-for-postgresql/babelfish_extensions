@@ -213,6 +213,7 @@ static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
 static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
 static void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx);
 static void handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx);
+static void rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx);
 static bool setSysSchema = false;
 
 /*
@@ -2547,6 +2548,11 @@ public:
 		}
 	}
 
+	void exitSTRING_AGG(TSqlParser::STRING_AGGContext *ctx) override
+	{
+		rewrite_string_agg_query(ctx);
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// statement analysis
 	//////////////////////////////////////////////////////////////////////////////
@@ -2714,6 +2720,9 @@ public:
 	MyInputStream &stream; 
 	bool in_procedure_parameter = false;    
 	bool in_procedure_parameter_id = false;    
+	bool in_create_or_alter_function = false;
+	bool in_create_or_alter_procedure = false;
+	bool in_create_or_alter_trigger = false;
 
 	std::vector<int> double_quota_places;
 
@@ -2723,6 +2732,30 @@ public:
     }
 
 public:
+	void enterCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
+		in_create_or_alter_function = true;
+	}
+
+	void exitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
+		in_create_or_alter_function = false;
+	}
+
+	void enterCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override {
+		in_create_or_alter_procedure = true;
+	}
+
+	void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override {
+		in_create_or_alter_procedure = false;
+	}
+
+	void enterCreate_or_alter_trigger(TSqlParser::Create_or_alter_triggerContext *ctx) override {
+		in_create_or_alter_trigger = true;
+	}
+
+	void exitCreate_or_alter_trigger(TSqlParser::Create_or_alter_triggerContext *ctx) override {
+		in_create_or_alter_trigger = false;
+	}
+
     void enterFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override
     {	
 	// We are looking at a function name; it may be a function call, or a
@@ -2956,6 +2989,19 @@ public:
 			}
 		}
 	}	
+
+	void exitSTRING_AGG(TSqlParser::STRING_AGGContext *ctx) override
+	{
+		/* 
+		 * For User Defined Function/Procedure/Trigger the language of the body of Function/Procedure/Trigger is set as 'pltsql' 
+		 * hence we cannot rewrite the STRING_AGG query into PG syntax during creation of this objects, 
+		 * hence skipped the rewriting of STRING_AGG query for Function/Procedure/Trigger. 
+		 * Also, Function's/Procedure's/Trigger's body gets compiled during its execution so the rewriting of
+		 * STRING_AGG query will happen in tsqlBuilder::exitSTRING_AGG() function.
+		 */
+		if (!(in_create_or_alter_function || in_create_or_alter_procedure || in_create_or_alter_trigger))
+			rewrite_string_agg_query(ctx);
+	}
 
 	void enterProcedure_param(TSqlParser::Procedure_paramContext *ctx) override
 	{
@@ -4808,6 +4854,9 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 	result->lineno =getLineNo(ctx);
 
 	auto *expr = makeTsqlExpr(ctx, false);
+	PLtsql_expr_query_mutator mutator(expr, ctx);
+	add_rewritten_query_fragment_to_mutator(&mutator);
+	mutator.run();
 	result->query = expr;
 	if (itvf)
 	{
@@ -8209,6 +8258,28 @@ rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, Get
 			return name.substr(1);
 	}
 	return "";
+}
+
+/*
+ * In this function we Rewrite the Query for STRING_AGG function as follows
+ * 	STRING_AGG '(' expr=expression ',' separator=expression ')' WITHIN GROUP '(' order_by_clause ')'
+ * with
+ *  STRING_AGG '(' expr=expression ',' separator=expression order_by_clause ')'
+ */
+static void
+rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx)
+{
+	if (ctx->WITHIN() && ctx->order_by_clause())
+	{
+		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()[0]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()[0]), std::string(" ") + ::getFullText(ctx->order_by_clause()) + ::getFullText(ctx->RR_BRACKET()[0]))));
+
+		/* remove block (WITHIN GROUP LR_BRACKET order_by_clause RR_BRACKET) */
+		rewritten_query_fragment.emplace(std::make_pair(ctx->WITHIN()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->WITHIN()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->GROUP()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->GROUP()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->LR_BRACKET()[1]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->LR_BRACKET()[1]), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->order_by_clause()->start->getStartIndex(), std::make_pair(::getFullText(ctx->order_by_clause()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()[1]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()[1]), "")));
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
