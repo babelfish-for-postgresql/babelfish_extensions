@@ -430,6 +430,15 @@ GO
 SELECT * INTO t222 FROM (SELECT *, (SELECT * FROM t1) FROM master..t3);
 GO
 
+SELECT * INTO master..t222 FROM db_4934_2..t1;
+GO
+
+SELECT * INTO db_4934_1..t222 FROM db_4934_2..t1;
+GO
+
+SELECT * INTO master..t222 FROM master..t1;
+GO
+
 -- #4934.2 Following statements will succeed across same database
 SELECT * INTO t3 FROM db_4934_1.dbo.t1;
 GO

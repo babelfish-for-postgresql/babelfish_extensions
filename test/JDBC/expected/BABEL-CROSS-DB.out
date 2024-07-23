@@ -652,6 +652,27 @@ GO
 ~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish)~~
 
 
+SELECT * INTO master..t222 FROM db_4934_2..t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish)~~
+
+
+SELECT * INTO db_4934_1..t222 FROM db_4934_2..t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish)~~
+
+
+SELECT * INTO master..t222 FROM master..t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish)~~
+
+
 -- #4934.2 Following statements will succeed across same database
 SELECT * INTO t3 FROM db_4934_1.dbo.t1;
 GO
