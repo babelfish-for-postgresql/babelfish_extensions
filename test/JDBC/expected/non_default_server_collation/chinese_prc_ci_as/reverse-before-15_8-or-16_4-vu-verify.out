@@ -538,8 +538,8 @@ varchar
 SELECT reverse(b) FROM babel_4839_reverse_text
 GO
 ~~START~~
-varchar
-??ihgfed?cba
+nvarchar
+🙂🙂ihgfed🙂cba
 ~~END~~
 
 

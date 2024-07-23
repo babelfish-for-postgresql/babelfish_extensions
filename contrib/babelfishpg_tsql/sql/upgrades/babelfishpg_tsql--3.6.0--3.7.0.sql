@@ -103,7 +103,7 @@ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 -- Adding following definition will make sure that reverse with ntext input
 -- will use following definition instead of PG reverse
 CREATE OR REPLACE FUNCTION sys.reverse(string NTEXT)
-RETURNS sys.VARCHAR
+RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN

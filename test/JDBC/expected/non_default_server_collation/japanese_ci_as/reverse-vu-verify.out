@@ -327,8 +327,8 @@ varchar
 SELECT * FROM babel_4839_reverse_dep_view_7
 GO
 ~~START~~
-varchar
-??ihgfed?cba
+nvarchar
+🙂🙂ihgfed🙂cba
 ~~END~~
 
 
@@ -537,8 +537,8 @@ varchar
 SELECT reverse(b) FROM babel_4839_reverse_text
 GO
 ~~START~~
-varchar
-??ihgfed?cba
+nvarchar
+🙂🙂ihgfed🙂cba
 ~~END~~
 
 
