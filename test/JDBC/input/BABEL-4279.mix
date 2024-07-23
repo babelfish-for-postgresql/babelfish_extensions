@@ -1,3 +1,8 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
 -- tsql
 CREATE TABLE test_babel_4279_t1([ABC.nfds] INT, [DEf.j] INT);
 GO
@@ -190,3 +195,7 @@ GO
 DROP TABLE t3
 GO
 
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
