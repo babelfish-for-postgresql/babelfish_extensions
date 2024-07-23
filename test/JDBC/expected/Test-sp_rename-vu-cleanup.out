@@ -46,6 +46,3 @@ GO
 
 DROP SCHEMA sp_rename_vu_schema1;
 GO
-
-DROP VIEW babelfish_split_identifier_view;
-GO
