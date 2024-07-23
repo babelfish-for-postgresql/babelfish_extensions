@@ -1,30 +1,33 @@
 /* CHARINDEX WITH CI_AI COLLATIONS */
 
+/* Cases where single character is equal to two characters */
 SELECT CHARINDEX('Æ','AAAAAE' COLLATE Latin1_General_CI_AI)
 SELECT CHARINDEX('Æ','AeAAAaE' COLLATE Latin1_General_CI_AI, 2)
+SELECT CHARINDEX('Æ','AeAAAaE' COLLATE Latin1_General_CI_AI, 1)
 SELECT CHARINDEX('Æ', 'AAAAAABBBBBBBEEEEEEAAAAA' COLLATE Latin1_General_CI_AI);
 GO
 
 /* BASIC TEST CASES */
 /* These should find a result */
 SELECT CHARINDEX('cat', 'The cat is on the mat' COLLATE Latin1_General_CI_AI, 1);
-SELECT CHARINDEX('cafe', 'The café is cozy' COLLATE Latin1_General_CI_AI, 1);
+SELECT CHARINDEX('cafe', 'The Café is cozy' COLLATE Latin1_General_CI_AI, 1);
 /* These should not find a result */
 SELECT CHARINDEX('dog', 'The cat is on the mat' COLLATE Latin1_General_CI_AI, 1);
 SELECT CHARINDEX('caé', 'The café is cozy' COLLATE Latin1_General_CI_AI, 1);
 GO
 
-
+/* empty arguments */
 SELECT CHARINDEX('', 'The café is cozy' COLLATE Latin1_General_CI_AI, 1);
 SELECT CHARINDEX('café', '' COLLATE Latin1_General_CI_AI, 1);
 SELECT CHARINDEX('', '' COLLATE Latin1_General_CI_AI, 1)
 GO
 
+/* case sensitivity */
 SELECT CHARINDEX('tHe Cať', 'Where is The càt ???' COLLATE Latin1_General_CI_AI);
-SELECT CHARINDEX('CaT', 'The cat̤ is on the mat' COLLATE Latin1_General_CI_AI);
+SELECT CHARINDEX('caT', 'The Cat̤ is on the mat' COLLATE Latin1_General_CI_AI);
 GO
 
-SELECT CHARINDEX('cat', 'The cat is on the mat cat' COLLATE Latin1_General_CI_AI, 6)
+SELECT CHARINDEX('cat', 'The cat is on the mat cAť' COLLATE Latin1_General_CI_AI, 6)
 SELECT CHARINDEX('cat', 'The cat is on the mat' COLLATE Latin1_General_CI_AI, 30)
 GO
 
@@ -67,7 +70,11 @@ SELECT REPLACE('This café is cozy.', ' ', ' ' COLLATE Latin1_General_CI_AI)
 SELECT REPLACE(N'The café is!.', '!', '@@' COLLATE Latin1_General_CI_AI)
 GO
 
+/* overlapping case */
+SELECT REPLACE ('ABCABCABCABCABC','abcÀBć' collate Latin1_General_CI_AI, 'abcabc')
+GO
 
+/* Cases where single character is equal to two characters */
 SELECT REPLACE ('aaaaaaÆaaaaaaÆaaaa','AE' collate Latin1_General_CI_AI, '!---!')
 SELECT REPLACE ('ÆAEaaaaaaÆ','AE' collate Latin1_General_CI_AI, '!---!')
 SELECT REPLACE ('eeeeeeeeeAAAAAA','AE' collate Latin1_General_CI_AI, '!---!')
