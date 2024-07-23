@@ -384,8 +384,8 @@ abc?defghi??abc?defghi??abc?defghi??abc?defghi??
 SELECT * FROM babel_862_replicate_dep_view_7
 GO
 ~~START~~
-nvarchar
-abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂
+varchar
+abc?defghi??abc?defghi??abc?defghi??abc?defghi??
 ~~END~~
 
 
