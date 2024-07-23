@@ -59,9 +59,15 @@ int
 1
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+0
+~~END~~
 
-~~ERROR (Message: failed to perform ICU search: U_ILLEGAL_ARGUMENT_ERROR)~~
+~~START~~
+int
+1
+~~END~~
 
 
 SELECT CHARINDEX('tHe Cať', 'Where is The càt ???' COLLATE Latin1_General_CI_AI);
@@ -86,9 +92,10 @@ int
 23
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: failed to perform ICU search: U_ILLEGAL_ARGUMENT_ERROR)~~
+~~START~~
+int
+0
+~~END~~
 
 
 
