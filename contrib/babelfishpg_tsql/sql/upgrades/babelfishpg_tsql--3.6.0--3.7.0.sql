@@ -130,7 +130,7 @@ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 -- Adding following definition will make sure that replicate with ntext input
 -- will use following definition instead of PG replicate
 CREATE OR REPLACE FUNCTION sys.replicate(string NTEXT, i INTEGER)
-RETURNS sys.VARCHAR
+RETURNS sys.NVARCHAR
 AS
 $BODY$
 BEGIN
