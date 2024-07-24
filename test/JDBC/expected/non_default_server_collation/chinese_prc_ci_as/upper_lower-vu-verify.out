@@ -608,7 +608,7 @@ varchar#!#varchar
 Select UPPER(a), LOWER(a) from upper_lower_ntext
 GO
 ~~START~~
-varchar#!#varchar
+nvarchar#!#nvarchar
 6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
 ~~END~~
 
@@ -797,14 +797,14 @@ varchar#!#varchar
 SELECT * from dep_view_upper_lower1
 GO
 ~~START~~
-varchar#!#varchar
+nvarchar#!#nvarchar
 6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
 ~~END~~
 
 EXEC dep_proc_upper_lower1
 GO
 ~~START~~
-varchar#!#varchar
+nvarchar#!#nvarchar
 6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
 ~~END~~
 

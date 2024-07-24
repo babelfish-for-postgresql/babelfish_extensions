@@ -3087,7 +3087,7 @@ BEGIN
     type_oid := pg_typeof($1);
     typnam := sys.translate_pg_type_to_tsql(type_oid);
     IF typnam IS NULL THEN
-        typ_base_oid := (SELECT typbasetype FROM pg_type WHERE oid = type_oid);
+        typ_base_oid := sys.bbf_get_immediate_base_type_of_UDT(type_oid);
         typnam := sys.translate_pg_type_to_tsql(typ_base_oid);
     END IF;
     IF typnam IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
@@ -3130,7 +3130,7 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Function to handle NTEXT because of return type VARCHAR
 CREATE OR REPLACE FUNCTION sys.upper(NTEXT)
-RETURNS sys.VARCHAR
+RETURNS sys.NVARCHAR
 AS $$
 BEGIN
     RETURN pg_catalog.upper($1);
@@ -3151,7 +3151,7 @@ BEGIN
     type_oid := pg_typeof($1);
     typnam := sys.translate_pg_type_to_tsql(type_oid);
     IF typnam IS NULL THEN
-        typ_base_oid := (SELECT typbasetype FROM pg_type WHERE oid = type_oid);
+        typ_base_oid := sys.bbf_get_immediate_base_type_of_UDT(type_oid);
         typnam := sys.translate_pg_type_to_tsql(typ_base_oid);
     END IF;
     IF typnam IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
@@ -3194,7 +3194,7 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Function to handle NTEXT because of return type VARCHAR
 CREATE OR REPLACE FUNCTION sys.lower(NTEXT)
-RETURNS sys.VARCHAR
+RETURNS sys.NVARCHAR
 AS $$
 BEGIN
     RETURN pg_catalog.lower($1);

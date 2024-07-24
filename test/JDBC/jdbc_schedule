@@ -224,11 +224,6 @@ ignore#!#BABEL_3571-before-15-5-vu-verify
 ignore#!#BABEL_3571-15_5-or-15_6-or-16_1-or-16_2-vu-prepare
 ignore#!#BABEL_3571-15_5-or-15_6-or-16_1-or-16_2-vu-verify
 
-# These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
-ignore#!#upper_lower-before-15_8-or-16_4-vu-prepare
-ignore#!#upper_lower-before-15_8-or-16_4-vu-verify
-ignore#!#upper_lower-before-15_8-or-16_4-vu-cleanup
-
 # These are bash scripts that should not be executed
 ignore#!#load_aggtest
 ignore#!#load_emp
@@ -275,6 +270,9 @@ ignore#!#rtrim-before-15_8-or-16_4-vu-cleanup
 ignore#!#trim-before-15_8-or-16_4-vu-prepare
 ignore#!#trim-before-15_8-or-16_4-vu-verify
 ignore#!#trim-before-15_8-or-16_4-vu-cleanup
+ignore#!#upper_lower-before-15_8-or-16_4-vu-prepare
+ignore#!#upper_lower-before-15_8-or-16_4-vu-verify
+ignore#!#upper_lower-before-15_8-or-16_4-vu-cleanup
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
