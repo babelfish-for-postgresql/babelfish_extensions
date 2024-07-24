@@ -293,7 +293,7 @@ SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t
 GO
 ~~START~~
 text
-?-?-?-?-?
+?-莫-?-尔-莫
 ~~END~~
 
 
@@ -301,8 +301,8 @@ SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t GROUP BY g
 GO
 ~~START~~
 text
-?-?-?
-?-?
+莫-?-莫
+?-尔
 ~~END~~
 
 
@@ -310,8 +310,8 @@ SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_multibyte_
 GO
 ~~START~~
 text
-?-?
-?-?-?
+?-尔
+莫-?-莫
 ~~END~~
 
 
@@ -319,8 +319,8 @@ SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_multib
 GO
 ~~START~~
 text
-?-?
-?-?-?
+?-尔
+莫-?-莫
 ~~END~~
 
 
@@ -328,8 +328,8 @@ SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_multi
 GO
 ~~START~~
 text
-?-?
-?-?-?
+尔-?
+莫-?-莫
 ~~END~~
 
 
@@ -337,8 +337,8 @@ SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_mu
 GO
 ~~START~~
 text
-?-?
-?-?-?
+尔-?
+?-莫-莫
 ~~END~~
 
 
@@ -346,8 +346,8 @@ SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_m
 GO
 ~~START~~
 text
-?-?
-?-?-?
+尔-?
+莫-?-莫
 ~~END~~
 
 

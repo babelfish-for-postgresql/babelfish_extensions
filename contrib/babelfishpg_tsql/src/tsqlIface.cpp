@@ -8262,9 +8262,9 @@ rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, Get
 
 /*
  * In this function we Rewrite the Query for STRING_AGG function as follows
- * 	STRING_AGG '(' expr=expression ',' separator=expression ')' WITHIN GROUP '(' order_by_clause ')'
- * with
- *  STRING_AGG '(' expr=expression ',' separator=expression order_by_clause ')'
+ * Query: STRING_AGG '(' expr=expression ',' separator=expression ')' WITHIN GROUP '(' order_by_clause ')'
+ * will be rewritten to 
+ * Query: STRING_AGG '(' expr=expression ',' separator=expression order_by_clause ')'
  */
 static void
 rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx)

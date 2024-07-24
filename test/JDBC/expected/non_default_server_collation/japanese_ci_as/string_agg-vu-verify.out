@@ -293,7 +293,7 @@ SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t
 GO
 ~~START~~
 text
-?-?-?-?-?
+?-莫-?-?-莫
 ~~END~~
 
 
@@ -301,7 +301,7 @@ SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t GROUP BY g
 GO
 ~~START~~
 text
-?-?-?
+莫-?-莫
 ?-?
 ~~END~~
 
@@ -311,7 +311,7 @@ GO
 ~~START~~
 text
 ?-?
-?-?-?
+莫-?-莫
 ~~END~~
 
 
@@ -320,7 +320,7 @@ GO
 ~~START~~
 text
 ?-?
-?-?-?
+莫-?-莫
 ~~END~~
 
 
@@ -329,7 +329,7 @@ GO
 ~~START~~
 text
 ?-?
-?-?-?
+莫-?-莫
 ~~END~~
 
 
@@ -338,7 +338,7 @@ GO
 ~~START~~
 text
 ?-?
-?-?-?
+?-莫-莫
 ~~END~~
 
 
@@ -347,7 +347,7 @@ GO
 ~~START~~
 text
 ?-?
-?-?-?
+莫-?-莫
 ~~END~~
 
 

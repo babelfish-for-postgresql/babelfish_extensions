@@ -1,7 +1,7 @@
 DROP TRIGGER string_agg_tr_concat_student_names
 GO
 
-DROP TABLE string_agg_order_school
+DROP TABLE string_agg_school_details
 GO
 
 DROP VIEW string_agg_dep_v3
@@ -31,5 +31,14 @@ GO
 DROP FUNCTION string_agg_dep_f1
 GO
 
+DROP TABLE string_agg_multibyte_t
+GO
+
+DROP TABLE string_agg_chinese_prc_ci_as
+GO
+
+DROP TABLE string_agg_t2
+GO
+
 DROP TABLE string_agg_t
-go
+GO

@@ -94,6 +94,60 @@ SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g
 GO
 
+-- expression as column with multibyte characters
+SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t
+GO
+
+SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_multibyte_t GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_multibyte_t GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_multibyte_t GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_multibyte_t GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_multibyte_t GROUP BY g
+GO
+
+-- expression as column with chinese characters
+SELECT STRING_AGG(a,'-') FROM string_agg_chinese_prc_ci_as
+GO
+
+SELECT STRING_AGG(a,'-') FROM string_agg_chinese_prc_ci_as GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_chinese_prc_ci_as GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_chinese_prc_ci_as GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_chinese_prc_ci_as GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_chinese_prc_ci_as GROUP BY g
+GO
+
+SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_chinese_prc_ci_as GROUP BY g
+GO
+
+-- expression from a column of a subquery
+SELECT STRING_AGG(sbq.b,'-') WITHIN GROUP (ORDER BY g1) FROM (SELECT g1, g2, STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id) as 'b' FROM string_agg_t2 GROUP BY g1, g2) as sbq GROUP BY g2
+GO
+
+SELECT STRING_AGG(sbq.b,'-') WITHIN GROUP (ORDER BY g1 ASC) FROM (SELECT g1, g2, STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id ASC) as 'b' FROM string_agg_t2 GROUP BY g1, g2) as sbq GROUP BY g2
+GO
+
+SELECT STRING_AGG(sbq.b,'-') WITHIN GROUP (ORDER BY g1 DESC) FROM (SELECT g1, g2, STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id DESC) as 'b' FROM string_agg_t2 GROUP BY g1, g2) as sbq GROUP BY g2
+GO
+
 -- Dependent objects
 SELECT * FROM string_agg_dep_v1
 GO
@@ -123,15 +177,15 @@ SELECT * FROM dbo.string_agg_dep_f3()
 GO
 
 -- dependent object trigger
-INSERT INTO string_agg_order_school (classID, rollID, studentName)
+INSERT INTO string_agg_school_details (classID, rollID, studentName)
 VALUES (2, 3, 'StudentF');
 GO
 
-UPDATE string_agg_order_school
+UPDATE string_agg_school_details
 SET studentName = 'StudentG'
 WHERE classID = 2 AND rollID = 3;
 GO
 
-DELETE FROM string_agg_order_school
+DELETE FROM string_agg_school_details
 WHERE classID = 1 AND rollID = 2;
 GO

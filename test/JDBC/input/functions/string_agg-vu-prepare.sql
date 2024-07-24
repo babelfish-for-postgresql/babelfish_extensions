@@ -11,6 +11,41 @@ INSERT INTO string_agg_t values
 (4,'h','t',1,2)
 go
 
+CREATE TABLE string_agg_t2 (id int, a varchar(10), g1 int, g2 int)
+go
+
+INSERT INTO string_agg_t2 values 
+(1,'b',2,1),
+(2,'g',2,1),
+(3,'e',2,1),
+(1,'a',1,2),
+(2,'c',1,2),
+(3,'d',1,2),
+(4,'h',1,2),
+(1,'d',3,1),
+(2,'h',3,1)
+go
+
+CREATE TABLE string_agg_multibyte_t (id int, a nvarchar(10), g int, sbid int)
+go
+INSERT INTO string_agg_multibyte_t VALUES 
+(3,N'😎',1,4),
+(2,N'莫',2,6),
+(2,N'😇',2,5),
+(1,N'尔',1,7),
+(5,N'莫',2,1)
+GO
+
+CREATE TABLE string_agg_chinese_prc_ci_as(id int, a VARCHAR(50) COLLATE CHINESE_PRC_CI_AS, g int, sbid int)
+GO
+INSERT INTO string_agg_chinese_prc_ci_as VALUES
+(1,N'莫',1,5),
+(2,N'尔',2,4),
+(2,N'拉',2,3),
+(3,N'比',1,2),
+(5,N'斯',2,1)
+GO
+
 CREATE VIEW string_agg_dep_v1 AS
     SELECT STRING_AGG (a, '-') as result FROM string_agg_t
 GO
@@ -56,31 +91,31 @@ RETURN (SELECT STRING_AGG (a, '-') WITHIN GROUP (ORDER BY sbid) as result FROM s
 GO
 
 -- Create a table to test the trigger
-CREATE TABLE string_agg_order_school (
+CREATE TABLE string_agg_school_details (
     classID INT,
     rollID INT,
     studentName VARCHAR(50)
 );
 GO
 
-INSERT INTO string_agg_order_school (classID, rollID, studentName)
+INSERT INTO string_agg_school_details (classID, rollID, studentName)
 VALUES
     (1, 2, 'StudentB'),
     (1, 1, 'StudentA'),
     (1, 3, 'StudentC'),
     (2, 2, 'StudentE'),
-    (2, 1, 'StudentD');
+    (2, 1, 'StudentD')
 GO
 
 -- Create a trigger to display classID, list of student names seperated by ', '
 CREATE TRIGGER string_agg_tr_concat_student_names
-ON string_agg_order_school
+ON string_agg_school_details
 AFTER INSERT, UPDATE, DELETE
 AS
 BEGIN
     SELECT classID, STRING_AGG(studentName, ', ') 
     WITHIN GROUP (ORDER BY rollID) 
-    FROM string_agg_order_school 
+    FROM string_agg_school_details 
     GROUP BY classID;
 END;
 GO
