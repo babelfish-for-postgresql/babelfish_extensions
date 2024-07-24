@@ -327,9 +327,8 @@ SELECT * FROM babel_862_replicate_itvf_func()
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: structure of query does not match function result type)~~
+abc?defghi??abc?defghi??abc?defghi??abc?defghi??
+~~END~~
 
 
 SELECT * FROM babel_862_replicate_dep_view_1
