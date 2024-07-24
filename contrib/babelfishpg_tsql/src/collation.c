@@ -471,7 +471,7 @@ get_remove_accents_internal_oid()
 		return;
 	}
 #endif
-	elog(WARNING, "Using ICU function to remove accents");
+	elog(LOG, "Using ICU function to remove accents");
 	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
 }
 
@@ -515,14 +515,22 @@ compare_remove_accent_map_pair(const void *p1, const void *p2)
 PG_FUNCTION_INFO_V1(remove_accents_internal_using_cache);
 Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 {
-	unsigned char *input_str = (unsigned char *) text_to_cstring(PG_GETARG_TEXT_PP(0));
-	unsigned char *input_str_start = input_str;
-	text          *return_result;
-	int           len = strlen((char *)input_str),
+	unsigned char *input_str,
+	              *input_str_start,
+	              *normalized_char;
+	int           len,
 	              char_len;
+	text          *return_result;
 	StringInfoData result;
-	unsigned char *normalized_char = (unsigned char *) palloc(sizeof(uint32) + 1);
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	input_str = (unsigned char *) text_to_cstring(PG_GETARG_TEXT_PP(0));
+	input_str_start = input_str;
+	len = strlen((char *) input_str);
 	initStringInfo(&result);
+	normalized_char = (unsigned char *) palloc(sizeof(uint32) + 1);
 
 	for (; len > 0; len -= char_len)
 	{

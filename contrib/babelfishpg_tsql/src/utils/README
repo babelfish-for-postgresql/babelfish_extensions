@@ -3,9 +3,10 @@ Generate remove accents mappings
 
 Use the below plpgsql script to generate the contents of pltsql_remove_accent_map.
 The output from this script should be replaced in utils/removeaccent.map
-Also update the ICU version in get_remove_accents_internal_oid() with the version
-used to run the SQL script. The cache is only used when the version being used by
-the engine matches to the one used to generate the mappings.
+Also update the macros pltsql_remove_accent_map_icu_major_version &
+pltsql_remove_accent_map_icu_min_version with the ICU version used while running
+the script . The mappings are only used when the version being used by the engine
+matches to the one used to generate the mappings.
 
 -- Setup
 CREATE TABLE all_utf8_chars(col1 BYTEA, col2 TEXT);
