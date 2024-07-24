@@ -1,6 +1,6 @@
 /* TRANSFORMATION_RULE "[[:Latin:][:Nd:]]; Latin-ASCII" */
 
-static const remove_accent_map_pair pltsql_remove_accent_map[811] = 
+static const remove_accent_map_pair pltsql_remove_accent_map[] =
 {
     /* À */    {0xc380, 0x41},    /* A */
     /* Á */    {0xc381, 0x41},    /* A */

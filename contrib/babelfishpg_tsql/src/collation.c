@@ -471,7 +471,7 @@ get_remove_accents_internal_oid()
 		return;
 	}
 #endif
-	elog(LOG, "Using ICU function to remove accents");
+	elog(WARNING, "Using ICU function to remove accents");
 	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
 }
 
@@ -519,12 +519,12 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 	unsigned char *input_str_start = input_str;
 	text          *return_result;
 	int           len = strlen((char *)input_str),
-	              l;
+	              char_len;
 	StringInfoData result;
-	unsigned char *c = (unsigned char *) palloc(sizeof(uint32) + 1);
+	unsigned char *normalized_char = (unsigned char *) palloc(sizeof(uint32) + 1);
 	initStringInfo(&result);
 
-	for (; len > 0; len -= l)
+	for (; len > 0; len -= char_len)
 	{
 		unsigned char b1 = 0;
 		unsigned char b2 = 0;
@@ -538,33 +538,33 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 		if (*input_str == '\0')
 			break;
 
-		l = pg_utf_mblen(input_str);
+		char_len = pg_utf_mblen(input_str);
 		
-		if (len < l)
+		if (len < char_len)
 			break;
 
-		if (!pg_utf8_islegal(input_str, l))
+		if (!pg_utf8_islegal(input_str, char_len))
 			break;
 
-		if (l == 1)
+		if (char_len == 1)
 		{
 			appendBinaryStringInfo(&result, input_str++, 1);
 			continue;
 		}
 
 		/* collect coded char of length l */
-		if (l == 2)
+		if (char_len == 2)
 		{
 			b3 = *input_str++;
 			b4 = *input_str++;
 		}
-		else if (l == 3)
+		else if (char_len == 3)
 		{
 			b2 = *input_str++;
 			b3 = *input_str++;
 			b4 = *input_str++;
 		}
-		else if (l == 4)
+		else if (char_len == 4)
 		{
 			b1 = *input_str++;
 			b2 = *input_str++;
@@ -573,7 +573,7 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			elog(ERROR, "unsupported character length %d", l);
+			elog(ERROR, "unsupported character length %d", char_len);
 		}
 
 		utf8_char = (b1 << 24 | b2 << 16 | b3 << 8 | b4);
@@ -587,20 +587,20 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 		else
 			utf8_normalized_str = utf8_char;
 
-		store_coded_char(c, utf8_normalized_str);
+		store_coded_char(normalized_char, utf8_normalized_str);
 
-		appendBinaryStringInfo(&result, c, strlen((const char *) c));
+		appendBinaryStringInfo(&result, normalized_char, strlen((const char *) normalized_char));
 	}
 
 	if (len > 0)
 		ereport(ERROR,
 			(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-			 errmsg("invalid byte sequence for encoding UTF-8 while removing accents using cache")));
+			 errmsg("invalid byte sequence for encoding UTF-8 while removing accents")));
 
 	return_result = cstring_to_text_with_len(result.data, result.len);
 	pfree(result.data);
 	pfree(input_str_start);
-	pfree(c);
+	pfree(normalized_char);
 
 	PG_RETURN_VARCHAR_P(return_result);
 }
