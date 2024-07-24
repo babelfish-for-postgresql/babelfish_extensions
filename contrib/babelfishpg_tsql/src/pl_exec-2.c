@@ -17,6 +17,7 @@
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "pltsql_bulkcopy.h"
+#include "pltsql_partition.h"
 #include "table_variable_mvcc.h"
 
 #include "catalog.h"

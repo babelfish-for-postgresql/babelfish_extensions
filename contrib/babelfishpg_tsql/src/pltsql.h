@@ -64,8 +64,6 @@
 
 #define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
 
- /* Max number of partitions allowed for babelfish partitioned tables. */
-#define MAX_PARTITIONS_LIMIT 15000
 
 /*
  * Compiler's namespace item types
