@@ -79,7 +79,7 @@ COMMIT
 GO
 
 ----------------------------------------------------------
--- ALTER TABLE (should fail due to BABEL-4912)
+-- ALTER TABLE (BABEL-4912)
 ----------------------------------------------------------
 CREATE TABLE #temp_table_rollback_t1 (a int, b int)
 GO
@@ -95,12 +95,12 @@ ROLLBACK
 GO
 
 BEGIN TRAN
-ALTER TABLE #temp_table_rollback_t1 DROP COLUMN b
+ALTER TABLE #temp_table_rollback_t1 ALTER COLUMN b VARCHAR
 COMMIT
 GO
 
 BEGIN TRAN
-ALTER TABLE #temp_table_rollback_t1 ALTER COLUMN b VARCHAR
+ALTER TABLE #temp_table_rollback_t1 DROP COLUMN b
 COMMIT
 GO
 
