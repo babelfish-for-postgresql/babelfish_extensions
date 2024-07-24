@@ -1302,7 +1302,7 @@ is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 }
 
 Datum
-is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
+is_collated_ai_internal(PG_FUNCTION_ARGS)
 {
 	Oid  		colloid = PG_GET_COLLATION();
 	HeapTuple	tp;
@@ -1338,9 +1338,8 @@ is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
 	collcollate = TextDatumGetCString(datum);
 	ReleaseSysCache(tp);
 
-	if ((strstr(lowerstr(collcollate), lowerstr("colStrength=primary"))) ||
-		(0 != strstr(lowerstr(collcollate), "level1") &&    /* CI_AI */
-		 0 == strstr(lowerstr(collcollate), "kc-true")))
+	if (strstr(lowerstr(collcollate), lowerstr("colStrength=primary")) ||
+		0 != strstr(lowerstr(collcollate), "level1"))    /* AI */
 	{
 		pfree(collcollate);
 		PG_RETURN_BOOL(true);
@@ -1574,7 +1573,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.get_server_collation_oid_internal = &get_server_collation_oid_internal;
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
 		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
-		collation_callbacks_var.is_collated_ci_ai_internal = &is_collated_ci_ai_internal;
+		collation_callbacks_var.is_collated_ai_internal = &is_collated_ai_internal;
 		collation_callbacks_var.collationproperty_helper = &collationproperty_helper;
 		collation_callbacks_var.tdscollationproperty_helper = &tdscollationproperty_helper;
 		collation_callbacks_var.lookup_collation_table_callback = &lookup_collation_table;

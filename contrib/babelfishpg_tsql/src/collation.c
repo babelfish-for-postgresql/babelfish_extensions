@@ -73,7 +73,7 @@ PG_FUNCTION_INFO_V1(init_collid_trans_tab);
 PG_FUNCTION_INFO_V1(init_like_ilike_table);
 PG_FUNCTION_INFO_V1(get_server_collation_oid);
 PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
-PG_FUNCTION_INFO_V1(is_collated_ci_ai_internal);
+PG_FUNCTION_INFO_V1(is_collated_ai_internal);
 
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation);
@@ -125,9 +125,9 @@ is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 }
 
 Datum
-is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
+is_collated_ai_internal(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(tsql_is_collated_ci_ai_internal(fcinfo));
+	PG_RETURN_DATUM(tsql_is_collated_ai_internal(fcinfo));
 }
 
 /* init_like_ilike_table - this function is no longer needed and is only a placeholder for upgrade script */
@@ -1043,12 +1043,12 @@ tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 }
 
 Datum
-tsql_is_collated_ci_ai_internal(PG_FUNCTION_ARGS)
+tsql_is_collated_ai_internal(PG_FUNCTION_ARGS)
 {
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	return (*collation_callbacks_ptr->is_collated_ci_ai_internal) (fcinfo);
+	return (*collation_callbacks_ptr->is_collated_ai_internal) (fcinfo);
 }
 
 bytea *
@@ -1219,7 +1219,7 @@ translate_char_pos(const char* str,		/* UTF-8 string */
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				errmsg("This function requires ICU library, which is not available")));
+				errmsg("translate_char_pos requires ICU library, which is not available")));
 #endif
 	}
 	if (p_str != NULL)
@@ -1289,7 +1289,7 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				errmsg("This function requires ICU library, which is not available")));
+				errmsg("pltsql strpos requires ICU library, which is not available")));
 #endif
 	}
 
@@ -1417,7 +1417,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				errmsg("This function requires ICU library, which is not available")));
+				errmsg("pltsql replace requires ICU library, which is not available")));
 #endif
 	}
 	return false;
