@@ -5990,8 +5990,10 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	List *result;
 	ListCell *elements;
 	AlterTableStmt *altstmt;
+	AlterTableStmt *newstmt;
 	IntoClause *into;
 	Node *n;
+	
 
 	n = stmt->query;
 	into = stmt->into;
@@ -6074,13 +6076,16 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				constraint->contype = CONSTR_IDENTITY;
 				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
 				constraint->options = seqoptions;
-
+				
 				def = makeNode(ColumnDef);
 				def->colname = tle->resname;
 				def->typeName = typename;
 				def->identity = ATTRIBUTE_IDENTITY_ALWAYS;
 				def->is_not_null = true;
 				def->constraints = lappend(def->constraints, constraint);
+
+				
+
 
 				lcmd = makeNode(AlterTableCmd);
 				lcmd->subtype = AT_AddColumn;
@@ -6090,9 +6095,34 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			}
 			else
 			{
+				AlterTableCmd *cmd;
+
+				//Convert the column name to lowercase
+				char* original_name = tle->resname;
+				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 				current_resno += 1;
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
+				// checking if the column_name is already in lower case
+				// value == 0 => already in lowercase 
+				char* lowercase_name = tle->resname;
+				value=strcmp(original_name,lowercase_name);  
+				//trying some options to store the original name of the column_name 
+					if(value!=0){
+						cmd = makeNode(AlterTableCmd);
+						cmd->subtype = AT_SetOptions;
+						cmd->name = tle->resname;
+						cmd->def = (Node *) list_make1(makeDefElem(pstrdup("bbf_original_rel_name"), (Node *) makeString(pstrdup(original_name)), -1));
+						cmd->behavior = DROP_RESTRICT;
+						cmd->missing_ok = false;
+
+						newstmt = makeNode(AlterTableStmt);
+						newstmt->relation = into->rel;
+						newstmt->cmds = NIL;
+						newstmt->objtype = OBJECT_TABLE;
+						newstmt->cmds = lappend(newstmt->cmds, cmd);
+				}
+				
 			}
 		}
 		q->targetList = modifiedTargetList;
@@ -6122,9 +6152,11 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	}
 
 	result = lappend(result, stmt);
+	
 	if (altstmt)
 		result = lappend(result, altstmt);
-
+	if(newstmt)
+		result = lappend(result, newstmt);
 	return result;
 }
 
