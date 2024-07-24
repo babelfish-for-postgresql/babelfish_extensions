@@ -5008,6 +5008,14 @@ END;
 $$
 LANGUAGE plpgsql STRICT STABLE;
 
+DROP FUNCTION IF EXISTS sys.substring(string TEXT, i INTEGER, j INTEGER);
+
+DROP FUNCTION IF EXISTS sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER);
+
+DROP FUNCTION IF EXISTS sys.substring(string sys.NVARCHAR, i INTEGER, j INTEGER);
+
+DROP FUNCTION IF EXISTS sys.substring(string sys.NCHAR, i INTEGER, j INTEGER);
+
 CREATE OR REPLACE FUNCTION sys.substring(string TEXT, start INTEGER, length INTEGER)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
