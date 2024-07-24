@@ -529,6 +529,11 @@ alter-procedure
 BABEL-4707
 BABEL_4817
 BABEL-4641
+trim
+ltrim
+rtrim
+left
+right
 BABEL-4863
 babel_test_int4_numeric_oper
 babel_test_int8_numeric_oper
