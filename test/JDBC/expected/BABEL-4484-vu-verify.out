@@ -26,3 +26,43 @@ GO
 varchar
 ~~END~~
 
+
+SELECT test_babel_4484_t1.ced--table1.REPGETTEXT(
+FROM test_babel_4484_t1
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select test_babel_4484_t1.您您--table1.a.b.c
+from test_babel_4484_t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column test_babel_4484_t1.您您 does not exist)~~
+
+
+select test_babel_4484_t2.您您--table1.a.b.c
+from test_babel_4484_t2
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select test_babel_4484_t1.您您 as kk--table1.a.b.c
+from test_babel_4484_t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column test_babel_4484_t1.您您 does not exist)~~
+
+
+select test_babel_4484_t2.您您 as kk--table1.a.b.c
+from test_babel_4484_t2
+GO
+~~START~~
+varchar
+~~END~~
+
