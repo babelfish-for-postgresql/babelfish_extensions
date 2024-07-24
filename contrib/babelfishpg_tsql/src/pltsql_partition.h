@@ -16,6 +16,8 @@
 #ifndef PLTSQL_PARTITION_H
 #define PLTSQL_PARTITION_H
 
+#include "nodes/parsenodes.h"
+
 /* Max number of partitions allowed for babelfish partitioned tables. */
 #define MAX_PARTITIONS_LIMIT 15000
 
