@@ -6,6 +6,28 @@ GO
 ~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
 
 
+SELECT substring(CAST(NULL AS int), 2, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type integer is invalid for argument 1 of substring function.)~~
+
+
+SELECT substring(CAST(NULL AS varbinary), 2, 1)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+SELECT substring(CAST(NULL AS decimal), 2, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "decimal" is invalid for argument 1 of substring function.)~~
+
+
 SELECT substring('abc', NULL, 1)
 GO
 ~~START~~
@@ -14,7 +36,51 @@ varchar
 ~~END~~
 
 
+SELECT substring('abc', CAST(NULL AS text), 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type text is invalid for argument 2 of substring function.)~~
+
+
+SELECT substring('abc', CAST(NULL AS varchar), 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "varchar" is invalid for argument 2 of substring function.)~~
+
+
+SELECT substring('abc', CAST(NULL AS int), 1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
 SELECT substring('abc', 2, NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT substring('abc', 2, CAST(NULL AS text))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type text is invalid for argument 3 of substring function.)~~
+
+
+SELECT substring('abc', 2, CAST(NULL AS varchar))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "varchar" is invalid for argument 3 of substring function.)~~
+
+
+SELECT substring('abc', 2, CAST(NULL AS int))
 GO
 ~~START~~
 varchar
@@ -109,9 +175,9 @@ varchar
 
 SELECT substring('AbdefGhi', 2147483648, 1)
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: Argument data type bigint is invalid for argument 2 of substring function.)~~
 
 
 -- edge case values for third parameter
@@ -155,9 +221,9 @@ bdefGhi
 
 SELECT substring('AbdefGhi', 2, 2147483648)
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: Argument data type bigint is invalid for argument 3 of substring function.)~~
 
 
 -- input type char
@@ -757,7 +823,7 @@ SELECT substring(@inputString, 4, 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type time is invalid for argument 1 of substring function.)~~
+~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of substring function.)~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
@@ -781,7 +847,7 @@ SELECT substring(@inputString, 4, 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type decimal is invalid for argument 1 of substring function.)~~
+~~ERROR (Message: Argument data type "decimal" is invalid for argument 1 of substring function.)~~
 
 
 DECLARE @inputString numeric = 12345.12;
@@ -797,7 +863,7 @@ SELECT substring(@inputString, 4, 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type float is invalid for argument 1 of substring function.)~~
+~~ERROR (Message: Argument data type double precision is invalid for argument 1 of substring function.)~~
 
 
 DECLARE @inputString real = 12345.1;
@@ -821,7 +887,7 @@ SELECT substring(@inputString, 4, 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type int is invalid for argument 1 of substring function.)~~
+~~ERROR (Message: Argument data type integer is invalid for argument 1 of substring function.)~~
 
 
 DECLARE @inputString smallint = 12356;
@@ -861,7 +927,7 @@ SELECT substring(@inputString, 4, 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type bit is invalid for argument 1 of substring function.)~~
+~~ERROR (Message: Argument data type "bit" is invalid for argument 1 of substring function.)~~
 
 
 DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)

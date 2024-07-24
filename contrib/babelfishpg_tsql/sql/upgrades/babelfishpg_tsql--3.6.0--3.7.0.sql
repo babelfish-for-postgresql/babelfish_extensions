@@ -5008,19 +5008,35 @@ END;
 $$
 LANGUAGE plpgsql STRICT STABLE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string NTEXT, i INTEGER, j INTEGER)
-RETURNS sys.NVARCHAR
-AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.substring(string sys.BPCHAR, i INTEGER, j INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string TEXT, start INTEGER, length INTEGER)
 RETURNS sys.VARCHAR
-AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string sys.VARBINARY, i INTEGER, j INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string NTEXT, start INTEGER, length INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, start INTEGER, length INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.BPCHAR, start INTEGER, length INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NVARCHAR, start INTEGER, length INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, start INTEGER, length INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARBINARY, start INTEGER, length INTEGER)
 RETURNS sys.VARBINARY
-AS 'babelfishpg_tsql', 'tsql_varbinary_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'tsql_varbinary_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string ANYELEMENT, i INTEGER, j INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string ANYELEMENT, start INTEGER, length INTEGER)
 RETURNS sys.VARBINARY
 AS
 $BODY$
@@ -5031,19 +5047,19 @@ BEGIN
     string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
     IF string_arg_datatype IS NULL THEN
         -- for User Defined Datatype, use immediate base type to check for argument datatype validation
-        string_basetype := (SELECT typbasetype FROM pg_type WHERE oid = pg_typeof(string)::oid);
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
         string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
     END IF;
 
     -- restricting arguments with invalid datatypes for substring function
-    IF string_arg_datatype NOT IN ('varchar', 'char', 'nchar', 'nvarchar', 'binary', 'varbinary', 'image') THEN
+    IF string_arg_datatype NOT IN ('binary', 'image') THEN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of substring function.', string_arg_datatype;
     END IF;
 
-    RETURN sys.substring(string::sys.VARBINARY, i, j);
+    RETURN sys.substring(string::sys.VARBINARY, start, length);
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

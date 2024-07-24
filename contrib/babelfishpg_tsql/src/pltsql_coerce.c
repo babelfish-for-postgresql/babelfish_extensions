@@ -379,8 +379,8 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 #define TOTAL_TSQL_PRECEDENCE_COUNT (sizeof(tsql_precedence_infos)/sizeof(tsql_precedence_infos[0]))
 
 /* Following constants value are defined based on the special function list */
-#define SFUNC_MAX_ARGS 2			/* maximum number of args special function in special function list can have */
-#define SFUNC_MAX_VALID_TYPES 6		/* maximum number of valid types supported argument of function in special function list can have */
+#define SFUNC_MAX_ARGS 3			/* maximum number of args special function in special function list can have */
+#define SFUNC_MAX_VALID_TYPES 9		/* maximum number of valid types supported argument of function in special function list can have */
 
 /* struct to store details of valid types supported for a argument */
 typedef struct tsql_valid_arg_type
@@ -402,7 +402,8 @@ typedef struct tsql_special_function
 
 tsql_special_function_t tsql_special_function_list[] = 
 {
-	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
+	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
+	{"sys", "substring", "substring", 3, {{9, {"char","varchar","nchar","nvarchar","text","ntext","image","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {3, {"tinyint","smallint","int"}, {InvalidOid, InvalidOid, InvalidOid}} , {3, {"tinyint","smallint","int"}, {InvalidOid, InvalidOid, InvalidOid}}}}
 };
 
 static bool		inited_tsql_special_function_list = false;
@@ -1030,7 +1031,7 @@ init_special_function_list()
  * and also validate the input argument data types.
  */
 bool
-validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
+validate_special_function(char *func_nsname, char *func_name, List* fargs, int nargs, Oid *input_typeids)
 {
 	tsql_special_function_t    *special_func;
 	bool                        type_match;
@@ -1038,7 +1039,7 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 	Oid                         sys_varcharoid;
 
 	/* Sanity checks */
-	if (func_name == NULL || (nargs != 0 && input_typeids == NULL))
+	if (func_name == NULL || (nargs != 0 && input_typeids == NULL) || fargs == NULL)
 		return false;
 
 	/* 
@@ -1076,8 +1077,17 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 	/* Report error in case of invalid argument datatype */
 	for (int i = 0; i < special_func->nargs; i++)
 	{
-		/* for unknown literals consider its type as sys.VARCHAR */
-		input_type_id = (input_typeids[i] == UNKNOWNOID) ? sys_varcharoid : input_typeids[i];
+		/* if function argument is NULL then keep its typeId as UNKNOWN otherwise consider it as sys.VARCHAR */
+		if (input_typeids[i] == UNKNOWNOID)
+		{
+			Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
+			if (IsA(arg, Const) && ((Const *)arg)->constisnull)
+				continue;
+			else
+				input_type_id = sys_varcharoid;
+		}
+		else
+			input_type_id = input_typeids[i];
 
 		/* for UDT use its base type for input argument datatype validation */
 		base_type_id = get_immediate_base_type_of_UDT_internal(input_type_id);
@@ -1114,7 +1124,7 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
  * based on matching return type. Also throw error in case of invalid argument data type.
  */
 static FuncCandidateList
-tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
 	FuncCandidateList			current_candidate, best_candidate;
 	Oid 						expr_result_type;
@@ -1126,7 +1136,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
-	is_func_validated = validate_special_function(proc_nsname, proc_name, nargs, input_typeids);
+	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids);
 
 	/* Return NULL if function is not a special function */
 	if (!is_func_validated)
@@ -1145,7 +1155,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1])
 			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[1]))
 		{
-			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar"); 
 		}
 		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[1])
 				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[1])
@@ -1154,6 +1164,8 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			expr_result_type = get_sys_varcharoid();
 		}
 	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name, "substring", 9) == 0) // we don't want special handling for substring
+		return NULL;
 
 	if (!OidIsValid(expr_result_type))
 		return NULL;
@@ -1194,6 +1206,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 
 static FuncCandidateList
 tsql_func_select_candidate(List *names,
+						   List *fargs,
 						   int nargs,
 						   Oid *input_typeids,
 						   FuncCandidateList candidates,
@@ -1207,7 +1220,7 @@ tsql_func_select_candidate(List *names,
 	bool			  candidates_are_opers = false;
 
 	if (is_special)
-		return tsql_func_select_candidate_for_special_func(names, nargs, input_typeids, candidates);
+		return tsql_func_select_candidate_for_special_func(names, fargs, nargs, input_typeids, candidates);
 
 	if (unknowns_resolved)
 	{

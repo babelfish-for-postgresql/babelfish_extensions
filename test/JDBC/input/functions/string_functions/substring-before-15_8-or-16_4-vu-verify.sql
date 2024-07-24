@@ -2,10 +2,37 @@
 SELECT substring(NULL, 2, 1)
 GO
 
+SELECT substring(CAST(NULL AS int), 2, 1)
+GO
+
+SELECT substring(CAST(NULL AS varbinary), 2, 1)
+GO
+
+SELECT substring(CAST(NULL AS decimal), 2, 1)
+GO
+
 SELECT substring('abc', NULL, 1)
 GO
 
+SELECT substring('abc', CAST(NULL AS text), 1)
+GO
+
+SELECT substring('abc', CAST(NULL AS varchar), 1)
+GO
+
+SELECT substring('abc', CAST(NULL AS int), 1)
+GO
+
 SELECT substring('abc', 2, NULL)
+GO
+
+SELECT substring('abc', 2, CAST(NULL AS text))
+GO
+
+SELECT substring('abc', 2, CAST(NULL AS varchar))
+GO
+
+SELECT substring('abc', 2, CAST(NULL AS int))
 GO
 
 SELECT substring(NULL, 2, NULL)
