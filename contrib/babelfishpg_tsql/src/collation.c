@@ -451,6 +451,11 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	return ret;
 }
 
+/*
+ * Only use cached mappings for removing accents when the
+ * current ICU version matches to the one used to generate
+ * the cache. Otherwise we fallback on the ICU function
+ */
 static void
 get_remove_accents_internal_oid()
 {
