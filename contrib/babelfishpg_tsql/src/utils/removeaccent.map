@@ -1,11 +1,5 @@
 /* TRANSFORMATION_RULE "[[:Latin:][:Nd:]]; Latin-ASCII" */
 
-/*
- * We generate the mapping by running ICU transliterate using
- * the above rule against every possible UTF-8 character
- * see collations/verify_mapping_for_remove_accents.mix
- */
-
 static const remove_accent_map_pair pltsql_remove_accent_map[811] = 
 {
     /* À */    {0xc380, 0x41},    /* A */

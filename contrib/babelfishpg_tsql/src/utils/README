@@ -1,0 +1,34 @@
+Generate remove accents mappings
+================================
+
+Use the below plpgsql script to generate the contents of pltsql_remove_accent_map.
+
+-- Setup
+CREATE TABLE all_utf8_chars(col1 BYTEA, col2 TEXT);
+
+-- Insert all possible UNICODE and UTF-8 valid characters into table
+DO $$
+DECLARE
+    erro TEXT;
+    cnt INT:= 1;
+    var TEXT;
+BEGIN
+    WHILE cnt <= 1114112 LOOP
+        BEGIN
+            INSERT INTO all_utf8_chars VALUES (cast(chr(cnt) as bytea), chr(cnt));
+        EXCEPTION
+        WHEN others THEN
+        END;       
+        cnt := cnt + 1;
+    END LOOP;
+END;         
+$$;
+
+-- Generate a mapping for every required character
+-- ex:  /* Æ */    {0xc386, 0x4145}    /* AE */
+SELECT REPLACE(FORMAT('/* %s */    {%s, %s},    /* %s */',col2, col1, cast(sys.remove_accents_internal(col2) as bytea), sys.remove_accents_internal(col2)), '\', '0')
+    FROM all_utf8_chars
+    WHERE col2 != sys.remove_accents_internal(col2);
+
+-- Cleanup
+DROP TABLE all_utf8_chars;
