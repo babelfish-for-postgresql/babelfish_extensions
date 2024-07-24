@@ -1,0 +1,716 @@
+-- customer case, mentioned in the jira description
+DECLARE @custname NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT @custname, 
+    TRIM(@custname) as [TRIM]
+    , LTRIM(@custname) as [LTRIM]
+    , RTRIM(@custname) as [RTRIM]
+    , LEFT(@custname, 4) as [LEFT4]
+    , RIGHT(@custname, 4) as [RIGHT4]
+    , SUBSTRING(@custname, 2, 4) as [SUBSTRING_2_4]
+;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉#!#·拉莫斯#!#尔·拉莫
+~~END~~
+
+
+-- NULL
+SELECT RIGHT(NULL, -2)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid length parameter passed to the right function.)~~
+
+
+SELECT RIGHT(NULL, 0)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT RIGHT(NULL, 2)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT RIGHT('abc', NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT RIGHT(NULL, NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- edge case values for second parameter
+SELECT RIGHT('AbdefGhi', -2)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid length parameter passed to the right function.)~~
+
+
+SELECT '|' + RIGHT('AbdefGhi', 0) + '|'
+GO
+~~START~~
+varchar
+||
+~~END~~
+
+
+SELECT RIGHT('AbdefGhi', 2)
+GO
+~~START~~
+varchar
+hi
+~~END~~
+
+
+SELECT RIGHT('AbdefGhi', 2147483646)
+GO
+~~START~~
+varchar
+AbdefGhi
+~~END~~
+
+
+SELECT RIGHT('AbdefGhi', 2147483650)
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- input type char
+DECLARE @inputString CHAR(15) = 'abc🙂defghi🙂🙂'
+SELECT '|' + RIGHT(@inputString, 8) + '|'
+GO
+~~START~~
+varchar
+|ghi??   |
+~~END~~
+
+
+DECLARE @inputString CHAR(15) = '比尔·拉莫斯'
+SELECT '|' + RIGHT(@inputString, 13) + '|'
+GO
+~~START~~
+varchar
+|比??拉莫斯     |
+~~END~~
+
+
+DECLARE @inputString CHAR(15) = '比尔·拉莫斯'
+SELECT '|' + RIGHT(@inputString, 13) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|比??拉莫斯     |
+~~END~~
+
+
+DECLARE @inputString CHAR(15) = 'abc🙂defghi🙂🙂'
+SELECT '|' + RIGHT(@inputString, 50) + '|'
+GO
+~~START~~
+varchar
+|abc?defghi??   |
+~~END~~
+
+
+-- input type varchar
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT RIGHT(@inputString, 5)
+GO
+~~START~~
+varchar
+ghi??
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT RIGHT(@inputString, 4)
+GO
+~~START~~
+varchar
+?拉莫斯
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT RIGHT(@inputString, 4) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+·拉莫斯
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT RIGHT(@inputString, 50)
+GO
+~~START~~
+varchar
+abc?defghi??
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT RIGHT(a, 4) FROM babel_4489_right_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+·拉莫斯
+~~END~~
+
+
+SELECT RIGHT(a, 4) COLLATE CHINESE_PRC_CI_AS FROM babel_4489_right_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+·拉莫斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT RIGHT(a, 4) FROM babel_4489_right_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+·拉莫斯
+~~END~~
+
+
+SELECT RIGHT(a, 4) COLLATE CHINESE_PRC_CS_AS FROM babel_4489_right_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+·拉莫斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT RIGHT(a, 4) FROM babel_4489_right_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+·拉莫斯
+~~END~~
+
+
+SELECT RIGHT(a, 4) COLLATE CHINESE_PRC_CI_AI FROM babel_4489_right_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+·拉莫斯
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT RIGHT(a, 4) FROM babel_4489_right_arabic_ci_as
+GO
+~~START~~
+varchar
+تقين
+~~END~~
+
+
+SELECT RIGHT(a, 4) COLLATE ARABIC_CI_AS FROM babel_4489_right_arabic_ci_as
+GO
+~~START~~
+varchar
+تقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT RIGHT(a, 4) FROM babel_4489_right_arabic_cs_as
+GO
+~~START~~
+varchar
+تقين
+~~END~~
+
+
+SELECT RIGHT(a, 4) COLLATE ARABIC_CS_AS FROM babel_4489_right_arabic_cs_as
+GO
+~~START~~
+varchar
+تقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT RIGHT(a, 4) FROM babel_4489_right_arabic_ci_ai
+GO
+~~START~~
+varchar
+تقين
+~~END~~
+
+
+SELECT RIGHT(a, 4) COLLATE ARABIC_CI_AI FROM babel_4489_right_arabic_ci_ai
+GO
+~~START~~
+varchar
+تقين
+~~END~~
+
+
+-- input type nchar
+DECLARE @inputString NCHAR(15) = N'abc🙂defghi🙂🙂'
+SELECT '|' + RIGHT(@inputString, 8) + '|'
+GO
+~~START~~
+nvarchar
+|ghi??   |
+~~END~~
+
+
+DECLARE @inputString NCHAR(15) = N'比尔·拉莫斯'
+SELECT '|' + RIGHT(@inputString, 13) + '|'
+GO
+~~START~~
+nvarchar
+|比??拉莫斯     |
+~~END~~
+
+
+DECLARE @inputString NCHAR(15) = N'abc🙂defghi🙂🙂'
+SELECT '|' + RIGHT(@inputString, 50) + '|'
+GO
+~~START~~
+nvarchar
+|abc?defghi??   |
+~~END~~
+
+
+-- with table column of type nchar
+SELECT '|' + RIGHT(a, 13) + '|' FROM babel_4489_right_t1 
+GO
+~~START~~
+nvarchar
+|c🙂defghi🙂🙂   |
+|·拉莫斯         |
+~~END~~
+
+
+-- input type nvarchar
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT RIGHT(@inputString, 5)
+GO
+~~START~~
+nvarchar
+ghi🙂🙂
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT RIGHT(@inputString, 4)
+GO
+~~START~~
+nvarchar
+·拉莫斯
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT RIGHT(@inputString, 50)
+GO
+~~START~~
+nvarchar
+abc🙂defghi🙂🙂
+~~END~~
+
+
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT RIGHT(@inputString, 4)
+GO
+~~START~~
+varchar
+efgh
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT RIGHT(@inputString, 4)
+GO
+~~START~~
+varchar
+efgh
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_4489_right_dep_view
+GO
+~~START~~
+nvarchar
+ghi🙂🙂
+~~END~~
+
+
+EXEC babel_4489_right_dep_proc
+GO
+~~START~~
+nvarchar
+ghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_4489_right_dep_func()
+GO
+~~START~~
+nvarchar
+ghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_4489_right_itvf_func()
+GO
+~~START~~
+nvarchar
+ghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_4489_right_dep_view_1
+GO
+~~START~~
+nvarchar
+🙂🙂   
+     
+~~END~~
+
+
+SELECT * FROM babel_4489_right_dep_view_2
+GO
+~~START~~
+nvarchar
+ghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_4489_right_dep_view_3
+GO
+~~START~~
+varchar
+     
+~~END~~
+
+
+SELECT * FROM babel_4489_right_dep_view_4
+GO
+~~START~~
+varchar
+i    
+~~END~~
+
+
+SELECT * FROM babel_4489_right_dep_view_5
+GO
+~~START~~
+varchar
+bcd  
+~~END~~
+
+
+SELECT * FROM babel_4489_right_dep_view_6
+GO
+~~START~~
+varchar
+ghi??
+~~END~~
+
+
+SELECT * FROM babel_4489_right_dep_view_7
+GO
+~~START~~
+nvarchar
+ghi🙂🙂
+~~END~~
+
+
+-- input type UDT
+-- -- in table babel_4489_right_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT RIGHT(a, 3) FROM babel_4489_right_UDT
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of right function.)~~
+
+
+SELECT RIGHT(b, 3) FROM babel_4489_right_UDT
+GO
+~~START~~
+varchar
+def
+~~END~~
+
+
+-- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+DECLARE @inputString date = '2016-12-21';
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+-21
+~~END~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+:00
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+:00
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+237
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+:00
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+237
+~~END~~
+
+
+DECLARE @inputString decimal = 123456;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+456
+~~END~~
+
+
+DECLARE @inputString numeric = 12345.12;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+345
+~~END~~
+
+
+DECLARE @inputString float = 12345.1;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+5.1
+~~END~~
+
+
+DECLARE @inputString real = 12345.1;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+5.1
+~~END~~
+
+
+DECLARE @inputString bigint = 12345678;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+678
+~~END~~
+
+
+DECLARE @inputString int = 12345678;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+678
+~~END~~
+
+
+DECLARE @inputString smallint = 12356;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+356
+~~END~~
+
+
+DECLARE @inputString tinyint = 235;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+235
+~~END~~
+
+
+DECLARE @inputString money = 12356;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+000
+~~END~~
+
+
+DECLARE @inputString smallmoney = 12356;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+000
+~~END~~
+
+
+DECLARE @inputString bit = 1;
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT RIGHT(@inputString, 3)
+GO
+~~START~~
+varchar
+4FF
+~~END~~
+
+
+SELECT RIGHT(a, 5) from babel_4489_right_image;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of right function.)~~
+
+
+-- input datatype text
+SELECT RIGHT(a, 5) FROM babel_4489_right_text
+GO
+~~START~~
+varchar
+ghi??
+~~END~~
+
+
+-- input datatype ntext
+SELECT RIGHT(b, 5) FROM babel_4489_right_text
+GO
+~~START~~
+nvarchar
+ghi🙂🙂
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT RIGHT(@inputString, 3)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of right function.)~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT RIGHT(@inputString, 3)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of right function.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT RIGHT(@inputString, 3)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of right function.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT RIGHT(@inputString, 3)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of right function.)~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT RIGHT(CAST(@inputString AS VARCHAR(50)), 3)
+GO
+~~START~~
+varchar
+4FF
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT RIGHT(CAST(@inputString AS VARCHAR(50)), 3)
+GO
+~~START~~
+varchar
+dy>
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT RIGHT(CAST(@inputString AS VARCHAR(50)), 3)
+GO
+~~START~~
+varchar
+ 2)
+~~END~~
+
