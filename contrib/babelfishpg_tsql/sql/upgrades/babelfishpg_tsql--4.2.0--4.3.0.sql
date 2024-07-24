@@ -332,8 +332,6 @@ CREATE OR REPLACE FUNCTION sys.is_collated_ai(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ai_internal'
 LANGUAGE C VOLATILE PARALLEL SAFE;
 
-$$
-LANGUAGE SQL VOLATILE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) returns TEXT as
 $body$
