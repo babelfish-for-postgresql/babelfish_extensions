@@ -1956,7 +1956,17 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				colname_start = pstate->p_sourcetext + res->location;
 				last_dot = colname_start;
 				while(*colname_start != '\0')
-				{	
+				{
+					/*
+					 * comment follow up with column like : 
+					 *
+					 * 'SELECT table1.c2--table1.REPGETTEXT('
+					 * 
+					 * will cause crash if we don't break the searching
+					 * for the last_dot position
+					 */
+					if (*colname_start == '-' && *(colname_start+1) == '-')
+						break;
 					if(open_square_bracket == 0 && *colname_start == '"')
 					{
 						double_quotes++;

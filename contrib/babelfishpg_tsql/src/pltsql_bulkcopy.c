@@ -350,6 +350,8 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	 */
 	save_cur_lineno = cstate->cur_rowno;
 
+	/* Open indices to update them after the multi insert */
+	ExecOpenIndices(resultRelInfo, false);
 	/*
 	 * table_multi_insert may leak memory, so switch to short-lived memory
 	 * context before calling it.
@@ -361,7 +363,6 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 					   mycid,
 					   ti_options,
 					   buffer->bistate);
-	MemoryContextSwitchTo(oldcontext);
 
 	for (i = 0; i < nused; i++)
 	{
@@ -381,6 +382,36 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 		}
 
 		ExecClearTuple(slots[i]);
+	}
+
+	/* 
+	 * ExecInsertIndexTuples also leaks memory, so only switch back to old
+	 * context after it.
+	 */
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Close the indices we've opened before multi insert */
+	ExecCloseIndices(resultRelInfo);
+
+	/*
+	 * ExecCloseIndices does not free neither resulsting arrays, allocated
+	 * in ExecOpenIndices, nor its contents. Instead of moving open/close into
+	 * short-lived context lets clean it up explicitly, so indices open/close
+	 * can be untied from batch handling in future if needed.
+	 * 
+	 * There is an additional call to ExecCloseIndices in
+	 * EndBulkCopy->ExecCloseResultRelations, we reset ri_NumIndices to make
+	 * it no-op.
+	 */
+	if (resultRelInfo->ri_NumIndices > 0)
+	{
+		for (i = 0; i < resultRelInfo->ri_NumIndices; i++)
+		{
+			pfree(resultRelInfo->ri_IndexRelationInfo[i]);
+		}
+		pfree(resultRelInfo->ri_IndexRelationInfo);
+		pfree(resultRelInfo->ri_IndexRelationDescs);
+		resultRelInfo->ri_NumIndices = 0;
 	}
 
 	/* Mark that all slots are free. */
@@ -589,8 +620,6 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					 errmsg("cannot bulk copy to non-table relation \"%s\"",
 							RelationGetRelationName(cstate->rel))));
 	}
-
-	ExecOpenIndices(cstate->resultRelInfo, false);
 
 	econtext = GetPerTupleExprContext(cstate->estate);
 
