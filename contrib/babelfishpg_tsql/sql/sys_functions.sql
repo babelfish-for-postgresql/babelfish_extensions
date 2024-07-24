@@ -4874,7 +4874,7 @@ BEGIN
     string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
     IF string_arg_datatype IS NULL THEN
         -- for User Defined Datatype, use immediate base type to check for argument datatype validation
-        string_basetype := (SELECT typbasetype FROM pg_type WHERE oid = pg_typeof(string)::oid);
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
         string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
     END IF;
 

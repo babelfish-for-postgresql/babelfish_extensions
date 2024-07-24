@@ -271,9 +271,8 @@ SELECT * FROM babel_4839_reverse_itvf_func()
 GO
 ~~START~~
 text
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: structure of query does not match function result type)~~
+??ihgfed?cba
+~~END~~
 
 
 SELECT * FROM babel_4839_reverse_dep_view_1
