@@ -210,8 +210,6 @@ ignore#!#BABEL-730-before-15_6-or-16_1-vu-prepare
 ignore#!#BABEL-730-before-15_6-or-16_1-vu-verify
 ignore#!#BABEL-730-before-15_6-or-16_1-vu-cleanup
 
-# These tests are meant for upgrade scenario prior to (potential) 15_7 or 16_3 release
-
 ignore#!#BABEL-404-before-15_7-or-16_3-vu-prepare
 ignore#!#BABEL-404-before-15_7-or-16_3-vu-verify
 ignore#!#BABEL-404-before-15_7-or-16_3-vu-cleanup
@@ -252,6 +250,26 @@ ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-cleanup
 ignore#!#BABEL-621-after-14_12-before-15-vu-prepare
 ignore#!#BABEL-621-after-14_12-before-15-vu-verify
 ignore#!#BABEL-621-after-14_12-before-15-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
+ignore#!#sys-host_name-before-15_8-or-16_4-vu-prepare
+ignore#!#sys-host_name-before-15_8-or-16_4-vu-verify
+ignore#!#sys-host_name-before-15_8-or-16_4-vu-cleanup
+ignore#!#left-before-15_8-or-16_4-vu-prepare
+ignore#!#left-before-15_8-or-16_4-vu-verify
+ignore#!#left-before-15_8-or-16_4-vu-cleanup
+ignore#!#right-before-15_8-or-16_4-vu-prepare
+ignore#!#right-before-15_8-or-16_4-vu-verify
+ignore#!#right-before-15_8-or-16_4-vu-cleanup
+ignore#!#ltrim-before-15_8-or-16_4-vu-prepare
+ignore#!#ltrim-before-15_8-or-16_4-vu-verify
+ignore#!#ltrim-before-15_8-or-16_4-vu-cleanup
+ignore#!#rtrim-before-15_8-or-16_4-vu-prepare
+ignore#!#rtrim-before-15_8-or-16_4-vu-verify
+ignore#!#rtrim-before-15_8-or-16_4-vu-cleanup
+ignore#!#trim-before-15_8-or-16_4-vu-prepare
+ignore#!#trim-before-15_8-or-16_4-vu-verify
+ignore#!#trim-before-15_8-or-16_4-vu-cleanup
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
