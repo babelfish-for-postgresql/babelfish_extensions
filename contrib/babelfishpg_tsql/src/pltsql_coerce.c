@@ -9,6 +9,8 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/genam.h"
+#include "access/table.h"
 #include "access/parallel.h"	/* InitializingParallelWorker */
 #include "miscadmin.h"
 #include "catalog/pg_authid.h"
@@ -28,6 +30,7 @@
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/guc.h"
+#include "utils/fmgroids.h"
 #include "common/int.h"
 #include "utils/numeric.h"
 #include "utils/memutils.h"
@@ -53,6 +56,7 @@ extern bool babelfish_dump_restore;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
+PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
@@ -373,6 +377,37 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 };
 
 #define TOTAL_TSQL_PRECEDENCE_COUNT (sizeof(tsql_precedence_infos)/sizeof(tsql_precedence_infos[0]))
+
+/* Following constants value are defined based on the special function list */
+#define SFUNC_MAX_ARGS 2			/* maximum number of args special function in special function list can have */
+#define SFUNC_MAX_VALID_TYPES 6		/* maximum number of valid types supported argument of function in special function list can have */
+
+/* struct to store details of valid types supported for a argument */
+typedef struct tsql_valid_arg_type
+{
+	int     len;                                      /* length of list of valid types for the argument */
+	char   *valid_types[SFUNC_MAX_VALID_TYPES];       /* list of valid type name supported for the argument */
+	Oid     valid_types_oid[SFUNC_MAX_VALID_TYPES];   /* list of valid type oid supported for the argument */
+} tsql_valid_arg_type_t;
+
+/* struct to store details of special function */
+typedef struct tsql_special_function
+{
+	const char             *nsp;                              /* namespace of special function */
+	const char             *funcname;                         /* name of special function */
+	const char             *formatted_funcname;				  /* formatted name of special function */
+	int                     nargs;                            /* number of arguments of special function */
+	tsql_valid_arg_type_t   valid_arg_types[SFUNC_MAX_ARGS];  /* list for storing details of all the valid types supported for each arguments */
+} tsql_special_function_t;
+
+tsql_special_function_t tsql_special_function_list[] = 
+{
+	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
+};
+
+static bool		inited_tsql_special_function_list = false;
+
+#define TOTAL_TSQL_SPECIAL_FUNCTION_COUNT (sizeof(tsql_special_function_list)/sizeof(tsql_special_function_list[0]))
 
 /* T-SQL Cast */
 typedef struct tsql_cast_info_key
@@ -888,17 +923,291 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
 	return new_candidates;
 }
 
+/*
+ * get_immediate_base_type_of_UDT_internal()
+ * This function returns the Immediate base type for UDT.
+ * Returns InvalidOid if given type is not an UDT
+ */
+static Oid
+get_immediate_base_type_of_UDT_internal(Oid typeid)
+{
+	HeapTuple					tuple;
+	bool						isnull;
+	Datum						datum;
+	Datum                       tsql_typename;
+	Oid							base_type;
+	LOCAL_FCINFO(fcinfo, 1);
+
+	if (!OidIsValid(typeid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("typeid is invalid!")));
+
+	/* if common_utility_plugin_ptr is not initialised */
+	if (common_utility_plugin_ptr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Failed to find common utility plugin.")));
+
+	/* if tsql_typename is NULL it implies that inputTypId corresponds to UDT */
+	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+	fcinfo->args[0].value = ObjectIdGetDatum(typeid);
+	fcinfo->args[0].isnull = false;
+	tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+
+	/* if given type is not an UDT then return InvalidOid */
+	if (tsql_typename)
+		return InvalidOid;
+
+	/* Get immediate base type id of given type id */
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeid));
+	if (!HeapTupleIsValid(tuple))
+		return InvalidOid;
+
+	datum = SysCacheGetAttr(TYPEOID, tuple, Anum_pg_type_typbasetype, &isnull);
+	if (isnull)
+		return InvalidOid;
+
+	base_type = DatumGetObjectId(datum);
+	ReleaseSysCache(tuple);
+
+	return base_type;
+}
+
+Datum
+get_immediate_base_type_of_UDT(PG_FUNCTION_ARGS)
+{
+	Oid			base_type;
+	
+	base_type = get_immediate_base_type_of_UDT_internal(PG_GETARG_OID(0));
+	if (!OidIsValid(base_type))
+		PG_RETURN_NULL();
+
+	PG_RETURN_OID(base_type);
+}
+
+void
+init_special_function_list()
+{
+	Oid			type_id;
+
+	/* if common_utility_plugin_ptr is not initialised */
+	if (common_utility_plugin_ptr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to find common utility plugin.")));
+
+	/* mark the special function list initialised */
+	inited_tsql_special_function_list = true;
+
+	for (int special_func_idx = 0; special_func_idx < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; special_func_idx++)
+	{
+		for (int arg_idx = 0; arg_idx < tsql_special_function_list[special_func_idx].nargs; arg_idx++)
+		{
+			for (int valid_type_idx = 0; valid_type_idx < tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].len; valid_type_idx++)
+			{
+				if (!OidIsValid(tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types_oid[valid_type_idx]))
+				{
+					type_id = (*common_utility_plugin_ptr->get_tsql_datatype_oid)(tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types[valid_type_idx]);
+
+					if (OidIsValid(type_id))
+					{
+						tsql_special_function_list[special_func_idx].valid_arg_types[arg_idx].valid_types_oid[valid_type_idx] = type_id;
+					}
+					else
+					{
+						/* type id is not loaded. wait for next scan */
+						inited_tsql_special_function_list = false;
+					}
+				}
+			}
+		}
+	}
+}
+
+/*
+ * For a given function details, validate whether it is in special function list
+ * and also validate the input argument data types.
+ */
+bool
+validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
+{
+	tsql_special_function_t    *special_func;
+	bool                        type_match;
+	Oid                         input_type_id, valid_type_id, base_type_id;
+	Oid                         sys_varcharoid;
+
+	/* Sanity checks */
+	if (func_name == NULL || (nargs != 0 && input_typeids == NULL))
+		return false;
+
+	/* 
+	 * Special function handling is only for some specific system functions.
+	 * If func_nsname is NULL, consider it to be a "sys".
+	 */
+	if (func_nsname != NULL &&
+		(strlen(func_nsname) != 3 || strncmp(func_nsname, "sys", 3) != 0))
+		return false;
+
+	/* Initialise T-SQL special function argument type id list if not already done */
+	if (!inited_tsql_special_function_list)
+	{
+		init_special_function_list();
+	}
+
+	/* Get Special function details */
+	special_func = NULL;
+	for (int i = 0; i < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; i++)
+	{
+		if (strcmp(func_name, tsql_special_function_list[i].funcname) == 0
+			&& nargs == tsql_special_function_list[i].nargs)
+		{
+			special_func = &tsql_special_function_list[i];
+			break;
+		}
+	}
+
+	/* If function is not a special function no additional handling required */
+	if (special_func == NULL)
+		return false;
+
+	sys_varcharoid = get_sys_varcharoid();
+
+	/* Report error in case of invalid argument datatype */
+	for (int i = 0; i < special_func->nargs; i++)
+	{
+		/* for unknown literals consider its type as sys.VARCHAR */
+		input_type_id = (input_typeids[i] == UNKNOWNOID) ? sys_varcharoid : input_typeids[i];
+
+		/* for UDT use its base type for input argument datatype validation */
+		base_type_id = get_immediate_base_type_of_UDT_internal(input_type_id);
+		if (OidIsValid(base_type_id))
+			input_type_id = base_type_id;
+
+		type_match = false;
+		for (int j = 0; j < special_func->valid_arg_types[i].len; j++)
+		{
+			valid_type_id = special_func->valid_arg_types[i].valid_types_oid[j];
+
+			if (input_type_id == valid_type_id)
+			{
+				type_match = true;
+				break;
+			}
+		}
+		if (!type_match)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("Argument data type %s is invalid for argument %d of %s function.", 
+				 		 format_type_be(input_type_id), i+1, special_func->formatted_funcname)));
+		}
+	}
+
+	return true;
+}
+
+/*
+ * tsql_func_select_candidate_for_special_func()
+ *
+ * For functions present in special function list, and try to find best candidate 
+ * based on matching return type. Also throw error in case of invalid argument data type.
+ */
 static FuncCandidateList
-tsql_func_select_candidate(int nargs,
+tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+{
+	FuncCandidateList			current_candidate, best_candidate;
+	Oid 						expr_result_type;
+	char					   *proc_nsname;
+	char					   *proc_name;
+	bool						is_func_validated;
+	int							ncandidates;
+	Oid							rettype;
+
+	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
+
+	is_func_validated = validate_special_function(proc_nsname, proc_name, nargs, input_typeids);
+
+	/* Return NULL if function is not a special function */
+	if (!is_func_validated)
+		return NULL;
+
+	/* if common_utility_plugin_ptr is not initialised */
+	if (common_utility_plugin_ptr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Failed to find common utility plugin.")));
+
+	/* function based logic to decide return type */
+	expr_result_type = InvalidOid;
+	if (strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[1]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[1])
+				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[1])
+				|| input_typeids[1] == UNKNOWNOID)
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+
+	if (!OidIsValid(expr_result_type))
+		return NULL;
+
+	/* Get the candidate with matching return type */
+	ncandidates = 0;
+	best_candidate = NULL;
+	for (current_candidate = candidates;
+			current_candidate != NULL;
+			current_candidate = current_candidate->next)
+	{
+		rettype = get_func_rettype(current_candidate->oid);
+		if (expr_result_type == rettype)
+		{
+			best_candidate = current_candidate;
+			ncandidates++;
+		}
+	}
+
+	/* Only one definition should exists per return type for special function */
+	if (ncandidates == 0)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("function %s.%s with return type %s does not exists.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+	}
+	else if (ncandidates > 1)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+	}
+
+	if (best_candidate != NULL)
+		best_candidate->next = NULL;
+	return best_candidate;
+}
+
+static FuncCandidateList
+tsql_func_select_candidate(List *names,
+						   int nargs,
 						   Oid *input_typeids,
 						   FuncCandidateList candidates,
-						   bool unknowns_resolved)
+						   bool unknowns_resolved,
+						   bool is_special)
 {
 	FuncCandidateList new_candidates;
 	FuncCandidateList current_candidate;
 	FuncCandidateList another_candidate;
 	int			i;
 	bool			  candidates_are_opers = false;
+
+	if (is_special)
+		return tsql_func_select_candidate_for_special_func(names, nargs, input_typeids, candidates);
 
 	if (unknowns_resolved)
 	{
