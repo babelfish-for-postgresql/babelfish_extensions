@@ -843,6 +843,8 @@ class tsqlCommonMutator : public TSqlParserBaseListener
 public:
 	explicit tsqlCommonMutator() = default;
 	bool in_create_or_alter_function = false;
+	bool in_create_or_alter_procedure = false;
+	bool in_create_or_alter_trigger = false;
 
 	void enterCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
 		in_create_or_alter_function = true;
@@ -850,6 +852,22 @@ public:
 
 	void exitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
 		in_create_or_alter_function = false;
+	}
+
+	void enterCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override {
+		in_create_or_alter_procedure = true;
+	}
+
+	void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override {
+		in_create_or_alter_procedure = false;
+	}
+
+	void enterCreate_or_alter_trigger(TSqlParser::Create_or_alter_triggerContext *ctx) override {
+		in_create_or_alter_trigger = true;
+	}
+
+	void exitCreate_or_alter_trigger(TSqlParser::Create_or_alter_triggerContext *ctx) override {
+		in_create_or_alter_trigger = false;
 	}
 
 	void enterTransaction_statement(TSqlParser::Transaction_statementContext *ctx) override {
@@ -1181,6 +1199,19 @@ public:
 			rewritten_query_fragment.emplace(std::make_pair(ctx->OPENQUERY()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->OPENQUERY()), "openquery_internal")));
 			rewritten_query_fragment.emplace(std::make_pair(linked_srv->start->getStartIndex(), std::make_pair(linked_srv_name, str)));
 		}	
+	}
+	
+	void exitSTRING_AGG(TSqlParser::STRING_AGGContext *ctx) override
+	{
+		/* 
+		 * For User Defined Function/Procedure/Trigger the language of the body of Function/Procedure/Trigger is set as 'pltsql' 
+		 * hence we cannot rewrite the STRING_AGG query into PG syntax during creation of this objects, 
+		 * hence skipped the rewriting of STRING_AGG query for Function/Procedure/Trigger. 
+		 * Also, Function's/Procedure's/Trigger's body gets compiled during its execution so the rewriting of
+		 * STRING_AGG query will happen during execution.
+		 */
+		if (!(in_create_or_alter_function || in_create_or_alter_procedure || in_create_or_alter_trigger))
+			rewrite_string_agg_query(ctx);
 	}
 };
 
@@ -2548,11 +2579,6 @@ public:
 		}
 	}
 
-	void exitSTRING_AGG(TSqlParser::STRING_AGGContext *ctx) override
-	{
-		rewrite_string_agg_query(ctx);
-	}
-
 	//////////////////////////////////////////////////////////////////////////////
 	// statement analysis
 	//////////////////////////////////////////////////////////////////////////////
@@ -2720,9 +2746,6 @@ public:
 	MyInputStream &stream; 
 	bool in_procedure_parameter = false;    
 	bool in_procedure_parameter_id = false;    
-	bool in_create_or_alter_function = false;
-	bool in_create_or_alter_procedure = false;
-	bool in_create_or_alter_trigger = false;
 
 	std::vector<int> double_quota_places;
 
@@ -2732,30 +2755,6 @@ public:
     }
 
 public:
-	void enterCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
-		in_create_or_alter_function = true;
-	}
-
-	void exitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
-		in_create_or_alter_function = false;
-	}
-
-	void enterCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override {
-		in_create_or_alter_procedure = true;
-	}
-
-	void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override {
-		in_create_or_alter_procedure = false;
-	}
-
-	void enterCreate_or_alter_trigger(TSqlParser::Create_or_alter_triggerContext *ctx) override {
-		in_create_or_alter_trigger = true;
-	}
-
-	void exitCreate_or_alter_trigger(TSqlParser::Create_or_alter_triggerContext *ctx) override {
-		in_create_or_alter_trigger = false;
-	}
-
     void enterFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override
     {	
 	// We are looking at a function name; it may be a function call, or a
@@ -2989,19 +2988,6 @@ public:
 			}
 		}
 	}	
-
-	void exitSTRING_AGG(TSqlParser::STRING_AGGContext *ctx) override
-	{
-		/* 
-		 * For User Defined Function/Procedure/Trigger the language of the body of Function/Procedure/Trigger is set as 'pltsql' 
-		 * hence we cannot rewrite the STRING_AGG query into PG syntax during creation of this objects, 
-		 * hence skipped the rewriting of STRING_AGG query for Function/Procedure/Trigger. 
-		 * Also, Function's/Procedure's/Trigger's body gets compiled during its execution so the rewriting of
-		 * STRING_AGG query will happen in tsqlBuilder::exitSTRING_AGG() function.
-		 */
-		if (!(in_create_or_alter_function || in_create_or_alter_procedure || in_create_or_alter_trigger))
-			rewrite_string_agg_query(ctx);
-	}
 
 	void enterProcedure_param(TSqlParser::Procedure_paramContext *ctx) override
 	{
