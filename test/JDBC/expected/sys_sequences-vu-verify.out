@@ -19,7 +19,7 @@ varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#
 ~~END~~
 
 
-SELECT sys_sequences_test_func()
+SELECT dbo.sys_sequences_test_func()
 GO
 ~~START~~
 int

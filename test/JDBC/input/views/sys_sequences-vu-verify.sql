@@ -7,7 +7,7 @@ GO
 EXEC sys_sequences_test_proc
 GO
 
-SELECT sys_sequences_test_func()
+SELECT dbo.sys_sequences_test_func()
 GO
 
 SELECT

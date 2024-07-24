@@ -33,7 +33,6 @@ if($script_flag -eq $var_one)
     $Objects += $db.UserDefinedTableTypes
     $Objects += $db.Tables.Indexes
     $Objects += $db.Tables.Triggers
-    $Objects += $db.Sequences
     foreach ($CurrentObject in $Objects)
     {
         if (-not $CurrentObject.IsSystemObject )
