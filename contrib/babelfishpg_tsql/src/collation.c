@@ -590,7 +590,7 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 	if (len > 0)
 		ereport(ERROR,
 			(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-			 errmsg("error while removing accents")));
+			 errmsg("invalid byte sequence for encoding UTF-8 while removing accents using cache")));
 
 	return_result = cstring_to_text_with_len(result.data, result.len);
 	pfree(result.data);
