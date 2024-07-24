@@ -1554,16 +1554,9 @@ $$
 $$
 LANGUAGE SQL VOLATILE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.is_collated_ai_internal(IN input_string TEXT) RETURNS BOOL
+CREATE OR REPLACE FUNCTION sys.is_collated_ai(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ai_internal'
 LANGUAGE C VOLATILE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.is_collated_ai(IN input_string TEXT)
-RETURNS BOOL AS
-$$
- SELECT sys.is_collated_ai_internal(input_string);
-$$
-LANGUAGE SQL VOLATILE PARALLEL SAFE;
 
 create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
 $body$
