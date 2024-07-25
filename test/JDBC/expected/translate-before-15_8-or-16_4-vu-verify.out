@@ -472,8 +472,8 @@ nvarchar
 SELECT * FROM babel_4837_translate_dep_view
 GO
 ~~START~~
-nvarchar
-|  x🙂cydefghiyy    |
+varchar
+|  x?cydefghiyy    |
 ~~END~~
 
 
@@ -504,8 +504,8 @@ nvarchar
 SELECT * FROM babel_4837_translate_itvf_func()
 GO
 ~~START~~
-nvarchar
-|  x🙂cydefghiyy    |
+varchar
+|  x?cydefghiyy    |
 ~~END~~
 
 
