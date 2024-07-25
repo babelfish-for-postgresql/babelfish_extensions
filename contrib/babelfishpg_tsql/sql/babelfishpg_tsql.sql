@@ -3027,7 +3027,7 @@ AS $$
 BEGIN
 	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row, * 
 	INTO #sp_rename_temptable 
-	FROM STRING_SPLIT(@input, '.') ORDER BY row DESC;
+	FROM sys.babelfish_split_identifier(@input) ORDER BY row DESC;
 
 	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as id, * 
 	INTO #sp_rename_temptable2 

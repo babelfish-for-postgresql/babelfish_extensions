@@ -158,7 +158,7 @@ insteadof_nested_trigger_with_dml
 insteadoftriggers_with_transaction
 ISC-Columns
 ISC-Table_Constraints
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_system_health_state
