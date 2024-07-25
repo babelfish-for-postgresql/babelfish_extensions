@@ -1235,6 +1235,8 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 
 	if (!lc_collate_is_c(collid))
 		mylocale = pg_newlocale_from_collation(collid);
+	else
+		return false;
 
 	if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
 	{
@@ -1303,6 +1305,8 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 
 	if (!lc_collate_is_c(collid))
 		mylocale = pg_newlocale_from_collation(collid);
+	else
+		return false;
 
 	if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
 	{
