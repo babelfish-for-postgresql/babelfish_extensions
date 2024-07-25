@@ -587,12 +587,11 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 	Assert(list_length(cstate->range_table) == 1);
 
 	/*
-	 * The target must be a plain, foreign, or partitioned relation, or have
+	 * The target must be a plain, or foreign relation, or have
 	 * an INSTEAD OF INSERT row trigger.
 	 */
 	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION &&
 		cstate->rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
-		cstate->rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
 		!(cstate->rel->trigdesc &&
 		  cstate->rel->trigdesc->trig_insert_instead_row))
 	{
@@ -611,6 +610,10 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot bulk copy to sequence \"%s\"",
 							RelationGetRelationName(cstate->rel))));
+		else if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Bulk Copy to partitioned-table is not yet supported in Babelfish.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
