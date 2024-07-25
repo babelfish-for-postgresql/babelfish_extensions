@@ -1,21 +1,21 @@
 SELECT * FROM sys.sequences
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#tinyint#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#int#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
 ~~END~~
 
 
 SELECT * FROM sys_sequences_test_view
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#tinyint#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#int#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
 ~~END~~
 
 
 EXEC sys_sequences_test_proc
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#tinyint#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#int#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
 ~~END~~
 
 
