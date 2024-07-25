@@ -2639,7 +2639,7 @@ tsql_untruncated_IDENT:
 					 * Extract the original, untruncated identifier from the input buffer.
 					 * Here, @1 represents the start location of the identifier token.
 					 */
-					$$ = extract_identifier(yyextra->core_yy_extra.scanbuf + @1);
+					$$ = extract_identifier(yyextra->core_yy_extra.scanbuf + @1, NULL);
 					
 				}
 		;

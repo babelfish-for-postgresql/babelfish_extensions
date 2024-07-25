@@ -99,3 +99,13 @@ GO
 
 CREATE TYPE sp_rename_vu_schema1.sp_rename_vu_alias1 FROM VARCHAR(11) NOT NULL;
 GO
+
+-- Dependency test for function babelfish_split_identifier
+-- Create a view which depends upon babelfish_split_identifier function only
+-- if the function exists.
+IF OBJECT_ID('sys.babelfish_split_identifier') IS NOT NULL
+BEGIN
+    EXEC sp_executesql N'
+        CREATE VIEW babelfish_split_identifier_view AS SELECT * FROM sys.babelfish_split_identifier(''ABC.DEF.GHI'')';
+END
+GO
