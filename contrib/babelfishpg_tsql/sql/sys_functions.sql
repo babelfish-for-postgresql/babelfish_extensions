@@ -3155,7 +3155,7 @@ BEGIN
         typnam := sys.translate_pg_type_to_tsql(typ_base_oid);
     END IF;
     IF typnam IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
-        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', typnam;
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of lower function.', typnam;
     END IF;
     IF $1 IS NULL THEN
         RETURN NULL;
