@@ -1,0 +1,610 @@
+-- customer case, mentioned in the jira description
+DECLARE @custname NVARCHAR(50) = N'比尔·拉莫斯'
+SELECT @custname, 
+    TRIM(@custname) as [TRIM]
+    , LTRIM(@custname) as [LTRIM]
+    , RTRIM(@custname) as [RTRIM]
+    , LEFT(@custname, 4) as [LEFT4]
+    , RIGHT(@custname, 4) as [RIGHT4]
+    , SUBSTRING(@custname, 2, 4) as [SUBSTRING_2_4]
+;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉#!#·拉莫斯#!#尔·拉莫
+~~END~~
+
+
+-- NULL
+SELECT RTRIM(NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- input type char
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|  abc?defghi??|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|  ??·???|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + RTRIM(@inputString) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|  ??·???|
+~~END~~
+
+
+-- input type varchar
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|  abc?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|  ??·???|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + RTRIM(@inputString) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯|
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯|
+~~END~~
+
+
+SELECT '|' + RTRIM(a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_rtrim_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯|
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯|
+~~END~~
+
+
+SELECT '|' + RTRIM(a) COLLATE CHINESE_PRC_CS_AS + '|' FROM babel_4489_rtrim_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯|
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯|
+~~END~~
+
+
+SELECT '|' + RTRIM(a) COLLATE CHINESE_PRC_CI_AI + '|' FROM babel_4489_rtrim_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯|
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_arabic_ci_as
+GO
+~~START~~
+varchar
+|  الله مع المتقين|
+~~END~~
+
+
+SELECT '|' + RTRIM(a) COLLATE ARABIC_CI_AS + '|' FROM babel_4489_rtrim_arabic_ci_as
+GO
+~~START~~
+varchar
+|  الله مع المتقين|
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_arabic_cs_as
+GO
+~~START~~
+varchar
+|  الله مع المتقين|
+~~END~~
+
+
+SELECT '|' + RTRIM(a) COLLATE ARABIC_CS_AS + '|' FROM babel_4489_rtrim_arabic_cs_as
+GO
+~~START~~
+varchar
+|  الله مع المتقين|
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_arabic_ci_ai
+GO
+~~START~~
+varchar
+|  الله مع المتقين|
+~~END~~
+
+
+SELECT '|' + RTRIM(a) COLLATE ARABIC_CI_AI + '|' FROM babel_4489_rtrim_arabic_ci_ai
+GO
+~~START~~
+varchar
+|  الله مع المتقين|
+~~END~~
+
+
+-- input type nchar
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+nvarchar
+|  abc?defghi??|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+nvarchar
+|  ??·???|
+~~END~~
+
+
+-- with table column of type nchar
+SELECT '|' + RTRIM(a) + '|' FROM babel_4489_rtrim_t1 
+GO
+~~START~~
+nvarchar
+|  abc🙂defghi🙂🙂|
+|  比尔·拉莫斯|
+~~END~~
+
+
+-- input type nvarchar
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+nvarchar
+|  abc🙂defghi🙂🙂|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+nvarchar
+|  比尔·拉莫斯|
+~~END~~
+
+
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x202061626364656667682020
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|  abcdefgh|
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x202061626364656667682020
+SELECT '|' + RTRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|  abcdefgh|
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_4489_rtrim_dep_view
+GO
+~~START~~
+varchar
+|  abc?defghi??|
+~~END~~
+
+
+EXEC babel_4489_rtrim_dep_proc
+GO
+~~START~~
+nvarchar
+|  abc🙂defghi🙂🙂|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_func()
+GO
+~~START~~
+nvarchar
+|  abc🙂defghi🙂🙂|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_itvf_func()
+GO
+~~START~~
+varchar
+|  abc?defghi??|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_1
+GO
+~~START~~
+varchar
+|  abc?defghi??|
+|  ??·???|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_2
+GO
+~~START~~
+varchar
+|  abc?defghi??|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_3
+GO
+~~START~~
+varchar
+|  abcdefghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_4
+GO
+~~START~~
+varchar
+|  abcdefghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_5
+GO
+~~START~~
+varchar
+|0x2020616263642020|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_6
+GO
+~~START~~
+varchar
+|  abc?defghi??|
+~~END~~
+
+
+SELECT * FROM babel_4489_rtrim_dep_view_7
+GO
+~~START~~
+varchar
+|  abc?defghi??|
+~~END~~
+
+
+-- input type UDT
+-- -- in table babel_4489_rtrim_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT RTRIM(a) FROM babel_4489_rtrim_UDT
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of rtrim function.)~~
+
+
+SELECT RTRIM(b) FROM babel_4489_rtrim_UDT
+GO
+~~START~~
+varchar
+abcdef
+~~END~~
+
+
+-- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+DECLARE @inputString date = '2016-12-21';
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+2016-12-21
+~~END~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+2016-12-21 00:00:00
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+1955-12-13 12:43:00
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+12:10:05.1237
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:00
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+1968-10-23 12:45:37.1237
+~~END~~
+
+
+DECLARE @inputString decimal = 123456;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+123456
+~~END~~
+
+
+DECLARE @inputString numeric = 12345.12;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+12345
+~~END~~
+
+
+DECLARE @inputString float = 12345.1;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+12345.1
+~~END~~
+
+
+DECLARE @inputString real = 12345.1;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+12345.1
+~~END~~
+
+
+DECLARE @inputString bigint = 12345678;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+12345678
+~~END~~
+
+
+DECLARE @inputString int = 12345678;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+12345678
+~~END~~
+
+
+DECLARE @inputString smallint = 12356;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+12356
+~~END~~
+
+
+DECLARE @inputString tinyint = 235;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+235
+~~END~~
+
+
+DECLARE @inputString money = 12356;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+12356.0000
+~~END~~
+
+
+DECLARE @inputString smallmoney = 12356;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+12356.0000
+~~END~~
+
+
+DECLARE @inputString bit = 1;
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT RTRIM(@inputString)
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+SELECT RTRIM(a) from babel_4489_rtrim_image;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of rtrim function.)~~
+
+
+-- input datatype text
+SELECT RTRIM(a) FROM babel_4489_rtrim_text
+GO
+~~START~~
+varchar
+  abc?defghi??
+~~END~~
+
+
+-- input datatype ntext
+SELECT RTRIM(b) FROM babel_4489_rtrim_text
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT RTRIM(@inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of rtrim function.)~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT RTRIM(@inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of rtrim function.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT RTRIM(@inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of rtrim function.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT RTRIM(@inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of rtrim function.)~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT RTRIM(CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT RTRIM(CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+<body><fruit/></body>
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT RTRIM(CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+POINT(1 2)
+~~END~~
+

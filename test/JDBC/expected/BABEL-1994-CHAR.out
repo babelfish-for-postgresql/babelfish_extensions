@@ -191,7 +191,7 @@ select
 ;
 go
 ~~START~~
-int#!#text#!#nvarchar#!#bigint#!#text
+int#!#text#!#nvarchar#!#bigint#!#varchar
 97#!#    a#!#[a[]] b ]#!#1#!#a
 ~~END~~
 
@@ -207,7 +207,7 @@ select
 ;
 go
 ~~START~~
-text#!#text#!#int#!#int#!#int#!#int#!#int
+text#!#varchar#!#int#!#int#!#int#!#int#!#int
 a    #!#a #!#0#!#97#!#5#!#5#!#3
 ~~END~~
 
