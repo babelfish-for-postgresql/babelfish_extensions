@@ -2445,6 +2445,11 @@ public:
 							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
 					}
 				}
+				else if (id->keyword()->TRANSLATE()) /* TRANSLATE */
+				{
+					size_t startPosition = id->keyword()->TRANSLATE()->getSymbol()->getStartIndex();
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
+				}
 
                               if (id->keyword()->CHECKSUM())
                               {
@@ -2476,6 +2481,14 @@ public:
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
 						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
+				}
+
+				if (pg_strcasecmp(proc_name.c_str(), "trim") == 0 
+					&& !(ctx->func_proc_name_server_database_schema()->server)
+					&& !(ctx->func_proc_name_server_database_schema()->database)
+					&& !(ctx->func_proc_name_server_database_schema()->schema))
+				{
+					rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx->func_proc_name_server_database_schema()), "sys.trim")));
 				}
 			}
 		}

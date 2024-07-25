@@ -3647,7 +3647,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -4653,7 +4653,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -5718,7 +5718,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
