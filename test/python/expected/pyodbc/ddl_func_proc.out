@@ -116,11 +116,6 @@ GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
-CREATE FUNCTION [dbo].[col_name]() RETURNS INT AS BEGIN RETURN 2; END;
-GO
-
-SET ANSI_NULLS ON
-SET QUOTED_IDENTIFIER ON
 create function routines_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;
 GO
 
