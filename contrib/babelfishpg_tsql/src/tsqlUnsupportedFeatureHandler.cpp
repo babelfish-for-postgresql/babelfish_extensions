@@ -736,7 +736,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_table(TSqlParser::C
 
 	for (auto cctx : ctx->create_table_options())
 	{
-		if (cctx->ON() || cctx->TEXTIMAGE_ON() || cctx->FILESTREAM_ON())
+		if (cctx->TEXTIMAGE_ON() || cctx->FILESTREAM_ON())
+			handle_storage_partition(cctx->storage_partition_clause());
+		/* handle storage_partition_clause only if it's not partitioning clause */
+		if (cctx->ON() && cctx->storage_partition_clause()->id().size() < 2)
 			handle_storage_partition(cctx->storage_partition_clause());
 	}
 
@@ -808,7 +811,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_table(TSqlParser::Al
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_index(TSqlParser::Create_indexContext *ctx)
 {
-	handle_storage_partition(ctx->storage_partition_clause());
+	/* handle storage_partition_clause only if it's not partitioning clause */
+	if (ctx->storage_partition_clause() && ctx->storage_partition_clause()->id().size() < 2)
+		handle_storage_partition(ctx->storage_partition_clause());
 
 	if (ctx->clustered() && ctx->clustered()->CLUSTERED())
 		handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_CLUSTERED, ctx->clustered()->CLUSTERED(), &st_escape_hatch_index_clustering);
