@@ -445,7 +445,7 @@ WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
 UNION ALL
 SELECT
 CAST(name AS SYS.SYSNAME) AS name,
-CAST(2 AS INT) AS principal_id,
+CAST(-1 AS INT) AS principal_id,
 CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
 CAST(type AS CHAR(1)) as type,
 CAST(
