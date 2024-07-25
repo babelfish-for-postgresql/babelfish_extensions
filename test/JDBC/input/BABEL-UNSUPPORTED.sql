@@ -251,18 +251,10 @@ GO
 -- escape hatch: storage_on_partition.
 -- 'strict' is default
 
-CREATE TABLE t_unsupported_sop1(a int) ON partition(a);
-GO
-
 CREATE TABLE t_unsupported_sop2(a int) FILESTREAM_ON partition(a);
 GO
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_storage_on_partition', 'ignore', 'false')
-GO
-
-CREATE TABLE t_unsupported_sop1(a int) ON partition(a);
-GO
-DROP TABLE t_unsupported_sop1;
 GO
 
 CREATE TABLE t_unsupported_sop2(a int) FILESTREAM_ON partition(a);

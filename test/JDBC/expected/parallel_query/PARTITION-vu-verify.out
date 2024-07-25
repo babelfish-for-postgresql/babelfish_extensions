@@ -762,20 +762,20 @@ GO
 nvarchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar
 BigIntPartitionFunction#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
 BinaryPartitionFunction#!#binary#!#1#!#8000#!#0#!#0#!#<NULL>
-CharPartitionFunction#!#char#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+CharPartitionFunction#!#char#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 DatePartitionFunction#!#date#!#1#!#3#!#10#!#0#!#<NULL>
 DateTime2PartitionFunction#!#datetime2#!#1#!#8#!#26#!#6#!#<NULL>
 DateTimePartitionFunction#!#datetime#!#1#!#8#!#23#!#3#!#<NULL>
 DecimalPartitionFunction#!#decimal#!#1#!#17#!#38#!#38#!#<NULL>
 IntPartitionFunction#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 MoneyPartitionFunction#!#money#!#1#!#8#!#19#!#4#!#<NULL>
-NCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+NCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 NumericPartitionFunction#!#numeric#!#1#!#17#!#38#!#38#!#<NULL>
-NVarCharPartitionFunction#!#nvarchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+NVarCharPartitionFunction#!#nvarchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 PARTITION_FUNCTION  유니코드스키마👻  #!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PARTITION_FUNCTION 😎$@ #123 🌍rder  #!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PARTITION_FUNCTIONログインαιώνια#!#int#!#1#!#4#!#10#!#0#!#<NULL>
-PartitionFunctionHavingDifferentCollationInput#!#nvarchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+PartitionFunctionHavingDifferentCollationInput#!#nvarchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 PartitionFunctionInsideProc1#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PartitionFunctionInsideProc2#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
@@ -783,11 +783,11 @@ PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#bi
 SmallDateTimePartitionFunction#!#smalldatetime#!#1#!#4#!#16#!#0#!#<NULL>
 SmallIntPartitionFunction#!#smallint#!#1#!#2#!#5#!#0#!#<NULL>
 SmallMoneyPartitionFunction#!#smallmoney#!#1#!#4#!#10#!#4#!#<NULL>
-SqlVariantPartitionFunction#!#sql_variant#!#1#!#8016#!#0#!#0#!#chinese_prc_ci_as
+SqlVariantPartitionFunction#!#sql_variant#!#1#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as
 TinyIntPartitionFunction#!#tinyint#!#1#!#1#!#3#!#0#!#<NULL>
 UniqueIdentifierPartitionFunction#!#uniqueidentifier#!#1#!#16#!#0#!#0#!#<NULL>
 VarBinaryPartitionFunction#!#varbinary#!#1#!#8000#!#0#!#0#!#<NULL>
-VarCharPartitionFunction#!#varchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
+VarCharPartitionFunction#!#varchar#!#1#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
@@ -1575,16 +1575,19 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_int_table
-Append
-  ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_1" partition_vu_prepare_int_table_1
-  ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_2" partition_vu_prepare_int_table_2
-  ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_3" partition_vu_prepare_int_table_3
-  ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_0" partition_vu_prepare_int_table_4
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_1" partition_vu_prepare_int_table_1
+        ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_2" partition_vu_prepare_int_table_2
+        ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_3" partition_vu_prepare_int_table_3
+        ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_0" partition_vu_prepare_int_table_4
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.782 ms
+Babelfish T-SQL Batch Parsing Time: 0.744 ms
 ~~END~~
 
 
@@ -1593,17 +1596,20 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_bigint_table
-Append
-  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_1" partition_vu_prepare_bigint_table_1
-  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_2" partition_vu_prepare_bigint_table_2
-  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_3" partition_vu_prepare_bigint_table_3
-  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_4" partition_vu_prepare_bigint_table_4
-  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_0" partition_vu_prepare_bigint_table_5
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_1" partition_vu_prepare_bigint_table_1
+        ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_2" partition_vu_prepare_bigint_table_2
+        ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_3" partition_vu_prepare_bigint_table_3
+        ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_4" partition_vu_prepare_bigint_table_4
+        ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_0" partition_vu_prepare_bigint_table_5
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.120 ms
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 
@@ -1612,16 +1618,19 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_smallint_table
-Append
-  ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_1" partition_vu_prepare_smallint_table_1
-  ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_2" partition_vu_prepare_smallint_table_2
-  ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_3" partition_vu_prepare_smallint_table_3
-  ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_0" partition_vu_prepare_smallint_table_4
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_1" partition_vu_prepare_smallint_table_1
+        ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_2" partition_vu_prepare_smallint_table_2
+        ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_3" partition_vu_prepare_smallint_table_3
+        ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_0" partition_vu_prepare_smallint_table_4
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.131 ms
+Babelfish T-SQL Batch Parsing Time: 0.105 ms
 ~~END~~
 
 
@@ -1630,16 +1639,19 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_tinyint_table
-Append
-  ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_1" partition_vu_prepare_tinyint_table_1
-  ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_2" partition_vu_prepare_tinyint_table_2
-  ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_3" partition_vu_prepare_tinyint_table_3
-  ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_0" partition_vu_prepare_tinyint_table_4
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_1" partition_vu_prepare_tinyint_table_1
+        ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_2" partition_vu_prepare_tinyint_table_2
+        ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_3" partition_vu_prepare_tinyint_table_3
+        ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_0" partition_vu_prepare_tinyint_table_4
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.120 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -1648,17 +1660,20 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_decimal_table
-Append
-  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_1 partition_vu_prepare_decimal_table_1
-  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_2 partition_vu_prepare_decimal_table_2
-  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_3 partition_vu_prepare_decimal_table_3
-  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_4 partition_vu_prepare_decimal_table_4
-  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_0 partition_vu_prepare_decimal_table_5
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_1 partition_vu_prepare_decimal_table_1
+        ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_2 partition_vu_prepare_decimal_table_2
+        ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_3 partition_vu_prepare_decimal_table_3
+        ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_4 partition_vu_prepare_decimal_table_4
+        ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_0 partition_vu_prepare_decimal_table_5
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.121 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -1667,12 +1682,15 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_numeric_table
-Append
-  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_1" partition_vu_prepare_numeric_table_1
-  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_2" partition_vu_prepare_numeric_table_2
-  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_3" partition_vu_prepare_numeric_table_3
-  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_4" partition_vu_prepare_numeric_table_4
-  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_0" partition_vu_prepare_numeric_table_5
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_1" partition_vu_prepare_numeric_table_1
+        ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_2" partition_vu_prepare_numeric_table_2
+        ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_3" partition_vu_prepare_numeric_table_3
+        ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_4" partition_vu_prepare_numeric_table_4
+        ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_0" partition_vu_prepare_numeric_table_5
 ~~END~~
 
 ~~START~~
@@ -1686,16 +1704,19 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_money_table
-Append
-  ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_1" partition_vu_prepare_money_table_1
-  ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_2" partition_vu_prepare_money_table_2
-  ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_3" partition_vu_prepare_money_table_3
-  ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_0" partition_vu_prepare_money_table_4
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_1" partition_vu_prepare_money_table_1
+        ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_2" partition_vu_prepare_money_table_2
+        ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_3" partition_vu_prepare_money_table_3
+        ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_0" partition_vu_prepare_money_table_4
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.121 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -1704,16 +1725,19 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_smallmoney_table
-Append
-  ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1" partition_vu_prepare_smallmoney_table_1
-  ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_2" partition_vu_prepare_smallmoney_table_2
-  ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_3" partition_vu_prepare_smallmoney_table_3
-  ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0" partition_vu_prepare_smallmoney_table_4
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1" partition_vu_prepare_smallmoney_table_1
+        ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_2" partition_vu_prepare_smallmoney_table_2
+        ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_3" partition_vu_prepare_smallmoney_table_3
+        ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0" partition_vu_prepare_smallmoney_table_4
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -1722,65 +1746,14 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_date_table
-Append
-  ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_1" partition_vu_prepare_date_table_1
-  ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_2" partition_vu_prepare_date_table_2
-  ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_3" partition_vu_prepare_date_table_3
-  ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_0" partition_vu_prepare_date_table_4
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.123 ms
-~~END~~
-
-
-SELECT * FROM partition_vu_prepare_datetime_table;
-GO
-~~START~~
-text
-Query Text: SELECT * FROM partition_vu_prepare_datetime_table
-Append
-  ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_1" partition_vu_prepare_datetime_table_1
-  ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_2" partition_vu_prepare_datetime_table_2
-  ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_3" partition_vu_prepare_datetime_table_3
-  ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_0" partition_vu_prepare_datetime_table_4
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.122 ms
-~~END~~
-
-
-SELECT * FROM partition_vu_prepare_datetime2_table;
-GO
-~~START~~
-text
-Query Text: SELECT * FROM partition_vu_prepare_datetime2_table
-Append
-  ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_1" partition_vu_prepare_datetime2_table_1
-  ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_2" partition_vu_prepare_datetime2_table_2
-  ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_3" partition_vu_prepare_datetime2_table_3
-  ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_0" partition_vu_prepare_datetime2_table_4
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
-~~END~~
-
-
-SELECT * FROM partition_vu_prepare_smalldatetime_table;
-GO
-~~START~~
-text
-Query Text: SELECT * FROM partition_vu_prepare_smalldatetime_table
-Append
-  ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_1 partition_vu_prepare_smalldatetime_table_1
-  ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_2 partition_vu_prepare_smalldatetime_table_2
-  ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_3 partition_vu_prepare_smalldatetime_table_3
-  ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_0 partition_vu_prepare_smalldatetime_table_4
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_1" partition_vu_prepare_date_table_1
+        ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_2" partition_vu_prepare_date_table_2
+        ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_3" partition_vu_prepare_date_table_3
+        ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_0" partition_vu_prepare_date_table_4
 ~~END~~
 
 ~~START~~
@@ -1789,25 +1762,90 @@ Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
+SELECT * FROM partition_vu_prepare_datetime_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_datetime_table
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_1" partition_vu_prepare_datetime_table_1
+        ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_2" partition_vu_prepare_datetime_table_2
+        ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_3" partition_vu_prepare_datetime_table_3
+        ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_0" partition_vu_prepare_datetime_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_datetime2_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_datetime2_table
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_1" partition_vu_prepare_datetime2_table_1
+        ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_2" partition_vu_prepare_datetime2_table_2
+        ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_3" partition_vu_prepare_datetime2_table_3
+        ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_0" partition_vu_prepare_datetime2_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_smalldatetime_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_smalldatetime_table
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_1 partition_vu_prepare_smalldatetime_table_1
+        ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_2 partition_vu_prepare_smalldatetime_table_2
+        ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_3 partition_vu_prepare_smalldatetime_table_3
+        ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_0 partition_vu_prepare_smalldatetime_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
+~~END~~
+
+
 SELECT * FROM partition_vu_prepare_char_table;
 GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_char_table
-Append
-  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_1" partition_vu_prepare_char_table_1
-  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_2" partition_vu_prepare_char_table_2
-  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_3" partition_vu_prepare_char_table_3
-  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_4" partition_vu_prepare_char_table_4
-  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_5" partition_vu_prepare_char_table_5
-  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_6" partition_vu_prepare_char_table_6
-  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_7" partition_vu_prepare_char_table_7
-  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_0" partition_vu_prepare_char_table_8
+Gather
+  Workers Planned: 4
+  ->  Parallel Append
+        ->  Parallel Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_1" partition_vu_prepare_char_table_1
+        ->  Parallel Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_2" partition_vu_prepare_char_table_2
+        ->  Parallel Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_4" partition_vu_prepare_char_table_4
+        ->  Parallel Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_6" partition_vu_prepare_char_table_6
+        ->  Parallel Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_0" partition_vu_prepare_char_table_8
+        ->  Parallel Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_3" partition_vu_prepare_char_table_3
+        ->  Parallel Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_5" partition_vu_prepare_char_table_5
+        ->  Parallel Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_7" partition_vu_prepare_char_table_7
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.124 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -1816,18 +1854,21 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_varchar_table
-Append
-  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_1" partition_vu_prepare_varchar_table_1
-  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_2" partition_vu_prepare_varchar_table_2
-  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_3" partition_vu_prepare_varchar_table_3
-  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_4" partition_vu_prepare_varchar_table_4
-  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_5" partition_vu_prepare_varchar_table_5
-  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_0" partition_vu_prepare_varchar_table_6
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_1" partition_vu_prepare_varchar_table_1
+        ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_2" partition_vu_prepare_varchar_table_2
+        ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_3" partition_vu_prepare_varchar_table_3
+        ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_4" partition_vu_prepare_varchar_table_4
+        ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_5" partition_vu_prepare_varchar_table_5
+        ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_0" partition_vu_prepare_varchar_table_6
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -1836,18 +1877,21 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_nvarchar_table
-Append
-  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_1" partition_vu_prepare_nvarchar_table_1
-  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_2" partition_vu_prepare_nvarchar_table_2
-  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_3" partition_vu_prepare_nvarchar_table_3
-  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_4" partition_vu_prepare_nvarchar_table_4
-  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_5" partition_vu_prepare_nvarchar_table_5
-  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_0" partition_vu_prepare_nvarchar_table_6
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_1" partition_vu_prepare_nvarchar_table_1
+        ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_2" partition_vu_prepare_nvarchar_table_2
+        ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_3" partition_vu_prepare_nvarchar_table_3
+        ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_4" partition_vu_prepare_nvarchar_table_4
+        ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_5" partition_vu_prepare_nvarchar_table_5
+        ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_0" partition_vu_prepare_nvarchar_table_6
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -1856,20 +1900,22 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_nchar_table
-Append
-  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_1 partition_vu_prepare_nchar_table_1
-  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_2 partition_vu_prepare_nchar_table_2
-  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_3 partition_vu_prepare_nchar_table_3
-  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_4 partition_vu_prepare_nchar_table_4
-  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_5 partition_vu_prepare_nchar_table_5
-  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_6 partition_vu_prepare_nchar_table_6
-  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_7 partition_vu_prepare_nchar_table_7
-  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_0 partition_vu_prepare_nchar_table_8
+Gather
+  Workers Planned: 4
+  ->  Parallel Append
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_1 partition_vu_prepare_nchar_table_1
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_2 partition_vu_prepare_nchar_table_2
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_4 partition_vu_prepare_nchar_table_4
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_6 partition_vu_prepare_nchar_table_6
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_0 partition_vu_prepare_nchar_table_8
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_3 partition_vu_prepare_nchar_table_3
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_5 partition_vu_prepare_nchar_table_5
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_7 partition_vu_prepare_nchar_table_7
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -1878,12 +1924,14 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_binary_table
-Append
-  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
-  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_2" partition_vu_prepare_binary_table_2
-  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_3" partition_vu_prepare_binary_table_3
-  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_4" partition_vu_prepare_binary_table_4
-  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_0" partition_vu_prepare_binary_table_5
+Gather
+  Workers Planned: 3
+  ->  Parallel Append
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_2" partition_vu_prepare_binary_table_2
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_3" partition_vu_prepare_binary_table_3
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_4" partition_vu_prepare_binary_table_4
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_0" partition_vu_prepare_binary_table_5
 ~~END~~
 
 ~~START~~
@@ -1897,17 +1945,20 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_varbinary_table
-Append
-  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_1" partition_vu_prepare_varbinary_table_1
-  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_2" partition_vu_prepare_varbinary_table_2
-  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_3" partition_vu_prepare_varbinary_table_3
-  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_4" partition_vu_prepare_varbinary_table_4
-  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_0" partition_vu_prepare_varbinary_table_5
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_1" partition_vu_prepare_varbinary_table_1
+        ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_2" partition_vu_prepare_varbinary_table_2
+        ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_3" partition_vu_prepare_varbinary_table_3
+        ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_4" partition_vu_prepare_varbinary_table_4
+        ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_0" partition_vu_prepare_varbinary_table_5
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.100 ms
 ~~END~~
 
 
@@ -1916,16 +1967,19 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_uniqueidentifier_table
-Append
-  ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_1 partition_vu_prepare_uniqueidentifier_table_1
-  ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_2 partition_vu_prepare_uniqueidentifier_table_2
-  ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_3 partition_vu_prepare_uniqueidentifier_table_3
-  ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_0 partition_vu_prepare_uniqueidentifier_table_4
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_1 partition_vu_prepare_uniqueidentifier_table_1
+        ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_2 partition_vu_prepare_uniqueidentifier_table_2
+        ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_3 partition_vu_prepare_uniqueidentifier_table_3
+        ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_0 partition_vu_prepare_uniqueidentifier_table_4
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.106 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -1934,18 +1988,21 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table
-Append
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table_1
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_2" partition_vu_prepare_sqlvariant_table_2
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_3" partition_vu_prepare_sqlvariant_table_3
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_4" partition_vu_prepare_sqlvariant_table_4
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_5" partition_vu_prepare_sqlvariant_table_5
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_0" partition_vu_prepare_sqlvariant_table_6
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table_1
+        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_2" partition_vu_prepare_sqlvariant_table_2
+        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_3" partition_vu_prepare_sqlvariant_table_3
+        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_4" partition_vu_prepare_sqlvariant_table_4
+        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_5" partition_vu_prepare_sqlvariant_table_5
+        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_0" partition_vu_prepare_sqlvariant_table_6
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -1979,13 +2036,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_int_table WHERE Id >= 0 AND Id < 500
-Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_key" on "363863941f079adaa9aa733200e57c9f_partition_1" partition_vu_prepare_int_table
-  Index Cond: ((id >= 0) AND (id < 500))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_key" on "363863941f079adaa9aa733200e57c9f_partition_1" partition_vu_prepare_int_table
+        Index Cond: ((id >= 0) AND (id < 500))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 34.743 ms
+Babelfish T-SQL Batch Parsing Time: 34.406 ms
 ~~END~~
 
 
@@ -1994,13 +2054,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_bigint_table WHERE Id >= 0 AND Id < 100
-Index Scan using "548bb344374ce8d65342b36428375873_partition_1_id_idx" on "548bb344374ce8d65342b36428375873_partition_1" partition_vu_prepare_bigint_table
-  Index Cond: ((id >= 0) AND (id < 100))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "548bb344374ce8d65342b36428375873_partition_1_id_idx" on "548bb344374ce8d65342b36428375873_partition_1" partition_vu_prepare_bigint_table
+        Index Cond: ((id >= 0) AND (id < 100))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.201 ms
+Babelfish T-SQL Batch Parsing Time: 0.198 ms
 ~~END~~
 
 
@@ -2009,13 +2072,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_smallint_table WHERE Id >= -32768 AND Id < 0
-Index Scan using "12025e103721b70925744c196ce004cd_partition_1_id_idx" on "12025e103721b70925744c196ce004cd_partition_1" partition_vu_prepare_smallint_table
-  Index Cond: ((id >= '-32768'::integer) AND (id < 0))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "12025e103721b70925744c196ce004cd_partition_1_id_idx" on "12025e103721b70925744c196ce004cd_partition_1" partition_vu_prepare_smallint_table
+        Index Cond: ((id >= '-32768'::integer) AND (id < 0))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.419 ms
+Babelfish T-SQL Batch Parsing Time: 7.314 ms
 ~~END~~
 
 
@@ -2024,13 +2090,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_tinyint_table WHERE Id >= 0 AND Id < 128
-Index Scan using "61446d711d19b5970809387caa7fd3d3_partition_1_id_idx" on "61446d711d19b5970809387caa7fd3d3_partition_1" partition_vu_prepare_tinyint_table
-  Index Cond: (((id)::smallint >= 0) AND ((id)::smallint < 128))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "61446d711d19b5970809387caa7fd3d3_partition_1_id_idx" on "61446d711d19b5970809387caa7fd3d3_partition_1" partition_vu_prepare_tinyint_table
+        Index Cond: (((id)::smallint >= 0) AND ((id)::smallint < 128))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.157 ms
 ~~END~~
 
 
@@ -2039,13 +2108,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_decimal_table WHERE Id >= 0.0 AND Id < 100.0
-Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d769fd61eb60b1a461650212f_partition_1 partition_vu_prepare_decimal_table
-  Index Cond: (((id)::numeric >= 0.0) AND ((id)::numeric < 100.0))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d769fd61eb60b1a461650212f_partition_1 partition_vu_prepare_decimal_table
+        Index Cond: (((id)::numeric >= 0.0) AND ((id)::numeric < 100.0))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.571 ms
+Babelfish T-SQL Batch Parsing Time: 6.493 ms
 ~~END~~
 
 
@@ -2054,13 +2126,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_numeric_table WHERE Id >= 0.0 AND Id < 10.0
-Index Scan using "57405760297bb338f333c148aac5f845_partition_1_id_idx" on "57405760297bb338f333c148aac5f845_partition_1" partition_vu_prepare_numeric_table
-  Index Cond: ((id >= 0.0) AND (id < 10.0))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "57405760297bb338f333c148aac5f845_partition_1_id_idx" on "57405760297bb338f333c148aac5f845_partition_1" partition_vu_prepare_numeric_table
+        Index Cond: ((id >= 0.0) AND (id < 10.0))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.237 ms
+Babelfish T-SQL Batch Parsing Time: 0.158 ms
 ~~END~~
 
 
@@ -2069,16 +2144,19 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_money_table WHERE Id >= 2.56789 AND Id < 3.56789
-Append
-  ->  Index Scan using "640187c54e2c2984d190957d245a5fa5_partition_1_id_idx" on "640187c54e2c2984d190957d245a5fa5_partition_1" partition_vu_prepare_money_table_1
-        Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
-  ->  Index Scan using "640187c54e2c2984d190957d245a5fa5_partition_0_id_idx" on "640187c54e2c2984d190957d245a5fa5_partition_0" partition_vu_prepare_money_table_2
-        Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Index Scan using "640187c54e2c2984d190957d245a5fa5_partition_1_id_idx" on "640187c54e2c2984d190957d245a5fa5_partition_1" partition_vu_prepare_money_table_1
+              Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+        ->  Index Scan using "640187c54e2c2984d190957d245a5fa5_partition_0_id_idx" on "640187c54e2c2984d190957d245a5fa5_partition_0" partition_vu_prepare_money_table_2
+              Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.223 ms
+Babelfish T-SQL Batch Parsing Time: 0.218 ms
 ~~END~~
 
 
@@ -2087,16 +2165,19 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_smallmoney_table WHERE Id >= 2.56789 AND Id < 3.56789
-Append
-  ->  Index Scan using "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1_id_idx" on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1" partition_vu_prepare_smallmoney_table_1
-        Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
-  ->  Index Scan using "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0_id_idx" on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0" partition_vu_prepare_smallmoney_table_2
-        Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
+        ->  Index Scan using "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1_id_idx" on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1" partition_vu_prepare_smallmoney_table_1
+              Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+        ->  Index Scan using "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0_id_idx" on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0" partition_vu_prepare_smallmoney_table_2
+              Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.154 ms
+Babelfish T-SQL Batch Parsing Time: 0.156 ms
 ~~END~~
 
 
@@ -2105,13 +2186,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_date_table WHERE Id >= '2022-01-01' AND Id < '2022-07-01'
-Index Scan using "4867824426e52acac5c93d9cbe8aa366_partition_1_id_idx" on "4867824426e52acac5c93d9cbe8aa366_partition_1" partition_vu_prepare_date_table
-  Index Cond: ((id >= '2022-01-01'::date) AND (id < '2022-07-01'::date))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "4867824426e52acac5c93d9cbe8aa366_partition_1_id_idx" on "4867824426e52acac5c93d9cbe8aa366_partition_1" partition_vu_prepare_date_table
+        Index Cond: ((id >= '2022-01-01'::date) AND (id < '2022-07-01'::date))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.603 ms
+Babelfish T-SQL Batch Parsing Time: 6.605 ms
 ~~END~~
 
 
@@ -2120,13 +2204,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_datetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01'
-Index Scan using "751ce655481adf15600727bf291667f7_partition_1_id_idx" on "751ce655481adf15600727bf291667f7_partition_1" partition_vu_prepare_datetime_table
-  Index Cond: ((id >= '2019-01-01 00:00:00'::datetime) AND (id < '2022-01-01 00:00:00'::datetime))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "751ce655481adf15600727bf291667f7_partition_1_id_idx" on "751ce655481adf15600727bf291667f7_partition_1" partition_vu_prepare_datetime_table
+        Index Cond: ((id >= '2019-01-01 00:00:00'::datetime) AND (id < '2022-01-01 00:00:00'::datetime))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -2135,13 +2222,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_datetime2_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01'
-Index Scan using "5ed003cf80dacbb8cce0b21e175f7f94_partition_1_id_idx" on "5ed003cf80dacbb8cce0b21e175f7f94_partition_1" partition_vu_prepare_datetime2_table
-  Index Cond: ((id >= '2019-01-01 00:00:00'::datetime2) AND (id < '2022-01-01 00:00:00'::datetime2))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "5ed003cf80dacbb8cce0b21e175f7f94_partition_1_id_idx" on "5ed003cf80dacbb8cce0b21e175f7f94_partition_1" partition_vu_prepare_datetime2_table
+        Index Cond: ((id >= '2019-01-01 00:00:00'::datetime2) AND (id < '2022-01-01 00:00:00'::datetime2))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.159 ms
+Babelfish T-SQL Batch Parsing Time: 0.163 ms
 ~~END~~
 
 
@@ -2150,13 +2240,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_smalldatetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01'
-Index Scan using b5c2e665ec4a1219ba8510e33e45379b_partition_1_id_idx on b5c2e665ec4a1219ba8510e33e45379b_partition_1 partition_vu_prepare_smalldatetime_table
-  Index Cond: ((id >= '2019-01-01 00:00:00'::smalldatetime) AND (id < '2022-01-01 00:00:00'::smalldatetime))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using b5c2e665ec4a1219ba8510e33e45379b_partition_1_id_idx on b5c2e665ec4a1219ba8510e33e45379b_partition_1 partition_vu_prepare_smalldatetime_table
+        Index Cond: ((id >= '2019-01-01 00:00:00'::smalldatetime) AND (id < '2022-01-01 00:00:00'::smalldatetime))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.226 ms
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 
@@ -2165,13 +2258,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_char_table WHERE Id >= 'A' AND Id < 'B'
-Index Scan using "5d20bd977eb6e6f1304dec45598c09f5_partition_1_id_idx" on "5d20bd977eb6e6f1304dec45598c09f5_partition_1" partition_vu_prepare_char_table
-  Index Cond: ((id >= 'A'::bpchar) AND (id < 'B'::bpchar))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "5d20bd977eb6e6f1304dec45598c09f5_partition_1_id_idx" on "5d20bd977eb6e6f1304dec45598c09f5_partition_1" partition_vu_prepare_char_table
+        Index Cond: ((id >= 'A'::bpchar) AND (id < 'B'::bpchar))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.241 ms
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
 ~~END~~
 
 
@@ -2180,13 +2276,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_varchar_table WHERE Id >= 'Apple' AND Id < 'Banana'
-Index Scan using "933a5c7f0de13890324e53ee0711424b_partition_1_id_idx" on "933a5c7f0de13890324e53ee0711424b_partition_1" partition_vu_prepare_varchar_table
-  Index Cond: ((id >= 'Apple'::"varchar") AND (id < 'Banana'::"varchar"))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "933a5c7f0de13890324e53ee0711424b_partition_1_id_idx" on "933a5c7f0de13890324e53ee0711424b_partition_1" partition_vu_prepare_varchar_table
+        Index Cond: ((id >= 'Apple'::"varchar") AND (id < 'Banana'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.170 ms
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -2195,13 +2294,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_nvarchar_table WHERE Id >= N'Apple' AND Id < N'Banana'
-Index Scan using "320465af1d1bd21f5b29c57f9f4e5c51_partition_1_id_idx" on "320465af1d1bd21f5b29c57f9f4e5c51_partition_1" partition_vu_prepare_nvarchar_table
-  Index Cond: (((id)::"varchar" >= 'Apple'::"varchar") AND ((id)::"varchar" < 'Banana'::"varchar"))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "320465af1d1bd21f5b29c57f9f4e5c51_partition_1_id_idx" on "320465af1d1bd21f5b29c57f9f4e5c51_partition_1" partition_vu_prepare_nvarchar_table
+        Index Cond: (((id)::"varchar" >= 'Apple'::"varchar") AND ((id)::"varchar" < 'Banana'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.161 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 
@@ -2211,7 +2313,7 @@ GO
 text
 Query Text: SELECT * FROM partition_vu_prepare_nchar_table WHERE Id >= N'A' AND Id < N'B'
 Gather
-  Workers Planned: 2
+  Workers Planned: 4
   ->  Parallel Append
         ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_3 partition_vu_prepare_nchar_table_3
               Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
@@ -2233,7 +2335,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.159 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 
@@ -2243,7 +2345,7 @@ GO
 text
 Query Text: SELECT * FROM partition_vu_prepare_binary_table WHERE Id >= 0x0000 AND Id < 0x0400
 Gather
-  Workers Planned: 2
+  Workers Planned: 3
   ->  Parallel Append
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
               Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
@@ -2259,7 +2361,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.824 ms
+Babelfish T-SQL Batch Parsing Time: 6.791 ms
 ~~END~~
 
 
@@ -2268,13 +2370,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_varbinary_table WHERE Id >= 0x0000000000000000 AND Id < 0x4000000000000000
-Index Scan using "77718961234110c3a22a3c977bc252d8_partition_1_id_idx" on "77718961234110c3a22a3c977bc252d8_partition_1" partition_vu_prepare_varbinary_table
-  Index Cond: (((id)::bbf_varbinary >= '0x0000000000000000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x4000000000000000'::bbf_varbinary))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "77718961234110c3a22a3c977bc252d8_partition_1_id_idx" on "77718961234110c3a22a3c977bc252d8_partition_1" partition_vu_prepare_varbinary_table
+        Index Cond: (((id)::bbf_varbinary >= '0x0000000000000000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x4000000000000000'::bbf_varbinary))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.166 ms
+Babelfish T-SQL Batch Parsing Time: 0.163 ms
 ~~END~~
 
 
@@ -2283,13 +2388,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_uniqueidentifier_table WHERE Id >= '00000000-0000-0000-0000-000000000000' AND Id < '6F9619FF-8B86-D011-B42D-00C04FC964FF'
-Index Scan using f3baf999c06d6ea82082a4c549baeb77_partition_1_id_idx on f3baf999c06d6ea82082a4c549baeb77_partition_1 partition_vu_prepare_uniqueidentifier_table
-  Index Cond: ((id >= '00000000-0000-0000-0000-000000000000'::uniqueidentifier) AND (id < '6F9619FF-8B86-D011-B42D-00C04FC964FF'::uniqueidentifier))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using f3baf999c06d6ea82082a4c549baeb77_partition_1_id_idx on f3baf999c06d6ea82082a4c549baeb77_partition_1 partition_vu_prepare_uniqueidentifier_table
+        Index Cond: ((id >= '00000000-0000-0000-0000-000000000000'::uniqueidentifier) AND (id < '6F9619FF-8B86-D011-B42D-00C04FC964FF'::uniqueidentifier))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.188 ms
+Babelfish T-SQL Batch Parsing Time: 0.187 ms
 ~~END~~
 
 
@@ -2298,13 +2406,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10))
-Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table
-  Index Cond: ((id >= 'abc  '::sql_variant) AND (id < 'Apple'::sql_variant))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table
+        Index Cond: ((id >= 'abc  '::sql_variant) AND (id < 'Apple'::sql_variant))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.191 ms
+Babelfish T-SQL Batch Parsing Time: 7.057 ms
 ~~END~~
 
 
