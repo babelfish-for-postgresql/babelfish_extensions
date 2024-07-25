@@ -2109,7 +2109,7 @@ extern void pltsql_scanner_finish(void);
 extern int	pltsql_yyparse(void);
 
 /* functions in hooks.c */
-extern char *extract_identifier(const char *start);
+extern char *extract_identifier(const char *start, int *last_pos);
 
 /* functions in pltsql_utils.c */
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
