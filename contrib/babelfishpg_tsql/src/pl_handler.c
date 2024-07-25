@@ -6088,9 +6088,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				def->is_not_null = true;
 				def->constraints = lappend(def->constraints, constraint);
 
-				
-
-
 				lcmd = makeNode(AlterTableCmd);
 				lcmd->subtype = AT_AddColumn;
 				lcmd->missing_ok = false;
@@ -6100,14 +6097,14 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			else
 			{
 				char* original_name = tle->resname;
-				if(tle->resname!=NULL)
+				if (tle->resname!=NULL)
 				{
 					tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 				}	
 				current_resno += 1;
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
-				if(original_name!=NULL&&!strcmp(original_name,tle->resname))
+				if (original_name!=NULL&&strcmp(original_name,tle->resname))
 				{
 					cmd = makeNode(AlterTableCmd);
 					cmd->subtype = AT_SetOptions;
@@ -6123,7 +6120,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 					newstmt->cmds = lappend(newstmt->cmds, cmd);
 					tempStore = lappend(tempStore,newstmt);
 				}
-				
 			}
 		}
 		q->targetList = modifiedTargetList;
@@ -6157,7 +6153,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	if (altstmt)
 		result = lappend(result, altstmt);
 
-	if(tempStore!=NIL)
+	if (tempStore!=NIL)
 		result = list_concat(result,tempStore);	
 
 	return result;
