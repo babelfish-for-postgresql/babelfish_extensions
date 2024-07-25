@@ -1,35 +1,15 @@
 SELECT replace(a, 'a', 'c') FROM babel_4330_vu_prepare_t1;
 go
-~~START~~
-varchar
-cbcbc
-~~END~~
-
 
 SELECT * FROM babel_4330_vu_prepare_v1;
 go
-~~START~~
-varchar
-cbcbc
-~~END~~
-
 
 
 SELECT * FROM babel_4330_vu_prepare_f1();
 go
-~~START~~
-varchar
-cbcbc
-~~END~~
-
 
 EXEC babel_4330_vu_prepare_p1;
 GO
-~~START~~
-varchar
-cbcbc
-~~END~~
-
 
 
 DROP PROCEDURE babel_4330_vu_prepare_p1;

@@ -96,7 +96,7 @@ SELECT replace(@inputString, '拉莫', '尔·比')
 GO
 ~~START~~
 varchar
-??·???                                            
+比尔·尔·比斯                                      
 ~~END~~
 
 
@@ -105,7 +105,7 @@ SELECT replace(@inputString, '拉莫', '尔·比') COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 varchar
-??·???                                            
+比尔·尔·比斯                                      
 ~~END~~
 
 
@@ -114,7 +114,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-??·??·?                                           
+比尔·拉莫斯                                      
 ~~END~~
 
 
@@ -123,7 +123,7 @@ SELECT replace(@inputString, @pattern, @replacement) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 varchar
-??·??·?                                           
+比尔·拉莫斯                                      
 ~~END~~
 
 
@@ -160,7 +160,7 @@ SELECT replace(@inputString, '拉莫', '尔·比')
 GO
 ~~START~~
 varchar
-??·?·??
+比尔·尔·比斯
 ~~END~~
 
 
@@ -178,7 +178,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-??·?·??
+比尔·尔·比斯
 ~~END~~
 
 
@@ -196,7 +196,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-??·?·??
+比尔·尔·比斯
 ~~END~~
 
 
@@ -310,7 +310,7 @@ SELECT replace(@inputString, '拉莫', '尔·比')
 GO
 ~~START~~
 nvarchar
-??·???                                            
+比尔·尔·比斯                                      
 ~~END~~
 
 
@@ -319,7 +319,7 @@ SELECT replace(@inputString, '拉莫', '尔·比') COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-??·???                                            
+比尔·尔·比斯                                      
 ~~END~~
 
 
@@ -328,7 +328,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-??·??·?                                           
+比尔·拉莫斯                                      
 ~~END~~
 
 
@@ -337,7 +337,7 @@ SELECT replace(@inputString, @pattern, @replacement) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-??·??·?                                           
+比尔·拉莫斯                                      
 ~~END~~
 
 
@@ -600,7 +600,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-??·???                                            
+比尔·尔·比斯                                      
 ~~END~~
 
 
@@ -636,7 +636,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-??·??·?                                           
+比尔·拉莫斯                                      
 ~~END~~
 
 
@@ -672,7 +672,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-??·???                                            
+比尔·尔·比斯                                      
 ~~END~~
 
  
@@ -996,7 +996,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-??·???
+比尔·拉莫斯
 ~~END~~
 
 
@@ -1392,7 +1392,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-??·??·?                                           
+比尔·拉莫斯                                      
 ~~END~~
 
 
@@ -1428,7 +1428,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-??·???                                            
+比尔·尔·比斯                                      
 ~~END~~
 
 
@@ -1455,7 +1455,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-??·???                                            
+比尔·尔·比斯                                      
 ~~END~~
 
 

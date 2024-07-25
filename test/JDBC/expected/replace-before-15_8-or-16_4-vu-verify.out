@@ -530,15 +530,15 @@ nvarchar
 SELECT * FROM babel_4836_replace_dep_view
 GO
 ~~START~~
-nvarchar
-  abcx🙂yfghi🙂🙂    
+text
+  abcx?yfghi??    
 ~~END~~
 
 
 SELECT * FROM babel_4836_replace_dep_view1
 GO
 ~~START~~
-varchar
+text
   abcx?yfghi??    
 ~~END~~
 
@@ -562,8 +562,8 @@ nvarchar
 SELECT * FROM babel_4836_replace_itvf_func()
 GO
 ~~START~~
-nvarchar
-  abcx🙂yfghi🙂🙂    
+text
+  abcx?yfghi??    
 ~~END~~
 
 

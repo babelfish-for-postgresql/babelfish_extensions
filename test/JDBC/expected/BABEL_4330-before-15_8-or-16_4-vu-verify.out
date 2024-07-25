@@ -9,7 +9,7 @@ cbcbc
 SELECT * FROM babel_4330_vu_prepare_v1;
 go
 ~~START~~
-varchar
+text
 cbcbc
 ~~END~~
 
@@ -18,7 +18,7 @@ cbcbc
 SELECT * FROM babel_4330_vu_prepare_f1();
 go
 ~~START~~
-varchar
+text
 cbcbc
 ~~END~~
 
