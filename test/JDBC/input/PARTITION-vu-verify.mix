@@ -385,7 +385,20 @@ GO
 SELECT * FROM PartitionSchemeContainsDuplicateIDs()
 GO
 
+SELECT * FROM GetPartitionSchemeOrFilegroupForTableOrIndex
+GO
 
+SELECT * FROM GetFileGroupMappingOfPartitionScheme
+GO
+
+SELECT * FROM GetPartitionedTablePartitioningColumn
+GO
+
+SELECT * FROM GetPartitionedIndexPartitioningColumn
+GO
+
+SELECT * FROM GetSysPartitionsMetadata
+GO
 
 --------------------------------------------------
 --- Test Partition Function Argument Limit

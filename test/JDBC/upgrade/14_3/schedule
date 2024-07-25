@@ -204,7 +204,7 @@ sys-database_files
 sys-database_filestream_options
 sys_database_principals_dep
 sys-database_recovery_status
-sys-data_spaces
+sys-data_spaces-before-16-4
 sys-datefirst
 sys-dm_exec_connections
 sys-dm_exec_connections-dep

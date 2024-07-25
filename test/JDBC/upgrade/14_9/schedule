@@ -207,7 +207,7 @@ BABEL-ROLE-MEMBER
 tdscollation
 BABEL-EXTENDEDPROPERTY-before-15_4
 BABEL-EXECUTE_AS_CALLER
-sys-filegroups
+sys-filegroups-before-16-4
 sys-filetables
 sys-fulltext_indexes
 sys-hash_indexes
@@ -287,7 +287,7 @@ sys-change_tracking_tables
 sys-check_constraints
 sys-columns
 sys-computed_columns
-sys-data_spaces
+sys-data_spaces-before-16-4
 sys-database_files
 sys-database_filestream_options
 sys-database_recovery_status

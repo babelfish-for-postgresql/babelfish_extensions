@@ -9,7 +9,7 @@ PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 SELECT * FROM sys_data_spaces_vu_prepare_view
 GO
 ~~START~~
-nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
+varchar#!#int#!#char#!#nvarchar#!#bit#!#bit
 PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 ~~END~~
 

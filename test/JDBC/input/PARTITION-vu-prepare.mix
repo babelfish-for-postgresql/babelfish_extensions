@@ -135,6 +135,121 @@ RETURN
 GO
 
 
+CREATE VIEW GetPartitionSchemeOrFilegroupForTableOrIndex
+AS 
+(
+    SELECT
+        o.name AS TableName,
+        i.name AS IndexName,
+        ds.name AS PartitionSchemeOrFilegroupName
+    FROM
+        sys.indexes i
+    INNER JOIN
+        sys.objects o ON i.object_id = o.object_id
+    INNER JOIN
+        sys.data_spaces ds ON i.data_space_id = ds.data_space_id
+    WHERE
+        o.name like 'partition_vu_prepare%'
+    ORDER BY
+        o.name, i.name
+)
+GO
+
+
+CREATE VIEW GetFileGroupMappingOfPartitionScheme
+AS 
+(
+    SELECT
+        ps.name AS PartitionSchemeName,
+        sf.name AS FileGroupName,
+        dds.destination_id AS DestinationId
+    FROM
+        sys.partition_schemes AS ps
+    INNER JOIN
+        sys.destination_data_spaces AS dds ON dds.partition_scheme_id = ps.data_space_id
+    INNER JOIN
+        sys.filegroups AS sf ON sf.data_space_id = dds.data_space_id
+    WHERE
+    -- fetch only these two because they covers both possible value of next_used
+        ps.name in ('IntPartitionScheme', 'SmallIntPartitionScheme')
+    ORDER BY
+        ps.name, dds.destination_id
+)
+GO
+
+
+CREATE VIEW GetPartitionedTablePartitioningColumn
+AS
+(
+    SELECT
+        tbl.name AS TableName,
+        c.name AS PartitioningColumn,
+        ic.partition_ordinal AS PartitionOrdinal
+    FROM
+        sys.tables AS tbl
+    INNER JOIN 
+        sys.index_columns ic ON (ic.index_id = 0 AND ic.partition_ordinal > 0 AND ic.object_id = tbl.object_id)
+    INNER JOIN
+        sys.columns c ON (c.object_id = ic.object_id AND c.column_id = ic.column_id)
+    WHERE
+        tbl.name like 'partition_vu_prepare%'
+    ORDER BY
+        tbl.name
+)
+GO
+
+CREATE VIEW GetPartitionedIndexPartitioningColumn
+AS
+(
+    SELECT
+        idx.name AS IndexName,
+        OBJECT_NAME(idx.object_id) AS TableName,
+        c.name AS PartitioningColumn,
+        ic.partition_ordinal AS PartitionOrdinal
+    FROM
+        sys.indexes AS idx
+    INNER JOIN 
+        sys.index_columns ic ON (ic.partition_ordinal > 0 AND ic.object_id = idx.object_id)
+    INNER JOIN
+        sys.columns c ON (c.object_id = ic.object_id AND c.column_id = ic.column_id)
+    WHERE
+        idx.name like 'partition_vu_prepare%'
+    ORDER BY
+       idx.name
+)
+GO
+
+
+CREATE VIEW GetSysPartitionsMetadata
+AS
+(
+    SELECT
+        OBJECT_NAME(partition_id) AS PartitionName,
+        partition_number,
+        index_id
+    FROM
+        sys.partitions,
+        OBJECT_NAME(object_id) AS ParentName
+    WHERE
+        ParentName IN ('partition_vu_prepare_int_table', 'partition_vu_prepare_normal_table')
+    ORDER BY
+        ParentName, partition_number
+)
+GO
+
+--------------------------------------------------
+--- Create Normal TABLE and INDEX for Views testing
+--------------------------------------------------
+CREATE TABLE partition_vu_prepare_normal_table (
+    Id INT,
+    Value sys.varchar(50)
+);
+GO
+
+CREATE INDEX partition_vu_prepare_normal_index
+ON partition_vu_prepare_normal_table(Value);
+GO
+
 --------------------------------------------------
 --- Supported Datatypes for Partition Function 
 --------------------------------------------------
@@ -581,8 +696,8 @@ go
 ---------------------------------------------------------------------------
 -- int data type
 CREATE TABLE partition_vu_prepare_int_table (
-    Id INT UNIQUE,
-    Value sys.varchar(50)
+    Value sys.varchar(50),
+    Id INT UNIQUE
 ) ON IntPartitionScheme(Id);
 GO
 

@@ -241,7 +241,7 @@ sys_database_principals_dep
 sys-database_recovery_status
 sys-databases
 sys-databases-dep
-sys-data_spaces
+sys-data_spaces-before-16-4
 sys-datefirst
 sys-default_constraints
 sys-default_constraints-dep
@@ -255,7 +255,7 @@ sys-dm_os_host_info
 sys-endpoints
 sys-events
 sys-extended_properties
-sys-filegroups
+sys-filegroups-before-16-4
 sys-filetables
 sys-filetable_system_defined_objects
 sys-foreign_key_columns
