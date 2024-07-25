@@ -5988,9 +5988,11 @@ static List *
 transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
 	List *result;
+	List *tempStore;
 	ListCell *elements;
 	AlterTableStmt *altstmt;
 	AlterTableStmt *newstmt;
+	AlterTableCmd *cmd;
 	IntoClause *into;
 	Node *n;
 	
@@ -5999,6 +6001,8 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	into = stmt->into;
 	result = NIL;
 	altstmt = NULL;
+	newstmt = NULL;
+	tempStore=NIL;
 
 	if (n && n->type == T_Query)
 	{
@@ -6095,20 +6099,19 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			}
 			else
 			{
-				AlterTableCmd *cmd;
-
 				//Convert the column name to lowercase
 				char* original_name = tle->resname;
-				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
+				if(tle->resname!=NULL)
+					tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 				current_resno += 1;
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
 				// checking if the column_name is already in lower case
 				// value == 0 => already in lowercase 
-				char* lowercase_name = tle->resname;
-				value=strcmp(original_name,lowercase_name);  
 				//trying some options to store the original name of the column_name 
-					if(value!=0){
+				
+					if(original_name!=NULL&&!strcmp(original_name,tle->resname))
+					{
 						cmd = makeNode(AlterTableCmd);
 						cmd->subtype = AT_SetOptions;
 						cmd->name = tle->resname;
@@ -6121,6 +6124,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						newstmt->cmds = NIL;
 						newstmt->objtype = OBJECT_TABLE;
 						newstmt->cmds = lappend(newstmt->cmds, cmd);
+						tempStore = lappend(tempStore,newstmt);
 				}
 				
 			}
@@ -6155,8 +6159,10 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	
 	if (altstmt)
 		result = lappend(result, altstmt);
-	if(newstmt)
-		result = lappend(result, newstmt);
+
+	if(tempStore!=NIL)
+		result = list_concat(result,tempStore);	
+
 	return result;
 }
 

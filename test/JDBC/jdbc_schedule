@@ -7,9 +7,11 @@
 # 5. To add a test, add test name (without extension Eg. BABEL-TEST) on a
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
-
-BABEL-4926
-
+# all
+# 1_GRANT_SCHEMA-vu-prepare
+# 1_GRANT_SCHEMA-vu-cleanup
+# 1_GRANT_SCHEMA-vu-verify
+all
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
