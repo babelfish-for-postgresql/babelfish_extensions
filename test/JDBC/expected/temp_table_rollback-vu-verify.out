@@ -144,7 +144,7 @@ COMMIT
 GO
 
 ----------------------------------------------------------
--- ALTER TABLE (should fail due to BABEL-4912)
+-- ALTER TABLE (BABEL-4912)
 ----------------------------------------------------------
 CREATE TABLE #temp_table_rollback_t1 (a int, b int)
 GO
@@ -153,37 +153,21 @@ BEGIN TRAN
 ALTER TABLE #temp_table_rollback_t1 DROP COLUMN b
 ROLLBACK
 GO
-~~ERROR (Code: 3726)~~
-
-~~ERROR (Message: cannot drop column b of table "#temp_table_rollback_t1" because other objects depend on it)~~
-
 
 BEGIN TRAN
 ALTER TABLE #temp_table_rollback_t1 ALTER COLUMN b VARCHAR
 ROLLBACK
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: unexpected object depending on column: type "#temp_table_rollback_t1")~~
-
-
-BEGIN TRAN
-ALTER TABLE #temp_table_rollback_t1 DROP COLUMN b
-COMMIT
-GO
-~~ERROR (Code: 3726)~~
-
-~~ERROR (Message: cannot drop column b of table "#temp_table_rollback_t1" because other objects depend on it)~~
-
 
 BEGIN TRAN
 ALTER TABLE #temp_table_rollback_t1 ALTER COLUMN b VARCHAR
 COMMIT
 GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: unexpected object depending on column: type "#temp_table_rollback_t1")~~
-
+BEGIN TRAN
+ALTER TABLE #temp_table_rollback_t1 DROP COLUMN b
+COMMIT
+GO
 
 DROP TABLE #temp_table_rollback_t1
 GO

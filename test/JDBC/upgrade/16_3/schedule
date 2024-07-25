@@ -328,7 +328,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name
+sys-host_name-before-15_8-or-16_4
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns
@@ -536,3 +536,8 @@ babel_4328_datetime2
 babel_4328_datetimeoffset
 babel_726
 BABEL-3401
+trim-before-15_8-or-16_4
+ltrim-before-15_8-or-16_4
+rtrim-before-15_8-or-16_4
+left-before-15_8-or-16_4
+right-before-15_8-or-16_4
