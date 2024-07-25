@@ -4912,12 +4912,14 @@ AS
 $BODY$
 DECLARE
     string_arg_datatype text;
+    string_arg_typeid oid;
     string_basetype oid;
 BEGIN
-    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    string_arg_typeid := pg_typeof(string)::oid;
+    string_arg_datatype := sys.translate_pg_type_to_tsql(string_arg_typeid);
     IF string_arg_datatype IS NULL THEN
         -- for User Defined Datatype, use immediate base type to check for argument datatype validation
-        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(string_arg_typeid);
         string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
     END IF;
 
@@ -4977,7 +4979,7 @@ BEGIN
     RETURN PG_CATALOG.repeat(string, i);
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Adding following definition will make sure that replicate with ntext input
 -- will use following definition instead of PG replicate
@@ -4993,7 +4995,7 @@ BEGIN
     RETURN PG_CATALOG.repeat(string, i);
 END;
 $BODY$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- DROP deprecated function of replicate (if exists)
 DO $$
