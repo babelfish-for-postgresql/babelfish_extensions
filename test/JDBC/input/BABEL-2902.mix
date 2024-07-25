@@ -1,7 +1,7 @@
 -- parallel_query_expected
 -- Test setup --
 -- psql
--- ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 SELECT pg_reload_conf();
 GO
 
@@ -307,6 +307,6 @@ DROP DATABASE IF EXISTS babel_2902_testdb_2
 DROP DATABASE IF EXISTS babel_2902_testdb_3
 GO
 -- psql
--- ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
 SELECT pg_reload_conf();
 GO
