@@ -201,7 +201,7 @@ GO
 CREATE FUNCTION COL_NAME() RETURNS INT AS BEGIN RETURN 2; END;
 GO
 
-CREATE PROCEDURE sp_tables AS BEGIN SELECT 'sp_tables overloaded in different schema'; END;
+CREATE PROCEDURE sp_helpdb AS BEGIN SELECT 'sp_helpdb overloaded in different schema'; END;
 GO
 
 SELECT to_date();
@@ -216,8 +216,8 @@ GO
 SELECT sys.COL_NAME(CAST((SELECT OBJECT_ID('OverloadedObject')) AS INT), 1);
 GO
 
-EXEC sp_tables;
+EXEC sp_helpdb;
 GO
 
-EXEC [sys].sp_tables;
+EXEC [sys].sp_helpdb 'test';
 GO

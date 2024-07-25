@@ -105,5 +105,6 @@ GO
 ~~START~~
 varchar
 col_name
+sp_helpdb
 ~~END~~
 

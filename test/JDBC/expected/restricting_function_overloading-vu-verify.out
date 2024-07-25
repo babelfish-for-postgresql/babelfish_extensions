@@ -275,7 +275,7 @@ GO
 CREATE FUNCTION COL_NAME() RETURNS INT AS BEGIN RETURN 2; END;
 GO
 
-CREATE PROCEDURE sp_tables AS BEGIN SELECT 'sp_tables overloaded in different schema'; END;
+CREATE PROCEDURE sp_helpdb AS BEGIN SELECT 'sp_helpdb overloaded in different schema'; END;
 GO
 
 SELECT to_date();
@@ -310,19 +310,19 @@ a
 ~~END~~
 
 
-EXEC sp_tables;
+EXEC sp_helpdb;
 GO
 ~~START~~
 varchar
-sp_tables overloaded in different schema
+sp_helpdb overloaded in different schema
 ~~END~~
 
 
-EXEC [sys].sp_tables;
+EXEC [sys].sp_helpdb 'test';
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar
-master#!#dbo#!#overloadedobject#!#TABLE#!#<NULL>
-master#!#dbo#!#sysdatabases#!#VIEW#!#<NULL>
-~~END~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#tinyint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database 'test' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
 
