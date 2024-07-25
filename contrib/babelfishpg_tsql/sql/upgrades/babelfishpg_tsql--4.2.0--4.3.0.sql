@@ -351,6 +351,29 @@ end
 $body$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
 
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind PG_CATALOG.TEXT,
+										 expressionToSearch PG_CATALOG.TEXT,
+										 start_location INTEGER DEFAULT 0)
+RETURNS INTEGER AS
+$BODY$
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+	strpos(expressionToSearch, expressionToFind)
+ELSE
+	CASE
+	WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+		0
+	ELSE
+		strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+	END
+END;
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE;
+
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,

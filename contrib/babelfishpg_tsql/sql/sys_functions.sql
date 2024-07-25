@@ -931,6 +931,8 @@ RETURNS INTEGER AS
 $BODY$
 SELECT
 CASE
+WHEN expressionToFind = '' THEN
+    0
 WHEN start_location <= 0 THEN
 	strpos(expressionToSearch, expressionToFind)
 ELSE

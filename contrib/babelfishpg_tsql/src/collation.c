@@ -1228,6 +1228,15 @@ translate_char_pos(const char* str,		/* UTF-8 string */
 	return out_pos;
 }
 
+static int
+icu_compare_utf8_coll(pg_locale_t locale, UChar *uchar1, int32_t ulen1,
+					  UChar *uchar2, int32_t ulen2)
+{
+	return ucol_strcoll(locale->info.icu.ucol,
+							uchar1, ulen1,
+							uchar2, ulen2);
+}
+
 bool
 pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, int *r)
 {
@@ -1244,7 +1253,7 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 		int32_t src_len_utf8 = VARSIZE_ANY_EXHDR(src_text);
 		int32_t substr_len_utf8 = VARSIZE_ANY_EXHDR(substr_text);
 		int32_t src_ulen, substr_ulen;
-		int32_t u16_pos, u8_pos = 0;
+		int32_t u8_pos = -1;
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
 		UChar *src_uchar, *substr_uchar;
@@ -1259,31 +1268,38 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 										mylocale->info.icu.ucol,
 										NULL,
 										&status);
+
+		usearch_setAttribute(usearch, USEARCH_OVERLAP, USEARCH_ON, &status);
+
 		if (U_FAILURE(status))
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("failed to perform ICU search: %s",
 							u_errorName(status))));
-		else
+
+		for (int u16_pos = usearch_first(usearch, &status);
+		     u16_pos != USEARCH_DONE;
+		     u16_pos = usearch_next(usearch, &status))
 		{
-			u16_pos = usearch_first(usearch, &status);
-			if (!U_FAILURE(status) && u16_pos != USEARCH_DONE)
+			if (U_FAILURE(status))
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("failed to perform ICU search: %s",
+							u_errorName(status))));
+
+			/* for CS_AI collations usearch can give false positives so we double check the results here */
+			if (icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), substr_uchar, substr_ulen) == 0)
+			{
 				u8_pos = translate_char_pos(VARDATA_ANY(src_text), src_len_utf8,
-											src_uchar, src_ulen, u16_pos,
-											NULL);
-			else
-				u8_pos = -1;
+										src_uchar, src_ulen, u16_pos,
+										NULL);
+				break;
+			}
 		}
 
 		pfree(src_uchar);
 		pfree(substr_uchar);
 		usearch_close(usearch);
-
-		if (U_FAILURE(status))
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("failed to perform ICU search: %s",
-							u_errorName(status))));
 
 		/* return 0 if not found or the 1-based position of substr_text inside src_text */
 		*r = u8_pos + 1;
@@ -1335,7 +1351,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 										NULL,
 										&status);
 
-		usearch_setAttribute(usearch, USEARCH_OVERLAP, USEARCH_OFF, &status);
+		usearch_setAttribute(usearch, USEARCH_OVERLAP, USEARCH_ON, &status);
 
 		initStringInfo(&resbuf);
 		previous_pos = 0;
@@ -1352,6 +1368,14 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("failed to perform ICU search: %s",
 							u_errorName(status))));
+
+			/* for CS_AI collations usearch can give false positives so we double check the results here */
+			if (icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), from_uchar, from_ulen) != 0)
+				continue;
+
+			/* reject if overlaps with the last successful match */
+			if (pos < previous_pos)
+				continue;
 
 			/* copy the segment before the match */
 			translate_char_pos(
