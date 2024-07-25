@@ -64,8 +64,6 @@
 
 #define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
 
- /* Max number of partitions allowed for babelfish partitioned tables. */
-#define MAX_PARTITIONS_LIMIT 15000
 
 /*
  * Compiler's namespace item types
@@ -2107,6 +2105,9 @@ extern void pltsql_scanner_finish(void);
  * Externs in gram.y
  */
 extern int	pltsql_yyparse(void);
+
+/* functions in hooks.c */
+extern char *extract_identifier(const char *start);
 
 /* functions in pltsql_utils.c */
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);

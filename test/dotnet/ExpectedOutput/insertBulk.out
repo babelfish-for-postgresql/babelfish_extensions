@@ -442,3 +442,18 @@ hello#!#jello
 1
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#CREATE TABLE sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
+#Q#CREATE PARTITION FUNCTION IntPartitionFunction (int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
+#Q#CREATE PARTITION SCHEME IntPartitionScheme AS PARTITION IntPartitionFunction ALL TO ([PRIMARY])
+#Q#CREATE TABLE partitionedTable(c1 int, c2 CHAR(1024)) ON IntPartitionScheme(c1)
+#Q#Select count(*) from sourceTable
+#D#int
+1000
+#Q#select count(*) from partitionedTable
+#D#int
+0
+#Q#DROP TABLE partitionedTable
+#Q#DROP PARTITION SCHEME IntPartitionScheme
+#Q#DROP PARTITION FUNCTION IntPartitionFunction
+#Q#DROP TABLE sourceTable
