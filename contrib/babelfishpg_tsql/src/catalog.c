@@ -3195,8 +3195,6 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 		pfree(physical_schema_name);
 	if (logical_schema_name != NULL)
 		pfree(logical_schema_name);
-	if (object_name != NULL)
-		pfree(object_name);
 
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
@@ -5336,11 +5334,11 @@ partition_scheme_exists(int16 dbid, const char *partition_scheme_name)
 }
 
 /*
- * get_partition_function
- * 		Returns the partition function name for the given partition scheme name.
+ * get_partition_function_name
+ * 	Returns the partition function name for the given partition scheme name.
  */
 char*
-get_partition_function(int16 dbid, const char *partition_scheme_name)
+get_partition_function_name(int16 dbid, const char *partition_scheme_name)
 {
 	Relation	rel;
 	HeapTuple	tuple;
@@ -5374,6 +5372,266 @@ get_partition_function(int16 dbid, const char *partition_scheme_name)
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
 	return partition_function_name;
+}
+/*
+ * add_entry_to_bbf_partition_depend
+ *	Inserts a new entry into the sys.babelfish_partition_depend catalog
+ *	to track the dependecy between partition scheme and partitioned tables
+ *	created using that.
+ */
+void
+add_entry_to_bbf_partition_depend(int16 dbid, char* partition_scheme_name, char *schema_name, char *table_name)
+{
+	Relation	rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple;
+	Datum		new_record[BBF_PARTITION_DEPEND_NUM_COLS];
+	bool		new_record_nulls[BBF_PARTITION_DEPEND_NUM_COLS];
+
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
+	dsc = RelationGetDescr(rel);
+
+	/* Build a tuple to insert. */
+	new_record[Anum_bbf_partition_depend_dbid - 1] = Int16GetDatum(dbid);
+	new_record[Anum_bbf_partition_depend_scheme_name - 1] = CStringGetTextDatum(partition_scheme_name);
+	new_record[Anum_bbf_partition_depend_table_schema_name - 1] = CStringGetTextDatum(schema_name);
+	new_record[Anum_bbf_partition_depend_table_name - 1] = CStringGetTextDatum(table_name);
+
+	tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
+
+	/* Insert new record in the table. */
+	CatalogTupleInsert(rel, tuple);
+
+	heap_freetuple(tuple);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * remove_entry_from_bbf_partition_depend
+ *	Removes an entry from the sys.babelfish_partition_depend catalog.
+ */
+void
+remove_entry_from_bbf_partition_depend(int16 dbid, char *schema_name, char *table_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+
+	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_depend_table_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(schema_name));
+
+	ScanKeyEntryInitialize(&scanKey[2], 0, 
+				Anum_bbf_partition_depend_table_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(table_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
+					false, NULL, 3, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		CatalogTupleDelete(rel, &tuple->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * rename_table_update_bbf_partition_depend_catalog
+ * 	Updates table_name in sys.babelfish_partition_depend catalog for
+ * 	RENAME TABLE command to have consistency with the new names.
+ */
+void
+rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt)
+{
+	Relation	rel;
+	HeapTuple	tuple, new_tuple;
+	TupleDesc	dsc;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+	Datum		new_record[BBF_PARTITION_DEPEND_NUM_COLS];
+	bool		new_record_nulls[BBF_PARTITION_DEPEND_NUM_COLS];
+	bool		new_record_replace[BBF_PARTITION_DEPEND_NUM_COLS];
+	char		*logical_schema_name;
+	char		*table_name = stmt->relation->relname;
+	int16		dbid;
+
+	/* Find the logical schema name from physical schema name. */
+	logical_schema_name = (char *) get_logical_schema_name(stmt->relation->schemaname, true);
+
+	if (!logical_schema_name) /* not a TSQL schema */
+		return;
+
+	/* Find the dbid from physical schema name. */
+	dbid = get_dbid_from_physical_schema_name(stmt->relation->schemaname, false);
+
+	/* Open the catalog table. */
+	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
+
+	/* Search for the row which needs to be updated. */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_depend_table_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
+
+	ScanKeyEntryInitialize(&scanKey[2], 0, 
+				Anum_bbf_partition_depend_table_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(table_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
+					false, NULL, 3, scanKey);
+
+	tuple = systable_getnext(scan);
+
+	/* Update the table name of the found row. */
+	if (HeapTupleIsValid(tuple))
+	{
+		/* Get the descriptor of the table. */
+		dsc = RelationGetDescr(rel);
+
+		/* Build a tuple to insert. */
+		MemSet(new_record, 0, sizeof(new_record));
+		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+		MemSet(new_record_replace, false, sizeof(new_record_replace));
+
+		new_record[Anum_bbf_partition_depend_table_name - 1] = CStringGetTextDatum(stmt->newname);
+		new_record_replace[Anum_bbf_partition_depend_table_name - 1] = true;
+		new_tuple = heap_modify_tuple(tuple, dsc, new_record, new_record_nulls, new_record_replace);
+
+		/* Perform the actual catalog update. */
+		CatalogTupleUpdate(rel, &new_tuple->t_self, new_tuple);
+
+		/* Free the allocated tuple. */
+		heap_freetuple(new_tuple);
+	}
+
+	systable_endscan(scan);
+	/* Close the catalog table. */
+	table_close(rel, RowExclusiveLock);
+
+	/* Free the allocated memory. */
+	pfree(logical_schema_name);
+}
+
+/*
+ * is_bbf_partitioned_table
+ *		Returns true if provided table is babelfish partitioned table, false otherwise.
+ *
+ *	This function checks if provided table is babelfish partitioned table
+ *	by looking up in sys.babelfish_partition_depend catalog.
+ */
+bool
+is_bbf_partitioned_table(int16 dbid, char *schema_name, char *table_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+	bool		sucess = false;
+
+	rel = table_open(get_bbf_partition_depend_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_depend_table_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(schema_name));
+
+	ScanKeyEntryInitialize(&scanKey[2], 0,
+				Anum_bbf_partition_depend_table_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(table_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
+					false, NULL, 3, scanKey);
+
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+		sucess = true;
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	return sucess;
+}
+
+/*
+ * get_partition_scheme_for_partitioned_table
+ * 	Returns the name of partition scheme used to create the partitioned table.
+ */
+char*
+get_partition_scheme_for_partitioned_table(int16 dbid, char *schema_name, char *table_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+	char		*partition_scheme_name = NULL;
+
+	rel = table_open(get_bbf_partition_depend_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_depend_table_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(schema_name));
+
+	ScanKeyEntryInitialize(&scanKey[2], 0,
+				Anum_bbf_partition_depend_table_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(table_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
+					false, NULL, 3, scanKey);
+
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		bool isnull;
+		partition_scheme_name = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_depend_scheme_name, RelationGetDescr(rel), &isnull));
+	}
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	return partition_scheme_name;
 }
 
 /*

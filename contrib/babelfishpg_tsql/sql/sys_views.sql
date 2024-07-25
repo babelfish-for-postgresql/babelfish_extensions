@@ -70,7 +70,8 @@ from pg_class t
 inner join sys.schemas sch on sch.schema_id = t.relnamespace
 left join tt_internal tt on t.oid = tt.typrelid
 where tt.typrelid is null
-and t.relkind = 'r'
+and (t.relkind = 'r' or t.relkind = 'p')
+and t.relispartition = false
 and has_schema_privilege(t.relnamespace, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.tables TO PUBLIC;
@@ -450,6 +451,7 @@ where not a.attisdropped
 and (s.nspname = 'sys' or ext.nspname is not null)
 -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 and c.relkind in ('r', 'v', 'm', 'f', 'p')
+and c.relispartition = false
 and has_schema_privilege(s.oid, 'USAGE')
 and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 and a.attnum > 0;
@@ -574,6 +576,7 @@ BEGIN
 		AND a.attnum > 0
 		-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 		AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+		AND c.relispartition = false
 		AND has_schema_privilege(sch.schema_id, 'USAGE')
 		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 		union all
@@ -854,7 +857,7 @@ select
   , cast(imap.index_id as int) as index_id
 from pg_index X 
 inner join index_id_map imap on imap.indexrelid = X.indexrelid
-inner join pg_class I on I.oid = X.indexrelid and I.relkind = 'i'
+inner join pg_class I on I.oid = X.indexrelid and (I.relkind = 'i' or I.relkind = 'I') and I.relispartition = false
 inner join pg_namespace nsp on nsp.oid = I.relnamespace
 left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
 -- check if index is a unique constraint
@@ -890,7 +893,8 @@ select
 from pg_class t
 inner join pg_namespace nsp on nsp.oid = t.relnamespace
 left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
-where t.relkind = 'r'
+where (t.relkind = 'r' or t.relkind = 'p')
+and t.relispartition = false
 -- filter to get all the objects that belong to sys or babelfish schemas
 and (nsp.nspname = 'sys' or ext.nspname is not null)
 and has_schema_privilege(t.relnamespace, 'USAGE')
@@ -1339,7 +1343,8 @@ left join sys.table_types_internal tt on t.oid = tt.typrelid
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
 where t.relpersistence in ('p', 'u', 't')
-and t.relkind = 'r'
+and (t.relkind = 'r' or t.relkind = 'p')
+and t.relispartition = false
 and s.nspname <> 'sys' and nis.name is null
 and ext.nspname is not null
 and tt.typrelid is null
@@ -2161,7 +2166,7 @@ SELECT
 FROM
     pg_index i
     INNER JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
-    INNER JOIN pg_class c ON i.indrelid = c.oid
+    INNER JOIN pg_class c ON i.indrelid = c.oid and c.relispartition = false
     INNER JOIN pg_namespace nsp ON nsp.oid = c.relnamespace
     LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
     LEFT JOIN unnest(i.indkey) WITH ORDINALITY AS a(attnum, index_column_id) ON true

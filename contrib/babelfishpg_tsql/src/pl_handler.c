@@ -87,6 +87,7 @@
 #include "schemacmds.h"
 #include "session.h"
 #include "pltsql.h"
+#include "pltsql_partition.h"
 #include "pl_explain.h"
 #include "table_variable_mvcc.h"
 
@@ -2527,6 +2528,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 				}
+				
+				/*
+				 * Babelfish partitioned tables have specific security requirements to maintain data integrity.
+				 * Non-superusers should not be permitted to attach, detach, or modify partitions of these tables.
+				 */
+				if (!babelfish_dump_restore && atstmt->objtype == OBJECT_TABLE && !superuser())
+				{
+					bbf_alter_handle_partitioned_table(atstmt);
+				}
 				break;
 			}
 		case T_TruncateStmt:
@@ -3500,6 +3510,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				DropStmt   *drop_stmt = (DropStmt *) parsetree;
 
+				if (drop_stmt->removeType == OBJECT_TABLE)
+					bbf_drop_handle_partitioned_table(drop_stmt);
+
 				if (drop_stmt->removeType != OBJECT_SCHEMA)
 				{
 					if (sql_dialect == SQL_DIALECT_TSQL)
@@ -3647,6 +3660,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				else
 					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 											params, queryEnv, dest, qc);
+				
+				if (stmt->renameType == OBJECT_TABLE)
+				{
+					rename_table_update_bbf_partitions_name(stmt);
+					rename_table_update_bbf_partition_depend_catalog(stmt);
+				}
 				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
 					rename_update_bbf_catalog(stmt);
@@ -3730,6 +3749,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 											queryEnv, dest, qc);
 
+				/*
+				 * Create partitions of babelfish partitioned table
+				 * using the partition scheme and partitioning column.
+				 */
+				if (create_stmt->partspec && create_stmt->partspec->tsql_partition_scheme)
+				{
+					bbf_create_partition_tables(create_stmt);
+				}
+
 				if (create_stmt->tsql_tabletype || isTableVariable)
 				{
 					List	   *name;
@@ -3746,6 +3774,46 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 
 				return;
+			}
+		case T_IndexStmt:
+			{
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					IndexStmt *stmt = (IndexStmt *) parsetree;
+
+					/*
+					 * Create partitioned index if partition scheme is specified.
+					 * Allow only aligned-index.
+					 */
+					if (stmt->excludeOpNames != NIL)
+					{
+						List *partition_schemes = stmt->excludeOpNames;
+						stmt->excludeOpNames = NIL;
+
+						/*
+						 * Create the index first so that columns and table name
+						 * checks get done before index alignment check.
+						 */
+						if (prev_ProcessUtility)
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+										queryEnv, dest, qc);
+						else
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+											queryEnv, dest, qc);
+						
+						stmt->excludeOpNames = partition_schemes;
+
+						/* Validate that index is aligned-index. */
+						if (!bbf_validate_partitioned_index_alignment(stmt))
+						{
+							ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_OBJECT),
+									errmsg("Un-aligned Index is not supported in Babelfish.")));
+						}
+						return;
+					}
+				}
+				break;
 			}
 		case T_CreateDomainStmt:
 			{

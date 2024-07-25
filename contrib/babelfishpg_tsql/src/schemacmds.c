@@ -19,6 +19,7 @@
 #include "hooks.h"
 #include "schemacmds.h"
 #include "session.h"
+#include "pltsql.h"
 
 static bool has_ext_info(const char *schemaname);
 
