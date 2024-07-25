@@ -53,7 +53,7 @@ BABEL-2805
 BABEL-2812
 BABEL-2819
 BABEL-2845
-BABEL-2877
+babelfish_function_ext-before_16_4_or_15_8_or_14_13
 BABEL-2884
 BABEL-2917
 BABEL-2944
@@ -187,6 +187,7 @@ BABEL-SP_STORED_PROCEDURES
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
+SP_TABLES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -237,7 +238,7 @@ ISC-Columns
 isc-schemata-dep
 ISC-sequences
 ISC-Table_Constraints
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
