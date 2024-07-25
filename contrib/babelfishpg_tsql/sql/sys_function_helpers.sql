@@ -131,7 +131,7 @@ BEGIN
     END IF;
 
     IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
-        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
+        v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
                           WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
@@ -159,7 +159,7 @@ BEGIN
                     ELSE sys.babelfish_conv_greg_to_hijri(p_dateval) + 1
                  END;
 
-    v_day := ltrim(to_char(v_dateval, 'DD'), '0');
+    v_day := PG_CATALOG.ltrim(to_char(v_dateval, 'DD'), '0');
     v_month := to_char(v_dateval, 'MM')::SMALLINT;
 
     v_language := CASE
@@ -307,7 +307,7 @@ BEGIN
     THEN
         v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT;
 
-        v_src_datatype := rtrim(split_part(v_src_datatype, '(', 1));
+        v_src_datatype := PG_CATALOG.rtrim(split_part(v_src_datatype, '(', 1));
 
         IF (v_src_datatype <> 'DATETIME2' AND v_scale IS NOT NULL) THEN
             RAISE invalid_indicator_parameter_value;
@@ -331,7 +331,7 @@ BEGIN
     END IF;
 
     IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
-        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
+        v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
                           WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
@@ -360,8 +360,8 @@ BEGIN
                         ELSE sys.babelfish_conv_greg_to_hijri(p_datetimeval) + INTERVAL '1 day'
                      END;
 
-    v_day := ltrim(to_char(v_datetimeval, 'DD'), '0');
-    v_hour := ltrim(to_char(v_datetimeval, 'HH12'), '0');
+    v_day := PG_CATALOG.ltrim(to_char(v_datetimeval, 'DD'), '0');
+    v_hour := PG_CATALOG.ltrim(to_char(v_datetimeval, 'HH12'), '0');
     v_month := to_char(v_datetimeval, 'MM')::SMALLINT;
 
     v_language := CASE
@@ -1982,7 +1982,7 @@ BEGIN
 
     IF (v_datatype ~* DATATYPE_MASK_REGEXP)
     THEN
-        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
+        v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_res_maxlength := CASE
                               WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
@@ -2022,7 +2022,7 @@ BEGIN
         RAISE invalid_datetime_format;
     END IF;
 
-    v_hours := ltrim(to_char(p_timeval, 'HH12'), '0');
+    v_hours := PG_CATALOG.ltrim(to_char(p_timeval, 'HH12'), '0');
     v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(p_timeval, 'US'), v_scale);
 
     IF (v_scale = 7) THEN
@@ -2105,7 +2105,7 @@ EXCEPTION
 
     WHEN invalid_datetime_format THEN
         RAISE USING MESSAGE := pg_catalog.format('Error converting data type TIME to %s.',
-                                      rtrim(split_part(trim(p_datatype), '(', 1))),
+                                      PG_CATALOG.rtrim(split_part(trim(p_datatype), '(', 1))),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
 END;
@@ -2688,26 +2688,26 @@ BEGIN
     IF name IN('[' COLLATE "C", ']' COLLATE "C", '"' COLLATE "C") THEN
         RETURN NULL;
 
-    ELSIF length(name) >= 2 AND left(name, 1) = '[' COLLATE "C" AND right(name, 1) = ']' COLLATE "C" THEN
+    ELSIF length(name) >= 2 AND PG_CATALOG.left(name, 1) = '[' COLLATE "C" AND PG_CATALOG.right(name, 1) = ']' COLLATE "C" THEN
         IF length(name) = 2 THEN
             RETURN '';
         ELSE
             RETURN substring(name from 2 for length(name)-2);
         END IF;
-    ELSIF length(name) >= 2 AND left(name, 1) = '[' COLLATE "C" AND right(name, 1) != ']' COLLATE "C" THEN
+    ELSIF length(name) >= 2 AND PG_CATALOG.left(name, 1) = '[' COLLATE "C" AND PG_CATALOG.right(name, 1) != ']' COLLATE "C" THEN
         RETURN NULL;
-    ELSIF length(name) >= 2 AND left(name, 1) != '[' COLLATE "C" AND right(name, 1) = ']' COLLATE "C" THEN
+    ELSIF length(name) >= 2 AND PG_CATALOG.left(name, 1) != '[' COLLATE "C" AND PG_CATALOG.right(name, 1) = ']' COLLATE "C" THEN
         RETURN NULL;
 
-    ELSIF length(name) >= 2 AND left(name, 1) = '"' COLLATE "C" AND right(name, 1) = '"' COLLATE "C" THEN
+    ELSIF length(name) >= 2 AND PG_CATALOG.left(name, 1) = '"' COLLATE "C" AND PG_CATALOG.right(name, 1) = '"' COLLATE "C" THEN
         IF length(name) = 2 THEN
             RETURN '';
         ELSE
             RETURN substring(name from 2 for length(name)-2);
         END IF;
-    ELSIF length(name) >= 2 AND left(name, 1) = '"' COLLATE "C" AND right(name, 1) != '"' COLLATE "C" THEN
+    ELSIF length(name) >= 2 AND PG_CATALOG.left(name, 1) = '"' COLLATE "C" AND PG_CATALOG.right(name, 1) != '"' COLLATE "C" THEN
         RETURN NULL;
-    ELSIF length(name) >= 2 AND left(name, 1) != '"' COLLATE "C" AND right(name, 1) = '"' COLLATE "C" THEN
+    ELSIF length(name) >= 2 AND PG_CATALOG.left(name, 1) != '"' COLLATE "C" AND PG_CATALOG.right(name, 1) = '"' COLLATE "C" THEN
         RETURN NULL;
     
     END IF;
@@ -5923,14 +5923,14 @@ DECLARE
   var_originating_server_id INT DEFAULT 0;
 BEGIN
   /* Remove any leading/trailing spaces from parameters (except @owner_login_name) */
-  SELECT UPPER(LTRIM(RTRIM(par_originating_server))) INTO par_originating_server;
-  SELECT LTRIM(RTRIM(par_job_name)) INTO par_job_name;
-  SELECT LTRIM(RTRIM(par_description)) INTO par_description;
+  SELECT UPPER(PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_originating_server))) INTO par_originating_server;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_job_name)) INTO par_job_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_description)) INTO par_description;
   SELECT '[Uncategorized (Local)]' INTO par_category_name;
   SELECT 0 INTO par_category_id;
-  SELECT LTRIM(RTRIM(par_notify_email_operator_name)) INTO par_notify_email_operator_name;
-  SELECT LTRIM(RTRIM(par_notify_netsend_operator_name)) INTO par_notify_netsend_operator_name;
-  SELECT LTRIM(RTRIM(par_notify_page_operator_name)) INTO par_notify_page_operator_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_notify_email_operator_name)) INTO par_notify_email_operator_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_notify_netsend_operator_name)) INTO par_notify_netsend_operator_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_notify_page_operator_name)) INTO par_notify_page_operator_name;
   SELECT NULL INTO var_originating_server_id; /* Turn [nullable] empty string parameters into NULLs */
   SELECT NULL INTO par_job_id;
 
@@ -6418,9 +6418,9 @@ DECLARE
   var_orig_server_id INT;
 BEGIN
   /* Remove any leading/trailing spaces from parameters */
-  SELECT LTRIM(RTRIM(par_schedule_name))
-       , LTRIM(RTRIM(par_owner_login_name))
-       , UPPER(LTRIM(RTRIM(par_originating_server)))
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_schedule_name))
+       , PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_owner_login_name))
+       , UPPER(PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_originating_server)))
        , 0
     INTO par_schedule_name
        , par_owner_login_name
@@ -6912,7 +6912,7 @@ DECLARE
   var_job_owner_sid CHAR(85);
 BEGIN
   /* Remove any leading/trailing spaces from parameters */
-  SELECT LTRIM(RTRIM(par_name)) INTO par_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name)) INTO par_name;
 
   /* Check that we can uniquely identify the job */
   SELECT t.par_job_name
@@ -7636,25 +7636,25 @@ BEGIN
     /* Not updatable */
     /* Remove any leading/trailing spaces from parameters (except @owner_login_name) */
     SELECT
-        LTRIM(RTRIM(par_job_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_job_name))
         INTO par_job_name;
     SELECT
-        LTRIM(RTRIM(par_new_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_new_name))
         INTO par_new_name;
     SELECT
-        LTRIM(RTRIM(par_description))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_description))
         INTO par_description;
     SELECT
-        LTRIM(RTRIM(par_category_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_category_name))
         INTO par_category_name;
     SELECT
-        LTRIM(RTRIM(par_notify_email_operator_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_notify_email_operator_name))
         INTO par_notify_email_operator_name;
     SELECT
-        LTRIM(RTRIM(par_notify_netsend_operator_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_notify_netsend_operator_name))
         INTO par_notify_netsend_operator_name;
     SELECT
-        LTRIM(RTRIM(par_notify_page_operator_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_notify_page_operator_name))
         INTO par_notify_page_operator_name
     /* Are we modifying an attribute which tsql agent caches? */;
 
@@ -7890,10 +7890,10 @@ DECLARE
 BEGIN
     /* Remove any leading/trailing spaces from parameters */
     SELECT
-        LTRIM(RTRIM(par_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name))
         INTO par_name;
     SELECT
-        LTRIM(RTRIM(par_new_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_new_name))
         INTO par_new_name
     /* Turn [nullable] empty string parameters into NULLs */;
 
@@ -8104,14 +8104,14 @@ DECLARE
 BEGIN
     SELECT NULL INTO var_new_proxy_id;
     /* Remove any leading/trailing spaces from parameters */
-    SELECT LTRIM(RTRIM(par_step_name)) INTO par_step_name;
-    SELECT LTRIM(RTRIM(par_subsystem)) INTO par_subsystem;
-    SELECT LTRIM(RTRIM(par_command)) INTO par_command;
-    SELECT LTRIM(RTRIM(par_server)) INTO par_server;
-    SELECT LTRIM(RTRIM(par_database_name)) INTO par_database_name;
-    SELECT LTRIM(RTRIM(par_database_user_name)) INTO par_database_user_name;
-    SELECT LTRIM(RTRIM(par_output_file_name)) INTO par_output_file_name;
-    SELECT LTRIM(RTRIM(par_proxy_name)) INTO par_proxy_name;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_step_name)) INTO par_step_name;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_subsystem)) INTO par_subsystem;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_command)) INTO par_command;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_server)) INTO par_server;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_database_name)) INTO par_database_name;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_database_user_name)) INTO par_database_user_name;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_output_file_name)) INTO par_output_file_name;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_proxy_name)) INTO par_proxy_name;
     /* Make sure Dts is translated into new subsystem's name SSIS */
     /* IF (@subsystem IS NOT NULL AND UPPER(@subsystem collate SQL_Latin1_General_CP1_CS_AS) = N'DTS') */
     /* BEGIN */
@@ -8331,13 +8331,13 @@ DECLARE
 BEGIN
     /* Remove any leading/trailing spaces from parameters */
     SELECT
-        LTRIM(RTRIM(par_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name))
         INTO par_name;
     SELECT
-        LTRIM(RTRIM(par_new_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_new_name))
         INTO par_new_name;
     SELECT
-        LTRIM(RTRIM(par_owner_login_name))
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_owner_login_name))
         INTO par_owner_login_name
     /* Turn [nullable] empty string parameters into NULLs */;
 
@@ -8535,9 +8535,9 @@ DECLARE
   var_valid_range VARCHAR(50);
 BEGIN
   /* Remove any leading/trailing spaces from parameters */
-  SELECT LTRIM(RTRIM(par_name)) INTO par_name;
-  SELECT LTRIM(RTRIM(par_category_name)) INTO par_category_name;
-  SELECT UPPER(LTRIM(RTRIM(par_originating_server))) INTO par_originating_server;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name)) INTO par_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_category_name)) INTO par_category_name;
+  SELECT UPPER(PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_originating_server))) INTO par_originating_server;
 
   IF (
     EXISTS (
@@ -8615,7 +8615,7 @@ RETURNS integer AS
 $body$
 BEGIN
   /* Remove any leading/trailing spaces from parameters */
-  SELECT LTRIM(RTRIM(par_date_name)) INTO par_date_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_date_name)) INTO par_date_name;
 
   /* Success */
   returncode := 0;
@@ -8641,9 +8641,9 @@ DECLARE
   var_job_id_as_char VARCHAR(36);
 BEGIN
   /* Remove any leading/trailing spaces from parameters */
-  SELECT LTRIM(RTRIM(par_name_of_name_parameter)) INTO par_name_of_name_parameter;
-  SELECT LTRIM(RTRIM(par_name_of_id_parameter)) INTO par_name_of_id_parameter;
-  SELECT LTRIM(RTRIM(par_job_name)) INTO par_job_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name_of_name_parameter)) INTO par_name_of_name_parameter;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name_of_id_parameter)) INTO par_name_of_id_parameter;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_job_name)) INTO par_job_name;
 
   IF (par_job_name = '')
   THEN
@@ -8728,7 +8728,7 @@ DECLARE
   var_second INT;
 BEGIN
   /* Remove any leading/trailing spaces from parameters */
-  SELECT LTRIM(RTRIM(par_time_name)) INTO par_time_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_time_name)) INTO par_time_name;
 
   IF ((par_time < 0) OR (par_time > 235959))
   THEN
@@ -8803,9 +8803,9 @@ DECLARE
   var_owner_name VARCHAR(128);
 BEGIN
   /* Remove any leading/trailing spaces from parameters */
-  SELECT LTRIM(RTRIM(par_subsystem)) INTO par_subsystem;
-  SELECT LTRIM(RTRIM(par_server)) INTO par_server;
-  SELECT LTRIM(RTRIM(par_output_file_name)) INTO par_output_file_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_subsystem)) INTO par_subsystem;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_server)) INTO par_server;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_output_file_name)) INTO par_output_file_name;
 
   /* Get current maximum step id */
   SELECT COALESCE(MAX(step_id), 0)
@@ -8937,7 +8937,7 @@ DECLARE
   var_isAdmin INT;
 BEGIN
   /* Remove any leading/trailing spaces from parameters */
-  SELECT LTRIM(RTRIM(par_name)) INTO par_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name)) INTO par_name;
 
   /* Make sure that NULL input/output parameters - if NULL - are initialized to 0 */
   SELECT COALESCE(par_freq_interval, 0) INTO par_freq_interval;
@@ -9226,9 +9226,9 @@ DECLARE
   var_sch_name_count INT;
 BEGIN
   /* Remove any leading/trailing spaces from parameters */
-  SELECT LTRIM(RTRIM(par_name_of_name_parameter)) INTO par_name_of_name_parameter;
-  SELECT LTRIM(RTRIM(par_name_of_id_parameter)) INTO par_name_of_id_parameter;
-  SELECT LTRIM(RTRIM(par_schedule_name)) INTO par_schedule_name;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name_of_name_parameter)) INTO par_name_of_name_parameter;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name_of_id_parameter)) INTO par_name_of_id_parameter;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_schedule_name)) INTO par_schedule_name;
   SELECT 0 INTO var_sch_name_count;
 
   IF (par_schedule_name = '')
@@ -10122,7 +10122,7 @@ BEGIN
     IF (length(name) <= 2 AND (position('"' IN name) != 0 OR position(']' IN name) != 0 OR position('[' IN name) != 0))
         -- invalid name
         THEN RETURN 0;
-    ELSIF left(name, 1) = '[' THEN
+    ELSIF PG_CATALOG.left(name, 1) = '[' THEN
         pos = position('].' IN name);
         IF pos = 0 THEN 
             -- invalid name
@@ -10130,9 +10130,9 @@ BEGIN
         ELSE
             RETURN pos + 1;
         END IF;
-    ELSIF left(name, 1) = '"' THEN
+    ELSIF PG_CATALOG.left(name, 1) = '"' THEN
         -- search from position 1 in case name starts with a double quote.
-        pos = position('".' IN right(name, length(name) - 1));
+        pos = position('".' IN PG_CATALOG.right(name, length(name) - 1));
         IF pos = 0 THEN
             -- invalid name
             RETURN 0;
@@ -10160,7 +10160,7 @@ DECLARE
     counter int;
     cur_pos int;
 BEGIN
-    lower_object_name = lower(rtrim(name));
+    lower_object_name = lower(PG_CATALOG.rtrim(name));
 
     counter = 1;
     cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);
@@ -10172,7 +10172,7 @@ BEGIN
             RETURN;
         END IF;
 
-        names[counter] = babelfish_remove_delimiter_pair(rtrim(left(lower_object_name, cur_pos - 1)));
+        names[counter] = babelfish_remove_delimiter_pair(PG_CATALOG.rtrim(PG_CATALOG.left(lower_object_name, cur_pos - 1)));
         
         -- invalid name
         IF names[counter] IS NULL THEN
@@ -10199,7 +10199,7 @@ BEGIN
     END CASE;
 
     -- Assign each name accordingly
-    object_name = sys.babelfish_truncate_identifier(babelfish_remove_delimiter_pair(rtrim(lower_object_name)));
+    object_name = sys.babelfish_truncate_identifier(babelfish_remove_delimiter_pair(PG_CATALOG.rtrim(lower_object_name)));
 END;
 $$
 LANGUAGE plpgsql
@@ -10360,3 +10360,13 @@ LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.bbf_get_context_info()
 RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql', 'bbf_get_context_info' LANGUAGE C STABLE;
+
+/*
+ * bbf_get_immediate_base_type_of_UDT()
+ * This function returns the Immediate base type for UDT.
+ * Returns NULL if given type is not an UDT
+ */
+CREATE OR REPLACE FUNCTION sys.bbf_get_immediate_base_type_of_UDT(OID)
+RETURNS OID
+AS 'babelfishpg_tsql', 'get_immediate_base_type_of_UDT'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
