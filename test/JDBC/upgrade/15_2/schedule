@@ -453,5 +453,6 @@ babel_test_int2_numeric_oper_before_16_3
 BABEL-4869
 babel_4328_datetime-before-16_3
 babel_4328_datetime2-before-16_3
+translate-before-15_8-or-16_4
 babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
