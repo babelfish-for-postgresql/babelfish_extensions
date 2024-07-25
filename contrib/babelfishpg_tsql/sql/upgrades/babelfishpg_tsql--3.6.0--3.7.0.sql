@@ -5008,43 +5008,35 @@ END;
 $$
 LANGUAGE plpgsql STRICT STABLE;
 
-DROP FUNCTION IF EXISTS sys.substring(string TEXT, i INTEGER, j INTEGER);
-
-DROP FUNCTION IF EXISTS sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER);
-
-DROP FUNCTION IF EXISTS sys.substring(string sys.NVARCHAR, i INTEGER, j INTEGER);
-
-DROP FUNCTION IF EXISTS sys.substring(string sys.NCHAR, i INTEGER, j INTEGER);
-
-CREATE OR REPLACE FUNCTION sys.substring(string TEXT, start INTEGER, length INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string TEXT, i INTEGER, j INTEGER)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string NTEXT, start INTEGER, length INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string NTEXT, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, start INTEGER, length INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string sys.BPCHAR, start INTEGER, length INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string sys.BPCHAR, i INTEGER, j INTEGER)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string sys.NVARCHAR, start INTEGER, length INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NVARCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, start INTEGER, length INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string sys.VARBINARY, start INTEGER, length INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARBINARY, i INTEGER, j INTEGER)
 RETURNS sys.VARBINARY
 AS 'babelfishpg_tsql', 'tsql_varbinary_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string ANYELEMENT, start INTEGER, length INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string ANYELEMENT, i INTEGER, j INTEGER)
 RETURNS sys.VARBINARY
 AS
 $BODY$
@@ -5064,7 +5056,7 @@ BEGIN
         RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of substring function.', string_arg_datatype;
     END IF;
 
-    RETURN sys.substring(string::sys.VARBINARY, start, length);
+    RETURN sys.substring(string::sys.VARBINARY, i, j);
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
