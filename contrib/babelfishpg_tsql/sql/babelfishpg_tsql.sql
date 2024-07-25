@@ -2131,7 +2131,7 @@ BEGIN
 		BEGIN
 			IF EXISTS ( -- Search in the sys schema 
 					SELECT * FROM sys.sp_stored_procedures_view
-					WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+					WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 						AND (LOWER(procedure_owner) = 'sys'))
 			BEGIN
 				SELECT PROCEDURE_QUALIFIER,
@@ -2142,13 +2142,13 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = 'sys')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			ELSE IF EXISTS ( 
 				SELECT * FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
 					)
 			BEGIN
@@ -2160,7 +2160,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -2174,7 +2174,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = 'dbo')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -2191,7 +2191,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+			WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 				AND (LOWER(procedure_owner) = LOWER(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -2206,7 +2206,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, -2)) LIKE LOWER(@sp_name))
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) LIKE LOWER(@sp_name))
 				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -3472,9 +3472,9 @@ BEGIN
 
 	-- Get the executing statement for each spid and extract the main stmt type
 	-- This is for informational purposes only
-	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
+	SELECT pid, CAST(query AS sys.VARCHAR(MAX)) INTO #sp_who_tmp FROM pg_stat_activity pgsa
 	
-	UPDATE #sp_who_tmp SET query = ' ' + TRIM(UPPER(query))
+	UPDATE #sp_who_tmp SET query = ' ' + TRIM(CAST(UPPER(query) AS sys.VARCHAR(MAX)))
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
