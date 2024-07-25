@@ -187,6 +187,8 @@ FROM sys.babelfish_function_ext
 GO
 ~~START~~
 varchar#!#varchar#!#text#!#text
+master_babel-2877-vu-prepare schema . with .. dots#!#babel-2877-vu-prepare function . with .. dots#!#babel-2877-vu-prepare function . with .. dots(integer)#!#<NULL>
+master_babel-2877-vu-prepare_func_schema#!#babel-2877-vu-prepare_func#!#babel-2877-vu-prepare_func(integer)#!#<NULL>
 master_dbo#!#babel_2877_vu_prepare_func1#!#babel_2877_vu_prepare_func1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 3)
 master_dbo#!#babel_2877_vu_prepare_func2#!#babel_2877_vu_prepare_func2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
 master_dbo#!#babel_2877_vu_prepare_func3#!#babel_2877_vu_prepare_func3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
@@ -221,6 +223,8 @@ FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORD
 GO
 ~~START~~
 nvarchar#!#int#!#int
+BABEL-2877-vu-prepare Function . WITH .. DOTS#!#1#!#1
+BABEL-2877-vu-prepare_FUNC#!#1#!#1
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDOFF#!#0#!#0
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDON#!#0#!#1
 BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDOFF#!#1#!#0

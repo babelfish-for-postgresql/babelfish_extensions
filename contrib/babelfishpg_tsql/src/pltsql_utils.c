@@ -6,6 +6,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
+#include "funcapi.h"
 #include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/parse_type.h"
 #include "mb/pg_wchar.h"
@@ -46,6 +47,7 @@ extern char *get_cur_db_name(void);
 extern char *construct_unique_index_name(char *index_name, char *relation_name); 
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
 extern const char *get_dbo_schema_name(const char *dbname);
+PG_FUNCTION_INFO_V1(split_identifier_internal);
 
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
@@ -1592,6 +1594,71 @@ split_object_name(char *name)
 	}
 
 	return res;
+}
+
+/*
+ * Wrapper over split_object_name function above to expose it as a SQL function.
+ */
+Datum
+split_identifier_internal(PG_FUNCTION_ARGS)
+{
+	FuncCallContext	*funcctx;
+	char        	**split_parts = NULL;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		int         	num_parts = 0;
+		MemoryContext	oldcontext;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		if (!PG_ARGISNULL(0))
+		{
+			char	*input;
+			char	**splited_object_name;
+			int 	i, j = 0;
+
+			input = text_to_cstring(PG_GETARG_TEXT_P(0));
+			splited_object_name = split_object_name(input);
+
+			for (i = 0; i < 4; i++)
+			{
+				if (strlen(splited_object_name[i]) > 0)
+					num_parts++;
+			}
+
+			if (num_parts > 0)
+			{
+				split_parts = (char **) palloc(num_parts * sizeof(char *));
+
+				for (i = 0; i < 4; i++)
+				{
+					if (i >= (4 - num_parts))
+						split_parts[j++] = splited_object_name[i];
+					else
+						pfree(splited_object_name[i]);
+				}
+			}
+			pfree(splited_object_name);
+		}
+
+		funcctx->max_calls = num_parts;
+		funcctx->user_fctx = split_parts;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	split_parts = (char **) funcctx->user_fctx;
+
+	if (funcctx->call_cntr < funcctx->max_calls)
+	{
+		VarChar *val = (*common_utility_plugin_ptr->tsql_varchar_input) (split_parts[funcctx->call_cntr],
+																		 strlen(split_parts[funcctx->call_cntr]),
+																		 -1);
+		SRF_RETURN_NEXT(funcctx, PointerGetDatum(val));
+	}
+	else
+		SRF_RETURN_DONE(funcctx);
 }
 
 

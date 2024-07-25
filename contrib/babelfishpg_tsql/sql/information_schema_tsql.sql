@@ -241,16 +241,28 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 	SELECT c.oid AS "TABLE_OID",
 			CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-			CAST(CASE
-				 	WHEN c.reloptions[1] LIKE 'bbf_original_rel_name=%' THEN substring(c.reloptions[1], 23)
-				 	ELSE c.relname
-			     END AS sys.nvarchar(128)) AS "TABLE_NAME",
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+					c.relname)
+				AS sys.nvarchar(128)) AS "TABLE_NAME",
 
-			CAST(CASE
-				 	WHEN a.attoptions[1] LIKE 'bbf_original_name=%' THEN substring(a.attoptions[1], 19)
-				 	ELSE a.attname 
-			     END AS sys.nvarchar(128)) AS "COLUMN_NAME",
-			
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(a.attoptions) AS option),
+					a.attname)
+				AS sys.nvarchar(128)) AS "COLUMN_NAME",
+
 			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
 			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
 			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
@@ -333,6 +345,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 	WHERE (NOT pg_is_other_temp_schema(nc.oid))
 		AND a.attnum > 0 AND NOT a.attisdropped
 		AND c.relkind IN ('r', 'v', 'p')
+		AND c.relispartition = false
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_column_privilege(c.oid, a.attnum,
 									'SELECT, INSERT, UPDATE, REFERENCES'))
@@ -448,9 +461,15 @@ CREATE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
-			 CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
-                  ELSE c.relname END
-			 AS sys._ci_sysname) AS "TABLE_NAME",
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+				c.relname)
+			AS sys._ci_sysname) AS "TABLE_NAME",
 
 		   CAST(
 			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
@@ -463,6 +482,7 @@ CREATE VIEW information_schema_tsql.tables AS
 		   LEFT JOIN sys.table_types_internal tt on c.oid = tt.typrelid
 
 	WHERE c.relkind IN ('r', 'v', 'p')
+		AND c.relispartition = false
 		AND (NOT pg_is_other_temp_schema(nc.oid))
 		AND tt.typrelid IS NULL
 		AND (pg_has_role(c.relowner, 'USAGE')
@@ -502,6 +522,7 @@ CREATE VIEW information_schema_tsql.table_constraints AS
           AND c.conrelid = r.oid
           AND c.contype NOT IN ('t', 'x')
           AND r.relkind IN ('r', 'p')
+          AND relispartition = false
           AND (NOT pg_is_other_temp_schema(nr.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -565,6 +586,7 @@ CREATE VIEW information_schema_tsql.check_constraints AS
           AND c.conrelid = r.oid
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
+          AND r.relispartition = false
           AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -605,6 +627,7 @@ FROM (
           AND c.connamespace = nc.oid
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
+          AND r.relispartition = false
           AND NOT a.attisdropped
 	  AND (pg_has_role(r.relowner, 'USAGE')
 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -627,6 +650,7 @@ FROM (
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind IN ('r', 'p')
+          AND r.relispartition = false
 	  AND (pg_has_role(r.relowner, 'USAGE')
 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
@@ -809,7 +833,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
 		pg_constraint c 
-		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p')
+		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p') AND r.relispartition = false
 		JOIN sys.pg_namespace_ext nc ON nc.oid = c.connamespace AND r.relnamespace = nc.oid 
 		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nc.nspname AND ext.dbid = sys.db_id()
 		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
