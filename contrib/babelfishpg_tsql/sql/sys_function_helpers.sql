@@ -10370,3 +10370,7 @@ CREATE OR REPLACE FUNCTION sys.bbf_get_immediate_base_type_of_UDT(OID)
 RETURNS OID
 AS 'babelfishpg_tsql', 'get_immediate_base_type_of_UDT'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_split_identifier(IN identifier VARCHAR, OUT value VARCHAR)
+RETURNS SETOF VARCHAR AS 'babelfishpg_tsql', 'split_identifier_internal'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

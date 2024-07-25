@@ -167,6 +167,7 @@ BABEL-SP_STORED_PROCEDURES
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
+SP_TABLES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -209,7 +210,7 @@ ISC-Columns
 isc-schemata-dep
 ISC-sequences
 ISC-Table_Constraints
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade

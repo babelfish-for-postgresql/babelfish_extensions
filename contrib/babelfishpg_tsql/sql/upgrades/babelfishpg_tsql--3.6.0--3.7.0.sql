@@ -38,6 +38,103 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
+	in_table_name sys.nvarchar(384) = NULL,
+	in_table_owner sys.nvarchar(384) = NULL, 
+	in_table_qualifier sys.sysname = NULL,
+	in_table_type sys.varchar(100) = NULL,
+	in_fusepattern sys.bit = '1')
+	RETURNS TABLE (
+		out_table_qualifier sys.sysname,
+		out_table_owner sys.sysname,
+		out_table_name sys.sysname,
+		out_table_type sys.varchar(32),
+		out_remarks sys.varchar(254)
+	)
+	AS $$
+		DECLARE opt_table sys.varchar(16) = '';
+		DECLARE opt_view sys.varchar(16) = '';
+		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
+	BEGIN
+		IF upper(cs_as_in_table_type) LIKE '%''TABLE''%' THEN
+			opt_table = 'TABLE';
+		END IF;
+		IF upper(cs_as_in_table_type) LIKE '%''VIEW''%' THEN
+			opt_view = 'VIEW';
+		END IF;
+		IF in_fusepattern = 1 THEN
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE (in_table_name IS NULL OR table_name LIKE in_table_name collate sys.database_default)
+			AND (in_table_owner IS NULL OR table_owner LIKE in_table_owner collate sys.database_default)
+			AND (in_table_qualifier IS NULL OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
+			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		ELSE 
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE (in_table_name IS NULL OR table_name = in_table_name collate sys.database_default)
+			AND (in_table_owner IS NULL OR table_owner = in_table_owner collate sys.database_default)
+			AND (in_table_qualifier IS NULL OR table_qualifier = in_table_qualifier collate sys.database_default)
+			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		END IF;
+	END;
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE PROCEDURE sys.sp_tables (
+    "@table_name" sys.nvarchar(384) = NULL,
+    "@table_owner" sys.nvarchar(384) = NULL, 
+    "@table_qualifier" sys.sysname = NULL,
+    "@table_type" sys.nvarchar(100) = NULL,
+    "@fusepattern" sys.bit = '1')
+AS $$
+BEGIN
+
+	-- Handle special case: Enumerate all databases when name and owner are blank but qualifier is '%'
+	IF (@table_qualifier = '%' AND @table_owner = '' AND @table_name = '')
+	BEGIN
+		SELECT
+			d.name AS TABLE_QUALIFIER,
+			CAST(NULL AS sys.sysname) AS TABLE_OWNER,
+			CAST(NULL AS sys.sysname) AS TABLE_NAME,
+			CAST(NULL AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(NULL AS sys.varchar(254)) AS REMARKS
+		FROM sys.databases d ORDER BY TABLE_QUALIFIER;
+		
+		RETURN;
+	END;
+
+	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	SELECT
+	CAST(out_table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+	CAST(out_table_owner AS sys.sysname) AS TABLE_OWNER,
+	CAST(out_table_name AS sys.sysname) AS TABLE_NAME,
+	CAST(out_table_type AS sys.varchar(32)) AS TABLE_TYPE,
+	CAST(out_remarks AS sys.varchar(254)) AS REMARKS
+	FROM sys.sp_tables_internal(@table_name, @table_owner, @table_qualifier, CAST(@table_type AS varchar(100)), @fusepattern);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
+
 -- Update deprecated object_id function(s) since left function now restricts TEXT datatype
 DO $$
 BEGIN
@@ -5007,6 +5104,242 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STRICT STABLE;
+
+CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
+	SELECT c.oid AS "TABLE_OID",
+			CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+					c.relname)
+				AS sys.nvarchar(128)) AS "TABLE_NAME",
+
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(a.attoptions) AS option),
+					a.attname)
+				AS sys.nvarchar(128)) AS "COLUMN_NAME",
+
+			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
+			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
+			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
+				AS varchar(3))
+				AS "IS_NULLABLE",
+
+			CAST(
+				CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype)
+				WHEN tsql_type_name.tsql_type_name IS NULL THEN format_type(t.oid, NULL::integer)
+				ELSE tsql_type_name END
+				AS sys.nvarchar(128))
+				AS "DATA_TYPE",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_max_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_MAXIMUM_LENGTH",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_OCTET_LENGTH",
+
+			CAST(
+				/* Handle Tinyint separately */
+				information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, true_typid, true_typmod)
+				AS sys.tinyint)
+				AS "NUMERIC_PRECISION",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, true_typid, true_typmod)
+				AS smallint)
+				AS "NUMERIC_PRECISION_RADIX",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, true_typid, true_typmod)
+				AS int)
+				AS "NUMERIC_SCALE",
+
+			CAST(
+				information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
+				AS smallint)
+				AS "DATETIME_PRECISION",
+
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
+			/*
+			 * TODO: We need to first create mapping of collation name to char-set name;
+			 * Until then return null.
+			 */
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_CATALOG",
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+
+			/* Returns Babelfish specific collation name. */
+			CAST(co.collname AS sys.nvarchar(128)) AS "COLLATION_NAME",
+
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN nc.dbname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN ext.orig_name ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN t.typname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
+
+	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
+		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
+		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
+		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+		LEFT JOIN pg_collation co on co.oid = a.attcollation
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
+		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
+		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
+		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
+
+	WHERE (NOT pg_is_other_temp_schema(nc.oid))
+		AND a.attnum > 0 AND NOT a.attisdropped
+		AND c.relkind IN ('r', 'v', 'p')
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_column_privilege(c.oid, a.attnum,
+									'SELECT, INSERT, UPDATE, REFERENCES'))
+		AND ext.dbid =sys.db_id();
+
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		   CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+				c.relname)
+			AS sys._ci_sysname) AS "TABLE_NAME",
+
+		   CAST(
+			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
+				  WHEN c.relkind = 'v' THEN 'VIEW'
+				  ELSE null END
+			 AS sys.varchar(10)) COLLATE sys.database_default AS "TABLE_TYPE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+		   LEFT JOIN sys.table_types_internal tt on c.oid = tt.typrelid
+
+	WHERE c.relkind IN ('r', 'v', 'p')
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND tt.typrelid IS NULL
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = sys.db_id()
+		AND (NOT c.relname = 'sysdatabases');
+
+CREATE OR REPLACE FUNCTION sys.babelfish_split_identifier(IN identifier VARCHAR, OUT value VARCHAR)
+RETURNS SETOF VARCHAR AS 'babelfishpg_tsql', 'split_identifier_internal'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_word_parse(
+	IN "@input" sys.nvarchar(776),
+	IN "@objtype" sys.varchar(13),
+	INOUT "@subname" sys.nvarchar(776),
+	INOUT "@curr_relname" sys.nvarchar(776),
+	INOUT "@schemaname" sys.nvarchar(776),
+	INOUT "@dbname" sys.nvarchar(776)
+)
+AS $$
+BEGIN
+	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row, * 
+	INTO #sp_rename_temptable 
+	FROM sys.babelfish_split_identifier(@input) ORDER BY row DESC;
+
+	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as id, * 
+	INTO #sp_rename_temptable2 
+	FROM #sp_rename_temptable;
+	
+	DECLARE @row_count INT;
+	SELECT @row_count = COUNT(*) FROM #sp_rename_temptable2;
+
+	IF @objtype = 'COLUMN'
+		BEGIN
+			IF @row_count = 1
+				BEGIN
+					THROW 33557097, N'Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.', 1;
+				END
+			ELSE IF @row_count > 4
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			ELSE
+				BEGIN
+					IF @row_count > 1
+						BEGIN
+							SELECT @subname = value FROM #sp_rename_temptable2 WHERE id = 1;
+							SELECT @curr_relname = value FROM #sp_rename_temptable2 WHERE id = 2;
+							SET @schemaname = sys.schema_name();
+
+						END
+					IF @row_count > 2
+						BEGIN
+							SELECT @schemaname = value FROM #sp_rename_temptable2 WHERE id = 3;
+						END
+					IF @row_count > 3
+						BEGIN
+							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 4;
+							IF @dbname != sys.db_name()
+								BEGIN
+									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+								END
+						END
+				END
+		END
+	ELSE
+		BEGIN
+			IF @row_count > 3
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			ELSE
+				BEGIN
+					SET @curr_relname = NULL;
+					IF @row_count > 0
+						BEGIN
+							SELECT @subname = value FROM #sp_rename_temptable2 WHERE id = 1;
+							SET @schemaname = sys.schema_name();
+						END
+					IF @row_count > 1
+						BEGIN
+							SELECT @schemaname = value FROM #sp_rename_temptable2 WHERE id = 2;
+						END
+					IF @row_count > 2
+						BEGIN
+							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 3;
+							IF @dbname != sys.db_name()
+								BEGIN
+									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+								END
+						END
+				END
+		END
+END;
+$$
+LANGUAGE 'pltsql';
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
