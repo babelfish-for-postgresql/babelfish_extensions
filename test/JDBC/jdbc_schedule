@@ -193,6 +193,6 @@ ignore#!#babel_4328_datetimeoffset-before-14_12-vu-cleanup
 ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-prepare
 ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-verify
 ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-cleanup
-ignore#!#BABEL-2877-before_16_4_or_15_8_or_14_13-vu-prepare
-ignore#!#BABEL-2877-before_16_4_or_15_8_or_14_13-vu-verify
-ignore#!#BABEL-2877-before_16_4_or_15_8_or_14_13-vu-cleanup
+ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-prepare
+ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-verify
+ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-cleanup

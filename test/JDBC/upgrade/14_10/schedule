@@ -245,7 +245,7 @@ sys-all_sql_modules-before-14_12-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
-BABEL-2877-before_16_4_or_15_8_or_14_13
+babelfish_function_ext-before_16_4_or_15_8_or_14_13
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
