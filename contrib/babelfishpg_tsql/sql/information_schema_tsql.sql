@@ -57,7 +57,7 @@ $$SELECT
 		THEN 1073741823
 		WHEN type = 'sysname'
 		THEN 128
-		WHEN type IN ('xml', 'vector', 'geometry', 'geography')
+		WHEN type IN ('xml', 'vector', 'halfvec', 'sparsevec', 'geometry', 'geography')
 		THEN -1
 		WHEN type = 'sql_variant'
 		THEN 0
@@ -241,16 +241,28 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 	SELECT c.oid AS "TABLE_OID",
 			CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-			CAST(CASE
-				 	WHEN c.reloptions[1] LIKE 'bbf_original_rel_name=%' THEN substring(c.reloptions[1], 23)
-				 	ELSE c.relname
-			     END AS sys.nvarchar(128)) AS "TABLE_NAME",
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+					c.relname)
+				AS sys.nvarchar(128)) AS "TABLE_NAME",
 
-			CAST(CASE
-				 	WHEN a.attoptions[1] LIKE 'bbf_original_name=%' THEN substring(a.attoptions[1], 19)
-				 	ELSE a.attname 
-			     END AS sys.nvarchar(128)) AS "COLUMN_NAME",
-			
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(a.attoptions) AS option),
+					a.attname)
+				AS sys.nvarchar(128)) AS "COLUMN_NAME",
+
 			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
 			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
 			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
@@ -449,9 +461,15 @@ CREATE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
-			 CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
-                  ELSE c.relname END
-			 AS sys._ci_sysname) AS "TABLE_NAME",
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+				c.relname)
+			AS sys._ci_sysname) AS "TABLE_NAME",
 
 		   CAST(
 			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
