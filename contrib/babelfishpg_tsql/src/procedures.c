@@ -92,7 +92,6 @@ static List *gen_sp_droprolemember_subcmds(const char *user, const char *member)
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
 static void update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
-static void remove_delimited_identifer(char *str);
 static void rename_extended_property(ObjectType objtype,
 									 const char *var_schema_name,
 									 const char *var_major_name,
@@ -3551,8 +3550,6 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-extern bool pltsql_quoted_identifier;
-
 Datum
 sp_renamedb_internal(PG_FUNCTION_ARGS)
 {
@@ -3714,16 +3711,6 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			len = strlen(curr_relname);
 			while(isspace(curr_relname[len - 1]))
 				curr_relname[--len] = 0;
-		}
-
-		/* remove delimited identifiers if quoted_identifier is on */
-		if (pltsql_quoted_identifier)
-		{
-			remove_delimited_identifer(obj_name);
-			remove_delimited_identifer(schema_name);
-			if (curr_relname != NULL) {
-				remove_delimited_identifer(curr_relname);
-			}
 		}
 
 		/* check if inputs are empty after removing trailing spaces */
@@ -3958,6 +3945,7 @@ rename_extended_property(ObjectType objtype, const char *var_schema_name,
 	}
 }
 
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
 
 static List *
@@ -3974,6 +3962,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	{
 		case OBJECT_TABLE:
 			appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
+			appendStringInfo(&query, "ALTER TABLE dummy SET (dummy = 'dummy'); ");
 			break;
 		case OBJECT_VIEW:
 			appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
@@ -4012,7 +4001,10 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 	sql_dialect = old_dialect;
 
-	if ((objtype != OBJECT_COLUMN) && (objtype != OBJECT_TRIGGER) && (list_length(res) != 1))
+	if ((objtype != OBJECT_TABLE) &&
+		(objtype != OBJECT_COLUMN) &&
+		(objtype != OBJECT_TRIGGER) &&
+		(list_length(res) != 1))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
@@ -4030,6 +4022,29 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		renamestmt->newname = pstrdup(lowerstr(newname));
 		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
 		renamestmt->relation->relname = pstrdup(lowerstr(objname));
+
+		if (objtype == OBJECT_TABLE)
+		{
+			AlterTableStmt *altertablestmt;
+			AlterTableCmd *cmd;
+			ListCell *lc = NULL;
+
+			rewrite_object_refs(stmt);
+			/* extra query nodes for modifying reloption */
+			stmt = parsetree_nth_stmt(res, 1);
+			altertablestmt = (AlterTableStmt *) stmt;
+			if (!IsA(altertablestmt, AlterTableStmt))
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
+
+			altertablestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+			altertablestmt->relation->relname = pstrdup(lowerstr(newname));
+			altertablestmt->objtype = OBJECT_TABLE;
+			/* get data of the first node */
+			lc = list_head(altertablestmt->cmds);
+			cmd = (AlterTableCmd *) lfirst(lc);
+			cmd->subtype = AT_SetRelOptions;
+			cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(newname)), -1));
+		}
 	}
 	else if ((objtype == OBJECT_PROCEDURE) || (objtype == OBJECT_FUNCTION))
 	{
@@ -4104,23 +4119,6 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	rewrite_object_refs(stmt);
 
 	return res;
-}
-
-static void
-remove_delimited_identifer(char *str)
-{
-	size_t len = strlen(str);
-	if ((str[0] == '"' && str[len - 1] == '"') || (str[0] == '[' && str[len - 1] == ']'))
-	{
-		memmove(str, &str[1], len - 1);
-		str[len - 2] = '\0';
-	}
-	if (isspace(str[0]))
-		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						errmsg("Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.")));
-	len = strlen(str);
-	while (isspace(str[len - 1]))
-		str[--len] = 0;
 }
 
 Datum
