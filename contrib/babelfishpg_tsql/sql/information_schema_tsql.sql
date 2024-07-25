@@ -333,6 +333,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 	WHERE (NOT pg_is_other_temp_schema(nc.oid))
 		AND a.attnum > 0 AND NOT a.attisdropped
 		AND c.relkind IN ('r', 'v', 'p')
+		AND c.relispartition = false
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_column_privilege(c.oid, a.attnum,
 									'SELECT, INSERT, UPDATE, REFERENCES'))
@@ -463,6 +464,7 @@ CREATE VIEW information_schema_tsql.tables AS
 		   LEFT JOIN sys.table_types_internal tt on c.oid = tt.typrelid
 
 	WHERE c.relkind IN ('r', 'v', 'p')
+		AND c.relispartition = false
 		AND (NOT pg_is_other_temp_schema(nc.oid))
 		AND tt.typrelid IS NULL
 		AND (pg_has_role(c.relowner, 'USAGE')
@@ -502,6 +504,7 @@ CREATE VIEW information_schema_tsql.table_constraints AS
           AND c.conrelid = r.oid
           AND c.contype NOT IN ('t', 'x')
           AND r.relkind IN ('r', 'p')
+          AND relispartition = false
           AND (NOT pg_is_other_temp_schema(nr.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -565,6 +568,7 @@ CREATE VIEW information_schema_tsql.check_constraints AS
           AND c.conrelid = r.oid
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
+          AND r.relispartition = false
           AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -605,6 +609,7 @@ FROM (
           AND c.connamespace = nc.oid
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
+          AND r.relispartition = false
           AND NOT a.attisdropped
 	  AND (pg_has_role(r.relowner, 'USAGE')
 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -627,6 +632,7 @@ FROM (
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind IN ('r', 'p')
+          AND r.relispartition = false
 	  AND (pg_has_role(r.relowner, 'USAGE')
 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
@@ -809,7 +815,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
 		pg_constraint c 
-		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p')
+		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p') AND r.relispartition = false
 		JOIN sys.pg_namespace_ext nc ON nc.oid = c.connamespace AND r.relnamespace = nc.oid 
 		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nc.nspname AND ext.dbid = sys.db_id()
 		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
