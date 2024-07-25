@@ -2752,8 +2752,8 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, Oid *input
 						 errmsg("%s %s has no parameters and arguments were supplied.", obj_type, NameListToString(names))),
 						parser_errposition(pstate, location));
 			}
+			ReleaseSysCache(tup);
 		}
-		heap_freetuple(tup);
 	}
 }
 
