@@ -2509,7 +2509,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									int			location = defel->location;
 
-									orig_loginname = extract_identifier(queryString + location);
+									orig_loginname = extract_identifier(queryString + location, NULL);
 									login_options = lappend(login_options, defel);
 								}
 								else if (strcmp(defel->defname, "from_windows") == 0)
@@ -2684,7 +2684,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								char	   *orig_user_name;
 
-								orig_user_name = extract_identifier(queryString + location);
+								orig_user_name = extract_identifier(queryString + location, NULL);
 								user_options = lappend(user_options,
 													   makeDefElem("original_user_name",
 																   (Node *) makeString(orig_user_name),
@@ -2739,7 +2739,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								char	   *orig_user_name;
 
-								orig_user_name = extract_identifier(queryString + location);
+								orig_user_name = extract_identifier(queryString + location, NULL);
 								user_options = lappend(user_options,
 													   makeDefElem("original_user_name",
 																   (Node *) makeString(orig_user_name),
