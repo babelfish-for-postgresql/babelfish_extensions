@@ -983,10 +983,10 @@ AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
-	in_table_name sys.nvarchar(384) = '',
-	in_table_owner sys.nvarchar(384) = '', 
-	in_table_qualifier sys.sysname = '',
-	in_table_type sys.varchar(100) = '',
+	in_table_name sys.nvarchar(384) = NULL,
+	in_table_owner sys.nvarchar(384) = NULL, 
+	in_table_qualifier sys.sysname = NULL,
+	in_table_type sys.varchar(100) = NULL,
 	in_fusepattern sys.bit = '1')
 	RETURNS TABLE (
 		out_table_qualifier sys.sysname,
@@ -1015,12 +1015,10 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			CAST(remarks AS sys.varchar(254)) AS REMARKS
 			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.database_default)
-			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.database_default)
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
-			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
-			    OR table_type = opt_table
-			    OR table_type = opt_view)
+			WHERE (in_table_name IS NULL OR table_name LIKE in_table_name collate sys.database_default)
+			AND (in_table_owner IS NULL OR table_owner LIKE in_table_owner collate sys.database_default)
+			AND (in_table_qualifier IS NULL OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
+			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;
 		ELSE 
 			RETURN query
@@ -1031,30 +1029,40 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			CAST(remarks AS sys.varchar(254)) AS REMARKS
 			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.database_default)
-			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.database_default)
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.database_default)
-			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
-			    OR table_type = opt_table
-			    OR table_type = opt_view)
+			WHERE (in_table_name IS NULL OR table_name = in_table_name collate sys.database_default)
+			AND (in_table_owner IS NULL OR table_owner = in_table_owner collate sys.database_default)
+			AND (in_table_qualifier IS NULL OR table_qualifier = in_table_qualifier collate sys.database_default)
+			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;
 		END IF;
 	END;
 $$
 LANGUAGE plpgsql STABLE;
-	 
 
 CREATE OR REPLACE PROCEDURE sys.sp_tables (
-    "@table_name" sys.nvarchar(384) = '',
-    "@table_owner" sys.nvarchar(384) = '', 
-    "@table_qualifier" sys.sysname = '',
-    "@table_type" sys.nvarchar(100) = '',
+    "@table_name" sys.nvarchar(384) = NULL,
+    "@table_owner" sys.nvarchar(384) = NULL, 
+    "@table_qualifier" sys.sysname = NULL,
+    "@table_type" sys.nvarchar(100) = NULL,
     "@fusepattern" sys.bit = '1')
 AS $$
-	DECLARE @opt_table sys.varchar(16) = '';
-	DECLARE @opt_view sys.varchar(16) = ''; 
 BEGIN
-	IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+
+	-- Handle special case: Enumerate all databases when name and owner are blank but qualifier is '%'
+	IF (@table_qualifier = '%' AND @table_owner = '' AND @table_name = '')
+	BEGIN
+		SELECT
+			d.name AS TABLE_QUALIFIER,
+			CAST(NULL AS sys.sysname) AS TABLE_OWNER,
+			CAST(NULL AS sys.sysname) AS TABLE_NAME,
+			CAST(NULL AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(NULL AS sys.varchar(254)) AS REMARKS
+		FROM sys.databases d ORDER BY TABLE_QUALIFIER;
+		
+		RETURN;
+	END;
+
+	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(sys.db_name()))
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 	END
@@ -2122,7 +2130,7 @@ BEGIN
 		BEGIN
 			IF EXISTS ( -- Search in the sys schema 
 					SELECT * FROM sys.sp_stored_procedures_view
-					WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+					WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 						AND (LOWER(procedure_owner) = 'sys'))
 			BEGIN
 				SELECT PROCEDURE_QUALIFIER,
@@ -2133,13 +2141,13 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = 'sys')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			ELSE IF EXISTS ( 
 				SELECT * FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
 					)
 			BEGIN
@@ -2151,7 +2159,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -2165,7 +2173,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = 'dbo')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -2182,7 +2190,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+			WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
 				AND (LOWER(procedure_owner) = LOWER(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -2197,7 +2205,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, -2)) LIKE LOWER(@sp_name))
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) LIKE LOWER(@sp_name))
 				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -3463,9 +3471,9 @@ BEGIN
 
 	-- Get the executing statement for each spid and extract the main stmt type
 	-- This is for informational purposes only
-	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
+	SELECT pid, CAST(query AS sys.VARCHAR(MAX)) INTO #sp_who_tmp FROM pg_stat_activity pgsa
 	
-	UPDATE #sp_who_tmp SET query = ' ' + TRIM(UPPER(query))
+	UPDATE #sp_who_tmp SET query = ' ' + TRIM(CAST(UPPER(query) AS sys.VARCHAR(MAX)))
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')

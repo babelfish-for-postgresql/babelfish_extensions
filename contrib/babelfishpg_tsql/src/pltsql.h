@@ -2267,4 +2267,10 @@ void		GetOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDes
 extern void 	exec_utility_cmd_helper(char *query_str);
 extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 
+/*
+ * Functions in pltsql_coerce.c
+ */
+extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, Oid *input_typeids);
+extern void init_special_function_list(void);
+
 #endif							/* PLTSQL_H */

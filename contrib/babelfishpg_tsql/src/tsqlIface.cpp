@@ -215,6 +215,7 @@ static void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx);
 static void handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx);
 static void rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx);
 static bool setSysSchema = false;
+static void rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -973,6 +974,26 @@ public:
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
 		handleGeospatialFunctionsInFunctionCall(ctx);
+
+		if (ctx->func_proc_name_server_database_schema())
+		{
+			auto fpnsds = ctx->func_proc_name_server_database_schema();
+
+			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
+			{
+				auto id = fpnsds->id().back();
+
+				if (id->keyword()->TRIM())
+				{
+					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
+				}
+			}
+		}
+	}
+
+	void exitTRIM(TSqlParser::TRIMContext *ctx) override
+	{
+		rewrite_function_trim_to_sys_trim(ctx);
 	}
 
 	/* We are adding handling for CLR_UDT Types in:
@@ -1819,6 +1840,22 @@ public:
 		if (is_schema_specified)
 			stmt->is_schema_specified = true;
 
+		if (is_cross_db)
+		{
+			if (ctx->select_statement_standalone() &&
+				ctx->select_statement_standalone()->select_statement() &&
+				ctx->select_statement_standalone()->select_statement()->query_expression() &&
+				ctx->select_statement_standalone()->select_statement()->query_expression()->query_specification() &&
+				ctx->select_statement_standalone()->select_statement()->query_expression()->query_specification()->INTO() &&
+				ctx->select_statement_standalone()->select_statement()->query_expression()->query_specification()->table_name())
+			{
+				throw PGErrorWrapperException(ERROR,
+						ERRCODE_FEATURE_NOT_SUPPORTED,
+						"cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.",
+						getLineAndPos(ctx->select_statement_standalone()));
+			}
+		}
+
 		if (is_compiling_create_function())
 		{
 			/* select without destination should be blocked. We can use already information about desitnation, which is already processed. */
@@ -1840,6 +1877,23 @@ public:
 			else if (ctx->delete_statement() && ctx->delete_statement()->delete_statement_from()->ddl_object() && !ctx->delete_statement()->delete_statement_from()->ddl_object()->local_id()  &&
 					(ctx->delete_statement()->table_sources() ? ::getFullText(ctx->delete_statement()->table_sources()).c_str()[0] != '@' : true)) /* delete non-local object, table variables are allowed */
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'DELETE' cannot be used within a function", getLineAndPos(ctx->delete_statement()->delete_statement_from()->ddl_object()));
+
+			/*
+			 * Reject if OUTPUT clause is missing INTO (returning to client) or OUTPUT INTO non local object
+			 */
+
+			if (ctx->insert_statement() && ctx->insert_statement()->output_clause() && (!ctx->insert_statement()->output_clause()->INTO() || !ctx->insert_statement()->output_clause()->LOCAL_ID()))
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "Invalid use of a side-effecting operator 'INSERT' within a function.", getLineAndPos(ctx->insert_statement()->output_clause()));
+			}
+			else if (ctx->update_statement() && ctx->update_statement()->output_clause() && (!ctx->update_statement()->output_clause()->INTO() || !ctx->update_statement()->output_clause()->LOCAL_ID()))
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "Invalid use of a side-effecting operator 'UPDATE' within a function.", getLineAndPos(ctx->update_statement()->output_clause()));
+			}
+			else if (ctx->delete_statement() && ctx->delete_statement()->output_clause() && (!ctx->delete_statement()->output_clause()->INTO() || !ctx->delete_statement()->output_clause()->LOCAL_ID()))
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "Invalid use of a side-effecting operator 'DELETE' within a function.", getLineAndPos(ctx->delete_statement()->output_clause()));
+			}
 		}
 
 		/* we must add previous rewrite at first. */
@@ -2346,6 +2400,11 @@ public:
 		handleOrderByOffsetFetch(ctx);
 	}
 
+	void exitTRIM(TSqlParser::TRIMContext *ctx) override
+	{
+		rewrite_function_trim_to_sys_trim(ctx);
+	}
+  
 	// NB: the following are copied in tsqlMutator
 	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
 	{
@@ -2559,7 +2618,11 @@ public:
                                               }
                                       }
                               }
-
+				
+				if (id->keyword()->TRIM())
+				{
+					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
+				}
 			}
 
 			if (ctx->func_proc_name_server_database_schema()->procedure)
@@ -8266,6 +8329,20 @@ rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx)
 		rewritten_query_fragment.emplace(std::make_pair(ctx->order_by_clause()->start->getStartIndex(), std::make_pair(::getFullText(ctx->order_by_clause()), "")));
 		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()[1]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()[1]), "")));
 	}
+}
+
+/*
+ * In this function we Rewrite the Query for Trim function as follows
+ * TRIM '(' expression from expression ')' -> sys.TRIM '(' expression , expression ')'
+ */
+static void
+rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx)
+{
+	if (ctx->trim_from())
+	{	
+		rewritten_query_fragment.emplace(std::make_pair(ctx->trim_from()->start->getStartIndex(), std::make_pair(::getFullText(ctx->trim_from()), " , ")));
+	}
+	rewritten_query_fragment.emplace(std::make_pair(ctx->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TRIM()), "sys.trim")));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

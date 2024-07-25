@@ -187,6 +187,7 @@ BABEL-SP_STORED_PROCEDURES
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
+SP_TABLES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -522,3 +523,8 @@ babel_4328_datetime2
 babel_4328_datetimeoffset
 BABEL-3401
 babel_726
+trim
+ltrim
+rtrim
+left
+right

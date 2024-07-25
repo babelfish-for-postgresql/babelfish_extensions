@@ -169,6 +169,7 @@ BABEL-SP_STORED_PROCEDURES
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
+SP_TABLES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -286,7 +287,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name
+sys-host_name-before-15_8-or-16_4
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns
@@ -428,6 +429,11 @@ babel-4517
 BABEL-4815
 BABEL_3571-before-15-5
 BABEL-4641-before-16_3-or-15_7-or-14_12
+trim-before-15_8-or-16_4
+ltrim-before-15_8-or-16_4
+rtrim-before-15_8-or-16_4
+left-before-15_8-or-16_4
+right-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
 babel_726-before-14_12-or-15_7-or-16_3
 BABEL-4869
