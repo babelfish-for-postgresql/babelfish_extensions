@@ -1,6 +1,6 @@
 SELECT
        CASE WHEN xtype LIKE 'TT'
-            THEN substring(name, 4, 26)
+            THEN pg_catalog.substring(name, 4, 26)
             ELSE name
        END,
        xtype,
