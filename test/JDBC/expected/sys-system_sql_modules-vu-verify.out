@@ -104,5 +104,6 @@ WHERE o.min_val = 0 AND o.max_val = 1
 GO
 ~~START~~
 varchar
+col_name
 ~~END~~
 

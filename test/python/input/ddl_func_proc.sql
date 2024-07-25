@@ -46,6 +46,8 @@ drop  function  IF EXISTS routines_fc7;
 go
 DROP   TABLE  IF EXISTS routines_customers;
 go
+drop  function  IF EXISTS dbo.COL_NAME;
+go
 
 create procedure routines_test_nvar(@test_nvar_a nvarchar , @test_nvar_b int = 8)
 AS
@@ -182,6 +184,9 @@ RETURN
 END;
 GO
 
+CREATE FUNCTION COL_NAME() RETURNS INT AS BEGIN RETURN 2; END;
+GO
+
 -- Create procedure with more than 4K characters
 CREATE PROCEDURE proc_more_than_4k
 AS
@@ -237,6 +242,8 @@ go
 drop  function  IF EXISTS routines_fc7;
 go
 DROP   TABLE  IF EXISTS routines_customers;
+go
+drop  function  IF EXISTS dbo.COL_NAME;
 go
 drop procedure IF EXISTS proc_more_than_4k;
 go

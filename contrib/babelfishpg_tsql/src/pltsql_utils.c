@@ -206,8 +206,8 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			Oid func_oid = InvalidOid;
 			char *schemaname = NULL;
 			char *funcname = NULL;
-			char *dbname = get_cur_db_name();
-			char *cur_schema_name = pstrdup(get_dbo_schema_name(dbname));
+			List *path_oids;
+			char *cur_schema_name;
 
 			func = makeNode(ObjectWithArgs);
 
@@ -216,7 +216,10 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 
 			/* If schema name is not specified, use the current default schema */
 			if (schemaname == NULL || !strlen(schemaname)) {
+				path_oids = fetch_search_path(false);
+				cur_schema_name = get_namespace_name(linitial_oid(path_oids));
 				func->objname = list_make2(makeString(cur_schema_name), makeString(funcname));
+				list_free(path_oids);
 			} else {
 				func->objname = stmt->funcname;
 			}
