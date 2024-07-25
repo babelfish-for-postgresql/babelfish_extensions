@@ -206,8 +206,8 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			Oid func_oid = InvalidOid;
 			char *schemaname = NULL;
 			char *funcname = NULL;
-			List *path_oids;
-			char *cur_schema_name;
+			List *path_oids = NULL;
+			char *cur_schema_name = NULL;
 
 			func = makeNode(ObjectWithArgs);
 
@@ -215,17 +215,26 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			DeconstructQualifiedName(stmt->funcname, &schemaname, &funcname);
 
 			/* If schema name is not specified, use the current default schema */
-			if (schemaname == NULL || !strlen(schemaname)) {
+			if (schemaname == NULL || !strlen(schemaname))
+			{
 				path_oids = fetch_search_path(false);
-				cur_schema_name = get_namespace_name(linitial_oid(path_oids));
-				func->objname = list_make2(makeString(cur_schema_name), makeString(funcname));
-				list_free(path_oids);
-			} else {
+				if (path_oids != NIL)
+				{
+					cur_schema_name = get_namespace_name(linitial_oid(path_oids));
+					if (cur_schema_name == NULL)
+					{
+						ereport(ERROR, (errcode(ERRCODE_UNDEFINED_SCHEMA),
+										errmsg("Current schema name could not be determined")));
+					}
+					func->objname = list_make2(makeString(cur_schema_name), makeString(funcname));
+					list_free(path_oids);
+				}
+			} 
+			else
 				func->objname = stmt->funcname;
-			}
+
 			func->args_unspecified = true;
 
-			/* function, procedure */
 			func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
 
 			if (OidIsValid(func_oid))
