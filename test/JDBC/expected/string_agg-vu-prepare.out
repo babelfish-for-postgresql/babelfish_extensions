@@ -8,9 +8,10 @@ INSERT INTO string_agg_t values
 (1,'a','z',1,7), 
 (5,'e','v',2,1), 
 (4,'d','w',1,3), 
-(4,'h','t',1,2)
+(4,'h','t',1,2),
+(NULL,NULL,'s',2,NULL)
 go
-~~ROW COUNT: 7~~
+~~ROW COUNT: 8~~
 
 
 CREATE TABLE string_agg_t2 (id int, a varchar(10), g1 int, g2 int)
@@ -126,6 +127,7 @@ BEGIN
     SELECT classID, STRING_AGG(studentName, ', ') 
     WITHIN GROUP (ORDER BY rollID) 
     FROM string_agg_school_details 
-    GROUP BY classID;
+    GROUP BY classID
+    ORDER BY classID;
 END;
 GO
