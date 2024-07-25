@@ -920,6 +920,10 @@ public:
 				{
 					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
 				}
+				else if (id->keyword()->REPLACE())
+				{
+					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->REPLACE()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->REPLACE()), "sys.replace")));
+				}
 			}
 		}
 	}
@@ -2461,6 +2465,10 @@ public:
 				if (id->keyword()->TRIM())
 				{
 					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
+				}
+				else if (id->keyword()->REPLACE())
+				{
+					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->REPLACE()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->REPLACE()), "sys.replace")));
 				}
 			}
 

@@ -527,6 +527,7 @@ ltrim
 rtrim
 left
 right
+replace
 BABEL-4863
 babel_test_int4_numeric_oper
 babel_test_int8_numeric_oper

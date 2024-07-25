@@ -446,6 +446,7 @@ ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
 left-before-15_8-or-16_4
 right-before-15_8-or-16_4
+replace
 BABEL-4863-before-16_3-or-15_7-or-14_12
 babel_test_int4_numeric_oper_before_16_3_or_15_7
 babel_test_int8_numeric_oper_before_16_3_or_15_7
