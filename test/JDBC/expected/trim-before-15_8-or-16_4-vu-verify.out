@@ -1,0 +1,1364 @@
+-- customer case, mentioned in the jira description
+DECLARE @custname NVARCHAR(50) = N'比尔·拉莫斯'
+SELECT @custname, 
+    TRIM(@custname) as [TRIM]
+    , LTRIM(@custname) as [LTRIM]
+    , RTRIM(@custname) as [RTRIM]
+    , LEFT(@custname, 4) as [LEFT4]
+    , RIGHT(@custname, 4) as [RIGHT4]
+    , SUBSTRING(@custname, 2, 4) as [SUBSTRING_2_4]
+;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉#!#·拉莫斯#!#尔·拉莫
+~~END~~
+
+
+-- NULL
+SELECT TRIM(NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT TRIM(NULL FROM NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT TRIM('' FROM NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT TRIM(NULL FROM '')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- input type char
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|abc?defghi??|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + TRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + TRIM(@inputString) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM('ab? ' FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM('ab🙂 ' FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM('ab😎 ' FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + TRIM('比拉斯 ' FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + TRIM('比拉斯 ' FROM @inputString) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    ', @charSet CHAR(10) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|·|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    ', @charSet CHAR(10) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|·|
+~~END~~
+
+
+-- input type varchar
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|abc?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + TRIM(@inputString) + '|'
+GO
+~~START~~
+varchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + TRIM(@inputString) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|比尔·拉莫斯|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM('ab? ' FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM('ab🙂 ' FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM('ab😎 ' FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + TRIM('比拉斯 ' FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|?·??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + TRIM('比拉斯 ' FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|?·??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + TRIM('比拉斯 ' FROM @inputString) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @charSet VARCHAR(10) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|?·??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @charSet VARCHAR(10) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @charSet VARCHAR(MAX) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|?·??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @charSet VARCHAR(MAX) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CI_AS + '|' FROM babel_4489_trim_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CS_AS + '|' FROM babel_4489_trim_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE CHINESE_PRC_CI_AI + '|' FROM babel_4489_trim_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+|尔·拉莫|
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_arabic_ci_as
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE ARABIC_CI_AS + '|' FROM babel_4489_trim_arabic_ci_as
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_arabic_cs_as
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE ARABIC_CS_AS + '|' FROM babel_4489_trim_arabic_cs_as
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_arabic_ci_ai
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+SELECT '|' + TRIM(b FROM a) COLLATE ARABIC_CI_AI + '|' FROM babel_4489_trim_arabic_ci_ai
+GO
+~~START~~
+varchar
+|الله مع المتق|
+~~END~~
+
+
+-- input type nchar
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM(@inputString) + '|'
+GO
+~~START~~
+nvarchar
+|abc?defghi??|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + TRIM(@inputString) + '|'
+GO
+~~START~~
+nvarchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  ab😎c🙂defghi🙂🙂    '
+SELECT '|' + TRIM('ab🙂😎 ' FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|?c?defghi??|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + TRIM('比拉斯 ' FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    ', @charSet NCHAR(20) = N'比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|·|
+~~END~~
+
+
+-- with table column of type nchar
+SELECT '|' + TRIM(b FROM a) + '|' FROM babel_4489_trim_t1 
+GO
+~~START~~
+nvarchar
+|c🙂defghi|
+|尔·拉莫|
+~~END~~
+
+
+-- input type nvarchar
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + TRIM(@inputString) + '|'
+GO
+~~START~~
+nvarchar
+|abc🙂defghi🙂🙂|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + TRIM(@inputString) + '|'
+GO
+~~START~~
+nvarchar
+|比尔·拉莫斯|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  ab😎c🙂defghi🙂🙂    '
+SELECT '|' + TRIM('ab🙂😎 ' FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c🙂defghi|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + TRIM('比拉斯 ' FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|尔·拉莫|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @charSet NVARCHAR(20) = N'比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|尔·拉莫|
+~~END~~
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @charSet NVARCHAR(MAX) = N'比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|尔·拉莫|
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_4489_trim_dep_view
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+EXEC babel_4489_trim_dep_proc
+GO
+~~START~~
+nvarchar
+|c🙂defghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_func()
+GO
+~~START~~
+nvarchar
+|c🙂defghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_itvf_func()
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_1
+GO
+~~START~~
+varchar
+|abc?defghi??|
+|??·???|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_2
+GO
+~~START~~
+varchar
+|abc?defghi??|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_3
+GO
+~~START~~
+varchar
+|abcdefghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_4
+GO
+~~START~~
+varchar
+|abcdefghi|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_5
+GO
+~~START~~
+varchar
+|0x61626364|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_6
+GO
+~~START~~
+varchar
+|cdefgh|
+~~END~~
+
+
+-- different datatypes of inputString and charSet
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    ', @charSet VARCHAR(20) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NCHAR(20) = N'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NCHAR(20) = N'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NCHAR(20) = N'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    ', @charSet NCHAR(20) = N'比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|·|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NVARCHAR(20) = N'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NVARCHAR(20) = N'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NVARCHAR(20) = N'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    ', @charSet NVARCHAR(20) = N'比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet CHAR(20) = 'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet CHAR(20) = 'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet CHAR(20) = 'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @charSet CHAR(20) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NCHAR(20) = N'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NCHAR(20) = N'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NCHAR(20) = N'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @charSet NCHAR(20) = N'比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NVARCHAR(20) = N'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NVARCHAR(20) = N'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet NVARCHAR(20) = N'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @charSet NVARCHAR(20) = N'比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+varchar
+|?·??|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet CHAR(20) = 'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet CHAR(20) = 'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet CHAR(20) = 'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    ', @charSet CHAR(20) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|·|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c?defghi|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    ', @charSet VARCHAR(20) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet NVARCHAR(20) = N'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet NVARCHAR(20) = N'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c?defghi??|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    ', @charSet NVARCHAR(20) = N'比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|??·???|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet CHAR(20) = 'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c🙂defghi🙂🙂|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet CHAR(20) = 'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c🙂defghi🙂🙂|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet CHAR(20) = 'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c🙂defghi🙂🙂|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @charSet CHAR(20) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|比尔·拉莫斯|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab? '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c🙂defghi🙂🙂|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c🙂defghi|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c🙂defghi🙂🙂|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @charSet VARCHAR(20) = '比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|尔·拉莫|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet NCHAR(20) = N'ab🙂 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c🙂defghi🙂🙂|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    ', @charSet NCHAR(20) = N'ab😎 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|c🙂defghi🙂🙂|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @charSet NCHAR(20) = N'比拉斯 '
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~START~~
+nvarchar
+|比尔·拉莫斯|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  ABCDEF    ', @charSet BINARY(4) = 0x414243
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "binary" is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString VARBINARY(50) = 0x41424344, @charSet VARBINARY(2) = 0x4144
+SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of Trim function.)~~
+
+
+-- input type UDT
+-- -- in table babel_4489_trim_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT TRIM(a) FROM babel_4489_trim_UDT
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of Trim function.)~~
+
+
+SELECT TRIM(b) FROM babel_4489_trim_UDT
+GO
+~~START~~
+varchar
+abcdef
+~~END~~
+
+
+DECLARE @charSet VARCHAR(10) = 'ab'
+SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_UDT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 2 of Trim function.)~~
+
+
+DECLARE @charSet VARCHAR(10) = 'ab'
+SELECT TRIM(@charSet FROM b) FROM babel_4489_trim_UDT
+GO
+~~START~~
+varchar
+cdef
+~~END~~
+
+
+-- other different datatypes, all of these should be blocked
+DECLARE @inputString date = '2016-12-21'
+SELECT TRIM('12' FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type date is invalid for argument 2 of Trim function.)~~
+
+
+DECLARE @inputString date = '2016-12-21', @charSet VARCHAR(10) = '12';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type date is invalid for argument 2 of Trim function.)~~
+
+
+DECLARE @inputString date = '2016-12-21'
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type date is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date, @charSet VARCHAR(10) = '12';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetime is invalid for argument 2 of Trim function.)~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetime is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10', @charSet VARCHAR(10) = '12';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smalldatetime is invalid for argument 2 of Trim function.)~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237', @charSet VARCHAR(10) = '10';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type time without time zone is invalid for argument 2 of Trim function.)~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0', @charSet VARCHAR(10) = '23';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 2 of Trim function.)~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237', @charSet VARCHAR(10) = '23';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetime2 is invalid for argument 2 of Trim function.)~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString decimal = 123456, @charSet decimal = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "decimal" is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString numeric = 12345.12, @charSet numeric = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString float = 12345.1, @charSet float = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type double precision is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString real = 12345.1, @charSet real = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type real is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString bigint = 12345678, @charSet bigint = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type bigint is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString int = 12345678, @charSet int = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type integer is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString smallint = 12356, @charSet smallint = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smallint is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString tinyint = 235, @charSet tinyint = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString money = 12356, @charSet money = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type money is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString smallmoney = 12356, @charSet smallmoney = 12;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString bit = 1, @charSet bit = 1;
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "bit" is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
+DECLARE @charSet VARCHAR(10) = '6F';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 2 of Trim function.)~~
+
+DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
+DECLARE @charSet VARCHAR(10) = '6F';
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of Trim function.)~~
+
+
+SELECT TRIM(a FROM a) FROM babel_4489_trim_image;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @charSet VARCHAR(10) = '6F';
+SELECT TRIM(@charSet FROM a) from babel_4489_trim_image;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 2 of Trim function.)~~
+
+
+SELECT TRIM(a FROM b) FROM babel_4489_trim_text
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+SELECT TRIM(b FROM a) FROM babel_4489_trim_text
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+
+DECLARE @charSet VARCHAR(20) = 'ab? '
+SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_text
+GO
+~~START~~
+nvarchar
+c🙂defghi🙂🙂
+~~END~~
+
+
+DECLARE @charSet VARCHAR(20) = 'ab? '
+SELECT TRIM(@charSet FROM b) FROM babel_4489_trim_text
+GO
+~~START~~
+nvarchar
+c🙂defghi🙂🙂
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+DECLARE @charSet VARCHAR(10) = '6F';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 2 of Trim function.)~~
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+DECLARE @charSet VARCHAR(10) = '6F';
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+DECLARE @charSet xml = CAST ('<fruit/>' AS xml);
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @charSet VARCHAR(10) = '(1 2)';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geometry is invalid for argument 2 of Trim function.)~~
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @charSet VARCHAR(10) = '(1 2)';
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @charSet VARCHAR(10) = '2';
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geography is invalid for argument 2 of Trim function.)~~
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @charSet VARCHAR(10) = '2';
+SELECT TRIM(@inputString FROM @inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of Trim function.)~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+DECLARE @charSet VARCHAR(10) = '6F';
+SELECT TRIM(@charSet FROM CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+9619FF-8B86-D011-B42D-00C04FC964
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+DECLARE @charSet xml = CAST ('<fruit/>' AS xml);
+SELECT TRIM(CAST(@charSet AS VARCHAR) FROM CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+body><fruit/></body
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @charSet VARCHAR(10) = '(1 2)';
+SELECT TRIM(@charSet FROM CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+POINT
+~~END~~
+
