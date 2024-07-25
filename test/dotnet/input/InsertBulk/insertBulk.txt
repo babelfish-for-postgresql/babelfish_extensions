@@ -348,3 +348,17 @@ Select count(*) from sourceTable
 select count(*) from destinationTable
 drop table sourceTable
 drop table destinationTable
+
+# partitioned table
+CREATE TABLE sourceTable(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
+CREATE PARTITION FUNCTION IntPartitionFunction (int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
+CREATE PARTITION SCHEME IntPartitionScheme AS PARTITION IntPartitionFunction ALL TO ([PRIMARY])
+CREATE TABLE partitionedTable(c1 int, c2 CHAR(1024)) ON IntPartitionScheme(c1)
+insertbulk#!#sourceTable#!#partitionedTable
+Select count(*) from sourceTable
+select count(*) from partitionedTable
+DROP TABLE partitionedTable
+DROP PARTITION SCHEME IntPartitionScheme
+DROP PARTITION FUNCTION IntPartitionFunction
+DROP TABLE sourceTable

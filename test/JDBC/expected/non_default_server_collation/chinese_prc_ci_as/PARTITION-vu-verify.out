@@ -1,5 +1,6 @@
+
 --------------------------------------------------
---- CREATE PARTITION FUNCTION/SCHEME using procedure
+--- CREATE PARTITION FUNCTION/SCHEME/TABLE using procedure
 --------------------------------------------------
 EXEC PartitionProcedureCreatePartitionFunction
 GO
@@ -7,11 +8,14 @@ GO
 EXEC PartitionProcedureCreatePartitionScheme
 GO
 
-EXEC PartitionProcedureCreatePartitionFunctionAndScheme
+EXEC PartitionProcedureCreatePartitionTable
+GO
+
+EXEC PartitionProcedureCreatePartitionFunctionSchemeAndTable
 GO
 
 --------------------------------------------------
---- CREATE PARTITION FUNCTION/SCHEME inside Function
+--- CREATE PARTITION FUNCTION/SCHEME/TABLE inside Function
 --------------------------------------------------
 CREATE FUNCTION TestFunctionCreatePartitionFunction()
 RETURNS INT
@@ -66,6 +70,34 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid use of a side-effecting operator 'DROP PARTITION SCHEME' within a function.)~~
+
+
+CREATE FUNCTION TestFunctionCreatePartitionTable()
+RETURNS INT
+AS
+BEGIN
+    CREATE TABLE TestPartitionTable (
+    Id INT,
+    Value sys.varchar(20)
+    ) ON IntPartitionScheme(Id);
+END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: DDL cannot be used within a function)~~
+
+
+CREATE FUNCTION TestFunctionDropPartitionTable()
+RETURNS INT
+AS
+BEGIN
+    DROP TABLE partition_vu_prepare_int_table;
+    RETURN 1;
+END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: DDL cannot be used within a function)~~
 
 
 
@@ -398,6 +430,23 @@ GO
 ~~ERROR (Message: 'PARTIION FUNCTION with LEFT option' is not currently supported in Babelfish)~~
 
 
+-- NULL value is not supported in range values
+CREATE PARTITION FUNCTION PartitionFunctionWithNULL (int)
+AS RANGE RIGHT FOR VALUES (10, 1000, NULL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NULL values are not allowed in partition function boundary values list.)~~
+
+
+CREATE PARTITION FUNCTION PartitionFunctionWithNULL (int)
+AS RANGE RIGHT FOR VALUES (10, 1000, NULL, NULL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NULL values are not allowed in partition function boundary values list.)~~
+
+
 --------------------------------------------------
 --- Duplicate Create of Partition Function/Scheme
 --------------------------------------------------
@@ -474,6 +523,16 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Partition function 'IntPartitionFunction' is being used by one or more partition schemes.)~~
+
+
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Scheme when there is dependent Table on it
+-----------------------------------------------------------------------------------
+DROP PARTITION SCHEME IntPartitionScheme
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The partition scheme "IntPartitionScheme" is currently being used to partition one or more tables.)~~
 
 
 
@@ -558,13 +617,14 @@ MoneyPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 NCharPartitionFunction#!#R #!#RANGE#!#8#!#1#!#0
 NumericPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
 NVarCharPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
-PARTITION_FUNCTION  유니코드스키마👻#!#R #!#RANGE#!#4#!#1#!#0
-PARTITION_FUNCTION 😎$@ #123 🌍rder#!#R #!#RANGE#!#4#!#1#!#0
+PARTITION_FUNCTION  유니코드스키마👻  #!#R #!#RANGE#!#4#!#1#!#0
+PARTITION_FUNCTION 😎$@ #123 🌍rder  #!#R #!#RANGE#!#4#!#1#!#0
 PARTITION_FUNCTIONログインαιώνια#!#R #!#RANGE#!#4#!#1#!#0
 PartitionFunctionHavingDifferentCollationInput#!#R #!#RANGE#!#5#!#1#!#0
 PartitionFunctionInsideProc1#!#R #!#RANGE#!#4#!#1#!#0
 PartitionFunctionInsideProc2#!#R #!#RANGE#!#4#!#1#!#0
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#R #!#RANGE#!#5#!#1#!#0
+PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#R #!#RANGE#!#5#!#1#!#0
 SmallDateTimePartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallMoneyPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
@@ -626,12 +686,12 @@ NVarCharPartitionFunction#!#1#!#2#!#Banana
 NVarCharPartitionFunction#!#1#!#3#!#Cherry
 NVarCharPartitionFunction#!#1#!#4#!#Date
 NVarCharPartitionFunction#!#1#!#5#!#Mango
-PARTITION_FUNCTION  유니코드스키마👻#!#1#!#1#!#0
-PARTITION_FUNCTION  유니코드스키마👻#!#1#!#2#!#500
-PARTITION_FUNCTION  유니코드스키마👻#!#1#!#3#!#1000
-PARTITION_FUNCTION 😎$@ #123 🌍rder#!#1#!#1#!#0
-PARTITION_FUNCTION 😎$@ #123 🌍rder#!#1#!#2#!#500
-PARTITION_FUNCTION 😎$@ #123 🌍rder#!#1#!#3#!#1000
+PARTITION_FUNCTION  유니코드스키마👻  #!#1#!#1#!#0
+PARTITION_FUNCTION  유니코드스키마👻  #!#1#!#2#!#500
+PARTITION_FUNCTION  유니코드스키마👻  #!#1#!#3#!#1000
+PARTITION_FUNCTION 😎$@ #123 🌍rder  #!#1#!#1#!#0
+PARTITION_FUNCTION 😎$@ #123 🌍rder  #!#1#!#2#!#500
+PARTITION_FUNCTION 😎$@ #123 🌍rder  #!#1#!#3#!#1000
 PARTITION_FUNCTIONログインαιώνια#!#1#!#1#!#0
 PARTITION_FUNCTIONログインαιώνια#!#1#!#2#!#500
 PARTITION_FUNCTIONログインαιώνια#!#1#!#3#!#1000
@@ -649,6 +709,10 @@ PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#2#!#100
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#3#!#1000
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#1#!#4#!#10000
+PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#1#!#1#!#0
+PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#1#!#2#!#100
+PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#1#!#3#!#1000
+PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#1#!#4#!#10000
 SmallDateTimePartitionFunction#!#1#!#1#!#2019-01-01 00:00:00.0
 SmallDateTimePartitionFunction#!#1#!#2#!#2022-01-01 00:00:00.0
 SmallDateTimePartitionFunction#!#1#!#3#!#2022-07-01 00:00:00.0
@@ -708,13 +772,14 @@ MoneyPartitionFunction#!#money#!#1#!#8#!#19#!#4#!#<NULL>
 NCharPartitionFunction#!#nchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
 NumericPartitionFunction#!#numeric#!#1#!#17#!#38#!#38#!#<NULL>
 NVarCharPartitionFunction#!#nvarchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
-PARTITION_FUNCTION  유니코드스키마👻#!#int#!#1#!#4#!#10#!#0#!#<NULL>
-PARTITION_FUNCTION 😎$@ #123 🌍rder#!#int#!#1#!#4#!#10#!#0#!#<NULL>
+PARTITION_FUNCTION  유니코드스키마👻  #!#int#!#1#!#4#!#10#!#0#!#<NULL>
+PARTITION_FUNCTION 😎$@ #123 🌍rder  #!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PARTITION_FUNCTIONログインαιώνια#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PartitionFunctionHavingDifferentCollationInput#!#nvarchar#!#1#!#8000#!#0#!#0#!#chinese_prc_ci_as
 PartitionFunctionInsideProc1#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PartitionFunctionInsideProc2#!#int#!#1#!#4#!#10#!#0#!#<NULL>
 PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
+PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#bigint#!#1#!#8#!#19#!#0#!#<NULL>
 SmallDateTimePartitionFunction#!#smalldatetime#!#1#!#4#!#16#!#0#!#<NULL>
 SmallIntPartitionFunction#!#smallint#!#1#!#2#!#5#!#0#!#<NULL>
 SmallMoneyPartitionFunction#!#smallmoney#!#1#!#4#!#10#!#4#!#<NULL>
@@ -738,17 +803,20 @@ DateTime2PartitionScheme#!#DateTime2PartitionFunction#!#PS#!#PARTITION_SCHEME#!#
 DateTimePartitionScheme#!#DateTimePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 DecimalPartitionScheme#!#DecimalPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 IntPartitionScheme#!#IntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+MoneyPartitionScheme#!#MoneyPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 NCharPartitionScheme#!#NCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 NumericPartitionScheme#!#NumericPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 NVarCharPartitionScheme#!#NVarCharPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
-PARTITION_SCHEME  유니코드스키마👻#!#PARTITION_FUNCTION  유니코드스키마👻#!#PS#!#PARTITION_SCHEME#!#0#!#0
-PARTITION_SCHEME 😎$@ #123 🌍rder#!#PARTITION_FUNCTION 😎$@ #123 🌍rder#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PARTITION_SCHEME  유니코드스키마👻  #!#PARTITION_FUNCTION  유니코드스키마👻  #!#PS#!#PARTITION_SCHEME#!#0#!#0
+PARTITION_SCHEME 😎$@ #123 🌍rder  #!#PARTITION_FUNCTION 😎$@ #123 🌍rder  #!#PS#!#PARTITION_SCHEME#!#0#!#0
 PARTITION_SCHEMEログインαιώνια#!#PARTITION_FUNCTIONログインαιώνια#!#PS#!#PARTITION_SCHEME#!#0#!#0
 PartitionSchemeInsideProc1#!#PartitionFunctionInsideProc1#!#PS#!#PARTITION_SCHEME#!#0#!#0
 PartitionSchemeInsideProc2#!#PartitionFunctionInsideProc2#!#PS#!#PARTITION_SCHEME#!#0#!#0
 PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallDateTimePartitionScheme#!#SmallDateTimePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallIntPartitionScheme#!#SmallIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+SmallMoneyPartitionScheme#!#SmallMoneyPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SqlVariantPartitionScheme#!#SqlVariantPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 TinyIntPartitionScheme#!#TinyIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 UniqueIdentifierPartitionScheme#!#UniqueIdentifierPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
@@ -895,7 +963,12 @@ partition_u1
 ~~END~~
 
 
+
 -- CREATE/DROP should throw permission error
+------------------------------------------------------------
+--- only db owner and logins which are member of sysadmin
+--- are allowed to create/drop partition function and scheme
+------------------------------------------------------------
 CREATE PARTITION FUNCTION TestPartitionFunction (int)
 AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
 Go
@@ -927,7 +1000,9 @@ go
 ~~ERROR (Message: Cannot drop the partition scheme 'IntPartitionScheme', because it does not exist or you do not have permission.)~~
 
 
--- but they can access the metadata 
+------------------------------------------
+--- all user can access the metadata
+------------------------------------------
 SELECT 
         name, type, type_desc, fanout, boundary_value_on_right, is_system
     FROM 
@@ -952,7 +1027,68 @@ PartitionDb_PartitionScheme#!#PartitionDb_PartitionFunction#!#PS#!#PARTITION_SCH
 ~~END~~
 
 
+
+-- psql
+
+------------------------------------------------------------
+--- all user can use the metadata of the partition scheme 
+--- to create table if they permission to create table
+------------------------------------------------------------
+-- grant create permission to user on schema so that it can create table
+DO $$
+DECLARE
+    schema_name TEXT;
+BEGIN
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := 'partitiondb_dbo';
+    ELSE
+        schema_name := 'dbo';
+    END IF;
+    EXECUTE 'GRANT CREATE ON SCHEMA ' || quote_ident(schema_name) || ' TO partitiondb_partition_u1';
+END$$;
+GO
+
+-- tsql     user=partition_l1 password=12345678
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+partition_u1
+~~END~~
+
+
+CREATE TABLE PartitionDb_TestPartitionTable (
+    Id INT,
+    Value sys.varchar(20)
+) ON PartitionDb_PartitionScheme(Id);
+GO
+
+DROP TABLE PartitionDb_TestPartitionTable
+GO
+
+-- psql
+
+-- revoke create permission from user on schema
+DO $$
+DECLARE
+    schema_name TEXT;
+BEGIN
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := 'partitiondb_dbo';
+    ELSE
+        schema_name := 'dbo';
+    END IF;
+    EXECUTE 'REVOKE CREATE ON SCHEMA ' || quote_ident(schema_name) || ' FROM partitiondb_partition_u1';
+END$$;
+GO
+
 -- tsql
+-----------------------------------------------------------------------------------
+--- DB owner should be able to create/drop partition function and scheme
+----------------------------------------------------------------------------------
 -- make the user a DB owner
 USE PartitionDb;
 GO
@@ -1115,13 +1251,1793 @@ GO
 
 
 --------------------------------------------------
---- DROP PARTITION FUNCTION/SCHEME using procedure
+--- DROP PARTITION FUNCTION/SCHEME/TABLE using procedure
 --------------------------------------------------
+EXEC PartitionProcedureDropPartitionTable
+GO
+
 EXEC PartitionProcedureDropPartitionScheme
 GO
 
 EXEC PartitionProcedureDropPartitionFunction
 GO
 
-EXEC PartitionProcedureDropPartitionFunctionAndScheme
+EXEC PartitionProcedureDropPartitionFunctionSchemeAndTable
 GO
+
+
+---------------------------------------------------------------------------
+--- PARTITIONED TABLES test
+---------------------------------------------------------------------------
+SELECT * FROM GetPartitionedTableListFromSysTablesView
+GO
+~~START~~
+varchar
+partition_vu_prepare_bigint_table
+partition_vu_prepare_binary_table
+partition_vu_prepare_char_table
+partition_vu_prepare_date_table
+partition_vu_prepare_datetime_table
+partition_vu_prepare_datetime2_table
+partition_vu_prepare_decimal_table
+partition_vu_prepare_int_table
+partition_vu_prepare_money_table
+partition_vu_prepare_nchar_table
+partition_vu_prepare_numeric_table
+partition_vu_prepare_nvarchar_table
+partition_vu_prepare_smalldatetime_table
+partition_vu_prepare_smallint_table
+partition_vu_prepare_smallmoney_table
+partition_vu_prepare_sqlvariant_table
+partition_vu_prepare_tinyint_table
+partition_vu_prepare_uniqueidentifier_table
+partition_vu_prepare_varbinary_table
+partition_vu_prepare_varchar_table
+~~END~~
+
+
+---------------------------------------------------------------------------
+--- PARTITIONED INDEX test
+---------------------------------------------------------------------------
+SELECT * FROM GetPartitionedIndexListFromSysIndexesView
+GO
+~~START~~
+varchar
+partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63
+partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503
+partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f
+partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844
+partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e
+partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6
+partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9
+partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046
+partition_vu_prepare_int_table_id_key
+partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee
+partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1
+partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963
+partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec
+partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8
+partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579
+partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8
+partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47
+partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb
+partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf
+partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386
+partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08
+~~END~~
+
+
+
+----------------------------------------------------------------------------------------------
+--- System views should list only metadata of Partitioned table(not of the partitions)
+----------------------------------------------------------------------------------------------
+SELECT count(*) from sys.tables where name = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from sys.all_objects where name = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+---------------------------------------------------------
+--- System views should not list metadata of Partitions
+---------------------------------------------------------
+SELECT count(*) from sys.tables where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.all_objects where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+
+-- psql
+---------------------------------------------------------------------------
+--- Run analyze on each table and enable query plan
+---------------------------------------------------------------------------
+ANALYZE master_dbo.partition_vu_prepare_int_table;
+ANALYZE master_dbo.partition_vu_prepare_bigint_table;
+ANALYZE master_dbo.partition_vu_prepare_smallint_table;
+ANALYZE master_dbo.partition_vu_prepare_tinyint_table;
+ANALYZE master_dbo.partition_vu_prepare_decimal_table;
+ANALYZE master_dbo.partition_vu_prepare_numeric_table;
+ANALYZE master_dbo.partition_vu_prepare_money_table;
+ANALYZE master_dbo.partition_vu_prepare_smallmoney_table;
+ANALYZE master_dbo.partition_vu_prepare_date_table;
+ANALYZE master_dbo.partition_vu_prepare_datetime_table;
+ANALYZE master_dbo.partition_vu_prepare_datetime2_table;
+ANALYZE master_dbo.partition_vu_prepare_smalldatetime_table;
+ANALYZE master_dbo.partition_vu_prepare_char_table;
+ANALYZE master_dbo.partition_vu_prepare_varchar_table;
+ANALYZE master_dbo.partition_vu_prepare_nvarchar_table;
+ANALYZE master_dbo.partition_vu_prepare_nchar_table;
+ANALYZE master_dbo.partition_vu_prepare_binary_table;
+ANALYZE master_dbo.partition_vu_prepare_varbinary_table;
+ANALYZE master_dbo.partition_vu_prepare_uniqueidentifier_table;
+ANALYZE master_dbo.partition_vu_prepare_sqlvariant_table;
+GO
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+
+---------------------------------------------------------------------------
+--- Query plan of select on partitioned tables
+---------------------------------------------------------------------------
+SELECT * FROM partition_vu_prepare_int_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_int_table
+Append
+  ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_1" partition_vu_prepare_int_table_1
+  ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_2" partition_vu_prepare_int_table_2
+  ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_3" partition_vu_prepare_int_table_3
+  ->  Seq Scan on "363863941f079adaa9aa733200e57c9f_partition_0" partition_vu_prepare_int_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.782 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_bigint_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_bigint_table
+Append
+  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_1" partition_vu_prepare_bigint_table_1
+  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_2" partition_vu_prepare_bigint_table_2
+  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_3" partition_vu_prepare_bigint_table_3
+  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_4" partition_vu_prepare_bigint_table_4
+  ->  Seq Scan on "548bb344374ce8d65342b36428375873_partition_0" partition_vu_prepare_bigint_table_5
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_smallint_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_smallint_table
+Append
+  ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_1" partition_vu_prepare_smallint_table_1
+  ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_2" partition_vu_prepare_smallint_table_2
+  ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_3" partition_vu_prepare_smallint_table_3
+  ->  Seq Scan on "12025e103721b70925744c196ce004cd_partition_0" partition_vu_prepare_smallint_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.131 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_tinyint_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_tinyint_table
+Append
+  ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_1" partition_vu_prepare_tinyint_table_1
+  ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_2" partition_vu_prepare_tinyint_table_2
+  ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_3" partition_vu_prepare_tinyint_table_3
+  ->  Seq Scan on "61446d711d19b5970809387caa7fd3d3_partition_0" partition_vu_prepare_tinyint_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_decimal_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_decimal_table
+Append
+  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_1 partition_vu_prepare_decimal_table_1
+  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_2 partition_vu_prepare_decimal_table_2
+  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_3 partition_vu_prepare_decimal_table_3
+  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_4 partition_vu_prepare_decimal_table_4
+  ->  Seq Scan on cda2902d769fd61eb60b1a461650212f_partition_0 partition_vu_prepare_decimal_table_5
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_numeric_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_numeric_table
+Append
+  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_1" partition_vu_prepare_numeric_table_1
+  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_2" partition_vu_prepare_numeric_table_2
+  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_3" partition_vu_prepare_numeric_table_3
+  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_4" partition_vu_prepare_numeric_table_4
+  ->  Seq Scan on "57405760297bb338f333c148aac5f845_partition_0" partition_vu_prepare_numeric_table_5
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_money_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_money_table
+Append
+  ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_1" partition_vu_prepare_money_table_1
+  ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_2" partition_vu_prepare_money_table_2
+  ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_3" partition_vu_prepare_money_table_3
+  ->  Seq Scan on "640187c54e2c2984d190957d245a5fa5_partition_0" partition_vu_prepare_money_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_smallmoney_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_smallmoney_table
+Append
+  ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1" partition_vu_prepare_smallmoney_table_1
+  ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_2" partition_vu_prepare_smallmoney_table_2
+  ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_3" partition_vu_prepare_smallmoney_table_3
+  ->  Seq Scan on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0" partition_vu_prepare_smallmoney_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_date_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_date_table
+Append
+  ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_1" partition_vu_prepare_date_table_1
+  ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_2" partition_vu_prepare_date_table_2
+  ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_3" partition_vu_prepare_date_table_3
+  ->  Seq Scan on "4867824426e52acac5c93d9cbe8aa366_partition_0" partition_vu_prepare_date_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_datetime_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_datetime_table
+Append
+  ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_1" partition_vu_prepare_datetime_table_1
+  ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_2" partition_vu_prepare_datetime_table_2
+  ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_3" partition_vu_prepare_datetime_table_3
+  ->  Seq Scan on "751ce655481adf15600727bf291667f7_partition_0" partition_vu_prepare_datetime_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_datetime2_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_datetime2_table
+Append
+  ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_1" partition_vu_prepare_datetime2_table_1
+  ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_2" partition_vu_prepare_datetime2_table_2
+  ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_3" partition_vu_prepare_datetime2_table_3
+  ->  Seq Scan on "5ed003cf80dacbb8cce0b21e175f7f94_partition_0" partition_vu_prepare_datetime2_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_smalldatetime_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_smalldatetime_table
+Append
+  ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_1 partition_vu_prepare_smalldatetime_table_1
+  ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_2 partition_vu_prepare_smalldatetime_table_2
+  ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_3 partition_vu_prepare_smalldatetime_table_3
+  ->  Seq Scan on b5c2e665ec4a1219ba8510e33e45379b_partition_0 partition_vu_prepare_smalldatetime_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_char_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_char_table
+Append
+  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_1" partition_vu_prepare_char_table_1
+  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_2" partition_vu_prepare_char_table_2
+  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_3" partition_vu_prepare_char_table_3
+  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_4" partition_vu_prepare_char_table_4
+  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_5" partition_vu_prepare_char_table_5
+  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_6" partition_vu_prepare_char_table_6
+  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_7" partition_vu_prepare_char_table_7
+  ->  Seq Scan on "5d20bd977eb6e6f1304dec45598c09f5_partition_0" partition_vu_prepare_char_table_8
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_varchar_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_varchar_table
+Append
+  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_1" partition_vu_prepare_varchar_table_1
+  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_2" partition_vu_prepare_varchar_table_2
+  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_3" partition_vu_prepare_varchar_table_3
+  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_4" partition_vu_prepare_varchar_table_4
+  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_5" partition_vu_prepare_varchar_table_5
+  ->  Seq Scan on "933a5c7f0de13890324e53ee0711424b_partition_0" partition_vu_prepare_varchar_table_6
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_nvarchar_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_nvarchar_table
+Append
+  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_1" partition_vu_prepare_nvarchar_table_1
+  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_2" partition_vu_prepare_nvarchar_table_2
+  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_3" partition_vu_prepare_nvarchar_table_3
+  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_4" partition_vu_prepare_nvarchar_table_4
+  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_5" partition_vu_prepare_nvarchar_table_5
+  ->  Seq Scan on "320465af1d1bd21f5b29c57f9f4e5c51_partition_0" partition_vu_prepare_nvarchar_table_6
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_nchar_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_nchar_table
+Append
+  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_1 partition_vu_prepare_nchar_table_1
+  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_2 partition_vu_prepare_nchar_table_2
+  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_3 partition_vu_prepare_nchar_table_3
+  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_4 partition_vu_prepare_nchar_table_4
+  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_5 partition_vu_prepare_nchar_table_5
+  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_6 partition_vu_prepare_nchar_table_6
+  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_7 partition_vu_prepare_nchar_table_7
+  ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_0 partition_vu_prepare_nchar_table_8
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_binary_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_binary_table
+Append
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_2" partition_vu_prepare_binary_table_2
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_3" partition_vu_prepare_binary_table_3
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_4" partition_vu_prepare_binary_table_4
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_0" partition_vu_prepare_binary_table_5
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_varbinary_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_varbinary_table
+Append
+  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_1" partition_vu_prepare_varbinary_table_1
+  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_2" partition_vu_prepare_varbinary_table_2
+  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_3" partition_vu_prepare_varbinary_table_3
+  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_4" partition_vu_prepare_varbinary_table_4
+  ->  Seq Scan on "77718961234110c3a22a3c977bc252d8_partition_0" partition_vu_prepare_varbinary_table_5
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_uniqueidentifier_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_uniqueidentifier_table
+Append
+  ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_1 partition_vu_prepare_uniqueidentifier_table_1
+  ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_2 partition_vu_prepare_uniqueidentifier_table_2
+  ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_3 partition_vu_prepare_uniqueidentifier_table_3
+  ->  Seq Scan on f3baf999c06d6ea82082a4c549baeb77_partition_0 partition_vu_prepare_uniqueidentifier_table_4
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_sqlvariant_table;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table
+Append
+  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table_1
+  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_2" partition_vu_prepare_sqlvariant_table_2
+  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_3" partition_vu_prepare_sqlvariant_table_3
+  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_4" partition_vu_prepare_sqlvariant_table_4
+  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_5" partition_vu_prepare_sqlvariant_table_5
+  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_0" partition_vu_prepare_sqlvariant_table_6
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
+
+
+-----------------------------------------------------------------------------------------
+--- Query plan of select on partitioned tables with predicate and enforced index scan
+-----------------------------------------------------------------------------------------
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+
+SELECT * FROM partition_vu_prepare_int_table WHERE Id >= 0 AND Id < 500;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_int_table WHERE Id >= 0 AND Id < 500
+Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_key" on "363863941f079adaa9aa733200e57c9f_partition_1" partition_vu_prepare_int_table
+  Index Cond: ((id >= 0) AND (id < 500))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 34.743 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_bigint_table WHERE Id >= 0 AND Id < 100;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_bigint_table WHERE Id >= 0 AND Id < 100
+Index Scan using "548bb344374ce8d65342b36428375873_partition_1_id_idx" on "548bb344374ce8d65342b36428375873_partition_1" partition_vu_prepare_bigint_table
+  Index Cond: ((id >= 0) AND (id < 100))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.201 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_smallint_table WHERE Id >= -32768 AND Id < 0;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_smallint_table WHERE Id >= -32768 AND Id < 0
+Index Scan using "12025e103721b70925744c196ce004cd_partition_1_id_idx" on "12025e103721b70925744c196ce004cd_partition_1" partition_vu_prepare_smallint_table
+  Index Cond: ((id >= '-32768'::integer) AND (id < 0))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.419 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_tinyint_table WHERE Id >= 0 AND Id < 128;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_tinyint_table WHERE Id >= 0 AND Id < 128
+Index Scan using "61446d711d19b5970809387caa7fd3d3_partition_1_id_idx" on "61446d711d19b5970809387caa7fd3d3_partition_1" partition_vu_prepare_tinyint_table
+  Index Cond: (((id)::smallint >= 0) AND ((id)::smallint < 128))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_decimal_table WHERE Id >= 0.0 AND Id < 100.0;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_decimal_table WHERE Id >= 0.0 AND Id < 100.0
+Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d769fd61eb60b1a461650212f_partition_1 partition_vu_prepare_decimal_table
+  Index Cond: (((id)::numeric >= 0.0) AND ((id)::numeric < 100.0))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.571 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_numeric_table WHERE Id >= 0.0 AND Id < 10.0;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_numeric_table WHERE Id >= 0.0 AND Id < 10.0
+Index Scan using "57405760297bb338f333c148aac5f845_partition_1_id_idx" on "57405760297bb338f333c148aac5f845_partition_1" partition_vu_prepare_numeric_table
+  Index Cond: ((id >= 0.0) AND (id < 10.0))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.237 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_money_table WHERE Id >= 2.56789 AND Id < 3.56789;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_money_table WHERE Id >= 2.56789 AND Id < 3.56789
+Append
+  ->  Index Scan using "640187c54e2c2984d190957d245a5fa5_partition_1_id_idx" on "640187c54e2c2984d190957d245a5fa5_partition_1" partition_vu_prepare_money_table_1
+        Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+  ->  Index Scan using "640187c54e2c2984d190957d245a5fa5_partition_0_id_idx" on "640187c54e2c2984d190957d245a5fa5_partition_0" partition_vu_prepare_money_table_2
+        Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.223 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_smallmoney_table WHERE Id >= 2.56789 AND Id < 3.56789;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_smallmoney_table WHERE Id >= 2.56789 AND Id < 3.56789
+Append
+  ->  Index Scan using "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1_id_idx" on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_1" partition_vu_prepare_smallmoney_table_1
+        Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+  ->  Index Scan using "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0_id_idx" on "8acfdf2e7ec8a3fb29dd9f735c4d58b5_partition_0" partition_vu_prepare_smallmoney_table_2
+        Index Cond: (((id)::fixeddecimal >= 2.56789) AND ((id)::fixeddecimal < 3.56789))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.154 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_date_table WHERE Id >= '2022-01-01' AND Id < '2022-07-01';
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_date_table WHERE Id >= '2022-01-01' AND Id < '2022-07-01'
+Index Scan using "4867824426e52acac5c93d9cbe8aa366_partition_1_id_idx" on "4867824426e52acac5c93d9cbe8aa366_partition_1" partition_vu_prepare_date_table
+  Index Cond: ((id >= '2022-01-01'::date) AND (id < '2022-07-01'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.603 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_datetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_datetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01'
+Index Scan using "751ce655481adf15600727bf291667f7_partition_1_id_idx" on "751ce655481adf15600727bf291667f7_partition_1" partition_vu_prepare_datetime_table
+  Index Cond: ((id >= '2019-01-01 00:00:00'::datetime) AND (id < '2022-01-01 00:00:00'::datetime))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.184 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_datetime2_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_datetime2_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01'
+Index Scan using "5ed003cf80dacbb8cce0b21e175f7f94_partition_1_id_idx" on "5ed003cf80dacbb8cce0b21e175f7f94_partition_1" partition_vu_prepare_datetime2_table
+  Index Cond: ((id >= '2019-01-01 00:00:00'::datetime2) AND (id < '2022-01-01 00:00:00'::datetime2))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_smalldatetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_smalldatetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01'
+Index Scan using b5c2e665ec4a1219ba8510e33e45379b_partition_1_id_idx on b5c2e665ec4a1219ba8510e33e45379b_partition_1 partition_vu_prepare_smalldatetime_table
+  Index Cond: ((id >= '2019-01-01 00:00:00'::smalldatetime) AND (id < '2022-01-01 00:00:00'::smalldatetime))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.226 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_char_table WHERE Id >= 'A' AND Id < 'B';
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_char_table WHERE Id >= 'A' AND Id < 'B'
+Index Scan using "5d20bd977eb6e6f1304dec45598c09f5_partition_1_id_idx" on "5d20bd977eb6e6f1304dec45598c09f5_partition_1" partition_vu_prepare_char_table
+  Index Cond: ((id >= 'A'::bpchar) AND (id < 'B'::bpchar))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.241 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_varchar_table WHERE Id >= 'Apple' AND Id < 'Banana';
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_varchar_table WHERE Id >= 'Apple' AND Id < 'Banana'
+Index Scan using "933a5c7f0de13890324e53ee0711424b_partition_1_id_idx" on "933a5c7f0de13890324e53ee0711424b_partition_1" partition_vu_prepare_varchar_table
+  Index Cond: ((id >= 'Apple'::"varchar") AND (id < 'Banana'::"varchar"))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_nvarchar_table WHERE Id >= N'Apple' AND Id < N'Banana';
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_nvarchar_table WHERE Id >= N'Apple' AND Id < N'Banana'
+Index Scan using "320465af1d1bd21f5b29c57f9f4e5c51_partition_1_id_idx" on "320465af1d1bd21f5b29c57f9f4e5c51_partition_1" partition_vu_prepare_nvarchar_table
+  Index Cond: (((id)::"varchar" >= 'Apple'::"varchar") AND ((id)::"varchar" < 'Banana'::"varchar"))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_nchar_table WHERE Id >= N'A' AND Id < N'B';
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_nchar_table WHERE Id >= N'A' AND Id < N'B'
+Gather
+  Workers Planned: 2
+  ->  Parallel Append
+        ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_3 partition_vu_prepare_nchar_table_3
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_5 partition_vu_prepare_nchar_table_5
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_7 partition_vu_prepare_nchar_table_7
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_1 partition_vu_prepare_nchar_table_1
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_2 partition_vu_prepare_nchar_table_2
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_4 partition_vu_prepare_nchar_table_4
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_6 partition_vu_prepare_nchar_table_6
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+        ->  Parallel Seq Scan on e3b6f45b64d480f285db54a94209b4bc_partition_0 partition_vu_prepare_nchar_table_8
+              Filter: (((id)::"varchar" >= 'A'::"varchar") AND ((id)::"varchar" < 'B'::"varchar"))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_binary_table WHERE Id >= 0x0000 AND Id < 0x0400;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_binary_table WHERE Id >= 0x0000 AND Id < 0x0400
+Gather
+  Workers Planned: 2
+  ->  Parallel Append
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
+              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_2" partition_vu_prepare_binary_table_2
+              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_3" partition_vu_prepare_binary_table_3
+              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_4" partition_vu_prepare_binary_table_4
+              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_0" partition_vu_prepare_binary_table_5
+              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.824 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_varbinary_table WHERE Id >= 0x0000000000000000 AND Id < 0x4000000000000000;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_varbinary_table WHERE Id >= 0x0000000000000000 AND Id < 0x4000000000000000
+Index Scan using "77718961234110c3a22a3c977bc252d8_partition_1_id_idx" on "77718961234110c3a22a3c977bc252d8_partition_1" partition_vu_prepare_varbinary_table
+  Index Cond: (((id)::bbf_varbinary >= '0x0000000000000000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x4000000000000000'::bbf_varbinary))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.166 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_uniqueidentifier_table WHERE Id >= '00000000-0000-0000-0000-000000000000' AND Id < '6F9619FF-8B86-D011-B42D-00C04FC964FF';
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_uniqueidentifier_table WHERE Id >= '00000000-0000-0000-0000-000000000000' AND Id < '6F9619FF-8B86-D011-B42D-00C04FC964FF'
+Index Scan using f3baf999c06d6ea82082a4c549baeb77_partition_1_id_idx on f3baf999c06d6ea82082a4c549baeb77_partition_1 partition_vu_prepare_uniqueidentifier_table
+  Index Cond: ((id >= '00000000-0000-0000-0000-000000000000'::uniqueidentifier) AND (id < '6F9619FF-8B86-D011-B42D-00C04FC964FF'::uniqueidentifier))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.188 ms
+~~END~~
+
+
+SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10));
+GO
+~~START~~
+text
+Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10))
+Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table
+  Index Cond: ((id >= 'abc  '::sql_variant) AND (id < 'Apple'::sql_variant))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.191 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+
+
+-- psql
+------------------------------------------
+--- Blocked Operation For Partitioned Tables
+-------------------------------------------
+-- user should not be allowed to CREATE/ATTACH/DETACH partition
+-- to babelfish partitioned table from psql endpoint
+SET ROLE master_dbo;
+GO
+
+-- Attempt to create new partition with random values
+CREATE TABLE NonExistentTable PARTITION OF master_dbo.partition_vu_prepare_int_table
+FOR VALUES FROM (0) TO (500);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: partition "nonexistenttable" would overlap partition "363863941f079adaa9aa733200e57c9f_partition_1"
+  Position: 157
+    Server SQLState: 42P17)~~
+
+
+-- Attempt to create new partition with DEFAULT
+CREATE TABLE NonExistentTable PARTITION OF master_dbo.partition_vu_prepare_int_table
+DEFAULT
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: partition "nonexistenttable" conflicts with existing default partition "363863941f079adaa9aa733200e57c9f_partition_0"
+  Position: 134
+    Server SQLState: 42P17)~~
+
+
+-- Attempt to drop partition of babelfish partitioned table from psql endpoint
+DROP TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot drop the babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.
+    Server SQLState: 42704)~~
+
+
+
+-- Attempt to detach
+-- explicit schema name specified
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot detach partition from babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+RESET search_path;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot detach partition from babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- Attempt to detach using CONCURRENTLY option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+CONCURRENTLY;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot detach partition from babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- Attempt to detach using FINALIZE option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+FINALIZE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot detach partition from babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- Attempt to attach with Default value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable DEFAULT;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot attach partition to babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+-- Attempt to attach with random value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable FOR VALUES FROM (10) TO (20);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot attach partition to babelfish partitioned table 'partition_vu_prepare_int_table'.
+    Server SQLState: 0A000)~~
+
+
+
+-- user should not be allowed to modify partition 
+-- of babelfish partitioned table neither from psql nor tsql endpoint
+-- explicit schema name specified
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.
+    Server SQLState: 0A000)~~
+
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_0"
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+RESET search_path;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.
+    Server SQLState: 0A000)~~
+
+
+RESET ROLE;
+GO
+
+-- Attempt to ADD storage parameter to babelfish partitioned table (not on the partitions)
+SET babelfishpg_tsql.sql_dialect = "tsql";
+GO
+
+ALTER TABLE master_dbo.partition_vu_prepare_int_table SET (autovacuum_enabled = false);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot specify storage parameters for a partitioned table
+  Hint: Specify storage parameters for its leaf partitions instead.
+    Server SQLState: 42809)~~
+
+
+RESET babelfishpg_tsql.sql_dialect;
+GO
+
+
+-- tsql
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.)~~
+
+
+
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.)~~
+
+
+-- with explicity schema name
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.)~~
+
+
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.)~~
+
+
+-- Attempt to drop partition of babelfish partitioned table from tsql endpoint
+DROP TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.)~~
+
+
+--------------------------------------------------------------------
+--- Unsupported Option with CREATE TABLE with PARTITION SCHEME
+--------------------------------------------------------------------
+-- Computed column as partitioning column is not yet supported in babelfish
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value
+)
+ON IntPartitionScheme(computed_col);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot use generated column in partition key)~~
+
+
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value PERSISTED
+)
+ON IntPartitionScheme(computed_col);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot use generated column in partition key)~~
+
+
+-- temporary table
+CREATE TABLE #TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Creation of tempopary partitioned tables is not supported in Babelfish.)~~
+
+
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+---------------------------------------------------------------
+-- Attempt to create with multiple columns as partitioning scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id, value);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ',' at line 10 and character position 24)~~
+
+
+-- Attempt to create with a partition scheme that doesn't exist and column that doesn't exist in the table
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(NonExistentColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "nonexistentcolumn" named in partition key does not exist)~~
+
+
+-- Attempt to create with a partition scheme that doesn't exist
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(id);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid partition scheme 'NonExistentPartitionScheme' specifed.)~~
+
+
+-- Attempt to use two part name with partition scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON master.IntPartitionScheme(id);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 7 and character position 9)~~
+
+
+-- Attempt to create with a unique constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT UNIQUE
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unique constraint on partitioned table must include all partitioning columns)~~
+
+
+-- Attempt to create with a primary key constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT PRIMARY KEY
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unique constraint on partitioned table must include all partitioning columns)~~
+
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+--- Attempt to create with an incompatible partition column data type
+---------------------------------------------------------------
+CREATE TABLE TestPartitionedTable1
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 2)
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'decimal' which is different from the partition function 'IntPartitionFunction' parameter data type 'int'.)~~
+
+
+CREATE TABLE TestPartitionedTable2
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON DatePartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'datetime' which is different from the partition function 'DatePartitionFunction' parameter data type 'date'.)~~
+
+
+CREATE TABLE TestPartitionedTable3
+(
+    Id INT,
+    PartitionColumn VARCHAR(10)
+)
+ON CharPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'varchar' which is different from the partition function 'CharPartitionFunction' parameter data type 'char'.)~~
+
+
+CREATE TABLE TestPartitionedTable4
+(
+    Id INT,
+    PartitionColumn VARBINARY(10)
+)
+ON BinaryPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'varbinary' which is different from the partition function 'BinaryPartitionFunction' parameter data type 'binary'.)~~
+
+
+CREATE TABLE TestPartitionedTable5
+(
+    Id INT,
+    PartitionColumn SMALLINT
+)
+ON BigIntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int2' which is different from the partition function 'BigIntPartitionFunction' parameter data type 'bigint'.)~~
+
+
+CREATE TABLE TestPartitionedTable6
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 2)
+)
+ON SmallIntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'decimal' which is different from the partition function 'SmallIntPartitionFunction' parameter data type 'smallint'.)~~
+
+
+CREATE TABLE TestPartitionedTable7
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 5)
+)
+ON TinyIntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'decimal' which is different from the partition function 'TinyIntPartitionFunction' parameter data type 'tinyint'.)~~
+
+
+CREATE TABLE TestPartitionedTable8
+(
+    Id INT,
+    PartitionColumn BIGINT
+)
+ON DecimalPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int8' which is different from the partition function 'DecimalPartitionFunction' parameter data type 'decimal'.)~~
+
+
+CREATE TABLE TestPartitionedTable9
+(
+    Id INT,
+    PartitionColumn MONEY
+)
+ON NumericPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'money' which is different from the partition function 'NumericPartitionFunction' parameter data type 'numeric'.)~~
+
+
+CREATE TABLE TestPartitionedTable10
+(
+    Id INT,
+    PartitionColumn INT
+)
+ON MoneyPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int4' which is different from the partition function 'MoneyPartitionFunction' parameter data type 'money'.)~~
+
+
+CREATE TABLE TestPartitionedTable11
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON SmallMoneyPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'datetime' which is different from the partition function 'SmallMoneyPartitionFunction' parameter data type 'smallmoney'.)~~
+
+
+CREATE TABLE TestPartitionedTable12
+(
+    Id INT,
+    PartitionColumn DATETIME2(3)
+)
+ON DateTimePartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'datetime2' which is different from the partition function 'DateTimePartitionFunction' parameter data type 'datetime'.)~~
+
+
+CREATE TABLE TestPartitionedTable13
+(
+    Id INT,
+    PartitionColumn SMALLDATETIME
+)
+ON DateTime2PartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'smalldatetime' which is different from the partition function 'DateTime2PartitionFunction' parameter data type 'datetime2'.)~~
+
+
+CREATE TABLE TestPartitionedTable14
+(
+    Id INT,
+    PartitionColumn NVARCHAR(10)
+)
+ON SmallDateTimePartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'nvarchar' which is different from the partition function 'SmallDateTimePartitionFunction' parameter data type 'smalldatetime'.)~~
+
+
+CREATE TABLE TestPartitionedTable15
+(
+    Id INT,
+    PartitionColumn INT
+)
+ON NVarCharPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int4' which is different from the partition function 'NVarCharPartitionFunction' parameter data type 'nvarchar'.)~~
+
+
+CREATE TABLE TestPartitionedTable16
+(
+    Id INT,
+    PartitionColumn NCHAR(5)
+)
+ON VarCharPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'nchar' which is different from the partition function 'VarCharPartitionFunction' parameter data type 'varchar'.)~~
+
+
+CREATE TABLE TestPartitionedTable17
+(
+    Id INT,
+    PartitionColumn INT
+)
+ON NCharPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'int4' which is different from the partition function 'NCharPartitionFunction' parameter data type 'nchar'.)~~
+
+
+-- using user defined type
+CREATE TYPE PartitionUserDefinedType FROM SMALLINT;
+GO
+
+CREATE TABLE TestPartitionedTable18
+(
+    Id INT,
+    PartitionColumn PartitionUserDefinedType
+)
+ON BigIntPartitionScheme(PartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Partition column 'partitioncolumn' has data type 'partitionuserdefinedtype' which is different from the partition function 'BigIntPartitionFunction' parameter data type 'bigint'.)~~
+
+
+DROP TYPE PartitionUserDefinedType
+GO
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE Index with PARTITION SCHEME
+---------------------------------------------------------------
+CREATE TABLE TestPartitionedTable (
+    PartitionColumn INT,
+    NonPartitionColumn INT
+) ON IntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestNonPartitionedTable (
+    a INT,
+    b INT
+)
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonExistentColumn1)
+ON NonExistentPartitionScheme (NonExistentColumn2);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "nonexistentcolumn1" does not exist)~~
+
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON NonExistentPartitionScheme (NonExistentColumn2);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column 'nonexistentcolumn2' does not exist)~~
+
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON NonExistentPartitionScheme (NonPartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid object name 'NonExistentPartitionScheme'.)~~
+
+
+-- scheme is different from the partition scheme used in the table
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON BigIntPartitionScheme (NonPartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Un-aligned Index is not supported in Babelfish.)~~
+
+
+-- column specified with partition scheme is different
+-- from the partition column used in the table
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON IntPartitionScheme (NonPartitionColumn);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Un-aligned Index is not supported in Babelfish.)~~
+
+
+-- should work
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON IntPartitionScheme (PartitionColumn);
+GO
+
+DROP INDEX TestPartitionIndex ON TestPartitionedTable
+GO
+
+-- usage of partition scheme on non-partitioned table (should fail)
+CREATE INDEX TestPartitionIndex
+ON TestNonPartitionedTable(a)
+ON IntPartitionScheme (a);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Un-aligned Index is not supported in Babelfish.)~~
+
+
+
+DROP TABLE TestPartitionedTable
+GO
+
+DROP TABLE TestNonPartitionedTable
+GO
+-- psql
+-------------------------------------------------------------------------------------------
+--- Rename Operation on Partitioned Tables should update name in babelfish_partition_depend
+--- and it should also update the name of all the partitions
+-------------------------------------------------------------------------------------------
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table';
+GO
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+master#!#IntPartitionScheme#!#dbo#!#partition_vu_prepare_int_table
+~~END~~
+
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
+GO
+~~START~~
+regclass
+master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+master_dbo."363863941f079adaa9aa733200e57c9f_partition_1"
+master_dbo."363863941f079adaa9aa733200e57c9f_partition_2"
+master_dbo."363863941f079adaa9aa733200e57c9f_partition_3"
+~~END~~
+
+
+-- tsql
+-- trigger rename from TSQL endpoint
+EXEC sp_rename 'partition_vu_prepare_int_table', 'partition_vu_prepare_int_table_renamed', 'OBJECT'
+GO
+
+-- psql
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table_renamed';
+GO
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+master#!#IntPartitionScheme#!#dbo#!#partition_vu_prepare_int_table_renamed
+~~END~~
+
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table_renamed')::regclass;
+GO
+~~START~~
+regclass
+master_dbo.c2647401dc3e9a950809daafcd188637_partition_0
+master_dbo.c2647401dc3e9a950809daafcd188637_partition_1
+master_dbo.c2647401dc3e9a950809daafcd188637_partition_2
+master_dbo.c2647401dc3e9a950809daafcd188637_partition_3
+~~END~~
+
+
+-- trigger rename from PSQL endpoint
+ALTER TABLE master_dbo.partition_vu_prepare_int_table_renamed RENAME TO partition_vu_prepare_int_table;
+GO
+
+-- we should get orginal here 
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table';
+GO
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+master#!#IntPartitionScheme#!#dbo#!#partition_vu_prepare_int_table
+~~END~~
+
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
+GO
+~~START~~
+regclass
+master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+master_dbo."363863941f079adaa9aa733200e57c9f_partition_1"
+master_dbo."363863941f079adaa9aa733200e57c9f_partition_2"
+master_dbo."363863941f079adaa9aa733200e57c9f_partition_3"
+~~END~~
+
