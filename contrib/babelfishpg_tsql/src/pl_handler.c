@@ -6099,32 +6099,29 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			}
 			else
 			{
-				//Convert the column name to lowercase
 				char* original_name = tle->resname;
 				if(tle->resname!=NULL)
+				{
 					tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
+				}	
 				current_resno += 1;
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
-				// checking if the column_name is already in lower case
-				// value == 0 => already in lowercase 
-				//trying some options to store the original name of the column_name 
-				
-					if(original_name!=NULL&&!strcmp(original_name,tle->resname))
-					{
-						cmd = makeNode(AlterTableCmd);
-						cmd->subtype = AT_SetOptions;
-						cmd->name = tle->resname;
-						cmd->def = (Node *) list_make1(makeDefElem(pstrdup("bbf_original_rel_name"), (Node *) makeString(pstrdup(original_name)), -1));
-						cmd->behavior = DROP_RESTRICT;
-						cmd->missing_ok = false;
+				if(original_name!=NULL&&!strcmp(original_name,tle->resname))
+				{
+					cmd = makeNode(AlterTableCmd);
+					cmd->subtype = AT_SetOptions;
+					cmd->name = tle->resname;
+					cmd->def = (Node *) list_make1(makeDefElem(pstrdup("bbf_original_rel_name"), (Node *) makeString(pstrdup(original_name)), -1));
+					cmd->behavior = DROP_RESTRICT;
+					cmd->missing_ok = false;
 
-						newstmt = makeNode(AlterTableStmt);
-						newstmt->relation = into->rel;
-						newstmt->cmds = NIL;
-						newstmt->objtype = OBJECT_TABLE;
-						newstmt->cmds = lappend(newstmt->cmds, cmd);
-						tempStore = lappend(tempStore,newstmt);
+					newstmt = makeNode(AlterTableStmt);
+					newstmt->relation = into->rel;
+					newstmt->cmds = NIL;
+					newstmt->objtype = OBJECT_TABLE;
+					newstmt->cmds = lappend(newstmt->cmds, cmd);
+					tempStore = lappend(tempStore,newstmt);
 				}
 				
 			}
