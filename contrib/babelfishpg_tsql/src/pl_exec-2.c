@@ -4074,7 +4074,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
  *		values are found.
  *		Returns -1 if a < b, 1 if a > b and 0 if a == b.
  */
-static int
+int
 tsql_compare_values(const void *a, const void *b, void *arg)
 {
 	Datum		*da = (Datum *) a;

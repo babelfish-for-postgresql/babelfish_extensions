@@ -1021,3 +1021,59 @@ INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST(N'Ban
 INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST('Some text' AS SQL_VARIANT), 'Value Some text');
 INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
+
+---------------------------------------------------------------
+---- Views/Functions/Procedure to test DOLLAR PARTITION FUNCTION
+----------------------------------------------------------------
+
+CREATE VIEW DollarPartitionFunctionView
+AS 
+    SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+    FROM partition_vu_prepare_int_table
+    ORDER BY PartitionNumber, Id;
+GO
+
+CREATE PROCEDURE DollarPartitionFunctionProc
+AS
+    SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+    FROM partition_vu_prepare_int_table
+    ORDER BY PartitionNumber, Id;
+GO
+
+CREATE FUNCTION DollarPartitionFunctionFunc()
+RETURNS TABLE
+AS
+    RETURN (
+        SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+        FROM partition_vu_prepare_int_table
+        ORDER BY PartitionNumber, Id
+    )
+GO
+
+CREATE VIEW DollarPartitionFunctionNullView
+AS
+    SELECT $PARTITION.IntPartitionFunction(NULL)
+GO
+
+CREATE PROCEDURE DollarPartitionFunctionNullProc
+AS
+    SELECT $PARTITION.IntPartitionFunction(NULL)
+GO
+
+CREATE FUNCTION DollarPartitionFunctionNullFunc()
+RETURNS TABLE
+AS
+    RETURN (
+        SELECT $PARTITION.IntPartitionFunction(NULL)
+    )
+GO
+
+CREATE VIEW SysSearchPartitionDepView
+AS 
+    SELECT sys.search_partition('IntPartitionFunction', 10)
+GO
+
+CREATE VIEW SysSearchPartitionNULLDepView
+AS 
+    SELECT sys.search_partition('IntPartitionFunction', 10, NULL)
+GO
