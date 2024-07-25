@@ -2764,6 +2764,8 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+
 static List *
 gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype)
 {
@@ -2775,6 +2777,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	initStringInfo(&query);
 	if (objtype == OBJECT_TABLE) {
 		appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
+		appendStringInfo(&query, "ALTER TABLE dummy SET (dummy = 'dummy'); ");
 	} else if (objtype == OBJECT_VIEW) {
 		appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
 	} else if (objtype == OBJECT_PROCEDURE) {
@@ -2790,7 +2793,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	}
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-	if (list_length(res) != 1)
+	if ((objtype != OBJECT_TABLE) && (list_length(res) != 1))
 		ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
@@ -2807,6 +2810,29 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		renamestmt->newname = pstrdup(lowerstr(newname));
 		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
 		renamestmt->relation->relname = pstrdup(lowerstr(objname));
+
+		if (objtype == OBJECT_TABLE)
+		{
+			AlterTableStmt *altertablestmt;
+			AlterTableCmd *cmd;
+			ListCell *lc = NULL;
+
+			rewrite_object_refs(stmt);
+			/* extra query nodes for modifying reloption */
+			stmt = parsetree_nth_stmt(res, 1);
+			altertablestmt = (AlterTableStmt *) stmt;
+			if (!IsA(altertablestmt, AlterTableStmt))
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
+
+			altertablestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+			altertablestmt->relation->relname = pstrdup(lowerstr(newname));
+			altertablestmt->objtype = OBJECT_TABLE;
+			/* get data of the first node */
+			lc = list_head(altertablestmt->cmds);
+			cmd = (AlterTableCmd *) lfirst(lc);
+			cmd->subtype = AT_SetRelOptions;
+			cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(newname)), -1));
+		}
 	} else {
 	// } else if ((objtype == OBJECT_PROCEDURE) || (objtype == OBJECT_FUNCTION)) {
 		ObjectWithArgs *objwargs = (ObjectWithArgs *) renamestmt->object;

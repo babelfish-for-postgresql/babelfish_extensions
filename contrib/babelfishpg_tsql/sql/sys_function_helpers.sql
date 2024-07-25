@@ -10352,3 +10352,7 @@ CREATE OR REPLACE FUNCTION sys.bbf_is_shared_schema(IN schemaname TEXT)
 RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_shared_schema_wrapper'
 LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_split_identifier(IN identifier VARCHAR, OUT value VARCHAR)
+RETURNS SETOF VARCHAR AS 'babelfishpg_tsql', 'split_identifier_internal'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

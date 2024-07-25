@@ -239,7 +239,7 @@ sys-table_types-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
-BABEL-2877
+babelfish_function_ext-before_16_4_or_15_8_or_14_13
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
@@ -362,7 +362,7 @@ BABEL-3640
 sys-sysindexes
 sys-system_objects
 ISC-Views
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Columns
 #ISC-Check-Constraints
 ISC-Table_Constraints

@@ -291,7 +291,7 @@ sys_database_principals_dep_for_13_x
 babelfish_cast_floor
 babel_try_parse
 sys-sysindexes
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Columns
 ISC-Table_Constraints
 case_insensitive_collation

@@ -76,6 +76,252 @@ WHERE Ext.database_name = DB_NAME()
 AND (Ext.orig_username IN ('dbo', 'db_owner', 'guest', 'public', 'sys', 'INFORMATION_SCHEMA') -- system users should always be visible
 OR pg_has_role(Ext.rolname, 'MEMBER')); -- Current user should be able to see users it has permission of
 
+CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
+	SELECT c.oid AS "TABLE_OID",
+			CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+					c.relname)
+				AS sys.nvarchar(128)) AS "TABLE_NAME",
+
+			CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(a.attoptions) AS option),
+					a.attname)
+				AS sys.nvarchar(128)) AS "COLUMN_NAME",
+
+			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
+			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
+			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
+				AS varchar(3))
+				AS "IS_NULLABLE",
+
+			CAST(
+				CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype)
+				WHEN tsql_type_name.tsql_type_name IS NULL THEN format_type(t.oid, NULL::integer)
+				ELSE tsql_type_name END
+				AS sys.nvarchar(128))
+				AS "DATA_TYPE",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_max_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_MAXIMUM_LENGTH",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_OCTET_LENGTH",
+
+			CAST(
+				/* Handle Tinyint separately */
+				information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, true_typid, true_typmod)
+				AS sys.tinyint)
+				AS "NUMERIC_PRECISION",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, true_typid, true_typmod)
+				AS smallint)
+				AS "NUMERIC_PRECISION_RADIX",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, true_typid, true_typmod)
+				AS int)
+				AS "NUMERIC_SCALE",
+
+			CAST(
+				information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
+				AS smallint)
+				AS "DATETIME_PRECISION",
+
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
+			/*
+			 * TODO: We need to first create mapping of collation name to char-set name;
+			 * Until then return null.
+			 */
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_CATALOG",
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+
+			/* Returns Babelfish specific collation name. */
+			CAST(co.collname AS sys.nvarchar(128)) AS "COLLATION_NAME",
+
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN nc.dbname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN ext.orig_name ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN t.typname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
+
+	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
+		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
+		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
+		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+		LEFT JOIN pg_collation co on co.oid = a.attcollation
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
+		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
+		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
+		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
+
+	WHERE (NOT pg_is_other_temp_schema(nc.oid))
+		AND a.attnum > 0 AND NOT a.attisdropped
+		AND c.relkind IN ('r', 'v', 'p')
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_column_privilege(c.oid, a.attnum,
+									'SELECT, INSERT, UPDATE, REFERENCES'))
+		AND ext.dbid =sys.db_id();
+
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		   CAST(
+				COALESCE(
+					(SELECT string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+				c.relname)
+			AS sys._ci_sysname) AS "TABLE_NAME",
+
+		   CAST(
+			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
+				  WHEN c.relkind = 'v' THEN 'VIEW'
+				  ELSE null END
+			 AS sys.varchar(10)) COLLATE sys.database_default AS "TABLE_TYPE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+		   LEFT JOIN sys.table_types_internal tt on c.oid = tt.typrelid
+
+	WHERE c.relkind IN ('r', 'v', 'p')
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND tt.typrelid IS NULL
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = sys.db_id()
+		AND (NOT c.relname = 'sysdatabases');
+
+CREATE OR REPLACE FUNCTION sys.babelfish_split_identifier(IN identifier VARCHAR, OUT value VARCHAR)
+RETURNS SETOF VARCHAR AS 'babelfishpg_tsql', 'split_identifier_internal'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@objtype" sys.varchar(13) DEFAULT NULL
+)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	If @objtype IS NULL
+		BEGIN
+			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
+		END
+	IF @objtype = 'COLUMN'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Column', 1;
+		END
+	IF @objtype = 'INDEX'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
+		END
+	IF @objtype = 'STATISTICS'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
+		END
+	IF @objtype = 'USERDATATYPE'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type User-defined Data Type alias', 1;
+		END
+	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
+		BEGIN
+			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+		END
+	DECLARE @name_count INT;
+	DECLARE @subname sys.nvarchar(776) = '';
+	DECLARE @schemaname sys.nvarchar(776) = '';
+	DECLARE @dbname sys.nvarchar(776) = '';
+	SELECT @name_count = COUNT(*) FROM sys.babelfish_split_identifier(@objname);
+	IF @name_count > 3
+		BEGIN
+			THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+		END
+	IF @name_count = 3
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM sys.babelfish_split_identifier(@objname))
+			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
+			IF @dbname != sys.db_name()
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM sys.babelfish_split_identifier(@objname))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM sys.babelfish_split_identifier(@objname))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+		END
+	IF @name_count = 2
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM sys.babelfish_split_identifier(@objname))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM sys.babelfish_split_identifier(@objname))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
+		END
+	IF @name_count = 1
+		BEGIN
+			SET @schemaname = sys.schema_name();
+			SET @subname = @objname;
+		END
+	
+	DECLARE @count INT;
+	DECLARE @currtype char(2);
+	SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	IF @count > 1
+		BEGIN
+			THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+		END
+	IF @count < 1
+		BEGIN
+			THROW 33557097, N'There is no object with the given @objname.', 1;
+		END
+	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
+	PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
+END;
+$$;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

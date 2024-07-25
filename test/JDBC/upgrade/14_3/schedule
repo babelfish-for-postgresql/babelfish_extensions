@@ -300,7 +300,7 @@ BABEL-3640
 openjson
 sys-sysindexes
 sys-system_objects
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
