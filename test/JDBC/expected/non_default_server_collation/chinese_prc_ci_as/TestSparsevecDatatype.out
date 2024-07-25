@@ -1,0 +1,1583 @@
+-- tsql
+-- should throw error since vector is only allowed in sys
+exec sp_execute_postgresql 'create extension vector';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'vector' extension creation is restricted to 'sys' schema)~~
+
+
+exec sp_execute_postgresql 'create extension vector with schema sys';
+go
+
+create login vector_login with password='12345678'
+go
+
+Alter server role sysadmin add member vector_login
+go
+
+create database vector_db;
+go
+
+use vector_db
+go
+
+-- tsql user=vector_login password=12345678
+use vector_db;
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+
+SELECT CAST('{1:1.5,3:3.5}/5' as sparsevec);
+go
+~~START~~
+varchar
+{1:1.5,3:3.5}/5
+~~END~~
+
+
+SELECT CAST('{1:-2,3:-4}/5' as sparsevec);
+go
+~~START~~
+varchar
+{1:-2,3:-4}/5
+~~END~~
+
+
+SELECT CAST('{1:2.,3:4.}/5' as sparsevec);
+go
+~~START~~
+varchar
+{1:2,3:4}/5
+~~END~~
+
+
+SELECT CAST(' { 1 : 1.5 ,  3  :  3.5  } / 5 ' as sparsevec);
+go
+~~START~~
+varchar
+{1:1.5,3:3.5}/5
+~~END~~
+
+
+SELECT CAST('{1:1.23456}/1' as sparsevec);
+go
+~~START~~
+varchar
+{1:1.23456}/1
+~~END~~
+
+
+SELECT CAST('{1:hello,2:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{1:hello,2:1}/2")~~
+
+
+SELECT CAST('{1:NaN,2:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NaN not allowed in sparsevec)~~
+
+
+SELECT CAST('{1:Infinity,2:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: infinite value not allowed in sparsevec)~~
+
+
+SELECT CAST('{1:-Infinity,2:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: infinite value not allowed in sparsevec)~~
+
+
+SELECT CAST('{1:1.5e38,2:-1.5e38}/2' as sparsevec);
+go
+~~START~~
+varchar
+{1:1.5e+38,2:-1.5e+38}/2
+~~END~~
+
+
+SELECT CAST('{1:1.5e+38,2:-1.5e+38}/2' as sparsevec);
+go
+~~START~~
+varchar
+{1:1.5e+38,2:-1.5e+38}/2
+~~END~~
+
+
+SELECT CAST('{1:1.5e-38,2:-1.5e-38}/2' as sparsevec);
+go
+~~START~~
+varchar
+{1:1.5e-38,2:-1.5e-38}/2
+~~END~~
+
+
+SELECT CAST('{1:4e38,2:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "4e38" is out of range for type sparsevec)~~
+
+
+SELECT CAST('{1:-4e38,2:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "-4e38" is out of range for type sparsevec)~~
+
+
+SELECT CAST('{1:1e-46,2:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1e-46" is out of range for type sparsevec)~~
+
+
+SELECT CAST('{1:-1e-46,2:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "-1e-46" is out of range for type sparsevec)~~
+
+
+SELECT CAST('' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "")~~
+
+
+SELECT CAST('{' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{")~~
+
+
+SELECT CAST('{ ' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{ ")~~
+
+
+SELECT CAST('{:' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{:")~~
+
+
+SELECT CAST('{,' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{,")~~
+
+
+SELECT CAST('{}' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{}")~~
+
+
+SELECT CAST('{}/'' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ''{}/'' at line 1 and character position 12)~~
+
+
+SELECT CAST('{}/1' as sparsevec);
+go
+~~START~~
+varchar
+{}/1
+~~END~~
+
+
+SELECT CAST('{}/1a' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{}/1a")~~
+
+
+SELECT CAST('{ }/1' as sparsevec);
+go
+~~START~~
+varchar
+{}/1
+~~END~~
+
+
+SELECT CAST('{:}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{:}/1")~~
+
+
+SELECT CAST('{,}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{,}/1")~~
+
+
+SELECT CAST('{1,}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{1,}/1")~~
+
+
+SELECT CAST('{:1}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{:1}/1")~~
+
+
+SELECT CAST('{1:}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{1:}/1")~~
+
+
+SELECT CAST('{1a:1}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{1a:1}/1")~~
+
+
+SELECT CAST('{1:1a}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{1:1a}/1")~~
+
+
+SELECT CAST('{1:1,}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type sparsevec: "{1:1,}/1")~~
+
+
+SELECT CAST('{1:0,2:1,3:0}/3' as sparsevec);
+go
+~~START~~
+varchar
+{2:1}/3
+~~END~~
+
+
+SELECT CAST('{2:1,1:1}/2' as sparsevec);
+go
+~~START~~
+varchar
+{1:1,2:1}/2
+~~END~~
+
+
+SELECT CAST('{1:1,1:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec indices must not contain duplicates)~~
+
+
+SELECT CAST('{1:1,2:1,1:1}/2' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec indices must not contain duplicates)~~
+
+
+SELECT CAST('{}/5' as sparsevec);
+go
+~~START~~
+varchar
+{}/5
+~~END~~
+
+
+SELECT CAST('{}/-1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec must have at least 1 dimension)~~
+
+
+SELECT CAST('{}/1000000001' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec cannot have more than 1000000000 dimensions)~~
+
+
+SELECT CAST('{}/2147483648' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec cannot have more than 1000000000 dimensions)~~
+
+
+SELECT CAST('{}/-2147483649' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec must have at least 1 dimension)~~
+
+
+SELECT CAST('{}/9223372036854775808' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec cannot have more than 1000000000 dimensions)~~
+
+
+SELECT CAST('{}/-9223372036854775809' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec must have at least 1 dimension)~~
+
+
+SELECT CAST('{2147483647:1}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec index out of bounds)~~
+
+
+SELECT CAST('{2147483648:1}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec index out of bounds)~~
+
+
+SELECT CAST('{-2147483648:1}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec index out of bounds)~~
+
+
+SELECT CAST('{-2147483649:1}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec index out of bounds)~~
+
+
+SELECT CAST('{0:1}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec index out of bounds)~~
+
+
+SELECT CAST('{2:1}/1' as sparsevec);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sparsevec index out of bounds)~~
+
+
+SELECT CAST('{}/3' as sparsevec(3));
+go
+~~START~~
+varchar
+{}/3
+~~END~~
+
+
+SELECT CAST('{}/3' as sparsevec(2));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: expected 2 dimensions, not 3)~~
+
+
+SELECT CAST('{}/3' as sparsevec(3, 2));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid type modifier)~~
+
+
+SELECT CAST('{}/3' as sparsevec('a'));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 31)~~
+
+
+SELECT CAST('{}/3' as sparsevec(0));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: dimensions for type sparsevec must be at least 1)~~
+
+
+SELECT CAST('{}/3' as sparsevec(1000000001));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: dimensions for type sparsevec cannot exceed 1000000000)~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) < CAST('{1:1,2:2,3:3}/3' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) < CAST('{1:1,2:2}/2' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) <= CAST('{1:1,2:2,3:3}/3' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) <= CAST('{1:1,2:2}/2' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) = CAST('{1:1,2:2,3:3}/3' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) = CAST('{1:1,2:2}/2' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) != CAST('{1:1,2:2,3:3}/3' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) != CAST('{1:1,2:2}/2' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) >= CAST('{1:1,2:2,3:3}/3' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) >= CAST('{1:1,2:2}/2' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) > CAST('{1:1,2:2,3:3}/3' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT CASE WHEN CAST('{1:1,2:2,3:3}/3' as sparsevec) > CAST('{1:1,2:2}/2' as sparsevec) THEN 1 ELSE 0 END;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT sparsevec_cmp(CAST('{1:1,2:2,3:3}/3' as sparsevec), CAST('{1:1,2:2,3:3}/3' as sparsevec));
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT sparsevec_cmp(CAST('{1:1,2:2,3:3}/3' as sparsevec), CAST('{}/3' as sparsevec));
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT sparsevec_cmp(CAST('{}/3' as sparsevec), CAST('{1:1,2:2,3:3}/3' as sparsevec));
+go
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT sparsevec_cmp(CAST('{1:1,2:2}/2' as sparsevec), CAST('{1:1,2:2,3:3}/3' as sparsevec));
+go
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT sparsevec_cmp(CAST('{1:1,2:2,3:3}/3' as sparsevec), CAST('{1:1,2:2}/2' as sparsevec));
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT sparsevec_cmp(CAST('{1:1,2:2}/2' as sparsevec), CAST('{1:2,2:3,3:4}/3' as sparsevec));
+go
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT sparsevec_cmp(CAST('{1:2,2:3}/2' as sparsevec), CAST('{1:1,2:2,3:3}/3' as sparsevec));
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT ROUND(l2_norm(CAST('{1:1,2:1}/2' as sparsevec)), 5);
+go
+~~START~~
+numeric
+1.41421
+~~END~~
+
+
+SELECT l2_norm(CAST('{1:3,2:4}/2' as sparsevec));
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+SELECT l2_norm(CAST('{2:1}/2' as sparsevec));
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT l2_norm(CAST('{1:3e37,2:4e37}/2' as sparsevec));
+go
+~~START~~
+float
+5.000000042966943E37
+~~END~~
+
+
+SELECT l2_norm(CAST('{}/2' as sparsevec));
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT l2_norm(CAST('{1:2}/1' as sparsevec));
+go
+~~START~~
+float
+2.0
+~~END~~
+
+
+SELECT l2_distance(CAST('{}/2' as sparsevec), CAST('{1:3,2:4}/2' as sparsevec));
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+SELECT l2_distance(CAST('{1:3}/2' as sparsevec), CAST('{2:4}/2' as sparsevec));
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+SELECT l2_distance(CAST('{2:4}/2' as sparsevec), CAST('{1:3}/2' as sparsevec));
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+SELECT l2_distance(CAST('{1:3,2:4}/2' as sparsevec), CAST('{}/2' as sparsevec));
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+SELECT l2_distance(CAST('{}/2' as sparsevec), CAST('{2:1}/2' as sparsevec));
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT CAST('{}/2' as sparsevec) <-> CAST('{1:3,2:4}/2' as sparsevec);
+go
+~~START~~
+float
+5.0
+~~END~~
+
+
+SELECT inner_product(CAST('{1:1,2:2}/2' as sparsevec), CAST('{1:2,2:4}/2' as sparsevec));
+go
+~~START~~
+float
+10.0
+~~END~~
+
+
+SELECT inner_product(CAST('{1:1,2:2}/2' as sparsevec), CAST('{1:3}/1' as sparsevec));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: different sparsevec dimensions 2 and 1)~~
+
+
+SELECT inner_product(CAST('{1:1,3:3}/4' as sparsevec), CAST('{2:2,4:4}/4' as sparsevec));
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT inner_product(CAST('{2:2,4:4}/4' as sparsevec), CAST('{1:1,3:3}/4' as sparsevec));
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT inner_product(CAST('{1:1,3:3,5:5}/5' as sparsevec), CAST('{2:4,3:6,4:8}/5' as sparsevec));
+go
+~~START~~
+float
+18.0
+~~END~~
+
+
+SELECT inner_product(CAST('{1:1}/2' as sparsevec), CAST('{}/2' as sparsevec));
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT inner_product(CAST('{}/2' as sparsevec), CAST('{1:1}/2' as sparsevec));
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT inner_product(CAST('{1:3e38}/1' as sparsevec), CAST('{1:3e38}/1' as sparsevec));
+go
+~~START~~
+float
+Infinity
+~~END~~
+
+
+SELECT inner_product(CAST('{1:1,3:3,5:5}/5' as sparsevec), CAST('{2:4,3:6,4:8}/5' as sparsevec));
+go
+~~START~~
+float
+18.0
+~~END~~
+
+
+SELECT CAST('{1:1,2:2}/2' as sparsevec) <#> CAST('{1:3,2:4}/2' as sparsevec);
+go
+~~START~~
+float
+-11.0
+~~END~~
+
+
+SELECT cosine_distance(CAST('{1:1,2:2}/2' as sparsevec), CAST('{1:2,2:4}/2' as sparsevec));
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT cosine_distance(CAST('{1:1,2:2}/2' as sparsevec), CAST('{}/2' as sparsevec));
+go
+~~START~~
+float
+NaN
+~~END~~
+
+
+SELECT cosine_distance(CAST('{1:1,2:1}/2' as sparsevec), CAST('{1:1,2:1}/2' as sparsevec));
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT cosine_distance(CAST('{1:1}/2' as sparsevec), CAST('{2:2}/2' as sparsevec));
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT cosine_distance(CAST('{1:1,2:1}/2' as sparsevec), CAST('{1:-1,2:-1}/2' as sparsevec));
+go
+~~START~~
+float
+2.0
+~~END~~
+
+
+SELECT cosine_distance(CAST('{1:2}/2' as sparsevec), CAST('{2:2}/2' as sparsevec));
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT cosine_distance(CAST('{2:2}/2' as sparsevec), CAST('{1:2}/2' as sparsevec));
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT cosine_distance(CAST('{1:1,2:2}/2' as sparsevec), CAST('{1:3}/1' as sparsevec));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: different sparsevec dimensions 2 and 1)~~
+
+
+SELECT cosine_distance(CAST('{1:1,2:1}/2' as sparsevec), CAST('{1:1.1,2:1.1}/2' as sparsevec));
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT cosine_distance(CAST('{1:1,2:1}/2' as sparsevec), CAST('{1:-1.1,2:-1.1}/2' as sparsevec));
+go
+~~START~~
+float
+2.0
+~~END~~
+
+
+SELECT cosine_distance(CAST('{1:3e38}/1' as sparsevec), CAST('{1:3e38}/1' as sparsevec));
+go
+~~START~~
+float
+NaN
+~~END~~
+
+
+SELECT cosine_distance(CAST('{}/1' as sparsevec), CAST('{}/1' as sparsevec));
+go
+~~START~~
+float
+NaN
+~~END~~
+
+
+SELECT CAST('{1:1,2:2}/2' as sparsevec) <=> CAST('{1:2,2:4}/2' as sparsevec);
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+SELECT l1_distance(CAST('{}/2' as sparsevec), CAST('{1:3,2:4}/2' as sparsevec));
+go
+~~START~~
+float
+7.0
+~~END~~
+
+
+SELECT l1_distance(CAST('{}/2' as sparsevec), CAST('{2:1}/2' as sparsevec));
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT l1_distance(CAST('{1:1,2:2}/2' as sparsevec), CAST('{1:3}/1' as sparsevec));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: different sparsevec dimensions 2 and 1)~~
+
+
+SELECT l1_distance(CAST('{1:3e38}/1' as sparsevec), CAST('{1:-3e38}/1' as sparsevec));
+go
+~~START~~
+float
+Infinity
+~~END~~
+
+
+SELECT l1_distance(CAST('{1:1,3:3,5:5,7:7}/8' as sparsevec), CAST('{2:2,4:4,6:6,8:8}/8' as sparsevec));
+go
+~~START~~
+float
+36.0
+~~END~~
+
+
+SELECT l1_distance(CAST('{1:1,3:3,5:5,7:7,9:9}/9' as sparsevec), CAST('{2:2,4:4,6:6,8:8}/9' as sparsevec));
+go
+~~START~~
+float
+45.0
+~~END~~
+
+
+SELECT CAST('{}/2' as sparsevec) <+> CAST('{1:3,2:4}/2' as sparsevec);
+go
+~~START~~
+float
+7.0
+~~END~~
+
+
+SELECT l2_normalize(CAST('{1:3,2:4}/2' as sparsevec));
+go
+~~START~~
+varchar
+{1:0.6,2:0.8}/2
+~~END~~
+
+
+SELECT l2_normalize(CAST('{1:3}/2' as sparsevec));
+go
+~~START~~
+varchar
+{1:1}/2
+~~END~~
+
+
+SELECT l2_normalize(CAST('{2:0.1}/2' as sparsevec));
+go
+~~START~~
+varchar
+{2:1}/2
+~~END~~
+
+
+SELECT l2_normalize(CAST('{}/2' as sparsevec));
+go
+~~START~~
+varchar
+{}/2
+~~END~~
+
+
+SELECT l2_normalize(CAST('{1:3e38}/1' as sparsevec));
+go
+~~START~~
+varchar
+{1:1}/1
+~~END~~
+
+
+SELECT l2_normalize(CAST('{1:3e38,2:1e-37}/2' as sparsevec));
+go
+~~START~~
+varchar
+{1:1}/2
+~~END~~
+
+
+SELECT l2_normalize(CAST('{2:3e37,4:3e-37,6:4e37,8:4e-37}/9' as sparsevec));
+go
+~~START~~
+varchar
+{2:0.6,6:0.8}/9
+~~END~~
+
+
+
+-- L2
+CREATE TABLE sparsevec_table (val sparsevec(3));
+go
+
+INSERT INTO sparsevec_table (val) VALUES (CAST('{}/3' AS sparsevec)), (CAST('{1:1,2:2,3:3}/3' AS sparsevec)), (CAST('{1:1,2:1,3:1}/3' AS sparsevec)), (NULL);
+go
+~~ROW COUNT: 4~~
+
+
+CREATE INDEX idx ON sparsevec_table USING hnsw (val sparsevec_l2_ops);
+go
+
+INSERT INTO sparsevec_table (val) VALUES (CAST('{1:1,2:2,3:4}/3' AS sparsevec));
+go
+~~ROW COUNT: 1~~
+
+
+-- test explain output for index scan
+SET BABELFISH_STATISTICS PROFILE ON; SELECT set_config('enable_seqscan', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_seqscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+SELECT * FROM sparsevec_table ORDER BY val <-> CAST('{1:3,2:3,3:3}/3' AS sparsevec);
+go
+~~START~~
+varchar
+{1:1,2:2,3:3}/3
+{1:1,2:2,3:4}/3
+{1:1,2:1,3:1}/3
+{}/3
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM sparsevec_table ORDER BY val <-> CAST('{1:3,2:3,3:3}/3' AS sparsevec) NULLS LAST
+Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
+  Order By: (val <-> '{1:3,2:3,3:3}/3'::sparsevec)
+~~END~~
+
+
+SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <-> (SELECT CAST(NULL as sparsevec))) t2;
+go
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <-> (SELECT CAST(NULL as sparsevec)) NULLS LAST) t2
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
+        Order By: (val <-> $0)
+        InitPlan 1 (returns $0)
+          ->  Result (actual rows=1 loops=1)
+~~END~~
+
+
+SELECT COUNT(*) FROM sparsevec_table;
+go
+~~START~~
+int
+5
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM sparsevec_table
+Aggregate (actual rows=1 loops=1)
+  ->  Seq Scan on sparsevec_table (actual rows=5 loops=1)
+~~END~~
+
+
+TRUNCATE TABLE sparsevec_table;
+go
+
+SELECT * FROM sparsevec_table ORDER BY val <-> CAST('{1:3,2:3,3:3}/3' AS sparsevec);
+go
+~~START~~
+varchar
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM sparsevec_table ORDER BY val <-> CAST('{1:3,2:3,3:3}/3' AS sparsevec) NULLS LAST
+Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=0 loops=1)
+  Order By: (val <-> '{1:3,2:3,3:3}/3'::sparsevec)
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE OFF; SELECT set_config('enable_seqscan', 'on', false);
+DROP TABLE sparsevec_table;
+go
+~~START~~
+text
+on
+~~END~~
+
+
+
+-- inner product
+CREATE TABLE sparsevec_table (val sparsevec(3));
+go
+
+INSERT INTO sparsevec_table (val) VALUES (CAST('{}/3' AS sparsevec)), (CAST('{1:1,2:2,3:3}/3' AS sparsevec)), (CAST('{1:1,2:1,3:1}/3' AS sparsevec)), (NULL);
+go
+~~ROW COUNT: 4~~
+
+
+CREATE INDEX idx ON sparsevec_table USING hnsw (val sparsevec_ip_ops);
+go
+
+INSERT INTO sparsevec_table (val) VALUES (CAST('{1:1,2:2,3:4}/3' AS sparsevec));
+go
+~~ROW COUNT: 1~~
+
+
+-- test explain output for index scan
+SET BABELFISH_STATISTICS PROFILE ON; SELECT set_config('enable_seqscan', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_seqscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+SELECT * FROM sparsevec_table ORDER BY val <#> CAST('{1:3,2:3,3:3}/3' AS sparsevec);
+go
+~~START~~
+varchar
+{1:1,2:2,3:4}/3
+{1:1,2:2,3:3}/3
+{1:1,2:1,3:1}/3
+{}/3
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM sparsevec_table ORDER BY val <#> CAST('{1:3,2:3,3:3}/3' AS sparsevec) NULLS LAST
+Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
+  Order By: (val <#> '{1:3,2:3,3:3}/3'::sparsevec)
+~~END~~
+
+
+SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <#> (SELECT CAST(NULL as sparsevec))) t2;
+go
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <#> (SELECT CAST(NULL as sparsevec)) NULLS LAST) t2
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
+        Order By: (val <#> $0)
+        InitPlan 1 (returns $0)
+          ->  Result (actual rows=1 loops=1)
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE OFF; SELECT set_config('enable_seqscan', 'on', false);
+DROP TABLE sparsevec_table;
+go
+~~START~~
+text
+on
+~~END~~
+
+
+
+-- cosine
+CREATE TABLE sparsevec_table (val sparsevec(3));
+go
+
+INSERT INTO sparsevec_table (val) VALUES (CAST('{}/3' AS sparsevec)), (CAST('{1:1,2:2,3:3}/3' AS sparsevec)), (CAST('{1:1,2:1,3:1}/3' AS sparsevec)), (NULL);
+go
+~~ROW COUNT: 4~~
+
+
+CREATE INDEX idx ON sparsevec_table USING hnsw (val sparsevec_cosine_ops);
+go
+
+INSERT INTO sparsevec_table (val) VALUES (CAST('{1:1,2:2,3:4}/3' AS sparsevec));
+go
+~~ROW COUNT: 1~~
+
+
+-- test explain output for index scan
+SET BABELFISH_STATISTICS PROFILE ON; SELECT set_config('enable_seqscan', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_seqscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+SELECT * FROM sparsevec_table ORDER BY val <=> CAST('{1:3,2:3,3:3}/3' AS sparsevec);
+go
+~~START~~
+varchar
+{1:1,2:1,3:1}/3
+{1:1,2:2,3:3}/3
+{1:1,2:2,3:4}/3
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM sparsevec_table ORDER BY val <=> CAST('{1:3,2:3,3:3}/3' AS sparsevec) NULLS LAST
+Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=3 loops=1)
+  Order By: (val <=> '{1:3,2:3,3:3}/3'::sparsevec)
+~~END~~
+
+
+SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <=> CAST('{}/3' AS sparsevec)) t2;
+go
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <=> CAST('{}/3' AS sparsevec) NULLS LAST) t2
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=3 loops=1)
+        Order By: (val <=> '{}/3'::sparsevec)
+~~END~~
+
+
+SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <=> (SELECT CAST(NULL as sparsevec))) t2;
+go
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <=> (SELECT CAST(NULL as sparsevec)) NULLS LAST) t2
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=3 loops=1)
+        Order By: (val <=> $0)
+        InitPlan 1 (returns $0)
+          ->  Result (actual rows=1 loops=1)
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE OFF; SELECT set_config('enable_seqscan', 'on', false);
+DROP TABLE sparsevec_table;
+go
+~~START~~
+text
+on
+~~END~~
+
+
+
+-- L1
+CREATE TABLE sparsevec_table (val sparsevec(3));
+go
+
+INSERT INTO sparsevec_table (val) VALUES (CAST('{}/3' AS sparsevec)), (CAST('{1:1,2:2,3:3}/3' AS sparsevec)), (CAST('{1:1,2:1,3:1}/3' AS sparsevec)), (NULL);
+go
+~~ROW COUNT: 4~~
+
+
+CREATE INDEX idx ON sparsevec_table USING hnsw (val sparsevec_l1_ops);
+go
+
+INSERT INTO sparsevec_table (val) VALUES (CAST('{1:1,2:2,3:4}/3' AS sparsevec));
+go
+~~ROW COUNT: 1~~
+
+
+-- test explain output for index scan
+SET BABELFISH_STATISTICS PROFILE ON; SELECT set_config('enable_seqscan', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_seqscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+SELECT * FROM sparsevec_table ORDER BY val <+> CAST('{1:3,2:3,3:3}/3' AS sparsevec);
+go
+~~START~~
+varchar
+{1:1,2:2,3:3}/3
+{1:1,2:2,3:4}/3
+{1:1,2:1,3:1}/3
+{}/3
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM sparsevec_table ORDER BY val <+> CAST('{1:3,2:3,3:3}/3' AS sparsevec) NULLS LAST
+Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
+  Order By: (val <+> '{1:3,2:3,3:3}/3'::sparsevec)
+~~END~~
+
+
+SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <+> (SELECT CAST(NULL as sparsevec))) t2;
+go
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <+> (SELECT CAST(NULL as sparsevec)) NULLS LAST) t2
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
+        Order By: (val <+> $0)
+        InitPlan 1 (returns $0)
+          ->  Result (actual rows=1 loops=1)
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE OFF; SELECT set_config('enable_seqscan', 'on', false);
+DROP TABLE sparsevec_table;
+go
+~~START~~
+text
+on
+~~END~~
+
+
+
+-- non-zero elements
+CREATE TABLE sparsevec_table (val sparsevec(1001));
+go
+
+INSERT INTO sparsevec_table (val) VALUES (CAST(array_fill(1, ARRAY[1001]) AS sparsevec));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 46)~~
+
+
+CREATE INDEX idx ON sparsevec_table USING hnsw (val sparsevec_l2_ops);
+go
+
+TRUNCATE TABLE sparsevec_table;
+go
+
+DROP TABLE sparsevec_table;
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+
+-- system metadata, all objects get their datatype info from one of:
+-- typecodes or datatype_info data we have created. Testing sys.types for typecodes
+-- and sp_sproc_columns_100 for datatype_info is enough
+select count(*) from sys.types where name = 'sparsevec';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+create procedure sparsevec_proc_1 @a sparsevec, @b varchar(max) as select @a as a, @b as b;
+go
+
+exec sp_sproc_columns_100 @procedure_name= 'sparsevec_proc_1'
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+vector_db#!#dbo#!#sparsevec_proc_1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+vector_db#!#dbo#!#sparsevec_proc_1;1#!#@a#!#1#!#<NULL>#!#sparsevec#!#0#!#-1#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>
+vector_db#!#dbo#!#sparsevec_proc_1;1#!#@b#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
+~~END~~
+
+
+drop procedure sparsevec_proc_1;
+go
+
+create table t(a sparsevec(3), b varchar(max))
+go
+select * from information_schema.columns where table_name = 't'
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+vector_db#!#dbo#!#t#!#a#!#1#!#<NULL>#!#YES#!#sparsevec#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+vector_db#!#dbo#!#t#!#b#!#2#!#<NULL>#!#YES#!#varchar#!#-1#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+select count(*) from sys.columns where object_id = sys.object_id('t')
+go
+~~START~~
+int
+2
+~~END~~
+
+drop table t;
+go
+
+-- Testing with different typmod 
+CREATE TABLE document_embeddings (
+    id int PRIMARY KEY,
+    embedding sparsevec(5) NOT NULL
+);
+go
+CREATE INDEX document_embeddings_embedding_idx ON document_embeddings USING hnsw (embedding vector_l2_ops);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator class "vector_l2_ops" does not accept data type sparsevec)~~
+
+INSERT INTO document_embeddings(id, embedding) VALUES(1, CAST('{1:5,2:1}/5' as sparsevec));
+INSERT INTO document_embeddings(id, embedding) VALUES(2, CAST('{1:5, 2:10000, 3:-9.75, 4:8}/5' as sparsevec));
+INSERT INTO document_embeddings(id, embedding) VALUES(3, CAST('{1:-0.02,2:23,4:3.14,5:00}/5' as sparsevec));
+WITH cte AS (
+    SELECT CAST(2e2 AS real) a, 80 b, CAST('-305' AS real) c, -1 d
+)
+INSERT INTO document_embeddings(id, embedding) SELECT 4, CAST(CONCAT('{1:',a, ',3:', b, ',4:', c, ',5:', d, '}/5') as sparsevec) FROM cte; 
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT * FROM document_embeddings;
+go
+~~START~~
+int#!#varchar
+1#!#{1:5,2:1}/5
+2#!#{1:5,2:10000,3:-9.75,4:8}/5
+3#!#{1:-0.02,2:23,4:3.14}/5
+4#!#{1:200,3:80,4:-305,5:-1}/5
+~~END~~
+
+SELECT TOP 5 * FROM document_embeddings ORDER BY embedding <=> '{1:1,2:2,3:4}/5';
+go
+~~START~~
+int#!#varchar
+2#!#{1:5,2:10000,3:-9.75,4:8}/5
+3#!#{1:-0.02,2:23,4:3.14}/5
+4#!#{1:200,3:80,4:-305,5:-1}/5
+1#!#{1:5,2:1}/5
+~~END~~
+
+-- extending PG syntax to have generic vector expression support
+SELECT count(embedding <-> '{1:1,2:2,3:4}/5') FROM document_embeddings;
+SELECT count(embedding <=> '{1:1,2:2,3:4}/5') FROM document_embeddings;
+SELECT count(embedding <#> '{1:1,2:2,3:4}/5') FROM document_embeddings; 
+go
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+
+-- WHERE clause expressions
+SELECT * FROM document_embeddings WHERE embedding <-> '{1:1,2:2,4:4}/5' < 5;
+SELECT * FROM document_embeddings WHERE embedding <=> '{1:1,2:2,4:4}/5' < 5;
+SELECT * FROM document_embeddings WHERE embedding <#> '{1:1,2:2,4:4}/5' < 5; 
+go
+~~START~~
+int#!#varchar
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#{1:5,2:1}/5
+2#!#{1:5,2:10000,3:-9.75,4:8}/5
+3#!#{1:-0.02,2:23,4:3.14}/5
+4#!#{1:200,3:80,4:-305,5:-1}/5
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#{1:5,2:1}/5
+2#!#{1:5,2:10000,3:-9.75,4:8}/5
+3#!#{1:-0.02,2:23,4:3.14}/5
+~~END~~
+
+
+SELECT AVG(embedding) FROM document_embeddings;
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function avg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id;
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function avg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+Drop table document_embeddings
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'vector_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+use master
+go
+
+exec sp_execute_postgresql 'drop extension vector';
+go
+
+drop login vector_login
+go
+
+drop database vector_db;
+go

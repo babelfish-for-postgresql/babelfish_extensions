@@ -359,6 +359,8 @@ BEGIN
 			END IF;
 		WHEN 'timestamp' THEN max_length = 8;
 		WHEN 'vector' THEN max_length = -1; -- dummy as varchar max
+		WHEN 'halfvec' THEN max_length = -1; -- dummy as varchar max
+		WHEN 'sparsevec' THEN max_length = -1; -- dummy as varchar max
 		ELSE max_length = typelen;
 		END CASE;
 		RETURN max_length;
