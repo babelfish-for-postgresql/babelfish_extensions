@@ -5308,7 +5308,7 @@ AS SELECT
     , CAST(0 as sys.BIT) AS is_cycling
     , CAST(0 as sys.BIT) AS is_cached
     , CAST(0 as INT) AS cache_size
-    , CAST(0 as sys.TINYINT) AS system_type_id
+    , CAST(0 as INT) AS system_type_id
     , CAST(0 as INT) AS user_type_id
     , CAST(0 as sys.TINYINT) AS precision
     , CAST(0 as sys.TINYINT) AS scale
