@@ -2917,18 +2917,6 @@ init_catalog_data(void)
 			catalog_data[i].idx_oid = ForeignServerNameIndexId;
 			catalog_data[i].atttype = get_atttype(ForeignServerRelationId, Anum_pg_foreign_server_srvname);
 		}
-		else if (strcmp(catalog_data[i].tblname, "babelfish_partition_function") == 0)
-		{
-			catalog_data[i].tbl_oid = bbf_partition_function_oid;
-			catalog_data[i].idx_oid = bbf_partition_function_id_idx_oid;
-			catalog_data[i].atttype = get_atttype(bbf_partition_function_oid, Anum_bbf_partition_function_id);
-		}
-		else if (strcmp(catalog_data[i].tblname, "babelfish_partition_scheme") == 0)
-		{
-			catalog_data[i].tbl_oid = bbf_partition_scheme_oid;
-			catalog_data[i].idx_oid = bbf_partition_scheme_id_idx_oid;
-			catalog_data[i].atttype = get_atttype(bbf_partition_scheme_oid, Anum_bbf_partition_scheme_id);
-		}
 		else if (strcmp(catalog_data[i].tblname, "pg_class") == 0)
 		{
 			catalog_data[i].tbl_oid = RelationRelationId;
