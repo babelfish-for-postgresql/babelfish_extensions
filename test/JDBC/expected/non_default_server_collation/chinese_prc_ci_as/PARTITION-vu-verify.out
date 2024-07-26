@@ -1,3 +1,13 @@
+---------------------------------------------------
+--- Check for inconsistent metadata after upgrade
+----------------------------------------------------
+SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+GO
+~~START~~
+int
+0
+~~END~~
+
 
 --------------------------------------------------
 --- CREATE PARTITION FUNCTION/SCHEME/TABLE using procedure
