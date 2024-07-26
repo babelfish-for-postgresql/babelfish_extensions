@@ -1257,6 +1257,14 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
 		UChar *src_uchar, *substr_uchar;
+		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(collid);
+		bool is_CS_AI = false;
+
+		if (OidIsValid(coll_info_of_inputcollid.oid) &&
+		    coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
+		{
+			is_CS_AI = true;
+		}
 
 		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len_utf8);
 		substr_ulen = icu_to_uchar(&substr_uchar, VARDATA_ANY(substr_text), substr_len_utf8);
@@ -1288,7 +1296,7 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 							u_errorName(status))));
 
 			/* for CS_AI collations usearch can give false positives so we double check the results here */
-			if (icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), substr_uchar, substr_ulen) == 0)
+			if (!(is_CS_AI && icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), substr_uchar, substr_ulen) != 0))
 			{
 				u8_pos = translate_char_pos(VARDATA_ANY(src_text), src_len_utf8,
 										src_uchar, src_ulen, u16_pos,
@@ -1339,6 +1347,14 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		UChar *src_uchar, *from_uchar;
 		text *result;
 		StringInfoData resbuf;
+		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(collid);
+		bool is_CS_AI = false;
+
+		if (OidIsValid(coll_info_of_inputcollid.oid) &&
+		    coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
+		{
+			is_CS_AI = true;
+		}
 
 		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len);
 		from_ulen = icu_to_uchar(&from_uchar, VARDATA_ANY(from_text), from_str_len);
@@ -1370,7 +1386,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 							u_errorName(status))));
 
 			/* for CS_AI collations usearch can give false positives so we double check the results here */
-			if (icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), from_uchar, from_ulen) != 0)
+			if (is_CS_AI && icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), from_uchar, from_ulen) != 0)
 				continue;
 
 			/* reject if overlaps with the last successful match */
