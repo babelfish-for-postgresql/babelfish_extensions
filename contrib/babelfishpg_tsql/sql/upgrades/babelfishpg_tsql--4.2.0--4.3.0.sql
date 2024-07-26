@@ -328,6 +328,21 @@ WHERE
   ps.dbid = sys.db_id();
 GRANT SELECT ON sys.partition_schemes TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.remove_accents_internal_using_cache(IN TEXT) RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'remove_accents_internal_using_cache'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.get_icu_major_version() RETURNS INT4
+AS 'babelfishpg_tsql', 'get_icu_major_version'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.get_icu_minor_version() RETURNS INT4
+AS 'babelfishpg_tsql', 'get_icu_minor_version'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.is_collated_ai(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ai_internal'
 LANGUAGE C VOLATILE PARALLEL SAFE;

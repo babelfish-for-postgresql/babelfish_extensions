@@ -40,6 +40,12 @@ typedef struct like_ilike_info
 	Oid			ilike_opfuncid; /* oid for corresponding ILIKE func */
 } like_ilike_info_t;
 
+typedef struct remove_accent_map_pair
+{
+	uint32 		original_char;
+	uint32 		normalized_char;
+} remove_accent_map_pair;
+
 /* match definition in babelfishpg_common:collation.h */
 typedef struct collation_callbacks
 {
