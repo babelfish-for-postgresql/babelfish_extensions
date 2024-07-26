@@ -1,0 +1,602 @@
+-- NULL
+SELECT reverse(NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- empty string
+SELECT reverse('')
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+-- input type char
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+             ??ihgfed?cba
+~~END~~
+
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+                   ???·??
+~~END~~
+
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT reverse(@inputString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+                   ???·??
+~~END~~
+
+
+-- input type varchar
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+??ihgfed?cba
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+???·??
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT reverse(@inputString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+斯莫拉·尔比
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT reverse(a) FROM babel_4839_reverse_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+斯莫拉·尔比
+~~END~~
+
+
+SELECT reverse(a) COLLATE CHINESE_PRC_CI_AS FROM babel_4839_reverse_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+斯莫拉·尔比
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT reverse(a) FROM babel_4839_reverse_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+斯莫拉·尔比
+~~END~~
+
+
+SELECT reverse(a) COLLATE CHINESE_PRC_CS_AS FROM babel_4839_reverse_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+斯莫拉·尔比
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT reverse(a) FROM babel_4839_reverse_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+斯莫拉·尔比
+~~END~~
+
+
+SELECT reverse(a) COLLATE CHINESE_PRC_CI_AI FROM babel_4839_reverse_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+斯莫拉·尔比
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT reverse(a) FROM babel_4839_reverse_arabic_ci_as
+GO
+~~START~~
+varchar
+نيقتملا عم هللا
+~~END~~
+
+
+SELECT reverse(a) COLLATE ARABIC_CI_AS FROM babel_4839_reverse_arabic_ci_as
+GO
+~~START~~
+varchar
+نيقتملا عم هللا
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT reverse(a) FROM babel_4839_reverse_arabic_cs_as
+GO
+~~START~~
+varchar
+نيقتملا عم هللا
+~~END~~
+
+
+SELECT reverse(a) COLLATE ARABIC_CS_AS FROM babel_4839_reverse_arabic_cs_as
+GO
+~~START~~
+varchar
+نيقتملا عم هللا
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT reverse(a) FROM babel_4839_reverse_arabic_ci_ai
+GO
+~~START~~
+varchar
+نيقتملا عم هللا
+~~END~~
+
+
+SELECT reverse(a) COLLATE ARABIC_CI_AI FROM babel_4839_reverse_arabic_ci_ai
+GO
+~~START~~
+varchar
+نيقتملا عم هللا
+~~END~~
+
+
+-- input type nchar
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT reverse(@inputString)
+GO
+~~START~~
+nvarchar
+             ??ihgfed?cba
+~~END~~
+
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT reverse(@inputString)
+GO
+~~START~~
+nvarchar
+                   ???·??
+~~END~~
+
+
+-- with table column of type nchar
+SELECT reverse(a) FROM babel_4839_reverse_t1 
+GO
+~~START~~
+nvarchar
+                                      🙂🙂ihgfed🙂cba
+                                            斯莫拉·尔比
+~~END~~
+
+
+-- input type nvarchar
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT reverse(@inputString)
+GO
+~~START~~
+nvarchar
+🙂🙂ihgfed🙂cba
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT reverse(@inputString)
+GO
+~~START~~
+nvarchar
+斯莫拉·尔比
+~~END~~
+
+
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+hgfedcba
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+hgfedcba
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_4839_reverse_dep_view
+GO
+~~START~~
+text
+??ihgfed?cba
+~~END~~
+
+
+EXEC babel_4839_reverse_dep_proc
+GO
+~~START~~
+nvarchar
+🙂🙂ihgfed🙂cba
+~~END~~
+
+
+SELECT * FROM babel_4839_reverse_dep_func()
+GO
+~~START~~
+nvarchar
+🙂🙂ihgfed🙂cba
+~~END~~
+
+
+SELECT * FROM babel_4839_reverse_itvf_func()
+GO
+~~START~~
+text
+??ihgfed?cba
+~~END~~
+
+
+SELECT * FROM babel_4839_reverse_dep_view_1
+GO
+~~START~~
+text
+                                      ??ihgfed?cba
+                                            ???·??
+~~END~~
+
+
+SELECT * FROM babel_4839_reverse_dep_view_2
+GO
+~~START~~
+text
+??ihgfed?cba
+~~END~~
+
+
+SELECT * FROM babel_4839_reverse_dep_view_3
+GO
+~~START~~
+text
+                                         ihgfedcba
+~~END~~
+
+
+SELECT * FROM babel_4839_reverse_dep_view_4
+GO
+~~START~~
+text
+ihgfedcba
+~~END~~
+
+
+SELECT * FROM babel_4839_reverse_dep_view_5
+GO
+~~START~~
+text
+0202463626160202x0
+~~END~~
+
+
+SELECT * FROM babel_4839_reverse_dep_view_6
+GO
+~~START~~
+text
+??ihgfed?cba
+~~END~~
+
+
+SELECT * FROM babel_4839_reverse_dep_view_7
+GO
+~~START~~
+text
+??ihgfed?cba
+~~END~~
+
+
+-- input type UDT
+-- -- in table babel_4839_reverse_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT reverse(a) FROM babel_4839_reverse_UDT
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of reverse function.)~~
+
+
+SELECT reverse(b) FROM babel_4839_reverse_UDT
+GO
+~~START~~
+varchar
+fedcba
+~~END~~
+
+
+-- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+DECLARE @inputString date = '2016-12-21';
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+12-21-6102
+~~END~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+00:00:00 12-21-6102
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+00:34:21 31-21-5591
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+7321.50:01:21
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+00:01+ 4321.73:54:21 32-01-8691
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+7321.73:54:21 32-01-8691
+~~END~~
+
+
+DECLARE @inputString decimal = 123456;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+654321
+~~END~~
+
+
+DECLARE @inputString numeric = 12345.12;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+54321
+~~END~~
+
+
+DECLARE @inputString float = 12345.1;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+1.54321
+~~END~~
+
+
+DECLARE @inputString real = 12345.1;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+1.54321
+~~END~~
+
+
+DECLARE @inputString bigint = 12345678;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+87654321
+~~END~~
+
+
+DECLARE @inputString int = 12345678;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+87654321
+~~END~~
+
+
+DECLARE @inputString smallint = 12356;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+65321
+~~END~~
+
+
+DECLARE @inputString tinyint = 235;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+532
+~~END~~
+
+
+DECLARE @inputString money = 12356;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+0000.65321
+~~END~~
+
+
+DECLARE @inputString smallmoney = 12356;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+0000.65321
+~~END~~
+
+
+DECLARE @inputString bit = 1;
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT reverse(@inputString)
+GO
+~~START~~
+varchar
+FF469CF40C00-D24B-110D-68B8-FF9169F6
+~~END~~
+
+
+SELECT reverse(a) from babel_4839_reverse_image;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of reverse function.)~~
+
+
+-- input datatype text
+SELECT reverse(a) FROM babel_4839_reverse_text
+GO
+~~START~~
+varchar
+??ihgfed?cba
+~~END~~
+
+
+-- input datatype ntext
+SELECT reverse(b) FROM babel_4839_reverse_text
+GO
+~~START~~
+nvarchar
+🙂🙂ihgfed🙂cba
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT reverse(@inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of reverse function.)~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT reverse(@inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of reverse function.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT reverse(@inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of reverse function.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT reverse(@inputString)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of reverse function.)~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT reverse(CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+FF469CF40C00-D24B-110D-68B8-FF9169F6
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT reverse(CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+>ydob/<>/tiurf<>ydob<
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT reverse(CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+)2 1(TNIOP
+~~END~~
+

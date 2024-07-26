@@ -504,6 +504,7 @@ BABEL-492-before-15_6
 GRANT_SCHEMA-before-15_7-16_3
 BABEL-4815
 BABEL_3571-15_5-or-15_6-or-16_1-or-16_2
+upper_lower-before-15_8-or-16_4
 BABEL-4641-before-16_3-or-15_7-or-14_12
 trim-before-15_8-or-16_4
 ltrim-before-15_8-or-16_4
@@ -515,3 +516,4 @@ BABEL-4869
 babel_4328_datetime-before-16_3
 babel_4328_datetime2-before-16_3
 babel_4328_datetimeoffset-before-16_3
+reverse-before-15_8-or-16_4

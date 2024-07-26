@@ -534,8 +534,10 @@ babel_4328_datetime-before-16_3
 babel_4328_datetime2-before-16_3
 babel_4328_datetimeoffset-before-16_3
 BABEL-5071
+upper_lower-before-15_8-or-16_4
 trim-before-15_8-or-16_4
 ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
 left-before-15_8-or-16_4
 right-before-15_8-or-16_4
+reverse-before-15_8-or-16_4
