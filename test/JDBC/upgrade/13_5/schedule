@@ -146,7 +146,6 @@ sys-database_files
 sys-database_filestream_options
 sys-database_recovery_status
 sys-databases
-sys-data_spaces
 sys-datefirst
 sys-dm_exec_connections
 sys-dm_exec_connections-dep
