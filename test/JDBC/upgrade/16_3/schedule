@@ -536,6 +536,7 @@ babel_4328_datetime2
 babel_4328_datetimeoffset
 babel_726
 BABEL-3401
+upper_lower-before-15_8-or-16_4
 trim-before-15_8-or-16_4
 ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
