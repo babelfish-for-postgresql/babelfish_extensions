@@ -3080,6 +3080,134 @@ CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+-- wrapper functions for upper --
+-- Function to handle datatypes which are implicitly convertable to VARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(ANYELEMENT)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    type_oid oid;
+    typ_base_oid oid;
+    typnam text;
+BEGIN
+    typnam := NULL;
+    type_oid := pg_typeof($1);
+    typnam := sys.translate_pg_type_to_tsql(type_oid);
+    IF typnam IS NULL THEN
+        typ_base_oid := sys.bbf_get_immediate_base_type_of_UDT(type_oid);
+        typnam := sys.translate_pg_type_to_tsql(typ_base_oid);
+    END IF;
+    IF typnam IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', typnam;
+    END IF;
+    IF $1 IS NULL THEN
+        RETURN NULL;
+    END IF;
+    -- Call the underlying function after preprocessing
+    RETURN pg_catalog.upper($1::sys.varchar);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Function to handle NCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.upper($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NVARCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.upper($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle TEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(TEXT)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.upper($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NTEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(NTEXT)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.upper($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- wrapper functions for lower --
+-- Function to handle datatypes which are implicitly convertable to VARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(ANYELEMENT)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    type_oid oid;
+    typ_base_oid oid;
+    typnam text;
+BEGIN
+    typnam := NULL;
+    type_oid := pg_typeof($1);
+    typnam := sys.translate_pg_type_to_tsql(type_oid);
+    IF typnam IS NULL THEN
+        typ_base_oid := sys.bbf_get_immediate_base_type_of_UDT(type_oid);
+        typnam := sys.translate_pg_type_to_tsql(typ_base_oid);
+    END IF;
+    IF typnam IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of lower function.', typnam;
+    END IF;
+    IF $1 IS NULL THEN
+        RETURN NULL;
+    END IF;
+    -- Call the underlying function after preprocessing
+    RETURN pg_catalog.lower($1::sys.varchar);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Function to handle NCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.lower($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NVARCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.lower($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle TEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(TEXT)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.lower($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NTEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(NTEXT)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.lower($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- wrapper functions for TRIM
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.BPCHAR)
 RETURNS sys.VARCHAR
