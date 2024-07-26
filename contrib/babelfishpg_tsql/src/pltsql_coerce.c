@@ -379,8 +379,8 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 #define TOTAL_TSQL_PRECEDENCE_COUNT (sizeof(tsql_precedence_infos)/sizeof(tsql_precedence_infos[0]))
 
 /* Following constants value are defined based on the special function list */
-#define SFUNC_MAX_ARGS 3			/* maximum number of args special function in special function list can have */
-#define SFUNC_MAX_VALID_TYPES 9		/* maximum number of valid types supported argument of function in special function list can have */
+#define SFUNC_MAX_ARGS 2			/* maximum number of args special function in special function list can have */
+#define SFUNC_MAX_VALID_TYPES 6		/* maximum number of valid types supported argument of function in special function list can have */
 
 /* struct to store details of valid types supported for a argument */
 typedef struct tsql_valid_arg_type
@@ -402,8 +402,7 @@ typedef struct tsql_special_function
 
 tsql_special_function_t tsql_special_function_list[] = 
 {
-	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
-	{"sys", "substring", "substring", 3, {{9, {"char","varchar","nchar","nvarchar","text","ntext","image","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {3, {"tinyint","smallint","int"}, {InvalidOid, InvalidOid, InvalidOid}} , {3, {"tinyint","smallint","int"}, {InvalidOid, InvalidOid, InvalidOid}}}}
+	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
 
 static bool		inited_tsql_special_function_list = false;
@@ -1070,14 +1069,45 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 
 	/* If function is not a special function no additional handling required */
 	if (special_func == NULL)
+	{
+		/* report error for case when NULL casted to different datatypes and passed as 2nd or 3rd argument of SUBSTRING() function */
+		if (strlen(func_name) == 9 && strncmp(func_name, "substring", 9) == 0)
+		{
+			for (int i = 1; i < nargs; i++)
+			{
+				if (input_typeids[i] != UNKNOWNOID)
+				{
+					Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
+					/* Throw error when input is constant and NULL */
+					if (IsA(arg, Const) && ((Const *)arg)->constisnull)
+					{
+						if (common_utility_plugin_ptr == NULL)
+							ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+										errmsg("Failed to find common utility plugin.")));
+
+						if ((*common_utility_plugin_ptr->get_tsql_datatype_oid)("int") != input_typeids[i]
+							&& (*common_utility_plugin_ptr->get_tsql_datatype_oid)("bigint") != input_typeids[i]
+							&& (*common_utility_plugin_ptr->get_tsql_datatype_oid)("smallint") != input_typeids[i]
+							&& (*common_utility_plugin_ptr->get_tsql_datatype_oid)("tinyint") != input_typeids[i])
+							ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									errmsg("Argument data type %s is invalid for argument %d of substring function.", 
+											format_type_be(input_typeids[i]), i+1)));
+					}
+				}
+			}
+		}
 		return false;
+	}		
 
 	sys_varcharoid = get_sys_varcharoid();
 
 	/* Report error in case of invalid argument datatype */
 	for (int i = 0; i < special_func->nargs; i++)
 	{
-		/* if function argument is NULL then keep its typeId as UNKNOWN otherwise consider it as sys.VARCHAR */
+		/* if argument is NULL then keep its typeId as UNKNOWN and skip the report error handling 
+		 * otherwise consider it as sys.VARCHAR */
 		if (input_typeids[i] == UNKNOWNOID)
 		{
 			Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
@@ -1164,8 +1194,6 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 			expr_result_type = get_sys_varcharoid();
 		}
 	}
-	else if (strlen(proc_name) == 9 && strncmp(proc_name, "substring", 9) == 0) // we don't want special handling for substring
-		return NULL;
 
 	if (!OidIsValid(expr_result_type))
 		return NULL;

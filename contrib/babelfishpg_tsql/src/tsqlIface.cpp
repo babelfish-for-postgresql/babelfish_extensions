@@ -920,6 +920,11 @@ public:
 				{
 					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
 				}
+				if (id->keyword()->SUBSTRING())
+				{
+					size_t startPosition = id->keyword()->SUBSTRING()->getSymbol()->getStartIndex();
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
+				}
 			}
 		}
 	}
@@ -2445,6 +2450,11 @@ public:
 							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
 					}
 				}
+				if (id->keyword()->SUBSTRING()) /* SUBSTRING */
+				{
+					size_t startPosition = id->keyword()->SUBSTRING()->getSymbol()->getStartIndex();
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
+				}
 
                               if (id->keyword()->CHECKSUM())
                               {
@@ -2882,9 +2892,6 @@ public:
 				{
 					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
 					{
-						if (ctx->function_arg_list()->expression().size() != 3)
-							ereport(ERROR, (errcode(ERRCODE_UNDEFINED_FUNCTION), errmsg("The substring function requires 3 argument(s).")));
-
 						auto first_arg = ctx->function_arg_list()->expression().front();
 						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
 							ereport(ERROR, (errcode(ERRCODE_SUBSTRING_ERROR), errmsg("Argument data type NULL is invalid for argument 1 of substring function")));

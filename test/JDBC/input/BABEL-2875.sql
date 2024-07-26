@@ -7,8 +7,8 @@ CREATE TABLE t_sksql(
 )
 go
 
-SELECT pg_catalog.SUBSTRING( T.name, 1, 20 ) AS "UDDT name",
-pg_catalog.SUBSTRING( T2.name, 1, 20 ) AS "system dt name",
+SELECT SUBSTRING( T.name, 1, 20 ) AS "UDDT name",
+SUBSTRING( T2.name, 1, 20 ) AS "system dt name",
 OBJECT_NAME(T.system_type_id) AS "System type name", -- system_type_id is not static
 OBJECT_NAME(T.user_type_id) AS "User type name" -- user_type_id is not static
 FROM sys.columns C, sys.types T, sys.types T2

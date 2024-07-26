@@ -1,6 +1,6 @@
 SELECT
        CASE WHEN xtype LIKE 'TT'
-            THEN pg_catalog.substring(name, 4, 26)
+            THEN substring(name, 4, 26)
             ELSE name
        END,
        xtype,
@@ -16,7 +16,7 @@ FROM sys.sysobjects
        WHERE name LIKE '%%babel_3010_vu_prepare%%' ORDER BY name;
 GO
 ~~START~~
-text#!#char#!#text#!#text
+varchar#!#char#!#text#!#text
 @tab_babel_3010_vu_prepare#!#TT#!#Valid create date!#!#Valid ref date!
 babel_3010_vu_prepare_f1#!#FN#!#Valid create date!#!#Valid ref date!
 babel_3010_vu_prepare_f2#!#FN#!#Valid create date!#!#Valid ref date!

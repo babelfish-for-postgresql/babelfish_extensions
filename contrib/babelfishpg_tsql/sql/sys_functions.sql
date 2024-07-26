@@ -3086,13 +3086,15 @@ RETURNS sys.VARBINARY
 AS
 $BODY$
 DECLARE
+    type_oid oid;
     string_arg_datatype text;
     string_basetype oid;
 BEGIN
-    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    type_oid := pg_typeof(string);
+    string_arg_datatype := sys.translate_pg_type_to_tsql(type_oid);
     IF string_arg_datatype IS NULL THEN
         -- for User Defined Datatype, use immediate base type to check for argument datatype validation
-        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(type_oid);
         string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
     END IF;
 
