@@ -1312,3 +1312,14 @@ GO
 
 ~~ROW COUNT: 1~~
 
+
+---------------------------------------------------
+--- Check for inconsistent metadata before upgrade
+----------------------------------------------------
+SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+GO
+~~START~~
+int
+0
+~~END~~
+

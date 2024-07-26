@@ -1136,3 +1136,9 @@ INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST(N'Ban
 INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST('Some text' AS SQL_VARIANT), 'Value Some text');
 INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (NULL, 'Value NULL');
 GO
+
+---------------------------------------------------
+--- Check for inconsistent metadata before upgrade
+----------------------------------------------------
+SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+GO
