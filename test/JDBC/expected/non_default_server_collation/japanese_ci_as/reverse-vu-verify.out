@@ -31,7 +31,7 @@ SELECT reverse(@inputString)
 GO
 ~~START~~
 varchar
-                   ???·??
+               斯莫拉??比
 ~~END~~
 
 
@@ -40,7 +40,7 @@ SELECT reverse(@inputString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 varchar
-                   ???·??
+               斯莫拉??比
 ~~END~~
 
 
@@ -59,7 +59,7 @@ SELECT reverse(@inputString)
 GO
 ~~START~~
 varchar
-???·??
+斯莫拉??比
 ~~END~~
 
 
@@ -189,7 +189,7 @@ SELECT reverse(@inputString)
 GO
 ~~START~~
 nvarchar
-                   ???·??
+               斯莫拉??比
 ~~END~~
 
 
