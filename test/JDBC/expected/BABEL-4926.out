@@ -24,7 +24,7 @@ xmax#!#<NULL>
 cmin#!#<NULL>
 xmin#!#<NULL>
 ctid#!#<NULL>
-id#!#{bbf_original_rel_name=ID}
+id#!#{bbf_original_name=ID}
 ~~END~~
 
 -- dropping the table BABEL_4926
@@ -64,8 +64,8 @@ cmin#!#<NULL>
 xmin#!#<NULL>
 ctid#!#<NULL>
 numb#!#<NULL>
-numb1#!#{bbf_original_rel_name=Numb1}
-colum#!#{bbf_original_rel_name=ColuM}
+numb1#!#{bbf_original_name=Numb1}
+colum#!#{bbf_original_name=ColuM}
 ~~END~~
 
 -- dropping the table BABEL_4926
@@ -139,8 +139,8 @@ cmin#!#<NULL>
 xmin#!#<NULL>
 ctid#!#<NULL>
 numb#!#<NULL>
-numb1#!#{bbf_original_rel_name=Numb1}
-colum#!#{bbf_original_rel_name=ColuM}
+numb1#!#{bbf_original_name=Numb1}
+colum#!#{bbf_original_name=ColuM}
 ~~END~~
 
 -- dropping the table BABEL_4926
@@ -176,7 +176,7 @@ xmax#!#<NULL>
 cmin#!#<NULL>
 xmin#!#<NULL>
 ctid#!#<NULL>
-column__1#!#{bbf_original_rel_name=COlumn__1}
+column__1#!#{bbf_original_name=COlumn__1}
 ~~END~~
 
 -- dropping the table BABEL_4926

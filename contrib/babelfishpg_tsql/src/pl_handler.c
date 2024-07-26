@@ -97,6 +97,7 @@ extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
 extern bool pltsql_nocount;
+extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -5995,7 +5996,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	AlterTableCmd *cmd;
 	IntoClause *into;
 	Node *n;
-	
 
 	n = stmt->query;
 	into = stmt->into;
@@ -6080,7 +6080,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				constraint->contype = CONSTR_IDENTITY;
 				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
 				constraint->options = seqoptions;
-				
+
 				def = makeNode(ColumnDef);
 				def->colname = tle->resname;
 				def->typeName = typename;
@@ -6097,19 +6097,22 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			else
 			{
 				char* original_name = tle->resname;
+
 				if (tle->resname!=NULL)
 				{
 					tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 				}	
+
 				current_resno += 1;
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
+
 				if (original_name!=NULL&&strcmp(original_name,tle->resname))
 				{
 					cmd = makeNode(AlterTableCmd);
 					cmd->subtype = AT_SetOptions;
 					cmd->name = tle->resname;
-					cmd->def = (Node *) list_make1(makeDefElem(pstrdup("bbf_original_rel_name"), (Node *) makeString(pstrdup(original_name)), -1));
+					cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(original_name)), -1));
 					cmd->behavior = DROP_RESTRICT;
 					cmd->missing_ok = false;
 
@@ -6122,6 +6125,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				}
 			}
 		}
+		
 		q->targetList = modifiedTargetList;
 
 		if (seen_identity)
