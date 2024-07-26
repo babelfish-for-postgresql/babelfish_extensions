@@ -45,7 +45,7 @@
 #define FIXEDDECIMAL_MULTIPLIER 10000LL
 #endif
 
-#define TOTAL_TYPECODE_COUNT 36
+#define TOTAL_TYPECODE_COUNT 38
 
 struct Node;
 

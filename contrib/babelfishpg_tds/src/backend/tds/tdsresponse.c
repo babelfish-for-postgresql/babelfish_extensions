@@ -128,6 +128,8 @@ static TdsColumnMetaData *colMetaData = NULL;
 static List *relMetaDataInfoList = NULL;
 
 static Oid sys_vector_oid = InvalidOid;
+static Oid sys_sparsevec_oid = InvalidOid;
+static Oid sys_halfvec_oid = InvalidOid;
 static Oid decimal_oid = InvalidOid;
 
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
@@ -137,7 +139,7 @@ static void ResetTdsEstateErrorData(void);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
 static int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr);
 static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
-static bool is_sys_vector_datatype(Oid oid);
+static bool is_this_a_vector_datatype(Oid oid);
 
 static inline void
 SendPendingDone(bool more)
@@ -1105,8 +1107,8 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				temp->maxLen = 0xFFFF;
 			break;
 		case TDS_SEND_VARCHAR:
-			/* If this is vector datatype, we should adjust the typmod */
-			if (is_sys_vector_datatype(col->pgTypeOid))
+			/* If this is one of the vector datatypes we should adjust the typmod. */
+			if (is_this_a_vector_datatype(col->pgTypeOid))
 				atttypmod = -1;
 			SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 											attcollation, (atttypmod == -1) ?
@@ -1867,8 +1869,8 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 												att->attcollation, (atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_VARCHAR:
-				/* If this is vector datatype, we should adjust the typmod */
-				if (is_sys_vector_datatype(col->pgTypeOid))
+				/* If this is one of the vector datatypes we should adjust the typmod. */
+				if (is_this_a_vector_datatype(col->pgTypeOid))
 					atttypmod = -1;
 
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
@@ -3557,9 +3559,10 @@ SetAttributesForColmetada(TdsColumnMetaData *col)
 }
 
 static bool
-is_sys_vector_datatype(Oid oid)
+is_this_a_vector_datatype(Oid oid)
 {
 	Oid nspoid;
+
 	if (sys_vector_oid == InvalidOid)
 	{
 		nspoid = get_namespace_oid("sys", true);
@@ -3568,5 +3571,27 @@ is_sys_vector_datatype(Oid oid)
 
 		sys_vector_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("vector"), ObjectIdGetDatum(nspoid));
 	}
-	return sys_vector_oid == oid;
+	if (sys_vector_oid == oid)
+		return true;
+
+	if (sys_halfvec_oid == InvalidOid)
+	{
+		nspoid = get_namespace_oid("sys", true);
+		if (nspoid == InvalidOid)
+			return false;
+
+		sys_halfvec_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("halfvec"), ObjectIdGetDatum(nspoid));
+	}
+	if (sys_halfvec_oid == oid)
+		return true;
+
+	if (sys_sparsevec_oid == InvalidOid)
+	{
+		nspoid = get_namespace_oid("sys", true);
+		if (nspoid == InvalidOid)
+			return false;
+
+		sys_sparsevec_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("sparsevec"), ObjectIdGetDatum(nspoid));
+	}
+	return sys_sparsevec_oid == oid;
 }
