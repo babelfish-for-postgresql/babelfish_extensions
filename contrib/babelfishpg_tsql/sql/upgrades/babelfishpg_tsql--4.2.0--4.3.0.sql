@@ -6426,7 +6426,8 @@ FROM
     pg_index i
     INNER JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
     INNER JOIN pg_class tbl on tbl.oid = i.indrelid and tbl.relkind = 'p'
-    INNER JOIN sys.schemas sch ON sch.schema_id = tbl.relnamespace
+    INNER JOIN pg_namespace nsp on tbl.relnamespace = nsp.oid
+    INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
     INNER JOIN pg_partitioned_table ppt ON ppt.partrelid = tbl.oid
     LEFT JOIN unnest(ppt.partattrs) WITH ORDINALITY AS a(attnum, ordinal_position) ON true
 WHERE
@@ -6446,7 +6447,8 @@ SELECT
   CAST(0 AS SYS.BIT) AS is_included_column
 FROM 
     pg_class t
-    INNER JOIN sys.schemas sch ON sch.schema_id = t.relnamespace
+    INNER JOIN pg_namespace nsp on t.relnamespace = nsp.oid
+    INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
     INNER JOIN pg_partitioned_table ppt ON ppt.partrelid = t.oid
     LEFT JOIN unnest(ppt.partattrs) WITH ORDINALITY AS a(attnum, ordinal_position) ON true
 WHERE
