@@ -97,13 +97,13 @@ go
 
 -- tsql
 -- to test schema length truncation
-CREATE SCHEMA BaBeL_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+CREATE SCHEMA babel_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 go
 
-CREATE TABLE BaBeL_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.T1 (a int)
+CREATE TABLE babel_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.t1 (a int)
 go
 
-GRANT SELECT ON BaBeL_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.T1 TO babel_4768_u1
+GRANT SELECT ON babel_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.t1 TO babel_4768_u1
 go
 
 -- to test perms of multiple objects in same schema
@@ -130,31 +130,31 @@ GRANT EXECUTE ON babel_4768_s2.p1 TO babel_4768_u1
 go
 
 -- to test consistency in case of special characters in schema name
-CREATE SCHEMA BaBeL_4768ログインαιώνια
+CREATE SCHEMA babel_4768ログインαιώνια
 GO
 
-CREATE SCHEMA [BaBeL_4768 😎$chem@ #123 🌍rder]
+CREATE SCHEMA [babel_4768 😎$chem@ #123 🌍rder]
 GO
 
-CREATE SCHEMA [BaBeL_4768유니코드스키마👻]
+CREATE SCHEMA [babel_4768유니코드스키마👻]
 GO
 
-CREATE TABLE BaBeL_4768ログインαιώνια.t1 (a int)
+CREATE TABLE babel_4768ログインαιώνια.t1 (a int)
 go
 
-GRANT SELECT ON  BaBeL_4768ログインαιώνια.t1 TO babel_4768_u1
+GRANT SELECT ON  babel_4768ログインαιώνια.t1 TO babel_4768_u1
 go
 
-CREATE TABLE "BaBeL_4768 😎$chem@ #123 🌍rder".t1 (a int)
+CREATE TABLE "babel_4768 😎$chem@ #123 🌍rder".t1 (a int)
 go
 
-GRANT SELECT ON "BaBeL_4768 😎$chem@ #123 🌍rder".t1 TO babel_4768_u1
+GRANT SELECT ON "babel_4768 😎$chem@ #123 🌍rder".t1 TO babel_4768_u1
 go
 
-CREATE TABLE [BaBeL_4768유니코드스키마👻].t1 (a int)
+CREATE TABLE [babel_4768유니코드스키마👻].t1 (a int)
 go
 
-GRANT SELECT ON  [BaBeL_4768유니코드스키마👻].t1 TO babel_4768_u1
+GRANT SELECT ON  [babel_4768유니코드스키마👻].t1 TO babel_4768_u1
 go
 
 

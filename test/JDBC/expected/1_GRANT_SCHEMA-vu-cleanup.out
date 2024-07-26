@@ -40,10 +40,10 @@ go
 drop schema babel_4768_s1;
 go
 
-drop table BaBeL_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.T1
+drop table babel_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.t1
 go
 
-drop schema BaBeL_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+drop schema babel_4768_schema_longer_than_64_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 go
 
 DROP TABLE babel_4768_s2.t1
@@ -58,23 +58,23 @@ go
 DROP SCHEMA babel_4768_s2
 GO
 
-DROP TABLE BaBeL_4768ログインαιώνια.t1
+DROP TABLE babel_4768ログインαιώνια.t1
 go
 
 
-DROP TABLE "BaBeL_4768 😎$chem@ #123 🌍rder".t1
+DROP TABLE "babel_4768 😎$chem@ #123 🌍rder".t1
 go
 
-DROP TABLE [BaBeL_4768유니코드스키마👻].t1
+DROP TABLE [babel_4768유니코드스키마👻].t1
 go
 
-DROP SCHEMA BaBeL_4768ログインαιώνια
+DROP SCHEMA babel_4768ログインαιώνια
 GO
 
-DROP SCHEMA [BaBeL_4768 😎$chem@ #123 🌍rder]
+DROP SCHEMA [babel_4768 😎$chem@ #123 🌍rder]
 GO
 
-DROP SCHEMA [BaBeL_4768유니코드스키마👻]
+DROP SCHEMA [babel_4768유니코드스키마👻]
 GO
 
 

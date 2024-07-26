@@ -2552,9 +2552,9 @@ static Datum
 get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
 {
 	bool		schema_is_null, dbid_is_null;
-	Datum		schema_name_datum = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &schema_is_null);
+	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &schema_is_null);
 	Datum		dbid = heap_getattr(tuple, Anum_bbf_schema_perms_dbid, dsc, &dbid_is_null);
-	char		*physical_schema_name, *schema_name, *org_schema_name, *db_name;
+	char		*physical_schema_name;
 
 	if (dbid_is_null)
 		ereport(ERROR,
@@ -2565,18 +2565,8 @@ get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					errmsg("schema name should not be null in babelfish_schema_permissions catalog")));
 
-	org_schema_name = TextDatumGetCString(schema_name_datum);
-	db_name = get_db_name(DatumGetInt16(dbid));
-	/*
-	 * Downcase the orginal schema name and don't truncate it since
-	 * truncation will be handled inside get_physical_schema_name().
-	 */
-	schema_name = downcase_identifier(org_schema_name, strlen(org_schema_name), false, false);
-	physical_schema_name = get_physical_schema_name(db_name, schema_name);
-
-	pfree(db_name);
-	pfree(org_schema_name);
-	pfree(schema_name);
+	/* get_physical_schema_name() itself handles truncation, no explicit truncation needed */
+	physical_schema_name = get_physical_schema_name(get_db_name(DatumGetInt16(dbid)), TextDatumGetCString(schema_name));
 
 	return CStringGetDatum(physical_schema_name);
 }
