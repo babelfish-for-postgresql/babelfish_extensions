@@ -6,15 +6,19 @@ GO
 -- psql
 DO $$
 DECLARE
-    erro TEXT;
     cnt INT:= 1;
     var TEXT;
 BEGIN
     WHILE cnt <= 1114112 LOOP
         BEGIN
-            INSERT INTO master_dbo.all_utf8_chars VALUES (cast(chr(cnt) as bytea), chr(cnt));
+            var := chr(cnt);
+            IF var <> '\' THEN
+                INSERT INTO master_dbo.all_utf8_chars VALUES (cast(var as bytea), var);
+            ELSE
+                INSERT INTO master_dbo.all_utf8_chars VALUES (cast('\\' as bytea), '\');
+            END IF;
         EXCEPTION
-        WHEN others THEN
+            WHEN program_limit_exceeded THEN
         END;       
         cnt := cnt + 1;
     END LOOP;
