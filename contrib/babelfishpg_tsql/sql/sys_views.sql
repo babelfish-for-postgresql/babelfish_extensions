@@ -3306,7 +3306,7 @@ GRANT SELECT ON sys.trigger_events TO PUBLIC;
 CREATE OR REPLACE VIEW sys.partitions AS
 with index_id_map as MATERIALIZED(
   select
-    indexrelid,
+    *,
     case
       when indisclustered then 1
       else 1+row_number() over(partition by indrelid order by indexrelid)
@@ -3388,7 +3388,7 @@ UNION ALL
 SELECT
   CAST(pgi.inhrelid as sys.BIGINT) as partition_id,
   CAST(pidx.indrelid as int) as object_id,
-  CAST(imap.index_id as int) as index_id,
+  CAST(cidx.index_id as int) as index_id,
   CAST(row_number() over(partition by pgi.inhparent order by ctbl.relname) as int) as partition_number,
   CAST(0 as sys.bigint) AS hobt_id,
   CAST(case when ctbl.reltuples = -1 then 0 else ctbl.reltuples end as sys.bigint) AS rows,
@@ -3398,10 +3398,9 @@ SELECT
   CAST(0 as sys.bit) as xml_compression,
   CAST('OFF' as sys.varchar(3)) as xml_compression_desc
 FROM pg_inherits pgi
-INNER JOIN pg_index cidx on cidx.indexrelid = pgi.inhrelid
-INNER JOIN pg_index pidx on pidx.indexrelid = pgi.inhparent
+INNER JOIN index_id_map cidx on cidx.indexrelid = pgi.inhrelid
+INNER JOIN index_id_map pidx on pidx.indexrelid = pgi.inhparent
 INNER JOIN pg_class ctbl on (ctbl.oid = cidx.indrelid and ctbl.relkind = 'r' and ctbl.relispartition)
-INNER JOIN index_id_map imap on imap.indexrelid = cidx.indexrelid
 INNER JOIN pg_namespace nsp on ctbl.relnamespace = nsp.oid
 INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
 WHERE cidx.indislive
