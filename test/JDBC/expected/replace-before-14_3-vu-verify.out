@@ -96,7 +96,7 @@ SELECT replace(@inputString, '拉莫', '尔·比')
 GO
 ~~START~~
 varchar
-比????比斯                                        
+??·???                                            
 ~~END~~
 
 
@@ -105,7 +105,7 @@ SELECT replace(@inputString, '拉莫', '尔·比') COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 varchar
-比??尔·比斯                                        
+??·???                                            
 ~~END~~
 
 
@@ -114,7 +114,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-比??拉莫斯                                        
+??·??·?                                           
 ~~END~~
 
 
@@ -123,7 +123,7 @@ SELECT replace(@inputString, @pattern, @replacement) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 varchar
-比??拉莫斯                                        
+??·??·?                                           
 ~~END~~
 
 
@@ -160,7 +160,7 @@ SELECT replace(@inputString, '拉莫', '尔·比')
 GO
 ~~START~~
 varchar
-比????比斯
+??·?·??
 ~~END~~
 
 
@@ -178,7 +178,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-比????比斯
+??·?·??
 ~~END~~
 
 
@@ -196,7 +196,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-比????比斯
+??·?·??
 ~~END~~
 
 
@@ -310,7 +310,7 @@ SELECT replace(@inputString, '拉莫', '尔·比')
 GO
 ~~START~~
 nvarchar
-比??尔·比斯                                        
+??·???                                            
 ~~END~~
 
 
@@ -319,7 +319,7 @@ SELECT replace(@inputString, '拉莫', '尔·比') COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??尔·比斯                                        
+??·???                                            
 ~~END~~
 
 
@@ -328,7 +328,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比??拉莫斯                                        
+??·??·?                                           
 ~~END~~
 
 
@@ -337,7 +337,7 @@ SELECT replace(@inputString, @pattern, @replacement) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比??拉莫斯                                        
+??·??·?                                           
 ~~END~~
 
 
@@ -531,16 +531,18 @@ SELECT * FROM babel_4836_replace_dep_view
 GO
 ~~START~~
 text
-  abcx?yfghi??    
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 
 SELECT * FROM babel_4836_replace_dep_view1
 GO
 ~~START~~
 text
-  abcx?yfghi??    
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
 
 
 EXEC babel_4836_replace_dep_proc
@@ -600,7 +602,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-比????比斯                                        
+??·???                                            
 ~~END~~
 
 
@@ -636,7 +638,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比??拉莫斯                                        
+??·??·?                                           
 ~~END~~
 
 
@@ -672,7 +674,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比??尔·比斯                                        
+??·???                                            
 ~~END~~
 
  
@@ -996,7 +998,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-比??拉莫斯
+??·???
 ~~END~~
 
 
@@ -1392,7 +1394,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比??拉莫斯                                        
+??·??·?                                           
 ~~END~~
 
 
@@ -1428,7 +1430,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比??尔·比斯                                        
+??·???                                            
 ~~END~~
 
 
@@ -1455,7 +1457,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-比??尔·比斯                                        
+??·???                                            
 ~~END~~
 
 
@@ -2139,7 +2141,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-??比                DEF
+?·?                 DEF
 ~~END~~
 
 
