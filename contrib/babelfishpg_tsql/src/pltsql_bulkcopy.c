@@ -350,6 +350,8 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	 */
 	save_cur_lineno = cstate->cur_rowno;
 
+	/* Open indices to update them after the multi insert */
+	ExecOpenIndices(resultRelInfo, false);
 	/*
 	 * table_multi_insert may leak memory, so switch to short-lived memory
 	 * context before calling it.
@@ -361,7 +363,6 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 					   mycid,
 					   ti_options,
 					   buffer->bistate);
-	MemoryContextSwitchTo(oldcontext);
 
 	for (i = 0; i < nused; i++)
 	{
@@ -381,6 +382,36 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 		}
 
 		ExecClearTuple(slots[i]);
+	}
+
+	/* 
+	 * ExecInsertIndexTuples also leaks memory, so only switch back to old
+	 * context after it.
+	 */
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Close the indices we've opened before multi insert */
+	ExecCloseIndices(resultRelInfo);
+
+	/*
+	 * ExecCloseIndices does not free neither resulsting arrays, allocated
+	 * in ExecOpenIndices, nor its contents. Instead of moving open/close into
+	 * short-lived context lets clean it up explicitly, so indices open/close
+	 * can be untied from batch handling in future if needed.
+	 * 
+	 * There is an additional call to ExecCloseIndices in
+	 * EndBulkCopy->ExecCloseResultRelations, we reset ri_NumIndices to make
+	 * it no-op.
+	 */
+	if (resultRelInfo->ri_NumIndices > 0)
+	{
+		for (i = 0; i < resultRelInfo->ri_NumIndices; i++)
+		{
+			pfree(resultRelInfo->ri_IndexRelationInfo[i]);
+		}
+		pfree(resultRelInfo->ri_IndexRelationInfo);
+		pfree(resultRelInfo->ri_IndexRelationDescs);
+		resultRelInfo->ri_NumIndices = 0;
 	}
 
 	/* Mark that all slots are free. */
@@ -556,12 +587,11 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 	Assert(list_length(cstate->range_table) == 1);
 
 	/*
-	 * The target must be a plain, foreign, or partitioned relation, or have
+	 * The target must be a plain, or foreign relation, or have
 	 * an INSTEAD OF INSERT row trigger.
 	 */
 	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION &&
 		cstate->rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
-		cstate->rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
 		!(cstate->rel->trigdesc &&
 		  cstate->rel->trigdesc->trig_insert_instead_row))
 	{
@@ -580,14 +610,16 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot bulk copy to sequence \"%s\"",
 							RelationGetRelationName(cstate->rel))));
+		else if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Bulk Copy to partitioned-table is not yet supported in Babelfish.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot bulk copy to non-table relation \"%s\"",
 							RelationGetRelationName(cstate->rel))));
 	}
-
-	ExecOpenIndices(cstate->resultRelInfo, false);
 
 	econtext = GetPerTupleExprContext(cstate->estate);
 

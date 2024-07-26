@@ -1,0 +1,89 @@
+-- BABEL-4912 test ALTER TABLE for temp tables
+CREATE TABLE #t1 (a INT IDENTITY PRIMARY KEY NOT NULL, b INT)
+GO
+
+INSERT INTO #t1 (b) values (1)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+ALTER TABLE #t1 DROP COLUMN b
+GO
+
+SELECT * FROM #t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+ALTER TABLE #t1 ADD b varchar(20)
+GO
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#varchar
+1#!#<NULL>
+~~END~~
+
+
+ALTER TABLE #t1 ADD c AS a + 1
+GO
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#<NULL>#!#2
+~~END~~
+
+
+ALTER TABLE #t1 DROP COLUMN a
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot drop a column used by a generated column)~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#<NULL>#!#2
+~~END~~
+
+
+ALTER TABLE #t1 DROP COLUMN b
+GO
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+
+ALTER TABLE #t1 DROP COLUMN c
+GO
+
+SELECT * FROM #t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DROP TABLE #t1
+GO

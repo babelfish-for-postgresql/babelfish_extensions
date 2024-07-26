@@ -53,7 +53,7 @@ BABEL-2805
 BABEL-2812
 BABEL-2819
 BABEL-2845
-BABEL-2877
+babelfish_function_ext-before_16_4_or_15_8_or_14_13
 BABEL-2884
 BABEL-2917
 BABEL-2944
@@ -186,6 +186,7 @@ BABEL-SP_STORED_PROCEDURES
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
+SP_TABLES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -238,7 +239,7 @@ ISC-Columns
 isc-schemata-dep
 ISC-sequences
 ISC-Table_Constraints
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
@@ -327,7 +328,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name
+sys-host_name-before-15_8-or-16_4
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns
@@ -535,5 +536,10 @@ babel_4328_datetime2
 babel_4328_datetimeoffset
 babel_726
 BABEL-3401
+trim-before-15_8-or-16_4
+ltrim-before-15_8-or-16_4
+rtrim-before-15_8-or-16_4
+left-before-15_8-or-16_4
+right-before-15_8-or-16_4
 space
 

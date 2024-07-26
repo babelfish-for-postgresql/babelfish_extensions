@@ -213,7 +213,9 @@ static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
 static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
 static void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx);
 static void handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx);
+static void rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx);
 static bool setSysSchema = false;
+static void rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -842,6 +844,8 @@ class tsqlCommonMutator : public TSqlParserBaseListener
 public:
 	explicit tsqlCommonMutator() = default;
 	bool in_create_or_alter_function = false;
+	bool in_create_or_alter_procedure = false;
+	bool in_create_or_alter_trigger = false;
 
 	void enterCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
 		in_create_or_alter_function = true;
@@ -849,6 +853,22 @@ public:
 
 	void exitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
 		in_create_or_alter_function = false;
+	}
+
+	void enterCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override {
+		in_create_or_alter_procedure = true;
+	}
+
+	void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override {
+		in_create_or_alter_procedure = false;
+	}
+
+	void enterCreate_or_alter_trigger(TSqlParser::Create_or_alter_triggerContext *ctx) override {
+		in_create_or_alter_trigger = true;
+	}
+
+	void exitCreate_or_alter_trigger(TSqlParser::Create_or_alter_triggerContext *ctx) override {
+		in_create_or_alter_trigger = false;
 	}
 
 	void enterTransaction_statement(TSqlParser::Transaction_statementContext *ctx) override {
@@ -954,6 +974,26 @@ public:
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
 		handleGeospatialFunctionsInFunctionCall(ctx);
+
+		if (ctx->func_proc_name_server_database_schema())
+		{
+			auto fpnsds = ctx->func_proc_name_server_database_schema();
+
+			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
+			{
+				auto id = fpnsds->id().back();
+
+				if (id->keyword()->TRIM())
+				{
+					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
+				}
+			}
+		}
+	}
+
+	void exitTRIM(TSqlParser::TRIMContext *ctx) override
+	{
+		rewrite_function_trim_to_sys_trim(ctx);
 	}
 
 	/* We are adding handling for CLR_UDT Types in:
@@ -1180,6 +1220,19 @@ public:
 			rewritten_query_fragment.emplace(std::make_pair(ctx->OPENQUERY()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->OPENQUERY()), "openquery_internal")));
 			rewritten_query_fragment.emplace(std::make_pair(linked_srv->start->getStartIndex(), std::make_pair(linked_srv_name, str)));
 		}	
+	}
+	
+	void exitSTRING_AGG(TSqlParser::STRING_AGGContext *ctx) override
+	{
+		/* 
+		 * For User Defined Function/Procedure/Trigger the language of the body of Function/Procedure/Trigger is set as 'pltsql' 
+		 * hence we cannot rewrite the STRING_AGG query into PG syntax during creation of this objects, 
+		 * hence skipped the rewriting of STRING_AGG query for Function/Procedure/Trigger. 
+		 * Also, Function's/Procedure's/Trigger's body gets compiled during its execution so the rewriting of
+		 * STRING_AGG query will happen during execution.
+		 */
+		if (!(in_create_or_alter_function || in_create_or_alter_procedure || in_create_or_alter_trigger))
+			rewrite_string_agg_query(ctx);
 	}
 };
 
@@ -1787,6 +1840,22 @@ public:
 		if (is_schema_specified)
 			stmt->is_schema_specified = true;
 
+		if (is_cross_db)
+		{
+			if (ctx->select_statement_standalone() &&
+				ctx->select_statement_standalone()->select_statement() &&
+				ctx->select_statement_standalone()->select_statement()->query_expression() &&
+				ctx->select_statement_standalone()->select_statement()->query_expression()->query_specification() &&
+				ctx->select_statement_standalone()->select_statement()->query_expression()->query_specification()->INTO() &&
+				ctx->select_statement_standalone()->select_statement()->query_expression()->query_specification()->table_name())
+			{
+				throw PGErrorWrapperException(ERROR,
+						ERRCODE_FEATURE_NOT_SUPPORTED,
+						"cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.",
+						getLineAndPos(ctx->select_statement_standalone()));
+			}
+		}
+
 		if (is_compiling_create_function())
 		{
 			/* select without destination should be blocked. We can use already information about desitnation, which is already processed. */
@@ -1808,6 +1877,23 @@ public:
 			else if (ctx->delete_statement() && ctx->delete_statement()->delete_statement_from()->ddl_object() && !ctx->delete_statement()->delete_statement_from()->ddl_object()->local_id()  &&
 					(ctx->delete_statement()->table_sources() ? ::getFullText(ctx->delete_statement()->table_sources()).c_str()[0] != '@' : true)) /* delete non-local object, table variables are allowed */
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'DELETE' cannot be used within a function", getLineAndPos(ctx->delete_statement()->delete_statement_from()->ddl_object()));
+
+			/*
+			 * Reject if OUTPUT clause is missing INTO (returning to client) or OUTPUT INTO non local object
+			 */
+
+			if (ctx->insert_statement() && ctx->insert_statement()->output_clause() && (!ctx->insert_statement()->output_clause()->INTO() || !ctx->insert_statement()->output_clause()->LOCAL_ID()))
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "Invalid use of a side-effecting operator 'INSERT' within a function.", getLineAndPos(ctx->insert_statement()->output_clause()));
+			}
+			else if (ctx->update_statement() && ctx->update_statement()->output_clause() && (!ctx->update_statement()->output_clause()->INTO() || !ctx->update_statement()->output_clause()->LOCAL_ID()))
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "Invalid use of a side-effecting operator 'UPDATE' within a function.", getLineAndPos(ctx->update_statement()->output_clause()));
+			}
+			else if (ctx->delete_statement() && ctx->delete_statement()->output_clause() && (!ctx->delete_statement()->output_clause()->INTO() || !ctx->delete_statement()->output_clause()->LOCAL_ID()))
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "Invalid use of a side-effecting operator 'DELETE' within a function.", getLineAndPos(ctx->delete_statement()->output_clause()));
+			}
 		}
 
 		/* we must add previous rewrite at first. */
@@ -2314,6 +2400,11 @@ public:
 		handleOrderByOffsetFetch(ctx);
 	}
 
+	void exitTRIM(TSqlParser::TRIMContext *ctx) override
+	{
+		rewrite_function_trim_to_sys_trim(ctx);
+	}
+  
 	// NB: the following are copied in tsqlMutator
 	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
 	{
@@ -2527,7 +2618,11 @@ public:
                                               }
                                       }
                               }
-
+				
+				if (id->keyword()->TRIM())
+				{
+					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
+				}
 			}
 
 			if (ctx->func_proc_name_server_database_schema()->procedure)
@@ -4808,6 +4903,9 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 	result->lineno =getLineNo(ctx);
 
 	auto *expr = makeTsqlExpr(ctx, false);
+	PLtsql_expr_query_mutator mutator(expr, ctx);
+	add_rewritten_query_fragment_to_mutator(&mutator);
+	mutator.run();
 	result->query = expr;
 	if (itvf)
 	{
@@ -7085,8 +7183,12 @@ post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_exec
 		if (cctx->ON())
 		{
 			Assert(cctx->storage_partition_clause());
-			removeTokenStringFromQuery(stmt->sqlstmt, cctx->ON(), baseCtx);
-			removeCtxStringFromQuery(stmt->sqlstmt, cctx->storage_partition_clause(), baseCtx);
+			/* remove storage_partition_clause only if it's not partitioning clause */
+			if (cctx->storage_partition_clause()->id().size() != 2)
+			{
+				removeTokenStringFromQuery(stmt->sqlstmt, cctx->ON(), baseCtx);
+				removeCtxStringFromQuery(stmt->sqlstmt, cctx->storage_partition_clause(), baseCtx);
+			}
 		}
 		else if (cctx->TEXTIMAGE_ON())
 		{
@@ -7331,12 +7433,6 @@ makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
 static bool
 post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
-	if (ctx->storage_partition_clause())
-	{
-		removeTokenStringFromQuery(stmt->sqlstmt, ctx->ON().back(), baseCtx); /* remove last ON */
-		removeCtxStringFromQuery(stmt->sqlstmt, ctx->storage_partition_clause(), baseCtx);
-	}
-
 	if (ctx->clustered() && ctx->clustered()->CLUSTERED())
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->CLUSTERED(), baseCtx);
 	if (ctx->clustered() && ctx->clustered()->NONCLUSTERED())
@@ -8209,6 +8305,42 @@ rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, Get
 			return name.substr(1);
 	}
 	return "";
+}
+
+/*
+ * In this function we Rewrite the Query for STRING_AGG function as follows
+ * Query: STRING_AGG '(' expr=expression ',' separator=expression ')' WITHIN GROUP '(' order_by_clause ')'
+ * will be rewritten to 
+ * Query: STRING_AGG '(' expr=expression ',' separator=expression order_by_clause ')'
+ */
+static void
+rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx)
+{
+	if (ctx->WITHIN() && ctx->order_by_clause())
+	{
+		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()[0]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()[0]), std::string(" ") + ::getFullText(ctx->order_by_clause()) + ::getFullText(ctx->RR_BRACKET()[0]))));
+
+		/* remove block (WITHIN GROUP LR_BRACKET order_by_clause RR_BRACKET) */
+		rewritten_query_fragment.emplace(std::make_pair(ctx->WITHIN()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->WITHIN()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->GROUP()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->GROUP()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->LR_BRACKET()[1]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->LR_BRACKET()[1]), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->order_by_clause()->start->getStartIndex(), std::make_pair(::getFullText(ctx->order_by_clause()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()[1]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()[1]), "")));
+	}
+}
+
+/*
+ * In this function we Rewrite the Query for Trim function as follows
+ * TRIM '(' expression from expression ')' -> sys.TRIM '(' expression , expression ')'
+ */
+static void
+rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx)
+{
+	if (ctx->trim_from())
+	{	
+		rewritten_query_fragment.emplace(std::make_pair(ctx->trim_from()->start->getStartIndex(), std::make_pair(::getFullText(ctx->trim_from()), " , ")));
+	}
+	rewritten_query_fragment.emplace(std::make_pair(ctx->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TRIM()), "sys.trim")));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
