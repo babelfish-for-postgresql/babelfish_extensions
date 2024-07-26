@@ -60,7 +60,7 @@ column_domain_usage
 constraint_column_usage
 select-strip-parens-before-15_5
 sp_describe_first_result_set
-sys-host_name
+sys-host_name-before-15_8-or-16_4
 SYSTEM_USER
 indexproperty
 sys-all_parameters
@@ -252,6 +252,7 @@ BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO
 BABEL-SPCOLUMNS
+SP_TABLES-dep
 BABEL-SP_TABLES
 BABEL-SP_SPECIAL_COLUMNS
 BABEL-SP_TABLE_PRIVILIGES
@@ -368,7 +369,7 @@ BABEL-3640
 sys-sysindexes
 sys-system_objects
 ISC-Views
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Columns
 #ISC-Check-Constraints
 ISC-Table_Constraints
@@ -431,6 +432,11 @@ BABEL-492-before-15_6
 babel-4517
 babel-3254
 BABEL-4641
+trim-before-15_8-or-16_4
+ltrim-before-15_8-or-16_4
+rtrim-before-15_8-or-16_4
+left-before-15_8-or-16_4
+right-before-15_8-or-16_4
 BABEL-4863
 babel_test_int4_numeric_oper_before_16_3
 babel_test_int8_numeric_oper_before_16_3
@@ -442,3 +448,4 @@ babel_4328_datetime2
 babel_4328_datetimeoffset
 babel_726
 BABEL-3401
+reverse-before-15_8-or-16_4

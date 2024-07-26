@@ -68,7 +68,7 @@ PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 SELECT a*2, REVERSE(b) FROM bbf_fpn_server...fpn_table
 GO
 ~~START~~
-int#!#text
+int#!#varchar
 2#!#eno
 4#!#owt
 6#!#eerht

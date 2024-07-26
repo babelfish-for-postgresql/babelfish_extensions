@@ -40,7 +40,6 @@ BABEL-1994-VARCHAR
 BABEL-2086
 BABEL-2170
 BABEL-2203
-BABEL-4390
 BABEL-2208
 BABEL-2257
 BABEL-2449
@@ -54,7 +53,7 @@ BABEL-2805
 BABEL-2812
 BABEL-2819
 BABEL-2845
-BABEL-2877
+babelfish_function_ext-before_16_4_or_15_8_or_14_13
 BABEL-2884
 BABEL-2917
 BABEL-2944
@@ -67,6 +66,7 @@ BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
+BABEL-3147
 BABEL-3166
 BABEL-3192
 BABEL-3204
@@ -115,6 +115,7 @@ BABEL-3914
 BABEL-3938
 BABEL-3952
 BABEL-3953-datetrunc
+BABEL-404
 BABEL-405
 BABEL-4078
 BABEL-4098
@@ -122,8 +123,8 @@ BABEL-4214
 BABEL-4516
 babel_417
 BABEL-493
-BABEL-4888
 BABEL_539
+BABEL-621
 BABEL-728
 BABEL-733
 BABEL-741
@@ -148,6 +149,7 @@ babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
+check_for_inconsistent_metadata
 babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
@@ -184,6 +186,7 @@ BABEL-SP_STORED_PROCEDURES
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
+SP_TABLES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -224,6 +227,7 @@ fulltextserviceproperty
 FULLTEXT_INDEX
 fts-contains
 fts-contains-utils
+BABEL-4785
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -235,7 +239,7 @@ ISC-Columns
 isc-schemata-dep
 ISC-sequences
 ISC-Table_Constraints
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
@@ -246,6 +250,7 @@ msdb-dbo-syspolicy_configuration
 msdb-dbo-syspolicy_system_health_state
 nested_trigger_inside_proc
 nested_trigger_with_dml
+newid_before_15_8_or_16_4
 objectpropertyex
 openjson
 openquery_upgrd_before_15_4
@@ -323,7 +328,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name
+sys-host_name-before-15_8-or-16_4
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns
@@ -449,6 +454,7 @@ TestTableType
 TestText
 TestTime
 TestTinyInt
+TestUDD
 TestUniqueIdentifier
 Test_user_from_win_login
 TestVarChar
@@ -512,9 +518,27 @@ BABEL-730
 babel-4475
 babel-3254
 babel-4517
-BABEL-4815
-Test_alter_db_rename
-Test_sp_renamedb
-Test_sp_rename_database
+babel_table_type
+alter-procedure
+1_GRANT_SCHEMA
+BABEL-4707
+BABEL_4817
+BABEL-4641
+BABEL-4863
+babel_test_int4_numeric_oper
+babel_test_int8_numeric_oper
+babel_test_int2_numeric_oper
+login_token-dep
+test_like_for_AI
 BABEL-4869
-BABEL-5071
+babel_4328_datetime
+babel_4328_datetime2
+babel_4328_datetimeoffset
+babel_726
+BABEL-3401
+trim-before-15_8-or-16_4
+ltrim-before-15_8-or-16_4
+rtrim-before-15_8-or-16_4
+left-before-15_8-or-16_4
+right-before-15_8-or-16_4
+reverse-before-15_8-or-16_4

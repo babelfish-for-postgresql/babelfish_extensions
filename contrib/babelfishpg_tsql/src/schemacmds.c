@@ -19,6 +19,7 @@
 #include "hooks.h"
 #include "schemacmds.h"
 #include "session.h"
+#include "pltsql.h"
 
 static bool has_ext_info(const char *schemaname);
 
@@ -38,7 +39,7 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 	if (!orig_name)
 	{
 		if (stmt->location != -1 && queryString)
-			orig_name = extract_identifier(queryString + stmt->location);
+			orig_name = extract_identifier(queryString + stmt->location, NULL);
 		else
 			orig_name = "";
 	}
