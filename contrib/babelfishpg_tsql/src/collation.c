@@ -534,6 +534,10 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 
 	for (; len > 0; len -= char_len)
 	{
+		unsigned char b1 = 0;
+		unsigned char b2 = 0;
+		unsigned char b3 = 0;
+		unsigned char b4 = 0;
 		uint32 utf8_char;
 		uint32 utf8_normalized_str;
 		remove_accent_map_pair *pr;
@@ -550,13 +554,37 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 		if (!pg_utf8_islegal(input_str, char_len))
 			break;
 
-		utf8_char = 0;
-
-		/* convert multi byte char to integral value */
-		for (int byte_idx = 1 ; byte_idx <= char_len ; byte_idx++)
+		if (char_len == 1)
 		{
-			utf8_char |= (*input_str++) << ((char_len - byte_idx) * 8);
+			appendBinaryStringInfo(&result, input_str++, 1);
+			continue;
 		}
+
+		/* collect coded char of length l */
+		if (char_len == 2)
+		{
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else if (char_len == 3)
+		{
+			b2 = *input_str++;
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else if (char_len == 4)
+		{
+			b1 = *input_str++;
+			b2 = *input_str++;
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else
+		{
+			elog(ERROR, "unsupported character length %d", char_len);
+		}
+
+		utf8_char = (b1 << 24 | b2 << 16 | b3 << 8 | b4);
 
 		pr = bsearch(&utf8_char, pltsql_remove_accent_map, lengthof(pltsql_remove_accent_map),
 							sizeof(remove_accent_map_pair), compare_remove_accent_map_pair);
