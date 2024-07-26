@@ -98,3 +98,18 @@ GO
 
 SET QUOTED_IDENTIFIER ON;
 GO
+
+CREATE SCHEMA [BABEL-2877-vu-prepare_FUNC_Schema]
+GO
+
+CREATE SCHEMA [BABEL-2877-vu-prepare Schema . WITH .. DOTS]
+GO
+
+-- Function name which is prefix of schema name
+CREATE FUNCTION [BABEL-2877-vu-prepare_FUNC_Schema]  .  [BABEL-2877-vu-prepare_FUNC] (@a int)
+RETURNS INT AS BEGIN RETURN 1; END;
+GO
+
+CREATE FUNCTION [BABEL-2877-vu-prepare Schema . WITH .. DOTS]  .  [BABEL-2877-vu-prepare Function . WITH .. DOTS] (@a int)
+RETURNS INT AS BEGIN RETURN 1; END;
+GO
