@@ -25,6 +25,9 @@ GO
 DROP FUNCTION IF EXISTS dbo.sysdatetime;
 GO
 
+DROP FUNCTION IF EXISTS dbo.overloaded_function_f1;
+GO
+
 DROP PROCEDURE IF EXISTS OverloadedObject;
 GO
 

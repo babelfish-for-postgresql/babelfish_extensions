@@ -149,6 +149,23 @@ GO
 DROP FUNCTION OverloadedFunction(float, float);
 GO
 
+SET search_path TO non_existent_schema, "$user", public;
+GO
+
+CREATE OR REPLACE FUNCTION OverloadedFunction_f1()
+RETURNS INT
+AS
+$$
+BEGIN
+RETURN 1;
+END;
+$$
+LANGUAGE plpgsql;
+GO
+
+SET search_path TO "$user", public;
+GO
+
 -- Overloaded procedures via PG port
 CREATE OR REPLACE PROCEDURE OverloadedProcedure(IN a FLOAT, IN b FLOAT, OUT c FLOAT)
 LANGUAGE plpgsql
@@ -285,5 +302,36 @@ GO
 ~~START~~
 date
 2017-01-03
+~~END~~
+
+
+-- Case 6: When current default schema in the search path is invalid
+SELECT CURRENT_SETTING('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+-- Making a non existent schema as current default schema
+SELECT SET_CONFIG('search_path', 'master_non_existent_schema, master_dbo, "$user", sys, pg_catalog', false);
+GO
+~~START~~
+text
+master_non_existent_schema, master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+-- should create the function in next valid schema in the search path i.e. dbo
+CREATE FUNCTION overloaded_function_f1() RETURNS INT AS BEGIN RETURN 1; END
+GO
+
+-- Reset search path
+SELECT SET_CONFIG('search_path', 'master_dbo, "$user", sys, pg_catalog', false);
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
 ~~END~~
 

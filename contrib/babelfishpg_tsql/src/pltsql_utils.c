@@ -223,7 +223,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 				if (path_oids != NIL)
 				{
 					cur_schema_name = get_namespace_name(linitial_oid(path_oids));
-					if (cur_schema_name == NULL)
+					if (unlikely(cur_schema_name == NULL))
 					{
 						ereport(ERROR, (errcode(ERRCODE_UNDEFINED_SCHEMA),
 										errmsg("Current schema name could not be determined")));
