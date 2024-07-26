@@ -253,6 +253,7 @@ BABEL-1438
 BABEL-SP_DATATYPE_INFO
 BABEL-SPCOLUMNS
 BABEL-SP_TABLES
+SP_TABLES-dep
 BABEL-SP_SPECIAL_COLUMNS
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_FKEYS
@@ -368,7 +369,7 @@ BABEL-3640
 sys-sysindexes
 sys-system_objects
 ISC-Views
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Columns
 #ISC-Check-Constraints
 ISC-Table_Constraints
@@ -447,3 +448,4 @@ BABEL-4815-before-14_13
 babel_4328_datetime-before-15_7
 babel_4328_datetime2-before-15_7
 babel_4328_datetimeoffset-before-15_7
+reverse-before-15_8-or-16_4

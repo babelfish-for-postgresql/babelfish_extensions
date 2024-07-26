@@ -155,6 +155,7 @@ BABEL-SP_STORED_PROCEDURES
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
+SP_TABLES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -192,7 +193,7 @@ insteadof_nested_trigger_inside_proc
 insteadof_nested_trigger_with_dml
 insteadoftriggers_with_transaction
 ISC-Table_Constraints
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Views
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
@@ -418,3 +419,4 @@ BABEL-4815-before-14_13
 babel_4328_datetime-before-15_7
 babel_4328_datetime2-before-15_7
 babel_4328_datetimeoffset-before-15_7
+reverse-before-15_8-or-16_4

@@ -96,6 +96,7 @@ BABEL-SP_SPROC_COLUMNS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
+SP_TABLES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -241,3 +242,4 @@ BABEL-4869
 babel_4328_datetime-before-15_7
 babel_4328_datetime2-before-15_7
 babel_4328_datetimeoffset-before-15_7
+reverse-before-15_8-or-16_4
