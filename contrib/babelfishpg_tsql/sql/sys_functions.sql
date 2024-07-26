@@ -5201,7 +5201,7 @@ END;
 $body$
 LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION sys.bbf_pivot()
+CREATE OR REPLACE FUNCTION sys.bbf_pivot(IN arg TEXT)
 RETURNS setof record
 AS 'babelfishpg_tsql', 'bbf_pivot'
 LANGUAGE C STABLE;

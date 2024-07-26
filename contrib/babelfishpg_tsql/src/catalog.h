@@ -388,6 +388,20 @@ extern Oid	bbf_extended_properties_idx_oid;
 extern Oid	get_bbf_extended_properties_oid(void);
 extern Oid	get_bbf_extended_properties_idx_oid(void);
 
+typedef struct FormData_bbf_extended_properties
+{
+	int16		dbid;
+	NameData	schema_name;
+	NameData	major_name;
+	NameData	minor_name;
+	VarChar		type;
+	VarChar		name;
+	VarChar		orig_name;
+	bytea		value;
+} FormData_bbf_extended_properties;
+
+typedef FormData_bbf_extended_properties *Form_bbf_extended_properties;
+
 /*****************************************
  *			PARTITION_FUNCTION
  *****************************************/
@@ -476,20 +490,38 @@ extern bool	is_bbf_partitioned_table(int16 dbid, char *schema_name, char *table_
 extern char	*get_partition_scheme_for_partitioned_table(int16 dbid, char *schema_name, char *table_name);
 extern void	rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt, char *logical_schema_name, int16 dbid);
 
+/*****************************************
+ *			PIVOT_VIEW
+ *****************************************/
+#define BBF_PIVOT_VIEW_TABLE_NAME "babelfish_pivot_view"
+#define BBF_PIVOT_VIEW_IDX_NAME "babelfish_pivot_view_pkey"
+#define Anum_bbf_pivot_view_dbid 1
+#define Anum_bbf_pivot_view_pivot_view_uuid 2
+#define Anum_bbf_pivot_view_schema_name 3
+#define Anum_bbf_pivot_view_pivot_view_name 4
+#define Anum_bbf_pivot_view_agg_func_name 5
+#define BBF_PIVOT_VIEW_NUM_COLS 5
+#define BBF_PIVOT_VIEW_SRC_PREFIX "pvt_sv_"
+#define BBF_PIVOT_VIEW_CAT_PREFIX "pvt_cv_"
+extern Oid	bbf_pivot_view_oid;
+extern Oid 	bbf_pivot_view_idx_oid;
 
-typedef struct FormData_bbf_extended_properties
+extern Oid 	get_bbf_pivot_view_oid(void);
+extern Oid	get_bbf_pivot_view_idx_oid(void);
+extern char	*add_entry_to_bbf_pivot_view(const char *pivot_view_name, Node *src_parsetree, Node *cat_parsetree, const char *source_text, const char *agg_func_name);
+extern void remove_entrys_from_bbf_pivot_view(int16 dbid, const char *logical_schema_name, const char *pivot_view_name);
+extern void clean_up_bbf_pivot_view(int16 dbid);
+
+typedef struct FormData_bbf_pivot_view
 {
 	int16		dbid;
-	NameData	schema_name;
-	NameData	major_name;
-	NameData	minor_name;
-	VarChar		type;
-	VarChar		name;
-	VarChar		orig_name;
-	bytea		value;
-} FormData_bbf_extended_properties;
+	VarChar		pivot_view_uuid;
+	VarChar		schema_name;
+	VarChar		pivot_view_name;
+	VarChar		agg_func_name;
+} FormData_bbf_pivot_view;
 
-typedef FormData_bbf_extended_properties *Form_bbf_extended_properties;
+typedef FormData_bbf_pivot_view *Form_bbf_pivot_view;
 
 /*****************************************
  *			Metadata Check Rule

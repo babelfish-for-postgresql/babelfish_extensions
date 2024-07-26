@@ -156,6 +156,7 @@ static void fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *n
 static void pltsql_report_proc_not_found_error(List *names, List *fargs, List *argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern PLtsql_execstate *get_current_tsql_estate();
+static Query *parse_analyze_babelfish_view(ViewStmt *stmt, RawStmt *rawstmt, const char *queryString);
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
 static void pltsql_drop_view_definition(Oid objectId);
 static void preserve_view_constraints_from_base_table(ColumnDef *col, Oid tableOid, AttrNumber colId);
@@ -274,6 +275,7 @@ static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook =
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
+static parse_analyze_babelfish_view_hook_type pre_parse_analyze_babelfish_view_hook = NULL;
 static pass_pivot_data_to_fcinfo_hook_type pre_pass_pivot_data_to_fcinfo_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook = NULL;
@@ -492,13 +494,16 @@ InstallExtendedHooks(void)
 	pltsql_replace_non_determinstic_hook = pltsql_replace_non_determinstic;
 
 	prev_pltsql_is_partitioned_table_reloptions_allowed_hook = pltsql_is_partitioned_table_reloptions_allowed_hook;
-	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed; 
+	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed;
 
 	handle_param_collation_hook = set_param_collation;
 	handle_default_collation_hook = default_collation_for_builtin_type;
 
 	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
 	ExecFuncProc_AclCheck_hook = pltsql_ExecFuncProc_AclCheck;
+
+	pre_parse_analyze_babelfish_view_hook = parse_analyze_babelfish_view_hook;
+	parse_analyze_babelfish_view_hook = parse_analyze_babelfish_view;
 }
 
 void
@@ -563,10 +568,9 @@ UninstallExtendedHooks(void)
 	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
-	pltsql_strpos_non_determinstic_hook = prev_pltsql_strpos_non_determinstic_hook;
-	pltsql_replace_non_determinstic_hook = prev_pltsql_replace_non_determinstic_hook;
-	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;
+	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;	
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
+	parse_analyze_babelfish_view_hook = pre_parse_analyze_babelfish_view_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -3336,6 +3340,9 @@ pltsql_drop_view_definition(Oid objectId)
 		return;
 	}
 
+	/* check if the view is a pivot view, if so, we drop all its related views */
+	remove_entrys_from_bbf_pivot_view(dbid, logical_schemaname, objectname);
+
 	/* Fetch the relation */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
 
@@ -4937,6 +4944,7 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 	if (relid == sysdatabases_oid ||
 		relid == namespace_ext_oid ||
 		relid == bbf_view_def_oid ||
+		relid == bbf_pivot_view_oid ||
 		relid == bbf_extended_properties_oid ||
 		relid == bbf_schema_perms_oid ||
 		relid == bbf_partition_scheme_oid ||
@@ -5073,6 +5081,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	List		*src_sql_sortbylist;
 	List		*src_sql_fromClause_copy;
 	List 		*pivot_context_list;
+	A_Const 	*bbf_pivot_arg;
 	char		*pivot_colstr;
 	char		*value_colstr;
 	String		*funcName;
@@ -5084,14 +5093,19 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	RawStmt			*c_sql;
 	FuncCall 		*pivot_func;
 	WithClause		*with_clause;
+	bool 			is_view_transform;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	/* initialize all lists */
+	temp_src_targetlist = NIL;
 	new_src_sql_targetist = NIL;
 	new_pivot_aliaslist = NIL;
 	src_sql_groupbylist = NIL;
 	src_sql_sortbylist = NIL;
+	pivot_context_list = NIL;
+	is_view_transform = false;
 
 	with_clause = copyObject(stmt->withClause);
 	pivot_src_sql =  makeNode(SelectStmt);
@@ -5221,28 +5235,66 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 
 	wrapperSelect_RangeFunction->coldeflist = new_pivot_aliaslist;
 
+	/* make bbf_pivot function argument, default is NULL */
+	bbf_pivot_arg = makeNode(A_Const);
+	bbf_pivot_arg->val.sval.type = T_String;
+	bbf_pivot_arg->val.sval.sval = NULL;
+	bbf_pivot_arg->location = -1;
+	
+	/* 
+	 * There are two ways to handle stmt with pivot operator:
+	 *   1. If the query is wrapped in a view, then we will first genearte a uuid for this pivot call
+	 * 		then two helper views with name like pvt_sv_[uuid], pvt_cv_[uuid]. The uuid will be saved as 
+	 * 		bbf_pivot function argument for later in function view name retrival. 
+	 * 		The uuid, dbid, logical name, view name, and aggreate function name will also be saved in 
+	 *		babelfish_pivot_view catalog.
+	 *   2. If the query is not wrapped in a view, then we will save the pivot operator metadatas
+	 * 		(rawparsetrees, funcName, sql text)to bbf_pivot->context. The metadata will later passed 
+	 * 		to FunctionCallInfo->context and will be consumed within bbf_pivot function.
+	 */
+	is_view_transform = checkQueryWithinView(pstate->p_queryEnv);
+	if (is_view_transform)
+	{	/* case 1: current query is wrapped in a view */
+		char		*view_name;
+		char		*view_uuid;
+		view_name = getQueryEnvViewName(pstate->p_queryEnv);
+		view_uuid = add_entry_to_bbf_pivot_view(view_name,
+												(Node *) copyObject(pivot_src_sql), 
+												(Node *) copyObject(stmt->catSql), 
+												pstate->p_sourcetext,
+												funcName->sval);
+		bbf_pivot_arg->val.sval.sval = view_uuid;						
+	}
+	else
+	{
+		/* case 2: current query is not wrapped in a view */
+		s_sql = makeNode(RawStmt);
+		c_sql = makeNode(RawStmt);
+		s_sql->stmt = (Node *) pivot_src_sql;
+		s_sql->stmt_location = 0;
+		s_sql->stmt_len = 0;
 
-	s_sql = makeNode(RawStmt);
-	c_sql = makeNode(RawStmt);
-	s_sql->stmt = (Node *) pivot_src_sql;
-	s_sql->stmt_location = 0;
-	s_sql->stmt_len = 0;
+		c_sql->stmt = (Node *) stmt->catSql;
+		c_sql->stmt_location = 0;
+		c_sql->stmt_len = 0;
 
-	c_sql->stmt = (Node *) stmt->catSql;
-	c_sql->stmt_location = 0;
-	c_sql->stmt_len = 0;
+		pivot_context_list = list_make3(list_make1(makeString("bbf_pivot_func")),
+								list_make2((Node *) copyObject(s_sql),
+											(Node *) copyObject(c_sql)
+											),
+								list_make2(makeString(pstrdup(pstate->p_sourcetext)),
+											makeString(pstrdup(funcName->sval))
+											)
+								);
 
-	pivot_context_list = list_make3(list_make1(makeString("bbf_pivot_func")),
-									list_make2((Node *) copyObject(s_sql),
-												(Node *) copyObject(c_sql)
-												),
-									list_make2(makeString(pstrdup(pstate->p_sourcetext)),
-												makeString(pstrdup(funcName->sval))
-												)
-									);
-
+		bbf_pivot_arg->val.sval.sval = "";
+	}
 	/* Store pivot information in FuncCall to live through parser analyzer */
-	pivot_func = makeFuncCall(list_make2(makeString("sys"), makeString("bbf_pivot")), NIL, COERCE_EXPLICIT_CALL, -1);
+	pivot_func = makeFuncCall(list_make2(makeString("sys"), 
+											makeString("bbf_pivot")), 
+											list_make1(bbf_pivot_arg), 
+											COERCE_EXPLICIT_CALL, 
+											-1);
 	pivot_func->context = (Node *) pivot_context_list;
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
 }
@@ -5487,4 +5539,41 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 	}
 
 	return oid;
+}
+/*
+ * parse_analyze_babelfish_view
+ * 	This function is used to parse the view query and set the QueryEnvironment
+ * 	to indicate we are currently analyze/transform a query that inside a view.
+ */
+static Query *
+parse_analyze_babelfish_view(ViewStmt *stmt, RawStmt *rawstmt, const char *queryString)
+{
+	Query 	*viewParse;
+	char	*viewName;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return parse_analyze_fixedparams(rawstmt, queryString, NULL, 0, NULL);
+
+	viewParse = NULL;
+	viewName = ((RangeVar *)(stmt->view))->relname;
+
+	create_queryEnv2(AllocSetContextCreate(CurrentMemoryContext,
+											"BabelViewMemoryContext",
+											ALLOCSET_DEFAULT_SIZES),
+								false);
+	setQueryEnvInView(currentQueryEnv, true);
+	setQueryEnvViewName(currentQueryEnv, viewName);
+	PG_TRY();
+	{
+		viewParse = parse_analyze_fixedparams(rawstmt, queryString, NULL, 0, currentQueryEnv);
+	}
+	PG_FINALLY();
+	{
+		setQueryEnvInView(currentQueryEnv, false);
+		setQueryEnvViewName(currentQueryEnv, "");
+		remove_queryEnv();
+	}
+	PG_END_TRY();
+	
+	return viewParse;
 }

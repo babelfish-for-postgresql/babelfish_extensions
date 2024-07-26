@@ -15,10 +15,13 @@
 #include "catalog/pg_foreign_server.h"
 #include "catalog/namespace.h"
 #include "commands/extension.h"
+#include "commands/view.h"
 #include "commands/schemacmds.h"
 #include "commands/user.h"
+#include "commands/tablecmds.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
+#include "nodes/makefuncs.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -26,6 +29,7 @@
 #include "utils/formatting.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/uuid.h"
 #include "utils/tuplestore.h"
 #include "utils/rel.h"
 #include "utils/regproc.h"
@@ -40,6 +44,8 @@
 #include "rolecmds.h"
 #include "session.h"
 #include "pltsql.h"
+#include "port.h"
+#include "fmgr.h"
 
 /*****************************************
  *			SYS schema
@@ -132,6 +138,11 @@ Oid	bbf_partition_scheme_seq_oid = InvalidOid;
 Oid	bbf_partition_depend_oid = InvalidOid;
 Oid	bbf_partition_depend_idx_oid = InvalidOid;
 
+/*****************************************
+ *			PIVOT_VIEW
+ *****************************************/
+Oid	bbf_pivot_view_oid = InvalidOid;
+Oid bbf_pivot_view_idx_oid = InvalidOid;
 
 /*****************************************
  * 			Catalog General
@@ -299,6 +310,9 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_partition_depend_oid = get_bbf_partition_depend_oid();
 	bbf_partition_depend_idx_oid = get_bbf_partition_depend_idx_oid();
 
+	bbf_pivot_view_oid = get_bbf_pivot_view_oid();
+	bbf_pivot_view_idx_oid = get_bbf_pivot_view_idx_oid();
+
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();
 
@@ -338,7 +352,7 @@ IsPLtsqlExtendedCatalog(Oid relationId)
 		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
 		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid ||
 		relationId == bbf_partition_function_oid || relationId == bbf_partition_scheme_oid ||
-		relationId == bbf_partition_depend_oid))
+		relationId == bbf_partition_depend_oid || relationId == bbf_pivot_view_oid))
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -1824,6 +1838,29 @@ get_bbf_partition_depend_idx_oid()
 }
 
 /*****************************************
+ *			PIVOT_VIEW
+ *****************************************/
+Oid
+get_bbf_pivot_view_oid()
+{
+	if (!OidIsValid(bbf_pivot_view_oid))
+		bbf_pivot_view_oid = get_relname_relid(BBF_PIVOT_VIEW_TABLE_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_pivot_view_oid;
+}
+
+Oid
+get_bbf_pivot_view_idx_oid()
+{
+	if (!OidIsValid(bbf_pivot_view_idx_oid))
+		bbf_pivot_view_idx_oid = get_relname_relid(BBF_PIVOT_VIEW_IDX_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_pivot_view_idx_oid;
+}
+
+/*****************************************
  * 			Metadata Check
  * ---------------------------------------
  * Babelfish catalogs should comply with
@@ -1878,6 +1915,8 @@ static Datum get_partition_scheme_dbname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_partition_depend_dbname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_partition_depend_schema_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_partition_depend_table_oid(HeapTuple tuple, TupleDesc dsc);
+static Datum get_pivot_view_dbname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_pivot_view_schema_name(HeapTuple tuple, TupleDesc dsc);
 
 /* Condition function declaration */
 static bool is_multidb(void);
@@ -2074,6 +2113,15 @@ Rule		must_match_rules_partition_depend[] =
 	"pg_class", "oid", NULL, get_partition_depend_table_oid, NULL, check_exist, NULL}
 };
 
+/* babelfish_pivot_view */
+Rule		must_match_rules_pivot_view[] =
+{
+	{"<dbid> in babelfish_pivot_view must also exist in babelfish_sysdatabases",
+	"babelfish_sysdatabases", "name", NULL, get_pivot_view_dbname, NULL, check_exist, NULL},
+	{"<schema_name> in babelfish_pivot_view must also exist in babelfish_namespace_ext",
+	"babelfish_namespace_ext", "nspname", NULL, get_pivot_view_schema_name, NULL, check_exist, NULL}
+};
+
 /*****************************************
  * 			Core function
  *****************************************/
@@ -2168,6 +2216,7 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 	size_t		num_must_match_rules_partition_function = sizeof(must_match_rules_partition_function) / sizeof(must_match_rules_partition_function[0]);
 	size_t		num_must_match_rules_partition_scheme = sizeof(must_match_rules_partition_scheme) / sizeof(must_match_rules_partition_scheme[0]);
 	size_t		num_must_match_rules_partition_depend = sizeof(must_match_rules_partition_depend) / sizeof(must_match_rules_partition_depend[0]);
+	size_t 		num_must_match_rules_pivot_view = sizeof(must_match_rules_pivot_view) / sizeof(must_match_rules_pivot_view[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
 	init_catalog_data();
@@ -2211,6 +2260,9 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		||
 		!(check_must_match_rules(must_match_rules_partition_depend, num_must_match_rules_partition_depend,
 								 bbf_partition_depend_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_pivot_view, num_must_match_rules_pivot_view,
+								 bbf_pivot_view_oid, res_tupstore, res_tupdesc))
 		)
 		return;
 }
@@ -2697,6 +2749,76 @@ get_partition_depend_table_oid(HeapTuple tuple, TupleDesc dsc)
 	pfree(table_name);
 
 	return ObjectIdGetDatum(table_oid);
+}
+
+static Datum
+get_pivot_view_dbname(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		is_null;
+	char	   *dbname;
+	Datum		dbid;
+
+	is_null = NULL;
+	dbname = NULL;
+
+	dbid = heap_getattr(tuple, Anum_bbf_pivot_view_dbid, dsc, &is_null);
+
+	if (is_null) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_pivot_view catalog")));
+	
+	/* Another way to check for existence of dbid in babelfish_sysdatabases catalog. */
+	dbname = get_db_name(DatumGetInt16(dbid));
+
+	if (!dbname) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("dbid in babelfish_pivot_view catalog doesn't exists in babelfish_sysdatabases catalog")));
+
+	return CStringGetTextDatum(dbname);
+}
+
+static Datum
+get_pivot_view_schema_name(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		schema_is_null, dbid_is_null;
+	char	   *physical_schema_name, 
+			   *schema_name, 
+			   *org_schema_name;
+	Datum		dbid;
+	Datum		schema_name_datum;
+
+	schema_is_null = NULL;
+	dbid_is_null = NULL;
+	physical_schema_name = NULL;
+	schema_name = NULL;
+	org_schema_name = NULL;
+
+	dbid = heap_getattr(tuple, Anum_bbf_pivot_view_dbid, dsc, &dbid_is_null);
+	schema_name_datum = heap_getattr(tuple, Anum_bbf_pivot_view_schema_name, dsc, &schema_is_null);
+
+	if (dbid_is_null) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_pivot_view catalog")));
+
+	if (schema_is_null) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("schema_name should not be null in babelfish_pivot_view catalog")));
+
+	org_schema_name = TextDatumGetCString(schema_name_datum);
+	/*
+	 * Downcase the orginal schema name and don't truncate it since
+	 * truncation will be handled inside get_physical_schema_name().
+	 */
+	schema_name = downcase_identifier(org_schema_name, strlen(org_schema_name), false, false);
+	physical_schema_name = get_physical_schema_name(get_db_name(DatumGetInt16(dbid)), schema_name);
+
+	pfree(schema_name);
+	pfree(org_schema_name);
+	return CStringGetDatum(physical_schema_name);
 }
 
 /*****************************************
@@ -5890,6 +6012,237 @@ clean_up_bbf_partition_metadata(int16 dbid)
 	{
 		if (HeapTupleIsValid(tuple))
 			CatalogTupleDelete(rel, &tuple->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+}
+
+
+static ViewStmt *
+make_pivot_view_helper_view(Node* node, const char *viewName, const char *schemaname)
+{
+	ViewStmt *n;
+
+	n = makeNode(ViewStmt);
+	n->view = makeRangeVar(pstrdup(schemaname), pstrdup(viewName), -1);
+	n->view->relpersistence = RELPERSISTENCE_PERMANENT;
+	n->aliases = NIL;
+	n->query = node;
+	n->replace = false;
+	n->options = NIL;
+
+	return n;
+}
+
+/*
+ *  get_uuid_no_dash
+ *	generate a uuid string with no dash(hyphen)
+ */
+static char *
+get_uuid_str_no_dash(pg_uuid_t *uuid)
+{
+	static const char hex_chars[] = "0123456789abcdef";
+	StringInfoData buf;
+	int			i;
+
+	initStringInfo(&buf);
+	for (i = 0; i < UUID_LEN; i++)
+	{
+		int			hi;
+		int			lo;
+
+		hi = uuid->data[i] >> 4;
+		lo = uuid->data[i] & 0x0F;
+
+		appendStringInfoChar(&buf, hex_chars[hi]);
+		appendStringInfoChar(&buf, hex_chars[lo]);
+	}
+	return buf.data;
+}
+
+/*
+ * add_entry_to_bbf_pivot_view
+ * 		Add a new entry to the sys.bbf_pivot_view catalog table.
+ */
+char *
+add_entry_to_bbf_pivot_view(const char *pivot_view_name, Node *src_parsetree, Node *cat_parsetree, const char * source_text, const char *agg_func_name)
+{
+	Relation	rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple;
+	ViewStmt 	*src_view;
+	ViewStmt 	*cat_view;
+	pg_uuid_t  	*uuid;
+	char  		*uuid_str;
+	char		*logical_schema_name;
+	char		*physical_schema_name;
+	char 		*src_view_name;
+	char 		*cat_view_name;
+	Datum		new_record[BBF_PIVOT_VIEW_NUM_COLS];
+	bool		new_record_nulls[BBF_PIVOT_VIEW_NUM_COLS];
+	StringInfoData 		buf;
+
+	logical_schema_name = get_authid_user_ext_schema_name(get_cur_db_name(), get_user_for_database(get_cur_db_name()));
+	physical_schema_name = get_physical_schema_name(get_cur_db_name(), logical_schema_name);
+
+	rel = table_open(get_bbf_pivot_view_oid(), RowExclusiveLock);
+	dsc = RelationGetDescr(rel);
+
+	uuid = DatumGetUUIDP(DirectFunctionCall1(gen_random_uuid, PointerGetDatum(NULL)));
+	uuid_str = get_uuid_str_no_dash(uuid);
+
+	/* Build the view names */	
+	initStringInfo(&buf);
+	appendStringInfoString(&buf, BBF_PIVOT_VIEW_SRC_PREFIX);
+	appendStringInfoString(&buf, uuid_str);
+	src_view_name = pstrdup(buf.data);
+
+	resetStringInfo(&buf);
+	appendStringInfoString(&buf, BBF_PIVOT_VIEW_CAT_PREFIX);
+	appendStringInfoString(&buf, uuid_str);
+	cat_view_name = pstrdup(buf.data);
+
+    /* create view for src_view and cat_view */
+	src_view = (ViewStmt *) make_pivot_view_helper_view(src_parsetree, src_view_name, physical_schema_name);
+	cat_view = (ViewStmt *) make_pivot_view_helper_view(cat_parsetree, cat_view_name, physical_schema_name);
+	DefineView(src_view, pstrdup(source_text), -1, strlen(source_text));
+	DefineView(cat_view, pstrdup(source_text), -1, strlen(source_text));
+
+	/* Build a tuple to insert */
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	new_record[Anum_bbf_pivot_view_pivot_view_uuid - 1] = CStringGetTextDatum(uuid_str);
+	new_record[Anum_bbf_pivot_view_dbid - 1] = Int16GetDatum(get_cur_db_id());
+	new_record[Anum_bbf_pivot_view_schema_name - 1] = CStringGetTextDatum(logical_schema_name);
+	new_record[Anum_bbf_pivot_view_pivot_view_name - 1] = CStringGetTextDatum(pivot_view_name);
+	new_record[Anum_bbf_pivot_view_agg_func_name - 1] = CStringGetTextDatum(agg_func_name);
+
+	tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
+
+	CatalogTupleInsert(rel, tuple);
+
+	heap_freetuple(tuple);
+	table_close(rel, RowExclusiveLock);
+
+	return uuid_str;
+}
+
+static void drop_pivot_view_helper_view(char *view_name)
+{
+	DropStmt *n;
+
+	n = makeNode(DropStmt);
+	n->objects = list_make1(list_make1(makeString(view_name)));
+	n->removeType = OBJECT_VIEW;
+	n->behavior = DROP_RESTRICT;
+	n->missing_ok = false;
+	n->concurrent = false;
+
+	RemoveRelations(n);
+}
+
+/*
+ * remove_entrys_from_bbf_pivot_view
+ * 		Remove all entries from the sys.bbf_pivot_view catalog table.
+ */
+void 
+remove_entrys_from_bbf_pivot_view(int16 dbid, const char *logical_schema_name, const char *pivot_view_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey[3];
+
+	rel = table_open(get_bbf_pivot_view_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey[0],
+			Anum_bbf_pivot_view_dbid,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, Anum_bbf_pivot_view_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
+				CStringGetTextDatum(logical_schema_name));
+
+	ScanKeyEntryInitialize(&scanKey[2], 0, Anum_bbf_pivot_view_pivot_view_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
+				CStringGetTextDatum(pivot_view_name));
+    
+	scan = systable_beginscan(rel, get_bbf_pivot_view_idx_oid(),
+					false, NULL, 3, scanKey);
+
+	/* Remove all pivot view related entries from bbf_pivot_view table */
+    tuple = systable_getnext(scan);
+	while (HeapTupleIsValid(tuple))
+	{
+		char 	*uuid;
+		char	*src_view_name;
+		char 	*cat_view_name;
+		bool	uuid_is_null;
+		StringInfoData 	buf;
+		
+		uuid = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_pivot_view_pivot_view_uuid, RelationGetDescr(rel), &uuid_is_null));
+
+		initStringInfo(&buf);
+		appendStringInfoString(&buf, BBF_PIVOT_VIEW_SRC_PREFIX);
+		appendStringInfoString(&buf, uuid);
+		src_view_name = pstrdup(buf.data);
+
+		resetStringInfo(&buf);
+		appendStringInfoString(&buf, BBF_PIVOT_VIEW_CAT_PREFIX);
+		appendStringInfoString(&buf, uuid);
+		cat_view_name = pstrdup(buf.data);
+
+		drop_pivot_view_helper_view(src_view_name);
+		drop_pivot_view_helper_view(cat_view_name);
+
+		if (HeapTupleIsValid(tuple))
+			CatalogTupleDelete(rel, &tuple->t_self);
+		
+        tuple = systable_getnext(scan);
+
+		pfree(src_view_name);
+		pfree(cat_view_name);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * clean_up_bbf_pivot_view
+ *		clean up all the maintained metadata related to pivot view for
+ * 		provided database
+ */
+void
+clean_up_bbf_pivot_view(int16 dbid)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey[1];
+
+	rel = table_open(get_bbf_pivot_view_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey[0],
+			Anum_bbf_pivot_view_dbid,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int16GetDatum(dbid));
+    
+	scan = systable_beginscan(rel, get_bbf_pivot_view_idx_oid(),
+					false, NULL, 1, scanKey);
+
+    tuple = systable_getnext(scan);
+	while (HeapTupleIsValid(tuple))
+	{
+		if (HeapTupleIsValid(tuple))
+			CatalogTupleDelete(rel, &tuple->t_self);
+		
+        tuple = systable_getnext(scan);
 	}
 
 	systable_endscan(scan);

@@ -25,6 +25,7 @@ babelfish_namespace_ext
 babelfish_partition_depend
 babelfish_partition_function
 babelfish_partition_scheme
+babelfish_pivot_view
 babelfish_schema_permissions
 babelfish_server_options
 babelfish_sysdatabases

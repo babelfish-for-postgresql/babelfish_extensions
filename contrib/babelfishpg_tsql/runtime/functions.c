@@ -80,6 +80,7 @@
 #define DATEPART_MIN_VALUE -53690               	/* minimun value for datepart general_integer_datatype */
 #define DATEPART_SMALLMONEY_MAX_VALUE 214748.3647	/* maximum value for datepart smallmoney */
 #define DATEPART_SMALLMONEY_MIN_VALUE -53690		/* minimum value for datepart smallmoney */
+#define PIVOT_METADATA_COUNT 3						/* total of 3 metadata is needed by bbf_pivot function */
 
 typedef enum
 {
@@ -205,9 +206,10 @@ void	   *get_host_id(void);
 
 Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
 int 		SPI_execute_raw_parsetree(RawStmt *parsetree, const char *sourcetext, bool read_only, long tcount);
-static HTAB *load_categories_hash(RawStmt *cats_sql, const char *sourcetext, MemoryContext per_query_ctx);
+static HTAB *load_categories_hash(RawStmt *cats_sql, const char *sourcetext, const char	*view_uuid, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt 	*sql,
 												const char 	*sourcetext,
+												const char	*view_uuid,
 												const char 	*funcName,
 												HTAB 		*bbf_pivot_hash,
 												TupleDesc 	tupdesc,
@@ -4648,6 +4650,7 @@ Datum
 bbf_pivot(PG_FUNCTION_ARGS)
 {	
 	ReturnSetInfo   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	char			*view_uuid = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	TupleDesc		tupdesc;
 	MemoryContext 	per_query_ctx;
 	MemoryContext 	oldcontext;
@@ -4671,32 +4674,82 @@ bbf_pivot(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 	
-	if (fcinfo->context == NULL || !IsA(fcinfo->context, List) || list_length((List *) fcinfo->context) != 3)
-		ereport(ERROR,
-			(errcode(ERRCODE_CHECK_VIOLATION),
-				errmsg("Babelfish PIVOT is not properly initialized.")));
+	bbf_pivot_src_sql = NULL;
+	bbf_pivot_cat_sql = NULL;
+	query_string = NULL;
+	funcName = NULL;
 
-	node = list_nth((List *)fcinfo->context, 0);
-	if (!IsA(node, List) 
-			|| !IsA(list_nth((List *)node, 0), String) 
-			|| strcmp(((String *)list_nth((List *)node, 0))->sval, "bbf_pivot_func") != 0)
-	{
-		ereport(ERROR,
-			(errcode(ERRCODE_CHECK_VIOLATION),
-				errmsg("Babelfish PIVOT is not properly initialized.")));
+	/*
+	 * if view_uuid is not defined (view_uuid is empty string), then we will get the pivot metadata from
+	 * FunctionCallInfo(fcinfo).
+	 */
+	if (!view_uuid || strlen(view_uuid) == 0)
+	{	
+		if (fcinfo->context == NULL || !IsA(fcinfo->context, List) || list_length((List *) fcinfo->context) != PIVOT_METADATA_COUNT)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+					errmsg("Babelfish PIVOT is not properly initialized.")));
+		}
+
+		node = list_nth((List *)fcinfo->context, 0);
+		if (!IsA(node, List) 
+				|| !IsA(list_nth((List *)node, 0), String) 
+				|| strcmp(((String *)list_nth((List *)node, 0))->sval, "bbf_pivot_func") != 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+					errmsg("Babelfish PIVOT is not properly initialized.")));
+		}
+
+		pivot_parsetree = (List *) list_nth((List *) fcinfo->context, 1);
+		pivot_extrainfo = (List *) list_nth((List *) fcinfo->context, 2);
+		
+		if (!IsA(pivot_parsetree, List) || !IsA(pivot_extrainfo, List))
+			ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+					errmsg("Babelfish PIVOT is not properly initialized.")));
+
+		bbf_pivot_src_sql = (RawStmt *) list_nth(pivot_parsetree, 0);
+		bbf_pivot_cat_sql = (RawStmt *) list_nth(pivot_parsetree, 1);
+		query_string = ((String *) list_nth(pivot_extrainfo, 0))->sval;
+		funcName = ((String *) list_nth(pivot_extrainfo, 1))->sval;
 	}
-	pivot_parsetree = (List *) list_nth((List *) fcinfo->context, 1);
-	pivot_extrainfo = (List *) list_nth((List *) fcinfo->context, 2);
-	
-	if (!IsA(pivot_parsetree, List) || !IsA(pivot_extrainfo, List))
-		ereport(ERROR,
-			(errcode(ERRCODE_CHECK_VIOLATION),
-				errmsg("Babelfish PIVOT is not properly initialized.")));
+	else
+	{
+	   /*
+		* If view_uuid is defined (not empty string), then we know current bbf_pivot function is within
+		* a view stmt.
+		* We will not fetch metadata from FunctionCallInfo (fcinfo) but rather get the 
+		* view_uuid from the function argument and get aggregate function argument from babel-
+		* fish_view_catalog.
+		*/
+		Relation	rel;
+		HeapTuple	tuple;
+		SysScanDesc	scan;
+		ScanKeyData	scanKey[1];
 
-	bbf_pivot_src_sql = (RawStmt *) list_nth(pivot_parsetree, 0);
-	bbf_pivot_cat_sql = (RawStmt *) list_nth(pivot_parsetree, 1);
-	query_string = ((String *) list_nth(pivot_extrainfo, 0))->sval;
-	funcName = ((String *) list_nth(pivot_extrainfo, 1))->sval;
+		rel = table_open(get_bbf_pivot_view_oid(), RowExclusiveLock);
+
+		ScanKeyInit(&scanKey[0],
+			Anum_bbf_pivot_view_pivot_view_uuid,
+			BTEqualStrategyNumber, F_TEXTEQ,
+			CStringGetTextDatum(view_uuid));
+		
+		scan = systable_beginscan(rel, get_bbf_pivot_view_idx_oid(),
+					false, NULL, 1, scanKey);
+
+		tuple = systable_getnext(scan);
+		if (HeapTupleIsValid(tuple))
+		{
+			bool isnull;
+			funcName = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_pivot_view_agg_func_name, RelationGetDescr(rel), &isnull));
+		}
+		
+		systable_endscan(scan);
+		table_close(rel, RowExclusiveLock);
+	}
+
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -4718,7 +4771,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 						"bbf_pivot function are not compatible")));
 
 	/* load up the categories hash table */
-	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, query_string, per_query_ctx);
+	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, query_string, view_uuid, per_query_ctx);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
@@ -4726,6 +4779,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	/* now go build it */
 	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_src_sql,
 												query_string,
+												view_uuid,
 												funcName,
 												bbf_pivot_hash,
 												tupdesc,
@@ -4748,7 +4802,11 @@ bbf_pivot(PG_FUNCTION_ARGS)
  * load up the categories hash table
  */
 static HTAB *
-load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext per_query_ctx)
+load_categories_hash(RawStmt *cats_sql, 
+					 const char *sourcetext, 
+					 const char	*view_uuid,
+					 MemoryContext per_query_ctx
+					 )
 {
 	HTAB	   *bbf_pivot_hash;
 	HASHCTL		ctl;
@@ -4775,8 +4833,30 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 		/* internal error */
 		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
 
-	/* Retrieve the category name rows */
-	ret = SPI_execute_raw_parsetree(cats_sql, sourcetext, true, 0);
+	/* 
+	 * Retrieve the category name rows    
+	 *
+	 * If view_uuid is defined, then we will use the provided uuid to form the catefory_sql and 
+	 * get result. category_sql name format is pvt_cv_[uuid]
+	 * 
+	 * if view_uuid is not defined, then we will use the rawparsetree of catefory_sql to get the
+	 * result
+	 */
+	if (!view_uuid || strlen(view_uuid) != 0)
+	{
+		StringInfoData 		buf;
+		
+		initStringInfo(&buf);
+		appendStringInfoString(&buf, "select * from ");
+		appendStringInfoString(&buf, BBF_PIVOT_VIEW_CAT_PREFIX);
+		appendStringInfoString(&buf, view_uuid);
+		
+		ret = SPI_execute(buf.data, true, 0);
+	}
+	else
+	{
+		ret = SPI_execute_raw_parsetree(cats_sql, sourcetext, true, 0);
+	}
 	tuple_processed = SPI_processed;
 
 	/* Check for qualifying tuples */
@@ -4843,6 +4923,7 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 static Tuplestorestate *
 get_bbf_pivot_tuplestore(RawStmt 	*sql,
 						const char 	*sourcetext,
+						const char	*view_uuid,
 						const char	*funcName,
 						HTAB 		*bbf_pivot_hash,
 						TupleDesc 	tupdesc,
@@ -4864,8 +4945,30 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 		/* internal error */
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_connect returned %d", ret);
 
-	/* Now retrieve the bbf_pivot source rows */
-	ret = SPI_execute_raw_parsetree(sql, sourcetext, true, 0);
+	/* 
+	 * Now retrieve the bbf_pivot source rows    
+	 *
+	 * If view_uuid is defined, then we will use the provided uuid to form the source_sql and 
+	 * get result. source_sql name format is pvt_sv_[uuid]
+	 * 
+	 * if view_uuid is not defined, then we will use the rawparsetree of source_sql to get the
+	 * result
+	 */
+	if (!view_uuid || strlen(view_uuid) != 0)
+	{
+		StringInfoData 		buf;
+		
+		initStringInfo(&buf);
+		appendStringInfoString(&buf, "select * from ");
+		appendStringInfoString(&buf, BBF_PIVOT_VIEW_SRC_PREFIX);
+		appendStringInfoString(&buf, view_uuid);
+		
+		ret = SPI_execute(buf.data, true, 0);
+	}
+	else
+	{
+		ret = SPI_execute_raw_parsetree(sql, sourcetext, true, 0);
+	}
 	tuple_processed = SPI_processed;
 
 	/* Check for qualifying tuples */
