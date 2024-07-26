@@ -189,7 +189,7 @@ select
 ;
 go
 ~~START~~
-int#!#text#!#nvarchar#!#bigint#!#varchar
+int#!#varchar#!#nvarchar#!#bigint#!#varchar
 97#!# a#!#[a[]] b ]#!#1#!#a
 ~~END~~
 
