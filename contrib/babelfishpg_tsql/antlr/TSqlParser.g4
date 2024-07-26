@@ -5208,7 +5208,22 @@ column_name_list_with_order
 
 /* We introduce specific index methods so as to avoid PG syntax leaks. */
 column_name_list_with_order_for_vector
-    : simple_column_name (ASC | DESC)? (VECTOR_COSINE_OPS | VECTOR_IP_OPS | VECTOR_L2_OPS)? (COMMA simple_column_name (ASC | DESC)? (VECTOR_COSINE_OPS | VECTOR_IP_OPS | VECTOR_L2_OPS)?)*
+    : simple_column_name (ASC | DESC)? vector_index_ops? (COMMA simple_column_name (ASC | DESC)? vector_index_ops?)*
+    ;
+
+vector_index_ops
+    : VECTOR_COSINE_OPS
+    | VECTOR_IP_OPS
+    | VECTOR_L1_OPS
+    | VECTOR_L2_OPS
+    | HALFVEC_COSINE_OPS
+    | HALFVEC_IP_OPS
+    | HALFVEC_L1_OPS
+    | HALFVEC_L2_OPS
+    | SPARSEVEC_COSINE_OPS
+    | SPARSEVEC_IP_OPS
+    | SPARSEVEC_L1_OPS
+    | SPARSEVEC_L2_OPS
     ;
 
 //For some reason, sql server allows any number of prefixes:  Here, h is the column: a.b.c.d.e.f.g.h
@@ -5255,7 +5270,11 @@ comparison_operator
     ;
 
 vector_operator
-    : VECTOR_COSINE | VECTOR_IP | VECTOR_L2
+    : VECTOR_COSINE
+    | VECTOR_IP
+    | VECTOR_L2
+    | VECTOR_L1
+    | VECTOR_CONCATENATE
     ;
 
 assignment_operator
