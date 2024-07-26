@@ -10511,6 +10511,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE VIEW sys.sequences 
+AS SELECT 
+    so.*,
+    CAST(0 as sys.sql_variant) AS start_value
+    , CAST(0 as sys.sql_variant) AS increment
+    , CAST(0 as sys.sql_variant) AS minimum_value
+    , CAST(0 as sys.sql_variant) AS maximum_value
+    , CAST(0 as sys.BIT) AS is_cycling
+    , CAST(0 as sys.BIT) AS is_cached
+    , CAST(0 as INT) AS cache_size
+    , CAST(0 as INT) AS system_type_id
+    , CAST(0 as INT) AS user_type_id
+    , CAST(0 as sys.TINYINT) AS precision
+    , CAST(0 as sys.TINYINT) AS scale
+    , CAST(0 as sys.sql_variant) AS current_value
+    , CAST(0 as sys.BIT) AS is_exhausted
+    , CAST(0 as sys.sql_variant) AS last_used_value
+FROM sys.objects so
+WHERE FALSE;
+GRANT SELECT ON sys.sequences TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
