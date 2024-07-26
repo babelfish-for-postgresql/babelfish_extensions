@@ -40,6 +40,12 @@ typedef struct like_ilike_info
 	Oid			ilike_opfuncid; /* oid for corresponding ILIKE func */
 } like_ilike_info_t;
 
+typedef struct remove_accent_map_pair
+{
+	uint32 		original_char;
+	uint32 		normalized_char;
+} remove_accent_map_pair;
+
 /* match definition in babelfishpg_common:collation.h */
 typedef struct collation_callbacks
 {
@@ -55,6 +61,8 @@ typedef struct collation_callbacks
 	Datum		(*collation_list_internal) (PG_FUNCTION_ARGS);
 
 	Datum		(*is_collated_ci_as_internal) (PG_FUNCTION_ARGS);
+
+	Datum		(*is_collated_ai_internal) (PG_FUNCTION_ARGS);
 
 	int			(*collationproperty_helper) (const char *collationaname, const char *property);
 
@@ -84,6 +92,7 @@ extern collation_callbacks *collation_callbacks_ptr;
 extern Oid	tsql_get_server_collation_oid_internal(bool missingOk);
 extern Datum tsql_collation_list_internal(PG_FUNCTION_ARGS);
 extern Datum tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS);
+extern Datum tsql_is_collated_ai_internal(PG_FUNCTION_ARGS);
 extern int	tsql_collationproperty_helper(const char *collationaname, const char *property);
 extern bytea *tsql_tdscollationproperty_helper(const char *collationaname, const char *property);
 extern bool tsql_is_server_collation_CI_AS(void);
@@ -95,6 +104,8 @@ like_ilike_info_t tsql_lookup_like_ilike_table_internal(Oid opno);
 int			tsql_find_cs_as_collation_internal(int collidx);
 int			tsql_find_collation_internal(const char *collation_name);
 extern const char *tsql_translate_bbf_collation_to_tsql_collation(const char *collname);
+extern bool pltsql_strpos_non_determinstic(text *t1, text *t2, Oid collid, int *r);
+extern bool pltsql_replace_non_determinstic(text *t1, text *t2, text *t3, Oid collid, text **result);
 
 /* Utility functions */
 extern bool has_ilike_node_and_ci_as_coll(Node *expr);
