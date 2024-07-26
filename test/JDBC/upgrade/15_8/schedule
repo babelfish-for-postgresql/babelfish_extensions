@@ -528,3 +528,4 @@ ltrim
 rtrim
 left
 right
+reverse

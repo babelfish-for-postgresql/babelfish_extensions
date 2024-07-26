@@ -360,6 +360,8 @@ BEGIN
 			END IF;
 		WHEN 'timestamp' THEN max_length = 8;
 		WHEN 'vector' THEN max_length = -1; -- dummy as varchar max
+		WHEN 'halfvec' THEN max_length = -1; -- dummy as varchar max
+		WHEN 'sparsevec' THEN max_length = -1; -- dummy as varchar max
 		ELSE max_length = typelen;
 		END CASE;
 		RETURN max_length;
@@ -3554,3 +3556,24 @@ AS SELECT
     , CAST(0 as sys.BIT) AS is_contained
 WHERE FALSE;
 GRANT SELECT ON sys.availability_groups TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sequences 
+AS SELECT 
+    so.*,
+    CAST(0 as sys.sql_variant) AS start_value
+    , CAST(0 as sys.sql_variant) AS increment
+    , CAST(0 as sys.sql_variant) AS minimum_value
+    , CAST(0 as sys.sql_variant) AS maximum_value
+    , CAST(0 as sys.BIT) AS is_cycling
+    , CAST(0 as sys.BIT) AS is_cached
+    , CAST(0 as INT) AS cache_size
+    , CAST(0 as INT) AS system_type_id
+    , CAST(0 as INT) AS user_type_id
+    , CAST(0 as sys.TINYINT) AS precision
+    , CAST(0 as sys.TINYINT) AS scale
+    , CAST(0 as sys.sql_variant) AS current_value
+    , CAST(0 as sys.BIT) AS is_exhausted
+    , CAST(0 as sys.sql_variant) AS last_used_value
+FROM sys.objects so
+WHERE FALSE;
+GRANT SELECT ON sys.sequences TO PUBLIC;

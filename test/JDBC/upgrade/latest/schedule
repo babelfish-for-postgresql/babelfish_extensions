@@ -549,3 +549,6 @@ BABEL-3401
 BABEL-3820
 PARTITION
 BABEL-5071
+string_agg
+reverse
+sys_sequences
