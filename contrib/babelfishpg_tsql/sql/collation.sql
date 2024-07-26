@@ -210,3 +210,13 @@ CREATE OR REPLACE FUNCTION sys.remove_accents_internal_using_cache(IN TEXT) RETU
 AS 'babelfishpg_tsql', 'remove_accents_internal_using_cache'
 LANGUAGE C
 IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.get_icu_major_version() RETURNS INT4
+AS 'babelfishpg_tsql', 'get_icu_major_version'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.get_icu_minor_version() RETURNS INT4
+AS 'babelfishpg_tsql', 'get_icu_minor_version'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;

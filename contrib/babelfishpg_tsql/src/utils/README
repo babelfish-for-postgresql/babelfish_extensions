@@ -33,6 +33,10 @@ BEGIN
 END;         
 $$;
 
+-- Generate macros
+SELECT CONCAT('#define pltsql_remove_accent_map_icu_major_version ', sys.get_icu_major_version());
+SELECT CONCAT('#define pltsql_remove_accent_map_icu_min_version ', sys.get_icu_minor_version());
+
 -- Generate a mapping for every required character
 -- ex:  /* Æ */    {0xc386, 0x4145}    /* AE */
 SELECT REPLACE(FORMAT('/* %s */    {%s, %s},    /* %s */',col2, col1, cast(sys.remove_accents_internal(col2) as bytea), sys.remove_accents_internal(col2)), '\', '0')

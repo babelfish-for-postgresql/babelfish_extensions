@@ -1312,3 +1312,31 @@ has_ilike_node_and_ci_as_coll(Node *expr)
 	}
 	return false;
 }
+
+PG_FUNCTION_INFO_V1(get_icu_major_version);
+Datum
+get_icu_major_version(PG_FUNCTION_ARGS)
+{
+#ifdef USE_ICU
+	PG_RETURN_INT32(U_ICU_VERSION_MAJOR_NUM);
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("ICU library is not found")));
+	PG_RETURN_NULL();
+#endif
+}
+
+PG_FUNCTION_INFO_V1(get_icu_minor_version);
+Datum
+get_icu_minor_version(PG_FUNCTION_ARGS)
+{
+#ifdef USE_ICU
+	PG_RETURN_INT32(U_ICU_VERSION_MINOR_NUM);
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("ICU library is not found")));
+	PG_RETURN_NULL();
+#endif
+}
