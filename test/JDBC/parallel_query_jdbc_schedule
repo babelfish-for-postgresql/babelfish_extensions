@@ -14,6 +14,7 @@ ignore#!#BABEL-4815-vu-cleanup
 ignore#!#BABEL-4815-before-14_13-vu-prepare
 ignore#!#BABEL-4815-before-14_13-vu-verify
 ignore#!#BABEL-4815-before-14_13-vu-cleanup
+ignore#!#verify_mapping_for_remove_accents
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
