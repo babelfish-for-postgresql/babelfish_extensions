@@ -760,7 +760,7 @@ datetime
 ~~END~~
 
 ~~START~~
-text#!#varchar#!#int#!#int#!#int#!#int#!#int
+varchar#!#varchar#!#int#!#int#!#int#!#int#!#int
 a    #!#a #!#0#!#97#!#5#!#5#!#3
 ~~END~~
 
@@ -804,7 +804,7 @@ datetime
 ~~END~~
 
 ~~START~~
-text#!#varchar#!#int#!#int#!#int#!#int#!#int
+varchar#!#varchar#!#int#!#int#!#int#!#int#!#int
 a    #!#a #!#0#!#97#!#5#!#5#!#3
 ~~END~~
 
