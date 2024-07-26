@@ -1775,6 +1775,23 @@ public:
 			else if (ctx->delete_statement() && ctx->delete_statement()->delete_statement_from()->ddl_object() && !ctx->delete_statement()->delete_statement_from()->ddl_object()->local_id()  &&
 					(ctx->delete_statement()->table_sources() ? ::getFullText(ctx->delete_statement()->table_sources()).c_str()[0] != '@' : true)) /* delete non-local object, table variables are allowed */
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'DELETE' cannot be used within a function", getLineAndPos(ctx->delete_statement()->delete_statement_from()->ddl_object()));
+
+			/*
+			 * Reject if OUTPUT clause is missing INTO (returning to client) or OUTPUT INTO non local object
+			 */
+
+			if (ctx->insert_statement() && ctx->insert_statement()->output_clause() && (!ctx->insert_statement()->output_clause()->INTO() || !ctx->insert_statement()->output_clause()->LOCAL_ID()))
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "Invalid use of a side-effecting operator 'INSERT' within a function.", getLineAndPos(ctx->insert_statement()->output_clause()));
+			}
+			else if (ctx->update_statement() && ctx->update_statement()->output_clause() && (!ctx->update_statement()->output_clause()->INTO() || !ctx->update_statement()->output_clause()->LOCAL_ID()))
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "Invalid use of a side-effecting operator 'UPDATE' within a function.", getLineAndPos(ctx->update_statement()->output_clause()));
+			}
+			else if (ctx->delete_statement() && ctx->delete_statement()->output_clause() && (!ctx->delete_statement()->output_clause()->INTO() || !ctx->delete_statement()->output_clause()->LOCAL_ID()))
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "Invalid use of a side-effecting operator 'DELETE' within a function.", getLineAndPos(ctx->delete_statement()->output_clause()));
+			}
 		}
 
 		/* we must add previous rewrite at first. */
