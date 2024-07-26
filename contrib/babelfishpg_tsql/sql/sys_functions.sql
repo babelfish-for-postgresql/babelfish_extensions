@@ -931,6 +931,8 @@ RETURNS INTEGER AS
 $BODY$
 SELECT
 CASE
+WHEN expressionToFind = '' THEN
+    0
 WHEN start_location <= 0 THEN
 	strpos(expressionToSearch, expressionToFind)
 ELSE
@@ -1553,6 +1555,10 @@ $$
 	SELECT sys.is_collated_ci_as_internal(input_string);
 $$
 LANGUAGE SQL VOLATILE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.is_collated_ai(IN input_string TEXT) RETURNS BOOL
+AS 'babelfishpg_tsql', 'is_collated_ai_internal'
+LANGUAGE C VOLATILE PARALLEL SAFE;
 
 create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
 $body$
@@ -4234,6 +4240,8 @@ begin
        return null;
    elsif pattern = '' then
        return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
    elsif sys.is_collated_ci_as(input_string) then
        return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
    else

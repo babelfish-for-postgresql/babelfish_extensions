@@ -322,11 +322,11 @@ int#!#int
 
 DECLARE @haystack VARCHAR(100);  
 SELECT @haystack = 'This is a haystack';  
-SELECT CHARINDEX('', @haystack); -- empty string - expect 1
+SELECT CHARINDEX('', @haystack); -- empty string - expect 0
 go
 ~~START~~
 int
-1
+0
 ~~END~~
 
 

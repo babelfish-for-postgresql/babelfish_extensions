@@ -328,6 +328,52 @@ WHERE
   ps.dbid = sys.db_id();
 GRANT SELECT ON sys.partition_schemes TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.is_collated_ai(IN input_string TEXT) RETURNS BOOL
+AS 'babelfishpg_tsql', 'is_collated_ai_internal'
+LANGUAGE C VOLATILE PARALLEL SAFE;
+
+
+CREATE OR REPLACE FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) returns TEXT as
+$body$
+begin
+   if pattern is null or replacement is null then
+       return null;
+   elsif pattern = '' then
+       return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
+   elsif sys.is_collated_ci_as(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
+   end if;
+end
+$body$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind PG_CATALOG.TEXT,
+										 expressionToSearch PG_CATALOG.TEXT,
+										 start_location INTEGER DEFAULT 0)
+RETURNS INTEGER AS
+$BODY$
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+	strpos(expressionToSearch, expressionToFind)
+ELSE
+	CASE
+	WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+		0
+	ELSE
+		strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+	END
+END;
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE;
+
 create or replace function sys.get_tds_id(
 	datatype sys.varchar(50)
 )
@@ -6823,6 +6869,27 @@ BEGIN
 END;
 $$
 LANGUAGE 'pltsql';
+
+CREATE OR REPLACE VIEW sys.sequences 
+AS SELECT 
+    so.*,
+    CAST(0 as sys.sql_variant) AS start_value
+    , CAST(0 as sys.sql_variant) AS increment
+    , CAST(0 as sys.sql_variant) AS minimum_value
+    , CAST(0 as sys.sql_variant) AS maximum_value
+    , CAST(0 as sys.BIT) AS is_cycling
+    , CAST(0 as sys.BIT) AS is_cached
+    , CAST(0 as INT) AS cache_size
+    , CAST(0 as INT) AS system_type_id
+    , CAST(0 as INT) AS user_type_id
+    , CAST(0 as sys.TINYINT) AS precision
+    , CAST(0 as sys.TINYINT) AS scale
+    , CAST(0 as sys.sql_variant) AS current_value
+    , CAST(0 as sys.BIT) AS is_exhausted
+    , CAST(0 as sys.sql_variant) AS last_used_value
+FROM sys.objects so
+WHERE FALSE;
+GRANT SELECT ON sys.sequences TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
