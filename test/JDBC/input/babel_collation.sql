@@ -75,7 +75,7 @@ go
 
 DECLARE @haystack VARCHAR(100);  
 SELECT @haystack = 'This is a haystack';  
-SELECT CHARINDEX('', @haystack); -- empty string - expect 1
+SELECT CHARINDEX('', @haystack); -- empty string - expect 0
 go
 
 DECLARE @haystack VARCHAR(100);  

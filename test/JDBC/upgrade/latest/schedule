@@ -551,3 +551,4 @@ PARTITION
 BABEL-5071
 string_agg
 reverse
+sys_sequences
