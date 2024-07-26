@@ -2505,6 +2505,7 @@ tsql_stmt :
 			| CreatePLangStmt
 			| CreateSchemaStmt
 			| CreateSeqStmt
+			| tsql_CreatePartitionStmt
 			| CreateStmt
 			| CreateSubscriptionStmt
 			| CreateStatsStmt
@@ -2572,6 +2573,75 @@ tsql_stmt :
 			| tsql_alter_server_role
 			| /*EMPTY*/
 				{ $$ = NULL; }
+		;
+
+/*
+ * The Opt clauses are included in the tsql_CreatePartitionStmt rule
+ * to resolve a shift-reduce conflict with the CreateStmt rule.
+ * Although semantically it is not required for TSQL partitioned table creation,
+ * its inclusion ensures that the parser can unambiguously distinguish
+ * between regular table creation and TSQL partitioned table creation statements.
+ */
+tsql_CreatePartitionStmt:
+			CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
+			OptInherit OptPartitionSpec table_access_method_clause OptWith
+			tsql_PartitionSpec
+				{
+					CreateStmt *n = makeNode(CreateStmt);
+					n->relation = $4;
+					n->tableElts = $6;
+					n->inhRelations = NIL;
+					n->partspec = $12;
+					n->ofTypename = NULL;
+					n->constraints = NIL;
+					n->accessMethod = NULL;
+					n->options = NIL;
+					n->oncommit = ONCOMMIT_NOOP;
+					n->tablespacename = NULL;
+					n->if_not_exists = false;
+					$$ = (Node *) n;
+				}
+		;
+
+tsql_PartitionSpec:
+			ON tsql_untruncated_IDENT '(' part_params ')'
+				{
+					PartitionSpec *n = makeNode(PartitionSpec);
+					n->tsql_partition_scheme = $2;
+					n->strategy = PARTITION_STRATEGY_RANGE;
+					n->partParams = $4;
+					n->location = @1;
+					$$ = n;
+				}
+		;
+
+
+ /*
+  * TSQL untruncated identfiers:
+  *	This rule handles the parsing of untruncated identifiers in TSQL.
+  *	Unlike PostgreSQL, which truncates identifier when they exceeds the
+  *	maximum allowed length (NAMEDATALEN), while in TSQL, for certain cases we
+  *	want to parse identifiers with lengths exceeding such limit.
+  *	
+  *	This rule extract the entire identifier string from the input buffer,
+  *	regardless of its length.
+  */
+tsql_untruncated_IDENT:
+			IDENT
+				{
+					/*
+					 * Retrieve the "extra" information attached to the scanner
+					 * to access the input string (the string being parsed).
+					 */
+					base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+
+					/*
+					 * Extract the original, untruncated identifier from the input buffer.
+					 * Here, @1 represents the start location of the identifier token.
+					 */
+					$$ = extract_identifier(yyextra->core_yy_extra.scanbuf + @1, NULL);
+					
+				}
 		;
 
 tsql_opt_INTO:
@@ -3245,7 +3315,7 @@ tsql_IndexStmt:
 			INDEX opt_concurrently opt_single_name
 			ON relation_expr access_method_clause '(' index_params ')'
 			opt_include where_clause opt_reloptions
-			tsql_opt_on_filegroup
+			tsql_opt_partition_scheme_or_filegroup
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -3258,7 +3328,7 @@ tsql_IndexStmt:
 					n->nulls_not_distinct = $2;
 					n->whereClause = $15;
 					n->options = $16;
-					n->excludeOpNames = NIL;
+					n->excludeOpNames = $17;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
 					n->oldNumber = InvalidOid;
@@ -3311,6 +3381,25 @@ tsql_on_filegroup: ON name {}
 tsql_opt_on_filegroup:
 			tsql_on_filegroup					    {}
 			| /*EMPTY*/				    {}
+		;
+
+/*
+ * TSQL support for partition scheme and filegroup
+ */
+
+tsql_opt_partition_scheme_or_filegroup:
+			ON tsql_untruncated_IDENT '(' ColId ')'
+				{
+					$$ =  list_make2(makeString($2), makeString($4));
+				}
+			| tsql_on_filegroup
+				{
+					$$ = NIL;
+				}
+			| /*EMPTY*/
+				{
+					$$ = NIL;
+				}
 		;
 
 /*

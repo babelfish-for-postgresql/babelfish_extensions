@@ -11,6 +11,7 @@
 #include "utils/pg_locale.h"
 #include "access/xact.h"
 #include "access/relation.h"
+#include "access/reloptions.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
@@ -148,7 +149,7 @@ static void fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *n
 /*****************************************
  * 			Utility Hooks
  *****************************************/
-static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
+static void pltsql_report_proc_not_found_error(List *names, List *argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern PLtsql_execstate *get_current_tsql_estate();
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
@@ -184,9 +185,7 @@ static bool bbf_check_rowcount_hook(int es_processed);
 
 static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 extern bool called_from_tsql_insert_exec();
-extern Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
-							 Oid valtype, int32 valtypmod,
-							 Oid reqtype, int32 reqtypmod);
+extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
@@ -203,6 +202,7 @@ static void logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot 
 static object_access_hook_type prev_object_access_hook = NULL;
 static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
 static void revoke_func_permission_from_public(Oid objectId);
+static bool is_partitioned_table_reloptions_allowed(Datum reloptions);
 
 /*****************************************
  * 			Planner Hook
@@ -261,9 +261,11 @@ static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
 static pass_pivot_data_to_fcinfo_hook_type pre_pass_pivot_data_to_fcinfo_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
+static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
 static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_constraint_nulls_ordering_hook = NULL;
+static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -444,6 +446,9 @@ InstallExtendedHooks(void)
 	pre_called_from_tsql_insert_exec_hook = called_from_tsql_insert_exec_hook;
 	called_from_tsql_insert_exec_hook = called_from_tsql_insert_exec;
 
+	prev_called_for_tsql_itvf_func_hook = called_for_tsql_itvf_func_hook;
+	called_for_tsql_itvf_func_hook = called_for_tsql_itvf_func;
+
 	pre_exec_tsql_cast_value_hook = exec_tsql_cast_value_hook;
 	exec_tsql_cast_value_hook = pltsql_exec_tsql_cast_value;
 
@@ -455,6 +460,9 @@ InstallExtendedHooks(void)
 
 	prev_pltsql_unique_constraint_nulls_ordering_hook = pltsql_unique_constraint_nulls_ordering_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = unique_constraint_nulls_ordering;
+
+	prev_pltsql_is_partitioned_table_reloptions_allowed_hook = pltsql_is_partitioned_table_reloptions_allowed_hook;
+	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed; 
 }
 
 void
@@ -516,8 +524,10 @@ UninstallExtendedHooks(void)
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
+	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
+	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -1438,7 +1448,7 @@ check_insert_row(List *icolumns, List *exprList, Oid relid)
 }
 
 char *
-extract_identifier(const char *start)
+extract_identifier(const char *start, int *last_pos)
 {
 	/*
 	 * We will extract original identifier from source query string. 'start'
@@ -1491,6 +1501,8 @@ extract_identifier(const char *start)
 				original_name = palloc(i + 1);
 				memcpy(original_name, start, i);
 				original_name[i] = '\0';
+				if (last_pos)
+					*last_pos = i;
 				return original_name;
 			}
 		}
@@ -1508,6 +1520,8 @@ extract_identifier(const char *start)
 
 			if (!valid)
 			{
+				if (last_pos)
+					*last_pos = i + 1;
 				if (!found_escaped_in_dq)
 				{
 					/* no escaped character. copy whole string at once */
@@ -1553,6 +1567,8 @@ extract_identifier(const char *start)
 
 			if (!valid)
 			{
+				if (last_pos)
+					*last_pos = i + 1;
 				if (!found_escaped_in_sq)
 				{
 					/* no escaped character. copy whole string at once */
@@ -1594,6 +1610,8 @@ extract_identifier(const char *start)
 											 * bracket */
 				memcpy(original_name, start + 1, i - 1);
 				original_name[i - 1] = '\0';
+				if (last_pos)
+					*last_pos = i + 1;
 				return original_name;
 			}
 		}
@@ -1602,6 +1620,42 @@ extract_identifier(const char *start)
 	}
 
 	return NULL;
+}
+
+/*
+ * extract_multipart_identifier_name
+ *    Return name of a multipart SQL identifier, whose starting position
+ *    is given as 'start'. This helper function basically returns the
+ *    last part of the multipart identifier.
+ */
+static char *
+extract_multipart_identifier_name(const char *start)
+{
+	int 	identifier_len = strlen(start);
+	int 	last_pos = 0;
+	char	*name = extract_identifier(start, &last_pos);
+
+	/* Loop until we find the last part of the identifier */
+	while (last_pos < identifier_len)
+	{
+		int cur_pos = 0;
+		if (isspace(start[last_pos]))
+		{
+			last_pos++;
+			continue;
+		}
+		if (start[last_pos] != '.')
+			break;
+
+		last_pos++;
+		while (isspace(start[last_pos]))
+			last_pos++;
+		pfree(name);
+		name = extract_identifier(start + last_pos, &cur_pos);
+		last_pos += cur_pos;
+	}
+
+	return name;
 }
 
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
@@ -1623,7 +1677,7 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, 
 	 * string.
 	 */
 	const char *column_name_start = pstate->p_sourcetext + column->location;
-	char	   *original_name = extract_identifier(column_name_start);
+	char	   *original_name = extract_identifier(column_name_start, NULL);
 
 	if (original_name == NULL)
 		ereport(ERROR,
@@ -1663,8 +1717,7 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 	 * string.
 	 */
 	char	   *table_name_start,
-			   *original_name,
-			   *temp;
+			   *original_name;
 
 	/*
 	 * Skip during restore since reloptions are also dumped using separate
@@ -1678,24 +1731,7 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 
 	table_name_start = (char *) pstate->p_sourcetext + relation->location;
 
-	/*
-	 * Could be the case that the fully qualified name is included, so just
-	 * find the text after '.' in the identifier. We need to be careful as
-	 * there can be '.' in the table name itself, so we will break the loop if
-	 * current string matches with actual relname.
-	 */
-	temp = strpbrk(table_name_start, ". ");
-	while (temp && temp[0] != ' ' &&
-		   strncasecmp(relname, table_name_start, strlen(relname)) != 0 &&
-		   strncasecmp(relname, table_name_start + 1, strlen(relname)) != 0)	/* match after skipping
-																				 * delimiter */
-	{
-		temp += 1;
-		table_name_start = temp;
-		temp = strpbrk(table_name_start, ". ");
-	}
-
-	original_name = extract_identifier(table_name_start);
+	original_name = extract_multipart_identifier_name(table_name_start);
 	if (original_name == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
@@ -1952,7 +1988,17 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				colname_start = pstate->p_sourcetext + res->location;
 				last_dot = colname_start;
 				while(*colname_start != '\0')
-				{	
+				{
+					/*
+					 * comment follow up with column like : 
+					 *
+					 * 'SELECT table1.c2--table1.REPGETTEXT('
+					 * 
+					 * will cause crash if we don't break the searching
+					 * for the last_dot position
+					 */
+					if (*colname_start == '-' && *(colname_start+1) == '-')
+						break;
 					if(open_square_bracket == 0 && *colname_start == '"')
 					{
 						double_quotes++;
@@ -2028,7 +2074,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			}
 
 			/* To extract the identifier name from the query.*/
-			original_name = extract_identifier(colname_start);
+			original_name = extract_identifier(colname_start, NULL);
 			actual_alias_len = strlen(original_name);
 
 			/* Maximum alias_len can be 63 after truncation. If alias_len is smaller than actual_alias_len,
@@ -2422,7 +2468,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool o
 
 /* Generate similar error message with SQL Server when function/procedure is not found if possible. */
 void
-pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs, ParseState *pstate, int location, bool proc_call)
+pltsql_report_proc_not_found_error(List *names, List *given_argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call)
 {
 	FuncCandidateList candidates = NULL,
 				current_candidate = NULL;
@@ -2430,6 +2476,8 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 	int			min_nargs = INT_MAX;
 	int			ncandidates = 0;
 	bool		found = false;
+	char	   *schemaname;
+	char	   *funcname;
 	const char *obj_type = proc_call ? "procedure" : "function";
 
 	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);	/* search all possible
@@ -2469,6 +2517,18 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 		 */
 		if (found)
 		{
+			if (!proc_call)
+			{
+				/* deconstruct the names list */
+				DeconstructQualifiedName(names, &schemaname, &funcname);
+
+				/* 
+				 * Check whether function is an special function or not, and 
+				 * report appropriate error if applicable 
+				 */
+				validate_special_function(schemaname, funcname, nargs, input_typeids);
+			}
+
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.", obj_type, NameListToString(names))),
@@ -2696,8 +2756,8 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 						 errmsg("%s %s has no parameters and arguments were supplied.", obj_type, NameListToString(names))),
 						parser_errposition(pstate, location));
 			}
+			ReleaseSysCache(tup);
 		}
-		heap_freetuple(tup);
 	}
 }
 
@@ -3343,30 +3403,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		 * To get original function name, utilize location of original name
 		 * and query string.
 		 */
-		char	   *func_name_start,
-				   *temp;
-		const char *funcname = NameStr(form_proctup->proname);
+		char	   *func_name_start;
 
 		func_name_start = (char *) queryString + origname_location;
 
-		/*
-		 * Could be the case that the fully qualified name is included, so
-		 * just find the text after '.' in the identifier. We need to be
-		 * careful as there can be '.' in the function name itself, so we will
-		 * break the loop if current string matches with actual funcname.
-		 */
-		temp = strpbrk(func_name_start, ". ");
-		while (temp && temp[0] != ' ' &&
-			   strncasecmp(funcname, func_name_start, strlen(funcname)) != 0 &&
-			   strncasecmp(funcname, func_name_start + 1, strlen(funcname)) != 0)	/* match after skipping
-																					 * delimiter */
-		{
-			temp += 1;
-			func_name_start = temp;
-			temp = strpbrk(func_name_start, ". ");
-		}
-
-		original_name = extract_identifier(func_name_start);
+		original_name = extract_multipart_identifier_name(func_name_start);
 		if (original_name == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
@@ -5192,4 +5233,33 @@ unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 	}
 
 	return SORTBY_NULLS_DEFAULT;
+}
+
+/*
+ * is_partitioned_table_reloptions_allowed
+ * 	This function checks if the given reloptions are allowed or not for partitioned tables.
+ * 	Returns true if allowed, false otherwise.
+ * 
+ * 	Only bbf_rel_create_date and bbf_original_rel_name reloptions
+ * 	are allowed in TSQL dialect and while restoring babelfish database.
+ */
+static bool
+is_partitioned_table_reloptions_allowed(Datum reloptions)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL || babelfish_dump_restore)
+	{
+		List *options = untransformRelOptions(reloptions);
+		ListCell *cell;
+
+		foreach(cell, options)
+		{
+			DefElem  *defel = (DefElem *) lfirst(cell);
+
+			if (pg_strcasecmp(defel->defname, ATTOPTION_BBF_TABLE_CREATE_DATE) != 0 &&
+					pg_strcasecmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) != 0)
+				return false;
+
+		}
+	}
+	return true;
 }

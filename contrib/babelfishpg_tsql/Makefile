@@ -76,6 +76,7 @@ OBJS += src/table_variable_mvcc.o
 OBJS += src/extendedproperty.o
 OBJS += src/fts.o
 OBJS += src/fts_parser.o
+OBJS += src/pltsql_partition.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime

@@ -155,6 +155,7 @@ BABEL-SP_STORED_PROCEDURES
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
+SP_TABLES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -191,7 +192,7 @@ insteadof_nested_trigger_with_dml
 insteadoftriggers_with_transaction
 ISC-Columns
 ISC-Table_Constraints
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
@@ -266,7 +267,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name
+sys-host_name-before-15_8-or-16_4
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns
@@ -407,8 +408,14 @@ babel-4517
 BABEL-4815
 BABEL_3571-before-15-5
 BABEL-4641-before-16_3-or-15_7-or-14_12
+trim-before-15_8-or-16_4
+ltrim-before-15_8-or-16_4
+rtrim-before-15_8-or-16_4
+left-before-15_8-or-16_4
+right-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
 babel_4328_datetime-before-16_3
 babel_4328_datetime2-before-16_3
 babel_4328_datetimeoffset-before-16_3
+reverse-before-15_8-or-16_4

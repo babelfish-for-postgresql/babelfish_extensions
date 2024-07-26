@@ -1151,10 +1151,10 @@ BEGIN
 
         result := (SELECT input_expr_tmz AT TIME ZONE tz_name)::TEXT;
         tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
-        if LEFT(tz_diff,1) <> '-' THEN
+        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
             tz_diff := concat('+',tz_diff);
         END IF;
-        tz_offset := left(tz_diff,6);
+        tz_offset := PG_CATALOG.left(tz_diff,6);
         input_expr_tx := concat(input_expr_tx,tz_offset);
         return cast(input_expr_tx as sys.datetimeoffset);
     ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
@@ -1162,10 +1162,10 @@ BEGIN
         input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
         result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
         tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
-        if LEFT(tz_diff,1) <> '-' THEN
+        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
             tz_diff := concat('+',tz_diff);
         END IF;
-        tz_offset := left(tz_diff,6);
+        tz_offset := PG_CATALOG.left(tz_diff,6);
         result := concat(result,tz_offset);
         return cast(result as sys.datetimeoffset);
     ELSE
@@ -1564,13 +1564,13 @@ begin
   if pattern is null or expression is null then
     return null;
   end if;
-  if left(pattern, 1) = '%' collate sys.database_default then
+  if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i');
   else
     v_regexp_pattern := '#"' || pattern;
   end if;
 
-  if right(pattern, 1) = '%' collate sys.database_default then
+  if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i');
   else
    v_regexp_pattern := v_regexp_pattern || '#"';
@@ -2739,11 +2739,11 @@ BEGIN
 
     -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
     -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
-    cs_as_securable = lower(rtrim(cs_as_securable));
-    cs_as_securable_class = lower(rtrim(cs_as_securable_class));
-    cs_as_permission = lower(rtrim(cs_as_permission));
-    cs_as_sub_securable = lower(rtrim(cs_as_sub_securable));
-    cs_as_sub_securable_class = lower(rtrim(cs_as_sub_securable_class));
+    cs_as_securable = lower(PG_CATALOG.rtrim(cs_as_securable));
+    cs_as_securable_class = lower(PG_CATALOG.rtrim(cs_as_securable_class));
+    cs_as_permission = lower(PG_CATALOG.rtrim(cs_as_permission));
+    cs_as_sub_securable = lower(PG_CATALOG.rtrim(cs_as_sub_securable));
+    cs_as_sub_securable_class = lower(PG_CATALOG.rtrim(cs_as_sub_securable_class));
 
     -- Assert that sub_securable and sub_securable_class are either both NULL or both defined
     IF cs_as_sub_securable IS NOT NULL AND cs_as_sub_securable_class IS NULL THEN
@@ -3079,6 +3079,635 @@ AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+-- wrapper functions for TRIM
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.BPCHAR)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.btrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.btrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS 
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.btrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.btrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string ANYELEMENT)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+DECLARE
+    string_arg_datatype text;
+    string_basetype oid;
+BEGIN
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for trim function
+    IF string_arg_datatype NOT IN ('char', 'varchar', 'nchar', 'nvarchar', 'text', 'ntext') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of Trim function.', string_arg_datatype;
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.btrim(string::sys.varchar);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Additional handling is added for TRIM function with 2 arguments, 
+-- hence only following two definitions are required.
+CREATE OR REPLACE FUNCTION sys.TRIM(characters sys.VARCHAR, string sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.btrim(string, characters);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(characters sys.VARCHAR, string sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.btrim(string, characters);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- wrapper functions for LTRIM
+CREATE OR REPLACE FUNCTION sys.LTRIM(string ANYELEMENT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype text;
+    string_basetype oid;
+BEGIN
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for ltrim function
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of ltrim function.', string_arg_datatype;
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.ltrim(string::sys.varchar);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.BPCHAR)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.ltrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.ltrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.ltrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.ltrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Adding following definition will make sure that ltrim with text input
+-- will use following definition instead of PG ltrim
+CREATE OR REPLACE FUNCTION sys.LTRIM(string TEXT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.ltrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Adding following definition will make sure that ltrim with ntext input
+-- will use following definition instead of PG ltrim
+CREATE OR REPLACE FUNCTION sys.LTRIM(string NTEXT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.ltrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- wrapper functions for RTRIM
+CREATE OR REPLACE FUNCTION sys.RTRIM(string ANYELEMENT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype text;
+    string_basetype oid;
+BEGIN
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for rtrim function
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of rtrim function.', string_arg_datatype;
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.rtrim(string::sys.varchar);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.BPCHAR)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.rtrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.rtrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.rtrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.rtrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Adding following definition will make sure that rtrim with text input
+-- will use following definition instead of PG rtrim
+CREATE OR REPLACE FUNCTION sys.RTRIM(string TEXT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.rtrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Adding following definition will make sure that rtrim with ntext input
+-- will use following definition instead of PG rtrim
+CREATE OR REPLACE FUNCTION sys.RTRIM(string NTEXT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.rtrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+
+-- wrapper functions for LEFT
+CREATE OR REPLACE FUNCTION sys.LEFT(string ANYELEMENT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype text;
+    string_basetype oid;
+BEGIN
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for left function
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of left function.', string_arg_datatype;
+    END IF;
+
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string::sys.varchar, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string sys.BPCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string sys.VARCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string sys.NCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string sys.NVARCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Adding following definition will make sure that left with text input
+-- will use following definition instead of PG left
+CREATE OR REPLACE FUNCTION sys.LEFT(string TEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Adding following definition will make sure that left with ntext input
+-- will use following definition instead of PG left
+CREATE OR REPLACE FUNCTION sys.LEFT(string NTEXT, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+
+-- wrapper functions for RIGHT
+CREATE OR REPLACE FUNCTION sys.RIGHT(string ANYELEMENT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype text;
+    string_basetype oid;
+BEGIN
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof(string)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(string)::oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for right function
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of right function.', string_arg_datatype;
+    END IF;
+
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+    RETURN PG_CATALOG.right(string::sys.varchar, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.BPCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.VARCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.NCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.NVARCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Adding following definition will make sure that right with text input
+-- will use following definition instead of PG right
+CREATE OR REPLACE FUNCTION sys.RIGHT(string TEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Adding following definition will make sure that right with ntext input
+-- will use following definition instead of PG right
+CREATE OR REPLACE FUNCTION sys.RIGHT(string NTEXT, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE EXCEPTION 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 -- For getting host os from PG_VERSION_STR
 CREATE OR REPLACE FUNCTION sys.get_host_os()
@@ -3423,9 +4052,35 @@ LANGUAGE C STABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
 $$
-	SELECT sys.is_rolemember_internal(role, NULL);
+DECLARE
+    is_windows_grp boolean := (CHARINDEX('\', role) != 0);
+BEGIN
+    -- Always return 1 for 'public'
+    IF (role = 'public')
+    THEN RETURN 1;
+    END IF;
+
+    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role AND type != 'S') -- do not consider sql logins
+    THEN
+        IF ((EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type IN ('SERVER ROLE', 'SQL LOGIN'))) OR is_windows_grp) -- do not consider sql logins, server roles
+        THEN RETURN NULL; -- Also return NULL if session is not a windows auth session but argument is a windows group
+        ELSIF EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type NOT IN ('SERVER ROLE', 'SQL LOGIN'))
+        THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
+        ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
+        END IF;
+    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role)
+    THEN
+        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role)
+        THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
+        ELSIF (is_windows_grp)
+        THEN RETURN NULL; -- Return NULL if session is not a windows auth session but argument is a windows group
+        ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
+        END IF;
+    ELSE RETURN NULL; -- Return NULL if role/group does not exist
+    END IF;
+END;
 $$
-LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
+LANGUAGE plpgsql STRICT STABLE;
 
 CREATE OR REPLACE FUNCTION sys.is_rolemember(IN role sys.SYSNAME)
 RETURNS INT AS
@@ -3475,7 +4130,7 @@ CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
 RETURNS SYS.SQL_VARIANT
 AS $$
 BEGIN
-	property := RTRIM(LOWER(COALESCE(property, '')));
+	property := PG_CATALOG.RTRIM(LOWER(COALESCE(property, '')));
 	
 	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
 	THEN
@@ -4028,7 +4683,7 @@ BEGIN
         -- Here, converting TIMESTAMP into datetimeoffset datatype with the same timezone as of date argument.
         IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
             timezone = sys.babelfish_get_datetimeoffset_tzoffset(date)::INTEGER;
-            offset_string = right(date::PG_CATALOG.TEXT, 6);
+            offset_string = PG_CATALOG.right(date::PG_CATALOG.TEXT, 6);
             result_date = result_date + make_interval(mins => timezone);
             RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
         ELSE
@@ -4151,8 +4806,8 @@ BEGIN
             input_expr_timestamp = date::timestamp;
             -- preserving offset_string value in the case of datetimeoffset datatype before converting it to timestamps 
             IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
-                offset_string = RIGHT(date::PG_CATALOG.TEXT, 6);
-                input_expr_timestamp := LEFT(date::PG_CATALOG.TEXT, -6)::timestamp;
+                offset_string = PG_CATALOG.RIGHT(date::PG_CATALOG.TEXT, 6);
+                input_expr_timestamp := PG_CATALOG.LEFT(date::PG_CATALOG.TEXT, -6)::timestamp;
             END IF;
             CASE
                 WHEN datepart IN ('year', 'quarter', 'month', 'week', 'hour', 'minute', 'second', 'millisecond', 'microsecond')  THEN
@@ -4213,3 +4868,79 @@ CREATE OR REPLACE FUNCTION sys.bbf_pivot()
 RETURNS setof record
 AS 'babelfishpg_tsql', 'bbf_pivot'
 LANGUAGE C STABLE;
+
+-- wrapper functions for reverse
+CREATE OR REPLACE FUNCTION sys.reverse(string ANYELEMENT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype text;
+    string_arg_typeid oid;
+    string_basetype oid;
+BEGIN
+    string_arg_typeid := pg_typeof(string)::oid;
+    string_arg_datatype := sys.translate_pg_type_to_tsql(string_arg_typeid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(string_arg_typeid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for reverse function
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of reverse function.', string_arg_datatype;
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.reverse(string::sys.varchar);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.reverse(string sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.reverse(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.reverse(string sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.reverse(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Adding following definition will make sure that reverse with text input
+-- will use following definition instead of PG reverse
+CREATE OR REPLACE FUNCTION sys.reverse(string TEXT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.reverse(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Adding following definition will make sure that reverse with ntext input
+-- will use following definition instead of PG reverse
+CREATE OR REPLACE FUNCTION sys.reverse(string NTEXT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.reverse(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
