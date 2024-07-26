@@ -135,6 +135,23 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
 
+CREATE TABLE sys.babelfish_pivot_view
+(
+  dbid SMALLINT NOT NULL,
+  pivot_view_uuid sys.NVARCHAR(128) NOT NULL,
+  schema_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  pivot_view_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  agg_func_name sys.NVARCHAR(128) NOT NULL,
+  PRIMARY KEY(pivot_view_uuid)
+);
+
+CREATE OR REPLACE FUNCTION sys.bbf_pivot(IN arg TEXT)
+RETURNS setof record
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_pivot_view', '');
+
 -- Update deprecated object_id function(s) since left function now restricts TEXT datatype
 DO $$
 BEGIN

@@ -36,6 +36,7 @@ babelfish_domain_mapping
 babelfish_extended_properties
 babelfish_function_ext
 babelfish_namespace_ext
+babelfish_pivot_view
 babelfish_schema_permissions
 babelfish_server_options
 babelfish_sysdatabases

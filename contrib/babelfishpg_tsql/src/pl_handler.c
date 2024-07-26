@@ -528,6 +528,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				if (relid == sysdatabases_oid ||
 					relid == namespace_ext_oid ||
 					relid == bbf_view_def_oid ||
+					relid == bbf_pivot_view_oid ||
 					relid == bbf_extended_properties_oid ||
 					relid == bbf_schema_perms_oid)
 				{
