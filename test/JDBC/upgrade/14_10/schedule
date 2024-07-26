@@ -435,6 +435,7 @@ babel-3254
 babel-4517
 BABEL_3571-before-15-5
 BABEL_4817
+upper_lower-before-15_8-or-16_4
 BABEL-4641-before-16_3-or-15_7-or-14_12
 trim-before-15_8-or-16_4
 ltrim-before-15_8-or-16_4
@@ -449,3 +450,4 @@ babel_4328_datetime-before-15_7
 babel_4328_datetime2-before-15_7
 translate-before-15_8-or-16_4
 babel_4328_datetimeoffset-before-15_7
+reverse-before-15_8-or-16_4

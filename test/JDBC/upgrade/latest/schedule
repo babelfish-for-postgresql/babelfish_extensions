@@ -521,6 +521,7 @@ babel_table_type
 1_GRANT_SCHEMA
 BABEL-4707
 BABEL_4817
+upper_lower
 BABEL-4641
 trim
 ltrim
@@ -542,3 +543,5 @@ babel_4328_datetime2
 translate
 babel_4328_datetimeoffset
 BABEL-3820
+reverse
+sys_sequences

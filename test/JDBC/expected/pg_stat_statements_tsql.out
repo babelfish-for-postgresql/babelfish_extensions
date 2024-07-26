@@ -541,7 +541,7 @@ int
 SELECT REVERSE(name) FROM pgss_cust
 go
 ~~START~~
-text
+varchar
 CBA
 ZYX
 NML

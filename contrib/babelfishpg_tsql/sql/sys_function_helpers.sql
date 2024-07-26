@@ -115,7 +115,7 @@ DECLARE
     DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
     DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
 BEGIN
-    v_datatype := upper(trim(p_datatype));
+    v_datatype := pg_catalog.upper(trim(p_datatype));
     v_style := floor(p_style)::SMALLINT;
 
     IF (scale(p_style) > 0) THEN
@@ -234,7 +234,7 @@ EXCEPTION
    WHEN interval_field_overflow THEN
        RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
                                      v_lengthexpr,
-                                     lower(v_res_datatype),
+                                     pg_catalog.lower(v_res_datatype),
                                      v_maxlength),
                    DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
@@ -252,7 +252,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
                                       v_err_message),
@@ -299,8 +299,8 @@ DECLARE
     DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
     v_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE;
 BEGIN
-    v_datatype := upper(trim(p_datatype));
-    v_src_datatype := upper(trim(p_src_datatype));
+    v_datatype := pg_catalog.upper(trim(p_datatype));
+    v_src_datatype := pg_catalog.upper(trim(p_src_datatype));
     v_style := floor(p_style)::SMALLINT;
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
@@ -522,7 +522,7 @@ EXCEPTION
 
     WHEN interval_field_overflow THEN
         RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
-                                      v_lengthexpr, lower(v_res_datatype), v_maxlength),
+                                      v_lengthexpr, pg_catalog.lower(v_res_datatype), v_maxlength),
                     DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
                     HINT := 'Change size component of data type parameter to the allowable value and try again.';
 
@@ -539,7 +539,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -1311,12 +1311,12 @@ DECLARE
     FULL_DIGITMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{8}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
 BEGIN
     v_datatype := trim(p_datatype);
-    v_datetimestring := upper(trim(p_datetimestring));
+    v_datetimestring := pg_catalog.upper(trim(p_datetimestring));
     v_style := floor(p_style)::SMALLINT;
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
 
-    v_res_datatype := upper(v_datatype_groups[1]);
+    v_res_datatype := pg_catalog.upper(v_datatype_groups[1]);
     v_scale := v_datatype_groups[2]::SMALLINT;
 
     IF (v_res_datatype IS NULL) THEN
@@ -1773,7 +1773,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -1820,12 +1820,12 @@ DECLARE
     DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
 BEGIN
     v_datatype := trim(regexp_replace(p_datatype, 'DATETIME', 'TIME', 'gi'));
-    v_timestring := upper(trim(p_timestring));
+    v_timestring := pg_catalog.upper(trim(p_timestring));
     v_style := floor(p_style)::SMALLINT;
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
 
-    v_src_datatype := upper(v_datatype_groups[1]);
+    v_src_datatype := pg_catalog.upper(v_datatype_groups[1]);
     v_scale := v_datatype_groups[2]::SMALLINT;
 
     IF (v_src_datatype IS NULL) THEN
@@ -1924,7 +1924,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -1965,8 +1965,8 @@ DECLARE
     DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
     SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^\s*(?:TIME)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?\s*$';
 BEGIN
-    v_datatype := upper(trim(p_datatype));
-    v_src_datatype := upper(trim(p_src_datatype));
+    v_datatype := pg_catalog.upper(trim(p_datatype));
+    v_src_datatype := pg_catalog.upper(trim(p_src_datatype));
     v_style := floor(p_style)::SMALLINT;
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
@@ -2084,7 +2084,7 @@ EXCEPTION
 
    WHEN interval_field_overflow THEN
        RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
-                                     v_lengthexpr, lower(v_res_datatype), v_res_maxlength),
+                                     v_lengthexpr, pg_catalog.lower(v_res_datatype), v_res_maxlength),
                    DETAIL := 'Use of incorrect size value of target data type parameter during conversion process.',
                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
 
@@ -2261,7 +2261,7 @@ DECLARE
     v_lang_spec_culture VARCHAR COLLATE "C";
     v_is_cached BOOLEAN := FALSE;
 BEGIN
-    v_lang_spec_culture := upper(trim(p_lang_spec_culture));
+    v_lang_spec_culture := pg_catalog.upper(trim(p_lang_spec_culture));
 
     IF (char_length(v_lang_spec_culture) > 0)
     THEN
@@ -2275,7 +2275,7 @@ BEGIN
 
         IF (v_lang_data_jsonb IS NULL)
         THEN
-            v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
+            v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
             IF (v_lang_spec_culture IN ('AR', 'FI') OR
                 v_lang_spec_culture ~ '_')
             THEN
@@ -2301,7 +2301,7 @@ BEGIN
                                   ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
                                END;
 
-        v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
+        v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
 
         BEGIN
             v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
@@ -2427,18 +2427,18 @@ DECLARE
     v_monthname TEXT;
     v_monthnum SMALLINT;
 BEGIN
-    v_monthname := lower(trim(p_monthname));
+    v_monthname := pg_catalog.lower(trim(p_monthname));
 
-    v_monthnum := array_position(ARRAY(SELECT lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_shortnames'))), v_monthname);
-
-    v_monthnum := coalesce(v_monthnum,
-                           array_position(ARRAY(SELECT lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_names'))), v_monthname));
+    v_monthnum := array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_shortnames'))), v_monthname);
 
     v_monthnum := coalesce(v_monthnum,
-                           array_position(ARRAY(SELECT lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_extrashortnames'))), v_monthname));
+                           array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_names'))), v_monthname));
 
     v_monthnum := coalesce(v_monthnum,
-                           array_position(ARRAY(SELECT lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_extranames'))), v_monthname));
+                           array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_extrashortnames'))), v_monthname));
+
+    v_monthnum := coalesce(v_monthnum,
+                           array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_extranames'))), v_monthname));
 
     IF (v_monthnum IS NULL) THEN
         RAISE datetime_field_overflow;
@@ -2507,8 +2507,8 @@ DECLARE
     HHMM_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
     HH_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '$');
 BEGIN
-    v_timepart := upper(trim(p_timepart));
-    v_timeunit := upper(trim(p_timeunit));
+    v_timepart := pg_catalog.upper(trim(p_timepart));
+    v_timeunit := pg_catalog.upper(trim(p_timeunit));
 
     v_daypart := substring(v_timepart, 'AM|PM');
     v_timepart := trim(regexp_replace(v_timepart, coalesce(v_daypart, ''), ''));
@@ -2561,7 +2561,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
@@ -2598,15 +2598,15 @@ DECLARE
     v_weekdayname TEXT;
     v_weekdaynum SMALLINT;
 BEGIN
-    v_weekdayname := lower(trim(p_weekdayname));
+    v_weekdayname := pg_catalog.lower(trim(p_weekdayname));
 
-    v_weekdaynum := array_position(ARRAY(SELECT lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_names'))), v_weekdayname);
-
-    v_weekdaynum := coalesce(v_weekdaynum,
-                             array_position(ARRAY(SELECT lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_shortnames'))), v_weekdayname));
+    v_weekdaynum := array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_names'))), v_weekdayname);
 
     v_weekdaynum := coalesce(v_weekdaynum,
-                             array_position(ARRAY(SELECT lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_extrashortnames'))), v_weekdayname));
+                             array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_shortnames'))), v_weekdayname));
+
+    v_weekdaynum := coalesce(v_weekdaynum,
+                             array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_extrashortnames'))), v_weekdayname));
 
     IF (v_weekdaynum IS NULL) THEN
         RAISE datetime_field_overflow;
@@ -3111,10 +3111,10 @@ DECLARE
     CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
     DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
-    v_datestring := upper(trim(p_datestring));
-    v_culture := coalesce(nullif(upper(trim(p_culture)), ''), 'EN-US');
+    v_datestring := pg_catalog.upper(trim(p_datestring));
+    v_culture := coalesce(nullif(pg_catalog.upper(trim(p_culture)), ''), 'EN-US');
 
-    v_dayparts := ARRAY(SELECT upper(array_to_string(regexp_matches(v_datestring, '[AP]M|ص|م', 'gi'), '')));
+    v_dayparts := ARRAY(SELECT pg_catalog.upper(array_to_string(regexp_matches(v_datestring, '[AP]M|ص|م', 'gi'), '')));
 
     IF (array_length(v_dayparts, 1) > 1) THEN
         RAISE invalid_datetime_format;
@@ -3156,7 +3156,7 @@ BEGIN
                                        'gi');
     END IF;
 
-    v_date_format := coalesce(nullif(upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(pg_catalog.upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp :=
         array_to_string(array_cat(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
@@ -3710,7 +3710,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -4100,12 +4100,12 @@ DECLARE
     DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
     v_datatype := trim(p_datatype);
-    v_datetimestring := upper(trim(p_datetimestring));
-    v_culture := coalesce(nullif(upper(trim(p_culture)), ''), 'EN-US');
+    v_datetimestring := pg_catalog.upper(trim(p_datetimestring));
+    v_culture := coalesce(nullif(pg_catalog.upper(trim(p_culture)), ''), 'EN-US');
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
 
-    v_res_datatype := upper(v_datatype_groups[1]);
+    v_res_datatype := pg_catalog.upper(v_datatype_groups[1]);
     v_scale := v_datatype_groups[2]::SMALLINT;
 
     IF (v_res_datatype IS NULL) THEN
@@ -4120,7 +4120,7 @@ BEGIN
         v_scale := 7;
     END IF;
 
-    v_dayparts := ARRAY(SELECT upper(array_to_string(regexp_matches(v_datetimestring, '[AP]M|ص|م', 'gi'), '')));
+    v_dayparts := ARRAY(SELECT pg_catalog.upper(array_to_string(regexp_matches(v_datetimestring, '[AP]M|ص|م', 'gi'), '')));
 
     IF (array_length(v_dayparts, 1) > 1) THEN
         RAISE invalid_datetime_format;
@@ -4162,7 +4162,7 @@ BEGIN
                                            'gi');
     END IF;
 
-    v_date_format := coalesce(nullif(upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(pg_catalog.upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp :=
         array_to_string(array_cat(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
@@ -4768,7 +4768,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -5158,12 +5158,12 @@ DECLARE
     DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
     v_datatype := trim(p_datatype);
-    v_srctimestring := upper(trim(p_srctimestring));
-    v_culture := coalesce(nullif(upper(trim(p_culture)), ''), 'EN-US');
+    v_srctimestring := pg_catalog.upper(trim(p_srctimestring));
+    v_culture := coalesce(nullif(pg_catalog.upper(trim(p_culture)), ''), 'EN-US');
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
 
-    v_res_datatype := upper(v_datatype_groups[1]);
+    v_res_datatype := pg_catalog.upper(v_datatype_groups[1]);
     v_scale := v_datatype_groups[2]::SMALLINT;
 
     IF (v_res_datatype IS NULL) THEN
@@ -5175,7 +5175,7 @@ BEGIN
         v_scale := 7;
     END IF;
 
-    v_dayparts := ARRAY(SELECT upper(array_to_string(regexp_matches(v_srctimestring, '[AP]M|ص|م', 'gi'), '')));
+    v_dayparts := ARRAY(SELECT pg_catalog.upper(array_to_string(regexp_matches(v_srctimestring, '[AP]M|ص|م', 'gi'), '')));
 
     IF (array_length(v_dayparts, 1) > 1) THEN
         RAISE invalid_datetime_format;
@@ -5217,7 +5217,7 @@ BEGIN
                                           'gi');
     END IF;
 
-    v_date_format := coalesce(nullif(upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(pg_catalog.upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp :=
         array_to_string(array_cat(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
@@ -5796,7 +5796,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
