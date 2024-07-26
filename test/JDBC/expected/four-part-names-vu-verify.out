@@ -38,7 +38,7 @@ int#!#varchar
 SELECT * FROM bbf_fpn_server.master.sys.data_spaces
 GO
 ~~START~~
-varchar#!#int#!#char#!#nvarchar#!#bit#!#bit
+nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
 PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 ~~END~~
 
@@ -59,7 +59,7 @@ int#!#varchar
 SELECT * FROM bbf_fpn_server..sys.data_spaces
 GO
 ~~START~~
-varchar#!#int#!#char#!#nvarchar#!#bit#!#bit
+nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
 PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 ~~END~~
 
@@ -68,7 +68,7 @@ PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 SELECT a*2, REVERSE(b) FROM bbf_fpn_server...fpn_table
 GO
 ~~START~~
-int#!#text
+int#!#varchar
 2#!#eno
 4#!#owt
 6#!#eerht

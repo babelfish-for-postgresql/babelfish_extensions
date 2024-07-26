@@ -279,6 +279,15 @@ ignore#!#rtrim-before-15_8-or-16_4-vu-cleanup
 ignore#!#trim-before-15_8-or-16_4-vu-prepare
 ignore#!#trim-before-15_8-or-16_4-vu-verify
 ignore#!#trim-before-15_8-or-16_4-vu-cleanup
+ignore#!#upper_lower-before-15_8-or-16_4-vu-prepare
+ignore#!#upper_lower-before-15_8-or-16_4-vu-verify
+ignore#!#upper_lower-before-15_8-or-16_4-vu-cleanup
+ignore#!#sys-data_spaces-before-16-4-vu-prepare
+ignore#!#sys-data_spaces-before-16-4-vu-verify
+ignore#!#sys-data_spaces-before-16-4-vu-cleanup
+ignore#!#sys-filegroups-before-16-4-vu-prepare
+ignore#!#sys-filegroups-before-16-4-vu-verify
+ignore#!#sys-filegroups-before-16-4-vu-cleanup
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
@@ -331,6 +340,10 @@ ignore#!#catalogs_dbo_sys_schema-upgrade-vu-prepare
 ignore#!#catalogs_dbo_sys_schema-upgrade-vu-verify
 ignore#!#catalogs_dbo_sys_schema-upgrade-vu-cleanup
 
+# These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
+ignore#!#reverse-before-15_8-or-16_4-vu-prepare
+ignore#!#reverse-before-15_8-or-16_4-vu-verify
+ignore#!#reverse-before-15_8-or-16_4-vu-cleanup
 ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-prepare
 ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-verify
 ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-cleanup
