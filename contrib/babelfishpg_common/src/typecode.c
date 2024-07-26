@@ -53,6 +53,8 @@ type_info_t type_infos[TOTAL_TYPECODE_COUNT] =
 	{0, 1, "rowversion", "timestamp", 8, 32, 3},
 	{0, 1, "timestamp", "timestamp", 8, 33, 3},
 	{0, 1, "vector", "vector", 9, 34, 3},
+	{0, 1, "sparsevec", "sparsevec", 9, 34, 3},
+	{0, 1, "halfvec", "halfvec", 9, 34, 3},
 	/*
 	 * Geospatial types cannot be stored in SQL variant so setting sqlvariant header size to 1
 	 */
