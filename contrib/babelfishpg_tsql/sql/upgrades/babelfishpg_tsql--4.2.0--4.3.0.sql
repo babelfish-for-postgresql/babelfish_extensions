@@ -6715,7 +6715,8 @@ SELECT
   CAST(0 as sys.bit) as xml_compression,
   CAST('OFF' as sys.varchar(3)) as xml_compression_desc
 FROM pg_class t
-INNER JOIN sys.schemas sch on sch.schema_id = t.relnamespace
+INNER JOIN pg_namespace nsp on t.relnamespace = nsp.oid
+INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
 LEFT JOIN tt_internal tt on t.oid = tt.typrelid
 WHERE tt.typrelid is null
 AND t.relkind = 'r'
@@ -6740,7 +6741,8 @@ SELECT
 FROM pg_index idx
 INNER JOIN index_id_map imap on imap.indexrelid = idx.indexrelid
 INNER JOIN pg_class t on t.oid = idx.indrelid and t.relkind = 'r' and t.relispartition = false
-INNER JOIN sys.schemas sch on sch.schema_id = t.relnamespace
+INNER JOIN pg_namespace nsp on t.relnamespace = nsp.oid
+INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
 where idx.indislive
 and has_schema_privilege(t.relnamespace, 'USAGE')
 
@@ -6759,12 +6761,11 @@ SELECT
   CAST(0 as sys.bit) as xml_compression,
   CAST('OFF' as sys.varchar(3)) as xml_compression_desc
 FROM pg_inherits pgi
-INNER JOIN pg_class ctbl on ctbl.oid = pgi.inhrelid
-INNER JOIN pg_class ptbl on ptbl.oid = pgi.inhparent
-INNER JOIN sys.schemas sch on sch.schema_id = ptbl.relnamespace
-WHERE ptbl.relkind = 'p'
-AND has_schema_privilege(ptbl.relnamespace, 'USAGE')
-AND has_table_privilege(ptbl.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+INNER JOIN pg_class ctbl on (ctbl.oid = pgi.inhrelid and ctbl.relkind = 'r' and ctbl.relispartition)
+INNER JOIN pg_namespace nsp on ctbl.relnamespace = nsp.oid
+INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
+WHERE has_schema_privilege(ctbl.relnamespace, 'USAGE')
+AND has_table_privilege(ctbl.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 
 UNION ALL
 -- entries for partitions of partitioned indexes
@@ -6783,12 +6784,11 @@ SELECT
 FROM pg_inherits pgi
 INNER JOIN pg_index cidx on cidx.indexrelid = pgi.inhrelid
 INNER JOIN pg_index pidx on pidx.indexrelid = pgi.inhparent
-INNER JOIN pg_class ctbl on ctbl.oid = cidx.indrelid
+INNER JOIN pg_class ctbl on (ctbl.oid = cidx.indrelid and ctbl.relkind = 'r' and ctbl.relispartition)
 INNER JOIN index_id_map imap on imap.indexrelid = cidx.indexrelid
-INNER JOIN sys.schemas sch on sch.schema_id = ctbl.relnamespace
+INNER JOIN pg_namespace nsp on ctbl.relnamespace = nsp.oid
+INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
 WHERE cidx.indislive
-AND ctbl.relkind = 'r'
-AND ctbl.relispartition
 AND has_schema_privilege(ctbl.relnamespace, 'USAGE');
 GRANT SELECT ON sys.partitions TO PUBLIC;
 
