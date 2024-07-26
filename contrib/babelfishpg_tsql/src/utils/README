@@ -14,15 +14,19 @@ CREATE TABLE all_utf8_chars(col1 BYTEA, col2 TEXT);
 -- Insert all possible UNICODE and UTF-8 valid characters into table
 DO $$
 DECLARE
-    erro TEXT;
     cnt INT:= 1;
     var TEXT;
 BEGIN
     WHILE cnt <= 1114112 LOOP
         BEGIN
-            INSERT INTO all_utf8_chars VALUES (cast(chr(cnt) as bytea), chr(cnt));
+            var := chr(cnt);
+            IF var <> '\' THEN
+                INSERT INTO all_utf8_chars VALUES (cast(var as bytea), var);
+            ELSE
+                INSERT INTO all_utf8_chars VALUES (cast('\\' as bytea), '\');
+            END IF;
         EXCEPTION
-        WHEN others THEN
+            WHEN program_limit_exceeded THEN
         END;       
         cnt := cnt + 1;
     END LOOP;
