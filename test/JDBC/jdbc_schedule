@@ -279,6 +279,9 @@ ignore#!#rtrim-before-15_8-or-16_4-vu-cleanup
 ignore#!#trim-before-15_8-or-16_4-vu-prepare
 ignore#!#trim-before-15_8-or-16_4-vu-verify
 ignore#!#trim-before-15_8-or-16_4-vu-cleanup
+ignore#!#upper_lower-before-15_8-or-16_4-vu-prepare
+ignore#!#upper_lower-before-15_8-or-16_4-vu-verify
+ignore#!#upper_lower-before-15_8-or-16_4-vu-cleanup
 ignore#!#sys-data_spaces-before-16-4-vu-prepare
 ignore#!#sys-data_spaces-before-16-4-vu-verify
 ignore#!#sys-data_spaces-before-16-4-vu-cleanup

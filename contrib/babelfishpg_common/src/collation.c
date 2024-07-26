@@ -26,7 +26,7 @@
 #define DATABASE_DEFAULT "database_default"
 #define CATALOG_DEFAULT "catalog_default"
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int	server_collation_collidx = NOT_FOUND;
@@ -1301,6 +1301,55 @@ is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(false);
 }
 
+Datum
+is_collated_ai_internal(PG_FUNCTION_ARGS)
+{
+	Oid  		colloid = PG_GET_COLLATION();
+	HeapTuple	tp;
+	char		*collcollate = NULL;
+	char		collprovider;
+	bool		collisdeterministic;
+	Datum		datum;
+	bool		isnull;
+
+	if (!OidIsValid(colloid) || GetDatabaseEncoding() != PG_UTF8)
+		PG_RETURN_BOOL(false);
+
+	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(colloid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for collation %u", colloid);
+
+	collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
+	collisdeterministic = ((Form_pg_collation) GETSTRUCT(tp))->collisdeterministic;
+
+	if (collisdeterministic == true || collprovider != COLLPROVIDER_ICU)
+	{
+		ReleaseSysCache(tp);
+		PG_RETURN_BOOL(false);
+	}
+	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colliculocale, &isnull);
+
+	if (isnull)
+	{
+		ReleaseSysCache(tp);
+		PG_RETURN_BOOL(false);
+	}
+
+	collcollate = TextDatumGetCString(datum);
+	ReleaseSysCache(tp);
+
+	if (strstr(lowerstr(collcollate), lowerstr("colStrength=primary")) ||
+		0 != strstr(lowerstr(collcollate), "level1"))    /* AI */
+	{
+		pfree(collcollate);
+		PG_RETURN_BOOL(true);
+	}
+
+	pfree(collcollate);
+
+	PG_RETURN_BOOL(false);
+}
+
 const char *
 BabelfishTranslateCollation(const char *collname, Oid collnamespace, int32 encoding)
 {
@@ -1524,6 +1573,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.get_server_collation_oid_internal = &get_server_collation_oid_internal;
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
 		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
+		collation_callbacks_var.is_collated_ai_internal = &is_collated_ai_internal;
 		collation_callbacks_var.collationproperty_helper = &collationproperty_helper;
 		collation_callbacks_var.tdscollationproperty_helper = &tdscollationproperty_helper;
 		collation_callbacks_var.lookup_collation_table_callback = &lookup_collation_table;
