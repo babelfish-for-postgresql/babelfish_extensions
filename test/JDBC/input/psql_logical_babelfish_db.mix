@@ -1,6 +1,6 @@
 -- psql
 -- check whether we can query system views before setting the GUC. Should return zero rows
-select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
 go
 
 -- GUC should be NULL as it is not set yet
@@ -16,7 +16,7 @@ show psql_logical_babelfish_db_name;
 go
 
 -- query system views. Should return metadata of master database
-select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
 go
 
 -- set the GUC to an invalid database
@@ -24,12 +24,12 @@ set psql_logical_babelfish_db_name = 'invalid_db'
 go
 
 -- should return zero rows as the database set does not exist
-select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
 go
 
 -- tsql
 -- should return data of master as the current database is master
-select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
 go
 
 create database logical_database_db1
@@ -41,14 +41,14 @@ select set_config('psql_logical_babelfish_db_name', 'logical_database_db1', fals
 go
 
 -- should return data of master as the current database is master
-select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
 go
 
 use logical_database_db1
 go
 
 -- should return data of logical_database_db1 as the current database is logical_database_db1
-select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
 go
 
 create login logical_database_l1 with password = '12345678'
@@ -58,14 +58,14 @@ alter server role sysadmin add member logical_database_l1
 go
 
 -- psql user=logical_database_l1 password=12345678
-select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
 go
 
 -- any user can set the GUC
 set psql_logical_babelfish_db_name = 'logical_database_db1'
 go
 
-select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
 go
 
 -- psql

@@ -1,0 +1,845 @@
+DECLARE @class NCHAR(30) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE (@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'ANIKAIT AGRAWAL'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'Anikait Agrawal '
+SELECT '[' + @class + ']' WHERE lower(@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'anikait agrawal'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'Anikait Agrawal '
+GO
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+
+DECLARE @class CHAR(30) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE (@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'ANIKAIT AGRAWAL'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'Anikait Agrawal '
+SELECT '[' + @class + ']' WHERE lower(@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'anikait agrawal'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'Anikait Agrawal '
+GO
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+
+DECLARE @class NCHAR = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'ANIKAIT AGRAWAL'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'anikait agrawal'
+GO
+~~START~~
+nvarchar
+~~END~~
+
+~~START~~
+nvarchar
+~~END~~
+
+
+DECLARE @class CHAR = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'ANIKAIT AGRAWAL'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'anikait agrawal'
+GO
+~~START~~
+varchar
+~~END~~
+
+~~START~~
+varchar
+~~END~~
+
+
+-- different result from TSQL, should be fixed under BABEL-4807
+declare @string1 varchar(30) = N'比尔·拉' COLLATE chinese_prc_ci_as
+SELECT UPPER(@string1)
+SELECT UPPER(@string1) COLLATE chinese_prc_ci_as
+SELECT LOWER(@string1)
+SELECT LOWER(@string1) COLLATE chinese_prc_ci_as
+go
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+declare @string1 char(30) = N'比尔·拉' COLLATE chinese_prc_ci_as
+SELECT '|' + UPPER(@string1) + '|'
+SELECT '|' + UPPER(@string1) + '|' COLLATE chinese_prc_ci_as
+SELECT '|' + LOWER(@string1) + '|'
+SELECT '|' + LOWER(@string1) + '|' COLLATE chinese_prc_ci_as
+go
+~~START~~
+varchar
+|比尔·拉                      |
+~~END~~
+
+~~START~~
+varchar
+|比尔·拉                      |
+~~END~~
+
+~~START~~
+varchar
+|比尔·拉                      |
+~~END~~
+
+~~START~~
+varchar
+|比尔·拉                      |
+~~END~~
+
+
+SELECT UPPER(NULL)
+SELECT LOWER(NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+DECLARE @inputString BINARY(30) = 0x4142434445
+SELECT UPPER(@inputString)
+SELECT LOWER(@inputString)
+SELECT CONVERT(BINARY(50), UPPER(@inputString));
+SELECT CONVERT(BINARY(50), LOWER(@inputString));
+GO
+~~START~~
+varchar
+ABCDE
+~~END~~
+
+~~START~~
+varchar
+abcde
+~~END~~
+
+~~START~~
+binary
+4142434445000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+~~END~~
+
+~~START~~
+binary
+6162636465000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+~~END~~
+
+
+DECLARE @inputString VARBINARY(30) = 0x4142434445
+SELECT UPPER(@inputString)
+SELECT LOWER(@inputString)
+SELECT CONVERT(VARBINARY(50), UPPER(@inputString));
+SELECT CONVERT(VARBINARY(50), LOWER(@inputString));
+GO
+~~START~~
+varchar
+ABCDE
+~~END~~
+
+~~START~~
+varchar
+abcde
+~~END~~
+
+~~START~~
+varbinary
+4142434445
+~~END~~
+
+~~START~~
+varbinary
+6162636465
+~~END~~
+
+
+-- different result from TSQL, should be fixed under BABEL-4803
+declare @string1 nchar(30) = N'比尔·拉';
+select '|' + UPPER(@string1) + '|'
+select '|' + LOWER(@string1) + '|'
+GO
+~~START~~
+nvarchar
+|比尔·拉                      |
+~~END~~
+
+~~START~~
+nvarchar
+|比尔·拉                      |
+~~END~~
+
+
+-- different result from TSQL, should be fixed under BABEL-1664
+DECLARE @date date = '12-21-16';  
+DECLARE @datetime datetime = @date; 
+SELECT UPPER(@datetime)
+SELECT LOWER(@datetime)
+GO
+~~START~~
+varchar
+2016-12-21 00:00:00
+~~END~~
+
+~~START~~
+varchar
+2016-12-21 00:00:00
+~~END~~
+
+
+-- different result from TSQL, should be fixed under BABEL-1664
+DECLARE @smalldatetime smalldatetime = '1955-12-13 12:43:10';
+SELECT UPPER(@smalldatetime)
+SELECT LOWER(@smalldatetime)
+GO
+~~START~~
+varchar
+1955-12-13 12:43:00
+~~END~~
+
+~~START~~
+varchar
+1955-12-13 12:43:00
+~~END~~
+
+
+DECLARE @date date = '2016-12-21';
+SELECT UPPER(@date)
+SELECT LOWER(@date)
+GO
+~~START~~
+varchar
+2016-12-21
+~~END~~
+
+~~START~~
+varchar
+2016-12-21
+~~END~~
+
+
+DECLARE @time time(4) = '12:10:05.1237';
+SELECT UPPER(@time)
+SELECT LOWER(@time)
+GO
+~~START~~
+varchar
+12:10:05.1237
+~~END~~
+
+~~START~~
+varchar
+12:10:05.1237
+~~END~~
+
+
+DECLARE @datetimeoffset datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT UPPER(@datetimeoffset)
+SELECT LOWER(@datetimeoffset)
+GO
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:00
+~~END~~
+
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:00
+~~END~~
+
+
+DECLARE @datetime2 datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT UPPER(@datetime2)
+SELECT LOWER(@datetime2)
+GO
+~~START~~
+varchar
+1968-10-23 12:45:37.1237
+~~END~~
+
+~~START~~
+varchar
+1968-10-23 12:45:37.1237
+~~END~~
+
+
+DECLARE @decimal decimal = 123;
+SELECT UPPER(@decimal)
+SELECT LOWER(@decimal)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @numeric numeric = 12345.12;
+SELECT UPPER(@numeric)
+SELECT LOWER(@numeric)
+GO
+~~START~~
+varchar
+12345
+~~END~~
+
+~~START~~
+varchar
+12345
+~~END~~
+
+
+DECLARE @float float = 12345.1;
+SELECT UPPER(@float)
+SELECT LOWER(@float)
+GO
+~~START~~
+varchar
+12345.1
+~~END~~
+
+~~START~~
+varchar
+12345.1
+~~END~~
+
+
+DECLARE @real real = 12345.1;
+SELECT UPPER(@real)
+SELECT LOWER(@real)
+GO
+~~START~~
+varchar
+12345.1
+~~END~~
+
+~~START~~
+varchar
+12345.1
+~~END~~
+
+
+DECLARE @bigint bigint = 2;
+SELECT UPPER(@bigint)
+SELECT LOWER(@bigint)
+GO
+~~START~~
+varchar
+2
+~~END~~
+
+~~START~~
+varchar
+2
+~~END~~
+
+
+DECLARE @int int = 2;
+SELECT UPPER(@int)
+SELECT LOWER(@int)
+GO
+~~START~~
+varchar
+2
+~~END~~
+
+~~START~~
+varchar
+2
+~~END~~
+
+
+DECLARE @smallint smallint = 2;
+SELECT UPPER(@smallint)
+SELECT LOWER(@smallint)
+GO
+~~START~~
+varchar
+2
+~~END~~
+
+~~START~~
+varchar
+2
+~~END~~
+
+
+DECLARE @tinyint tinyint = 2;
+SELECT UPPER(@tinyint)
+SELECT LOWER(@tinyint)
+GO
+~~START~~
+varchar
+2
+~~END~~
+
+~~START~~
+varchar
+2
+~~END~~
+
+
+DECLARE @money money = 2;
+SELECT UPPER(@money)
+SELECT LOWER(@money)
+GO
+~~START~~
+varchar
+2.0000
+~~END~~
+
+~~START~~
+varchar
+2.0000
+~~END~~
+
+
+DECLARE @smallmoney smallmoney = 2;
+SELECT UPPER(@smallmoney)
+SELECT LOWER(@smallmoney)
+GO
+~~START~~
+varchar
+2.0000
+~~END~~
+
+~~START~~
+varchar
+2.0000
+~~END~~
+
+
+DECLARE @bit bit = 1;
+SELECT UPPER(@bit)
+SELECT LOWER(@bit)
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @myid uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT UPPER(@myid)
+SELECT LOWER(@myid)
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+~~START~~
+varchar
+6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
+
+
+DECLARE @myid sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT UPPER(@myid)
+SELECT LOWER(@myid)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of upper function.)~~
+
+
+DECLARE @myid xml = CAST ('<body/>' AS xml)
+SELECT UPPER(@myid)
+SELECT LOWER(@myid)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of upper function.)~~
+
+
+DECLARE @myid geometry = geometry::STGeomFromText('POINT (1 2)', 0)
+SELECT UPPER(@myid)
+SELECT LOWER(@myid)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of upper function.)~~
+
+
+DECLARE @myid sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT UPPER(CAST (@myid AS VARCHAR))
+SELECT LOWER(CAST (@myid AS VARCHAR))
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04F
+~~END~~
+
+~~START~~
+varchar
+6f9619ff-8b86-d011-b42d-00c04f
+~~END~~
+
+
+DECLARE @myid xml = CAST ('<body/>' AS xml)
+SELECT UPPER(CAST (@myid AS VARCHAR))
+SELECT LOWER(CAST (@myid AS VARCHAR))
+GO
+~~START~~
+varchar
+<BODY/>
+~~END~~
+
+~~START~~
+varchar
+<body/>
+~~END~~
+
+
+DECLARE @myid geometry = geometry::STGeomFromText('POINT (1 2)', 0)
+SELECT UPPER(CAST (@myid AS VARCHAR))
+SELECT LOWER(CAST (@myid AS VARCHAR))
+GO
+~~START~~
+varchar
+POINT(1 2)
+~~END~~
+
+~~START~~
+varchar
+point(1 2)
+~~END~~
+
+
+Select UPPER(a), LOWER(a) from upper_lower_text
+GO
+~~START~~
+varchar#!#varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
+
+Select UPPER(a), LOWER(a) from upper_lower_ntext
+GO
+~~START~~
+nvarchar#!#nvarchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
+
+Select UPPER(a), LOWER(a) from upper_lower_image
+GO
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of upper function.)~~
+
+
+declare @string1 nvarchar(30) = N'比尔·拉';
+select '|' + UPPER(@string1) + '|'
+select '|' + LOWER(@string1) + '|'
+GO
+~~START~~
+nvarchar
+|比尔·拉|
+~~END~~
+
+~~START~~
+nvarchar
+|比尔·拉|
+~~END~~
+
+
+declare @string1 char(30) = N'比尔·拉';
+select '|' + UPPER(@string1) + '|'
+select '|' + LOWER(@string1) + '|'
+GO
+~~START~~
+varchar
+|比尔·拉                      |
+~~END~~
+
+~~START~~
+varchar
+|比尔·拉                      |
+~~END~~
+
+
+declare @string1 varchar(30) = N'比尔·拉';
+select UPPER(@string1)
+select LOWER(@string1)
+GO
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+SELECT upper(a), lower(b), lower(c), upper(d) from upper_lower_dt;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+ANIKAIT #!#agrawal #!#anikait             #!#AGRAWAL                 
+ ANIKAIT#!# agrawal#!# anikait            #!# AGRAWAL                
+   A#!#   🤣😃#!#   a                #!#   🤣😃                   
+ #!# #!#                    #!#                        
+#!##!#                    #!#                        
+A#!#a#!#a                   #!#A                       
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
+~~END~~
+
+SELECT * from upper_lower_dt where UPPER(a) = N'Anikait';
+GO
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+Anikait #!#Agrawal #!#Anikait             #!#Agrawal                 
+~~END~~
+
+SELECT * from upper_lower_dt where LOWER(c) = N'比尔·拉';
+GO
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
+~~END~~
+
+SELECT * from upper_lower_dt where LOWER(d) = N'比尔·拉';
+GO
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
+~~END~~
+
+
+SELECT * from dep_view_upper
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_arabic_ci_ai;
+GO
+~~START~~
+varchar#!#varchar
+لقد#!#لقد
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_arabic_ci_as;
+GO
+~~START~~
+varchar#!#varchar
+لقد#!#لقد
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_arabic_cs_as;
+GO
+~~START~~
+varchar#!#varchar
+لقد#!#لقد
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_chinese_ci_ai;
+GO
+~~START~~
+varchar#!#varchar
+比尔·拉#!#比尔·拉
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_chinese_ci_as;
+GO
+~~START~~
+varchar#!#varchar
+比尔·拉#!#比尔·拉
+~~END~~
+
+SELECT upper(col), lower(col) FROM tab_chinese_cs_as;
+GO
+~~START~~
+varchar#!#varchar
+比尔·拉#!#比尔·拉
+~~END~~
+
+EXEC dep_proc_upper
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 
+~~END~~
+
+select dbo.dep_func_upper()
+GO
+~~START~~
+varchar
+ANIKAIT 
+~~END~~
+
+
+SELECT * from dep_view_lower
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+anikait #!#agrawal #!#anikait             #!#agrawal                 
+~~END~~
+
+EXEC dep_proc_lower
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+anikait #!#agrawal #!#anikait             #!#agrawal                 
+~~END~~
+
+SELECT * from dep_view_upper_lower
+GO
+~~START~~
+varchar#!#varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
+
+EXEC dep_proc_upper_lower
+GO
+~~START~~
+varchar#!#varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
+
+SELECT * from dep_view_upper_lower1
+GO
+~~START~~
+nvarchar#!#nvarchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
+
+EXEC dep_proc_upper_lower1
+GO
+~~START~~
+nvarchar#!#nvarchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
+
+select dbo.dep_func_lower()
+GO
+~~START~~
+varchar
+anikait 
+~~END~~
+
+select dbo.tvp_func_upper_lower()
+GO
+~~START~~
+varchar
+("ANIKAIT ","anikait ")
+(" ANIKAIT"," anikait")
+("   A","   a")
+(" "," ")
+("","")
+(A,a)
+(,)
+(比尔·拉,比尔·拉)
+~~END~~
+
+SELECT * from dep_view_lower1
+GO
+~~START~~
+varchar
+adjnfjh
+~~END~~
+
+declare @b dbo.MyUDT = CAST('scsdc' AS dbo.MyUDT)
+select upper(@b)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of upper function.)~~
+

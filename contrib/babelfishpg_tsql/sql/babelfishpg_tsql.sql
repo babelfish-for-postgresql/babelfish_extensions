@@ -640,6 +640,8 @@ BEGIN
 		WHEN 'datetimeoffset' THEN tds_id = 43;
 		WHEN 'timestamp' THEN tds_id = 173;
 		WHEN 'vector' THEN tds_id = 167; -- Same as varchar 
+		WHEN 'sparsevec' THEN tds_id = 167; -- Same as varchar 
+		WHEN 'halfvec' THEN tds_id = 167; -- Same as varchar 
 		WHEN 'geometry' THEN tds_id = 240;
 		WHEN 'geography' THEN tds_id = 240;
 		ELSE tds_id = 0;
@@ -977,7 +979,8 @@ END AS TABLE_TYPE,
 
 CAST(NULL AS varchar(254)) AS remarks
 FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, sys.schemas AS t3
-WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','v','m') 
+WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','p','v','m') 
+AND t1.relispartition = false
 AND has_schema_privilege(t1.relnamespace, 'USAGE')
 AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
@@ -3027,7 +3030,7 @@ AS $$
 BEGIN
 	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row, * 
 	INTO #sp_rename_temptable 
-	FROM STRING_SPLIT(@input, '.') ORDER BY row DESC;
+	FROM sys.babelfish_split_identifier(@input) ORDER BY row DESC;
 
 	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as id, * 
 	INTO #sp_rename_temptable2 

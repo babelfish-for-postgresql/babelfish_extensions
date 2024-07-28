@@ -232,6 +232,7 @@ drop_index-before-15_6-or-16_2
 permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 babel-4517
+upper_lower-before-15_8-or-16_4
 BABEL-4641-before-16_3-or-15_7-or-14_12
 trim-before-15_8-or-16_4
 ltrim-before-15_8-or-16_4
@@ -240,3 +241,4 @@ left-before-15_8-or-16_4
 right-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
+reverse-before-15_8-or-16_4

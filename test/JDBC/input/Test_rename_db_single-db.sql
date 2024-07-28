@@ -13,10 +13,10 @@ Create login rename_db_login1 with password = '1234', default_database = rename_
 go
 
 -- sanity checks for metadata stored in babelfish catalog
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1');
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%' ORDER BY name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1') ORDER BY nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%' ORDER BY rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%' ORDER BY rolname;
 go
 
 -- Test Alter Database
@@ -32,10 +32,10 @@ use master;
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1');
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%' ORDER BY name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1') ORDER BY nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%' ORDER BY rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%' ORDER BY rolname;
 go
 
 -- Test sp_renamedb
@@ -51,10 +51,10 @@ use master;
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1');
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%' ORDER BY name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1') ORDER BY nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%' ORDER BY rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%' ORDER BY rolname;
 go
 
 -- Test sp_rename
@@ -70,10 +70,10 @@ use master;
 go
 
 -- should return updated rows
-select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%';
-select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1');
-select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%';
-select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%';
+select owner, name from sys.babelfish_sysdatabases where name LIKE 'rename_db_database%' ORDER BY name;
+select nspname, orig_name from sys.babelfish_namespace_ext where nspname IN ('dbo', 'guest', 'rename_db_schema1') ORDER BY nspname;
+select rolname, login_name, orig_username, database_name from sys.babelfish_authid_user_ext where database_name LIKE 'rename_db_database%' ORDER BY rolname;
+select rolname, default_database_name from sys.babelfish_authid_login_ext where default_database_name LIKE 'rename_db_database%' ORDER BY rolname;
 go
 
 -- cleanup
