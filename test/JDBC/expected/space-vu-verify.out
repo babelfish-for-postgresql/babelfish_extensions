@@ -79,6 +79,33 @@ int
 ~~END~~
 
 
+-- INT_MAX
+SELECT datalength(SPACE(2147483647))
+GO
+~~START~~
+int
+8000
+~~END~~
+
+
+-- INT_MAX/2
+SELECT datalength(SPACE(1073741823))
+GO
+~~START~~
+int
+8000
+~~END~~
+
+
+-- INT_MIN
+SELECT datalength(SPACE(-2147483648))
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
 SELECT dbo.babel_4811_vu_prepare_f1(5);
 GO
 ~~START~~

@@ -11360,7 +11360,8 @@ BEGIN
     IF number < 0 THEN
         result := NULL;
     ELSE
-        result := PG_CATALOG.repeat(' ',number);
+        -- TSQL has a limitation of 8000 character spaces for space function.
+        result := PG_CATALOG.repeat(' ',least(number, 8000));
     END IF;
 END;
 $$

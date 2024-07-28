@@ -29,6 +29,18 @@ GO
 SELECT DATALENGTH(SPACE(0));
 GO
 
+-- INT_MAX
+SELECT datalength(SPACE(2147483647))
+GO
+
+-- INT_MAX/2
+SELECT datalength(SPACE(1073741823))
+GO
+
+-- INT_MIN
+SELECT datalength(SPACE(-2147483648))
+GO
+
 SELECT dbo.babel_4811_vu_prepare_f1(5);
 GO
 
