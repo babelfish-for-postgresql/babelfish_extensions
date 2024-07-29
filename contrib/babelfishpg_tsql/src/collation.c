@@ -1724,24 +1724,27 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 {
 	text         *pattern_text = PG_GETARG_TEXT_P(0);
 	text         *input_text = PG_GETARG_TEXT_P(1);
+	Oid          cid = PG_GET_COLLATION();
 	char         *input_str = text_to_cstring(input_text);
 	char         *pattern_str = text_to_cstring(pattern_text);
 	char         *input_str_itr = input_str;
-	char         *pattern_stripped;
-	int          pattern_len = strlen(pattern_str),
-	             start_offset = 0, end_offset = 0,
+	char         *pattern_stripped = pattern_str;
+	int          start_offset = 0, end_offset = 0,
 	             result = 0, itr = 0;
-	Oid          cid = PG_GET_COLLATION();
 
-    if (pattern_str[0] == '%')
-        start_offset = 1;
+	if (pattern_stripped[strlen(pattern_stripped)-1] == '%')
+	{
+		pattern_stripped[strlen(pattern_stripped)-1] = '\0';
+		end_offset = 1;
+	}
+	if (*pattern_stripped == '%')
+	{
+		pattern_stripped++;
+		start_offset = 1;
+	}
 
-    if (pattern_len > 1 && pattern_str[pattern_len-1] == '%')
-        end_offset = 1;
-
-    pattern_stripped = (char *) palloc(pattern_len - start_offset - end_offset + 1);
-    memcpy(pattern_stripped, pattern_str + start_offset, pattern_len - start_offset - end_offset);
-    pattern_stripped[pattern_len - start_offset - end_offset] = '\0';
+	if (strlen(pattern_stripped) == 0)
+		result = 1;
 
 	while (*input_str_itr != '\0')
 	{
@@ -1753,7 +1756,7 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 
 		itr++;
 
-        while (tlen > 0 && plen > 0 && !match_failed)
+		while (tlen > 0 && plen > 0 && !match_failed)
 		{
 			if (*p == '_')
 			{
@@ -1800,7 +1803,7 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 					}
 					else
 					{
-						int len = 0, matched_idx = 0;
+						int p_start_len = plen, matched_idx = 0;
 						char *p_start = p;
 						text *src_text, *substr_text;
 						prev = p;
@@ -1810,10 +1813,9 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 						{
 							prev = p;
 							NextByte(p, plen);
-							len++;
 						}
 						
-						src_text = cstring_to_text_with_len(p_start, len);
+						src_text = cstring_to_text_with_len(p_start, p_start_len - plen);
 						substr_text = cstring_to_text_with_len(t, pg_mblen(t));
 						
 						if (pltsql_strpos_non_determinstic(src_text, substr_text, cid, &matched_idx) && matched_idx != 0)
@@ -1855,12 +1857,14 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 			break;
 		}
 
-		input_str_itr += pg_mblen(input_str_itr);
-    }
+		if (start_offset)
+			input_str_itr += pg_mblen(input_str_itr);
+		else
+			break;
+	}
 
 	pfree(input_str);
 	pfree(pattern_str);
-	pfree(pattern_stripped);
 
-    PG_RETURN_INT32(result);
+	PG_RETURN_INT32(result);
 }
