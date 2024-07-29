@@ -123,7 +123,7 @@ CREATE VIEW CoordsFromGeom AS SELECT STX(location), STY(location)  AS Coordinate
 
 CREATE VIEW GeomView AS SELECT location.STX, location.STY AS Coordinates FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
 
-CREATE VIEW ValFromGeom AS SELECT location.STAsText(), location.STAsBinary() AS binary FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
+CREATE VIEW ValFromGeom AS SELECT location.STArea(), location.STAsText(), location.STAsBinary() AS binary FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
 
 CREATE FUNCTION f_getval() RETURNS TABLE AS RETURN ( SELECT location.STX AS XCoordinate, location.STY AS YCoordinate FROM SPATIALPOINTGEOM_dt ORDER BY location.STX );
 
@@ -132,6 +132,10 @@ CREATE PROCEDURE dbo.p_getcoordinates AS BEGIN DECLARE @Coordinates TABLE ( XCoo
 CREATE VIEW equal_geom AS SELECT p1.location AS point FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location = p2.location ORDER BY p1.location.STX;
 
 CREATE VIEW point_distances_geom AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.STX;
+
+CREATE VIEW point_equality1 AS SELECT STEquals( p1.location, p2.location ) AS equality FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2;
+
+CREATE VIEW isIn AS SELECT STContains( p1.location, p2.location ) AS isIN FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
 
 CREATE TABLE SPATIALPOINTGEOG_dt (location geography)
 
@@ -233,7 +237,7 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 
-CREATE VIEW TextFromGeog AS SELECT Lat(location) AS Latitude, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+CREATE VIEW TextFromGeog AS SELECT Lat(location) AS Latitude, STArea(location) AS Area, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
 CREATE VIEW BinaryFromGeog AS SELECT STAsBinary(location) AS BinaryRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
@@ -269,6 +273,10 @@ CREATE VIEW TransformFromGeog AS SELECT ST_Transform(location, 4326) AS Modified
 CREATE VIEW equal_geog AS SELECT p1.location AS point FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location = p2.location ORDER BY p1.location.Lat;
 
 CREATE VIEW point_distances_geog AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.Lat;
+
+CREATE VIEW point_Equality AS SELECT STEquals( p1.location, p2.location ) AS Equality FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW point_in AS SELECT STContains( p1.location, p2.location ) AS isIn FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2;
 
 CREATE TABLE SpatialData(ID INT PRIMARY KEY, SpatialLocation GEOGRAPHY);
 INSERT INTO SpatialData (ID, SpatialLocation) VALUES (1, geography::Point(1, 2, 4326)), (2, geography::Point(3, 4, 4326)), (3, geography::Point(5, 6, 4326)), (4, geography::Point(7, 8, 4326)), (5, geography::Point(9, 10, 4326));

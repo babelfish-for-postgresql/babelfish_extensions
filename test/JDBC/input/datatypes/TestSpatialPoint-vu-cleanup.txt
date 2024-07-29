@@ -50,6 +50,14 @@ DROP FUNCTION IF EXISTS func_getval
 
 DROP VIEW IF EXISTS point_distances_geog
 
+DROP VIEW IF EXISTS point_equality1
+
+DROP VIEW IF EXISTS isIn
+
+DROP VIEW IF EXISTS point_Equality
+
+DROP VIEW IF EXISTS point_in
+
 DROP function IF EXISTS testspatial_tvf;
 
 DROP TABLE IF EXISTS SpatialData;
