@@ -4927,7 +4927,7 @@ begin
   if pattern is null or expression is null then
     return null;
   end if;
-  if sys.is_collated_ai(input_string) then
+  if sys.is_collated_ai(expression) then
     return sys.patindex_ai_collations(pattern, expression);
   end if;
   if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
