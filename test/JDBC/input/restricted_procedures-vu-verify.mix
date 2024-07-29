@@ -1,4 +1,12 @@
--- tsql user=babel_4390_user_l2 password=12345678
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_4390_user_l1 WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_4390_user_l2 WITH PASSWORD = 'abc';
+GO
+
+-- tsql user=babel_4390_user_l2 password=abc
 -- should throw error
 EXEC babel_4390_prepare_p1;
 GO
@@ -36,18 +44,10 @@ GO
 EXEC babel_4390_prepare_p2;
 GO
 
--- psql user=babel_4390_user_l2 password=12345678
+-- psql user=babel_4390_user_l2 password=abc
 -- should throw error
 DROP PROCEDURE master_dbo.xp_qv;
 GO
 
 DROP PROCEDURE master_dbo.sp_addlinkedsrvlogin;
-GO
-
--- tsql
--- reset the login password
-ALTER LOGIN babel_4390_user_l1 WITH PASSWORD = 'abc';
-GO
-
-ALTER LOGIN babel_4390_user_l2 WITH PASSWORD = 'abc';
 GO
