@@ -546,3 +546,5 @@ BABEL-3820
 replicate
 reverse
 sys_sequences
+sys_partition_functions
+sys_partition_schemes
