@@ -1722,15 +1722,15 @@ PG_FUNCTION_INFO_V1(patindex_ai_collations);
 Datum
 patindex_ai_collations(PG_FUNCTION_ARGS)
 {
-	text         *input_text = PG_GETARG_TEXT_P(1);
 	text         *pattern_text = PG_GETARG_TEXT_P(0);
+	text         *input_text = PG_GETARG_TEXT_P(1);
 	char         *input_str = text_to_cstring(input_text);
-	char         *input_str_itr = input_str;
 	char         *pattern_str = text_to_cstring(pattern_text);
+	char         *input_str_itr = input_str;
 	char         *pattern_stripped;
 	int          pattern_len = strlen(pattern_str),
 	             start_offset = 0, end_offset = 0,
-	             result = 0;
+	             result = 0, itr = 0;
 	Oid          cid = PG_GET_COLLATION();
 
     if (pattern_str[0] == '%')
@@ -1743,15 +1743,15 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
     memcpy(pattern_stripped, pattern_str + start_offset, pattern_len - start_offset - end_offset);
     pattern_stripped[pattern_len - start_offset - end_offset] = '\0';
 
-    while (*input_str_itr != '\0')
-    {
+	while (*input_str_itr != '\0')
+	{
 		char  *t = input_str_itr;
 		char  *p = pattern_stripped;
 		int   tlen = strlen(t),
 		      plen = strlen(pattern_stripped);
 		bool  match_failed = false;
 
-		result++;
+		itr++;
 
         while (tlen > 0 && plen > 0 && !match_failed)
 		{
@@ -1779,9 +1779,6 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 					if (*p == ']')
 					{
 						close_bracket = true;
-						/* only one of find match or reverse mode can be true for successful match */
-						if (find_match ^ reverse_mode)
-							NextChar(t, tlen);
 						NextByte(p, plen);
 						break;
 					}
@@ -1827,17 +1824,16 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 						pfree(substr_text);
 					}
 				}
-				if ((!find_match && !reverse_mode) ||
-				    (find_match && !close_bracket) ||
-				    (find_match && reverse_mode) )
-				{
+
+				if (close_bracket && (find_match ^ reverse_mode)) /* found a match */
+					NextChar(t, tlen);
+				else
 					match_failed = true;
-				}
 			}
 			else
 			{
 				char *p_start = p;
-				int len = plen, matched_len = 0;
+				int  len = plen, matched_len = 0;
 
 				while (plen > 0 && *p != '[' && *p != '_')
 				{
@@ -1855,10 +1851,8 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 
 		if (plen == 0 && match_failed == false && (tlen == 0 || end_offset == 1))
 		{
-			pfree(input_str);
-			pfree(pattern_str);
-			pfree(pattern_stripped);
-			PG_RETURN_INT32(result);
+			result = itr;
+			break;
 		}
 
 		input_str_itr += pg_mblen(input_str_itr);
@@ -1868,5 +1862,5 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 	pfree(pattern_str);
 	pfree(pattern_stripped);
 
-    PG_RETURN_INT32(0);
+    PG_RETURN_INT32(result);
 }
