@@ -43,3 +43,11 @@ GO
 
 DROP PROCEDURE master_dbo.sp_addlinkedsrvlogin;
 GO
+
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_4390_user_l1 WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_4390_user_l2 WITH PASSWORD = 'abc';
+GO

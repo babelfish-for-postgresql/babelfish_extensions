@@ -1,4 +1,4 @@
--- tsql user=babel_4390_user_l2 password=12345678
+-- tsql user=babel_4390_user_l2 password=abc
 DROP PROCEDURE IF EXISTS babel_4390_prepare_p1;
 GO
 
@@ -29,7 +29,7 @@ GO
 DROP PROCEDURE IF EXISTS babel_4390_prepare_p9;
 GO
 
--- tsql user=babel_4390_user_l1 password=12345678
+-- tsql user=babel_4390_user_l1 password=abc
 DROP PROCEDURE IF EXISTS babel_4390_test_schema_s1.xp_qv;
 GO
 
