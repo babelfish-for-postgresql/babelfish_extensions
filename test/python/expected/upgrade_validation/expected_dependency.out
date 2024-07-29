@@ -1,5 +1,4 @@
 Could not find dependencies on
-Collation sys.arabic_cs_as
 Collation sys.bbf_unicode_cp1250_ci_ai
 Collation sys.bbf_unicode_cp1250_cs_ai
 Collation sys.bbf_unicode_cp1251_ci_ai
@@ -37,8 +36,6 @@ Collation sys.bbf_unicode_pref_cp1257_cs_as
 Collation sys.bbf_unicode_pref_cp1258_cs_as
 Collation sys.bbf_unicode_pref_cp1_cs_as
 Collation sys.bbf_unicode_pref_cp874_cs_as
-Collation sys.chinese_prc_ci_as
-Collation sys.chinese_prc_cs_as
 Collation sys.cyrillic_general_ci_ai
 Collation sys.cyrillic_general_ci_as
 Collation sys.estonian_ci_as
@@ -223,6 +220,7 @@ Function sys.bbf_binary_cmp(sys.bbf_binary,sys.bbf_binary)
 Function sys.bbf_binary_varbinary_cmp(sys.bbf_binary,sys.bbf_varbinary)
 Function sys.bbf_get_context_info()
 Function sys.bbf_get_current_physical_schema_name(text)
+Function sys.bbf_get_immediate_base_type_of_udt(oid)
 Function sys.bbf_is_shared_schema(text)
 Function sys.bbf_pivot()
 Function sys.bbf_varbinary(sys.geography)
@@ -476,6 +474,8 @@ Function sys.geometry_helper(bytea)
 Function sys.geompoint_helper(double precision,double precision,integer)
 Function sys.get_current_full_xact_id()
 Function sys.get_host_os()
+Function sys.get_icu_major_version()
+Function sys.get_icu_minor_version()
 Function sys.get_valid_srids()
 Function sys.getdate()
 Function sys.getutcdate()
@@ -519,6 +519,7 @@ Function sys.int8fixeddecimaldiv(bigint,sys.fixeddecimal)
 Function sys.int8fixeddecimaldiv(bigint,sys.smallmoney)
 Function sys.int8rowversion(bigint,integer,boolean)
 Function sys.int8varbinary(bigint,integer,boolean)
+Function sys.is_collated_ai(text)
 Function sys.is_collated_ci_as(text)
 Function sys.is_collated_ci_as_internal(text)
 Function sys.is_member(character varying)
@@ -578,7 +579,7 @@ Function sys.rand(integer)
 Function sys.real_larger(sys."real",sys."real")
 Function sys.real_smaller(sys."real",sys."real")
 Function sys.real_sqlvariant(real)
-Function sys.replicate(text,integer)
+Function sys.remove_accents_internal_using_cache(text)
 Function sys.role_id(sys.sysname)
 Function sys.round(numeric,integer)
 Function sys.round(numeric,integer,integer)
@@ -815,7 +816,6 @@ Operator sys.+(sys.fixeddecimal,integer)
 Operator sys.+(sys.fixeddecimal,smallint)
 Operator sys.+(sys.fixeddecimal,sys.fixeddecimal)
 Operator sys.+(sys.nvarchar,sys."varchar")
-Operator sys.+(sys.nvarchar,sys.nvarchar)
 Operator sys.+(sys.smallmoney,bigint)
 Operator sys.+(sys.smallmoney,integer)
 Operator sys.+(sys.smallmoney,smallint)

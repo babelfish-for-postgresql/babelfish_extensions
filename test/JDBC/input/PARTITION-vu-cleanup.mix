@@ -13,6 +13,12 @@ GO
 DROP VIEW GetPartitionSchemesMetadataView
 GO
 
+DROP VIEW GetPartitionedTableListFromSysTablesView
+GO
+
+DROP VIEW GetPartitionedIndexListFromSysIndexesView
+GO
+
 DROP FUNCTION PartitionFunctionContainsDuplicateName
 GO
 
@@ -25,6 +31,202 @@ GO
 DROP FUNCTION PartitionSchemeContainsDuplicateIDs
 GO
 
+DROP VIEW GetPartitionSchemeOrFilegroupForTableOrIndex
+GO
+
+DROP VIEW GetFileGroupMappingOfPartitionScheme
+GO
+
+DROP VIEW GetPartitionedTablePartitioningColumn
+GO
+
+DROP VIEW GetPartitionedIndexPartitioningColumn
+GO
+
+DROP VIEW GetSysPartitionsMetadata
+GO
+
+--------------------------------------------------
+--- DROP Partitioned Index
+--------------------------------------------------
+DROP INDEX partition_vu_prepare_sqlvariant_index ON partition_vu_prepare_sqlvariant_table;
+GO
+
+DROP INDEX partition_vu_prepare_uniqueidentifier_index ON partition_vu_prepare_uniqueidentifier_table;
+GO
+
+DROP INDEX partition_vu_prepare_varbinary_index ON partition_vu_prepare_varbinary_table;
+GO
+
+DROP INDEX partition_vu_prepare_binary_index ON partition_vu_prepare_binary_table;
+GO
+
+DROP INDEX partition_vu_prepare_nchar_index ON partition_vu_prepare_nchar_table;
+GO
+
+DROP INDEX partition_vu_prepare_nvarchar_index ON partition_vu_prepare_nvarchar_table;
+GO
+
+DROP INDEX partition_vu_prepare_varchar_index ON partition_vu_prepare_varchar_table;
+GO
+
+DROP INDEX partition_vu_prepare_char_index ON partition_vu_prepare_char_table;
+GO
+
+DROP INDEX partition_vu_prepare_smalldatetime_index ON partition_vu_prepare_smalldatetime_table;
+GO
+
+DROP INDEX partition_vu_prepare_datetime2_index ON partition_vu_prepare_datetime2_table;
+GO
+
+DROP INDEX partition_vu_prepare_datetime_index ON partition_vu_prepare_datetime_table;
+GO
+
+DROP INDEX partition_vu_prepare_date_index ON partition_vu_prepare_date_table;
+GO
+
+DROP INDEX partition_vu_prepare_smallmoney_index ON partition_vu_prepare_smallmoney_table;
+GO
+
+DROP INDEX partition_vu_prepare_money_index ON partition_vu_prepare_money_table;
+GO
+
+DROP INDEX partition_vu_prepare_numeric_index ON partition_vu_prepare_numeric_table;
+GO
+
+DROP INDEX partition_vu_prepare_decimal_index ON partition_vu_prepare_decimal_table;
+GO
+
+DROP INDEX partition_vu_prepare_tinyint_index ON partition_vu_prepare_tinyint_table;
+GO
+
+DROP INDEX partition_vu_prepare_smallint_index ON partition_vu_prepare_smallint_table;
+GO
+
+DROP INDEX partition_vu_prepare_bigint_index ON partition_vu_prepare_bigint_table;
+GO
+
+DROP INDEX partition_vu_prepare_int_index ON partition_vu_prepare_int_table;
+GO
+
+DROP INDEX PARTITION_INDEXログインαιώνια ON PARTITION_TABLEログインαιώνια
+GO
+
+DROP INDEX [PARTITION_INDEX 유니코드스키마👻  ] ON [PARTITION_TABLE  유니코드스키마👻  ]
+GO
+
+DROP INDEX partition_vu_prepare_normal_index ON partition_vu_prepare_normal_table
+GO
+
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+DROP INDEX "PARTITION_INDEX 😎$@ #123 🌍rder  " ON "PARTITION_TABLE 😎$@ #123 🌍rder  "
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+DROP INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+GO
+
+DROP INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+GO
+--------------------------------------------------
+--- DROP Partitioned Table
+--------------------------------------------------
+DROP TABLE partition_vu_prepare_sqlvariant_table;
+GO
+
+DROP TABLE partition_vu_prepare_uniqueidentifier_table;
+GO
+
+DROP TABLE partition_vu_prepare_varbinary_table;
+GO
+
+DROP TABLE partition_vu_prepare_binary_table;
+GO
+
+DROP TABLE partition_vu_prepare_nchar_table;
+GO
+
+DROP TABLE partition_vu_prepare_nvarchar_table;
+GO
+
+DROP TABLE partition_vu_prepare_varchar_table;
+GO
+
+DROP TABLE partition_vu_prepare_char_table;
+GO
+
+DROP TABLE partition_vu_prepare_smalldatetime_table;
+GO
+
+DROP TABLE partition_vu_prepare_datetime2_table;
+GO
+
+DROP TABLE partition_vu_prepare_datetime_table;
+GO
+
+DROP TABLE partition_vu_prepare_date_table;
+GO
+
+DROP TABLE partition_vu_prepare_smallmoney_table;
+GO
+
+DROP TABLE partition_vu_prepare_money_table;
+GO
+
+DROP TABLE partition_vu_prepare_numeric_table;
+GO
+
+DROP TABLE partition_vu_prepare_decimal_table;
+GO
+
+DROP TABLE partition_vu_prepare_tinyint_table;
+GO
+
+DROP TABLE partition_vu_prepare_smallint_table;
+GO
+
+DROP TABLE partition_vu_prepare_bigint_table;
+GO
+
+DROP TABLE partition_vu_prepare_int_table;
+GO
+
+DROP TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
+GO
+
+DROP TABLE PARTITION_TABLEログインαιώνια
+GO
+
+DROP TABLE [PARTITION_TABLE  유니코드스키마👻  ]
+GO
+
+DROP TABLE partition_vu_prepare_normal_table
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+DROP TABLE "PARTITION_TABLE 😎$@ #123 🌍rder  "
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+DROP TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+GO
+
+DROP TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+GO
+
+DROP SCHEMA PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+GO
 --------------------------------------------------
 --- DROP Partition Scheme
 --------------------------------------------------
@@ -44,6 +246,12 @@ DROP PARTITION SCHEME DecimalPartitionScheme
 GO
 
 DROP PARTITION SCHEME NumericPartitionScheme
+GO
+
+DROP PARTITION SCHEME MoneyPartitionScheme
+GO
+
+DROP PARTITION SCHEME SmallMoneyPartitionScheme
 GO
 
 DROP PARTITION SCHEME DatePartitionScheme
@@ -88,19 +296,22 @@ GO
 DROP PARTITION SCHEME PARTITION_SCHEMEログインαιώνια
 GO
 
-DROP PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻]
+DROP PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ]
 GO
 
 SET QUOTED_IDENTIFIER ON;
 GO
 
-DROP PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder"
+DROP PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder  "
 Go
 
 SET QUOTED_IDENTIFIER OFF;
 GO
 
---------------------------------------------------
+DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+GO
+
+-------------------------------------------
 --- DROP Partition Function
 -------------------------------------------
 DROP PARTITION FUNCTION IntPartitionFunction 
@@ -172,8 +383,15 @@ GO
 DROP PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια
 GO
 
-DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻]
+DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻  ]
 GO
+
+DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+GO
+
+---------------------------
+--- DROP Procedures
+---------------------------
 
 DROP PROCEDURE PartitionProcedureCreatePartitionFunction
 GO
@@ -181,7 +399,10 @@ GO
 DROP PROCEDURE PartitionProcedureCreatePartitionScheme
 GO
 
-DROP PROCEDURE PartitionProcedureCreatePartitionFunctionAndScheme
+DROP PROCEDURE PartitionProcedureCreatePartitionTable
+GO
+
+DROP PROCEDURE PartitionProcedureCreatePartitionFunctionSchemeAndTable
 GO
 
 DROP PROCEDURE PartitionProcedureDropPartitionFunction
@@ -190,14 +411,17 @@ GO
 DROP PROCEDURE PartitionProcedureDropPartitionScheme
 GO
 
-DROP PROCEDURE PartitionProcedureDropPartitionFunctionAndScheme
+DROP PROCEDURE PartitionProcedureDropPartitionTable
+GO
+
+DROP PROCEDURE PartitionProcedureDropPartitionFunctionSchemeAndTable
 GO
 
 
 SET QUOTED_IDENTIFIER ON;
 GO
 
-DROP PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder"
+DROP PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  "
 Go
 
 SET QUOTED_IDENTIFIER OFF;
@@ -214,3 +438,14 @@ go
 
 DROP DATABASE PartitionDb
 go
+
+-- validate that catalogs don't have stale entries
+-- psql
+SELECT count(*) FROM sys.babelfish_partition_function;
+GO
+
+SELECT count(*) FROM sys.babelfish_partition_scheme
+GO
+
+SELECT count(*) FROM sys.babelfish_partition_depend
+GO

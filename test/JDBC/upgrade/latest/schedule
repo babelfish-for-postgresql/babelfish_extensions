@@ -53,7 +53,7 @@ BABEL-2805
 BABEL-2812
 BABEL-2819
 BABEL-2845
-BABEL-2877
+babelfish_function_ext
 BABEL-2884
 BABEL-2917
 BABEL-2944
@@ -528,7 +528,13 @@ alter-procedure
 1_GRANT_SCHEMA
 BABEL-4707
 BABEL_4817
+upper_lower
 BABEL-4641
+trim
+ltrim
+rtrim
+left
+right
 BABEL-4863
 babel_test_int4_numeric_oper
 babel_test_int8_numeric_oper
@@ -544,3 +550,7 @@ BABEL-3401
 BABEL-3820
 PARTITION
 BABEL-5071
+string_agg
+reverse
+sys_sequences
+replicate

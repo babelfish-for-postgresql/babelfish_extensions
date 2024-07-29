@@ -135,9 +135,128 @@ RETURN
 GO
 
 
+CREATE VIEW GetPartitionSchemeOrFilegroupForTableOrIndex
+AS 
+(
+    SELECT
+        o.name AS TableName,
+        i.name AS IndexName,
+        ds.name AS PartitionSchemeOrFilegroupName
+    FROM
+        sys.indexes i
+    INNER JOIN
+        sys.objects o ON i.object_id = o.object_id
+    INNER JOIN
+        sys.data_spaces ds ON i.data_space_id = ds.data_space_id
+    WHERE
+        o.name like 'partition_vu_prepare%'
+    ORDER BY
+        o.name, i.name
+)
+GO
+
+
+CREATE VIEW GetFileGroupMappingOfPartitionScheme
+AS 
+(
+    SELECT
+        ps.name AS PartitionSchemeName,
+        sf.name AS FileGroupName,
+        dds.destination_id AS DestinationId
+    FROM
+        sys.partition_schemes AS ps
+    INNER JOIN
+        sys.destination_data_spaces AS dds ON dds.partition_scheme_id = ps.data_space_id
+    INNER JOIN
+        sys.filegroups AS sf ON sf.data_space_id = dds.data_space_id
+    WHERE
+    -- fetch only these two because they covers both possible value of next_used
+        ps.name in ('IntPartitionScheme', 'SmallIntPartitionScheme')
+    ORDER BY
+        ps.name, dds.destination_id
+)
+GO
+
+
+CREATE VIEW GetPartitionedTablePartitioningColumn
+AS
+(
+    SELECT
+        tbl.name AS TableName,
+        c.name AS PartitioningColumn,
+        ic.partition_ordinal AS PartitionOrdinal
+    FROM
+        sys.tables AS tbl
+    INNER JOIN 
+        sys.index_columns ic ON (ic.index_id = 0 AND ic.partition_ordinal > 0 AND ic.object_id = tbl.object_id)
+    INNER JOIN
+        sys.columns c ON (c.object_id = ic.object_id AND c.column_id = ic.column_id)
+    WHERE
+        tbl.name like 'partition_vu_prepare%'
+    ORDER BY
+        tbl.name
+)
+GO
+
+CREATE VIEW GetPartitionedIndexPartitioningColumn
+AS
+(
+    SELECT
+        idx.name AS IndexName,
+        OBJECT_NAME(idx.object_id) AS TableName,
+        c.name AS PartitioningColumn,
+        ic.partition_ordinal AS PartitionOrdinal
+    FROM
+        sys.indexes AS idx
+    INNER JOIN 
+        sys.index_columns ic ON (ic.partition_ordinal > 0 AND ic.object_id = idx.object_id)
+    INNER JOIN
+        sys.columns c ON (c.object_id = ic.object_id AND c.column_id = ic.column_id)
+    WHERE
+        idx.name like 'partition_vu_prepare%'
+    ORDER BY
+       idx.name
+)
+GO
+
+
+CREATE VIEW GetSysPartitionsMetadata
+AS
+(
+    SELECT
+        OBJECT_NAME(partition_id) AS PartitionName,
+        partition_number,
+        index_id
+    FROM
+        sys.partitions,
+        OBJECT_NAME(object_id) AS ParentName
+    WHERE
+        ParentName IN ('partition_vu_prepare_int_table', 'partition_vu_prepare_normal_table')
+    ORDER BY
+        ParentName, partition_number
+)
+GO
+
+--------------------------------------------------
+--- Create Normal TABLE and INDEX for Views testing
+--------------------------------------------------
+CREATE TABLE partition_vu_prepare_normal_table (
+    Id INT,
+    Value sys.varchar(50)
+);
+GO
+
+CREATE INDEX partition_vu_prepare_normal_index
+ON partition_vu_prepare_normal_table(Value);
+GO
+
+
+
 --------------------------------------------------
 --- Supported Datatypes for Partition Function 
 --------------------------------------------------
+-- all datatypes should sort and store the values in ascending order by itself
+-- and input values should be implicit casted into specified type
 -- using local variable in args
 declare @a int = 0;
 declare @b int = 500;
@@ -146,9 +265,9 @@ CREATE PARTITION FUNCTION IntPartitionFunction (int)
 AS RANGE RIGHT FOR VALUES (@a, @b, @c);
 GO
 
--- all datatypes should sort and store the values in ascending order by itself
--- and input values should be implicit casted into specified type
-CREATE PARTITION FUNCTION BigIntPartitionFunction (bigint)
+
+-- explicit schema can also be specified with paramater type
+CREATE PARTITION FUNCTION BigIntPartitionFunction (sys.bigint)
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
 GO
 
@@ -156,7 +275,8 @@ CREATE PARTITION FUNCTION SmallIntPartitionFunction (smallint)
 AS RANGE RIGHT FOR VALUES (cast(32767 as bigint), -32768, 0);
 GO
 
-CREATE PARTITION FUNCTION TinyIntPartitionFunction (tinyint)
+-- explicit schema can also be specified with paramater type
+CREATE PARTITION FUNCTION TinyIntPartitionFunction (sys.tinyint)
 AS RANGE RIGHT FOR VALUES (0, cast(255 as varchar), 128);
 GO
 
@@ -237,6 +357,10 @@ CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdef
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
 GO
 
+CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder (bigint)
+AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
+GO
+
 CREATE PARTITION FUNCTION PartitionFunctionHavingDifferentCollationInput (NVARCHAR(50))
 AS RANGE RIGHT
 FOR VALUES (
@@ -252,17 +376,19 @@ GO
 --- Partition Scheme
 --------------------------------------------------
 -- without all option
+-- filegroups are equal to partition that will generated by function
 CREATE PARTITION SCHEME IntPartitionScheme AS
 PARTITION IntPartitionFunction 
 TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
 GO
 
--- with all option
+-- filgroups are more than partition that will generated by function
 CREATE PARTITION SCHEME BigIntPartitionScheme AS
 PARTITION BigIntPartitionFunction 
-ALL TO ([PRIMARY]);
+TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
 GO
 
+-- with all option
 CREATE PARTITION SCHEME SmallIntPartitionScheme AS
 PARTITION SmallIntPartitionFunction 
 ALL TO ([PRIMARY]);
@@ -280,6 +406,16 @@ GO
 
 CREATE PARTITION SCHEME NumericPartitionScheme AS
 PARTITION NumericPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME MoneyPartitionScheme AS
+PARTITION MoneyPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME SmallMoneyPartitionScheme AS
+PARTITION SmallMoneyPartitionFunction 
 ALL TO ([PRIMARY]);
 GO
 
@@ -349,6 +485,39 @@ PARTITION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuv
 ALL TO ([PRIMARY]);
 GO
 
+CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder AS
+PARTITION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+ALL TO ([PRIMARY]);
+GO
+
+CREATE SCHEMA PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+GO
+
+CREATE TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz (
+    PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz BIGINT,
+    Value sys.varchar(50)
+) ON   PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz    (PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
+GO
+
+CREATE INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz(Value)
+ON PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
+(PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
+GO
+
+CREATE TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder (
+    PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz BIGINT,
+    Value sys.varchar(50)
+) ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder   
+(PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
+GO
+
+CREATE INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder(Value)
+ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder 
+(PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
+GO
+
 --------------------------------------------------
 --- name identifiers test
 --------------------------------------------------
@@ -361,27 +530,60 @@ PARTITION PARTITION_FUNCTIONログインαιώνια
 ALL TO ([PRIMARY]);
 GO
 
-CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻] (int)
+CREATE TABLE PARTITION_TABLEログインαιώνια (
+    PARTITION_COLUMNログインαιώνια INT,
+    Value sys.varchar(50)
+) ON PARTITION_SCHEMEログインαιώνια(PARTITION_COLUMNログインαιώνια);
+GO
+
+CREATE INDEX PARTITION_INDEXログインαιώνια
+ON PARTITION_TABLEログインαιώνια(Value)
+ON PARTITION_SCHEMEログインαιώνια(PARTITION_COLUMNログインαιώνια);
+GO
+
+CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻  ] (int)
 AS RANGE RIGHT FOR VALUES (0, 500, 1000);
 GO
 
-CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻] AS
-PARTITION [PARTITION_FUNCTION  유니코드스키마👻]
+CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ] AS
+PARTITION [PARTITION_FUNCTION  유니코드스키마👻  ]
 ALL TO ([PRIMARY]);
 GO
 
+CREATE TABLE [PARTITION_TABLE  유니코드스키마👻  ](
+    [PARTITION_COLUMN  유니코드스키마👻  ] INT,
+    Value sys.varchar(50)
+) ON [PARTITION_SCHEME  유니코드스키마👻  ]([PARTITION_COLUMN  유니코드스키마👻  ]);
+GO
+
+CREATE INDEX [PARTITION_INDEX 유니코드스키마👻  ]
+ON [PARTITION_TABLE  유니코드스키마👻  ](Value)
+ON [PARTITION_SCHEME  유니코드스키마👻  ]([PARTITION_COLUMN  유니코드스키마👻  ]);
+GO
 
 -- qouted identifer
 SET QUOTED_IDENTIFIER ON;
 GO
 
-CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder" (int)
+CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  " (int)
 AS RANGE RIGHT FOR VALUES (0, 500, 1000);
 GO
 
-CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder" AS
-PARTITION "PARTITION_FUNCTION 😎$@ #123 🌍rder"
+CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder  " AS
+PARTITION "PARTITION_FUNCTION 😎$@ #123 🌍rder  "
 ALL TO ([PRIMARY]);
+GO
+
+
+CREATE TABLE "PARTITION_TABLE 😎$@ #123 🌍rder  " (
+    "PARTITION_COLUMN 😎$@ #123 🌍rder  " INT,
+    Value sys.varchar(50)
+) ON "PARTITION_SCHEME 😎$@ #123 🌍rder  " ("PARTITION_COLUMN 😎$@ #123 🌍rder  ");
+GO
+
+CREATE INDEX "PARTITION_INDEX 😎$@ #123 🌍rder  "
+ON "PARTITION_TABLE 😎$@ #123 🌍rder  " (Value)
+ON "PARTITION_SCHEME 😎$@ #123 🌍rder  "("PARTITION_COLUMN 😎$@ #123 🌍rder  ");
 GO
 
 SET QUOTED_IDENTIFIER OFF;
@@ -406,11 +608,22 @@ PARTITION PartitionDb_PartitionFunction
 ALL TO ([PRIMARY]);
 GO
 
+CREATE TABLE PartitionDb_PartitionTable (
+    Id INT,
+    Value sys.varchar(50)
+) ON PartitionDb_PartitionScheme(Id);
+GO
+
+CREATE INDEX PartitionDb_PartitionIndex
+ON PartitionDb_PartitionTable(Id)
+ON PartitionDb_PartitionScheme (Id);
+GO
+
 USE MASTER
 go
 
 ---------------------------------------------------------------
---- CREATE/DROP Partition Function/Scheme inside Procedure
+--- CREATE/DROP Partition Function/Scheme/Table inside Procedure
 ---------------------------------------------------------------
 CREATE PROCEDURE PartitionProcedureCreatePartitionFunction AS
 BEGIN
@@ -427,14 +640,26 @@ ALL TO ([PRIMARY])
 END;
 GO
 
+CREATE PROCEDURE PartitionProcedureCreatePartitionTable AS
+BEGIN
+CREATE TABLE PartitionTableInsideProc1(
+    Id INT,
+    Value sys.varchar(50)
+) ON PartitionSchemeInsideProc1(Id);
+END;
+GO
 
-CREATE PROCEDURE PartitionProcedureCreatePartitionFunctionAndScheme AS
+CREATE PROCEDURE PartitionProcedureCreatePartitionFunctionSchemeAndTable AS
 BEGIN
 CREATE PARTITION FUNCTION PartitionFunctionInsideProc2 (int)
 AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
 CREATE PARTITION SCHEME PartitionSchemeInsideProc2 AS
 PARTITION PartitionFunctionInsideProc2
 ALL TO ([PRIMARY]);
+CREATE TABLE PartitionTableInsideProc2(
+    Id INT,
+    Value sys.varchar(50)
+) ON PartitionSchemeInsideProc2(Id);
 END;
 Go
 
@@ -450,9 +675,651 @@ DROP PARTITION SCHEME PartitionSchemeInsideProc1
 END;
 GO
 
-CREATE PROCEDURE PartitionProcedureDropPartitionFunctionAndScheme AS
+CREATE PROCEDURE PartitionProcedureDropPartitionTable AS
 BEGIN
+DROP TABLE PartitionTableInsideProc1
+END;
+GO
+
+CREATE PROCEDURE PartitionProcedureDropPartitionFunctionSchemeAndTable AS
+BEGIN
+DROP TABLE PartitionTableInsideProc2;
 DROP PARTITION SCHEME PartitionSchemeInsideProc2;
 DROP PARTITION FUNCTION PartitionFunctionInsideProc2;
 END;
 Go
+
+USE master;
+go
+---------------------------------------------------------------------------
+--- CREATE PARTITIONED TABLES with PARTITION SCHEME for different datatypes
+---------------------------------------------------------------------------
+-- int data type
+CREATE TABLE partition_vu_prepare_int_table (
+    Value sys.varchar(50),
+    Id INT UNIQUE
+) ON IntPartitionScheme(Id);
+GO
+
+-- add constraint
+ALTER TABLE partition_vu_prepare_int_table ADD CONSTRAINT check_value_not_null CHECK(value IS NOT NULL);
+GO
+
+-- bigint data type
+CREATE TABLE partition_vu_prepare_bigint_table (
+    Id BIGINT,
+    Value sys.varchar(50)
+) ON BigIntPartitionScheme--this is comment should get ignored
+(Id);
+GO
+
+-- smallint data type
+CREATE TABLE partition_vu_prepare_smallint_table (
+    Id SMALLINT,
+    Value sys.varchar(50)
+) ON SmallIntPartitionScheme(Id);
+GO
+
+-- tinyint data type
+CREATE TABLE partition_vu_prepare_tinyint_table (
+    Id TINYINT,
+    Value sys.varchar(50)
+) ON TinyIntPartitionScheme(Id);
+GO
+
+-- decimal data type
+CREATE TABLE partition_vu_prepare_decimal_table (
+    Id DECIMAL(10, 5),
+    Value sys.varchar(50)
+) ON DecimalPartitionScheme(Id);
+GO
+
+-- numeric data type
+CREATE TABLE partition_vu_prepare_numeric_table (
+    Id NUMERIC(5, 2),
+    Value sys.varchar(50)
+) ON NumericPartitionScheme(Id);
+GO
+
+-- money data type
+CREATE TABLE partition_vu_prepare_money_table (
+    Id MONEY,
+    Value sys.varchar(50)
+) ON MoneyPartitionScheme(Id);
+GO
+
+-- smallmoney data type
+CREATE TABLE partition_vu_prepare_smallmoney_table (
+    Id SMALLMONEY,
+    Value sys.varchar(50)
+) ON SmallMoneyPartitionScheme(Id);
+GO
+
+-- date data type
+CREATE TABLE partition_vu_prepare_date_table (
+    Id DATE,
+    Value sys.varchar(50)
+) ON DatePartitionScheme(Id);
+GO
+
+-- datetime data type
+CREATE TABLE partition_vu_prepare_datetime_table (
+    Id DATETIME,
+    Value sys.varchar(50)
+) ON DateTimePartitionScheme(Id);
+GO
+
+-- datetime2 data type
+CREATE TABLE partition_vu_prepare_datetime2_table (
+    Id DATETIME2(3),
+    Value sys.varchar(50)
+) ON DateTime2PartitionScheme(Id);
+GO
+
+-- smalldatetime data type
+CREATE TABLE partition_vu_prepare_smalldatetime_table (
+    Id SMALLDATETIME,
+    Value sys.varchar(50)
+) ON SmallDateTimePartitionScheme(Id);
+GO
+
+-- char data type
+CREATE TABLE partition_vu_prepare_char_table (
+    Id CHAR(5),
+    Value sys.varchar(50)
+) ON CharPartitionScheme(Id);
+GO
+
+-- varchar data type
+CREATE TABLE partition_vu_prepare_varchar_table (
+    Id VARCHAR(10),
+    Value sys.varchar(50)
+) ON VarCharPartitionScheme(Id);
+GO
+
+-- nvarchar data type
+CREATE TABLE partition_vu_prepare_nvarchar_table (
+    Id NVARCHAR(10),
+    Value sys.varchar(50)
+) ON NVarCharPartitionScheme(Id);
+GO
+
+-- nchar data type
+CREATE TABLE partition_vu_prepare_nchar_table (
+    Id NCHAR(5),
+    Value sys.varchar(50)
+) ON NCharPartitionScheme(Id);
+GO
+
+-- binary data type
+CREATE TABLE partition_vu_prepare_binary_table (
+    Id BINARY(4),
+    Value sys.varchar(50)
+) ON BinaryPartitionScheme(Id);
+GO
+
+-- varbinary data type
+CREATE TABLE partition_vu_prepare_varbinary_table (
+    Id VARBINARY(8),
+    Value sys.varchar(50)
+) ON VarBinaryPartitionScheme(Id);
+GO
+
+-- uniqueidentifier data type
+CREATE TABLE partition_vu_prepare_uniqueidentifier_table (
+    Id UNIQUEIDENTIFIER,
+    Value sys.varchar(50)
+) ON UniqueIdentifierPartitionScheme(Id);
+GO
+
+-- sql_variant data type
+CREATE TABLE partition_vu_prepare_sqlvariant_table (
+    Id SQL_VARIANT,
+    Value sys.varchar(50)
+) ON SqlVariantPartitionScheme(Id);
+GO
+
+-- identifier length greater than 64
+CREATE TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (
+    Id INT,
+    Value sys.varchar(50)
+) ON IntPartitionScheme(Id);
+GO
+
+CREATE VIEW GetPartitionedTableListFromSysTablesView
+AS
+(
+    SELECT
+        name
+    FROM 
+        sys.tables
+    WHERE
+        name like '%partition_vu_prepare%'
+    ORDER BY
+        name
+)
+GO
+
+---------------------------------------------------------------------------
+--- CREATE ALIGNED PARTITIONED INDEX with PARTITION SCHEME
+---------------------------------------------------------------------------
+-- using schema name
+CREATE INDEX partition_vu_prepare_int_index
+ON dbo.partition_vu_prepare_int_table(Value)
+ON IntPartitionScheme (Id);
+GO
+
+-- without explicit schema name
+CREATE INDEX partition_vu_prepare_bigint_index
+ON partition_vu_prepare_bigint_table(Id)
+ON BigIntPartitionScheme (Id);
+GO
+
+-- without partition scheme should also work
+CREATE INDEX partition_vu_prepare_smallint_index
+ON partition_vu_prepare_smallint_table--this is comment should get ignored
+(Id)
+GO
+
+CREATE INDEX partition_vu_prepare_tinyint_index
+ON partition_vu_prepare_tinyint_table(Id)
+ON TinyIntPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_decimal_index
+ON partition_vu_prepare_decimal_table(Id)
+ON DecimalPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_numeric_index
+ON partition_vu_prepare_numeric_table(Id)
+ON NumericPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_money_index
+ON partition_vu_prepare_money_table(Id)
+ON MoneyPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_smallmoney_index
+ON partition_vu_prepare_smallmoney_table(Id)
+ON SmallMoneyPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_date_index
+ON partition_vu_prepare_date_table(Id)
+ON DatePartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_datetime_index
+ON partition_vu_prepare_datetime_table(Id)
+ON DateTimePartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_datetime2_index
+ON partition_vu_prepare_datetime2_table(Id)
+ON DateTime2PartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_smalldatetime_index
+ON partition_vu_prepare_smalldatetime_table(Id)
+ON SmallDateTimePartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_char_index
+ON partition_vu_prepare_char_table(Id)
+ON CharPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_varchar_index
+ON partition_vu_prepare_varchar_table(Id)
+ON VarCharPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_nvarchar_index
+ON partition_vu_prepare_nvarchar_table(Id)
+ON NVarCharPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_nchar_index
+ON partition_vu_prepare_nchar_table(Id)
+ON NCharPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_binary_index
+ON partition_vu_prepare_binary_table(Id)
+ON BinaryPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_varbinary_index
+ON partition_vu_prepare_varbinary_table(Id)
+ON VarBinaryPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_uniqueidentifier_index
+ON partition_vu_prepare_uniqueidentifier_table(Id)
+ON UniqueIdentifierPartitionScheme (Id);
+GO
+
+CREATE INDEX partition_vu_prepare_sqlvariant_index
+ON partition_vu_prepare_sqlvariant_table(Id)
+ON SqlVariantPartitionScheme (Id);
+GO
+
+CREATE VIEW GetPartitionedIndexListFromSysIndexesView
+AS
+(
+    SELECT
+        name
+    FROM
+        sys.indexes
+    WHERE
+       name like '%partition_vu_prepare%'
+    ORDER BY
+        name
+)
+GO
+
+---------------------------------------------------------------------------
+--- Insert data into partitioned tables
+---------------------------------------------------------------------------
+-- Insert values into partition_vu_prepare_int_table
+INSERT INTO partition_vu_prepare_int_table (Id, Value) VALUES (1, 'Value 1');
+INSERT INTO partition_vu_prepare_int_table (Id, Value) VALUES (100, 'Value 100');
+INSERT INTO partition_vu_prepare_int_table (Id, Value) VALUES (10000, 'Value 10000');
+INSERT INTO partition_vu_prepare_int_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_bigint_table
+INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (1, 'Value 1');
+INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (100, 'Value 100');
+INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (10000, 'Value 10000');
+INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (1000000000, 'Value 1000000000');
+INSERT INTO partition_vu_prepare_bigint_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_smallint_table
+INSERT INTO partition_vu_prepare_smallint_table (Id, Value) VALUES (1, 'Value 1');
+INSERT INTO partition_vu_prepare_smallint_table (Id, Value) VALUES (-32768, 'Value -32768');
+INSERT INTO partition_vu_prepare_smallint_table (Id, Value) VALUES (32767, 'Value 32767');
+INSERT INTO partition_vu_prepare_smallint_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_tinyint_table
+INSERT INTO partition_vu_prepare_tinyint_table (Id, Value) VALUES (1, 'Value 1');
+INSERT INTO partition_vu_prepare_tinyint_table (Id, Value) VALUES (128, 'Value 128');
+INSERT INTO partition_vu_prepare_tinyint_table (Id, Value) VALUES (255, 'Value 255');
+INSERT INTO partition_vu_prepare_tinyint_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_decimal_table
+INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (1.0, 'Value 1.0');
+INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (100.0, 'Value 100.0');
+INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (200.0, 'Value 200.0');
+INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (300.0, 'Value 300.0');
+INSERT INTO partition_vu_prepare_decimal_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_numeric_table
+INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (1.0, 'Value 1.0');
+INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (10.0, 'Value 10.0');
+INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (20.0, 'Value 20.0');
+INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (30.0, 'Value 30.0');
+INSERT INTO partition_vu_prepare_numeric_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_money_table
+INSERT INTO partition_vu_prepare_money_table (Id, Value) VALUES (1.0, 'Value 1.0');
+INSERT INTO partition_vu_prepare_money_table (Id, Value) VALUES (2.56789, 'Value 2.56789');
+INSERT INTO partition_vu_prepare_money_table (Id, Value) VALUES (4.91, 'Value 4.91');
+INSERT INTO partition_vu_prepare_money_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_smallmoney_table
+INSERT INTO partition_vu_prepare_smallmoney_table (Id, Value) VALUES (1.0, 'Value 1.0');
+INSERT INTO partition_vu_prepare_smallmoney_table (Id, Value) VALUES (2.56789, 'Value 2.56789');
+INSERT INTO partition_vu_prepare_smallmoney_table (Id, Value) VALUES (4.91, 'Value 4.91');
+INSERT INTO partition_vu_prepare_smallmoney_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_date_table
+INSERT INTO partition_vu_prepare_date_table (Id, Value) VALUES ('2022-01-01', 'Value 2022-01-01');
+INSERT INTO partition_vu_prepare_date_table (Id, Value) VALUES ('2022-07-01', 'Value 2022-07-01');
+INSERT INTO partition_vu_prepare_date_table (Id, Value) VALUES ('2023-01-01', 'Value 2023-01-01');
+INSERT INTO partition_vu_prepare_date_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_datetime_table
+INSERT INTO partition_vu_prepare_datetime_table (Id, Value) VALUES ('2019-01-01', 'Value 2019-01-01');
+INSERT INTO partition_vu_prepare_datetime_table (Id, Value) VALUES ('2022-01-01', 'Value 2022-01-01');
+INSERT INTO partition_vu_prepare_datetime_table (Id, Value) VALUES ('2022-07-01', 'Value 2022-07-01');
+INSERT INTO partition_vu_prepare_datetime_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_datetime2_table
+INSERT INTO partition_vu_prepare_datetime2_table (Id, Value) VALUES ('2019-01-01 00:00:00.000', 'Value 2019-01-01 00:00:00.000');
+INSERT INTO partition_vu_prepare_datetime2_table (Id, Value) VALUES ('2022-01-01 00:00:00.000', 'Value 2022-01-01 00:00:00.000');
+INSERT INTO partition_vu_prepare_datetime2_table (Id, Value) VALUES ('2022-07-01 00:00:00.000', 'Value 2022-07-01 00:00:00.000');
+INSERT INTO partition_vu_prepare_datetime2_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_smalldatetime_table
+INSERT INTO partition_vu_prepare_smalldatetime_table (Id, Value) VALUES ('2019-01-01', 'Value 2019-01-01');
+INSERT INTO partition_vu_prepare_smalldatetime_table (Id, Value) VALUES ('2022-01-01', 'Value 2022-01-01');
+INSERT INTO partition_vu_prepare_smalldatetime_table (Id, Value) VALUES ('2022-07-01', 'Value 2022-07-01');
+INSERT INTO partition_vu_prepare_smalldatetime_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_char_table
+INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES ('A', 'Value A');
+INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES ('K', 'Value K');
+INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES ('U', 'Value U');
+INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES ('D', 'Value D');
+INSERT INTO partition_vu_prepare_char_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_varchar_table
+INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES ('Apple', 'Value Apple');
+INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES ('Banana', 'Value Banana');
+INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES ('Mango', 'Value Mango');
+INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES ('Cherry', 'Value Cherry');
+INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES ('Date', 'Value Date');
+INSERT INTO partition_vu_prepare_varchar_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_nvarchar_table
+INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (N'Apple', N'Value Apple');
+INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (N'Banana', N'Value Banana');
+INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (N'Mango', N'Value Mango');
+INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (N'Cherry', N'Value Cherry');
+INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (N'Date', N'Value Date');
+INSERT INTO partition_vu_prepare_nvarchar_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_nchar_table
+INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (N'A', N'Value A');
+INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (N'K', N'Value K');
+INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (N'U', N'Value U');
+INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (N'B', N'Value B');
+INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+
+-- BABEL-4957 needs to fixed first otherwise dump/restore will fail
+-- Insert values into partition_vu_prepare_binary_table
+-- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0000, 'Value 0x0000');
+-- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0400, 'Value 0x0400');
+-- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0800, 'Value 0x0800');
+-- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0C000, 'Value 0x0C000');
+-- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (NULL, 'Value NULL');
+-- GO
+-- Insert values into partition_vu_prepare_varbinary_table
+INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (0x0000000000000000, 'Value 0x0000000000000000');
+INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (0x4000000000000000, 'Value 0x4000000000000000');
+INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (0x8000000000000000, 'Value 0x8000000000000000');
+INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (0xC000000000000000, 'Value 0xC000000000000000');
+INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_uniqueidentifier_table
+INSERT INTO partition_vu_prepare_uniqueidentifier_table (Id, Value) VALUES ('00000000-0000-0000-0000-000000000000', 'Value 00000000-0000-0000-0000-000000000000');
+INSERT INTO partition_vu_prepare_uniqueidentifier_table (Id, Value) VALUES ('6F9619FF-8B86-D011-B42D-00C04FC964FF', 'Value 6F9619FF-8B86-D011-B42D-00C04FC964FF');
+INSERT INTO partition_vu_prepare_uniqueidentifier_table (Id, Value) VALUES ('FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', 'Value FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF');
+INSERT INTO partition_vu_prepare_uniqueidentifier_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Insert values into partition_vu_prepare_sqlvariant_table
+INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST('abc' AS char(5)), 'Value abc');
+INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST(N'xyz' AS nchar(5)), N'Value xyz');
+INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST('Apple' AS VARCHAR(10)), 'Value Apple');
+INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST(N'Banana' AS NVARCHAR(10)), N'Value Banana');
+INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (CAST('Some text' AS SQL_VARIANT), 'Value Some text');
+INSERT INTO partition_vu_prepare_sqlvariant_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+---------------------------------------------------
+--- Check for inconsistent metadata before upgrade
+----------------------------------------------------
+SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+GO
+~~START~~
+int
+0
+~~END~~
+

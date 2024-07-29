@@ -54,7 +54,7 @@ BABEL-2805
 BABEL-2812
 BABEL-2819
 BABEL-2845
-BABEL-2877
+babelfish_function_ext-before_16_4_or_15_8_or_14_13
 BABEL-2884
 BABEL-2917
 BABEL-2944
@@ -238,7 +238,7 @@ ISC-Columns
 isc-schemata-dep
 ISC-sequences
 ISC-Table_Constraints
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
@@ -296,7 +296,7 @@ sys_syslogins_dep
 sys-database_recovery_status
 sys-databases
 sys-databases-dep
-sys-data_spaces
+sys-data_spaces-before-16-4
 sys-datefirst
 sys-default_constraints
 sys-default_constraints-dep
@@ -312,7 +312,7 @@ sys-eomonth
 sys-events
 sys-extended_properties
 sys-sql_expression_dependencies
-sys-filegroups
+sys-filegroups-before-16-4
 sys-filetables
 sys-filetable_system_defined_objects
 sys-foreign_key_columns
@@ -327,7 +327,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name
+sys-host_name-before-15_8-or-16_4
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns
@@ -517,6 +517,11 @@ babel_table_type
 1_GRANT_SCHEMA
 BABEL-4707
 BABEL_4817
+trim-before-15_8-or-16_4
+ltrim-before-15_8-or-16_4
+rtrim-before-15_8-or-16_4
+left-before-15_8-or-16_4
+right-before-15_8-or-16_4
 BABEL-4641
 BABEL-4863
 babel_test_int4_numeric_oper
@@ -527,9 +532,12 @@ login_token-dep
 test_like_for_AI
 babel_726
 BABEL-4869
+upper_lower-before-15_8-or-16_4
 BABEL-4815
+reverse-before-15_8-or-16_4
 BABEL-3401
 babel_4328_datetime
 babel_4328_datetime2
 babel_4328_datetimeoffset
 BABEL-3820
+replicate-before-15_8-or-16_4

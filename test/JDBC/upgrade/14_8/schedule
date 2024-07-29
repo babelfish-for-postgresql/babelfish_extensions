@@ -208,7 +208,7 @@ insteadof_nested_trigger_with_dml
 insteadoftriggers_with_transaction
 ISC-Columns
 ISC-Table_Constraints
-ISC-Tables
+ISC-Tables-before_16_4_or_15_8_or_14_13
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
@@ -256,7 +256,7 @@ sys_database_principals_dep
 sys-database_recovery_status
 sys-databases
 sys-databases-dep
-sys-data_spaces
+sys-data_spaces-before-16-4
 sys-datefirst
 sys-default_constraints
 sys-default_constraints-dep
@@ -270,7 +270,7 @@ sys-dm_os_host_info
 sys-endpoints
 sys-events
 sys-extended_properties
-sys-filegroups
+sys-filegroups-before-16-4
 sys-filetables
 sys-filetable_system_defined_objects
 sys-foreign_key_columns
@@ -285,7 +285,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name
+sys-host_name-before-15_8-or-16_4
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns
@@ -431,9 +431,17 @@ BABEL-4815
 BABEL_3571-before-15-5
 BABEL_4817
 BABEL-4641-before-16_3-or-15_7-or-14_12
+trim-before-15_8-or-16_4
+ltrim-before-15_8-or-16_4
+rtrim-before-15_8-or-16_4
+left-before-15_8-or-16_4
+right-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
+upper_lower-before-15_8-or-16_4
 babel_726-before-14_12-or-15_7-or-16_3
 BABEL-4869
 babel_4328_datetime-before-16_3
 babel_4328_datetime2-before-16_3
 babel_4328_datetimeoffset-before-16_3
+reverse-before-15_8-or-16_4
+replicate-before-15_8-or-16_4

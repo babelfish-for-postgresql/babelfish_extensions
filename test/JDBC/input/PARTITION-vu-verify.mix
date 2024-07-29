@@ -1,5 +1,12 @@
+-- parallel_query_expected
+---------------------------------------------------
+--- Check for inconsistent metadata after upgrade
+----------------------------------------------------
+SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+GO
+
 --------------------------------------------------
---- CREATE PARTITION FUNCTION/SCHEME using procedure
+--- CREATE PARTITION FUNCTION/SCHEME/TABLE using procedure
 --------------------------------------------------
 EXEC PartitionProcedureCreatePartitionFunction
 GO
@@ -7,11 +14,14 @@ GO
 EXEC PartitionProcedureCreatePartitionScheme
 GO
 
-EXEC PartitionProcedureCreatePartitionFunctionAndScheme
+EXEC PartitionProcedureCreatePartitionTable
+GO
+
+EXEC PartitionProcedureCreatePartitionFunctionSchemeAndTable
 GO
 
 --------------------------------------------------
---- CREATE PARTITION FUNCTION/SCHEME inside Function
+--- CREATE PARTITION FUNCTION/SCHEME/TABLE inside Function
 --------------------------------------------------
 CREATE FUNCTION TestFunctionCreatePartitionFunction()
 RETURNS INT
@@ -48,6 +58,26 @@ RETURNS INT
 AS
 BEGIN
     DROP PARTITION SCHEME IntPartitionScheme;
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION TestFunctionCreatePartitionTable()
+RETURNS INT
+AS
+BEGIN
+    CREATE TABLE TestPartitionTable (
+    Id INT,
+    Value sys.varchar(20)
+    ) ON IntPartitionScheme(Id);
+END;
+GO
+
+CREATE FUNCTION TestFunctionDropPartitionTable()
+RETURNS INT
+AS
+BEGIN
+    DROP TABLE partition_vu_prepare_int_table;
     RETURN 1;
 END;
 GO
@@ -228,6 +258,15 @@ CREATE PARTITION FUNCTION PartitionFunctionWithLeft (int)
 AS RANGE FOR VALUES (10, 1000, 10000);
 GO
 
+-- NULL value is not supported in range values
+CREATE PARTITION FUNCTION PartitionFunctionWithNULL (int)
+AS RANGE RIGHT FOR VALUES (10, 1000, NULL);
+GO
+
+CREATE PARTITION FUNCTION PartitionFunctionWithNULL (int)
+AS RANGE RIGHT FOR VALUES (10, 1000, NULL, NULL);
+GO
+
 --------------------------------------------------
 --- Duplicate Create of Partition Function/Scheme
 --------------------------------------------------
@@ -272,6 +311,12 @@ GO
 --- Drop of of Partition Function when there is dependent Partition Scheme
 -----------------------------------------------------------------------------------
 DROP PARTITION FUNCTION IntPartitionFunction
+GO
+
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Scheme when there is dependent Table on it
+-----------------------------------------------------------------------------------
+DROP PARTITION SCHEME IntPartitionScheme
 GO
 
 
@@ -345,7 +390,20 @@ GO
 SELECT * FROM PartitionSchemeContainsDuplicateIDs()
 GO
 
+SELECT * FROM GetPartitionSchemeOrFilegroupForTableOrIndex
+GO
 
+SELECT * FROM GetFileGroupMappingOfPartitionScheme
+GO
+
+SELECT * FROM GetPartitionedTablePartitioningColumn
+GO
+
+SELECT * FROM GetPartitionedIndexPartitioningColumn
+GO
+
+SELECT * FROM GetSysPartitionsMetadata
+GO
 
 --------------------------------------------------
 --- Test Partition Function Argument Limit
@@ -434,6 +492,11 @@ SELECT CURRENT_USER
 GO
 
 -- CREATE/DROP should throw permission error
+
+------------------------------------------------------------
+--- only db owner and logins which are member of sysadmin
+--- are allowed to create/drop partition function and scheme
+------------------------------------------------------------
 CREATE PARTITION FUNCTION TestPartitionFunction (int)
 AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
 Go
@@ -449,7 +512,9 @@ go
 DROP PARTITION SCHEME IntPartitionScheme
 go
 
--- but they can access the metadata 
+------------------------------------------
+--- all user can access the metadata
+------------------------------------------
 SELECT 
         name, type, type_desc, fanout, boundary_value_on_right, is_system
     FROM 
@@ -464,6 +529,62 @@ SELECT
         sys.partition_functions pf on (ps.function_id = pf.function_id)
 go
 
+------------------------------------------------------------
+--- all user can use the metadata of the partition scheme 
+--- to create table if they permission to create table
+------------------------------------------------------------
+
+-- grant create permission to user on schema so that it can create table
+-- psql
+DO $$
+DECLARE
+    schema_name TEXT;
+BEGIN
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := 'partitiondb_dbo';
+    ELSE
+        schema_name := 'dbo';
+    END IF;
+
+    EXECUTE 'GRANT CREATE ON SCHEMA ' || quote_ident(schema_name) || ' TO partitiondb_partition_u1';
+END$$;
+GO
+
+-- tsql     user=partition_l1 password=12345678
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+
+CREATE TABLE PartitionDb_TestPartitionTable (
+    Id INT,
+    Value sys.varchar(20)
+) ON PartitionDb_PartitionScheme(Id);
+GO
+
+DROP TABLE PartitionDb_TestPartitionTable
+GO
+
+-- revoke create permission from user on schema
+-- psql
+DO $$
+DECLARE
+    schema_name TEXT;
+BEGIN
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := 'partitiondb_dbo';
+    ELSE
+        schema_name := 'dbo';
+    END IF;
+
+    EXECUTE 'REVOKE CREATE ON SCHEMA ' || quote_ident(schema_name) || ' FROM partitiondb_partition_u1';
+END$$;
+GO
+
+-----------------------------------------------------------------------------------
+--- DB owner should be able to create/drop partition function and scheme
+----------------------------------------------------------------------------------
 -- make the user a DB owner
 -- tsql
 USE PartitionDb;
@@ -566,13 +687,747 @@ GO
 
 
 --------------------------------------------------
---- DROP PARTITION FUNCTION/SCHEME using procedure
+--- DROP PARTITION FUNCTION/SCHEME/TABLE using procedure
 --------------------------------------------------
+EXEC PartitionProcedureDropPartitionTable
+GO
+
 EXEC PartitionProcedureDropPartitionScheme
 GO
 
 EXEC PartitionProcedureDropPartitionFunction
 GO
 
-EXEC PartitionProcedureDropPartitionFunctionAndScheme
+EXEC PartitionProcedureDropPartitionFunctionSchemeAndTable
+GO
+
+---------------------------------------------------------------------------
+--- PARTITIONED TABLES test
+---------------------------------------------------------------------------
+
+SELECT * FROM GetPartitionedTableListFromSysTablesView
+GO
+
+---------------------------------------------------------------------------
+--- PARTITIONED INDEX test
+---------------------------------------------------------------------------
+SELECT * FROM GetPartitionedIndexListFromSysIndexesView
+GO
+
+
+----------------------------------------------------------------------------------------------
+--- System views should list only metadata of Partitioned table(not of the partitions)
+----------------------------------------------------------------------------------------------
+SELECT count(*) from sys.tables where name = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.all_objects where name = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+---------------------------------------------------------
+--- System views should not list metadata of Partitions
+---------------------------------------------------------
+SELECT count(*) from sys.tables where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.all_objects where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+
+---------------------------------------------------------------------------
+--- Run analyze on each table and enable query plan
+---------------------------------------------------------------------------
+
+-- psql
+ANALYZE master_dbo.partition_vu_prepare_int_table;
+ANALYZE master_dbo.partition_vu_prepare_bigint_table;
+ANALYZE master_dbo.partition_vu_prepare_smallint_table;
+ANALYZE master_dbo.partition_vu_prepare_tinyint_table;
+ANALYZE master_dbo.partition_vu_prepare_decimal_table;
+ANALYZE master_dbo.partition_vu_prepare_numeric_table;
+ANALYZE master_dbo.partition_vu_prepare_money_table;
+ANALYZE master_dbo.partition_vu_prepare_smallmoney_table;
+ANALYZE master_dbo.partition_vu_prepare_date_table;
+ANALYZE master_dbo.partition_vu_prepare_datetime_table;
+ANALYZE master_dbo.partition_vu_prepare_datetime2_table;
+ANALYZE master_dbo.partition_vu_prepare_smalldatetime_table;
+ANALYZE master_dbo.partition_vu_prepare_char_table;
+ANALYZE master_dbo.partition_vu_prepare_varchar_table;
+ANALYZE master_dbo.partition_vu_prepare_nvarchar_table;
+ANALYZE master_dbo.partition_vu_prepare_nchar_table;
+ANALYZE master_dbo.partition_vu_prepare_binary_table;
+ANALYZE master_dbo.partition_vu_prepare_varbinary_table;
+ANALYZE master_dbo.partition_vu_prepare_uniqueidentifier_table;
+ANALYZE master_dbo.partition_vu_prepare_sqlvariant_table;
+GO
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+---------------------------------------------------------------------------
+--- Query plan of select on partitioned tables
+---------------------------------------------------------------------------
+
+SELECT * FROM partition_vu_prepare_int_table;
+GO
+
+SELECT * FROM partition_vu_prepare_bigint_table;
+GO
+
+SELECT * FROM partition_vu_prepare_smallint_table;
+GO
+
+SELECT * FROM partition_vu_prepare_tinyint_table;
+GO
+
+SELECT * FROM partition_vu_prepare_decimal_table;
+GO
+
+SELECT * FROM partition_vu_prepare_numeric_table;
+GO
+
+SELECT * FROM partition_vu_prepare_money_table;
+GO
+
+SELECT * FROM partition_vu_prepare_smallmoney_table;
+GO
+
+SELECT * FROM partition_vu_prepare_date_table;
+GO
+
+SELECT * FROM partition_vu_prepare_datetime_table;
+GO
+
+SELECT * FROM partition_vu_prepare_datetime2_table;
+GO
+
+SELECT * FROM partition_vu_prepare_smalldatetime_table;
+GO
+
+SELECT * FROM partition_vu_prepare_char_table;
+GO
+
+SELECT * FROM partition_vu_prepare_varchar_table;
+GO
+
+SELECT * FROM partition_vu_prepare_nvarchar_table;
+GO
+
+SELECT * FROM partition_vu_prepare_nchar_table;
+GO
+
+SELECT * FROM partition_vu_prepare_binary_table;
+GO
+
+SELECT * FROM partition_vu_prepare_varbinary_table;
+GO
+
+SELECT * FROM partition_vu_prepare_uniqueidentifier_table;
+GO
+
+SELECT * FROM partition_vu_prepare_sqlvariant_table;
+GO
+
+
+-----------------------------------------------------------------------------------------
+--- Query plan of select on partitioned tables with predicate and enforced index scan
+-----------------------------------------------------------------------------------------
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+
+SELECT * FROM partition_vu_prepare_int_table WHERE Id >= 0 AND Id < 500;
+GO
+
+SELECT * FROM partition_vu_prepare_bigint_table WHERE Id >= 0 AND Id < 100;
+GO
+
+SELECT * FROM partition_vu_prepare_smallint_table WHERE Id >= -32768 AND Id < 0;
+GO
+
+SELECT * FROM partition_vu_prepare_tinyint_table WHERE Id >= 0 AND Id < 128;
+GO
+
+SELECT * FROM partition_vu_prepare_decimal_table WHERE Id >= 0.0 AND Id < 100.0;
+GO
+
+SELECT * FROM partition_vu_prepare_numeric_table WHERE Id >= 0.0 AND Id < 10.0;
+GO
+
+SELECT * FROM partition_vu_prepare_money_table WHERE Id >= 2.56789 AND Id < 3.56789;
+GO
+
+SELECT * FROM partition_vu_prepare_smallmoney_table WHERE Id >= 2.56789 AND Id < 3.56789;
+GO
+
+SELECT * FROM partition_vu_prepare_date_table WHERE Id >= '2022-01-01' AND Id < '2022-07-01';
+GO
+
+SELECT * FROM partition_vu_prepare_datetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+
+SELECT * FROM partition_vu_prepare_datetime2_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+
+SELECT * FROM partition_vu_prepare_smalldatetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+
+SELECT * FROM partition_vu_prepare_char_table WHERE Id >= 'A' AND Id < 'B';
+GO
+
+SELECT * FROM partition_vu_prepare_varchar_table WHERE Id >= 'Apple' AND Id < 'Banana';
+GO
+
+SELECT * FROM partition_vu_prepare_nvarchar_table WHERE Id >= N'Apple' AND Id < N'Banana';
+GO
+
+SELECT * FROM partition_vu_prepare_nchar_table WHERE Id >= N'A' AND Id < N'B';
+GO
+
+SELECT * FROM partition_vu_prepare_binary_table WHERE Id >= 0x0000 AND Id < 0x0400;
+GO
+
+SELECT * FROM partition_vu_prepare_varbinary_table WHERE Id >= 0x0000000000000000 AND Id < 0x4000000000000000;
+GO
+
+SELECT * FROM partition_vu_prepare_uniqueidentifier_table WHERE Id >= '00000000-0000-0000-0000-000000000000' AND Id < '6F9619FF-8B86-D011-B42D-00C04FC964FF';
+GO
+
+SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10));
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+GO
+
+
+------------------------------------------
+--- Blocked Operation For Partitioned Tables
+-------------------------------------------
+-- user should not be allowed to CREATE/ATTACH/DETACH partition
+-- to babelfish partitioned table from psql endpoint
+
+-- psql
+SET ROLE master_dbo;
+GO
+
+-- Attempt to create new partition with random values
+CREATE TABLE NonExistentTable PARTITION OF master_dbo.partition_vu_prepare_int_table
+FOR VALUES FROM (0) TO (500);
+GO
+
+-- Attempt to create new partition with DEFAULT
+CREATE TABLE NonExistentTable PARTITION OF master_dbo.partition_vu_prepare_int_table
+DEFAULT
+GO
+
+-- Attempt to drop partition of babelfish partitioned table from psql endpoint
+DROP TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+
+
+-- Attempt to detach
+-- explicit schema name specified
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+RESET search_path;
+GO
+
+-- Attempt to detach using CONCURRENTLY option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+CONCURRENTLY;
+GO
+
+-- Attempt to detach using FINALIZE option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+FINALIZE;
+GO
+
+-- Attempt to attach with Default value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable DEFAULT;
+GO
+
+-- Attempt to attach with random value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable FOR VALUES FROM (10) TO (20);
+GO
+
+-- user should not be allowed to modify partition 
+-- of babelfish partitioned table neither from psql nor tsql endpoint
+
+-- explicit schema name specified
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+GO
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_0"
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+RESET search_path;
+GO
+
+RESET ROLE;
+GO
+
+-- Attempt to ADD storage parameter to babelfish partitioned table (not on the partitions)
+SET babelfishpg_tsql.sql_dialect = "tsql";
+GO
+
+ALTER TABLE master_dbo.partition_vu_prepare_int_table SET (autovacuum_enabled = false);
+GO
+
+RESET babelfishpg_tsql.sql_dialect;
+GO
+
+
+-- tsql
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+
+
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+
+-- with explicity schema name
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+
+-- Attempt to drop partition of babelfish partitioned table from tsql endpoint
+DROP TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+GO
+
+--------------------------------------------------------------------
+--- Unsupported Option with CREATE TABLE with PARTITION SCHEME
+--------------------------------------------------------------------
+-- Computed column as partitioning column is not yet supported in babelfish
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value
+)
+ON IntPartitionScheme(computed_col);
+GO
+
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value PERSISTED
+)
+ON IntPartitionScheme(computed_col);
+GO
+
+-- temporary table
+CREATE TABLE #TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id);
+GO
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+---------------------------------------------------------------
+
+-- Attempt to create with multiple columns as partitioning scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id, value);
+GO
+
+-- Attempt to create with a partition scheme that doesn't exist and column that doesn't exist in the table
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(NonExistentColumn);
+GO
+
+-- Attempt to create with a partition scheme that doesn't exist
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(id);
+GO
+
+-- Attempt to use two part name with partition scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON master.IntPartitionScheme(id);
+GO
+
+-- Attempt to create with a unique constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT UNIQUE
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+
+-- Attempt to create with a primary key constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT PRIMARY KEY
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+--- Attempt to create with an incompatible partition column data type
+---------------------------------------------------------------
+CREATE TABLE TestPartitionedTable1
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 2)
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable2
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON DatePartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable3
+(
+    Id INT,
+    PartitionColumn VARCHAR(10)
+)
+ON CharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable4
+(
+    Id INT,
+    PartitionColumn VARBINARY(10)
+)
+ON BinaryPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable5
+(
+    Id INT,
+    PartitionColumn SMALLINT
+)
+ON BigIntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable6
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 2)
+)
+ON SmallIntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable7
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 5)
+)
+ON TinyIntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable8
+(
+    Id INT,
+    PartitionColumn BIGINT
+)
+ON DecimalPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable9
+(
+    Id INT,
+    PartitionColumn MONEY
+)
+ON NumericPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable10
+(
+    Id INT,
+    PartitionColumn INT
+)
+ON MoneyPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable11
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON SmallMoneyPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable12
+(
+    Id INT,
+    PartitionColumn DATETIME2(3)
+)
+ON DateTimePartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable13
+(
+    Id INT,
+    PartitionColumn SMALLDATETIME
+)
+ON DateTime2PartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable14
+(
+    Id INT,
+    PartitionColumn NVARCHAR(10)
+)
+ON SmallDateTimePartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable15
+(
+    Id INT,
+    PartitionColumn INT
+)
+ON NVarCharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable16
+(
+    Id INT,
+    PartitionColumn NCHAR(5)
+)
+ON VarCharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable17
+(
+    Id INT,
+    PartitionColumn INT
+)
+ON NCharPartitionScheme(PartitionColumn);
+GO
+
+-- using user defined type
+CREATE TYPE PartitionUserDefinedType FROM SMALLINT;
+GO
+
+CREATE TABLE TestPartitionedTable18
+(
+    Id INT,
+    PartitionColumn PartitionUserDefinedType
+)
+ON BigIntPartitionScheme(PartitionColumn);
+GO
+
+DROP TYPE PartitionUserDefinedType
+GO
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE Index with PARTITION SCHEME
+---------------------------------------------------------------
+CREATE TABLE TestPartitionedTable (
+    PartitionColumn INT,
+    NonPartitionColumn INT
+) ON IntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestNonPartitionedTable (
+    a INT,
+    b INT
+)
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonExistentColumn1)
+ON NonExistentPartitionScheme (NonExistentColumn2);
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON NonExistentPartitionScheme (NonExistentColumn2);
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON NonExistentPartitionScheme (NonPartitionColumn);
+GO
+
+-- scheme is different from the partition scheme used in the table
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON BigIntPartitionScheme (NonPartitionColumn);
+GO
+
+-- column specified with partition scheme is different
+-- from the partition column used in the table
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON IntPartitionScheme (NonPartitionColumn);
+GO
+
+-- should work
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON IntPartitionScheme (PartitionColumn);
+GO
+
+DROP INDEX TestPartitionIndex ON TestPartitionedTable
+GO
+
+-- usage of partition scheme on non-partitioned table (should fail)
+CREATE INDEX TestPartitionIndex
+ON TestNonPartitionedTable(a)
+ON IntPartitionScheme (a);
+GO
+
+
+DROP TABLE TestPartitionedTable
+GO
+
+DROP TABLE TestNonPartitionedTable
+GO
+-------------------------------------------------------------------------------------------
+--- Rename Operation on Partitioned Tables should update name in babelfish_partition_depend
+--- and it should also update the name of all the partitions
+-------------------------------------------------------------------------------------------
+-- psql
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table';
+GO
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
+GO
+
+-- tsql
+-- trigger rename from TSQL endpoint
+EXEC sp_rename 'partition_vu_prepare_int_table', 'partition_vu_prepare_int_table_renamed', 'OBJECT'
+GO
+
+-- psql
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table_renamed';
+GO
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table_renamed')::regclass;
+GO
+
+-- trigger rename from PSQL endpoint
+ALTER TABLE master_dbo.partition_vu_prepare_int_table_renamed RENAME TO partition_vu_prepare_int_table;
+GO
+
+-- we should get orginal here 
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table';
+GO
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
 GO
