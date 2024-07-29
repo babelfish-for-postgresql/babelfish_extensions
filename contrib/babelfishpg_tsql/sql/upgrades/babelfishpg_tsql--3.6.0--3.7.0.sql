@@ -198,26 +198,26 @@ BEGIN
             if obj_type <> '' then
                 case
                     -- Schema does not apply as much to temp objects.
-                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
+                    when pg_catalog.upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+                    id := (select reloid from sys.babelfish_get_enr_list() where pg_catalog.lower(relname) collate sys.database_default = obj_name limit 1);
 
-                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-                    id := (select oid from pg_class where lower(relname) collate sys.database_default = obj_name 
+                    when pg_catalog.upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+                    id := (select oid from pg_class where pg_catalog.lower(relname) collate sys.database_default = obj_name 
                                 and relnamespace = schema_oid limit 1);
 
-                    when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-                    id := (select oid from pg_constraint where lower(conname) collate sys.database_default = obj_name 
+                    when pg_catalog.upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+                    id := (select oid from pg_constraint where pg_catalog.lower(conname) collate sys.database_default = obj_name 
                                 and connamespace = schema_oid limit 1);
 
-                    when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-                    id := (select oid from pg_proc where lower(proname) collate sys.database_default = obj_name 
+                    when pg_catalog.upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+                    id := (select oid from pg_proc where pg_catalog.lower(proname) collate sys.database_default = obj_name 
                                 and pronamespace = schema_oid limit 1);
 
-                    when upper(object_type) in ('TR', 'TA') then
-                    id := (select oid from pg_trigger where lower(tgname) collate sys.database_default = obj_name limit 1);
+                    when pg_catalog.upper(object_type) in ('TR', 'TA') then
+                    id := (select oid from pg_trigger where pg_catalog.lower(tgname) collate sys.database_default = obj_name limit 1);
 
                     -- Throwing exception as a reminder to add support in the future.
-                    when upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                    when pg_catalog.upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
                         RAISE EXCEPTION 'Object type currently unsupported.';
 
                     -- unsupported obj_type
@@ -226,21 +226,21 @@ BEGIN
             else
                 if not is_temp_object then 
                     id := (
-                        select oid from pg_class where lower(relname) = obj_name
+                        select oid from pg_class where pg_catalog.lower(relname) = obj_name
                             and relnamespace = schema_oid
                         union
-                        select oid from pg_constraint where lower(conname) = obj_name
+                        select oid from pg_constraint where pg_catalog.lower(conname) = obj_name
                             and connamespace = schema_oid
                         union
-                        select oid from pg_proc where lower(proname) = obj_name
+                        select oid from pg_proc where pg_catalog.lower(proname) = obj_name
                             and pronamespace = schema_oid
                         union
-                        select oid from pg_trigger where lower(tgname) = obj_name
+                        select oid from pg_trigger where pg_catalog.lower(tgname) = obj_name
                         limit 1
                     );
                 else
                     -- temp object without "object_type" in-argument
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
+                    id := (select reloid from sys.babelfish_get_enr_list() where pg_catalog.lower(relname) collate sys.database_default = obj_name limit 1);
                 end if;
             end if;
 
@@ -310,26 +310,26 @@ BEGIN
             if obj_type <> '' then
                 case
                     -- Schema does not apply as much to temp objects.
-                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
+                    when pg_catalog.upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+                    id := (select reloid from sys.babelfish_get_enr_list() where pg_catalog.lower(relname) collate sys.database_default = obj_name limit 1);
 
-                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-                    id := (select oid from pg_class where lower(relname) collate sys.database_default = obj_name 
+                    when pg_catalog.upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+                    id := (select oid from pg_class where pg_catalog.lower(relname) collate sys.database_default = obj_name 
                                 and relnamespace = schema_oid limit 1);
 
-                    when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-                    id := (select oid from pg_constraint where lower(conname) collate sys.database_default = obj_name 
+                    when pg_catalog.upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+                    id := (select oid from pg_constraint where pg_catalog.lower(conname) collate sys.database_default = obj_name 
                                 and connamespace = schema_oid limit 1);
 
-                    when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-                    id := (select oid from pg_proc where lower(proname) collate sys.database_default = obj_name 
+                    when pg_catalog.upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+                    id := (select oid from pg_proc where pg_catalog.lower(proname) collate sys.database_default = obj_name 
                                 and pronamespace = schema_oid limit 1);
 
-                    when upper(object_type) in ('TR', 'TA') then
-                    id := (select oid from pg_trigger where lower(tgname) collate sys.database_default = obj_name limit 1);
+                    when pg_catalog.upper(object_type) in ('TR', 'TA') then
+                    id := (select oid from pg_trigger where pg_catalog.lower(tgname) collate sys.database_default = obj_name limit 1);
 
                     -- Throwing exception as a reminder to add support in the future.
-                    when upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                    when pg_catalog.upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
                         RAISE EXCEPTION 'Object type currently unsupported.';
 
                     -- unsupported obj_type
@@ -338,21 +338,21 @@ BEGIN
             else
                 if not is_temp_object then 
                     id := (
-                        select oid from pg_class where lower(relname) = obj_name
+                        select oid from pg_class where pg_catalog.lower(relname) = obj_name
                             and relnamespace = schema_oid
                         union
-                        select oid from pg_constraint where lower(conname) = obj_name
+                        select oid from pg_constraint where pg_catalog.lower(conname) = obj_name
                             and connamespace = schema_oid
                         union
-                        select oid from pg_proc where lower(proname) = obj_name
+                        select oid from pg_proc where pg_catalog.lower(proname) = obj_name
                             and pronamespace = schema_oid
                         union
-                        select oid from pg_trigger where lower(tgname) = obj_name
+                        select oid from pg_trigger where pg_catalog.lower(tgname) = obj_name
                         limit 1
                     );
                 else
                     -- temp object without "object_type" in-argument
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
+                    id := (select reloid from sys.babelfish_get_enr_list() where pg_catalog.lower(relname) collate sys.database_default = obj_name limit 1);
                 end if;
             end if;
 
@@ -1191,6 +1191,183 @@ END
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;
 
+create or replace function sys.get_tds_id(
+	datatype sys.varchar(50)
+)
+returns INT
+AS $$
+DECLARE
+	tds_id INT;
+BEGIN
+	IF datatype IS NULL THEN
+		RETURN 0;
+	END IF;
+	CASE datatype
+		WHEN 'text' THEN tds_id = 35;
+		WHEN 'uniqueidentifier' THEN tds_id = 36;
+		WHEN 'tinyint' THEN tds_id = 38;
+		WHEN 'smallint' THEN tds_id = 38;
+		WHEN 'int' THEN tds_id = 38;
+		WHEN 'bigint' THEN tds_id = 38;
+		WHEN 'ntext' THEN tds_id = 99;
+		WHEN 'bit' THEN tds_id = 104;
+		WHEN 'float' THEN tds_id = 109;
+		WHEN 'real' THEN tds_id = 109;
+		WHEN 'varchar' THEN tds_id = 167;
+		WHEN 'nvarchar' THEN tds_id = 231;
+		WHEN 'nchar' THEN tds_id = 239;
+		WHEN 'money' THEN tds_id = 110;
+		WHEN 'smallmoney' THEN tds_id = 110;
+		WHEN 'char' THEN tds_id = 175;
+		WHEN 'date' THEN tds_id = 40;
+		WHEN 'datetime' THEN tds_id = 111;
+		WHEN 'smalldatetime' THEN tds_id = 111;
+		WHEN 'numeric' THEN tds_id = 108;
+		WHEN 'xml' THEN tds_id = 241;
+		WHEN 'decimal' THEN tds_id = 106;
+		WHEN 'varbinary' THEN tds_id = 165;
+		WHEN 'binary' THEN tds_id = 173;
+		WHEN 'image' THEN tds_id = 34;
+		WHEN 'time' THEN tds_id = 41;
+		WHEN 'datetime2' THEN tds_id = 42;
+		WHEN 'sql_variant' THEN tds_id = 98;
+		WHEN 'datetimeoffset' THEN tds_id = 43;
+		WHEN 'timestamp' THEN tds_id = 173;
+		WHEN 'vector' THEN tds_id = 167; -- Same as varchar 
+		WHEN 'sparsevec' THEN tds_id = 167; -- Same as varchar 
+		WHEN 'halfvec' THEN tds_id = 167; -- Same as varchar 
+		WHEN 'geometry' THEN tds_id = 240;
+		WHEN 'geography' THEN tds_id = 240;
+		ELSE tds_id = 0;
+	END CASE;
+	RETURN tds_id;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length(type text, typmod int4) RETURNS integer
+	LANGUAGE sql
+	IMMUTABLE
+	PARALLEL SAFE
+	RETURNS NULL ON NULL INPUT
+	AS
+$$SELECT
+	CASE WHEN type IN ('char', 'nchar', 'varchar', 'nvarchar', 'binary', 'varbinary')
+		THEN CASE WHEN typmod = -1
+			THEN -1
+			ELSE typmod - 4
+			END
+		WHEN type IN ('text', 'image')
+		THEN 2147483647
+		WHEN type = 'ntext'
+		THEN 1073741823
+		WHEN type = 'sysname'
+		THEN 128
+		WHEN type IN ('xml', 'vector', 'halfvec', 'sparsevec', 'geometry', 'geography')
+		THEN -1
+		WHEN type = 'sql_variant'
+		THEN 0
+		ELSE null
+	END$$;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	max_length SMALLINT;
+	precision INT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	-- unknown tsql type
+	IF v_type IS NULL THEN
+		RETURN CAST(typelen as SMALLINT);
+	END IF;
+
+	-- if using typmod_array from pg_proc.probin
+	IF used_typmod_array THEN
+		IF v_type = 'sysname' THEN
+			RETURN 256;
+		ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+		THEN
+			IF typemod < 0 THEN -- max value. 
+				RETURN -1;
+			ELSIF v_type in ('nchar', 'nvarchar') THEN
+				RETURN (2 * typemod);
+			ELSE
+				RETURN typemod;
+			END IF;
+		END IF;
+	END IF;
+
+	IF typelen != -1 THEN
+		CASE v_type 
+		WHEN 'tinyint' THEN max_length = 1;
+		WHEN 'date' THEN max_length = 3;
+		WHEN 'smalldatetime' THEN max_length = 4;
+		WHEN 'smallmoney' THEN max_length = 4;
+		WHEN 'datetime2' THEN
+			IF typemod = -1 THEN max_length = 8;
+			ELSIF typemod <= 2 THEN max_length = 6;
+			ELSIF typemod <= 4 THEN max_length = 7;
+			ELSEIF typemod <= 7 THEN max_length = 8;
+			-- typemod = 7 is not possible for datetime2 in Babel
+			END IF;
+		WHEN 'datetimeoffset' THEN
+			IF typemod = -1 THEN max_length = 10;
+			ELSIF typemod <= 2 THEN max_length = 8;
+			ELSIF typemod <= 4 THEN max_length = 9;
+			ELSIF typemod <= 7 THEN max_length = 10;
+			-- typemod = 7 is not possible for datetimeoffset in Babel
+			END IF;
+		WHEN 'time' THEN
+			IF typemod = -1 THEN max_length = 5;
+			ELSIF typemod <= 2 THEN max_length = 3;
+			ELSIF typemod <= 4 THEN max_length = 4;
+			ELSIF typemod <= 7 THEN max_length = 5;
+			END IF;
+		WHEN 'timestamp' THEN max_length = 8;
+		WHEN 'vector' THEN max_length = -1; -- dummy as varchar max
+    WHEN 'halfvec' THEN max_length = -1; -- dummy as varchar max
+    WHEN 'sparsevec' THEN max_length = -1; -- dummy as varchar max
+		ELSE max_length = typelen;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE 
+		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
+			IF for_sys_types THEN max_length = 8000;
+			ELSE max_length = -1;
+			END IF;
+		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
+		WHEN v_type in ('geometry', 'geography') THEN max_length = -1;
+		ELSE max_length = typemod;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	CASE
+	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type in ('numeric', 'decimal') THEN
+		precision = ((typemod - 4) >> 16) & 65535;
+		IF precision >= 1 and precision <= 9 THEN max_length = 5;
+		ELSIF precision <= 19 THEN max_length = 9;
+		ELSIF precision <= 28 THEN max_length = 13;
+		ELSIF precision <= 38 THEN max_length = 17;
+	ELSE max_length = typelen;
+	END IF;
+	ELSE
+		max_length = typemod;
+	END CASE;
+	RETURN max_length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
 CREATE OR REPLACE PROCEDURE sys.sp_stored_procedures(
     "@sp_name" sys.nvarchar(390) = '',
     "@sp_owner" sys.nvarchar(384) = '',
@@ -1377,7 +1554,7 @@ DECLARE
     DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
     DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
 BEGIN
-    v_datatype := upper(trim(p_datatype));
+    v_datatype := pg_catalog.upper(trim(p_datatype));
     v_style := floor(p_style)::SMALLINT;
 
     IF (scale(p_style) > 0) THEN
@@ -1496,7 +1673,7 @@ EXCEPTION
    WHEN interval_field_overflow THEN
        RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
                                      v_lengthexpr,
-                                     lower(v_res_datatype),
+                                     pg_catalog.lower(v_res_datatype),
                                      v_maxlength),
                    DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
@@ -1514,7 +1691,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
                                       v_err_message),
@@ -1561,8 +1738,8 @@ DECLARE
     DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
     v_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE;
 BEGIN
-    v_datatype := upper(trim(p_datatype));
-    v_src_datatype := upper(trim(p_src_datatype));
+    v_datatype := pg_catalog.upper(trim(p_datatype));
+    v_src_datatype := pg_catalog.upper(trim(p_src_datatype));
     v_style := floor(p_style)::SMALLINT;
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
@@ -1784,7 +1961,7 @@ EXCEPTION
 
     WHEN interval_field_overflow THEN
         RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
-                                      v_lengthexpr, lower(v_res_datatype), v_maxlength),
+                                      v_lengthexpr, pg_catalog.lower(v_res_datatype), v_maxlength),
                     DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
                     HINT := 'Change size component of data type parameter to the allowable value and try again.';
 
@@ -1801,7 +1978,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -1842,8 +2019,8 @@ DECLARE
     DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
     SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^\s*(?:TIME)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?\s*$';
 BEGIN
-    v_datatype := upper(trim(p_datatype));
-    v_src_datatype := upper(trim(p_src_datatype));
+    v_datatype := pg_catalog.upper(trim(p_datatype));
+    v_src_datatype := pg_catalog.upper(trim(p_src_datatype));
     v_style := floor(p_style)::SMALLINT;
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
@@ -1961,7 +2138,7 @@ EXCEPTION
 
    WHEN interval_field_overflow THEN
        RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
-                                     v_lengthexpr, lower(v_res_datatype), v_res_maxlength),
+                                     v_lengthexpr, pg_catalog.lower(v_res_datatype), v_res_maxlength),
                    DETAIL := 'Use of incorrect size value of target data type parameter during conversion process.',
                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
 
@@ -5660,470 +5837,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
-                                                                 IN p_dateval DATE,
-                                                                 IN p_style NUMERIC DEFAULT 20)
-RETURNS TEXT
-AS
-$BODY$
-DECLARE
-    v_day VARCHAR COLLATE "C";
-    v_dateval DATE;
-    v_style SMALLINT;
-    v_month SMALLINT;
-    v_resmask VARCHAR COLLATE "C";
-    v_datatype VARCHAR COLLATE "C";
-    v_language VARCHAR COLLATE "C";
-    v_monthname VARCHAR COLLATE "C";
-    v_resstring VARCHAR COLLATE "C";
-    v_lengthexpr VARCHAR COLLATE "C";
-    v_maxlength SMALLINT;
-    v_res_length SMALLINT;
-    v_err_message VARCHAR COLLATE "C";
-    v_res_datatype VARCHAR COLLATE "C";
-    v_lang_metadata_json JSONB;
-    VARCHAR_MAX CONSTANT SMALLINT := 8000;
-    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
-    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
-    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
-    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
-BEGIN
-    v_datatype := pg_catalog.upper(trim(p_datatype));
-    v_style := floor(p_style)::SMALLINT;
-
-    IF (scale(p_style) > 0) THEN
-        RAISE most_specific_type_mismatch;
-    ELSIF (NOT ((v_style BETWEEN 0 AND 13) OR
-                (v_style BETWEEN 20 AND 25) OR
-                (v_style BETWEEN 100 AND 113) OR
-                v_style IN (120, 121, 126, 127, 130, 131)))
-    THEN
-        RAISE invalid_parameter_value;
-    ELSIF (v_style IN (8, 24, 108)) THEN
-        RAISE invalid_datetime_format;
-    END IF;
-
-    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
-        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
-
-        v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
-                          ELSE NVARCHAR_MAX
-                       END;
-
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
-
-        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
-            RAISE interval_field_overflow;
-        END IF;
-
-        v_res_length := CASE v_lengthexpr
-                           WHEN 'MAX' THEN v_maxlength
-                           ELSE v_lengthexpr::SMALLINT
-                        END;
-    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
-        v_res_datatype := v_datatype;
-    ELSE
-        RAISE datatype_mismatch;
-    END IF;
-
-    v_dateval := CASE
-                    WHEN (v_style NOT IN (130, 131)) THEN p_dateval
-                    ELSE sys.babelfish_conv_greg_to_hijri(p_dateval) + 1
-                 END;
-
-    v_day := ltrim(to_char(v_dateval, 'DD'), '0');
-    v_month := to_char(v_dateval, 'MM')::SMALLINT;
-
-    v_language := CASE
-                     WHEN (v_style IN (130, 131)) THEN 'HIJRI'
-                     ELSE CONVERSION_LANG
-                  END;
- RAISE NOTICE 'v_language=[%]', v_language;		  
-    BEGIN
-        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
-    EXCEPTION
-        WHEN OTHERS THEN
-        RAISE invalid_character_value_for_cast;
-    END;
-
-    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
-
-    v_resmask := CASE
-                    WHEN (v_style IN (1, 22)) THEN 'MM/DD/YY'
-                    WHEN (v_style = 101) THEN 'MM/DD/YYYY'
-                    WHEN (v_style = 2) THEN 'YY.MM.DD'
-                    WHEN (v_style = 102) THEN 'YYYY.MM.DD'
-                    WHEN (v_style = 3) THEN 'DD/MM/YY'
-                    WHEN (v_style = 103) THEN 'DD/MM/YYYY'
-                    WHEN (v_style = 4) THEN 'DD.MM.YY'
-                    WHEN (v_style = 104) THEN 'DD.MM.YYYY'
-                    WHEN (v_style = 5) THEN 'DD-MM-YY'
-                    WHEN (v_style = 105) THEN 'DD-MM-YYYY'
-                    WHEN (v_style = 6) THEN 'DD $mnme$ YY'
-                    WHEN (v_style IN (13, 106, 113)) THEN 'DD $mnme$ YYYY'
-                    WHEN (v_style = 7) THEN '$mnme$ DD, YY'
-                    WHEN (v_style = 107) THEN '$mnme$ DD, YYYY'
-                    WHEN (v_style = 10) THEN 'MM-DD-YY'
-                    WHEN (v_style = 110) THEN 'MM-DD-YYYY'
-                    WHEN (v_style = 11) THEN 'YY/MM/DD'
-                    WHEN (v_style = 111) THEN 'YYYY/MM/DD'
-                    WHEN (v_style = 12) THEN 'YYMMDD'
-                    WHEN (v_style = 112) THEN 'YYYYMMDD'
-                    WHEN (v_style IN (20, 21, 23, 25, 120, 121, 126, 127)) THEN 'YYYY-MM-DD'
-                    WHEN (v_style = 130) THEN 'DD $mnme$ YYYY'
-                    WHEN (v_style = 131) THEN pg_catalog.format('%s/MM/YYYY', lpad(v_day, 2, ' '))
-                    WHEN (v_style IN (0, 9, 100, 109)) THEN pg_catalog.format('$mnme$ %s YYYY', lpad(v_day, 2, ' '))
-                 END;
-
-    v_resstring := to_char(v_dateval, v_resmask);
-    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
-    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
-    v_res_length := coalesce(v_res_length,
-                             CASE v_res_datatype
-                                WHEN 'CHAR' THEN 30
-                                ELSE 60
-                             END);
-    RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
-              ELSE rpad(v_resstring, v_res_length, ' ')
-           END;
-EXCEPTION
-    WHEN most_specific_type_mismatch THEN
-        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of convert function.',
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from DATE to a character string.', v_style),
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := pg_catalog.format('Error converting data type DATE to %s.', trim(p_datatype)),
-                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
-                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
-
-   WHEN interval_field_overflow THEN
-       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
-                                     v_lengthexpr,
-                                     pg_catalog.lower(v_res_datatype),
-                                     v_maxlength),
-                   DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
-                   HINT := 'Change size component of data type parameter to the allowable value and try again.';
-
-    WHEN datatype_mismatch THEN
-        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
-                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
-                    HINT := 'Change "datatype" parameter to the proper value and try again.';
-
-    WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
-                                      CONVERSION_LANG),
-                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
-                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
-
-    WHEN invalid_text_representation THEN
-        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
-
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
-                                      v_err_message),
-                    DETAIL := 'Supplied value contains illegal characters.',
-                    HINT := 'Correct supplied value, remove all illegal characters.';
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT,
-                                                                     IN p_src_datatype TEXT,
-                                                                     IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE,
-                                                                     IN p_style NUMERIC DEFAULT -1)
-RETURNS TEXT
-AS
-$BODY$
-DECLARE
-    v_day VARCHAR COLLATE "C";
-    v_hour VARCHAR COLLATE "C";
-    v_month SMALLINT;
-    v_style SMALLINT;
-    v_scale SMALLINT;
-    v_resmask VARCHAR COLLATE "C";
-    v_language VARCHAR COLLATE "C";
-    v_datatype VARCHAR COLLATE "C";
-    v_fseconds VARCHAR COLLATE "C";
-    v_fractsep VARCHAR COLLATE "C";
-    v_monthname VARCHAR COLLATE "C";
-    v_resstring VARCHAR COLLATE "C";
-    v_lengthexpr VARCHAR COLLATE "C";
-    v_maxlength SMALLINT;
-    v_res_length SMALLINT;
-    v_err_message VARCHAR COLLATE "C";
-    v_src_datatype VARCHAR COLLATE "C";
-    v_res_datatype VARCHAR COLLATE "C";
-    v_lang_metadata_json JSONB;
-    VARCHAR_MAX CONSTANT SMALLINT := 8000;
-    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
-    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
-    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
-    SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^(?:DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?$';
-    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
-    v_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE;
-BEGIN
-    v_datatype := pg_catalog.upper(trim(p_datatype));
-    v_src_datatype := pg_catalog.upper(trim(p_src_datatype));
-    v_style := floor(p_style)::SMALLINT;
-
-    IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
-    THEN
-        v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT;
-
-        v_src_datatype := rtrim(split_part(v_src_datatype, '(', 1));
-
-        IF (v_src_datatype <> 'DATETIME2' AND v_scale IS NOT NULL) THEN
-            RAISE invalid_indicator_parameter_value;
-        ELSIF (v_scale NOT BETWEEN 0 AND 7) THEN
-            RAISE invalid_regular_expression;
-        END IF;
-
-        v_scale := coalesce(v_scale, 7);
-    ELSE
-        RAISE most_specific_type_mismatch;
-    END IF;
-
-    IF (scale(p_style) > 0) THEN
-        RAISE escape_character_conflict;
-    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
-                (v_style BETWEEN 20 AND 25) OR
-                (v_style BETWEEN 100 AND 114) OR
-                v_style IN (-1, 120, 121, 126, 127, 130, 131)))
-    THEN
-        RAISE invalid_parameter_value;
-    END IF;
-
-    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
-        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
-
-        v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
-                          ELSE NVARCHAR_MAX
-                       END;
-
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
-
-        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4)
-        THEN
-            RAISE interval_field_overflow;
-        END IF;
-
-        v_res_length := CASE v_lengthexpr
-                           WHEN 'MAX' THEN v_maxlength
-                           ELSE v_lengthexpr::SMALLINT
-                        END;
-    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
-        v_res_datatype := v_datatype;
-    ELSE
-        RAISE datatype_mismatch;
-    END IF;
-
-    v_datetimeval := CASE
-                        WHEN (v_style NOT IN (130, 131)) THEN p_datetimeval
-                        ELSE sys.babelfish_conv_greg_to_hijri(p_datetimeval) + INTERVAL '1 day'
-                     END;
-
-    v_day := ltrim(to_char(v_datetimeval, 'DD'), '0');
-    v_hour := ltrim(to_char(v_datetimeval, 'HH12'), '0');
-    v_month := to_char(v_datetimeval, 'MM')::SMALLINT;
-
-    v_language := CASE
-                     WHEN (v_style IN (130, 131)) THEN 'HIJRI'
-                     ELSE CONVERSION_LANG
-                  END;
-    BEGIN
-        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
-    EXCEPTION
-        WHEN OTHERS THEN
-        RAISE invalid_character_value_for_cast;
-    END;
-
-    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
-
-    IF (v_src_datatype IN ('DATETIME', 'SMALLDATETIME')) THEN
-        v_fseconds := sys.babelfish_round_fractseconds(to_char(v_datetimeval, 'MS'));
-
-        IF (v_fseconds::INTEGER = 1000) THEN
-            v_fseconds := '000';
-            v_datetimeval := v_datetimeval + INTERVAL '1 second';
-        ELSE
-            v_fseconds := lpad(v_fseconds, 3, '0');
-        END IF;
-    ELSE
-        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(v_datetimeval, 'US'), v_scale);
-
-        IF (v_scale = 7) THEN
-            v_fseconds := concat(v_fseconds, '0');
-        END IF;
-    END IF;
-
-    v_fractsep := CASE v_src_datatype
-                     WHEN 'DATETIME2' THEN '.'
-                     ELSE ':'
-                  END;
-
-    IF ((v_style = -1 AND v_src_datatype <> 'DATETIME2') OR
-        v_style IN (0, 9, 100, 109))
-    THEN
-        v_resmask := pg_catalog.format('$mnme$ %s YYYY %s:MI%s',
-                            lpad(v_day, 2, ' '),
-                            lpad(v_hour, 2, ' '),
-                            CASE
-                               WHEN (v_style IN (-1, 0, 100)) THEN 'AM'
-                               ELSE pg_catalog.format(':SS:%sAM', v_fseconds)
-                            END);
-    ELSIF (v_style = 1) THEN
-        v_resmask := 'MM/DD/YY';
-    ELSIF (v_style = 101) THEN
-        v_resmask := 'MM/DD/YYYY';
-    ELSIF (v_style = 2) THEN
-        v_resmask := 'YY.MM.DD';
-    ELSIF (v_style = 102) THEN
-        v_resmask := 'YYYY.MM.DD';
-    ELSIF (v_style = 3) THEN
-        v_resmask := 'DD/MM/YY';
-    ELSIF (v_style = 103) THEN
-        v_resmask := 'DD/MM/YYYY';
-    ELSIF (v_style = 4) THEN
-        v_resmask := 'DD.MM.YY';
-    ELSIF (v_style = 104) THEN
-        v_resmask := 'DD.MM.YYYY';
-    ELSIF (v_style = 5) THEN
-        v_resmask := 'DD-MM-YY';
-    ELSIF (v_style = 105) THEN
-        v_resmask := 'DD-MM-YYYY';
-    ELSIF (v_style = 6) THEN
-        v_resmask := 'DD $mnme$ YY';
-    ELSIF (v_style = 106) THEN
-        v_resmask := 'DD $mnme$ YYYY';
-    ELSIF (v_style = 7) THEN
-        v_resmask := '$mnme$ DD, YY';
-    ELSIF (v_style = 107) THEN
-        v_resmask := '$mnme$ DD, YYYY';
-    ELSIF (v_style IN (8, 24, 108)) THEN
-        v_resmask := 'HH24:MI:SS';
-    ELSIF (v_style = 10) THEN
-        v_resmask := 'MM-DD-YY';
-    ELSIF (v_style = 110) THEN
-        v_resmask := 'MM-DD-YYYY';
-    ELSIF (v_style = 11) THEN
-        v_resmask := 'YY/MM/DD';
-    ELSIF (v_style = 111) THEN
-        v_resmask := 'YYYY/MM/DD';
-    ELSIF (v_style = 12) THEN
-        v_resmask := 'YYMMDD';
-    ELSIF (v_style = 112) THEN
-        v_resmask := 'YYYYMMDD';
-    ELSIF (v_style IN (13, 113)) THEN
-        v_resmask := pg_catalog.format('DD $mnme$ YYYY HH24:MI:SS%s%s', v_fractsep, v_fseconds);
-    ELSIF (v_style IN (14, 114)) THEN
-        v_resmask := pg_catalog.format('HH24:MI:SS%s%s', v_fractsep, v_fseconds);
-    ELSIF (v_style IN (20, 120)) THEN
-        v_resmask := 'YYYY-MM-DD HH24:MI:SS';
-    ELSIF ((v_style = -1 AND v_src_datatype = 'DATETIME2') OR
-           v_style IN (21, 25, 121))
-    THEN
-        v_resmask := pg_catalog.format('YYYY-MM-DD HH24:MI:SS.%s', v_fseconds);
-    ELSIF (v_style = 22) THEN
-        v_resmask := pg_catalog.format('MM/DD/YY %s:MI:SS AM', lpad(v_hour, 2, ' '));
-    ELSIF (v_style = 23) THEN
-        v_resmask := 'YYYY-MM-DD';
-    ELSIF (v_style IN (126, 127)) THEN
-        v_resmask := CASE v_src_datatype
-                        WHEN 'SMALLDATETIME' THEN 'YYYY-MM-DDT$rem$HH24:MI:SS'
-                        ELSE pg_catalog.format('YYYY-MM-DDT$rem$HH24:MI:SS.%s', v_fseconds)
-                     END;
-    ELSIF (v_style IN (130, 131)) THEN
-        v_resmask := concat(CASE p_style
-                               WHEN 131 THEN pg_catalog.format('%s/MM/YYYY ', lpad(v_day, 2, ' '))
-                               ELSE pg_catalog.format('%s $mnme$ YYYY ', lpad(v_day, 2, ' '))
-                            END,
-                            pg_catalog.format('%s:MI:SS%s%sAM', lpad(v_hour, 2, ' '), v_fractsep, v_fseconds));
-    END IF;
-
-    v_resstring := to_char(v_datetimeval, v_resmask);
-    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
-    v_resstring := pg_catalog.replace(v_resstring, '$rem$', '');
-
-    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
-    v_res_length := coalesce(v_res_length,
-                             CASE v_res_datatype
-                                WHEN 'CHAR' THEN 30
-                                ELSE 60
-                             END);
-    RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
-              ELSE rpad(v_resstring, v_res_length, ' ')
-           END;
-EXCEPTION
-    WHEN most_specific_type_mismatch THEN
-        RAISE USING MESSAGE := 'Source data type should be one of these values: ''DATETIME'', ''SMALLDATETIME'', ''DATETIME2'' or ''DATETIME2(n)''.',
-                    DETAIL := 'Use of incorrect "src_datatype" parameter value during conversion process.',
-                    HINT := 'Change "srcdatatype" parameter to the proper value and try again.';
-
-   WHEN invalid_regular_expression THEN
-       RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
-                                     v_scale),
-                   DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
-                   HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
-
-    WHEN invalid_indicator_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_src_datatype),
-                    DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
-                    HINT := 'Change data type scale component or select different data type and try again.';
-
-    WHEN escape_character_conflict THEN
-        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 4 of convert function.',
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from %s to a character string.',
-                                      v_style, v_src_datatype),
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN interval_field_overflow THEN
-        RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
-                                      v_lengthexpr, pg_catalog.lower(v_res_datatype), v_maxlength),
-                    DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
-                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
-
-    WHEN datatype_mismatch THEN
-        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
-                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
-                    HINT := 'Change "datatype" parameter to the proper value and try again.';
-
-    WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
-                                      CONVERSION_LANG),
-                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
-                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
-
-    WHEN invalid_text_representation THEN
-        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
-
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
-                                      v_err_message),
-                    DETAIL := 'Supplied value contains illegal characters.',
-                    HINT := 'Correct supplied value, remove all illegal characters.';
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_datetime(IN p_datatype TEXT,
                                                                      IN p_datetimestring TEXT,
                                                                      IN p_style NUMERIC DEFAULT 0)
@@ -6864,184 +6577,6 @@ EXCEPTION
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT,
-                                                                 IN p_src_datatype TEXT,
-                                                                 IN p_timeval TIME(6) WITHOUT TIME ZONE,
-                                                                 IN p_style NUMERIC DEFAULT 25)
-RETURNS TEXT
-AS
-$BODY$
-DECLARE
-    v_hours VARCHAR COLLATE "C";
-    v_style SMALLINT;
-    v_scale SMALLINT;
-    v_resmask VARCHAR COLLATE "C";
-    v_fseconds VARCHAR COLLATE "C";
-    v_datatype VARCHAR COLLATE "C";
-    v_resstring VARCHAR COLLATE "C";
-    v_lengthexpr VARCHAR COLLATE "C";
-    v_res_length SMALLINT;
-    v_res_datatype VARCHAR COLLATE "C";
-    v_src_datatype VARCHAR COLLATE "C";
-    v_res_maxlength SMALLINT;
-    VARCHAR_MAX CONSTANT SMALLINT := 8000;
-    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
-    -- We use the regex below to make sure input p_datatype is one of them
-    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
-    -- We use the regex below to get the length of the datatype, if specified
-    -- For example, to get the '10' out of 'varchar(10)'
-    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
-    SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^\s*(?:TIME)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?\s*$';
-BEGIN
-    v_datatype := pg_catalog.upper(trim(p_datatype));
-    v_src_datatype := pg_catalog.upper(trim(p_src_datatype));
-    v_style := floor(p_style)::SMALLINT;
-
-    IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
-    THEN
-        v_scale := coalesce(substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT, 7);
-
-        IF (v_scale NOT BETWEEN 0 AND 7) THEN
-            RAISE invalid_regular_expression;
-        END IF;
-    ELSE
-        RAISE most_specific_type_mismatch;
-    END IF;
-
-    IF (v_datatype ~* DATATYPE_MASK_REGEXP)
-    THEN
-        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
-
-        v_res_maxlength := CASE
-                              WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
-                              ELSE NVARCHAR_MAX
-                           END;
-
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
-
-        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
-            RAISE interval_field_overflow;
-        END IF;
-
-        v_res_length := CASE v_lengthexpr
-                           WHEN 'MAX' THEN v_res_maxlength
-                           ELSE v_lengthexpr::SMALLINT
-                        END;
-    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
-        v_res_datatype := v_datatype;
-    ELSE
-        RAISE datatype_mismatch;
-    END IF;
-
-    IF (scale(p_style) > 0) THEN
-        RAISE escape_character_conflict;
-    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
-                (v_style BETWEEN 20 AND 25) OR
-                (v_style BETWEEN 100 AND 114) OR
-                v_style IN (120, 121, 126, 127, 130, 131)))
-    THEN
-        RAISE invalid_parameter_value;
-    ELSIF ((v_style BETWEEN 1 AND 7) OR
-           (v_style BETWEEN 10 AND 12) OR
-           (v_style BETWEEN 101 AND 107) OR
-           (v_style BETWEEN 110 AND 112) OR
-           v_style = 23)
-    THEN
-        RAISE invalid_datetime_format;
-    END IF;
-
-    v_hours := ltrim(to_char(p_timeval, 'HH12'), '0');
-    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(p_timeval, 'US'), v_scale);
-
-    IF (v_scale = 7) THEN
-        v_fseconds := concat(v_fseconds, '0');
-    END IF;
-
-    IF (v_style IN (0, 100))
-    THEN
-        v_resmask := concat(v_hours, ':MIAM');
-    ELSIF (v_style IN (8, 20, 24, 108, 120))
-    THEN
-        v_resmask := 'HH24:MI:SS';
-    ELSIF (v_style IN (9, 109))
-    THEN
-        v_resmask := CASE
-                        WHEN (char_length(v_fseconds) = 0) THEN concat(v_hours, ':MI:SSAM')
-                        ELSE pg_catalog.format('%s:MI:SS.%sAM', v_hours, v_fseconds)
-                     END;
-    ELSIF (v_style IN (13, 14, 21, 25, 113, 114, 121, 126, 127))
-    THEN
-        v_resmask := CASE
-                        WHEN (char_length(v_fseconds) = 0) THEN 'HH24:MI:SS'
-                        ELSE concat('HH24:MI:SS.', v_fseconds)
-                     END;
-    ELSIF (v_style = 22)
-    THEN
-        v_resmask := pg_catalog.format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
-    ELSIF (v_style IN (130, 131))
-    THEN
-        v_resmask := CASE
-                        WHEN (char_length(v_fseconds) = 0) THEN concat(lpad(v_hours, 2, ' '), ':MI:SSAM')
-                        ELSE pg_catalog.format('%s:MI:SS.%sAM', lpad(v_hours, 2, ' '), v_fseconds)
-                     END;
-    END IF;
-
-    v_resstring := to_char(p_timeval, v_resmask);
-
-    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
-    v_res_length := coalesce(v_res_length,
-                             CASE v_res_datatype
-                                WHEN 'CHAR' THEN 30
-                                ELSE 60
-                             END);
-    RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
-              ELSE rpad(v_resstring, v_res_length, ' ')
-           END;
-EXCEPTION
-    WHEN most_specific_type_mismatch THEN
-        RAISE USING MESSAGE := 'Source data type should be ''TIME'' or ''TIME(n)''.',
-                    DETAIL := 'Use of incorrect "src_datatype" parameter value during conversion process.',
-                    HINT := 'Change "src_datatype" parameter to the proper value and try again.';
-
-   WHEN invalid_regular_expression THEN
-       RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
-                                     v_scale),
-                   DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
-                   HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
-
-   WHEN interval_field_overflow THEN
-       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
-                                     v_lengthexpr, pg_catalog.lower(v_res_datatype), v_res_maxlength),
-                   DETAIL := 'Use of incorrect size value of target data type parameter during conversion process.',
-                   HINT := 'Change size component of data type parameter to the allowable value and try again.';
-
-    WHEN escape_character_conflict THEN
-        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 4 of convert function.',
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from TIME to a character string.', v_style),
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN datatype_mismatch THEN
-        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
-                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
-                    HINT := 'Change "datatype" parameter to the proper value and try again.';
-
-    WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := pg_catalog.format('Error converting data type TIME to %s.',
-                                      rtrim(split_part(trim(p_datatype), '(', 1))),
-                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
-                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
 END;
 $BODY$
 LANGUAGE plpgsql
@@ -10397,235 +9932,6 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
--- Update deprecated object_id function(s) since upper and lower functions now changes return type for TEXT input
-DO $$
-BEGIN
-    -- Update body of object_id_deprecated_in_2_4_0 to use PG_CATALOG.UPPER and PG_CATALOG.LOWER instead, if function exists
-    IF EXISTS(SELECT count(*) 
-                FROM pg_proc p 
-                JOIN pg_namespace nsp 
-                    ON p.pronamespace = nsp.oid 
-                WHERE p.proname='object_id_deprecated_in_2_4_0' AND nsp.nspname='sys') THEN
-
-        CREATE OR REPLACE FUNCTION sys.object_id_deprecated_in_2_4_0(IN object_name TEXT, IN object_type char(2) DEFAULT '')
-        RETURNS INTEGER AS
-        $BODY$
-        DECLARE
-            id oid;
-            db_name text collate "C";
-            bbf_schema_name text collate "C";
-            schema_name text collate "C";
-            schema_oid oid;
-            obj_name text collate "C";
-            is_temp_object boolean;
-            obj_type char(2) collate "C";
-            cs_as_object_name text collate "C" := object_name;
-        BEGIN
-            obj_type = object_type;
-            id = null;
-            schema_oid = NULL;
-
-            SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name 
-            FROM babelfish_split_object_name(cs_as_object_name) s;
-
-            -- Invalid object_name
-            IF obj_name IS NULL OR obj_name = '' collate sys.database_default THEN
-                RETURN NULL;
-            END IF;
-
-            IF bbf_schema_name IS NULL OR bbf_schema_name = '' collate sys.database_default THEN
-                bbf_schema_name := sys.schema_name();
-            END IF;
-
-            schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
-
-            -- Check if looking for temp object.
-            is_temp_object = left(obj_name, 1) = '#' collate sys.database_default;
-
-            -- Can only search in current database. Allowing tempdb for temp objects.
-            IF db_name IS NOT NULL AND db_name collate sys.database_default <> db_name() AND db_name collate sys.database_default <> 'tempdb' THEN
-                RAISE EXCEPTION 'Can only do lookup in current database.';
-            END IF;
-
-            IF schema_name IS NULL OR schema_name = '' collate sys.database_default THEN
-                RETURN NULL;
-            END IF;
-
-            -- Searching within a schema. Get schema oid.
-            schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
-            IF schema_oid IS NULL THEN
-                RETURN NULL;
-            END IF;
-
-            if obj_type <> '' then
-                case
-                    -- Schema does not apply as much to temp objects.
-                    when pg_catalog.upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-                    id := (select reloid from sys.babelfish_get_enr_list() where pg_catalog.lower(relname) collate sys.database_default = obj_name limit 1);
-
-                    when pg_catalog.upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-                    id := (select oid from pg_class where pg_catalog.lower(relname) collate sys.database_default = obj_name 
-                                and relnamespace = schema_oid limit 1);
-
-                    when pg_catalog.upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-                    id := (select oid from pg_constraint where pg_catalog.lower(conname) collate sys.database_default = obj_name 
-                                and connamespace = schema_oid limit 1);
-
-                    when pg_catalog.upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-                    id := (select oid from pg_proc where pg_catalog.lower(proname) collate sys.database_default = obj_name 
-                                and pronamespace = schema_oid limit 1);
-
-                    when pg_catalog.upper(object_type) in ('TR', 'TA') then
-                    id := (select oid from pg_trigger where pg_catalog.lower(tgname) collate sys.database_default = obj_name limit 1);
-
-                    -- Throwing exception as a reminder to add support in the future.
-                    when pg_catalog.upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
-                        RAISE EXCEPTION 'Object type currently unsupported.';
-
-                    -- unsupported obj_type
-                    else id := null;
-                end case;
-            else
-                if not is_temp_object then 
-                    id := (
-                        select oid from pg_class where pg_catalog.lower(relname) = obj_name
-                            and relnamespace = schema_oid
-                        union
-                        select oid from pg_constraint where pg_catalog.lower(conname) = obj_name
-                            and connamespace = schema_oid
-                        union
-                        select oid from pg_proc where pg_catalog.lower(proname) = obj_name
-                            and pronamespace = schema_oid
-                        union
-                        select oid from pg_trigger where pg_catalog.lower(tgname) = obj_name
-                        limit 1
-                    );
-                else
-                    -- temp object without "object_type" in-argument
-                    id := (select reloid from sys.babelfish_get_enr_list() where pg_catalog.lower(relname) collate sys.database_default = obj_name limit 1);
-                end if;
-            end if;
-
-            RETURN id::integer;
-        END;
-        $BODY$
-        LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
-    END IF;
-    
-    -- Update body of object_id_deprecated_in_3_1_0 to use PG_CATALOG.UPPER and PG_CATALOG.LOWER instead, if function exists
-    IF EXISTS(SELECT count(*) 
-                FROM pg_proc p 
-                JOIN pg_namespace nsp 
-                    ON p.pronamespace = nsp.oid 
-                WHERE p.proname='object_id_deprecated_in_3_1_0' AND nsp.nspname='sys') THEN
-
-        CREATE OR REPLACE FUNCTION sys.object_id_deprecated_in_3_1_0(IN object_name TEXT, IN object_type char(2) DEFAULT '')
-        RETURNS INTEGER AS
-        $BODY$
-        DECLARE
-            id oid;
-            db_name text collate "C";
-            bbf_schema_name text collate "C";
-            schema_name text collate "C";
-            schema_oid oid;
-            obj_name text collate "C";
-            is_temp_object boolean;
-            obj_type char(2) collate "C";
-            cs_as_object_name text collate "C" := object_name;
-        BEGIN
-            obj_type = object_type;
-            id = null;
-            schema_oid = NULL;
-
-            SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name 
-            FROM babelfish_split_object_name(cs_as_object_name) s;
-
-            -- Invalid object_name
-            IF obj_name IS NULL OR obj_name = '' collate sys.database_default THEN
-                RETURN NULL;
-            END IF;
-
-            IF bbf_schema_name IS NULL OR bbf_schema_name = '' collate sys.database_default THEN
-                bbf_schema_name := sys.schema_name();
-            END IF;
-
-            schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
-
-            -- Check if looking for temp object.
-            is_temp_object = left(obj_name, 1) = '#' collate sys.database_default;
-
-            -- Can only search in current database. Allowing tempdb for temp objects.
-            IF db_name IS NOT NULL AND db_name collate sys.database_default <> db_name() AND db_name collate sys.database_default <> 'tempdb' THEN
-                RAISE EXCEPTION 'Can only do lookup in current database.';
-            END IF;
-
-            IF schema_name IS NULL OR schema_name = '' collate sys.database_default THEN
-                RETURN NULL;
-            END IF;
-
-            -- Searching within a schema. Get schema oid.
-            schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
-            IF schema_oid IS NULL THEN
-                RETURN NULL;
-            END IF;
-
-            if obj_type <> '' then
-                case
-                    -- Schema does not apply as much to temp objects.
-                    when pg_catalog.upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-                    id := (select reloid from sys.babelfish_get_enr_list() where pg_catalog.lower(relname) collate sys.database_default = obj_name limit 1);
-
-                    when pg_catalog.upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-                    id := (select oid from pg_class where pg_catalog.lower(relname) collate sys.database_default = obj_name 
-                                and relnamespace = schema_oid limit 1);
-
-                    when pg_catalog.upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-                    id := (select oid from pg_constraint where pg_catalog.lower(conname) collate sys.database_default = obj_name 
-                                and connamespace = schema_oid limit 1);
-
-                    when pg_catalog.upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-                    id := (select oid from pg_proc where pg_catalog.lower(proname) collate sys.database_default = obj_name 
-                                and pronamespace = schema_oid limit 1);
-
-                    when pg_catalog.upper(object_type) in ('TR', 'TA') then
-                    id := (select oid from pg_trigger where pg_catalog.lower(tgname) collate sys.database_default = obj_name limit 1);
-
-                    -- Throwing exception as a reminder to add support in the future.
-                    when pg_catalog.upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
-                        RAISE EXCEPTION 'Object type currently unsupported.';
-
-                    -- unsupported obj_type
-                    else id := null;
-                end case;
-            else
-                if not is_temp_object then 
-                    id := (
-                        select oid from pg_class where pg_catalog.lower(relname) = obj_name
-                            and relnamespace = schema_oid
-                        union
-                        select oid from pg_constraint where pg_catalog.lower(conname) = obj_name
-                            and connamespace = schema_oid
-                        union
-                        select oid from pg_proc where pg_catalog.lower(proname) = obj_name
-                            and pronamespace = schema_oid
-                        union
-                        select oid from pg_trigger where pg_catalog.lower(tgname) = obj_name
-                        limit 1
-                    );
-                else
-                    -- temp object without "object_type" in-argument
-                    id := (select reloid from sys.babelfish_get_enr_list() where pg_catalog.lower(relname) collate sys.database_default = obj_name limit 1);
-                end if;
-            end if;
-
-            RETURN id::integer;
-        END;
-        $BODY$
-        LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
-    END IF;
-END;
-$$;
-
 -- wrapper functions for upper --
 -- Function to handle datatypes which are implicitly convertable to VARCHAR
 CREATE OR REPLACE FUNCTION sys.upper(ANYELEMENT)
@@ -10753,6 +10059,27 @@ BEGIN
     RETURN pg_catalog.lower($1);
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE VIEW sys.sequences 
+AS SELECT 
+    so.*,
+    CAST(0 as sys.sql_variant) AS start_value
+    , CAST(0 as sys.sql_variant) AS increment
+    , CAST(0 as sys.sql_variant) AS minimum_value
+    , CAST(0 as sys.sql_variant) AS maximum_value
+    , CAST(0 as sys.BIT) AS is_cycling
+    , CAST(0 as sys.BIT) AS is_cached
+    , CAST(0 as INT) AS cache_size
+    , CAST(0 as INT) AS system_type_id
+    , CAST(0 as INT) AS user_type_id
+    , CAST(0 as sys.TINYINT) AS precision
+    , CAST(0 as sys.TINYINT) AS scale
+    , CAST(0 as sys.sql_variant) AS current_value
+    , CAST(0 as sys.BIT) AS is_exhausted
+    , CAST(0 as sys.sql_variant) AS last_used_value
+FROM sys.objects so
+WHERE FALSE;
+GRANT SELECT ON sys.sequences TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

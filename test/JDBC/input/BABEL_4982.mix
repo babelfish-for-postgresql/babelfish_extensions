@@ -1,0 +1,64 @@
+-- psql
+CREATE SCHEMA s1
+GO
+
+CREATE TABLE s1.babel_4982_t (id VARCHAR(100))
+GO
+
+CREATE FUNCTION babel_4982_ddl_trigger()
+RETURNS event_trigger AS
+$$
+BEGIN
+INSERT INTO babel_4982_t VALUES (current_setting('search_path'));
+END;
+$$
+SECURITY DEFINER
+SET search_path = s1, pg_catalog, pg_temp
+LANGUAGE plpgsql;
+
+CREATE EVENT TRIGGER babel_4982_ddl_trigger
+	ON ddl_command_end
+	EXECUTE PROCEDURE babel_4982_ddl_trigger();
+
+SELECT set_config('search_path', 'master_dbo, sys, '||current_setting('search_path'), false);
+GO
+
+SHOW search_path
+GO
+
+CREATE TABLE babel_4982_t2 (id INT)
+GO
+
+SHOW search_path
+GO
+
+BEGIN
+GO
+
+SHOW search_path
+GO
+
+DROP TABLE babel_4982_t2
+GO
+
+SHOW search_path
+GO
+
+COMMIT
+GO
+
+-- two entries since two DDLs after trigger was created
+SELECT * FROM s1.babel_4982_t
+GO
+
+DROP EVENT TRIGGER babel_4982_ddl_trigger
+GO
+
+DROP FUNCTION babel_4982_ddl_trigger
+GO
+
+DROP TABLE s1.babel_4982_t
+GO
+
+DROP SCHEMA s1
+GO
