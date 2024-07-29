@@ -6412,7 +6412,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				continue;
 				
 			/* Restrict dropping of extended stored procedures for non-sysadmin roles */
-			if (stmt->removeType == OBJECT_PROCEDURE && !is_member_of_role(GetSessionUserId(), get_sysadmin_oid()))
+			if (stmt->removeType == OBJECT_PROCEDURE && !superuser())
 				check_restricted_stored_procedure(address.objectId);
 
 			/* Get major_name */
