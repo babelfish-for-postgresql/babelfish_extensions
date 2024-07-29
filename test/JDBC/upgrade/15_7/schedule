@@ -296,7 +296,7 @@ sys_syslogins_dep
 sys-database_recovery_status
 sys-databases
 sys-databases-dep
-sys-data_spaces
+sys-data_spaces-before-16-4
 sys-datefirst
 sys-default_constraints
 sys-default_constraints-dep
@@ -312,7 +312,7 @@ sys-eomonth
 sys-events
 sys-extended_properties
 sys-sql_expression_dependencies
-sys-filegroups
+sys-filegroups-before-16-4
 sys-filetables
 sys-filetable_system_defined_objects
 sys-foreign_key_columns
@@ -532,6 +532,7 @@ login_token-dep
 test_like_for_AI
 babel_726
 BABEL-4869
+upper_lower-before-15_8-or-16_4
 BABEL-4815
 reverse-before-15_8-or-16_4
 BABEL-3401
@@ -539,3 +540,4 @@ babel_4328_datetime
 babel_4328_datetime2
 babel_4328_datetimeoffset
 BABEL-3820
+replicate-before-15_8-or-16_4

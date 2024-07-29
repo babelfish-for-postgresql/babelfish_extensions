@@ -265,6 +265,8 @@ static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook =
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
 static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_constraint_nulls_ordering_hook = NULL;
+static pltsql_strpos_non_determinstic_hook_type prev_pltsql_strpos_non_determinstic_hook = NULL;
+static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determinstic_hook = NULL;
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
 
 /*****************************************
@@ -461,8 +463,15 @@ InstallExtendedHooks(void)
 	prev_pltsql_unique_constraint_nulls_ordering_hook = pltsql_unique_constraint_nulls_ordering_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = unique_constraint_nulls_ordering;
 
+	prev_pltsql_strpos_non_determinstic_hook = pltsql_strpos_non_determinstic_hook;
+	pltsql_strpos_non_determinstic_hook = pltsql_strpos_non_determinstic;
+
+	prev_pltsql_replace_non_determinstic_hook = pltsql_replace_non_determinstic_hook;
+	pltsql_replace_non_determinstic_hook = pltsql_replace_non_determinstic;
+
 	prev_pltsql_is_partitioned_table_reloptions_allowed_hook = pltsql_is_partitioned_table_reloptions_allowed_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed; 
+
 }
 
 void
@@ -527,6 +536,8 @@ UninstallExtendedHooks(void)
 	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
+	pltsql_strpos_non_determinstic_hook = prev_pltsql_strpos_non_determinstic_hook;
+	pltsql_replace_non_determinstic_hook = prev_pltsql_replace_non_determinstic_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;

@@ -294,7 +294,7 @@ sys_syslogins_dep
 sys-database_recovery_status
 sys-databases
 sys-databases-dep
-sys-data_spaces
+sys-data_spaces-before-16-4
 sys-datefirst
 sys-default_constraints
 sys-default_constraints-dep
@@ -310,7 +310,7 @@ sys-eomonth
 sys-events
 sys-extended_properties
 sys-sql_expression_dependencies
-sys-filegroups
+sys-filegroups-before-16-4
 sys-filetables
 sys-filetable_system_defined_objects
 sys-foreign_key_columns
@@ -519,9 +519,11 @@ babel_4328_datetime2-before-16_3
 babel_4328_datetimeoffset-before-16_3
 babel_726-before-14_12-or-15_7-or-16_3
 BABEL-5071
+upper_lower-before-15_8-or-16_4
 trim-before-15_8-or-16_4
 ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
 left-before-15_8-or-16_4
 right-before-15_8-or-16_4
 reverse-before-15_8-or-16_4
+replicate-before-15_8-or-16_4
