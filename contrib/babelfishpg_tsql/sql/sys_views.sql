@@ -3338,3 +3338,16 @@ FROM sys.objects so
 WHERE FALSE;
 GRANT SELECT ON sys.sequences TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.partition_functions AS
+SELECT
+  CAST(NULL as sys.NVARCHAR(128)) as name,
+  CAST(0 as int) function_id,
+  CAST('R' as sys.bpchar(2)) as type,
+  CAST('RANGE' as sys.nvarchar(60)) as type_desc,
+  CAST(0 as int) fanout,
+  CAST(0 as sys.bit) as boundary_value_on_right,
+  CAST(0 as sys.bit) as is_system,
+  CAST(0 as sys.datetime) as create_date,
+  CAST(0 as sys.datetime) as modify_date
+WHERE FALSE;
+GRANT SELECT ON sys.partition_functions TO PUBLIC;
