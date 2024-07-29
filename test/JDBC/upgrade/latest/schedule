@@ -543,5 +543,6 @@ babel_4328_datetime2
 translate
 babel_4328_datetimeoffset
 BABEL-3820
+replicate
 reverse
 sys_sequences
