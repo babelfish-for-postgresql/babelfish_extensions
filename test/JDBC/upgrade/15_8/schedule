@@ -530,3 +530,4 @@ rtrim
 left
 right
 reverse
+replicate
