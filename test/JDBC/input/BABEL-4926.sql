@@ -119,7 +119,7 @@ BEGIN
 END;
 go
 -- Create a new table BABEL_4926_REPO with column babel_4926_COL1 using function
-select babel_4926_double_value(babel_4926_COL) as babel_4926_COL1 into BABEL_4926_REPO from BABEL_4926;
+select babel_4926_double_function(babel_4926_COL) as babel_4926_COL1 into BABEL_4926_REPO from BABEL_4926;
 go
 -- Indexing over column babel_4926_COL1
 create index IDX_REPRODUCTION on BABEL_4926_REPO(babel_4926_COl1);

@@ -6068,7 +6068,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	into = stmt->into;
 	result = NIL;
 	altstmt = NULL;
-	babel_4926_original_name_list=NIL;
+	babel_4926_original_name_list = NIL;
 
 	if (n && n->type == T_Query)
 	{
@@ -6164,10 +6164,10 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			{
 				AlterTableStmt *newstmt;
 				AlterTableCmd *cmd;
-				char* original_name=NULL;
+				char* original_name = NULL;
 				newstmt = NULL;
 
-				if (tle->resname!=NULL)
+				if (tle->resname != NULL)
 				{
 					original_name = tle->resname;
 					tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
@@ -6177,7 +6177,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
 
-				if (original_name!=NULL && strcmp(original_name, tle->resname))
+				if (original_name != NULL && strcmp(original_name, tle->resname))
 				{
 					cmd = makeNode(AlterTableCmd);
 					cmd->subtype = AT_SetOptions;
