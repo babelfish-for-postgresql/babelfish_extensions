@@ -682,18 +682,11 @@ WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   AND Ext.type != 'Z'
 UNION ALL
 SELECT
-CAST(name AS SYS.SYSNAME) AS name,
+CAST('public' AS SYS.SYSNAME) AS name,
 CAST(-1 AS INT) AS principal_id,
 CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
-CAST(type AS CHAR(1)) as type,
-CAST(
-  CASE
-    WHEN type = 'S' THEN 'SQL_LOGIN'
-    WHEN type = 'R' THEN 'SERVER_ROLE'
-    WHEN type = 'U' THEN 'WINDOWS_LOGIN'
-    ELSE NULL
-  END
-  AS NVARCHAR(60)) AS type_desc,
+CAST('R' AS CHAR(1)) as type,
+CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
 CAST(0 AS INT) AS is_disabled,
 CAST(NULL AS SYS.DATETIME) AS create_date,
 CAST(NULL AS SYS.DATETIME) AS modify_date,
@@ -701,8 +694,7 @@ CAST(NULL AS SYS.SYSNAME) AS default_database_name,
 CAST(NULL AS SYS.SYSNAME) AS default_language_name,
 CAST(NULL AS INT) AS credential_id,
 CAST(1 AS INT) AS owning_principal_id,
-CAST(0 AS sys.BIT) AS is_fixed_role
-FROM (VALUES ('public', 'R')) as dummy_principals(name, type);
+CAST(0 AS sys.BIT) AS is_fixed_role;
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
