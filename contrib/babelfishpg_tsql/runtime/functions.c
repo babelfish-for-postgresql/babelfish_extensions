@@ -1964,7 +1964,9 @@ tsql_bsearch_arg(const void *key, const void *base0,
  *	the partition function metadata, and performing a binary search 
  *	on the sorted array of partition range values.
  *
- *	Returns the index of the partition to which the input value belongs.
+ *	Returns:
+ *		- The index of the partition to which the input value belongs.
+ *		- 1, if the provided value is NULL and partition function exists in provided database.
  */
 Datum
 search_partition(PG_FUNCTION_ARGS)
@@ -1986,11 +1988,9 @@ search_partition(PG_FUNCTION_ARGS)
 	Datum			*range_values;
 	bool			*nulls;
 	int			nelems;
-	Oid			basetype_oid;
-	Oid			opclass_oid;
-	Oid			opfamily_oid;
 	Oid			cmpfunction_oid;
 	tsql_compare_context	cxt;
+	Oid			*arg_types;
 
 	if (!PG_ARGISNULL(2)) /* Database is specified. */
 	{
@@ -2046,7 +2046,11 @@ search_partition(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					errmsg("Invalid object name '%s'.", partition_func_name)));
 	
-	/* NULL values will always belong to first partition. */
+	/*
+	 * If the partition function exists in the provided database and
+	 * provided value is NULL then return 1 because NULL values will always
+	 * belong to first partition.
+	 */
 	if (PG_ARGISNULL(1))
 	{
 		pfree(partition_func_name);
@@ -2074,16 +2078,18 @@ search_partition(PG_FUNCTION_ARGS)
 						sqlvariant_typoid, -1);
 
 	/*
-	 * Find oid of comparator function for input type, which will be used during the sorting.
-	 * Here, we are first finding the default operator class for the input type then using that
-	 * we are finding the operator family for that operator class and finally using that we are
-	 * finding the defined comparator function for that operator family.
+	 * Find oid of comparator function for sqlvariant type, which will be
+	 * used for comparison during binary search. Here, we are searching the
+	 * for "sqlvarint_cmp" function in "sys" schema with sqlvariant arg types
+	 * to ensure that we get a unique result.
 	 */
-	basetype_oid = getBaseType(sqlvariant_typoid);
-	opclass_oid = GetDefaultOpClass(basetype_oid, BTREE_AM_OID);
-	opfamily_oid = get_opclass_family(opclass_oid);
-	cmpfunction_oid = get_opfamily_proc(opfamily_oid, basetype_oid, basetype_oid,
-						BTORDER_PROC);
+	arg_types = (Oid *) palloc(2 * sizeof(Oid));
+	arg_types[0] = sqlvariant_typoid;
+	arg_types[1] = sqlvariant_typoid;
+	cmpfunction_oid = GetSysCacheOid3(PROCNAMEARGSNSP, Anum_pg_proc_oid,
+								CStringGetDatum("sqlvariant_cmp"),
+								PointerGetDatum(buildoidvector(arg_types, 2)),
+								ObjectIdGetDatum(get_namespace_oid("sys", false)));
 
 	cxt.function_oid = cmpfunction_oid;
 	cxt.colloid = tsql_get_server_collation_oid_internal(false);
@@ -2092,6 +2098,7 @@ search_partition(PG_FUNCTION_ARGS)
 	result = tsql_bsearch_arg(&arg, range_values, nelems, sizeof(Datum), tsql_compare_values, &cxt);
 
 	/* Free the allocated memory. */
+	pfree(arg_types);
 	pfree(partition_func_name);
 	pfree(func_param_typname);
 	pfree(nulls);

@@ -11183,6 +11183,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg anyelement, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'search_partition'
+LANGUAGE C STABLE;
+
+-- Duplicate function with arg TEXT since ANYELEMNT cannot handle constant NULL and string literal (unknown type).
+CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg text, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'search_partition'
+LANGUAGE C STABLE;
+
 
 CREATE OR REPLACE VIEW sys.destination_data_spaces as
 SELECT
@@ -11354,17 +11365,6 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys_partitions_depreca
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys_filegroups_deprecated_4_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys_data_spaces_deprecated_4_3_0');
 
-
-CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg anyelement, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
-RETURNS INTEGER AS
-'babelfishpg_tsql', 'search_partition'
-LANGUAGE C STABLE;
-
--- Duplicate function with arg TEXT since ANYELEMNT cannot handle NULL value(unknown type).
-CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg text, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
-RETURNS INTEGER AS
-'babelfishpg_tsql', 'search_partition'
-LANGUAGE C STABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

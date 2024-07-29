@@ -797,7 +797,7 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'search_partition'
 LANGUAGE C STABLE;
 
--- Duplicate function with arg TEXT since ANYELEMNT cannot handle NULL value(unknown type).
+-- Duplicate function with arg TEXT since ANYELEMNT cannot handle constant NULL and string literal (unknown type).
 CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg text, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
 RETURNS INTEGER AS
 'babelfishpg_tsql', 'search_partition'
