@@ -566,7 +566,7 @@ Function sys.openquery_internal(text,text)
 Function sys.options()
 Function sys.original_login()
 Function sys.patindex(character varying,character varying)
-Function sys.patindex_ai_collations
+Function sys.patindex_ai_collations(character varying,character varying)
 Function sys.pgerror()
 Function sys.pltsql_call_handler()
 Function sys.pltsql_inline_handler(internal)

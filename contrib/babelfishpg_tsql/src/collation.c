@@ -1679,14 +1679,14 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
                                         mylocale->info.icu.ucol,
                                         NULL,
                                         &status);
-        if (U_FAILURE(status))
-            ereport(ERROR,
-                    (errcode(ERRCODE_INTERNAL_ERROR),
-                     errmsg("failed to perform ICU search: %s",
-                            u_errorName(status))));
+		if (U_FAILURE(status))
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("failed to perform ICU search: %s",
+							   u_errorName(status))));
 
 		usearch_setAttribute(usearch, USEARCH_OVERLAP, USEARCH_ON, &status);
-		
+
 		/* substr should start matching from the first position in src string */
 		u16_pos = usearch_preceding(usearch, 1, &status);
 		if (!U_FAILURE(status) && u16_pos != USEARCH_DONE)
@@ -1722,16 +1722,16 @@ PG_FUNCTION_INFO_V1(patindex_ai_collations);
 Datum
 patindex_ai_collations(PG_FUNCTION_ARGS)
 {
-    text        *input_text = PG_GETARG_TEXT_P(1);
-    char        *input_str = text_to_cstring(input_text);
-    char        *input_str_itr = input_str;
-    text        *pattern_text = PG_GETARG_TEXT_P(0);
-    char        *pattern_str = text_to_cstring(pattern_text);
+	text         *input_text = PG_GETARG_TEXT_P(1);
+	text         *pattern_text = PG_GETARG_TEXT_P(0);
+	char         *input_str = text_to_cstring(input_text);
+	char         *input_str_itr = input_str;
+	char         *pattern_str = text_to_cstring(pattern_text);
+	char         *pattern_stripped;
 	int          pattern_len = strlen(pattern_str),
-                 start_offset = 0, end_offset = 0;
-    char        *pattern_stripped;
-    Oid          cid = PG_GET_COLLATION();
-	int 		 result = 0;
+	             start_offset = 0, end_offset = 0,
+	             result = 0;
+	Oid          cid = PG_GET_COLLATION();
 
     if (pattern_str[0] == '%')
         start_offset = 1;
@@ -1745,10 +1745,11 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 
     while (*input_str_itr != '\0')
     {
-		char *t = input_str_itr;
-		char *p = pattern_stripped;
-		int tlen = strlen(t), plen = strlen(pattern_stripped);
-		bool 		match_failed = false;
+		char  *t = input_str_itr;
+		char  *p = pattern_stripped;
+		int   tlen = strlen(t),
+		      plen = strlen(pattern_stripped);
+		bool  match_failed = false;
 
 		result++;
 
