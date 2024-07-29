@@ -4912,6 +4912,11 @@ END;
 $BODY$
 LANGUAGE 'plpgsql' STABLE;
 
+CREATE OR REPLACE FUNCTION sys.patindex_ai_collations(in pattern character varying, in expression character varying) returns bigint
+AS 'babelfishpg_tsql', 'patindex_ai_collations'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
 create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
 $body$
 declare
@@ -4921,6 +4926,9 @@ declare
 begin
   if pattern is null or expression is null then
     return null;
+  end if;
+  if sys.is_collated_ai(input_string) then
+    return sys.patindex_ai_collations(pattern, expression);
   end if;
   if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i');

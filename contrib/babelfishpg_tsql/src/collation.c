@@ -18,6 +18,7 @@
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
+#include "utils/varlena.h"
 #ifdef USE_ICU
 #include <unicode/utrans.h>
 #include "utils/removeaccent.map"
@@ -44,6 +45,10 @@
  */
 #define MAX_BYTES_PER_CHAR 4
 #define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
+
+#define NextChar(p, plen) \
+	do { int __l = pg_mblen(p); (p) +=__l; (plen) -=__l; } while (0)
+#define NextByte(p, plen)	((p)++, (plen)--)
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
@@ -1638,4 +1643,218 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 #endif
 	}
 	return false;
+}
+
+/*
+ * Find the matched length for substr in src_text
+ */
+static bool
+icu_find_matched_length(char *src_text, int src_len, char *substr_text, int substr_len, Oid collid, int *matched_len)
+{
+    pg_locale_t mylocale = 0;
+
+    if (!lc_collate_is_c(collid))
+        mylocale = pg_newlocale_from_collation(collid);
+
+    if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
+    {
+#ifdef USE_ICU
+        int32_t src_len_utf8 = src_len;
+        int32_t substr_len_utf8 = substr_len;
+        int32_t src_ulen, substr_ulen;
+        int32_t u16_pos, u8_pos = 0;
+        UErrorCode  status = U_ZERO_ERROR;
+        UStringSearch *usearch;
+        UChar *src_uchar, *substr_uchar;
+		int32 matched_length_u16, u8_endpos;
+
+        src_ulen = icu_to_uchar(&src_uchar, src_text, src_len_utf8);
+        substr_ulen = icu_to_uchar(&substr_uchar, substr_text, substr_len_utf8);
+
+        usearch = usearch_openFromCollator(substr_uchar,
+                                        substr_ulen,
+                                        src_uchar,
+                                        src_ulen,
+                                        mylocale->info.icu.ucol,
+                                        NULL,
+                                        &status);
+        if (U_FAILURE(status))
+            ereport(ERROR,
+                    (errcode(ERRCODE_INTERNAL_ERROR),
+                     errmsg("failed to perform ICU search: %s",
+                            u_errorName(status))));
+
+		usearch_setAttribute(usearch, USEARCH_OVERLAP, USEARCH_ON, &status);
+		
+		/* substr should start matching from the first position in src string */
+		u16_pos = usearch_preceding(usearch, 1, &status);
+		if (!U_FAILURE(status) && u16_pos != USEARCH_DONE)
+		{
+			u8_pos = translate_char_pos(VARDATA_ANY(src_text), src_len_utf8,
+										src_uchar, src_ulen, u16_pos,
+										NULL);
+			matched_length_u16 = usearch_getMatchedLength(usearch);
+			u8_endpos = translate_char_pos(VARDATA_ANY(src_text), src_len_utf8,
+										src_uchar, src_ulen, u16_pos + matched_length_u16,
+										NULL);
+			*matched_len = u8_endpos - u8_pos;
+		}
+		else
+			u8_pos = -1;
+
+        pfree(src_uchar);
+        pfree(substr_uchar);
+        usearch_close(usearch);
+
+        return u8_pos < 0 ? false : true;
+#else
+    ereport(ERROR,
+            (errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+                errmsg("This function requires ICU library, which is not available")));
+#endif
+    }
+
+    return false;
+}
+
+PG_FUNCTION_INFO_V1(patindex_ai_collations);
+Datum
+patindex_ai_collations(PG_FUNCTION_ARGS)
+{
+    text        *input_text = PG_GETARG_TEXT_P(1);
+    char        *input_str = text_to_cstring(input_text);
+    char        *input_str_itr = input_str;
+    text        *pattern_text = PG_GETARG_TEXT_P(0);
+    char        *pattern_str = text_to_cstring(pattern_text);
+    int          pattern_len = strlen(pattern_str),
+                 start_offset = 0, end_offset = 0;
+    char        *pattern_stripped;
+    Oid          cid = PG_GET_COLLATION();
+	int 		 result = 0;
+
+    if (pattern_str[0] == '%')
+        start_offset = 1;
+
+    if (pattern_len > 1 && pattern_str[pattern_len-1] == '%')
+        end_offset = 1;
+
+    pattern_stripped = (char *) palloc(pattern_len - start_offset - end_offset + 1);
+    memcpy(pattern_stripped, pattern_str + start_offset, pattern_len - start_offset - end_offset);
+    pattern_stripped[pattern_len - start_offset - end_offset] = '\0';
+    
+    while (*input_str_itr != '\0')
+    {
+		char *t = input_str_itr;
+		char *p = pattern_stripped;
+	    int tlen = strlen(t), plen = strlen(pattern_stripped);
+		bool 		matched_failed = false;
+
+		result++;
+
+        while (tlen > 0 && plen > 0)
+		{
+			if (*p == '_')
+			{
+				/* _ matches any single character, and we know there is one */
+				NextChar(t, tlen);
+				NextByte(p, plen);
+				continue;
+			}
+			else if (*p == '[')
+			{
+				/* Tsql deal with [ and ] wild character */
+				bool find_match = false, reverse_mode = false, close_bracket = false;
+				const char * prev = NULL;
+
+				NextByte(p, plen);
+				if (plen > 0 && *p == '^')
+				{
+					reverse_mode = true;
+					NextByte(p, plen);
+				}
+				while (plen > 0)
+				{
+					if (*p == ']')
+					{
+						close_bracket = true;
+						NextByte(p, plen);
+						break;
+					}
+					if (find_match)
+					{
+						NextByte(p, plen);
+						continue;
+					}
+					if (*p == '-' && prev)
+					{
+						NextByte(p, plen);
+						Assert(cid != InvalidOid);
+						if (varstr_cmp(t, pg_mblen(t), prev, pg_mblen(prev), cid) >= 0 && varstr_cmp(t, pg_mblen(t), p, pg_mblen(p), cid) <= 0)
+						{
+							NextChar(t, tlen);
+							find_match = true;
+						}
+						prev = NULL;
+						NextByte(p, plen);
+					}
+					else
+					{
+						int len = 0, matched_idx = 0;
+						char *p_start = p;
+						text *src_text, *substr_text;
+						prev = p;
+
+						/* find the string till the next special character */
+						while (plen > 0 && *p != ']' && *p != '-')
+						{
+							prev = p;
+							NextByte(p, plen);
+							len++;
+						}
+						
+						src_text = cstring_to_text_with_len(p_start, len);
+						substr_text = cstring_to_text_with_len(t, pg_mblen(t));
+						
+						if (pltsql_strpos_non_determinstic(src_text, substr_text, cid, &matched_idx) && matched_idx != 0)
+						{
+							NextChar(t, tlen);
+							find_match = true;
+						}
+						pfree(src_text);
+						pfree(substr_text);
+					}
+				}
+				if ((!find_match && !reverse_mode) ||
+				    (find_match && !close_bracket) ||
+				    (find_match && reverse_mode) )
+				{
+					matched_failed = true;
+				}
+			}
+			else
+			{
+				char *p_start = p;
+				int len = plen, matched_len = 0;
+
+				while (plen > 0 && *p != '[' && *p != '_')
+				{
+					NextByte(p, plen);
+				}
+				if (icu_find_matched_length(t, strlen(t), p_start, len-plen, cid, &matched_len))
+				{
+					while (matched_len--)
+						NextChar(t, tlen);
+				}
+				else
+					matched_failed = true;
+			}
+		}
+
+		if (plen == 0 && matched_failed == false && (tlen == 0 || end_offset == 1))
+			PG_RETURN_INT32(result);
+		
+		input_str_itr += pg_mblen(input_str_itr);
+    }
+
+    PG_RETURN_INT32(0);
 }

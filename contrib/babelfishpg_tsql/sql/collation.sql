@@ -220,3 +220,8 @@ CREATE OR REPLACE FUNCTION sys.get_icu_minor_version() RETURNS INT4
 AS 'babelfishpg_tsql', 'get_icu_minor_version'
 LANGUAGE C
 IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.patindex_ai_collations(in pattern character varying, in expression character varying) returns bigint
+AS 'babelfishpg_tsql', 'patindex_ai_collations'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
