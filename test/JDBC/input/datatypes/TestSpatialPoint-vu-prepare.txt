@@ -270,7 +270,6 @@ CREATE VIEW equal_geog AS SELECT p1.location AS point FROM SPATIALPOINTGEOG_dt p
 
 CREATE VIEW point_distances_geog AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.Lat;
 
-
 CREATE TABLE SpatialData(ID INT PRIMARY KEY, SpatialLocation GEOGRAPHY);
 INSERT INTO SpatialData (ID, SpatialLocation) VALUES (1, geography::Point(1, 2, 4326)), (2, geography::Point(3, 4, 4326)), (3, geography::Point(5, 6, 4326)), (4, geography::Point(7, 8, 4326)), (5, geography::Point(9, 10, 4326));
 
