@@ -920,6 +920,11 @@ public:
 				{
 					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
 				}
+				if (id->keyword()->TRANSLATE())
+				{
+					size_t startPosition = id->keyword()->TRANSLATE()->getSymbol()->getStartIndex();
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
+				}
 			}
 		}
 	}
@@ -2461,6 +2466,11 @@ public:
 						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
 							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
 					}
+				}
+				if (id->keyword()->TRANSLATE()) /* TRANSLATE */
+				{
+					size_t startPosition = id->keyword()->TRANSLATE()->getSymbol()->getStartIndex();
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
 				}
 
                               if (id->keyword()->CHECKSUM())

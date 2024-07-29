@@ -7684,7 +7684,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -8678,7 +8678,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -9684,7 +9684,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -9959,6 +9959,30 @@ AS SELECT
 FROM sys.objects so
 WHERE FALSE;
 GRANT SELECT ON sys.sequences TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.translate(string sys.VARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+    
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.translate(string sys.NVARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
