@@ -18,7 +18,12 @@
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
+#ifdef USE_ICU
 #include <unicode/utrans.h>
+#include "utils/removeaccent.map"
+#include <unicode/ucol.h>
+#include <unicode/usearch.h>
+#endif
 
 #include "pltsql.h"
 #include "src/collation.h"
@@ -70,6 +75,7 @@ PG_FUNCTION_INFO_V1(init_collid_trans_tab);
 PG_FUNCTION_INFO_V1(init_like_ilike_table);
 PG_FUNCTION_INFO_V1(get_server_collation_oid);
 PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
+PG_FUNCTION_INFO_V1(is_collated_ai_internal);
 
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation);
@@ -118,6 +124,12 @@ Datum
 is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(tsql_is_collated_ci_as_internal(fcinfo));
+}
+
+Datum
+is_collated_ai_internal(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_DATUM(tsql_is_collated_ai_internal(fcinfo));
 }
 
 /* init_like_ilike_table - this function is no longer needed and is only a placeholder for upgrade script */
@@ -451,6 +463,11 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	return ret;
 }
 
+/*
+ * Only use cached mappings for removing accents when the
+ * current ICU version matches to the one used to generate
+ * the cache. Otherwise we fallback on the ICU function
+ */
 static void
 get_remove_accents_internal_oid()
 {
@@ -458,7 +475,154 @@ get_remove_accents_internal_oid()
 	if (OidIsValid(remove_accents_internal_oid))
 		return;
 
+#ifdef USE_ICU
+	if (U_ICU_VERSION_MAJOR_NUM == pltsql_remove_accent_map_icu_major_version && U_ICU_VERSION_MINOR_NUM == pltsql_remove_accent_map_icu_min_version)
+	{
+		elog(LOG, "Using cached mappings to remove accents");
+		remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal_using_cache")), -1, funcargtypes, true);
+		return;
+	}
+#endif
+	elog(LOG, "Using ICU function to remove accents");
 	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
+}
+
+/*
+ * store 32bit character representation into multibyte stream
+ */
+static inline void
+store_coded_char(unsigned char *dest, uint32 code)
+{
+	if (code & 0xff000000)
+	{
+		*dest++ = code >> 24;
+	}
+	if (code & 0x00ff0000)
+	{
+		*dest++ = code >> 16;
+	}
+	if (code & 0x0000ff00)
+	{
+		*dest++ = code >> 8;
+	}
+	if (code & 0x000000ff)
+	{
+		*dest++ = code;
+	}
+	*dest = '\0';
+	return;
+}
+
+static int
+compare_remove_accent_map_pair(const void *p1, const void *p2)
+{
+	uint32		v1,
+				v2;
+
+	v1 = *(const uint32 *) p1;
+	v2 = ((const remove_accent_map_pair *) p2)->original_char;
+	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
+}
+
+PG_FUNCTION_INFO_V1(remove_accents_internal_using_cache);
+Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
+{
+	unsigned char *input_str,
+	              *input_str_start,
+	              *normalized_char;
+	int           len,
+	              char_len;
+	text          *return_result;
+	StringInfoData result;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	input_str = (unsigned char *) text_to_cstring(PG_GETARG_TEXT_PP(0));
+	input_str_start = input_str;
+	len = strlen((char *) input_str);
+	initStringInfo(&result);
+	normalized_char = (unsigned char *) palloc(sizeof(uint32) + 1);
+
+	for (; len > 0; len -= char_len)
+	{
+		unsigned char b1 = 0;
+		unsigned char b2 = 0;
+		unsigned char b3 = 0;
+		unsigned char b4 = 0;
+		uint32 utf8_char;
+		uint32 utf8_normalized_str;
+		remove_accent_map_pair *pr;
+
+		/* "break" cases all represent errors */
+		if (*input_str == '\0')
+			break;
+
+		char_len = pg_utf_mblen(input_str);
+		
+		if (len < char_len)
+			break;
+
+		if (!pg_utf8_islegal(input_str, char_len))
+			break;
+
+		if (char_len == 1)
+		{
+			appendBinaryStringInfo(&result, input_str++, 1);
+			continue;
+		}
+
+		/* collect coded char of length l */
+		if (char_len == 2)
+		{
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else if (char_len == 3)
+		{
+			b2 = *input_str++;
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else if (char_len == 4)
+		{
+			b1 = *input_str++;
+			b2 = *input_str++;
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else
+		{
+			elog(ERROR, "unsupported character length %d", char_len);
+		}
+
+		utf8_char = (b1 << 24 | b2 << 16 | b3 << 8 | b4);
+
+		pr = bsearch(&utf8_char, pltsql_remove_accent_map, lengthof(pltsql_remove_accent_map),
+							sizeof(remove_accent_map_pair), compare_remove_accent_map_pair);
+
+		/* Use the mapping if availaible or else the character */
+		if (pr && pr->normalized_char)
+			utf8_normalized_str = pr->normalized_char;
+		else
+			utf8_normalized_str = utf8_char;
+
+		store_coded_char(normalized_char, utf8_normalized_str);
+
+		appendBinaryStringInfo(&result, normalized_char, strlen((const char *) normalized_char));
+	}
+
+	if (len > 0)
+		ereport(ERROR,
+			(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+			 errmsg("invalid byte sequence for encoding UTF-8 while removing accents")));
+
+	return_result = cstring_to_text_with_len(result.data, result.len);
+	pfree(result.data);
+	pfree(input_str_start);
+	pfree(normalized_char);
+
+	PG_RETURN_VARCHAR_P(return_result);
 }
 
 /*
@@ -553,13 +717,6 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 						&status);
 
 	/* Allocated capacity may not be enough to hold un-accented string. This shouldn't occur ideally but still defensive code. */
-	if (status == U_BUFFER_OVERFLOW_ERROR)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					errmsg("Buffer overflow occurred while normalising the string. Error: %s", u_errorName(status))));
-	}
-
 	if (U_FAILURE(status))
 	{
 		ereport(ERROR,
@@ -1032,6 +1189,15 @@ tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 	return (*collation_callbacks_ptr->is_collated_ci_as_internal) (fcinfo);
 }
 
+Datum
+tsql_is_collated_ai_internal(PG_FUNCTION_ARGS)
+{
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	return (*collation_callbacks_ptr->is_collated_ai_internal) (fcinfo);
+}
+
 bytea *
 tsql_tdscollationproperty_helper(const char *collationaname, const char *property)
 {
@@ -1168,6 +1334,313 @@ has_ilike_node_and_ci_as_coll(Node *expr)
 	return false;
 }
 
+PG_FUNCTION_INFO_V1(get_icu_major_version);
+Datum
+get_icu_major_version(PG_FUNCTION_ARGS)
+{
+#ifdef USE_ICU
+	PG_RETURN_INT32(U_ICU_VERSION_MAJOR_NUM);
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("ICU library is not found")));
+	PG_RETURN_NULL();
+#endif
+}
+
+PG_FUNCTION_INFO_V1(get_icu_minor_version);
+Datum
+get_icu_minor_version(PG_FUNCTION_ARGS)
+{
+#ifdef USE_ICU
+	PG_RETURN_INT32(U_ICU_VERSION_MINOR_NUM);
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("ICU library is not found")));
+	PG_RETURN_NULL();
+#endif
+}
+/*
+ * For a given string and position in UTF-16 and return
+ * the corresponding position in UTF-8 string. UTF-16
+ * string considers surrogate pairs as two chars while
+ * in UTF-8 they are 1, which is why we need to translate
+ */
+
+static int32_t
+translate_char_pos(const char* str,		/* UTF-8 string */
+				   int32_t str_len,		/* length of UTF-8 string */
+				   const UChar* str_utf16, 		/* UTF-16 string */
+				   int32_t u16_len,		/* length of UTF-16 string */
+				   int32_t u16_pos,		/* position to translare in UTF-16 string */
+				   const char **p_str)		/* character at same position in UTF-8 string */
+{
+	UChar32 c;
+	int32_t u16_idx = 0;
+	int32_t out_pos = 0;
+	int32_t u8_offset = 0;
+
+	Assert (GetDatabaseEncoding() == PG_UTF8);
+
+	/* for UTF-8, use ICU macros instead of calling pg_mblen() */
+	while (u16_idx < u16_pos)
+	{
+#ifdef USE_ICU
+		U16_NEXT(str_utf16, u16_idx, u16_len, c);
+		U8_NEXT(str, u8_offset, str_len, c);
+		out_pos++;
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("translate_char_pos requires ICU library, which is not available")));
+#endif
+	}
+	if (p_str != NULL)
+		*p_str = str + u8_offset;
+
+	return out_pos;
+}
+
+static int
+icu_compare_utf8_coll(pg_locale_t locale, UChar *uchar1, int32_t ulen1,
+					  UChar *uchar2, int32_t ulen2)
+{
+	return ucol_strcoll(locale->info.icu.ucol,
+							uchar1, ulen1,
+							uchar2, ulen2);
+}
+
+bool
+pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, int *r)
+{
+	pg_locale_t mylocale = 0;
+
+	if (!lc_collate_is_c(collid))
+		mylocale = pg_newlocale_from_collation(collid);
+	else
+		return false;
+
+	if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
+	{
+#ifdef USE_ICU
+		int32_t src_len_utf8 = VARSIZE_ANY_EXHDR(src_text);
+		int32_t substr_len_utf8 = VARSIZE_ANY_EXHDR(substr_text);
+		int32_t src_ulen, substr_ulen;
+		int32_t u8_pos = -1;
+		UErrorCode	status = U_ZERO_ERROR;
+		UStringSearch *usearch;
+		UChar *src_uchar, *substr_uchar;
+		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(collid);
+		bool is_CS_AI = false;
+
+		if (OidIsValid(coll_info_of_inputcollid.oid) &&
+		    coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
+		{
+			is_CS_AI = true;
+		}
+
+		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len_utf8);
+		substr_ulen = icu_to_uchar(&substr_uchar, VARDATA_ANY(substr_text), substr_len_utf8);
+
+		usearch = usearch_openFromCollator(substr_uchar,
+										substr_ulen,
+										src_uchar,
+										src_ulen,
+										mylocale->info.icu.ucol,
+										NULL,
+										&status);
+
+		usearch_setAttribute(usearch, USEARCH_OVERLAP, USEARCH_ON, &status);
+
+		if (U_FAILURE(status))
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("failed to perform ICU search: %s",
+							u_errorName(status))));
+
+		for (int u16_pos = usearch_first(usearch, &status);
+		     u16_pos != USEARCH_DONE;
+		     u16_pos = usearch_next(usearch, &status))
+		{
+			if (U_FAILURE(status))
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("failed to perform ICU search: %s",
+							u_errorName(status))));
+
+			/* for CS_AI collations usearch can give false positives so we double check the results here */
+			if (!(is_CS_AI && icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), substr_uchar, substr_ulen) != 0))
+			{
+				u8_pos = translate_char_pos(VARDATA_ANY(src_text), src_len_utf8,
+										src_uchar, src_ulen, u16_pos,
+										NULL);
+				break;
+			}
+		}
+
+		pfree(src_uchar);
+		pfree(substr_uchar);
+		usearch_close(usearch);
+
+		/* return 0 if not found or the 1-based position of substr_text inside src_text */
+		*r = u8_pos + 1;
+		return true;
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("pltsql strpos requires ICU library, which is not available")));
+#endif
+	}
+
+	return false;
+}
+
+bool
+pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, Oid collid, text **r)
+{
+	pg_locale_t mylocale = 0;
+
+	if (!lc_collate_is_c(collid))
+		mylocale = pg_newlocale_from_collation(collid);
+	else
+		return false;
+
+	if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
+	{
+#ifdef USE_ICU
+		const char *src_text_currptr = VARDATA_ANY(src_text);
+		const char* src_text_startptr = VARDATA_ANY(src_text);
+		int32_t src_len = VARSIZE_ANY_EXHDR(src_text);
+		int32_t from_str_len = VARSIZE_ANY_EXHDR(from_text);
+		int32_t to_str_len = VARSIZE_ANY_EXHDR(to_text);
+		int32_t previous_pos;
+		int32_t src_ulen, from_ulen;		/* in utf-16 units */
+		UErrorCode	status = U_ZERO_ERROR;
+		UStringSearch *usearch;
+		UChar *src_uchar, *from_uchar;
+		text *result;
+		StringInfoData resbuf;
+		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(collid);
+		bool is_CS_AI = false;
+
+		if (OidIsValid(coll_info_of_inputcollid.oid) &&
+		    coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
+		{
+			is_CS_AI = true;
+		}
+
+		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len);
+		from_ulen = icu_to_uchar(&from_uchar, VARDATA_ANY(from_text), from_str_len);
+
+		usearch = usearch_openFromCollator(from_uchar, /* needle */
+										from_ulen,
+										src_uchar, /* haystack */
+										src_ulen,
+										mylocale->info.icu.ucol,
+										NULL,
+										&status);
+
+		usearch_setAttribute(usearch, USEARCH_OVERLAP, USEARCH_ON, &status);
+
+		initStringInfo(&resbuf);
+		previous_pos = 0;
+
+		for (int pos = usearch_first(usearch, &status);
+		     pos != USEARCH_DONE;
+		     pos = usearch_next(usearch, &status))
+		{
+			const char *src_text_nextptr;
+			int32_t matched_length;
+
+			if (U_FAILURE(status))
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("failed to perform ICU search: %s",
+							u_errorName(status))));
+
+			/* for CS_AI collations usearch can give false positives so we double check the results here */
+			if (is_CS_AI && icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), from_uchar, from_ulen) != 0)
+				continue;
+
+			/* reject if overlaps with the last successful match */
+			if (pos < previous_pos)
+				continue;
+
+			/* copy the segment before the match */
+			translate_char_pos(
+				src_text_currptr,
+				src_len - (src_text_currptr - src_text_startptr),
+				src_uchar + previous_pos,
+				src_ulen - previous_pos,
+				pos - previous_pos,
+				&src_text_nextptr);
+
+			appendBinaryStringInfo(&resbuf,
+								src_text_currptr,
+								src_text_nextptr - src_text_currptr);
+
+
+			matched_length = usearch_getMatchedLength(usearch);
+
+			/* compute the length of the replaced text in txt1 */
+			translate_char_pos(
+				src_text_nextptr,
+				src_len - (src_text_nextptr - src_text_startptr),
+				src_uchar + pos,
+				matched_length,
+				matched_length,
+				&src_text_currptr);
+
+			/* append the replacement text */
+			appendBinaryStringInfo(&resbuf, VARDATA_ANY(to_text), to_str_len);
+
+			previous_pos = pos + matched_length;
+		}
+
+		/* copy the segment after the last match */
+		if (previous_pos)
+		{
+			if (src_len - (src_text_currptr - src_text_startptr) > 0)
+			{
+				appendBinaryStringInfo(&resbuf,
+									src_text_currptr,
+									src_len - (src_text_currptr - src_text_startptr));
+			}
+			result = cstring_to_text_with_len(resbuf.data, resbuf.len);
+			pfree(resbuf.data);
+		}
+		else
+		{
+			/*
+			* The substring is not found: return the original string
+			*/
+			result = src_text;
+		}
+
+		pfree(src_uchar);
+		pfree(from_uchar);
+
+		if (usearch != NULL)
+			usearch_close(usearch);
+
+		if (U_FAILURE(status))
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("failed to perform ICU search: %s",
+							u_errorName(status))));
+
+		*r = result;
+		return true;
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("pltsql replace requires ICU library, which is not available")));
+#endif
+	}
+	return false;
+}
+
 void
 tsql_set_db_collation()
 {
@@ -1194,3 +1667,4 @@ set_db_collation_internal(int16 db_id)
 	ReleaseSysCache(tuple);
 	tsql_set_db_collation();
 }
+

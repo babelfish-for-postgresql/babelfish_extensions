@@ -279,6 +279,15 @@ ignore#!#rtrim-before-15_8-or-16_4-vu-cleanup
 ignore#!#trim-before-15_8-or-16_4-vu-prepare
 ignore#!#trim-before-15_8-or-16_4-vu-verify
 ignore#!#trim-before-15_8-or-16_4-vu-cleanup
+ignore#!#upper_lower-before-15_8-or-16_4-vu-prepare
+ignore#!#upper_lower-before-15_8-or-16_4-vu-verify
+ignore#!#upper_lower-before-15_8-or-16_4-vu-cleanup
+ignore#!#sys-data_spaces-before-16-4-vu-prepare
+ignore#!#sys-data_spaces-before-16-4-vu-verify
+ignore#!#sys-data_spaces-before-16-4-vu-cleanup
+ignore#!#sys-filegroups-before-16-4-vu-prepare
+ignore#!#sys-filegroups-before-16-4-vu-verify
+ignore#!#sys-filegroups-before-16-4-vu-cleanup
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
@@ -341,3 +350,6 @@ ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-cleanup
 ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-prepare
 ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-verify
 ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-cleanup
+ignore#!#replicate-before-15_8-or-16_4-vu-prepare
+ignore#!#replicate-before-15_8-or-16_4-vu-verify
+ignore#!#replicate-before-15_8-or-16_4-vu-cleanup

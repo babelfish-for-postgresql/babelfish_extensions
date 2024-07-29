@@ -1048,6 +1048,29 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 		switch (nodeTag(parsetree))
 		{
+			case T_CreateFunctionStmt:
+			{
+				ListCell 		*option;
+				CreateTrigStmt *trigStmt;
+				Relation rel;
+				foreach (option, ((CreateFunctionStmt *) parsetree)->options){
+					DefElem *defel = (DefElem *) lfirst(option);
+					if (strcmp(defel->defname, "trigStmt") == 0)
+					{
+						trigStmt = (CreateTrigStmt *) defel->arg;
+						rel = table_openrv(trigStmt->relation, ShareRowExclusiveLock);
+						if (rel->rd_islocaltemp){
+							ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							errmsg("Cannot create trigger on a temporary object."),
+							"Cannot create trigger on a temporary object."
+							));
+						}
+						table_close(rel, NoLock);
+					}
+				}
+			}
+			break;
 			case T_CreateStmt:
 				{
 					CreateStmt *stmt = (CreateStmt *) parsetree;
