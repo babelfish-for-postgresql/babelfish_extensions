@@ -6058,11 +6058,9 @@ static List *
 transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
 	List *result;
-	List *tempStore;
+	List *babel_4926_original_name_list;
 	ListCell *elements;
 	AlterTableStmt *altstmt;
-	AlterTableStmt *newstmt;
-	AlterTableCmd *cmd;
 	IntoClause *into;
 	Node *n;
 
@@ -6070,8 +6068,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	into = stmt->into;
 	result = NIL;
 	altstmt = NULL;
-	newstmt = NULL;
-	tempStore=NIL;
+	babel_4926_original_name_list=NIL;
 
 	if (n && n->type == T_Query)
 	{
@@ -6165,10 +6162,14 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			}
 			else
 			{
-				char* original_name = tle->resname;
+				AlterTableStmt *newstmt;
+				AlterTableCmd *cmd;
+				char* original_name=NULL;
+				newstmt = NULL;
 
 				if (tle->resname!=NULL)
 				{
+					original_name = tle->resname;
 					tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 				}	
 
@@ -6176,7 +6177,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
 
-				if (original_name!=NULL&&strcmp(original_name,tle->resname))
+				if (original_name!=NULL && strcmp(original_name, tle->resname))
 				{
 					cmd = makeNode(AlterTableCmd);
 					cmd->subtype = AT_SetOptions;
@@ -6190,7 +6191,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 					newstmt->cmds = NIL;
 					newstmt->objtype = OBJECT_TABLE;
 					newstmt->cmds = lappend(newstmt->cmds, cmd);
-					tempStore = lappend(tempStore,newstmt);
+					babel_4926_original_name_list = lappend(babel_4926_original_name_list, newstmt);
 				}
 			}
 		}
@@ -6226,8 +6227,8 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	if (altstmt)
 		result = lappend(result, altstmt);
 
-	if (tempStore!=NIL)
-		result = list_concat(result,tempStore);	
+	if (babel_4926_original_name_list != NIL)
+		result = list_concat(result, babel_4926_original_name_list);	
 
 	return result;
 }
