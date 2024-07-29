@@ -529,4 +529,5 @@ ltrim
 rtrim
 left
 right
+translate
 reverse
