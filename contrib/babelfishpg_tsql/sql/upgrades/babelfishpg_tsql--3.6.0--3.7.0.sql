@@ -7927,7 +7927,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -8921,7 +8921,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -9927,7 +9927,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -10182,6 +10182,32 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE VIEW sys.partition_functions AS
+SELECT
+  CAST(NULL as sys.NVARCHAR(128)) as name,
+  CAST(0 as int) function_id,
+  CAST('R' as sys.bpchar(2)) as type,
+  CAST('RANGE' as sys.nvarchar(60)) as type_desc,
+  CAST(0 as int) fanout,
+  CAST(0 as sys.bit) as boundary_value_on_right,
+  CAST(0 as sys.bit) as is_system,
+  CAST(0 as sys.datetime) as create_date,
+  CAST(0 as sys.datetime) as modify_date
+WHERE FALSE;
+GRANT SELECT ON sys.partition_functions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.partition_schemes AS
+SELECT
+  CAST(NULL as sys.NVARCHAR(128)) as name,
+  CAST(0 as int) as data_space_id,
+  CAST('PS' as sys.bpchar(2)) as type,
+  CAST('PARTITION_SCHEME' as sys.nvarchar(60)) as type_desc,
+  CAST(0 as sys.bit) as is_default,
+  CAST(0 as sys.bit) as is_system,
+  CAST(0 as int) function_id
+WHERE FALSE;
+GRANT SELECT ON sys.partition_schemes TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sequences 
 AS SELECT 
     so.*,
@@ -10202,6 +10228,30 @@ AS SELECT
 FROM sys.objects so
 WHERE FALSE;
 GRANT SELECT ON sys.sequences TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.translate(string sys.VARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+    
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.translate(string sys.NVARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -402,8 +402,9 @@ typedef struct tsql_special_function
 
 tsql_special_function_t tsql_special_function_list[] = 
 {
-	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
-	{"sys", "replace", "replace", 3, {{8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
+	{"sys", "replace", "replace", 3, {{8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
+	{"sys", "translate", "translate", 3, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}} , {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
+	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
 
 static bool		inited_tsql_special_function_list = false;
@@ -1168,6 +1169,30 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
 		}
 		else
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name, "translate", 9) == 0)
+	{
+		if (input_typeids[1] != input_typeids[2])
+		{
+			if (!((input_typeids[1] == UNKNOWNOID && (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[2]))
+				|| (input_typeids[2] == UNKNOWNOID && (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[1]))))
+				ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					errmsg("The second and third arguments of the TRANSLATE built-in function must have same argument data type.")));
+		}
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(input_typeids[0]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar"); 
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[0])
+				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[0])
+				|| (*common_utility_plugin_ptr->is_tsql_text_datatype)(input_typeids[0])
+				|| input_typeids[0] == UNKNOWNOID)
 		{
 			expr_result_type = get_sys_varcharoid();
 		}
