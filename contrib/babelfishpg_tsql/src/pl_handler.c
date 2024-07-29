@@ -6411,7 +6411,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!OidIsValid(address.objectId))
 				continue;
 				
-			/* Restrict dropping of extended stored procedures for non-sysadmin roles */
+			/* Restrict dropping of extended stored procedures for non-superuser roles */
 			if (stmt->removeType == OBJECT_PROCEDURE && !superuser())
 				check_restricted_stored_procedure(address.objectId);
 
