@@ -33,6 +33,24 @@ CREATE OR REPLACE FUNCTION sys.geographyanalyze(internal)
     AS '$libdir/postgis-3','gserialized_analyze_nd'
     LANGUAGE 'c' VOLATILE STRICT;  
 
+-- STArea 
+CREATE OR REPLACE FUNCTION sys.STArea(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','ST_Area'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+-- STEqual
+CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS '$libdir/postgis-3','ST_Equals'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+-- STContains
+CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS '$libdir/postgis-3','within'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
 
 CREATE TYPE sys.GEOGRAPHY (
     INTERNALLENGTH = variable,

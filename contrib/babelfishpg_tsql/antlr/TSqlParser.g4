@@ -3892,10 +3892,13 @@ geospatial_col
 geospatial_func_no_arg
     : STASTEXT
     | STASBINARY
+    | STAREA
     ;
 
 geospatial_func_arg
     : STDISTANCE
+    | STEQUALS
+    | STCONTAINS
     ;
 
 hierarchyid_methods
@@ -4998,6 +5001,7 @@ keyword
     | STALE_QUERY_THRESHOLD_DAYS
     | STANDBY
     | START
+    | STAREA
     | STARTED
     | STARTUP_STATE
     | START_DATE
@@ -5011,9 +5015,11 @@ keyword
     | STATS_STREAM
     | STATUS
     | STATUSONLY
+    | STCONTAINS
     | STDEV
     | STDEVP
     | STDISTANCE
+    | STEQUALS
     | STOP
     | STOPAT
     | STOPATMARK
