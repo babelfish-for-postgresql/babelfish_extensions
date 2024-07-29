@@ -3351,3 +3351,15 @@ SELECT
   CAST(0 as sys.datetime) as modify_date
 WHERE FALSE;
 GRANT SELECT ON sys.partition_functions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.partition_schemes AS
+SELECT
+  CAST(NULL as sys.NVARCHAR(128)) as name,
+  CAST(0 as int) as data_space_id,
+  CAST('PS' as sys.bpchar(2)) as type,
+  CAST('PARTITION_SCHEME' as sys.nvarchar(60)) as type_desc,
+  CAST(0 as sys.bit) as is_default,
+  CAST(0 as sys.bit) as is_system,
+  CAST(0 as int) function_id
+WHERE FALSE;
+GRANT SELECT ON sys.partition_schemes TO PUBLIC;

@@ -1,0 +1,21 @@
+SELECT * FROM sys_partition_schemes_test_view
+GO
+~~START~~
+nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit#!#int
+~~END~~
+
+
+EXEC sys_partition_schemes_test_proc
+GO
+~~START~~
+nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit#!#int
+~~END~~
+
+
+SELECT * FROM sys_partition_schemes_test_func()
+GO
+~~START~~
+int
+0
+~~END~~
+
