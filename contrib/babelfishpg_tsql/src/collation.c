@@ -1647,6 +1647,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 
 /*
  * Find the matched length for substr in src_text
+ * Only matches if substr is prefix of src_text
  */
 static bool
 icu_find_matched_length(char *src_text, int src_len, char *substr_text, int substr_len, Oid collid, int *matched_len)
@@ -1726,7 +1727,7 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
     char        *input_str_itr = input_str;
     text        *pattern_text = PG_GETARG_TEXT_P(0);
     char        *pattern_str = text_to_cstring(pattern_text);
-    int          pattern_len = strlen(pattern_str),
+	int          pattern_len = strlen(pattern_str),
                  start_offset = 0, end_offset = 0;
     char        *pattern_stripped;
     Oid          cid = PG_GET_COLLATION();
@@ -1741,17 +1742,17 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
     pattern_stripped = (char *) palloc(pattern_len - start_offset - end_offset + 1);
     memcpy(pattern_stripped, pattern_str + start_offset, pattern_len - start_offset - end_offset);
     pattern_stripped[pattern_len - start_offset - end_offset] = '\0';
-    
+
     while (*input_str_itr != '\0')
     {
 		char *t = input_str_itr;
 		char *p = pattern_stripped;
-	    int tlen = strlen(t), plen = strlen(pattern_stripped);
-		bool 		matched_failed = false;
+		int tlen = strlen(t), plen = strlen(pattern_stripped);
+		bool 		match_failed = false;
 
 		result++;
 
-        while (tlen > 0 && plen > 0)
+        while (tlen > 0 && plen > 0 && !match_failed)
 		{
 			if (*p == '_')
 			{
@@ -1777,6 +1778,9 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 					if (*p == ']')
 					{
 						close_bracket = true;
+						/* only one of find match or reverse mode can be true for successful match */
+						if (find_match ^ reverse_mode)
+							NextChar(t, tlen);
 						NextByte(p, plen);
 						break;
 					}
@@ -1791,7 +1795,6 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 						Assert(cid != InvalidOid);
 						if (varstr_cmp(t, pg_mblen(t), prev, pg_mblen(prev), cid) >= 0 && varstr_cmp(t, pg_mblen(t), p, pg_mblen(p), cid) <= 0)
 						{
-							NextChar(t, tlen);
 							find_match = true;
 						}
 						prev = NULL;
@@ -1817,7 +1820,6 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 						
 						if (pltsql_strpos_non_determinstic(src_text, substr_text, cid, &matched_idx) && matched_idx != 0)
 						{
-							NextChar(t, tlen);
 							find_match = true;
 						}
 						pfree(src_text);
@@ -1828,7 +1830,7 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 				    (find_match && !close_bracket) ||
 				    (find_match && reverse_mode) )
 				{
-					matched_failed = true;
+					match_failed = true;
 				}
 			}
 			else
@@ -1846,15 +1848,24 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 						NextChar(t, tlen);
 				}
 				else
-					matched_failed = true;
+					match_failed = true;
 			}
 		}
 
-		if (plen == 0 && matched_failed == false && (tlen == 0 || end_offset == 1))
+		if (plen == 0 && match_failed == false && (tlen == 0 || end_offset == 1))
+		{
+			pfree(input_str);
+			pfree(pattern_str);
+			pfree(pattern_stripped);
 			PG_RETURN_INT32(result);
-		
+		}
+
 		input_str_itr += pg_mblen(input_str_itr);
     }
+
+	pfree(input_str);
+	pfree(pattern_str);
+	pfree(pattern_stripped);
 
     PG_RETURN_INT32(0);
 }
