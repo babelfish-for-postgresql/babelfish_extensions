@@ -1,3 +1,4 @@
+-- tsql user=babel_4390_user_l2 password=12345678
 -- should throw error
 EXEC babel_4390_prepare_p1;
 GO
@@ -35,7 +36,7 @@ GO
 EXEC babel_4390_prepare_p2;
 GO
 
--- psql
+-- psql user=babel_4390_user_l2 password=12345678
 -- should throw error
 DROP PROCEDURE master_dbo.xp_qv;
 GO

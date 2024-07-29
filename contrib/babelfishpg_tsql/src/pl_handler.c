@@ -6319,8 +6319,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!OidIsValid(address.objectId))
 				continue;
 				
-			/* Restrict dropping of extended stored procedures */
-			if (stmt->removeType == OBJECT_PROCEDURE)
+			/* Restrict dropping of extended stored procedures for non-sysadmin roles */
+			if (stmt->removeType == OBJECT_PROCEDURE && !is_member_of_role(GetSessionUserId(), get_sysadmin_oid()))
 				check_restricted_stored_procedure(address.objectId);
 
 			/* Get major_name */

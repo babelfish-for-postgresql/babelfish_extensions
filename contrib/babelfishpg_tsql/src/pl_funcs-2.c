@@ -401,7 +401,7 @@ check_restricted_stored_procedure(Oid proc_id)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be owner of procedure \'%s\'", procname)));
+				 errmsg("must be owner of procedure %s", procname)));
 	}
 }
 
