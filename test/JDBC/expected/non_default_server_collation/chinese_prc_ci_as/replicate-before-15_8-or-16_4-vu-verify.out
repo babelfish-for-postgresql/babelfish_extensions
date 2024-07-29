@@ -1,0 +1,658 @@
+-- NULL
+SELECT replicate(NULL, -2)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT replicate(NULL, 0)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT replicate(NULL, 2)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT replicate('abc', NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT replicate(NULL, NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- edge case values for second parameter
+SELECT replicate('AbdefGhi', -2)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT '|' + replicate('AbdefGhi', 0) + '|'
+GO
+~~START~~
+varchar
+||
+~~END~~
+
+
+SELECT replicate('AbdefGhi', 2)
+GO
+~~START~~
+varchar
+AbdefGhiAbdefGhi
+~~END~~
+
+
+SELECT replicate('AbdefGhi', 1001)
+GO
+~~START~~
+varchar
+AbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhiAbdefGhi
+~~END~~
+
+
+-- input type char
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+abc?defghi??             abc?defghi??             abc?defghi??             abc?defghi??             
+~~END~~
+
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+比尔·拉莫斯             比尔·拉莫斯             比尔·拉莫斯             比尔·拉莫斯             
+~~END~~
+
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT replicate(@inputString, 4) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比尔·拉莫斯             比尔·拉莫斯             比尔·拉莫斯             比尔·拉莫斯             
+~~END~~
+
+
+-- input type varchar
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+abc?defghi??abc?defghi??abc?defghi??abc?defghi??
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT replicate(@inputString, 4) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT replicate(a, 4) FROM babel_862_replicate_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯
+~~END~~
+
+
+SELECT replicate(a, 4) COLLATE CHINESE_PRC_CI_AS FROM babel_862_replicate_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT replicate(a, 4) FROM babel_862_replicate_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯
+~~END~~
+
+
+SELECT replicate(a, 4) COLLATE CHINESE_PRC_CS_AS FROM babel_862_replicate_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT replicate(a, 4) FROM babel_862_replicate_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯
+~~END~~
+
+
+SELECT replicate(a, 4) COLLATE CHINESE_PRC_CI_AI FROM babel_862_replicate_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT replicate(a, 4) FROM babel_862_replicate_arabic_ci_as
+GO
+~~START~~
+varchar
+الله مع المتقينالله مع المتقينالله مع المتقينالله مع المتقين
+~~END~~
+
+
+SELECT replicate(a, 4) COLLATE ARABIC_CI_AS FROM babel_862_replicate_arabic_ci_as
+GO
+~~START~~
+varchar
+الله مع المتقينالله مع المتقينالله مع المتقينالله مع المتقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT replicate(a, 4) FROM babel_862_replicate_arabic_cs_as
+GO
+~~START~~
+varchar
+الله مع المتقينالله مع المتقينالله مع المتقينالله مع المتقين
+~~END~~
+
+
+SELECT replicate(a, 4) COLLATE ARABIC_CS_AS FROM babel_862_replicate_arabic_cs_as
+GO
+~~START~~
+varchar
+الله مع المتقينالله مع المتقينالله مع المتقينالله مع المتقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT replicate(a, 4) FROM babel_862_replicate_arabic_ci_ai
+GO
+~~START~~
+varchar
+الله مع المتقينالله مع المتقينالله مع المتقينالله مع المتقين
+~~END~~
+
+
+SELECT replicate(a, 4) COLLATE ARABIC_CI_AI FROM babel_862_replicate_arabic_ci_ai
+GO
+~~START~~
+varchar
+الله مع المتقينالله مع المتقينالله مع المتقينالله مع المتقين
+~~END~~
+
+
+-- input type nchar
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+nvarchar
+abc?defghi??             abc?defghi??             abc?defghi??             abc?defghi??             
+~~END~~
+
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+nvarchar
+比尔·拉莫斯             比尔·拉莫斯             比尔·拉莫斯             比尔·拉莫斯             
+~~END~~
+
+
+-- with table column of type nchar
+SELECT replicate(a, 4) FROM babel_862_replicate_t1 
+GO
+~~START~~
+nvarchar
+abc🙂defghi🙂🙂                                      abc🙂defghi🙂🙂                                      abc🙂defghi🙂🙂                                      abc🙂defghi🙂🙂                                      
+比尔·拉莫斯                                            比尔·拉莫斯                                            比尔·拉莫斯                                            比尔·拉莫斯                                            
+~~END~~
+
+
+-- input type nvarchar
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+nvarchar
+abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+nvarchar
+比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯比尔·拉莫斯
+~~END~~
+
+
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+abcdefghabcdefghabcdefghabcdefgh
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+abcdefghabcdefghabcdefghabcdefgh
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_862_replicate_dep_view
+GO
+~~START~~
+varchar
+abc?defghi??abc?defghi??abc?defghi??abc?defghi??
+~~END~~
+
+
+EXEC babel_862_replicate_dep_proc
+GO
+~~START~~
+nvarchar
+abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_862_replicate_dep_func()
+GO
+~~START~~
+nvarchar
+abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_862_replicate_itvf_func()
+GO
+~~START~~
+varchar
+abc?defghi??abc?defghi??abc?defghi??abc?defghi??
+~~END~~
+
+
+SELECT * FROM babel_862_replicate_dep_view_1
+GO
+~~START~~
+varchar
+abc?defghi??                                      abc?defghi??                                      abc?defghi??                                      abc?defghi??                                      
+比尔·拉莫斯                                            比尔·拉莫斯                                            比尔·拉莫斯                                            比尔·拉莫斯                                            
+~~END~~
+
+
+SELECT * FROM babel_862_replicate_dep_view_2
+GO
+~~START~~
+varchar
+abc?defghi??abc?defghi??abc?defghi??abc?defghi??
+~~END~~
+
+
+SELECT * FROM babel_862_replicate_dep_view_3
+GO
+~~START~~
+varchar
+abcdefghi                                         abcdefghi                                         abcdefghi                                         abcdefghi                                         
+~~END~~
+
+
+SELECT * FROM babel_862_replicate_dep_view_4
+GO
+~~START~~
+varchar
+abcdefghiabcdefghiabcdefghiabcdefghi
+~~END~~
+
+
+SELECT * FROM babel_862_replicate_dep_view_5
+GO
+~~START~~
+varchar
+0x20206162636420200x20206162636420200x20206162636420200x2020616263642020
+~~END~~
+
+
+SELECT * FROM babel_862_replicate_dep_view_6
+GO
+~~START~~
+varchar
+abc?defghi??abc?defghi??abc?defghi??abc?defghi??
+~~END~~
+
+
+SELECT * FROM babel_862_replicate_dep_view_7
+GO
+~~START~~
+varchar
+abc?defghi??abc?defghi??abc?defghi??abc?defghi??
+~~END~~
+
+
+-- input type UDT
+-- -- in table babel_862_replicate_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT replicate(a, 4) FROM babel_862_replicate_UDT
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of replicate function.)~~
+
+
+SELECT replicate(b, 4) FROM babel_862_replicate_UDT
+GO
+~~START~~
+varchar
+abcdefabcdefabcdefabcdef
+~~END~~
+
+
+-- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+DECLARE @inputString date = '2016-12-21';
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+2016-12-212016-12-212016-12-212016-12-21
+~~END~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+2016-12-21 00:00:002016-12-21 00:00:002016-12-21 00:00:002016-12-21 00:00:00
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+1955-12-13 12:43:001955-12-13 12:43:001955-12-13 12:43:001955-12-13 12:43:00
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+12:10:05.123712:10:05.123712:10:05.123712:10:05.1237
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:001968-10-23 12:45:37.1234 +10:001968-10-23 12:45:37.1234 +10:001968-10-23 12:45:37.1234 +10:00
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+1968-10-23 12:45:37.12371968-10-23 12:45:37.12371968-10-23 12:45:37.12371968-10-23 12:45:37.1237
+~~END~~
+
+
+DECLARE @inputString decimal = 123456;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+123456123456123456123456
+~~END~~
+
+
+DECLARE @inputString numeric = 12345.12;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+12345123451234512345
+~~END~~
+
+
+DECLARE @inputString float = 12345.1;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+12345.112345.112345.112345.1
+~~END~~
+
+
+DECLARE @inputString real = 12345.1;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+12345.112345.112345.112345.1
+~~END~~
+
+
+DECLARE @inputString bigint = 12345678;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+12345678123456781234567812345678
+~~END~~
+
+
+DECLARE @inputString int = 12345678;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+12345678123456781234567812345678
+~~END~~
+
+
+DECLARE @inputString smallint = 12356;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+12356123561235612356
+~~END~~
+
+
+DECLARE @inputString tinyint = 235;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+235235235235
+~~END~~
+
+
+DECLARE @inputString money = 12356;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+12356.000012356.000012356.000012356.0000
+~~END~~
+
+
+DECLARE @inputString smallmoney = 12356;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+12356.000012356.000012356.000012356.0000
+~~END~~
+
+
+DECLARE @inputString bit = 1;
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+1111
+~~END~~
+
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT replicate(@inputString, 4)
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF6F9619FF-8B86-D011-B42D-00C04FC964FF6F9619FF-8B86-D011-B42D-00C04FC964FF6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+SELECT replicate(a, 4) from babel_862_replicate_image;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of replicate function.)~~
+
+
+-- input datatype text
+SELECT replicate(a, 4) FROM babel_862_replicate_text
+GO
+~~START~~
+varchar
+abc?defghi??abc?defghi??abc?defghi??abc?defghi??
+~~END~~
+
+
+-- input datatype ntext
+SELECT replicate(b, 4) FROM babel_862_replicate_text
+GO
+~~START~~
+nvarchar
+abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂abc🙂defghi🙂🙂
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT replicate(@inputString, 4)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of replicate function.)~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT replicate(@inputString, 4)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of replicate function.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT replicate(@inputString, 4)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of replicate function.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT replicate(@inputString, 4)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of replicate function.)~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT replicate(CAST(@inputString AS VARCHAR(50)), 4)
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF6F9619FF-8B86-D011-B42D-00C04FC964FF6F9619FF-8B86-D011-B42D-00C04FC964FF6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT replicate(CAST(@inputString AS VARCHAR(50)), 4)
+GO
+~~START~~
+varchar
+<body><fruit/></body><body><fruit/></body><body><fruit/></body><body><fruit/></body>
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT replicate(CAST(@inputString AS VARCHAR(50)), 4)
+GO
+~~START~~
+varchar
+POINT(1 2)POINT(1 2)POINT(1 2)POINT(1 2)
+~~END~~
+
