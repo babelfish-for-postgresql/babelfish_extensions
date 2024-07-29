@@ -1,0 +1,123 @@
+CREATE TABLE YourTable ( ID INT PRIMARY KEY, PointColumn geometry ); 
+
+INSERT INTO YourTable (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326));
+
+CREATE TABLE YourTable1 ( ID INT PRIMARY KEY, STX geometry ); 
+INSERT INTO YourTable1 (ID, STX) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326));
+
+CREATE TABLE YourTable2 ( ID INT PRIMARY KEY, PointColumn1 geometry, PointColumn2 geometry ); 
+INSERT INTO YourTable2 (ID, PointColumn1, PointColumn2) VALUES (1, geometry::Point(3.0, 4.0, 4326), geometry::Point(4.0, 5.0, 4326));
+
+CREATE TABLE TableA (ID INT PRIMARY KEY, PointA geometry); 
+CREATE TABLE TableB (ID INT PRIMARY KEY, PointB geometry);
+INSERT INTO TableA (ID, PointA) VALUES (1, geometry::Point(1.0, 2.0, 4326)); 
+INSERT INTO TableB (ID, PointB) VALUES (1, geometry::Point(3.0, 4.0, 4326));
+
+CREATE TABLE SPATIALPOINTGEOG_dt (location geography)
+
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 2.0)', 4326) )
+
+#Negative Test for STGeomFromText for Geography with SRID 0
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 0) )
+
+#Negative Test for STGeomFromText for Geography when lat > 90 or < -90
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -122.34900)', 4326) )
+
+#Negative Test for STGeomFromText when SRID is not provided
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)') )
+
+#Negative Test for STGeomFromText when cast is not provided
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+#Negative Test for STGeomFromText when incorrect cast is provided
+#INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+#Negative Test for STGeomFromText when SRID >= 10^6
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
+
+#Negative Test for STGeomFromText with SRID < 0
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', -1) )
+
+#Negative Test for STGeomFromText when a coordinate is missing
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) )
+
+#Negative Test for STGeomFromText when invalid type is provided
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Pnt', 4326) )
+
+#Test for STGeomFromText when null Point is Given -> Returns NBCRow
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText(null, 4326) )
+
+#Positive Test for STPointFromText with SRID 4326. Rest are same as STGeomFromText
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STPointFromText('Point(1.0 2.0)', 4326) )
+
+#Negative Test for STPointFromText for Geography when lat > 90 or < -90
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 122.34900)', 4326) )
+
+#Positive Test for Point with SRID 4326
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::Point(47.65100, -22.34900, 4326) )
+
+#Negative Test for Point for Geography when lat > 90 or < -90
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::Point(147.65100, -22.34900, 4326) )
+
+
+CREATE TABLE SPATIALPOINTGEOM_dt (location geometry)
+
+#Geometry Test Cases
+
+#Positive Test for STGeomFromText with SRID 4326
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 2.0)', 4326) )
+
+#Positive Test for STGeomFromText with SRID 0
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) )
+
+#Negative Test for STGeomFromText when SRID is not provided
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)') )
+
+#Negative Test for STGeomFromText when SRID >= 10^6
+#SRID should be between 0 to 999999
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
+
+#Negative Test for STGeomFromText with SRID < 0
+#SRID should be between 0 to 999999
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', -1) )
+
+#Negative Test for STGeomFromText when a coordinate is missing
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) )
+
+#Negative Test for STGeomFromText when invalid type is provided
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Pnt', 4326) )
+
+#Test for STGeomFromText when null Point is Given -> Returns NBCRow
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText(null, 4326) )
+
+#Negative Test for STGeomFromText when Incorrect cast is provided
+#INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+#Positive Test for STPointFromText with SRID 4326. Rest are same as STGeomFromText
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(1.0 2.0)', 4326) )
+
+
+#Positive Test for Point with SRID 4326
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::Point(47.65100, -22.34900, 4326) )
+
+
+
+CREATE VIEW point_equality1 AS SELECT STEquals( p1.location, p2.location ) AS equality FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2;
+
+CREATE VIEW isIn AS SELECT STContains( p1.location, p2.location ) AS isIN FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
+
+CREATE VIEW ValFromGeom AS SELECT location.STArea() FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW TextFromGeog AS SELECT  STArea(location) AS Area FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+
+CREATE VIEW point_Equality AS SELECT STEquals( p1.location, p2.location ) AS Equality FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW point_in AS SELECT STContains( p1.location, p2.location ) AS isIn FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2;

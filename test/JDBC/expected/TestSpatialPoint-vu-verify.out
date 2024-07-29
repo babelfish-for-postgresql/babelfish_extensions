@@ -1,839 +1,3 @@
--- For STEquals
-DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
-SELECT @point1.STEquals(@point2) AS Equal;
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
-SELECT STEquals(@point1, @point2);
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
-SELECT @point1 . STEquals ( @point2 );
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-SELECT PointColumn1.STEquals(PointColumn2) AS Equals FROM YourTable2;
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT PointColumn1.STEquals(@point1) AS Equals FROM YourTable2;
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @point1.STEquals(PointColumn2) AS Equals FROM YourTable2;
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @isEqual BIT = 1;
-SELECT * FROM YourTable WHERE PointColumn.STEquals(@referencePoint) = @isEqual;
-go
-~~START~~
-int#!#geometry
-~~END~~
-
-
-SELECT ID, PointColumn1.STEquals(PointColumn2) AS Equal_points FROM YourTable2;
-go
-~~START~~
-int#!#bit
-1#!#0
-~~END~~
-
-
-SELECT * FROM TableA JOIN TableB ON PointA.STEquals(TableB.PointB) <= 1;
-go
-~~START~~
-int#!#geometry#!#int#!#geometry
-1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM TableA JOIN TableB ON @referencePoint.STEquals(TableB.PointB) <= 1;
-go
-~~START~~
-int#!#geometry#!#int#!#geometry
-1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM TableA JOIN TableB ON PointA.STEquals(@referencePoint) <= 1;
-go
-~~START~~
-int#!#geometry#!#int#!#geometry
-1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM YourTable ORDER BY @referencePoint.STEquals(PointColumn);
-go
-~~START~~
-int#!#geometry
-1#!#E6100000010C00000000000008400000000000001040
-2#!#E6100000010C00000000000014400000000000001840
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM YourTable ORDER BY PointColumn.STEquals(@referencePoint);
-go
-~~START~~
-int#!#geometry
-1#!#E6100000010C00000000000008400000000000001040
-2#!#E6100000010C00000000000014400000000000001840
-~~END~~
-
-
-SELECT * FROM YourTable2 ORDER BY PointColumn1.STEquals(PointColumn2);
-go
-~~START~~
-int#!#geometry#!#geometry
-1#!#E6100000010C00000000000008400000000000001040#!#E6100000010C00000000000010400000000000001440
-~~END~~
-
-
-DECLARE @isEqual BIT = 1;
-SELECT ID, PointColumn1.STEquals(PointColumn2) AS isEqual,
-CASE WHEN PointColumn1.STEquals(PointColumn2) = @isEqual THEN 'yes' ELSE 'no'
-END AS isEqual
-FROM YourTable2;
-go
-~~START~~
-int#!#bit#!#text
-1#!#0#!#no
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH EqualCTE AS ( SELECT ID, PointColumn.STEquals(@referencePoint) AS Equality FROM YourTable)
-SELECT * FROM EqualCTE WHERE Equality <= 1;
-go
-~~START~~
-int#!#bit
-1#!#0
-2#!#0
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
-UPDATE YourTable SET PointColumn = @referencePoint
-WHERE PointColumn.STEquals(@referencePoint) != 1;
-go
-~~ROW COUNT: 2~~
-
-~~ROW COUNT: 2~~
-
-~~ROW COUNT: 2~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
-UPDATE YourTable SET PointColumn = @referencePoint
-WHERE @referencePoint.STEquals(PointColumn) = 1;
-go
-~~ROW COUNT: 2~~
-
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH EqualCTE AS ( SELECT ID, PointColumn.STEquals(@referencePoint) AS Equal FROM YourTable ORDER BY PointColumn.STX)
-SELECT * FROM EqualCTE WHERE Equal <= 1.0 ORDER BY Equal;
-GO
-~~START~~
-int#!#bit
-1#!#1
-2#!#1
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH EqualCTE AS ( SELECT ID, @referencePoint.STEquals(PointColumn) AS Equal FROM YourTable ORDER BY PointColumn.STX)
-SELECT * FROM EqualCTE WHERE Equal <= 1.0 ORDER BY Equal;
-GO
-~~START~~
-int#!#bit
-1#!#1
-2#!#1
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @isEqual BIT = 1;
-SELECT ID, PointColumn.STEquals(@referencePoint) AS EqualityReferencePoint,
-CASE WHEN PointColumn.STEquals(@referencePoint) <= @isEqual THEN 'Close'
-ELSE 'Far'
-END AS Proximity
-FROM YourTable;
-go
-~~START~~
-int#!#bit#!#text
-1#!#1#!#Close
-2#!#1#!#Close
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, @referencePoint.STEquals(PointColumn) AS EqualityReferencePoint,
-CASE WHEN @referencePoint.STEquals(PointColumn) <= @referencePoint.STY THEN 'Close'
-ELSE 'Far'
-END AS Proximity
-FROM YourTable;
-go
-~~START~~
-int#!#bit#!#text
-1#!#1#!#Far
-2#!#1#!#Far
-~~END~~
-
-
-DECLARE @Ranges TABLE (MinDistance float, MaxDistance float);
-INSERT INTO @Ranges VALUES (0, 5), (5, 10), (10, 15);
-SELECT * FROM ( SELECT ID,
-CASE WHEN PointColumn1.STEquals(PointColumn2) BETWEEN 0 AND 1 THEN 'yes'
-ELSE 'no'
-END AS Range
-FROM YourTable2
-) AS Source
-PIVOT ( COUNT(ID) FOR Range IN ([0-5], [5.1-10], [10.1-15], [15.1+])) AS PivotTable;
-go
-~~ROW COUNT: 3~~
-
-~~START~~
-int#!#int#!#int#!#int
-0#!#0#!#0#!#0
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STEquals(@referencePoint) AS Equality FROM <YourDatabase>.dbo.YourTable;
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 2 and character position 66)~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STEquals(@referencePoint) AS Equal,
-JSON_QUERY('{"Equal":' + CAST(PointColumn.STEquals(@referencePoint) AS NVARCHAR(MAX)) + '}') AS Json
-FROM YourTable;
-go
-~~START~~
-int#!#bit#!#nvarchar
-1#!#1#!#{"Equal": 1}
-2#!#1#!#{"Equal": 1}
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, @referencePoint.STEquals(PointColumn) AS Equal,
-JSON_QUERY('{"Equal":' + CAST(@referencePoint.STEquals(PointColumn) AS NVARCHAR(MAX)) + '}') Json
-FROM YourTable;
-go
-~~START~~
-int#!#bit#!#nvarchar
-1#!#1#!#{"Equal": 1}
-2#!#1#!#{"Equal": 1}
-~~END~~
-
-
-SELECT [PointColumn1].STEquals([PointColumn2]) AS Equality FROM [YourTable2];
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @isEqual BIT = 1;
-DECLARE @sql NVARCHAR(MAX);
-DECLARE @params NVARCHAR(MAX);
-SET @sql = N'
-SELECT ID, PointColumn.STEquals(@referencePoint) AS EqualityReferencePoint,
-CASE WHEN PointColumn.STEquals(@referencePoint) <= @isEqual THEN ''Close''
-ELSE ''Far''
-END AS Proximity
-FROM YourTable
-WHERE PointColumn.STEquals(@referencePoint) <= @isEqual;';
-SET @params = N'@referencePoint geometry, @isEqual float';
-EXEC sp_executesql @sql, @params, @referencePoint, @isEqual;
-go
-~~START~~
-int#!#bit#!#text
-1#!#1#!#Close
-2#!#1#!#Close
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STEquals(@referencePoint) AS Equality FROM YourTable;
-SELECT YourTable.PointColumn.STEquals(@referencePoint) AS Equality FROM YourTable;
-SELECT dbo.YourTable.PointColumn.STEquals(@referencePoint) AS Equality FROM YourTable;
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
-
-
-DECLARE @pnt geometry;
-SET @pnt = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-select geometry::Point(@pnt.STY, @pnt.STX, 4326).STEquals(@pnt)
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @equal BIT = 1;
-SELECT ROUND(PointColumn.STEquals(@referencePoint) / @equal, 0) * @equal AS Equalitygroup,
-COUNT(*) AS PointCount
-FROM YourTable
-GROUP BY ROUND(PointColumn.STEquals(@referencePoint) / @equal, 0) * @equal
-ORDER BY Equalitygroup;
-GO
-~~START~~
-numeric#!#int
-1#!#2
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(1.0, 0.0, 4326);
-SELECT ROUND(PointColumn.STEquals(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX AS Equalitygroup,
-COUNT(*) AS PointCount
-FROM YourTable
-GROUP BY ROUND(PointColumn.STEquals(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX
-ORDER BY Equalitygroup;
-GO
-~~START~~
-float#!#int
-0.0#!#2
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn1.STEquals(PointColumn2) AS equal,
-cast(PointColumn1.STEquals(@referencePoint) as float) - LAG(PointColumn1.STEquals(PointColumn2)) OVER (ORDER BY ID) AS Equalitygroup 
-FROM YourTable2 ORDER BY PointColumn1.STX;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "bit" to double precision)~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STEquals(@referencePoint) AS equal,
-cast(@referencePoint.STContains(PointColumn) as float) - LAG(@referencePoint.STX) OVER (ORDER BY ID) AS Equalitygroup
-FROM YourTable ORDER BY PointColumn.STX;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "bit" to double precision)~~
-
-
-
-
-
-
---For STContains
-DECLARE @point1 geometry, @point2 geometry;
-SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT STContains(@point1, @point2);
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @point1 geometry, @point2 geometry;
-SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT @point1.STContains(@point2);
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @point1 geometry, @point2 geometry;
-SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT @point1 . STContains ( @point2 );
-Go
-~~START~~
-bit
-0
-~~END~~
-
-
-SELECT ID, PointColumn1.STContains(PointColumn2) AS contain FROM YourTable2 ORDER BY PointColumn1.STX;
-GO
-~~START~~
-int#!#bit
-1#!#0
-~~END~~
-
-
-DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, PointColumn1.STContains(@point1) AS contain FROM YourTable2 ORDER BY PointColumn1.STX;
-GO
-~~START~~
-int#!#bit
-1#!#0
-~~END~~
-
-
-DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, @point1.STContains(PointColumn2) AS contain FROM YourTable2 ORDER BY PointColumn1.STX;
-GO
-~~START~~
-int#!#bit
-1#!#0
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @contain BIT = 1;
-SELECT * FROM YourTable WHERE PointColumn.STContains(@referencePoint) <= @contain ORDER BY PointColumn.STX;
-GO
-~~START~~
-int#!#geometry
-1#!#E6100000010C00000000000000000000000000000000
-2#!#E6100000010C00000000000000000000000000000000
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM YourTable WHERE @referencePoint.STContains(PointColumn) <= @referencePoint.STX ORDER BY PointColumn.STX;
-GO
-~~START~~
-int#!#geometry
-~~END~~
-
-
-SELECT ID, PointColumn1.STContains(PointColumn2) AS contain FROM YourTable2;
-go
-~~START~~
-int#!#bit
-1#!#0
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM YourTable WHERE PointColumn.STContains(@referencePoint) != @referencePoint.STX ORDER BY PointColumn.STX;
-GO
-~~START~~
-int#!#geometry
-1#!#E6100000010C00000000000000000000000000000000
-2#!#E6100000010C00000000000000000000000000000000
-~~END~~
-
-
-SELECT * FROM TableA JOIN TableB ON PointA.STContains(TableB.PointB) = 1 ORDER BY TableB.PointB.STX;
-GO
-~~START~~
-int#!#geometry#!#int#!#geometry
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM TableA JOIN TableB ON @referencePoint.STContains(TableB.PointB) = 1 ORDER BY TableB.PointB.STX;
-GO
-~~START~~
-int#!#geometry#!#int#!#geometry
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM TableA JOIN TableB ON PointA.STContains(@referencePoint) = 1 ORDER BY TableB.PointB.STX;
-GO
-~~START~~
-int#!#geometry#!#int#!#geometry
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM TableA JOIN TableB ON TableB.PointB.STContains(@referencePoint) = 0 ORDER BY TableB.PointB.STX;
-GO
-~~START~~
-int#!#geometry#!#int#!#geometry
-1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
-~~END~~
-
-
-SELECT * FROM YourTable2 ORDER BY PointColumn1.STContains(PointColumn2);
-GO
-~~START~~
-int#!#geometry#!#geometry
-1#!#E6100000010C00000000000008400000000000001040#!#E6100000010C00000000000010400000000000001440
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM YourTable ORDER BY PointColumn.STContains(@referencePoint);
-GO
-~~START~~
-int#!#geometry
-1#!#E6100000010C00000000000000000000000000000000
-2#!#E6100000010C00000000000000000000000000000000
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM YourTable ORDER BY @referencePoint.STContains(PointColumn);
-GO
-~~START~~
-int#!#geometry
-1#!#E6100000010C00000000000000000000000000000000
-2#!#E6100000010C00000000000000000000000000000000
-~~END~~
-
-
-DECLARE @contains BIT = 1 ;
-SELECT ID, PointColumn1.STContains(PointColumn2) AS doContain,
-CASE WHEN PointColumn1.STContains(PointColumn2) <= @contains THEN 'Contains' ELSE 'Do_not_contain'
-END AS Proximity
-FROM YourTable2 ORDER BY PointColumn1.STX;
-GO
-~~START~~
-int#!#bit#!#text
-1#!#0#!#Contains
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn1.STContains(@referencePoint) AS contain,
-CASE WHEN @referencePoint.STContains(PointColumn2) <= @referencePoint.STX THEN 'Contains' ELSE 'Do_not_contain'
-END AS Proximity
-FROM YourTable2 ORDER BY PointColumn1.STX;
-GO
-~~START~~
-int#!#bit#!#text
-1#!#0#!#Contains
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH CTE AS ( SELECT ID, PointColumn.STContains(@referencePoint) AS contain FROM YourTable ORDER BY PointColumn.STX)
-SELECT * FROM CTE WHERE contain = 1 ORDER BY contain;
-GO
-~~START~~
-int#!#bit
-1#!#1
-2#!#1
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH CTE AS ( SELECT ID, @referencePoint.STContains(PointColumn) AS contain FROM YourTable ORDER BY PointColumn.STX)
-SELECT * FROM CTE WHERE contain = 1 ORDER BY contain;
-GO
-~~START~~
-int#!#bit
-1#!#1
-2#!#1
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @contains BIT = 1;
-SELECT ID, PointColumn.STContains(@referencePoint) AS ReferencePoint,
-CASE WHEN PointColumn.STContains(@referencePoint) <= @contains THEN 'contain'
-ELSE 'do_not_contain'
-END AS Proximity
-FROM YourTable;
-go
-~~START~~
-int#!#bit#!#text
-1#!#1#!#contain
-2#!#1#!#contain
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, @referencePoint.STContains(PointColumn) AS ReferencePoint,
-CASE WHEN @referencePoint.STContains(PointColumn) <= @referencePoint.STY THEN 'contain'
-ELSE 'do_not_contain'
-END AS Proximity
-FROM YourTable;
-go
-~~START~~
-int#!#bit#!#text
-1#!#1#!#do_not_contain
-2#!#1#!#do_not_contain
-~~END~~
-
-
-DECLARE @Ranges TABLE (MinDistance float, MaxDistance float);
-INSERT INTO @Ranges VALUES (0, 5), (5, 10), (10, 15);
-SELECT * FROM ( SELECT ID,
-CASE WHEN PointColumn1.STContains(PointColumn2) BETWEEN 0 AND 1 THEN 'contain'
-ELSE 'do_not_contain'
-END AS Range
-FROM YourTable2
-) AS Source
-PIVOT ( COUNT(ID) FOR Range IN ([0-5], [5.1-10], [10.1-15], [15.1+])) AS PivotTable;
-go
-~~ROW COUNT: 3~~
-
-~~START~~
-int#!#int#!#int#!#int
-0#!#0#!#0#!#0
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STContains(@referencePoint) AS contain FROM <YourDatabase>.dbo.YourTable;
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 2 and character position 67)~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STContains(@referencePoint) AS contain,
-JSON_QUERY('{"Contain":' + CAST(PointColumn.STContains(@referencePoint) AS NVARCHAR(MAX)) + '}') AS Json
-FROM YourTable;
-go
-~~START~~
-int#!#bit#!#nvarchar
-1#!#1#!#{"Contain": 1}
-2#!#1#!#{"Contain": 1}
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, @referencePoint.STContains(PointColumn) AS contain,
-JSON_QUERY('{"Contain":' + CAST(@referencePoint.STContains(PointColumn) AS NVARCHAR(MAX)) + '}') Json
-FROM YourTable;
-go
-~~START~~
-int#!#bit#!#nvarchar
-1#!#1#!#{"Contain": 1}
-2#!#1#!#{"Contain": 1}
-~~END~~
-
-
-SELECT [PointColumn1].STContains([PointColumn2]) AS contain FROM [YourTable2];
-go
-~~START~~
-bit
-0
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @contains BIT = 1;
-DECLARE @sql NVARCHAR(MAX);
-DECLARE @params NVARCHAR(MAX);
-SET @sql = N'
-SELECT ID, PointColumn.STContains(@referencePoint) AS EqualityReferencePoint,
-CASE WHEN PointColumn.STContains(@referencePoint) <= @contains THEN ''contains''
-ELSE ''do_not_contain''
-END AS Proximity
-FROM YourTable
-WHERE PointColumn.STContains(@referencePoint) <= @contains;';
-SET @params = N'@referencePoint geometry, @contains float';
-EXEC sp_executesql @sql, @params, @referencePoint, @contains;
-go
-~~START~~
-int#!#bit#!#text
-1#!#1#!#contains
-2#!#1#!#contains
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STContains(@referencePoint) AS contain FROM YourTable;
-SELECT YourTable.PointColumn.STContains(@referencePoint) AS contain FROM YourTable;
-SELECT dbo.YourTable.PointColumn.STContains(@referencePoint) AS contain FROM YourTable;
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
-
-
-
-DECLARE @pnt geometry;
-SET @pnt = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-select geometry::Point(@pnt.STY, @pnt.STX, 4326).STContains(@pnt)
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-DECLARE @contains BIT = 1;
-SELECT ROUND(PointColumn.STContains(@referencePoint) / @contains, 0) * @contains AS Grp,
-COUNT(*) AS PointCount
-FROM YourTable
-GROUP BY ROUND(PointColumn.STContains(@referencePoint) / @contains, 0) * @contains
-ORDER BY Grp;
-GO
-~~START~~
-bit
-0
-~~END~~
-
-~~START~~
-numeric#!#int
-1#!#2
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(1.0, 0.0, 4326);
-SELECT ROUND(PointColumn.STContains(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX AS GRP,
-COUNT(*) AS PointCount
-FROM YourTable
-GROUP BY ROUND(PointColumn.STContains(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX
-ORDER BY Grp;
-GO
-~~START~~
-float#!#int
-0.0#!#2
-~~END~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn1.STContains(PointColumn2) AS contain,
-cast(PointColumn1.STContains(@referencePoint) as float) - LAG(PointColumn1.STContains(PointColumn2)) OVER (ORDER BY ID) AS Difference 
-FROM YourTable2 ORDER BY PointColumn1.STX;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "bit" to double precision)~~
-
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STContains(@referencePoint) AS contain,
-cast(@referencePoint.STContains(PointColumn) as float) - LAG(@referencePoint.STX) OVER (ORDER BY ID) AS Difference
-FROM YourTable ORDER BY PointColumn.STX;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "bit" to double precision)~~
-
-
-
---for STArea
-DECLARE @point geometry;
-SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT STArea(@point);
-go
-~~START~~
-float
-0.0
-~~END~~
-
-
-DECLARE @point geometry;
-SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT @point.STArea();
-Go
-~~START~~
-float
-0.0
-~~END~~
-
-
-DECLARE @point geometry;
-SET @point = geometry::POINT(22.34900, -47.65100, 4326);
-SELECT @point . STArea ( );
-Go
-~~START~~
-float
-0.0
-~~END~~
-
-
-SELECT location.STArea() from SPATIALPOINTGEOM_dt ORDER BY location.STX;
-GO
-~~START~~
-float
-<NULL>
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-~~END~~
-
-
-DECLARE @point geography;
-SET @point = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT STArea(@point);
-SELECT @point.STArea();
-Go
-~~START~~
-float
-0.0
-~~END~~
-
-~~START~~
-float
-0.0
-~~END~~
-
-
-DECLARE @point geography;
-SET @point = geography::Point(22.34900, -47.65100, 4326);
-SELECT STArea(@point);
-SELECT @point.STArea();
-Go
-~~START~~
-float
-0.0
-~~END~~
-
-~~START~~
-float
-0.0
-~~END~~
-
-
-
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);
@@ -996,11 +160,11 @@ float#!#float
 
 DECLARE @STX geometry;
 SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-select geometry::Point(@STX.STX, @STX.STY, 4326).STArea(),geometry::Point(@STX.STX, @STX.STY, 4326).STAsText(), geometry::Point(@STX.STX, @STX.STY, 4326).STAsBinary(), geometry::Point(@STX.STX, @STX.STY, 4326).STDistance(geometry::Point(@STX.STX, @STX.STY, 4326));
+select geometry::Point(@STX.STX, @STX.STY, 4326).STAsText(), geometry::Point(@STX.STX, @STX.STY, 4326).STAsBinary(), geometry::Point(@STX.STX, @STX.STY, 4326).STDistance(geometry::Point(@STX.STX, @STX.STY, 4326));
 go
 ~~START~~
-float#!#text#!#varbinary#!#float
-0.0#!#POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740#!#0.0
+text#!#varbinary#!#float
+POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740#!#0.0
 ~~END~~
 
 
@@ -1012,17 +176,10 @@ SET @point3 = geometry::Point(22.34900, -47.65100, 4326);
 SELECT @point1.STX;
 SELECT @point1.STY;
 SELECT @point1.STAsText();
-SELECT @point1.STArea();
 SELECT @point1.STAsBinary();
 SELECT @point1.STDistance(@point2);
 SELECT @point3.STDistance(@point2);
 SELECT @point1.STDistance(@point3);
-SELECT @point1.STEquals(@point2);
-SELECT @point3.STEquals(@point2);
-SELECT @point1.STEquals(@point3);
-SELECT @point1.STContains(@point2);
-SELECT @point3.STContains(@point2);
-SELECT @point1.STContains(@point3);
 Go
 ~~START~~
 float
@@ -1036,11 +193,6 @@ float
 
 ~~START~~
 text
-<NULL>
-~~END~~
-
-~~START~~
-float
 <NULL>
 ~~END~~
 
@@ -1064,44 +216,12 @@ float
 <NULL>
 ~~END~~
 
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
 
 -- Negative test for Geospatial functions
 DECLARE @point1 geometry, @point2 varchar(50), @point3 int;
 SET @point1 = geometry::Point(22.34900, -47.65100, 4326);;
 SET @point2 = 'Test_String';
 SELECT @point1.STDistance(@point2);
-SELECT @point1.STEquals(@point2);
-SELECT @point1.STContains(@point2);
 Go
 ~~ERROR (Code: 33557097)~~
 
@@ -1152,24 +272,24 @@ geometry
 SELECT * FROM ValFromGeom ORDER BY binary;
 GO
 ~~START~~
-float#!#text#!#varbinary
-<NULL>#!#<NULL>#!#<NULL>
-0.0#!#POINT(1 2)#!#0101000000000000000000F03F0000000000000040
-0.0#!#POINT(1 2)#!#0101000000000000000000F03F0000000000000040
-0.0#!#POINT(1 2)#!#0101000000000000000000F03F0000000000000040
-0.0#!#POINT(-91 -35)#!#01010000000000000000C056C000000000008041C0
-0.0#!#POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
-0.0#!#POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
-0.0#!#POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
-0.0#!#POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
-0.0#!#POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
-0.0#!#POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
-0.0#!#POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740
-0.0#!#POINT(120.345 45.1234)#!#0101000000AE47E17A14165E40C7293A92CB8F4640
-0.0#!#POINT(-120.345 45.1234)#!#0101000000AE47E17A14165EC0C7293A92CB8F4640
-0.0#!#POINT(220.345 45.1234)#!#0101000000D7A3703D0A8B6B40C7293A92CB8F4640
-0.0#!#POINT(290.345 45.1234)#!#0101000000EC51B81E85257240C7293A92CB8F4640
-0.0#!#POINT(-720.345 45.1234)#!#0101000000F6285C8FC28286C0C7293A92CB8F4640
+text#!#varbinary
+<NULL>#!#<NULL>
+POINT(1 2)#!#0101000000000000000000F03F0000000000000040
+POINT(1 2)#!#0101000000000000000000F03F0000000000000040
+POINT(1 2)#!#0101000000000000000000F03F0000000000000040
+POINT(-91 -35)#!#01010000000000000000C056C000000000008041C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740
+POINT(120.345 45.1234)#!#0101000000AE47E17A14165E40C7293A92CB8F4640
+POINT(-120.345 45.1234)#!#0101000000AE47E17A14165EC0C7293A92CB8F4640
+POINT(220.345 45.1234)#!#0101000000D7A3703D0A8B6B40C7293A92CB8F4640
+POINT(290.345 45.1234)#!#0101000000EC51B81E85257240C7293A92CB8F4640
+POINT(-720.345 45.1234)#!#0101000000F6285C8FC28286C0C7293A92CB8F4640
 ~~END~~
 
 
@@ -1528,8 +648,8 @@ SELECT PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
 float
-0.0
-0.0
+3.0
+5.0
 ~~END~~
 
 
@@ -1537,6 +657,7 @@ SELECT * FROM YourTable WHERE PointColumn.STX > 3.0 ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int#!#geometry
+2#!#E6100000010C00000000000014400000000000001840
 ~~END~~
 
 
@@ -1545,6 +666,8 @@ SELECT * FROM YourTable WHERE PointColumn.STX > @point.STX ORDER BY PointColumn.
 GO
 ~~START~~
 int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
 ~~END~~
 
 
@@ -1552,8 +675,8 @@ SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.ST
 GO
 ~~START~~
 int#!#float
-1#!#0.0
-2#!#0.0
+1#!#3.0
+2#!#5.0
 ~~END~~
 
 
@@ -1561,8 +684,8 @@ SELECT ID, dbo.GetXCoordinate(PointColumn) AS XCoordinate FROM YourTable ORDER B
 GO
 ~~START~~
 int#!#float
-1#!#0.0
-2#!#0.0
+1#!#3.0
+2#!#5.0
 ~~END~~
 
 
@@ -1594,8 +717,8 @@ SELECT * FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int#!#geometry
-1#!#E6100000010C00000000000000000000000000000000
-2#!#E6100000010C00000000000000000000000000000000
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
 ~~END~~
 
 
@@ -1604,8 +727,8 @@ SELECT * FROM YourTable ORDER BY @point.STX;
 GO
 ~~START~~
 int#!#geometry
-1#!#E6100000010C00000000000000000000000000000000
-2#!#E6100000010C00000000000000000000000000000000
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
 ~~END~~
 
 
@@ -1616,8 +739,8 @@ END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int#!#float#!#text
-1#!#0.0#!#Low X
-2#!#0.0#!#Low X
+1#!#3.0#!#Low X
+2#!#5.0#!#High X
 ~~END~~
 
 
@@ -1629,8 +752,8 @@ END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int#!#float#!#text
-1#!#0.0#!#Low X
-2#!#0.0#!#Low X
+1#!#3.0#!#Low X
+2#!#5.0#!#Low X
 ~~END~~
 
 
@@ -1639,6 +762,7 @@ SELECT * FROM PointData WHERE XCoordinate > 3.0 ORDER BY XCoordinate;
 GO
 ~~START~~
 int#!#float
+2#!#5.0
 ~~END~~
 
 
@@ -1666,7 +790,8 @@ FROM YourTable GROUP BY PointColumn.STX ORDER BY PointColumn.STX;
 GO
 ~~START~~
 float#!#int
-1.0#!#2
+1.0#!#1
+1.0#!#1
 ~~END~~
 
 
@@ -1676,8 +801,8 @@ FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int#!#float#!#float
-1#!#0.0#!#<NULL>
-2#!#0.0#!#0.0
+1#!#3.0#!#<NULL>
+2#!#5.0#!#2.0
 ~~END~~
 
 
@@ -1700,6 +825,7 @@ EXEC sp_executesql @DynamicQuery;
 GO
 ~~START~~
 int#!#geometry
+2#!#E6100000010C00000000000014400000000000001840
 ~~END~~
 
 
@@ -1710,6 +836,8 @@ EXEC sp_executesql @DynamicQuery;
 GO
 ~~START~~
 int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
 ~~END~~
 
 
@@ -1717,8 +845,8 @@ EXEC GetDistanceByXCoordinate @xCoordinate = 6.0;
 GO
 ~~START~~
 float#!#float
-0.0#!#6.0
-0.0#!#6.0
+0.0#!#5.0
+0.0#!#6.082762530298219
 ~~END~~
 
 
@@ -1743,6 +871,7 @@ EXEC sp_executesql @DynamicQuery;
 GO
 ~~START~~
 int#!#geometry
+2#!#E6100000010C00000000000014400000000000001840
 ~~END~~
 
 
@@ -1752,8 +881,8 @@ ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn
 GO
 ~~START~~
 int#!#float#!#text
-1#!#0.0#!#Zero X
-2#!#0.0#!#Zero X
+1#!#3.0#!#Positive X
+2#!#5.0#!#Positive X
 ~~END~~
 
 
@@ -1790,8 +919,8 @@ FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int#!#float#!#nvarchar
-1#!#0.0#!#{"XCoordinate": 0}
-2#!#0.0#!#{"XCoordinate": 0}
+1#!#3.0#!#{"XCoordinate": 3}
+2#!#5.0#!#{"XCoordinate": 5}
 ~~END~~
 
 
@@ -1811,8 +940,8 @@ SELECT [PointColumn].[STX] AS XCoordinate FROM [YourTable] ORDER BY PointColumn.
 GO
 ~~START~~
 float
-0.0
-0.0
+3.0
+5.0
 ~~END~~
 
 
@@ -1829,8 +958,8 @@ SELECT PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
 float
-0.0
-0.0
+3.0
+5.0
 ~~END~~
 
 
@@ -1838,8 +967,8 @@ SELECT YourTable.PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointCol
 GO
 ~~START~~
 float
-0.0
-0.0
+3.0
+5.0
 ~~END~~
 
 
@@ -1875,6 +1004,10 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 UPDATE YourTable SET PointColumn = @referencePoint
 WHERE PointColumn.STX >= @referencePoint.STX;
 GO
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
 ~~ROW COUNT: 2~~
 
 
@@ -2848,11 +1981,11 @@ float#!#float
 
 DECLARE @Lat geography;
 SET @Lat = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
-select geography::Point(@Lat.Long, @Lat.Lat, 4326).STArea(),geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsText(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsBinary(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STDistance(geography::Point(@Lat.Long, @Lat.Lat, 4326));
+select geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsText(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsBinary(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STDistance(geography::Point(@Lat.Long, @Lat.Lat, 4326));
 go
 ~~START~~
-float#!#text#!#varbinary#!#float
-0.0#!#POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0#!#0.0
+text#!#varbinary#!#float
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0#!#0.0
 ~~END~~
 
 
@@ -3134,17 +2267,10 @@ SET @point3 = geography::Point(22.34900, -47.65100, 4326);
 SELECT @point1.Long;
 SELECT @point1.Lat;
 SELECT @point1.STAsText();
-SELECT @point1.STArea();
 SELECT @point1.STAsBinary();
 SELECT @point1.STDistance(@point2);
 SELECT @point3.STDistance(@point2);
 SELECT @point1.STDistance(@point3);
-SELECT @point1.STEquals(@point2);
-SELECT @point3.STEquals(@point2);
-SELECT @point1.STEquals(@point3);
-SELECT @point1.STContains(@point2);
-SELECT @point3.STContains(@point2);
-SELECT @point1.STContains(@point3);
 Go
 ~~START~~
 float
@@ -3158,11 +2284,6 @@ float
 
 ~~START~~
 text
-<NULL>
-~~END~~
-
-~~START~~
-float
 <NULL>
 ~~END~~
 
@@ -3183,36 +2304,6 @@ float
 
 ~~START~~
 float
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
-<NULL>
-~~END~~
-
-~~START~~
-bit
 <NULL>
 ~~END~~
 
@@ -3340,22 +2431,22 @@ float#!#float
 SELECT * FROM TextFromGeog ORDER BY Latitude;
 GO
 ~~START~~
-float#!#float#!#text
-<NULL>#!#<NULL>#!#<NULL>
--35.0#!#0.0#!#POINT(-91 -35)
--22.349#!#0.0#!#POINT(47.651 -22.349)
--22.349#!#0.0#!#POINT(47.651 -22.349)
--22.349#!#0.0#!#POINT(47.651 -22.349)
--22.349#!#0.0#!#POINT(47.651 -22.349)
-2.0#!#0.0#!#POINT(1 2)
-2.0#!#0.0#!#POINT(1 2)
-2.0#!#0.0#!#POINT(1 2)
-45.1234#!#0.0#!#POINT(-720.345 45.1234)
-45.1234#!#0.0#!#POINT(220.345 45.1234)
-45.1234#!#0.0#!#POINT(120.345 45.1234)
-45.1234#!#0.0#!#POINT(290.345 45.1234)
-45.1234#!#0.0#!#POINT(-120.345 45.1234)
-47.651#!#0.0#!#POINT(-22.349 47.651)
+float#!#text
+<NULL>#!#<NULL>
+-35.0#!#POINT(-91 -35)
+-22.349#!#POINT(47.651 -22.349)
+-22.349#!#POINT(47.651 -22.349)
+-22.349#!#POINT(47.651 -22.349)
+-22.349#!#POINT(47.651 -22.349)
+2.0#!#POINT(1 2)
+2.0#!#POINT(1 2)
+2.0#!#POINT(1 2)
+45.1234#!#POINT(-720.345 45.1234)
+45.1234#!#POINT(220.345 45.1234)
+45.1234#!#POINT(120.345 45.1234)
+45.1234#!#POINT(290.345 45.1234)
+45.1234#!#POINT(-120.345 45.1234)
+47.651#!#POINT(-22.349 47.651)
 ~~END~~
 
 
@@ -3698,28 +2789,6 @@ POINT(120.345 45.1234)
 POINT(290.345 45.1234)
 POINT(-120.345 45.1234)
 POINT(-22.349 47.651)
-~~END~~
-
-
-SELECT location.STArea() from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
-GO
-~~START~~
-float
-<NULL>
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
-0.0
 ~~END~~
 
 
