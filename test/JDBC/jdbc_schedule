@@ -311,6 +311,9 @@ ignore#!#BABEL-3513_before_15_8_or_16_4-vu-prepare
 ignore#!#BABEL-3513_before_15_8_or_16_4-vu-verify
 
 # These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
+ignore#!#replicate-before-15_8-or-16_4-vu-prepare
+ignore#!#replicate-before-15_8-or-16_4-vu-verify
+ignore#!#replicate-before-15_8-or-16_4-vu-cleanup
 ignore#!#reverse-before-15_8-or-16_4-vu-prepare
 ignore#!#reverse-before-15_8-or-16_4-vu-verify
 ignore#!#reverse-before-15_8-or-16_4-vu-cleanup
