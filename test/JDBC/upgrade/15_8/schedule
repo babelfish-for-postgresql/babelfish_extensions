@@ -530,5 +530,6 @@ rtrim
 left
 right
 reverse
+replicate
 space
 
