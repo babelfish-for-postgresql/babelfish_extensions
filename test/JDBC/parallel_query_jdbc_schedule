@@ -20,6 +20,7 @@ ignore#!#Test_sp_rename_database-vu-cleanup
 ignore#!#Test_sp_renamedb-vu-prepare
 ignore#!#Test_sp_renamedb-vu-verify
 ignore#!#Test_sp_renamedb-vu-cleanup
+ignore#!#verify_mapping_for_remove_accents
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify

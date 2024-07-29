@@ -247,7 +247,7 @@ char#!#char#!#char#!#char#!#char#!#char#!#char#!#char
 select upper(cast (1 as smallint)), upper(cast (1 as int)), upper(cast (1 as bigint)), upper(cast (1 as real)), upper(cast (1 as float)), upper(cast (2.1 as numeric(2,1))), upper(cast (1 as smallmoney)), upper(cast (1 as money));
 GO
 ~~START~~
-text#!#text#!#text#!#text#!#text#!#text#!#text#!#text
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 1#!#1#!#1#!#1#!#1#!#2.1#!#1.0000#!#1.0000
 ~~END~~
 

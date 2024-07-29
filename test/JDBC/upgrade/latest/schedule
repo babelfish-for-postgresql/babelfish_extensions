@@ -528,6 +528,7 @@ alter-procedure
 1_GRANT_SCHEMA
 BABEL-4707
 BABEL_4817
+upper_lower
 BABEL-4641
 trim
 ltrim
@@ -550,3 +551,5 @@ BABEL-3820
 PARTITION
 BABEL-5071
 string_agg
+reverse
+sys_sequences
