@@ -11477,6 +11477,19 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys_filegroups_depreca
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys_data_spaces_deprecated_4_3_0');
 
 
+CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
+BEGIN
+    IF number < 0 THEN
+        result := NULL;
+    ELSE
+        -- TSQL has a limitation of 8000 character spaces for space function.
+        result := PG_CATALOG.repeat(' ',least(number, 8000));
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

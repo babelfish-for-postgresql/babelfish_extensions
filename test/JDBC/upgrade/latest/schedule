@@ -554,3 +554,5 @@ string_agg
 reverse
 sys_sequences
 replicate
+space
+
