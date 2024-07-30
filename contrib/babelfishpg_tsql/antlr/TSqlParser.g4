@@ -2890,7 +2890,7 @@ deny_statement
     ;
      
 permission_object
-    : (object_type colon_colon)? full_object_name (LR_BRACKET column_name_list RR_BRACKET)? 
+    : (permission_object_type colon_colon)? full_object_name (LR_BRACKET column_name_list RR_BRACKET)? 
     ;
 
 principals
@@ -2933,6 +2933,32 @@ single_permission
     | SUBSCRIBE QUERY NOTIFICATIONS
     | UNMASK
     | UNSAFE ASSEMBLY
+    ;
+
+permission_object_type
+    : APPLICATION ROLE
+    | ASSEMBLY
+    | ASYMMETRIC KEY
+    | AVAILABILITY GROUP
+    | CERTIFICATE
+    | CONTRACT
+    | DATABASE (SCOPED CREDENTIAL)?
+    | ENDPOINT
+    | FULLTEXT (CATALOG|STOPLIST)
+    | LOGIN
+    | MESSAGE TYPE
+    | OBJECT
+    | REMOTE SERVICE BINDING
+    | ROLE
+    | ROUTE
+    | SCHEMA
+    | SEARCH PROPERTY LIST
+    | SERVER ROLE
+    | SERVICE
+    | SYMMETRIC KEY
+    | TYPE
+    | USER
+    | XML SCHEMA COLLECTION
     ;
 
 object_type
