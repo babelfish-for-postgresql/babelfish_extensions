@@ -25,6 +25,10 @@ go
 exec alter_proc_p2
 go
 
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
+
 -- Test Case: Modify the procedure body, add a parameter, use "proc"
 --            instead of "procedure"              
 
@@ -47,6 +51,10 @@ GO
 
 exec alter_proc_p1 @param = 2
 GO
+
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
 
 -- Test Case: Expect error because no parameter provided
 exec alter_proc_p2
@@ -73,6 +81,10 @@ GO
 exec alter_proc_p1 @param = '2020-01-02'
 GO
 
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
+
 -- Test Case: Modify the procedure body to call another modified proc
 alter procedure alter_proc_p2
 AS
@@ -80,6 +92,10 @@ AS
 GO
 
 exec alter_proc_p2
+go
+
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p2';
 go
 
 -- Test Case: attempt to alter function, expect error for being unsupported
@@ -124,6 +140,10 @@ exec alter_proc_p3 @z = 500
 go
 
 select * from alter_proc_users
+go
+
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p3';
 go
 
 -- Test Case: Transaction - begin, alter proc, modify row, commit

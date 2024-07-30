@@ -51,6 +51,15 @@ int#!#int#!#int#!#int#!#date
 ~~END~~
 
 
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p1#!#SQL#!#CREATE PROCEDURE alter_proc_p1<newline>AS<newline>    select * from alter_proc_orders
+~~END~~
+
+
 
 
 -- Test Case: Modify the procedure body, add a parameter, use "proc"
@@ -83,6 +92,15 @@ GO
 int#!#int#!#int#!#int#!#date
 1#!#1#!#1#!#5#!#2023-06-25
 2#!#1#!#1#!#6#!#2023-06-25
+~~END~~
+
+
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p1#!#SQL#!#CREATE PROC alter_proc_p1<newline>    @param INT<newline>AS<newline>    IF (@param = 1)<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END
 ~~END~~
 
 
@@ -127,6 +145,15 @@ int#!#int#!#int#!#int#!#date
 ~~END~~
 
 
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p1#!#SQL#!#CREATE PROCEDURE alter_proc_p1<newline>    @param date<newline>AS<newline>    IF (@param = '2020-01-01')<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END
+~~END~~
+
+
 -- Test Case: Modify the procedure body to call another modified proc
 alter procedure alter_proc_p2
 AS
@@ -139,6 +166,15 @@ go
 int#!#varchar#!#varchar#!#varchar
 1#!#j#!#o#!#testemail
 1#!#e#!#l#!#testemail2
+~~END~~
+
+
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p2';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p2#!#SQL#!#CREATE procedure alter_proc_p2<newline>AS<newline>    exec alter_proc_p1 @param = '2020-01-01'
 ~~END~~
 
 
@@ -206,6 +242,15 @@ int#!#varchar#!#varchar#!#varchar
 1#!#j#!#o#!#testemail
 1#!#e#!#l#!#testemail2
 3#!#newuser#!#lastname#!#testemail3
+~~END~~
+
+
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p3';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p3#!#SQL#!#CREATE procedure alter_proc_p3 @z int as select 500 + @z
 ~~END~~
 
 
