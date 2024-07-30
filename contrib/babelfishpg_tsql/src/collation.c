@@ -58,6 +58,8 @@ static UTransliterator *cached_transliterator = NULL;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
+static int
+patindex_ai_match_text(char *input_str, char *pattern, Oid cid);
 
 extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 int ptype,
@@ -1718,47 +1720,39 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
     return false;
 }
 
-PG_FUNCTION_INFO_V1(patindex_ai_collations);
-Datum
-patindex_ai_collations(PG_FUNCTION_ARGS)
+static int
+patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 {
-	text         *pattern_text = PG_GETARG_TEXT_P(0);
-	text         *input_text = PG_GETARG_TEXT_P(1);
-	Oid          cid = PG_GET_COLLATION();
-	char         *input_str = text_to_cstring(input_text);
-	char         *pattern_str = text_to_cstring(pattern_text);
-	char         *input_str_itr = input_str;
-	char         *pattern_stripped = pattern_str;
-	int          start_offset = 0, end_offset = 0,
-	             result = 0, itr = 0;
+	bool start_offset = false;
+	int  itr = 0;
 
-	if (pattern_stripped[strlen(pattern_stripped)-1] == '%')
+	if (*pattern == '%')
 	{
-		pattern_stripped[strlen(pattern_stripped)-1] = '\0';
-		end_offset = 1;
+		pattern++;
+		start_offset = true;
 	}
-	if (*pattern_stripped == '%')
-	{
-		pattern_stripped++;
-		start_offset = 1;
-	}
+	if (strlen(pattern) == 0)
+		return 1;
 
-	if (strlen(pattern_stripped) == 0)
-		result = 1;
-
-	while (*input_str_itr != '\0')
+	while (*input_str != '\0')
 	{
-		char  *t = input_str_itr;
-		char  *p = pattern_stripped;
+		char  *t = input_str;
+		char  *p = pattern;
 		int   tlen = strlen(t),
-		      plen = strlen(pattern_stripped);
-		bool  match_failed = false;
+		      plen = strlen(pattern);
 
 		itr++;
 
-		while (tlen > 0 && plen > 0 && !match_failed)
+		while (tlen > 0 && plen > 0)
 		{
-			if (*p == '_')
+			if (*p == '%')
+			{
+				if (patindex_ai_match_text(t, p, cid))
+					return itr;
+				else
+					return 0;
+			}
+			else if (*p == '_')
 			{
 				/* _ matches any single character, and we know there is one */
 				NextChar(t, tlen);
@@ -1830,14 +1824,14 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 				if (close_bracket && (find_match ^ reverse_mode)) /* found a match */
 					NextChar(t, tlen);
 				else
-					match_failed = true;
+					break;
 			}
 			else
 			{
 				char *p_start = p;
 				int  len = plen, matched_len = 0;
 
-				while (plen > 0 && *p != '[' && *p != '_')
+				while (plen > 0 && *p != '[' && *p != '_' && *p != '%')
 				{
 					NextByte(p, plen);
 				}
@@ -1847,24 +1841,49 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 						NextChar(t, tlen);
 				}
 				else
-					match_failed = true;
+					break;
 			}
 		}
 
-		if (plen == 0 && match_failed == false && (tlen == 0 || end_offset == 1))
+		if (tlen > 0)
 		{
-			result = itr;
-			break;
+			while (tlen > 0 && *t == ' ')
+				NextByte(t, tlen);
+			if (tlen <= 0)
+				return itr;
 		}
 
+		/*
+		* End of text, but perhaps not of pattern.  Match if the remaining
+		* pattern can match a zero-length string, ie, it's zero or more %'s.
+		*/
+		while (plen > 0 && *p == '%')
+			NextByte(p, plen);
+		if (tlen == 0 && plen <= 0)
+			return itr;
+
 		if (start_offset)
-			input_str_itr += pg_mblen(input_str_itr);
+			input_str += pg_mblen(input_str);
 		else
 			break;
 	}
 
+	return 0;
+}
+
+PG_FUNCTION_INFO_V1(patindex_ai_collations);
+Datum
+patindex_ai_collations(PG_FUNCTION_ARGS)
+{
+	char         *pattern = text_to_cstring(PG_GETARG_TEXT_P(0));
+	char         *input_str = text_to_cstring(PG_GETARG_TEXT_P(1));
+	Oid          cid = PG_GET_COLLATION();
+	int 		 result;
+
+	result = patindex_ai_match_text(input_str, pattern, cid);
+
 	pfree(input_str);
-	pfree(pattern_str);
+	pfree(pattern);
 
 	PG_RETURN_INT32(result);
 }
