@@ -165,7 +165,7 @@ static Oid  pltsql_GetNewTempObjectId(void);
 static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
-static bool pltsql_is_enr_locktag(const LOCKTAG *locktag);
+static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
@@ -238,7 +238,7 @@ static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
 static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
 static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_msg_hook = NULL;
-static pltsql_is_enr_locktag_hook_type prev_pltsql_is_enr_locktag_hook = NULL;
+static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
@@ -369,8 +369,8 @@ InstallExtendedHooks(void)
 	prev_pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg_hook;
 	pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg;
 
-	prev_pltsql_is_enr_locktag_hook = pltsql_is_enr_locktag_hook;
-	pltsql_is_enr_locktag_hook = pltsql_is_enr_locktag;
+	prev_pltsql_get_tsql_enr_from_oid_hook = pltsql_get_tsql_enr_from_oid_hook;
+	pltsql_get_tsql_enr_from_oid_hook = pltsql_get_tsql_enr_from_oid;
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
@@ -4688,11 +4688,10 @@ pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg)
 	return (msg->id == SHAREDINVALRELCACHE_ID && msg->rc.local_only);
 }
 
-static bool
-pltsql_is_enr_locktag(const LOCKTAG *locktag)
+static EphemeralNamedRelation
+pltsql_get_tsql_enr_from_oid(const Oid oid)
 {
-	return (locktag->locktag_type == LOCKTAG_RELATION && 
-		get_ENR_withoid(currentQueryEnv, locktag->locktag_field2, ENR_TSQL_TEMP));
+	return get_ENR_withoid(currentQueryEnv, oid, ENR_TSQL_TEMP);
 }
 
 /*
