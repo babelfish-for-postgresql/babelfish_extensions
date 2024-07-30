@@ -916,6 +916,26 @@ public:
 			{
 				auto id = fpnsds->id().back();
 
+				if (id->keyword()->NULLIF()) /* NULLIF */
+				{
+					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+					{
+						auto first_arg = ctx->function_arg_list()->expression().front();
+						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
+							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
+					}
+				}
+				if (id->keyword()->CHECKSUM())
+				{
+					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+					{
+						for (auto arg: ctx->function_arg_list()->expression())
+						{
+							if (dynamic_cast<TSqlParser::Constant_exprContext*>(arg) && static_cast<TSqlParser:: Constant_exprContext*>(arg)->constant()->NULL_P())
+								throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "Argument NULL is invalid for CHECKSUM().", getLineAndPos(arg));
+						}
+					}
+				}
 				if (id->keyword()->TRIM())
 				{
 					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
@@ -2449,58 +2469,11 @@ public:
 				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SESSION_USER()), "sys.session_user()")));
 		}
 
-		handleGeospatialFunctionsInFunctionCall(ctx);
+		tsqlCommonMutator::exitFunction_call(ctx);
 
 		/* analyze scalar function call */
 		if (ctx->func_proc_name_server_database_schema())
 		{
-			if (ctx->func_proc_name_server_database_schema()->schema)
-				schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
-
-			auto fpnsds = ctx->func_proc_name_server_database_schema();
-
-			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
-			{
-				auto id = fpnsds->id().back();
-
-				if (id->keyword()->NULLIF()) /* NULLIF */
-				{
-					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
-					{
-						auto first_arg = ctx->function_arg_list()->expression().front();
-						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
-							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
-					}
-				}
-				if (id->keyword()->TRANSLATE()) /* TRANSLATE */
-				{
-					size_t startPosition = id->keyword()->TRANSLATE()->getSymbol()->getStartIndex();
-					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
-				}
-				if (id->keyword()->SUBSTRING()) /* SUBSTRING */
-				{
-					size_t startPosition = id->keyword()->SUBSTRING()->getSymbol()->getStartIndex();
-					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
-				}
-
-                              if (id->keyword()->CHECKSUM())
-                              {
-                                      if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
-                                      {
-                                              for (auto arg: ctx->function_arg_list()->expression())
-                                              {
-                                                      if (dynamic_cast<TSqlParser::Constant_exprContext*>(arg) && static_cast<TSqlParser:: Constant_exprContext*>(arg)->constant()->NULL_P())
-                                                              throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "Argument NULL is invalid for CHECKSUM().", getLineAndPos(arg));
-                                              }
-                                      }
-                              }
-				
-				if (id->keyword()->TRIM())
-				{
-					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
-				}
-			}
-
 			if (ctx->func_proc_name_server_database_schema()->procedure)
 			{
 				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);

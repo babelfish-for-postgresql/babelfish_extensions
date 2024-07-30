@@ -1082,19 +1082,32 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 					/* Throw error when input is constant and NULL */
 					if (IsA(arg, Const) && ((Const *)arg)->constisnull)
 					{
+						Datum                       tsql_typename;
+						char*						typ_name;
+						LOCAL_FCINFO(fcinfo, 1);
+
 						if (common_utility_plugin_ptr == NULL)
 							ereport(ERROR,
 									(errcode(ERRCODE_INTERNAL_ERROR),
 										errmsg("Failed to find common utility plugin.")));
 
-						if ((*common_utility_plugin_ptr->get_tsql_datatype_oid)("int") != input_typeids[i]
-							&& (*common_utility_plugin_ptr->get_tsql_datatype_oid)("bigint") != input_typeids[i]
-							&& (*common_utility_plugin_ptr->get_tsql_datatype_oid)("smallint") != input_typeids[i]
-							&& (*common_utility_plugin_ptr->get_tsql_datatype_oid)("tinyint") != input_typeids[i])
-							ereport(ERROR,
-								(errcode(ERRCODE_UNDEFINED_FUNCTION),
-									errmsg("Argument data type %s is invalid for argument %d of substring function.", 
-											format_type_be(input_typeids[i]), i+1)));
+						/* if tsql_typename is NULL it implies that inputTypId corresponds to UDT */
+						InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+						fcinfo->args[0].value = ObjectIdGetDatum(input_typeids[i]);
+						fcinfo->args[0].isnull = false;
+						tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+						if(tsql_typename)
+						{
+							typ_name = TextDatumGetCString(tsql_typename);
+							if (!((strlen(typ_name) == 3 && strncmp(typ_name,"int", 3) == 0) ||
+								(strlen(typ_name) == 7 && strncmp(typ_name,"tinyint", 7) == 0) ||
+								(strlen(typ_name) == 8 && strncmp(typ_name,"smallint", 8) == 0) ||
+								(strlen(typ_name) == 6 && strncmp(typ_name,"bigint", 6) == 0)))
+								ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_FUNCTION),
+										errmsg("Argument data type %s is invalid for argument %d of substring function.", 
+												format_type_be(input_typeids[i]), i+1)));
+						}
 					}
 				}
 			}
