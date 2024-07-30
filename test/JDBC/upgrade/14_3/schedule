@@ -204,7 +204,7 @@ sys-database_files
 sys-database_filestream_options
 sys_database_principals_dep
 sys-database_recovery_status
-sys-data_spaces
+sys-data_spaces-before-16-4
 sys-datefirst
 sys-dm_exec_connections
 sys-dm_exec_connections-dep
@@ -355,6 +355,7 @@ permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 GRANT_SCHEMA-before-15_7-16_3
 babel-4517
+upper_lower-before-15_8-or-16_4
 BABEL-4641-before-16_3-or-15_7-or-14_12
 trim-before-15_8-or-16_4
 ltrim-before-15_8-or-16_4
@@ -369,4 +370,9 @@ babel_test_int2_numeric_oper_before_16_3
 BABEL-4869
 babel_4328_datetime-before-16_3
 babel_4328_datetime2-before-16_3
+translate-before-15_8-or-16_4
 babel_4328_datetimeoffset-before-16_3
+reverse-before-15_8-or-16_4
+replicate-before-15_8-or-16_4
+space
+

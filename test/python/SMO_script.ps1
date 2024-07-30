@@ -22,9 +22,35 @@ $schm2 = "guest"
 
 
 
+$Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
+$Scripter.Options.DriAll = $True;
+$Scripter.Options.ScriptSchema = $True;
+$Scripter.Options.ScriptData  = $False;
+$Scripter.Options.NoCollation = $True;
+
+# Scripting PartitionFunctions and PartitionSchemes.
+# Unlike standard database objects, partition functions and schemes are scripted individually.
+foreach ($partitionFunction in $db.PartitionFunctions)
+{
+    if (-not $partitionFunction.IsSystemObject)
+    {
+        $Scripter.Script($partitionFunction)
+        Write-Output "GO`n"
+    }
+}
+
+foreach ($partitionScheme in $db.PartitionSchemes)
+{
+    if (-not $partitionScheme.IsSystemObject)
+    {
+        $Scripter.Script($partitionScheme)
+        Write-Output "GO`n"
+    }
+}
 
 if($script_flag -eq $var_one)
 {
+    # Collecting standard database objects (tables, views, procedures, functions, etc.).
     $Objects = $db.Tables
     $Objects += $db.Views
     $Objects += $db.StoredProcedures
@@ -33,15 +59,12 @@ if($script_flag -eq $var_one)
     $Objects += $db.UserDefinedTableTypes
     $Objects += $db.Tables.Indexes
     $Objects += $db.Tables.Triggers
+
+    # Scripting standard database objects.
     foreach ($CurrentObject in $Objects)
     {
         if (-not $CurrentObject.IsSystemObject )
         {
-            $Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
-            $Scripter.Options.DriAll = $True;
-            $Scripter.Options.ScriptSchema = $True;
-            $Scripter.Options.ScriptData  = $False;
-            $Scripter.Options.NoCollation = $True;
             $Scripter.Script($CurrentObject);
             Write-Output "GO`n" 
         }
@@ -50,6 +73,7 @@ if($script_flag -eq $var_one)
 }
 else
 {
+    # Collecting standard database objects (tables, views, procedures, functions, etc.).
     $Objects = $db.Tables
     $Objects += $db.Views
     $Objects += $db.StoredProcedures
@@ -59,15 +83,12 @@ else
     $SubObjects += $db.Tables.Indexes
     $SubObjects += $db.Tables.Triggers
     $SubObjects += $db.Users
+
+    # Scripting standard database objects.
     foreach ($CurrentObject in $Objects)
     {
         if ($CurrentObject.schema -ne $schm -and $CurrentObject.schema -ne $dtb -and $CurrentObject.schema -ne $null -and -not $CurrentObject.IsSystemObject )
         {
-            $Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
-            $Scripter.Options.DriAll = $True;
-            $Scripter.Options.ScriptSchema = $True;
-            $Scripter.Options.ScriptData  = $False;
-            $Scripter.Options.NoCollation = $True;
             $Scripter.Script($CurrentObject);
             Write-Output "GO`n"
         }
@@ -77,10 +98,6 @@ else
         if (-not $CurrentObject.IsSystemObject -and $CurrentObject.Name -ne $schm1 -and $CurrentObject.Name -ne $schm2)
             {
                 $Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
-                $Scripter.Options.DriAll = $True;
-                $Scripter.Options.ScriptSchema = $True;
-                $Scripter.Options.ScriptData  = $False;
-                $Scripter.Options.NoCollation = $True;
                 $Scripter.Script($CurrentObject);
                 Write-Output "GO`n"
             }
