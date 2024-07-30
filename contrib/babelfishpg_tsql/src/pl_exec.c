@@ -10303,6 +10303,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 				}
 				new_search_path = psprintf("%s, %s, %s", quote_identifier(physical_schema), quote_identifier(dbo_schema), *old_search_path);
 
+				pfree(physical_schema);
 				/*
 				 * Add the schema where the object is referenced and dbo
 				 * schema to the new search path
@@ -10310,6 +10311,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 				(void) set_config_option("search_path", new_search_path,
 										 PGC_USERSET, PGC_S_SESSION,
 										 GUC_ACTION_SAVE, true, 0, false);
+				pfree(new_search_path);
 				return true;
 			}
 			else if (top_es_entry->estate->db_name != NULL && stmt->is_ddl)
@@ -10352,6 +10354,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 					}
 					new_search_path = psprintf("%s, %s, %s", quote_identifier(physical_schema), quote_identifier(dbo_schema), *old_search_path);
 
+					pfree(physical_schema);
 					/*
 					 * Add the schema where the object is referenced and dbo
 					 * schema to the new search path
@@ -10359,6 +10362,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 					(void) set_config_option("search_path", new_search_path,
 											 PGC_USERSET, PGC_S_SESSION,
 											 GUC_ACTION_SAVE, true, 0, false);
+					pfree(new_search_path);
 					return true;
 				}
 			}
@@ -10381,6 +10385,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 		}
 		new_search_path = psprintf("%s, %s, %s", quote_identifier(physical_schema), quote_identifier(dbo_schema), *old_search_path);
 
+		pfree(physical_schema);
 		/*
 		 * Add the schema where the object is referenced and dbo schema to the
 		 * new search path
@@ -10388,8 +10393,11 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 		(void) set_config_option("search_path", new_search_path,
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
+		pfree(new_search_path);
 		return true;
 	}
+	
+	pfree(cur_dbname);
 	return false;
 }
 
