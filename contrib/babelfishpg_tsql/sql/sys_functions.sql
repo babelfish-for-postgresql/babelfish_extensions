@@ -792,6 +792,17 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg anyelement, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'search_partition'
+LANGUAGE C STABLE;
+
+-- Duplicate function with arg TEXT since ANYELEMNT cannot handle constant NULL and string literal (unknown type).
+CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg text, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'search_partition'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.NVARCHAR, object_piece int)
 RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'parsename'

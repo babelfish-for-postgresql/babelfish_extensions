@@ -11305,6 +11305,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg anyelement, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'search_partition'
+LANGUAGE C STABLE;
+
+-- Duplicate function with arg TEXT since ANYELEMNT cannot handle constant NULL and string literal (unknown type).
+CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg text, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'search_partition'
+LANGUAGE C STABLE;
+
 
 CREATE OR REPLACE VIEW sys.destination_data_spaces as
 SELECT
