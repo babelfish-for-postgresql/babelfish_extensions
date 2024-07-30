@@ -359,9 +359,21 @@ public class JDBCTempTable {
     }
 
     private static void test_lock_contention(BufferedWriter bw, Logger logger) throws Exception {
+        String connectionString = initializeConnectionString();
+
+        /* do a sanity check of pg_locks catalog */
+        Connection c = DriverManager.getConnection(connectionString);
+        Statement s = c.createStatement();
+        s.execute("BEGIN TRAN");
+        int oid = create_table_and_report_oid(c, "CREATE TABLE #t1 (a int)", "#t1");
+        ResultSet rs = s.executeQuery("SELECT * FROM pg_locks WHERE relation = " + String.valueOf(oid));
+        if (rs.next()) {
+            bw.write("Unexpected lock acquisition on a TSQL temp table.\n");
+        }
+        c.close();
+
         int num_connections = 2;
         
-        String connectionString = initializeConnectionString();
         ArrayList<Connection> cxns = new ArrayList<>();
 
         ArrayList<Thread> threads = new ArrayList<>();
@@ -386,10 +398,6 @@ public class JDBCTempTable {
                 bw.write("Lock contention detected.\n");
                 return;
             }
-        }
-
-        for (Connection cxn : cxns) {
-            cxn.close();
         }
     }
 }
