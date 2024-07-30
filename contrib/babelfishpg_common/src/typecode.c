@@ -300,8 +300,8 @@ lookup_tsql_datatype_oid(const char *typename)
 	return typoid;
 }
 
-void *
-resolve_pg_type_to_tsql(Oid oid)
+void
+resolve_pg_type_to_tsql(Oid oid, char **typ_name)
 {
 	ht_oid2typecode_entry_t *entry;
 
@@ -310,9 +310,8 @@ resolve_pg_type_to_tsql(Oid oid)
 		entry = hash_search(ht_oid2typecode, &oid, HASH_FIND, NULL);
 
 		if (entry && entry->persist_id < TOTAL_TYPECODE_COUNT)
-			return (char *) type_infos[entry->persist_id].tsql_typname;
+			*typ_name = pstrdup(type_infos[entry->persist_id].tsql_typname);
 	}
-	return NULL;
 }
 
 bool

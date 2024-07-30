@@ -108,7 +108,7 @@ extern void handle_type_and_collation(struct Node *node, Oid typid, Oid collatio
 extern bool check_target_type_is_sys_varchar(Oid funcid);
 extern type_info_t get_tsql_type_info(uint8_t type_code);
 extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
-extern void *resolve_pg_type_to_tsql(Oid oid);
+extern void resolve_pg_type_to_tsql(Oid oid, char **typ_name);
 extern Oid get_tsql_datatype_oid(char *type_name);
 
 /*
