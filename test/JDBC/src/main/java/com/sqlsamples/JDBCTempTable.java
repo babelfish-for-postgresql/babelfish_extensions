@@ -28,11 +28,12 @@ public class JDBCTempTable {
         long startTime = System.nanoTime();
 
         try {
-            // TODO: re-enable the temp table OID tests when the full fix is ready
-            // check_oids_equal(bw);
-            // test_oid_buffer(bw, logger);
-            // concurrency_test(bw);
-            // psql_test(bw, logger);
+            if (check_temp_oid_buffer_enabled(bw, logger)) {
+                check_oids_equal(bw);
+                test_oid_buffer(bw, logger);
+                psql_test(bw, logger);
+            }
+            concurrency_test(bw);
             test_trigger_on_temp_table(bw, logger);
             test_lock_contention(bw, logger);
         } catch (Exception e) {
@@ -45,6 +46,21 @@ public class JDBCTempTable {
 
         long endTime = System.nanoTime();
         curr_exec_time = endTime - startTime;
+    }
+
+    private static boolean check_temp_oid_buffer_enabled(BufferedWriter bw, Logger logger) throws Exception {
+        String temp_oid_buffer_size = "babelfishpg_tsql.temp_oid_buffer_size";
+        Connection c = DriverManager.getConnection(connectionString);
+        JDBCCrossDialect cx = new JDBCCrossDialect(c);
+        Connection psql = cx.getPsqlConnection("-- psql", bw, logger);
+        Statement check_guc = psql.createStatement();
+        ResultSet rs = check_guc.executeQuery("SHOW " + temp_oid_buffer_size);
+        if (!rs.next()) {
+            bw.write("Table is missing.");
+            bw.newLine();
+        }
+        int buffer_size = Integer.parseInt(rs.getString(temp_oid_buffer_size));
+        return buffer_size != 0;
     }
 
     /*
