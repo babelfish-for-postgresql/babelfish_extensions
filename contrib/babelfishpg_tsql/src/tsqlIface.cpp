@@ -916,17 +916,9 @@ public:
 			{
 				auto id = fpnsds->id().back();
 
-				if (id->keyword()->TRIM())
+				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE())
 				{
-					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
-				}
-				else if (id->keyword()->REPLACE())
-				{
-					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->REPLACE()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->REPLACE()), "sys.replace")));
-				}
-				else if (id->keyword()->TRANSLATE())
-				{
-					size_t startPosition = id->keyword()->TRANSLATE()->getSymbol()->getStartIndex();
+					size_t startPosition = id->keyword()->start->getStartIndex();
 					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
 				}
 			}
@@ -2471,9 +2463,9 @@ public:
 							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
 					}
 				}
-				if (id->keyword()->TRANSLATE()) /* TRANSLATE */
+				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE())
 				{
-					size_t startPosition = id->keyword()->TRANSLATE()->getSymbol()->getStartIndex();
+					size_t startPosition = id->keyword()->start->getStartIndex();
 					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
 				}
 
@@ -2488,15 +2480,6 @@ public:
                                               }
                                       }
                               }
-				
-				if (id->keyword()->TRIM())
-				{
-					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
-				}
-				else if (id->keyword()->REPLACE())
-				{
-					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->REPLACE()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->REPLACE()), "sys.replace")));
-				}
 			}
 
 			if (ctx->func_proc_name_server_database_schema()->procedure)
