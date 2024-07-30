@@ -951,6 +951,21 @@ public:
 					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
 				}
 			}
+
+			if (ctx->func_proc_name_server_database_schema()->procedure)
+			{
+				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
+				{
+					has_identity_function = true;
+				}
+				
+				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
+						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
+				}
+			}
 		}
 	}
 
@@ -2470,25 +2485,6 @@ public:
 		}
 
 		tsqlCommonMutator::exitFunction_call(ctx);
-
-		/* analyze scalar function call */
-		if (ctx->func_proc_name_server_database_schema())
-		{
-			if (ctx->func_proc_name_server_database_schema()->procedure)
-			{
-				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
-				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
-				{
-					has_identity_function = true;
-				}
-				
-				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
-				{
-					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
-						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
-				}
-			}
-		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////////

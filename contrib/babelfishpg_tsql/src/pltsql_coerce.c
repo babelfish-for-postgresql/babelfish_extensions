@@ -1082,23 +1082,16 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 					/* Throw error when input is constant and NULL */
 					if (IsA(arg, Const) && ((Const *)arg)->constisnull)
 					{
-						Datum                       tsql_typename;
-						char*						typ_name;
-						LOCAL_FCINFO(fcinfo, 1);
+						char	*typ_name;
 
 						if (common_utility_plugin_ptr == NULL)
 							ereport(ERROR,
 									(errcode(ERRCODE_INTERNAL_ERROR),
 										errmsg("Failed to find common utility plugin.")));
 
-						/* if tsql_typename is NULL it implies that inputTypId corresponds to UDT */
-						InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-						fcinfo->args[0].value = ObjectIdGetDatum(input_typeids[i]);
-						fcinfo->args[0].isnull = false;
-						tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
-						if(tsql_typename)
+						typ_name = TextDatumGetCString((*common_utility_plugin_ptr->resolve_pg_type_to_tsql) (input_typeids[i]));
+						if(typ_name)
 						{
-							typ_name = TextDatumGetCString(tsql_typename);
 							if (!((strlen(typ_name) == 3 && strncmp(typ_name,"int", 3) == 0) ||
 								(strlen(typ_name) == 7 && strncmp(typ_name,"tinyint", 7) == 0) ||
 								(strlen(typ_name) == 8 && strncmp(typ_name,"smallint", 8) == 0) ||
