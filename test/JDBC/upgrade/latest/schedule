@@ -528,6 +528,7 @@ alter-procedure
 1_GRANT_SCHEMA
 BABEL-4707
 BABEL_4817
+upper_lower
 BABEL-4641
 trim
 ltrim
@@ -543,6 +544,7 @@ test_like_for_AI
 BABEL-4869
 babel_4328_datetime
 babel_4328_datetime2
+translate
 babel_4328_datetimeoffset
 babel_726
 BABEL-3401
@@ -550,3 +552,8 @@ BABEL-3820
 PARTITION
 BABEL-5071
 string_agg
+reverse
+sys_sequences
+replicate
+space
+
