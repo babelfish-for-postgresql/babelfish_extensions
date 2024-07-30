@@ -1039,7 +1039,7 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 	Oid                         sys_varcharoid;
 
 	/* Sanity checks */
-	if (func_name == NULL || (nargs != 0 && input_typeids == NULL) || fargs == NULL)
+	if (func_name == NULL || (nargs != 0 && input_typeids == NULL) || fargs == NIL)
 		return false;
 
 	/* 
@@ -1107,8 +1107,10 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 	/* Report error in case of invalid argument datatype */
 	for (int i = 0; i < special_func->nargs; i++)
 	{
-		/* if argument is NULL then keep its typeId as UNKNOWN and skip the report error handling 
-		 * otherwise consider it as sys.VARCHAR */
+		/* 
+		 * if argument is NULL then keep its typeId as UNKNOWN and skip the report error handling 
+		 * otherwise consider it as sys.VARCHAR
+		 */
 		if (input_typeids[i] == UNKNOWNOID)
 		{
 			Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
