@@ -1,4 +1,3 @@
--- db_collation_expected
 create table var(a char(10), b nchar(9), c nvarchar(8), d varchar(7), e text, f ntext, g varbinary(10), h binary(9), i image, j xml)
 go
 
@@ -18,6 +17,14 @@ go
 
 Select * from information_schema.tables WHERE TABLE_NAME in ('nums', 'dates', 'var', 'CUSTOM.[CustomTable')  ORDER BY TABLE_NAME
 go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#CUSTOM\schema#!#CUSTOM.[CustomTable#!#BASE TABLE
+master#!#dbo#!#dates#!#BASE TABLE
+master#!#dbo#!#nums#!#BASE TABLE
+master#!#dbo#!#var#!#BASE TABLE
+~~END~~
+
 
 drop table [CUSTOM\schema].[CUSTOM.[CustomTable];
 drop schema [CUSTOM\schema];
@@ -26,16 +33,68 @@ go
 -- Testing generic columns for columns schema
 Select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, ORDINAL_POSITION, COLUMN_DEFAULT, IS_NULLABLE, DATA_TYPE, DOMAIN_CATALOG, DOMAIN_SCHEMA, DOMAIN_NAME from information_schema.columns where table_name in ('nums') ORDER BY DATA_TYPE
 go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#nums#!#d#!#4#!#<NULL>#!#YES#!#bigint#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#nums#!#e#!#5#!#<NULL>#!#YES#!#bit#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#nums#!#f#!#6#!#<NULL>#!#YES#!#float#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#nums#!#a#!#1#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#nums#!#i#!#9#!#<NULL>#!#YES#!#money#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#nums#!#h#!#8#!#<NULL>#!#YES#!#numeric#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#nums#!#g#!#7#!#<NULL>#!#YES#!#real#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#nums#!#b#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#nums#!#j#!#10#!#<NULL>#!#YES#!#smallmoney#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#nums#!#c#!#3#!#<NULL>#!#YES#!#tinyint#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
 
 -- Testing with most of the datatypes for columns schema
 Select DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_CATALOG, CHARACTER_SET_NAME, collation_catalog, collation_schema, collation_name from information_schema.columns where table_name in ('var') ORDER BY DATA_TYPE
 go
+~~START~~
+nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+binary#!#9#!#9#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+char#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+nchar#!#9#!#18#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+ntext#!#1073741823#!#2147483646#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+nvarchar#!#8#!#16#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+varbinary#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+varchar#!#7#!#7#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+xml#!#-1#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
 
 Select DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_CATALOG, CHARACTER_SET_NAME, collation_catalog, collation_schema, collation_name from information_schema.columns where table_name in ('dates') ORDER BY DATA_TYPE
 go
+~~START~~
+nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+smalldatetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+sql_variant#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+time#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
 
 Select DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_CATALOG, CHARACTER_SET_NAME, collation_catalog, collation_schema, collation_name from information_schema.columns where table_name in ('nums') ORDER BY DATA_TYPE
 go
+~~START~~
+nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+bigint#!#<NULL>#!#<NULL>#!#19#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+float#!#<NULL>#!#<NULL>#!#53#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+money#!#<NULL>#!#<NULL>#!#19#!#10#!#4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+numeric#!#<NULL>#!#<NULL>#!#5#!#10#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+real#!#<NULL>#!#<NULL>#!#24#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+smallmoney#!#<NULL>#!#<NULL>#!#10#!#10#!#4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+tinyint#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
 
 -- Testing User Defined Types
 create type int_a from int
@@ -47,11 +106,29 @@ go
 
 Select DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_CATALOG, CHARACTER_SET_NAME, collation_catalog, collation_schema, collation_name from information_schema.columns where table_name in ('isc_udt') ORDER BY DATA_TYPE
 go
+~~START~~
+nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+varchar#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 -- Testing delimited schema name
 Select DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_CATALOG, CHARACTER_SET_NAME, collation_catalog, collation_schema, collation_name from [information_schema].columns where table_name in ('isc_udt') ORDER BY DATA_TYPE
 Select DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_CATALOG, CHARACTER_SET_NAME, collation_catalog, collation_schema, collation_name from "information_schema".columns where table_name in ('isc_udt') ORDER BY DATA_TYPE
 go
+~~START~~
+nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+varchar#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+~~START~~
+nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+varchar#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 -- Testing Cross Database refences
 Create database isc_db
@@ -62,11 +139,25 @@ go
 
 Select * from information_schema.tables
 go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+~~END~~
+
 
 -- Will only include sysdatabases view
 select count(*) from information_schema.tables WHERE TABLE_NAME != 'sysdatabases'
 select count(*) from information_schema.columns WHERE TABLE_NAME != 'sysdatabases'
 go
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
 
 Use master
 go
@@ -187,18 +278,40 @@ go
 
 select * from information_schema.views where TABLE_NAME in ('vnums', 'vcnums')  ORDER BY TABLE_NAME
 go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#vcnums#!#create view vcnums as select * from nums with check option;#!#CASCADE#!#NO
+master#!#dbo#!#vnums#!#create view vnums as select * from nums;#!#NONE#!#NO
+~~END~~
+
 
 -- Get the length of view def
 select object_name,length(definition) from sys.babelfish_view_def where object_name in ('lview','nlview') order by object_name;
 go
+~~START~~
+varchar#!#int
+lview#!#4081
+nlview#!#4000
+~~END~~
+
 
 -- This should be truncated
 select length(view_definition) from information_schema.views where TABLE_NAME = 'lview';
 go
+~~START~~
+int
+4000
+~~END~~
+
 
 -- This shouldn't be truncated
 select length(view_definition) from information_schema.views where TABLE_NAME = 'nlview';
 go
+~~START~~
+int
+4000
+~~END~~
+
 
 -- Cross db ref testing for ISC.Views view
 Use isc_db
@@ -206,10 +319,19 @@ go
 
 Select table_catalog, table_schema, table_name from information_schema.views
 go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+~~END~~
+
 
 -- Will only include sysdatabases view
 select count(*) from information_schema.views WHERE TABLE_NAME != 'sysdatabases'
 go
+~~START~~
+int
+0
+~~END~~
+
 
 Use master
 go
@@ -222,6 +344,11 @@ go
 
 select * from information_schema.views where TABLE_NAME = 'v1'  ORDER BY TABLE_NAME
 go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#sch1#!#v1#!#create view sch1.v1 as select 1;#!#NONE#!#NO
+~~END~~
+
 
 -- clean-up
 DROP VIEW vnums
@@ -252,6 +379,16 @@ GO
 
 select column_name,numeric_precision, numeric_scale from information_schema.columns where column_name like '_numcol_%' order by column_name;
 GO
+~~START~~
+nvarchar#!#tinyint#!#int
+_numcol_bbf_13d0#!#13#!#0
+_numcol_bbf_13n0#!#13#!#0
+_numcol_bbf_15d6#!#15#!#6
+_numcol_bbf_15n6#!#15#!#6
+_numcol_decimal_test#!#15#!#6
+_numcol_numeric_test#!#15#!#6
+~~END~~
+
 
 drop table babel_2863;
 GO

@@ -298,7 +298,7 @@ GO
 USE babel_2902_testdb_3
 DROP TABLE babel_2902_t3
 GO
-USE master
+USE MASTER
 GO
 DROP TABLE IF EXISTS babel_2902_ma1
 GO

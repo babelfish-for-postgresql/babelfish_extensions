@@ -1,3 +1,4 @@
+-- db_collation_expected
 -- Test SYS.NCHAR, SYS.NVARCHAR and SYS.VARCHAR
 -- nchar is already available in postgres dialect
 select CAST('£' AS nchar(1));
@@ -74,4 +75,7 @@ GO
 drop table testing_1;
 GO
 drop table testing_4;
+GO
+
+drop type varchar3;
 GO

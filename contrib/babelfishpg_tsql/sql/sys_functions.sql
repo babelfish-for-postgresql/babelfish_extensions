@@ -307,7 +307,7 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 CREATE OR REPLACE FUNCTION sys.suser_sid(IN login SYS.SYSNAME, IN Param2 INT DEFAULT NULL)
 RETURNS SYS.VARBINARY(85) AS $$
     SELECT CASE
-    WHEN login = '' 
+    WHEN login = '' COLLATE sys.database_default
         THEN CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85))
     ELSE 
         CAST(CAST(sys.suser_id(login) AS INT) AS SYS.VARBINARY(85))
@@ -4069,8 +4069,8 @@ BEGIN
     END IF;
 
     -- To convert input jsonpath to the required jsonb_path format
-    json_path_convert = regexp_replace(json_path, '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
-    json_path_convert = regexp_replace(json_path_convert, '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
+    json_path_convert = regexp_replace(json_path COLLATE "C", '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
+    json_path_convert = regexp_replace(json_path_convert COLLATE "C", '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
     new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
 
     key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path

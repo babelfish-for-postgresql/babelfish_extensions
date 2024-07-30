@@ -501,39 +501,55 @@ CREATE OR REPLACE PROCEDURE sys.sp_columns (
     "@fusepattern" smallint = 1)
 AS $$
 BEGIN
-	select out_table_qualifier as TABLE_QUALIFIER, 
-			out_table_owner as TABLE_OWNER,
-			out_table_name as TABLE_NAME,
-			out_column_name as COLUMN_NAME,
-			out_data_type as DATA_TYPE,
-			out_type_name as TYPE_NAME,
-			out_precision as PRECISION,
-			out_length as LENGTH,
-			out_scale as SCALE,
-			out_radix as RADIX,
-			out_nullable as NULLABLE,
-			out_remarks as REMARKS,
-			out_column_def as COLUMN_DEF,
-			out_sql_data_type as SQL_DATA_TYPE,
-			out_sql_datetime_sub as SQL_DATETIME_SUB,
-			out_char_octet_length as CHAR_OCTET_LENGTH,
-			out_ordinal_position as ORDINAL_POSITION,
-			out_is_nullable as IS_NULLABLE,
+	IF @fusepattern = 1 
+		select table_qualifier as TABLE_QUALIFIER, 
+			table_owner as TABLE_OWNER,
+			table_name as TABLE_NAME,
+			column_name as COLUMN_NAME,
+			data_type as DATA_TYPE,
+			type_name as TYPE_NAME,
+			precision as PRECISION,
+			length as LENGTH,
+			scale as SCALE,
+			radix as RADIX,
+			nullable as NULLABLE,
+			remarks as REMARKS,
+			column_def as COLUMN_DEF,
+			sql_data_type as SQL_DATA_TYPE,
+			sql_datetime_sub as SQL_DATETIME_SUB,
+			char_octet_length as CHAR_OCTET_LENGTH,
+			ordinal_position as ORDINAL_POSITION,
+			is_nullable as IS_NULLABLE,
 			(
-			CASE
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -6 THEN 48 -- Tinyint Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 5 THEN 52 -- Smallint Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 4 THEN 56 -- Int Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -5 THEN 63 -- Bigint Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 3 THEN 55 -- Decimal Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 2 THEN 63 -- Numeric Identity
-				ELSE out_ss_data_type
-			END
+				CASE
+					WHEN ss_is_identity = 1 AND sql_data_type = -6 THEN 48 -- Tinyint Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 5 THEN 52 -- Smallint Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 4 THEN 56 -- Int Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = -5 THEN 63 -- Bigint Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 3 THEN 55 -- Decimal Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 2 THEN 63 -- Numeric Identity
+					ELSE ss_data_type
+				END
 			) as SS_DATA_TYPE
-	from sys.sp_columns_100_internal(sys.babelfish_truncate_identifier(@table_name),
-		sys.babelfish_truncate_identifier(@table_owner),
-		sys.babelfish_truncate_identifier(@table_qualifier),
-		sys.babelfish_truncate_identifier(@column_name), @NameScope, @ODBCVer, @fusepattern);
+		from sys.sp_columns_100_view
+		where pg_catalog.lower(table_name) like pg_catalog.lower(sys.babelfish_truncate_identifier(@table_name)) COLLATE database_default
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_owner),'')) = '' or table_owner like sys.babelfish_truncate_identifier(@table_owner) collate database_default)
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_qualifier),'')) = '' or table_qualifier like sys.babelfish_truncate_identifier(@table_qualifier) collate database_default)
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@column_name),'')) = '' or column_name like sys.babelfish_truncate_identifier(@column_name) collate database_default)
+		order by table_qualifier,
+				 table_owner,
+				 table_name,
+				 ordinal_position;
+	ELSE 
+		select table_qualifier, precision from sys.sp_columns_100_view
+			where sys.babelfish_truncate_identifier(@table_name) = table_name collate database_default
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_owner), '')) = '' or table_owner = sys.babelfish_truncate_identifier(@table_owner) collate database_default)
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_qualifier),'')) = '' or table_qualifier = sys.babelfish_truncate_identifier(@table_qualifier) collate database_default)
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@column_name),'')) = '' or column_name = sys.babelfish_truncate_identifier(@column_name) collate database_default)
+		order by table_qualifier,
+				 table_owner,
+				 table_name,
+				 ordinal_position;
 END;
 $$
 LANGUAGE 'pltsql';
@@ -549,49 +565,65 @@ CREATE OR REPLACE PROCEDURE sys.sp_columns_100 (
     "@fusepattern" smallint = 1)
 AS $$
 BEGIN
-	select out_table_qualifier as TABLE_QUALIFIER, 
-			out_table_owner as TABLE_OWNER,
-			out_table_name as TABLE_NAME,
-			out_column_name as COLUMN_NAME,
-			out_data_type as DATA_TYPE,
-			out_type_name as TYPE_NAME,
-			out_precision as PRECISION,
-			out_length as LENGTH,
-			out_scale as SCALE,
-			out_radix as RADIX,
-			out_nullable as NULLABLE,
-			out_remarks as REMARKS,
-			out_column_def as COLUMN_DEF,
-			out_sql_data_type as SQL_DATA_TYPE,
-			out_sql_datetime_sub as SQL_DATETIME_SUB,
-			out_char_octet_length as CHAR_OCTET_LENGTH,
-			out_ordinal_position as ORDINAL_POSITION,
-			out_is_nullable as IS_NULLABLE,
-			out_ss_is_sparse as SS_IS_SPARSE,
-			out_ss_is_column_set as SS_IS_COLUMN_SET,
-			out_ss_is_computed as SS_IS_COMPUTED,
-			out_ss_is_identity as SS_IS_IDENTITY,
-			out_ss_udt_catalog_name as SS_UDT_CATALOG_NAME,
-			out_ss_udt_schema_name as SS_UDT_SCHEMA_NAME,
-			out_ss_udt_assembly_type_name as SS_UDT_ASSEMBLY_TYPE_NAME,
-			out_ss_xml_schemacollection_catalog_name as SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
-			out_ss_xml_schemacollection_schema_name as SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
-			out_ss_xml_schemacollection_name as SS_XML_SCHEMACOLLECTION_NAME,
+	IF @fusepattern = 1 
+		select table_qualifier as TABLE_QUALIFIER, 
+			table_owner as TABLE_OWNER,
+			table_name as TABLE_NAME,
+			column_name as COLUMN_NAME,
+			data_type as DATA_TYPE,
+			type_name as TYPE_NAME,
+			precision as PRECISION,
+			length as LENGTH,
+			scale as SCALE,
+			radix as RADIX,
+			nullable as NULLABLE,
+			remarks as REMARKS,
+			column_def as COLUMN_DEF,
+			sql_data_type as SQL_DATA_TYPE,
+			sql_datetime_sub as SQL_DATETIME_SUB,
+			char_octet_length as CHAR_OCTET_LENGTH,
+			ordinal_position as ORDINAL_POSITION,
+			is_nullable as IS_NULLABLE,
+			ss_is_sparse as SS_IS_SPARSE,
+			ss_is_column_set as SS_IS_COLUMN_SET,
+			ss_is_computed as SS_IS_COMPUTED,
+			ss_is_identity as SS_IS_IDENTITY,
+			ss_udt_catalog_name as SS_UDT_CATALOG_NAME,
+			ss_udt_schema_name as SS_UDT_SCHEMA_NAME,
+			ss_udt_assembly_type_name as SS_UDT_ASSEMBLY_TYPE_NAME,
+			ss_xml_schemacollection_catalog_name as SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
+			ss_xml_schemacollection_schema_name as SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
+			ss_xml_schemacollection_name as SS_XML_SCHEMACOLLECTION_NAME,
 			(
-			CASE
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -6 THEN 48 -- Tinyint Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 5 THEN 52 -- Smallint Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 4 THEN 56 -- Int Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -5 THEN 63 -- Bigint Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 3 THEN 55 -- Decimal Identity
-				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 2 THEN 63 -- Numeric Identity
-				ELSE out_ss_data_type
-			END
+				CASE
+					WHEN ss_is_identity = 1 AND sql_data_type = -6 THEN 48 -- Tinyint Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 5 THEN 52 -- Smallint Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 4 THEN 56 -- Int Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = -5 THEN 63 -- Bigint Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 3 THEN 55 -- Decimal Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 2 THEN 63 -- Numeric Identity
+					ELSE ss_data_type
+				END
 			) as SS_DATA_TYPE
-	from sys.sp_columns_100_internal(sys.babelfish_truncate_identifier(@table_name),
-		sys.babelfish_truncate_identifier(@table_owner),
-		sys.babelfish_truncate_identifier(@table_qualifier),
-		sys.babelfish_truncate_identifier(@column_name), @NameScope, @ODBCVer, @fusepattern);
+		from sys.sp_columns_100_view
+		where pg_catalog.lower(table_name) like pg_catalog.lower(sys.babelfish_truncate_identifier(@table_name)) COLLATE database_default
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_owner),'')) = '' or table_owner like sys.babelfish_truncate_identifier(@table_owner) collate database_default)
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_qualifier),'')) = '' or table_qualifier like sys.babelfish_truncate_identifier(@table_qualifier) collate database_default)
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@column_name),'')) = '' or column_name like sys.babelfish_truncate_identifier(@column_name) collate database_default)
+		order by table_qualifier,
+				 table_owner,
+				 table_name,
+				 ordinal_position;
+	ELSE 
+		select table_qualifier, precision from sys.sp_columns_100_view
+			where sys.babelfish_truncate_identifier(@table_name) = table_name collate database_default
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_owner), '')) = '' or table_owner = sys.babelfish_truncate_identifier(@table_owner) collate database_default)
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_qualifier),'')) = '' or table_qualifier = sys.babelfish_truncate_identifier(@table_qualifier) collate database_default)
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@column_name),'')) = '' or column_name = sys.babelfish_truncate_identifier(@column_name) collate database_default)
+		order by table_qualifier,
+				 table_owner,
+				 table_name,
+				 ordinal_position;
 END;
 $$
 LANGUAGE 'pltsql';
@@ -1185,13 +1217,23 @@ CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
 )
 AS $$
 BEGIN
-	select out_table_qualifier as TABLE_QUALIFIER,
-			out_table_owner as TABLE_OWNER,
-			out_table_name as TABLE_NAME,
-			out_column_name as COLUMN_NAME,
-			out_key_seq as KEY_SEQ,
-			out_pk_name as PK_NAME
-	from sys.sp_pkeys_internal(@table_name, @table_owner, @table_qualifier);
+	-- select out_table_qualifier as TABLE_QUALIFIER,
+	-- 		out_table_owner as TABLE_OWNER,
+	-- 		out_table_name as TABLE_NAME,
+	-- 		out_column_name as COLUMN_NAME,
+	-- 		out_key_seq as KEY_SEQ,
+	-- 		out_pk_name as PK_NAME
+	-- from sys.sp_pkeys_internal(@table_name, @table_owner, @table_qualifier);
+	select * from sys.sp_pkeys_view
+	where table_name = @table_name
+		and table_owner = coalesce(@table_owner, 'dbo') 
+		and ((SELECT
+		         coalesce(@table_qualifier, '')) = '' or
+		         table_qualifier = @table_qualifier )
+	order by table_qualifier,
+	         table_owner,
+		 table_name,
+		 key_seq;
 END; 
 $$
 LANGUAGE 'pltsql';
@@ -1303,24 +1345,17 @@ CREATE OR REPLACE PROCEDURE sys.sp_statistics(
 )
 AS $$
 BEGIN
-    IF @index_name = '%'
+	IF @index_name = '%'
 	BEGIN
-	    SELECT @index_name = ''
+		SELECT @index_name = ''
 	END
-    select out_table_qualifier as table_qualifier,
-            out_table_owner as table_owner,
-            out_table_name as table_name,
-			out_non_unique as non_unique,
-			out_index_qualifier as index_qualifier,
-			out_index_name as index_name,
-			out_type as type,
-			out_seq_in_index as seq_in_index,
-			out_column_name as column_name,
-			out_collation as collation,
-			out_cardinality as cardinality,
-			out_pages as pages,
-			out_filter_condition as filter_condition
-    from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
+	select * from sys.sp_statistics_view
+	where @table_name = table_name
+		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
+		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
+		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
+		and ((UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(@is_unique) = 'N'))
+	order by non_unique, type, index_name, seq_in_index;
 END;
 $$
 LANGUAGE 'pltsql';
@@ -1337,24 +1372,17 @@ CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
 )
 AS $$
 BEGIN
-    IF @index_name = '%'
+	IF @index_name = '%'
 	BEGIN
-	    SELECT @index_name = ''
+		SELECT @index_name = ''
 	END
-    select out_table_qualifier as TABLE_QUALIFIER,
-            out_table_owner as TABLE_OWNER,
-            out_table_name as TABLE_NAME,
-			out_non_unique as NON_UNIQUE,
-			out_index_qualifier as INDEX_QUALIFIER,
-			out_index_name as INDEX_NAME,
-			out_type as TYPE,
-			out_seq_in_index as SEQ_IN_INDEX,
-			out_column_name as COLUMN_NAME,
-			out_collation as COLLATION,
-			out_cardinality as CARDINALITY,
-			out_pages as PAGES,
-			out_filter_condition as FILTER_CONDITION
-    from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
+	select * from sys.sp_statistics_view
+	where @table_name = table_name
+		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
+		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
+		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
+		and ((UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(@is_unique) = 'N'))
+	order by non_unique, type, index_name, seq_in_index;
 END;
 $$
 LANGUAGE 'pltsql';
@@ -2279,7 +2307,7 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public'
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
@@ -2316,7 +2344,7 @@ BEGIN
 	ELSE IF EXISTS (SELECT 1
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
-					OR lower(orig_username) = lower(@name_in_db))
+					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@name_in_db))
 					AND database_name = DB_NAME()
 					AND type = 'R')
 	BEGIN
@@ -2333,14 +2361,14 @@ BEGIN
 		AND Ext2.database_name = DB_NAME()
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
-		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY Role_name, Users_in_role;
 	END
 	-- If the security account is a user
 	ELSE IF EXISTS (SELECT 1
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
-					OR lower(orig_username) = lower(@name_in_db))
+					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@name_in_db))
 					AND database_name = DB_NAME()
 					AND type != 'R')
 	BEGIN
@@ -2349,7 +2377,7 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public' 
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
@@ -2371,7 +2399,7 @@ BEGIN
 		WHERE Ext1.database_name = DB_NAME()
 		AND (Ext1.type != 'R' OR Ext1.type != 'A')
 		AND Ext1.orig_username != 'db_owner'
-		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY UserName, RoleName;
 	END
 	-- If the security account is not valid

@@ -49,7 +49,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 25.554 ms
+Babelfish T-SQL Batch Parsing Time: 25.383 ms
 ~~END~~
 
 
@@ -66,7 +66,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.103 ms
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
 ~~END~~
 
 
@@ -83,7 +83,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -100,7 +100,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.080 ms
+Babelfish T-SQL Batch Parsing Time: 0.081 ms
 ~~END~~
 
 
@@ -117,7 +117,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.079 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 
@@ -134,7 +134,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -151,7 +151,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -168,7 +168,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.079 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -185,7 +185,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -202,7 +202,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -219,7 +219,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.079 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -236,7 +236,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.078 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -253,7 +253,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.079 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -270,7 +270,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.079 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 
@@ -287,7 +287,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.078 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -304,7 +304,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.079 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -321,7 +321,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 
@@ -338,7 +338,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.079 ms
+Babelfish T-SQL Batch Parsing Time: 0.082 ms
 ~~END~~
 
 
@@ -351,12 +351,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, a) > a)
+        Filter: (dateadd('day'::text, '-5'::integer, a) > a)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.079 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -369,12 +369,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, b) > (a)::datetimeoffset)
+        Filter: (dateadd('day'::text, '-5'::integer, b) > (a)::datetimeoffset)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.083 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -387,12 +387,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, c) > (a)::datetime2)
+        Filter: (dateadd('day'::text, '-5'::integer, c) > (a)::datetime2)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.082 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -405,12 +405,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: ((dateadd('day'::text COLLATE "default", '-5'::integer, d))::datetime > a)
+        Filter: ((dateadd('day'::text, '-5'::integer, d))::datetime > a)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.083 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -423,12 +423,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: ((dateadd('day'::text COLLATE "default", '-5'::integer, e))::datetime > a)
+        Filter: ((dateadd('day'::text, '-5'::integer, e))::datetime > a)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.081 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 
@@ -441,12 +441,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, f) > a)
+        Filter: (dateadd('day'::text, '-5'::integer, f) > a)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.082 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -459,12 +459,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, g) > a)
+        Filter: (dateadd('day'::text, '-5'::integer, g) > a)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.082 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -477,12 +477,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (dateadd('day'::text COLLATE "default", '-5'::integer, h) > a)
+        Filter: (dateadd('day'::text, '-5'::integer, h) > a)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.082 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -495,12 +495,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (datediff('day'::text COLLATE "default", a, (b)::datetime) > 5)
+        Filter: (datediff('day'::text, a, (b)::datetime) > 5)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.082 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -513,12 +513,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (datediff('day'::text COLLATE "default", b, (c)::datetimeoffset) > 5)
+        Filter: (datediff('day'::text, b, (c)::datetimeoffset) > 5)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.082 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -531,12 +531,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (datediff('day'::text COLLATE "default", c, (a)::datetime2) > 5)
+        Filter: (datediff('day'::text, c, (a)::datetime2) > 5)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.082 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -549,12 +549,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (datediff('day'::text COLLATE "default", d, (e)::smalldatetime(0) without time zone) > 5)
+        Filter: (datediff('day'::text, d, (e)::smalldatetime(0) without time zone) > 5)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -567,12 +567,12 @@ Gather
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on babel_4815
-        Filter: (datediff('day'::text COLLATE "default", e, (a)::date) > 5)
+        Filter: (datediff('day'::text, e, (a)::date) > 5)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 

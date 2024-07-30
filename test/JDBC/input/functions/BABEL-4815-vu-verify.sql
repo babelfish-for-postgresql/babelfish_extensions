@@ -1,3 +1,4 @@
+-- db_collation_expected
 BEGIN TRANSACTION babel_4815
 GO
 

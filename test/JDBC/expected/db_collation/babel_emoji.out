@@ -158,7 +158,7 @@ SELECT * FROM information_schema.columns WHERE table_name = 'testing_1'
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#testing_1#!#col#!#1#!#<NULL>#!#YES#!#nchar#!#1#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#testing_1#!#col#!#1#!#<NULL>#!#YES#!#nchar#!#1#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_ai#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
