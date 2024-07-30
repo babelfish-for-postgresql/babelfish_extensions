@@ -1662,25 +1662,25 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
     if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
     {
 #ifdef USE_ICU
-        int32_t src_len_utf8 = src_len;
-        int32_t substr_len_utf8 = substr_len;
-        int32_t src_ulen, substr_ulen;
-        int32_t u16_pos, u8_pos = 0;
-        UErrorCode  status = U_ZERO_ERROR;
-        UStringSearch *usearch;
-        UChar *src_uchar, *substr_uchar;
+		int32_t src_len_utf8 = src_len;
+		int32_t substr_len_utf8 = substr_len;
+		int32_t src_ulen, substr_ulen;
+		int32_t u16_pos, u8_pos = 0;
+		UErrorCode  status = U_ZERO_ERROR;
+		UStringSearch *usearch;
+		UChar *src_uchar, *substr_uchar;
 		int32 matched_length_u16, u8_endpos;
 
-        src_ulen = icu_to_uchar(&src_uchar, src_text, src_len_utf8);
-        substr_ulen = icu_to_uchar(&substr_uchar, substr_text, substr_len_utf8);
+		src_ulen = icu_to_uchar(&src_uchar, src_text, src_len_utf8);
+		substr_ulen = icu_to_uchar(&substr_uchar, substr_text, substr_len_utf8);
 
-        usearch = usearch_openFromCollator(substr_uchar,
-                                        substr_ulen,
-                                        src_uchar,
-                                        src_ulen,
-                                        mylocale->info.icu.ucol,
-                                        NULL,
-                                        &status);
+		usearch = usearch_openFromCollator(substr_uchar,
+										substr_ulen,
+										src_uchar,
+										src_ulen,
+										mylocale->info.icu.ucol,
+										NULL,
+										&status);
 		if (U_FAILURE(status))
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
