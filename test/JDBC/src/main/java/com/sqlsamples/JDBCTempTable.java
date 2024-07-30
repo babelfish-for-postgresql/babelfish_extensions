@@ -34,6 +34,7 @@ public class JDBCTempTable {
             // concurrency_test(bw);
             // psql_test(bw, logger);
             test_trigger_on_temp_table(bw, logger);
+            test_lock_contention(bw, logger);
         } catch (Exception e) {
             try {
                 bw.write(e.getMessage());
@@ -320,8 +321,14 @@ public class JDBCTempTable {
         queryString = "CREATE TABLE #t1(a int)";
         s.execute(queryString);
         queryString = "CREATE TRIGGER bar ON #t1 FOR INSERT AS BEGIN SELECT 1 END";
-        s.execute(queryString);
-
+        try {
+            s.execute(queryString);
+        } catch (Exception e) {
+            if (!e.getMessage().equals("Cannot create trigger on a temporary object.")) {
+                bw.write(e.getMessage());
+                bw.newLine();
+            }
+        }
         Connection c2 = connections.get(1);
         s = c2.createStatement();
         queryString = "DROP TRIGGER bar";
@@ -332,6 +339,41 @@ public class JDBCTempTable {
                 bw.write(e.getMessage());
                 bw.newLine();
             }
+        }
+    }
+
+    private static void test_lock_contention(BufferedWriter bw, Logger logger) throws Exception {
+        int num_connections = 2;
+        
+        String connectionString = initializeConnectionString();
+        ArrayList<Connection> cxns = new ArrayList<>();
+
+        ArrayList<Thread> threads = new ArrayList<>();
+
+        /* Create connections */
+        for (int i = 0; i < num_connections; i++) {
+            Connection connection = DriverManager.getConnection(connectionString);
+            cxns.add(connection);
+            Thread t = new Thread(new LockContentionWorker(connection, bw));
+            threads.add(t);
+            t.start();
+        }
+
+        /* 
+         * Unfortunately, setQueryTimeout (used in the worker thread) does not always work correctly.
+         * So we need to manaully try to detect a hanging thread.
+         */
+        Thread.sleep(1000);
+        for (Thread t : threads)
+        {
+            if (t.isAlive()) {
+                bw.write("Lock contention detected.\n");
+                return;
+            }
+        }
+
+        for (Connection cxn : cxns) {
+            cxn.close();
         }
     }
 }
@@ -373,6 +415,33 @@ class Worker implements Runnable {
                     s.execute("DROP TABLE " + tablename);
                     table_count++;
                 }
+            } catch (Exception e) {
+                bw.write(e.getMessage());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+class LockContentionWorker implements Runnable {
+
+    private Connection c;
+    private BufferedWriter bw;
+
+    LockContentionWorker(Connection c, BufferedWriter bw) {
+        this.c = c;
+        this.bw = bw;
+    }
+
+    public void run() {
+        try {
+            try {
+                Statement s = c.createStatement();
+                s.setQueryTimeout(1);
+                s.execute("BEGIN TRAN;");
+                s.execute("CREATE TABLE #temp_table1 (a int primary key not null identity, b as a + 1, c text);");
             } catch (Exception e) {
                 bw.write(e.getMessage());
                 bw.newLine();
