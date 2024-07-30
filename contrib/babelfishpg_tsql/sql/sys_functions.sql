@@ -1519,10 +1519,13 @@ STRICT
 LANGUAGE SQL IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
--- sys.varchar has default length of 1, so we have to pass in 'number' to be the
--- type modifier.
 BEGIN
-	EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
+    IF number < 0 THEN
+        result := NULL;
+    ELSE
+        -- TSQL has a limitation of 8000 character spaces for space function.
+        result := PG_CATALOG.repeat(' ',least(number, 8000));
+    END IF;
 END;
 $$
 STRICT
@@ -3923,6 +3926,31 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- wrapper functions for translate --
+CREATE OR REPLACE FUNCTION sys.translate(string sys.VARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+    
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.translate(string sys.NVARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- For getting host os from PG_VERSION_STR
 CREATE OR REPLACE FUNCTION sys.get_host_os()

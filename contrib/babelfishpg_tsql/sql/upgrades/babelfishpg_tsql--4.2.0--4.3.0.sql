@@ -9050,7 +9050,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.pg_catalog.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -10044,7 +10044,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -11050,7 +11050,7 @@ BEGIN
     IF (char_length(v_timestring) > 0 AND v_timestring NOT IN ('AM', 'ص', 'PM', 'م'))
     THEN
         IF (v_culture = 'FI') THEN
-            v_timestring := translate(v_timestring, '.,', ': ');
+            v_timestring := PG_CATALOG.translate(v_timestring, '.,', ': ');
 
             IF (char_length(split_part(v_timestring, ':', 4)) > 0) THEN
                 v_timestring := regexp_replace(v_timestring, ':(?=\s*\d+\s*:?\s*(?:[AP]M|ص|م)?\s*$)', '.');
@@ -11476,6 +11476,43 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys_partitions_depreca
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys_filegroups_deprecated_4_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys_data_spaces_deprecated_4_3_0');
 
+
+CREATE OR REPLACE FUNCTION sys.translate(string sys.VARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+    
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.translate(string sys.NVARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
+BEGIN
+    IF number < 0 THEN
+        result := NULL;
+    ELSE
+        -- TSQL has a limitation of 8000 character spaces for space function.
+        result := PG_CATALOG.repeat(' ',least(number, 8000));
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
