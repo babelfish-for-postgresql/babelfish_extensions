@@ -4877,6 +4877,7 @@ keyword
     | REMOVE
     | REORGANIZE
     | REPEATABLE
+    | REPLACE
     | REPLICA
     | REPLICATE	
     | REQUEST_MAX_CPU_TIME_SEC
@@ -5066,6 +5067,8 @@ keyword
     | TRANSACTION_ID
     | TRANSFER
     | TRANSFORM_NOISE_WORDS
+    | TRANSLATE
+    | TRIM
     | TRIPLE_DES
     | TRIPLE_DES_3KEY
     | TRUE
@@ -5141,13 +5144,6 @@ keyword
     //Babelfish-specific
     | BABELFISH_STATISTICS
     | BABELFISH_SHOWPLAN_ALL
-    | special_function
-    ;
-
-special_function
-    : REPLACE
-    | TRANSLATE
-    | TRIM
     ;
 
 entity_name
