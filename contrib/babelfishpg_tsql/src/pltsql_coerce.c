@@ -1076,31 +1076,32 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 		{
 			for (int i = 1; i < nargs; i++)
 			{
-				if (input_typeids[i] != UNKNOWNOID)
+				Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
+
+				if (input_typeids[i] == UNKNOWNOID)
+      				continue;
+
+				/* Throw error when input is constant and NULL */
+				if (IsA(arg, Const) && ((Const *)arg)->constisnull)
 				{
-					Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
-					/* Throw error when input is constant and NULL */
-					if (IsA(arg, Const) && ((Const *)arg)->constisnull)
+					char	*typ_name;
+
+					if (common_utility_plugin_ptr == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("Failed to find common utility plugin.")));
+
+					typ_name = (*common_utility_plugin_ptr->resolve_pg_type_to_tsql) (input_typeids[i]);
+					if(typ_name)
 					{
-						char	*typ_name;
-
-						if (common_utility_plugin_ptr == NULL)
+						if (!((strlen(typ_name) == 3 && strncmp(typ_name,"int", 3) == 0) ||
+							(strlen(typ_name) == 7 && strncmp(typ_name,"tinyint", 7) == 0) ||
+							(strlen(typ_name) == 8 && strncmp(typ_name,"smallint", 8) == 0) ||
+							(strlen(typ_name) == 6 && strncmp(typ_name,"bigint", 6) == 0)))
 							ereport(ERROR,
-									(errcode(ERRCODE_INTERNAL_ERROR),
-										errmsg("Failed to find common utility plugin.")));
-
-						typ_name = TextDatumGetCString((*common_utility_plugin_ptr->resolve_pg_type_to_tsql) (input_typeids[i]));
-						if(typ_name)
-						{
-							if (!((strlen(typ_name) == 3 && strncmp(typ_name,"int", 3) == 0) ||
-								(strlen(typ_name) == 7 && strncmp(typ_name,"tinyint", 7) == 0) ||
-								(strlen(typ_name) == 8 && strncmp(typ_name,"smallint", 8) == 0) ||
-								(strlen(typ_name) == 6 && strncmp(typ_name,"bigint", 6) == 0)))
-								ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_FUNCTION),
-										errmsg("Argument data type %s is invalid for argument %d of substring function.", 
-												format_type_be(input_typeids[i]), i+1)));
-						}
+								(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									errmsg("Argument data type %s is invalid for argument %d of substring function.", 
+											format_type_be(input_typeids[i]), i+1)));
 					}
 				}
 			}

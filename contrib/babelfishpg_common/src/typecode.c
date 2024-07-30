@@ -300,7 +300,7 @@ lookup_tsql_datatype_oid(const char *typename)
 	return typoid;
 }
 
-Datum
+void *
 resolve_pg_type_to_tsql(Oid oid)
 {
 	ht_oid2typecode_entry_t *entry;
@@ -310,9 +310,9 @@ resolve_pg_type_to_tsql(Oid oid)
 		entry = hash_search(ht_oid2typecode, &oid, HASH_FIND, NULL);
 
 		if (entry && entry->persist_id < TOTAL_TYPECODE_COUNT)
-			PG_RETURN_TEXT_P(CStringGetTextDatum(type_infos[entry->persist_id].tsql_typname));
+			return (char *) type_infos[entry->persist_id].tsql_typname;
 	}
-	return (Datum) 0;
+	return NULL;
 }
 
 bool
