@@ -239,6 +239,9 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 
 			func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
 
+			if (cur_schema_name)
+				pfree(cur_schema_name);
+
 			if (OidIsValid(func_oid))
 			{
 				/* Restrict duplicate procedure/function. */
