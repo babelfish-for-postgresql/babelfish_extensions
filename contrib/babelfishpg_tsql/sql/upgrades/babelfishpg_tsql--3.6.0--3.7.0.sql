@@ -9939,6 +9939,32 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE VIEW sys.partition_functions AS
+SELECT
+  CAST(NULL as sys.NVARCHAR(128)) as name,
+  CAST(0 as int) function_id,
+  CAST('R' as sys.bpchar(2)) as type,
+  CAST('RANGE' as sys.nvarchar(60)) as type_desc,
+  CAST(0 as int) fanout,
+  CAST(0 as sys.bit) as boundary_value_on_right,
+  CAST(0 as sys.bit) as is_system,
+  CAST(0 as sys.datetime) as create_date,
+  CAST(0 as sys.datetime) as modify_date
+WHERE FALSE;
+GRANT SELECT ON sys.partition_functions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.partition_schemes AS
+SELECT
+  CAST(NULL as sys.NVARCHAR(128)) as name,
+  CAST(0 as int) as data_space_id,
+  CAST('PS' as sys.bpchar(2)) as type,
+  CAST('PARTITION_SCHEME' as sys.nvarchar(60)) as type_desc,
+  CAST(0 as sys.bit) as is_default,
+  CAST(0 as sys.bit) as is_system,
+  CAST(0 as int) function_id
+WHERE FALSE;
+GRANT SELECT ON sys.partition_schemes TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sequences 
 AS SELECT 
     so.*,
@@ -10038,6 +10064,19 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
+BEGIN
+    IF number < 0 THEN
+        result := NULL;
+    ELSE
+        -- TSQL has a limitation of 8000 character spaces for space function.
+        result := PG_CATALOG.repeat(' ',least(number, 8000));
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
