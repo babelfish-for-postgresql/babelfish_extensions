@@ -1705,19 +1705,19 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
 		else
 			u8_pos = -1;
 
-        pfree(src_uchar);
-        pfree(substr_uchar);
-        usearch_close(usearch);
+		pfree(src_uchar);
+		pfree(substr_uchar);
+		usearch_close(usearch);
 
-        return u8_pos < 0 ? false : true;
+		return u8_pos < 0 ? false : true;
 #else
-    ereport(ERROR,
-            (errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-                errmsg("This function requires ICU library, which is not available")));
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("This function requires ICU library, which is not available")));
 #endif
     }
 
-    return false;
+	return false;
 }
 
 static int
@@ -1726,7 +1726,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 	bool start_offset = false;
 	int  itr = 0;
 
-	if (*pattern == '%')
+	while (*pattern == '%')
 	{
 		pattern++;
 		start_offset = true;
