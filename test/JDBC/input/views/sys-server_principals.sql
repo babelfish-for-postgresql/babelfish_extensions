@@ -19,6 +19,9 @@ GO
 CREATE LOGIN serv_principal_test WITH PASSWORD = 'test';
 GO
 
+CREATE LOGIN [public] WITH PASSWORD = 'test';
+GO
+
 SELECT name, type, type_desc, default_database_name, default_language_name
 FROM sys.server_principals 
 WHERE name in ('jdbc_user', 'serv_principal_test') order by name;
