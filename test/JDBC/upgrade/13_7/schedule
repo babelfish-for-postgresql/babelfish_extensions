@@ -345,6 +345,7 @@ BABEL-4869
 babel_4328_datetime-before-15_7
 babel_4328_datetime2-before-15_7
 translate-before-15_8-or-16_4
+substring-before-15_8-or-16_4
 babel_4328_datetimeoffset-before-15_7
 replicate-before-15_8-or-16_4
 reverse-before-15_8-or-16_4

@@ -10010,6 +10010,61 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.substring(string TEXT, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string NTEXT, i INTEGER, j INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.BPCHAR, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NVARCHAR, i INTEGER, j INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARBINARY, i INTEGER, j INTEGER)
+RETURNS sys.VARBINARY
+AS 'babelfishpg_tsql', 'tsql_varbinary_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string ANYELEMENT, i INTEGER, j INTEGER)
+RETURNS sys.VARBINARY
+AS
+$BODY$
+DECLARE
+    type_oid oid;
+    string_arg_datatype text;
+    string_basetype oid;
+BEGIN
+    type_oid := pg_typeof(string);
+    string_arg_datatype := sys.translate_pg_type_to_tsql(type_oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(type_oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for substring function
+    IF string_arg_datatype NOT IN ('binary', 'image') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of substring function.', string_arg_datatype;
+    END IF;
+
+    RETURN sys.substring(string::sys.VARBINARY, i, j);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
 BEGIN
     IF number < 0 THEN
