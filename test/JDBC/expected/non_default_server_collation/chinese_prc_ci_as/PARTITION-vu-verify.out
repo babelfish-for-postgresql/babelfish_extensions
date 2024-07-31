@@ -3585,6 +3585,11 @@ ORDER BY PartitionNumber, Id;
 GO
 ~~START~~
 int#!#binary
+1#!#<NULL>
+2#!#00000000
+2#!#00C00000
+3#!#04000000
+4#!#08000000
 ~~END~~
 
 

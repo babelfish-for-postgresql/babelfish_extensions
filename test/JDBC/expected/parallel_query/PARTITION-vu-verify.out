@@ -203,7 +203,7 @@ AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: The type 'geometry' is not valid for this operation.)~~
 
 
 CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOGRAPHY)
@@ -211,7 +211,7 @@ AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: The type 'geography' is not valid for this operation.)~~
 
 
 -- to test rowversion and timestamp
@@ -3700,6 +3700,11 @@ ORDER BY PartitionNumber, Id;
 GO
 ~~START~~
 int#!#binary
+1#!#<NULL>
+2#!#00000000
+2#!#00C00000
+3#!#04000000
+4#!#08000000
 ~~END~~
 
 
