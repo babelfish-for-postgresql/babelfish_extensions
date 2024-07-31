@@ -270,9 +270,6 @@ ignore#!#rtrim-before-15_8-or-16_4-vu-cleanup
 ignore#!#trim-before-15_8-or-16_4-vu-prepare
 ignore#!#trim-before-15_8-or-16_4-vu-verify
 ignore#!#trim-before-15_8-or-16_4-vu-cleanup
-ignore#!#binary-datatype-operators-before-15-8-or-16-4-vu-prepare
-ignore#!#binary-datatype-operators-before-15-8-or-16-4-vu-verify
-ignore#!#binary-datatype-operators-before-15-8-or-16-4-vu-cleanup
 ignore#!#translate-before-15_8-or-16_4-vu-prepare
 ignore#!#translate-before-15_8-or-16_4-vu-verify
 ignore#!#translate-before-15_8-or-16_4-vu-cleanup
