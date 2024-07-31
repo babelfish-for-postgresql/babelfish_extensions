@@ -508,6 +508,7 @@ babel_index_nulls_order
 BABEL-2999
 BABEL-4606
 BABEL-4672
+restricting_function_overloading
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
