@@ -1085,6 +1085,7 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 				if (IsA(arg, Const) && ((Const *)arg)->constisnull)
 				{
 					char	*typ_name = NULL;
+					int		len;
 
 					if (common_utility_plugin_ptr == NULL)
 						ereport(ERROR,
@@ -1094,16 +1095,19 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 					(*common_utility_plugin_ptr->resolve_pg_type_to_tsql) (input_typeids[i], &typ_name);
 					if(typ_name)
 					{
-						if (!((strlen(typ_name) == 3 && strncmp(typ_name,"int", 3) == 0) ||
-							(strlen(typ_name) == 7 && strncmp(typ_name,"tinyint", 7) == 0) ||
-							(strlen(typ_name) == 8 && strncmp(typ_name,"smallint", 8) == 0) ||
-							(strlen(typ_name) == 6 && strncmp(typ_name,"bigint", 6) == 0)))
+						len = strlen(typ_name);
+
+						if (!((len == 3 && strncmp(typ_name,"int", 3) == 0) ||
+							(len == 7 && strncmp(typ_name,"tinyint", 7) == 0) ||
+							(len == 8 && strncmp(typ_name,"smallint", 8) == 0) ||
+							(len == 6 && strncmp(typ_name,"bigint", 6) == 0)))
 							ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_FUNCTION),
 									errmsg("Argument data type %s is invalid for argument %d of substring function.", 
 											format_type_be(input_typeids[i]), i+1)));
+
+						pfree(typ_name);
 					}
-					pfree(typ_name);
 				}
 			}
 		}
