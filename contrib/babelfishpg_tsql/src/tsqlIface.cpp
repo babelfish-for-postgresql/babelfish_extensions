@@ -2178,7 +2178,7 @@ public:
 					}
 				}
 			}
-			else if (grant->ON() && grant->permission_object() && grant->permission_object()->object_type() && grant->permission_object()->object_type()->SCHEMA())
+			else if (grant->ON() && grant->permission_object() && grant->permission_object()->permission_object_type() && grant->permission_object()->permission_object_type()->SCHEMA())
 			{
 				if (grant->principals() && grant->permissions())
 				{
@@ -2215,7 +2215,7 @@ public:
 				}
 			}
 
-			else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->object_type() && revoke->permission_object()->object_type()->SCHEMA())
+			else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->permission_object_type() && revoke->permission_object()->permission_object_type()->SCHEMA())
 			{
 				if (revoke->principals() && revoke->permissions())
 				{
@@ -6078,7 +6078,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				}
 			}
 		}
-		else if (grant->ON() && grant->permission_object() && grant->permission_object()->object_type() && grant->permission_object()->object_type()->SCHEMA())
+		else if (grant->ON() && grant->permission_object() && grant->permission_object()->permission_object_type() && grant->permission_object()->permission_object_type()->SCHEMA())
 		{
 			if (grant->principals() && grant->permissions())
 			{
@@ -6173,7 +6173,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 			}
 		}
 
-		else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->object_type() && revoke->permission_object()->object_type()->SCHEMA())
+		else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->permission_object_type() && revoke->permission_object()->permission_object_type()->SCHEMA())
 		{
 			if (revoke->principals() && revoke->permissions())
 			{
