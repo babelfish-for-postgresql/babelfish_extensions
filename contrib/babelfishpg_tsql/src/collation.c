@@ -48,7 +48,6 @@
 
 #define NextChar(p, plen) \
 	do { int __l = pg_mblen(p); (p) +=__l; (plen) -=__l; } while (0)
-#define NextByte(p, plen)	((p)++, (plen)--)
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
@@ -1757,7 +1756,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 			{
 				/* _ matches any single character, and we know there is one */
 				NextChar(t, tlen);
-				NextByte(p, plen);
+				NextChar(p, plen);
 				continue;
 			}
 			else if (*p == '[')
@@ -1766,35 +1765,35 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 				bool find_match = false, reverse_mode = false, close_bracket = false;
 				const char * prev = NULL;
 
-				NextByte(p, plen);
+				NextChar(p, plen);
 				if (plen > 0 && *p == '^')
 				{
 					reverse_mode = true;
-					NextByte(p, plen);
+					NextChar(p, plen);
 				}
 				while (plen > 0)
 				{
 					if (*p == ']')
 					{
 						close_bracket = true;
-						NextByte(p, plen);
+						NextChar(p, plen);
 						break;
 					}
 					if (find_match)
 					{
-						NextByte(p, plen);
+						NextChar(p, plen);
 						continue;
 					}
 					if (*p == '-' && prev)
 					{
-						NextByte(p, plen);
+						NextChar(p, plen);
 						Assert(cid != InvalidOid);
 						if (varstr_cmp(t, pg_mblen(t), prev, pg_mblen(prev), cid) >= 0 && varstr_cmp(t, pg_mblen(t), p, pg_mblen(p), cid) <= 0)
 						{
 							find_match = true;
 						}
 						prev = NULL;
-						NextByte(p, plen);
+						NextChar(p, plen);
 					}
 					else
 					{
@@ -1807,7 +1806,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 						while (plen > 0 && *p != ']' && *p != '-')
 						{
 							prev = p;
-							NextByte(p, plen);
+							NextChar(p, plen);
 						}
 						
 						src_text = cstring_to_text_with_len(p_start, p_start_len - plen);
@@ -1837,7 +1836,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 
 				while (plen > 0 && *p != '[' && *p != '_' && *p != '%')
 				{
-					NextByte(p, plen);
+					NextChar(p, plen);
 				}
 				if (icu_find_matched_length(t, strlen(t), p_start, len-plen, cid, &matched_len))
 				{
@@ -1855,7 +1854,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 		if (tlen > 0 && !match_failed)
 		{
 			while (tlen > 0 && *t == ' ')
-				NextByte(t, tlen);
+				NextChar(t, tlen);
 			if (tlen <= 0 && plen <=0)
 				return itr;
 		}
@@ -1865,7 +1864,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 		* pattern can match a zero-length string, ie, it's zero or more %'s.
 		*/
 		while (plen > 0 && *p == '%')
-			NextByte(p, plen);
+			NextChar(p, plen);
 		if (tlen == 0 && plen <= 0 && !match_failed)
 			return itr;
 

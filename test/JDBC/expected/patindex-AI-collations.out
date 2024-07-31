@@ -444,6 +444,19 @@ bigint
 ~~END~~
 
 
+SELECT PATINDEX('%abcd%', '   ' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('%abcd%', 'xyz   ' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+~~START~~
+bigint
+0
+~~END~~
+
 
 
 
