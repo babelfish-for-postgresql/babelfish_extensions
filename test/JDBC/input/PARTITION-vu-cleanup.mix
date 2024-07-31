@@ -46,6 +46,29 @@ GO
 DROP VIEW GetSysPartitionsMetadata
 GO
 
+DROP VIEW DollarPartitionFunctionView
+GO
+
+DROP PROCEDURE DollarPartitionFunctionProc
+GO
+
+DROP FUNCTION DollarPartitionFunctionFunc
+GO
+
+DROP VIEW DollarPartitionFunctionNullView
+GO
+
+DROP PROCEDURE DollarPartitionFunctionNullProc
+GO
+
+DROP FUNCTION DollarPartitionFunctionNullFunc
+GO
+
+DROP VIEW SysSearchPartitionDepView
+GO
+
+DROP VIEW SysSearchPartitionNULLDepView
+GO
 --------------------------------------------------
 --- DROP Partitioned Index
 --------------------------------------------------
@@ -431,6 +454,9 @@ USE PartitionDb;
 GO
 
 DROP LOGIN partition_l1;
+GO
+
+DROP LOGIN partition_l2
 GO
 
 USE master
