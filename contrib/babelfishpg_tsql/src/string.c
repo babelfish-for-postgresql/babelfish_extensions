@@ -498,9 +498,9 @@ prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 Datum
 tsql_varchar_substr(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_VARCHAR_P(DirectFunctionCall3(text_substr, PG_GETARG_DATUM(0),
+	return DirectFunctionCall3(text_substr, PG_GETARG_DATUM(0),
 											PG_GETARG_INT32(1),
-											PG_GETARG_INT32(2)));
+											PG_GETARG_INT32(2));
 }
 
 /*
@@ -510,9 +510,9 @@ tsql_varchar_substr(PG_FUNCTION_ARGS)
 Datum
 tsql_varbinary_substr(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_BYTEA_P(DirectFunctionCall3(bytea_substr, PG_GETARG_DATUM(0),
+	return DirectFunctionCall3(bytea_substr, PG_GETARG_DATUM(0),
 											PG_GETARG_INT32(1),
-											PG_GETARG_INT32(2)));
+											PG_GETARG_INT32(2));
 }
 
 /*
