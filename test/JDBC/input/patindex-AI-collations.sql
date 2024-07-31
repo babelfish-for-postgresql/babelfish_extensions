@@ -189,6 +189,9 @@ DECLARE @testString NVARCHAR(100) = 'Special chars: !@#, $%^, &*()';
 SELECT PATINDEX('%[!@#][$%^&][*()]%', @testString COLLATE Latin1_General_CI_AI)
 GO
 
+SELECT PATINDEX('%abcd%', '   ' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('%abcd%', 'xyz   ' COLLATE Latin1_General_CI_AI)
+GO
 
 
 

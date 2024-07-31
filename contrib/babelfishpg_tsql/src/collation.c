@@ -1740,6 +1740,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 		char  *p = pattern;
 		int   tlen = strlen(t),
 		      plen = strlen(pattern);
+		bool  match_failed = false;
 
 		itr++;
 
@@ -1824,7 +1825,10 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 				if (close_bracket && (find_match ^ reverse_mode)) /* found a match */
 					NextChar(t, tlen);
 				else
+				{
+					match_failed = true;
 					break;
+				}
 			}
 			else
 			{
@@ -1841,15 +1845,18 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 						NextChar(t, tlen);
 				}
 				else
+				{
+					match_failed = true;
 					break;
+				}
 			}
 		}
 
-		if (tlen > 0)
+		if (tlen > 0 && !match_failed)
 		{
 			while (tlen > 0 && *t == ' ')
 				NextByte(t, tlen);
-			if (tlen <= 0)
+			if (tlen <= 0 && plen <=0)
 				return itr;
 		}
 
@@ -1859,7 +1866,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 		*/
 		while (plen > 0 && *p == '%')
 			NextByte(p, plen);
-		if (tlen == 0 && plen <= 0)
+		if (tlen == 0 && plen <= 0 && !match_failed)
 			return itr;
 
 		if (start_offset)
