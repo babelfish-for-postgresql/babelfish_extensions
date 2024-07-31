@@ -151,7 +151,7 @@ static void fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *n
 /*****************************************
  * 			Utility Hooks
  *****************************************/
-static void pltsql_report_proc_not_found_error(List *names, List *argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call);
+static void pltsql_report_proc_not_found_error(List *names, List *fargs, List *argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern PLtsql_execstate *get_current_tsql_estate();
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
@@ -2491,7 +2491,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool o
 
 /* Generate similar error message with SQL Server when function/procedure is not found if possible. */
 void
-pltsql_report_proc_not_found_error(List *names, List *given_argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call)
+pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call)
 {
 	FuncCandidateList candidates = NULL,
 				current_candidate = NULL;
@@ -2549,7 +2549,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, Oid *input
 				 * Check whether function is an special function or not, and 
 				 * report appropriate error if applicable 
 				 */
-				validate_special_function(schemaname, funcname, nargs, input_typeids);
+				validate_special_function(schemaname, funcname, fargs, nargs, input_typeids);
 			}
 
 			ereport(ERROR,
