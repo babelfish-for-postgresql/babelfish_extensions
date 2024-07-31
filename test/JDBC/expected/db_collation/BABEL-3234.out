@@ -1,4 +1,3 @@
--- db_collation_expected
 -- tsql
 
 drop table if exists babel_3234_t1;
@@ -22,6 +21,13 @@ where adrelid in ('master_dbo.babel_3234_t1'::regclass::oid,
                   'master_dbo.babel_3234_t2'::regclass::oid,
                   'master_dbo.babel_3234_t3'::regclass::oid);
 go
+~~START~~
+text
+sys.babelfish_runtime_error('An empty or space-only string cannot be converted into numeric/decimal data type'::text COLLATE sys.bbf_unicode_cp1_ci_ai)
+sys.babelfish_runtime_error('An empty or space-only string cannot be converted into numeric/decimal data type'::text COLLATE sys.bbf_unicode_cp1_ci_ai)
+sys.babelfish_runtime_error('An empty or space-only string cannot be converted into numeric/decimal data type'::text COLLATE sys.bbf_unicode_cp1_ci_ai)
+~~END~~
+
 
 -- tsql
 drop table if exists babel_3234_t1;

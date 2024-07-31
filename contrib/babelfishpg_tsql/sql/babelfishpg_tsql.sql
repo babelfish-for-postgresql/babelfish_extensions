@@ -1403,9 +1403,9 @@ BEGIN
     RAISE EXCEPTION 'user does not have permission';
   END IF;
 
-  IF lower("@resample") = 'resample' THEN
+  IF pg_catalog.lower("@resample") = 'resample' THEN
     RAISE NOTICE 'ignoring resample option';
-  ELSIF lower("@resample") != 'no' THEN
+  ELSIF pg_catalog.lower("@resample") != 'no' THEN
     RAISE EXCEPTION 'Invalid option name %', "@resample";
   END IF;
 

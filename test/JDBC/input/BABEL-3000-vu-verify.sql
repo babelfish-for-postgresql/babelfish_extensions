@@ -1,3 +1,4 @@
+-- db_collation_expected
 exec sp_describe_first_result_set N'select * from babel_3000_vu_prepare_var'
 go
 

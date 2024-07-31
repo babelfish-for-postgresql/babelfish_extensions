@@ -4271,21 +4271,21 @@ DECLARE
     is_windows_grp boolean := (CHARINDEX('\', role) != 0);
 BEGIN
     -- Always return 1 for 'public'
-    IF (role = 'public')
+    IF (role = 'public' COLLATE sys.database_default )
     THEN RETURN 1;
     END IF;
 
-    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role AND type != 'S') -- do not consider sql logins
+    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role COLLATE sys.database_default AND type != 'S') -- do not consider sql logins
     THEN
-        IF ((EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type IN ('SERVER ROLE', 'SQL LOGIN'))) OR is_windows_grp) -- do not consider sql logins, server roles
+        IF ((EXISTS (SELECT name FROM sys.login_token WHERE name = role COLLATE sys.database_default AND type IN ('SERVER ROLE', 'SQL LOGIN'))) OR is_windows_grp) -- do not consider sql logins, server roles
         THEN RETURN NULL; -- Also return NULL if session is not a windows auth session but argument is a windows group
-        ELSIF EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type NOT IN ('SERVER ROLE', 'SQL LOGIN'))
+        ELSIF EXISTS (SELECT name FROM sys.login_token WHERE name = role COLLATE sys.database_default AND type NOT IN ('SERVER ROLE', 'SQL LOGIN'))
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
         ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
         END IF;
-    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role)
+    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role COLLATE sys.database_default)
     THEN
-        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role)
+        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role COLLATE sys.database_default)
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
         ELSIF (is_windows_grp)
         THEN RETURN NULL; -- Return NULL if session is not a windows auth session but argument is a windows group

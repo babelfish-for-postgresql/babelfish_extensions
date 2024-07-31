@@ -1,3 +1,4 @@
+-- db_collation_expected
 EXEC sys_check_constraints_dep_vu_prepare_proc2
 GO
 

@@ -1,10 +1,15 @@
--- db_collation_expected
 -- Check column collation when we add explicit COLLATE clause for both the non-computed and computed column
 CREATE TABLE babel_2765_t1 (non_computed VARCHAR(200) COLLATE SQL_Latin1_General_CP1_CI_AI, computed AS substring(non_computed, 1, 5) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
 SELECT name, collation_name FROM sys.all_columns WHERE name = 'non_computed' or name = 'computed' ORDER BY name
 GO
+~~START~~
+varchar#!#varchar
+computed#!#bbf_unicode_cp1_ci_as
+non_computed#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 DROP TABLE babel_2765_t1
 GO
@@ -15,6 +20,12 @@ GO
 
 SELECT name, collation_name FROM sys.all_columns WHERE name = 'non_computed' or name = 'computed' ORDER BY name
 GO
+~~START~~
+varchar#!#varchar
+computed#!#bbf_unicode_cp1_ci_ai
+non_computed#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 DROP TABLE babel_2765_t1
 GO
@@ -25,6 +36,12 @@ GO
 
 SELECT name, collation_name FROM sys.all_columns WHERE name = 'non_computed' or name = 'computed' ORDER BY name
 GO
+~~START~~
+varchar#!#varchar
+computed#!#bbf_unicode_cp1_ci_ai
+non_computed#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 DROP TABLE babel_2765_t1
 GO
@@ -35,6 +52,12 @@ GO
 
 SELECT name, collation_name FROM sys.all_columns WHERE name = 'non_computed' or name = 'computed' ORDER BY name
 GO
+~~START~~
+varchar#!#varchar
+computed#!#bbf_unicode_cp1_ci_ai
+non_computed#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 DROP TABLE babel_2765_t1
 GO
@@ -49,6 +72,12 @@ GO
 
 SELECT name, collation_name FROM sys.all_columns WHERE name = 'non_computed' or name = 'computed' ORDER BY name
 GO
+~~START~~
+varchar#!#varchar
+computed#!#bbf_unicode_cp1_ci_as
+non_computed#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 DROP TABLE babel_2765_t1
 GO
@@ -63,6 +92,12 @@ GO
 
 SELECT name, collation_name FROM sys.all_columns WHERE name = 'non_computed' or name = 'computed' ORDER BY name
 GO
+~~START~~
+varchar#!#varchar
+computed#!#bbf_unicode_cp1_ci_ai
+non_computed#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 DROP TABLE babel_2765_t1
 GO
@@ -77,6 +112,12 @@ GO
 
 SELECT name, collation_name FROM sys.all_columns WHERE name = 'non_computed' or name = 'computed' ORDER BY name
 GO
+~~START~~
+varchar#!#varchar
+computed#!#bbf_unicode_cp1_ci_ai
+non_computed#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 DROP TABLE babel_2765_t1
 GO
@@ -91,6 +132,12 @@ GO
 
 SELECT name, collation_name FROM sys.all_columns WHERE name = 'non_computed' or name = 'computed' ORDER BY name
 GO
+~~START~~
+varchar#!#varchar
+computed#!#bbf_unicode_cp1_ci_ai
+non_computed#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 DROP TABLE babel_2765_t1
 GO
