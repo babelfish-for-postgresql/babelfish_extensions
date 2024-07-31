@@ -1239,6 +1239,39 @@ public:
 		if (!(in_create_or_alter_function || in_create_or_alter_procedure || in_create_or_alter_trigger))
 			rewrite_string_agg_query(ctx);
 	}
+
+	/*
+	 * The $PARTITION function handling is implemented in the
+	 * tsqlCommonMutator to support its usage not only from direct calls
+	 * but also within Views, Procedures, and Functions.
+	 */
+	void exitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override
+	{
+		/*
+		 * Re-write db_name.$PARTITION.partition_func_name(exp)
+		 * to sys.search_partition(partition_func_name, exp, db_name)
+		 * where db_name is optional.
+		 */
+
+		/* Replace "$PARTITION" with "sys.search_partition(partition_func_name, ".*/
+		rewritten_query_fragment.emplace(std::make_pair(ctx->DOLLAR_PARTITION()->getSymbol()->getStartIndex(),
+					std::make_pair(::getFullText(ctx->DOLLAR_PARTITION()),  "sys.search_partition('" + stripQuoteFromId(ctx->func_name) + "', ")));
+		
+		/* Remove dot after the $PARTITION, partition function name and "(" from query. */
+		rewritten_query_fragment.emplace(std::make_pair(ctx->DOT().back()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->DOT().back()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->id().back()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id().back()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->LR_BRACKET()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->LR_BRACKET()),"")));
+		
+		/* Re-write db_name only if exits in the query. */
+		if (ctx->db_name)
+		{
+			/* Replace the ")" with the ", db_name) ". */
+			rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()), ", '" + stripQuoteFromId(ctx->db_name) + "')")));
+			/* Remove db_name and dot after that from query. */
+			rewritten_query_fragment.emplace(std::make_pair(ctx->id().front()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id().front()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->DOT().front()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->DOT().front()), "")));
+		}
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
