@@ -533,4 +533,5 @@ translate
 reverse
 replicate
 space
+binary-datatype-operators
 
