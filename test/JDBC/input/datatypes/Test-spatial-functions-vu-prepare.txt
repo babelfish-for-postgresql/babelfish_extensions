@@ -45,3 +45,5 @@ CREATE VIEW TestSpatialFunction_point_EqualityTemp AS SELECT p1.location.STEqual
 CREATE VIEW TestSpatialFunction_point_inTemp AS SELECT p1.location.STContains(p2.location) AS isIn FROM TestSpatialFunction_SPATIALPOINTGEOG_dttemp p1 CROSS JOIN TestSpatialFunction_SPATIALPOINTGEOG_dttemp p2;
 
 CREATE VIEW TestSpatialFunction_SRIDFromGeom AS SELECT PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp;
+
+CREATE VIEW TestSpatialFunction_SRIDFromGeog AS SELECT  location.STSrid AS Area FROM TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;

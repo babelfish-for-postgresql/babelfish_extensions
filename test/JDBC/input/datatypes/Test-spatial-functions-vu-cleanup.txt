@@ -18,6 +18,8 @@ DROP VIEW IF EXISTS TestSpatialFunction_point_inTemp
 
 DROP VIEW IF EXISTS TestSpatialFunction_SRIDFromGeom
 
+DROP VIEW IF EXISTS TestSpatialFunction_SRIDFromGeog
+
 DROP TABLE IF EXISTS TestSpatialFunction_SPATIALPOINTGEOM_dttemp
 
 DROP TABLE IF EXISTS TestSpatialFunction_SPATIALPOINTGEOG_dttemp
