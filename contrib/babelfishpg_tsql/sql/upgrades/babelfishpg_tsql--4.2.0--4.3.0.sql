@@ -45,11 +45,6 @@ ALTER TABLE sys.babelfish_function_ext DROP CONSTRAINT babelfish_function_ext_pk
 ALTER TABLE sys.babelfish_function_ext ADD CONSTRAINT babelfish_function_ext_pkey PRIMARY KEY (funcname, nspname, funcsignature);
 RESET allow_system_table_mods;
 
-CREATE OR REPLACE FUNCTION sys.binary_lt(leftarg sys.bbf_binary, rightarg sys.bbf_binary)
-RETURNS boolean
-AS 'babelfishpg_common', 'varbinary_lt'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 	in_table_name sys.nvarchar(384) = NULL,
 	in_table_owner sys.nvarchar(384) = NULL, 
