@@ -2936,9 +2936,9 @@ single_permission
     ;
 
 permission_object_type
-    : APPLICATION ROLE
+    : (APPLICATION|SERVER)? ROLE
     | ASSEMBLY
-    | ASYMMETRIC KEY
+    | (ASYMMETRIC|SYMMETRIC) KEY
     | AVAILABILITY GROUP
     | CERTIFICATE
     | CONTRACT
@@ -2946,17 +2946,13 @@ permission_object_type
     | ENDPOINT
     | FULLTEXT (CATALOG|STOPLIST)
     | LOGIN
-    | MESSAGE TYPE
+    | (MESSAGE)? TYPE
     | OBJECT
     | REMOTE SERVICE BINDING
-    | ROLE
     | ROUTE
     | SCHEMA
     | SEARCH PROPERTY LIST
-    | SERVER ROLE
     | SERVICE
-    | SYMMETRIC KEY
-    | TYPE
     | USER
     | XML SCHEMA COLLECTION
     ;
