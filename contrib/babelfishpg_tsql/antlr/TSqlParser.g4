@@ -3875,7 +3875,10 @@ spatial_methods
     ;
         
 geospatial_col
-    : STX
+    : STSRID
+    | STSRID_DOUBLE_QUOTE
+    | STSRID_SQBRACKET
+    | STX
     | STX_SQBRACKET
     | STX_DOUBLE_QUOTE
     | STY
@@ -5029,6 +5032,9 @@ keyword
     | STOP_ON_ERROR
     | STRING_AGG
     | STRING_DELIMITER
+    | STSRID
+    | STSRID_DOUBLE_QUOTE
+    | STSRID_SQBRACKET
     | STUFF
     | STX
     | STX_DOUBLE_QUOTE
