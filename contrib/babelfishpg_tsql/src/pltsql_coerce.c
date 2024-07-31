@@ -1032,7 +1032,7 @@ init_special_function_list()
  * and also validate the input argument data types.
  */
 bool
-validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
+validate_special_function(char *func_nsname, char *func_name, List* fargs, int nargs, Oid *input_typeids)
 {
 	tsql_special_function_t    *special_func;
 	bool                        type_match;
@@ -1040,7 +1040,7 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 	Oid                         sys_varcharoid;
 
 	/* Sanity checks */
-	if (func_name == NULL || (nargs != 0 && input_typeids == NULL))
+	if (func_name == NULL || (nargs != 0 && input_typeids == NULL) || fargs == NIL)
 		return false;
 
 	/* 
@@ -1071,15 +1071,67 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
 
 	/* If function is not a special function no additional handling required */
 	if (special_func == NULL)
+	{
+		/* report error for case when NULL casted to different datatypes and passed as 2nd or 3rd argument of SUBSTRING() function */
+		if (strlen(func_name) == 9 && strncmp(func_name, "substring", 9) == 0)
+		{
+			for (int i = 1; i < nargs; i++)
+			{
+				Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
+
+				if (input_typeids[i] == UNKNOWNOID)
+      				continue;
+
+				/* Throw error when input is constant and NULL */
+				if (IsA(arg, Const) && ((Const *)arg)->constisnull)
+				{
+					const char	*typ_name;
+					int		len;
+
+					if (common_utility_plugin_ptr == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("Failed to find common utility plugin.")));
+
+					typ_name = (*common_utility_plugin_ptr->resolve_pg_type_to_tsql) (input_typeids[i]);
+					if(typ_name)
+					{
+						len = strlen(typ_name);
+
+						if (!((len == 3 && strncmp(typ_name,"int", 3) == 0) ||
+							(len == 7 && strncmp(typ_name,"tinyint", 7) == 0) ||
+							(len == 8 && strncmp(typ_name,"smallint", 8) == 0) ||
+							(len == 6 && strncmp(typ_name,"bigint", 6) == 0)))
+							ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									errmsg("Argument data type %s is invalid for argument %d of substring function.", 
+											format_type_be(input_typeids[i]), i+1)));
+					}
+				}
+			}
+		}
 		return false;
+	}		
 
 	sys_varcharoid = get_sys_varcharoid();
 
 	/* Report error in case of invalid argument datatype */
 	for (int i = 0; i < special_func->nargs; i++)
 	{
-		/* for unknown literals consider its type as sys.VARCHAR */
-		input_type_id = (input_typeids[i] == UNKNOWNOID) ? sys_varcharoid : input_typeids[i];
+		/* 
+		 * if argument is NULL then keep its typeId as UNKNOWN and skip the report error handling 
+		 * otherwise consider it as sys.VARCHAR
+		 */
+		if (input_typeids[i] == UNKNOWNOID)
+		{
+			Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
+			if (IsA(arg, Const) && ((Const *)arg)->constisnull)
+				continue;
+			else
+				input_type_id = sys_varcharoid;
+		}
+		else
+			input_type_id = input_typeids[i];
 
 		/* for UDT use its base type for input argument datatype validation */
 		base_type_id = get_immediate_base_type_of_UDT_internal(input_type_id);
@@ -1116,7 +1168,7 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, Oid *in
  * based on matching return type. Also throw error in case of invalid argument data type.
  */
 static FuncCandidateList
-tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
 	FuncCandidateList			current_candidate, best_candidate;
 	Oid 						expr_result_type;
@@ -1129,7 +1181,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
-	is_func_validated = validate_special_function(proc_nsname, proc_name, nargs, input_typeids);
+	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids);
 
 	/* Return NULL if function is not a special function */
 	if (!is_func_validated)
@@ -1148,7 +1200,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1])
 			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[1]))
 		{
-			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar"); 
 		}
 		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[1])
 				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[1])
@@ -1241,6 +1293,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 
 static FuncCandidateList
 tsql_func_select_candidate(List *names,
+						   List *fargs,
 						   int nargs,
 						   Oid *input_typeids,
 						   FuncCandidateList candidates,
@@ -1254,7 +1307,7 @@ tsql_func_select_candidate(List *names,
 	bool			  candidates_are_opers = false;
 
 	if (is_special)
-		return tsql_func_select_candidate_for_special_func(names, nargs, input_typeids, candidates);
+		return tsql_func_select_candidate_for_special_func(names, fargs, nargs, input_typeids, candidates);
 
 	if (unknowns_resolved)
 	{

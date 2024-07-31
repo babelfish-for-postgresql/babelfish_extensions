@@ -916,10 +916,45 @@ public:
 			{
 				auto id = fpnsds->id().back();
 
-				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE())
+				if (id->keyword()->NULLIF()) /* NULLIF */
+				{
+					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+					{
+						auto first_arg = ctx->function_arg_list()->expression().front();
+						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
+							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
+					}
+				}
+				if (id->keyword()->CHECKSUM())
+				{
+					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+					{
+						for (auto arg: ctx->function_arg_list()->expression())
+						{
+							if (dynamic_cast<TSqlParser::Constant_exprContext*>(arg) && static_cast<TSqlParser:: Constant_exprContext*>(arg)->constant()->NULL_P())
+								throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "Argument NULL is invalid for CHECKSUM().", getLineAndPos(arg));
+						}
+					}
+				}
+				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE() || id->keyword()->SUBSTRING())
 				{
 					size_t startPosition = id->keyword()->start->getStartIndex();
 					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
+				}
+			}
+
+			if (ctx->func_proc_name_server_database_schema()->procedure)
+			{
+				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
+				{
+					has_identity_function = true;
+				}
+				
+				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
+						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
 				}
 			}
 		}
@@ -2456,63 +2491,7 @@ public:
 				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SESSION_USER()), "sys.session_user()")));
 		}
 
-		handleGeospatialFunctionsInFunctionCall(ctx);
-
-		/* analyze scalar function call */
-		if (ctx->func_proc_name_server_database_schema())
-		{
-			if (ctx->func_proc_name_server_database_schema()->schema)
-				schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
-
-			auto fpnsds = ctx->func_proc_name_server_database_schema();
-
-			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
-			{
-				auto id = fpnsds->id().back();
-
-				if (id->keyword()->NULLIF()) /* NULLIF */
-				{
-					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
-					{
-						auto first_arg = ctx->function_arg_list()->expression().front();
-						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
-							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
-					}
-				}
-				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE())
-				{
-					size_t startPosition = id->keyword()->start->getStartIndex();
-					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
-				}
-
-                              if (id->keyword()->CHECKSUM())
-                              {
-                                      if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
-                                      {
-                                              for (auto arg: ctx->function_arg_list()->expression())
-                                              {
-                                                      if (dynamic_cast<TSqlParser::Constant_exprContext*>(arg) && static_cast<TSqlParser:: Constant_exprContext*>(arg)->constant()->NULL_P())
-                                                              throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "Argument NULL is invalid for CHECKSUM().", getLineAndPos(arg));
-                                              }
-                                      }
-                              }
-			}
-
-			if (ctx->func_proc_name_server_database_schema()->procedure)
-			{
-				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
-				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
-				{
-					has_identity_function = true;
-				}
-				
-				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
-				{
-					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
-						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
-				}
-			}
-		}
+		tsqlCommonMutator::exitFunction_call(ctx);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
