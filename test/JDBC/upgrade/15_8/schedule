@@ -529,4 +529,8 @@ ltrim
 rtrim
 left
 right
+translate
 reverse
+replicate
+space
+
