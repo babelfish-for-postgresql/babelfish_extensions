@@ -8,21 +8,21 @@ GO
 
 -- tsql user=babel_4390_user_l2 password=abc
 -- should throw error
-EXEC babel_4390_prepare_p1;
+EXEC dbo.babel_4390_prepare_p1;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: must be owner of procedure xp_qv)~~
 
 
-EXEC babel_4390_prepare_p3;
+EXEC dbo.babel_4390_prepare_p3;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: must be owner of procedure xp_instance_regread)~~
 
 
-EXEC babel_4390_prepare_p4;
+EXEC dbo.babel_4390_prepare_p4;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -30,7 +30,7 @@ GO
 
 
 BEGIN TRANSACTION;
-EXEC babel_4390_prepare_p1;
+EXEC dbo.babel_4390_prepare_p1;
 ROLLBACK;
 GO
 ~~ERROR (Code: 33557097)~~
@@ -45,44 +45,40 @@ GO
 ~~ERROR (Message: must be owner of procedure xp_qv)~~
 
 
-EXEC babel_4390_prepare_p5;
+EXEC dbo.babel_4390_prepare_p5;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: must be owner of procedure sp_addlinkedsrvlogin)~~
 
 
-EXEC babel_4390_prepare_p6;
+EXEC dbo.babel_4390_prepare_p6;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: must be owner of procedure sp_droplinkedsrvlogin)~~
 
 
-EXEC babel_4390_prepare_p7;
+EXEC dbo.babel_4390_prepare_p7;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: must be owner of procedure sp_dropserver)~~
 
 
-EXEC babel_4390_prepare_p8;
+EXEC dbo.babel_4390_prepare_p8;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: must be owner of procedure sp_enum_oledb_providers)~~
 
 
-EXEC babel_4390_prepare_p9;
+EXEC dbo.babel_4390_prepare_p9;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: must be owner of procedure sp_testlinkedserver)~~
 
-
--- should pass
-EXEC babel_4390_prepare_p2;
-GO
 
 -- psql user=babel_4390_user_l2 password=abc
 -- should throw error

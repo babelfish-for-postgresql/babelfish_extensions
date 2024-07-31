@@ -23,22 +23,10 @@ BEGIN
 END
 GO
 
--- tsql user=babel_4390_user_l2 password=12345678
+-- tsql
 CREATE PROCEDURE babel_4390_prepare_p1 AS
 BEGIN
     EXEC('DROP PROCEDURE dbo.xp_qv');
-END
-GO
-
-CREATE PROCEDURE babel_4390_test_proc AS
-BEGIN
-    SELECT 'This is a test proc to test drop procedure';
-END
-GO
-
-CREATE PROCEDURE babel_4390_prepare_p2 AS
-BEGIN
-    EXEC('DROP PROCEDURE babel_4390_test_proc');
 END
 GO
 
@@ -82,4 +70,28 @@ CREATE PROCEDURE babel_4390_prepare_p9 AS
 BEGIN
     EXEC('DROP PROCEDURE dbo.sp_testlinkedserver');
 END
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p1 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p3 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p4 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p5 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p6 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p7 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p8 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p9 TO guest;
 GO

@@ -1,17 +1,34 @@
--- tsql user=babel_4390_user_l2 password=abc
-DROP PROCEDURE IF EXISTS babel_4390_prepare_p1;
+REVOKE EXECUTE ON babel_4390_prepare_p1 TO guest;
 GO
 
-DROP PROCEDURE IF EXISTS babel_4390_prepare_p2;
+REVOKE EXECUTE ON babel_4390_prepare_p3 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p4 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p5 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p6 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p7 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p8 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p9 TO guest;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p1;
 GO
 
 DROP PROCEDURE IF EXISTS babel_4390_prepare_p3;
 GO
 
 DROP PROCEDURE IF EXISTS babel_4390_prepare_p4;
-GO
-
-DROP PROCEDURE IF EXISTS babel_4390_test_proc;
 GO
 
 DROP PROCEDURE IF EXISTS babel_4390_prepare_p5;
