@@ -1084,7 +1084,7 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 				/* Throw error when input is constant and NULL */
 				if (IsA(arg, Const) && ((Const *)arg)->constisnull)
 				{
-					char	*typ_name = NULL;
+					const char	*typ_name;
 					int		len;
 
 					if (common_utility_plugin_ptr == NULL)
@@ -1092,7 +1092,7 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 								(errcode(ERRCODE_INTERNAL_ERROR),
 									errmsg("Failed to find common utility plugin.")));
 
-					(*common_utility_plugin_ptr->resolve_pg_type_to_tsql) (input_typeids[i], &typ_name);
+					typ_name = (*common_utility_plugin_ptr->resolve_pg_type_to_tsql) (input_typeids[i]);
 					if(typ_name)
 					{
 						len = strlen(typ_name);
@@ -1105,8 +1105,6 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 								(errcode(ERRCODE_UNDEFINED_FUNCTION),
 									errmsg("Argument data type %s is invalid for argument %d of substring function.", 
 											format_type_be(input_typeids[i]), i+1)));
-
-						pfree(typ_name);
 					}
 				}
 			}
