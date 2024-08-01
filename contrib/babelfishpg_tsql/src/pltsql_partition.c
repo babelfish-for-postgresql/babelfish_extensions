@@ -466,8 +466,8 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 		relname = RelationGetRelationName(relation);
 
 		/* Proceed further only for permanent and partition/partitioned table. */
-		if ((!(form->relkind == RELKIND_PARTITIONED_TABLE || form->relispartition)
-			|| form->relpersistence != RELPERSISTENCE_PERMANENT))
+		if (!(form->relkind == RELKIND_PARTITIONED_TABLE || form->relispartition)
+			|| form->relpersistence != RELPERSISTENCE_PERMANENT)
 		{
 			relation_close(relation, AccessShareLock);
 			continue;
