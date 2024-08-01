@@ -630,8 +630,8 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
+		is_new_db = false;
 	}
-	is_new_db = false;
 	PG_END_TRY();
 }
 
