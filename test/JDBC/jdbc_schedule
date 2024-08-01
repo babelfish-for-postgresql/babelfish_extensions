@@ -288,6 +288,12 @@ ignore#!#sys-data_spaces-before-16-4-vu-cleanup
 ignore#!#sys-filegroups-before-16-4-vu-prepare
 ignore#!#sys-filegroups-before-16-4-vu-verify
 ignore#!#sys-filegroups-before-16-4-vu-cleanup
+ignore#!#translate-before-15_8-or-16_4-vu-prepare
+ignore#!#translate-before-15_8-or-16_4-vu-verify
+ignore#!#translate-before-15_8-or-16_4-vu-cleanup
+ignore#!#substring-before-15_8-or-16_4-vu-prepare
+ignore#!#substring-before-15_8-or-16_4-vu-verify
+ignore#!#substring-before-15_8-or-16_4-vu-cleanup
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare

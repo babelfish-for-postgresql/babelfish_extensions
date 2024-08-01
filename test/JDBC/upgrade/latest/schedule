@@ -515,6 +515,7 @@ BABEL-2999
 BABEL-4606
 BABEL-4672
 permission_restrictions_from_pg
+restricting_function_overloading
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
@@ -544,6 +545,8 @@ test_like_for_AI
 BABEL-4869
 babel_4328_datetime
 babel_4328_datetime2
+translate
+substring
 babel_4328_datetimeoffset
 babel_726
 BABEL-3401
@@ -554,3 +557,5 @@ string_agg
 reverse
 sys_sequences
 replicate
+space
+
