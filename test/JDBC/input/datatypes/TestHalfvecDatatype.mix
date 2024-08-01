@@ -1,3 +1,4 @@
+-- db_collation_expected
 -- parallel_query_expected
 -- tsql
 -- should throw error since vector is only allowed in sys

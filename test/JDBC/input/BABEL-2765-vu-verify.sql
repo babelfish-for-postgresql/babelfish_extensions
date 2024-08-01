@@ -1,4 +1,5 @@
 -- db_collation_expected
+-- db_collation_expected
 SELECT name, collation_name FROM sys.all_columns WHERE name = 'non_computed1' or name = 'computed1' ORDER BY name
 GO
 
