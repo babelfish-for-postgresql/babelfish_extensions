@@ -508,6 +508,7 @@ babel_index_nulls_order
 BABEL-2999
 BABEL-4606
 BABEL-4672
+restricting_function_overloading
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
@@ -528,6 +529,7 @@ ltrim
 rtrim
 left
 right
+replace
 BABEL-4863
 babel_test_int4_numeric_oper
 babel_test_int8_numeric_oper
@@ -541,6 +543,7 @@ BABEL-3401
 babel_4328_datetime
 babel_4328_datetime2
 translate
+substring
 babel_4328_datetimeoffset
 BABEL-3820
 replicate

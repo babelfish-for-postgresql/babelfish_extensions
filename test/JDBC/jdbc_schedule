@@ -273,6 +273,9 @@ ignore#!#trim-before-15_8-or-16_4-vu-cleanup
 ignore#!#translate-before-15_8-or-16_4-vu-prepare
 ignore#!#translate-before-15_8-or-16_4-vu-verify
 ignore#!#translate-before-15_8-or-16_4-vu-cleanup
+ignore#!#substring-before-15_8-or-16_4-vu-prepare
+ignore#!#substring-before-15_8-or-16_4-vu-verify
+ignore#!#substring-before-15_8-or-16_4-vu-cleanup
 ignore#!#upper_lower-before-15_8-or-16_4-vu-prepare
 ignore#!#upper_lower-before-15_8-or-16_4-vu-verify
 ignore#!#upper_lower-before-15_8-or-16_4-vu-cleanup
@@ -326,3 +329,11 @@ ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-cleanup
 ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-prepare
 ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-verify
 ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-cleanup
+ignore#!#replace-before-15_8-or-16_4-vu-prepare
+ignore#!#replace-before-15_8-or-16_4-vu-verify
+ignore#!#replace-before-15_8-or-16_4-vu-cleanup
+ignore#!#replace-before-14_3-vu-prepare
+ignore#!#replace-before-14_3-vu-verify
+ignore#!#replace-before-14_3-vu-cleanup
+ignore#!#BABEL_4330-before-15_8-or-16_4-vu-prepare
+ignore#!#BABEL_4330-before-15_8-or-16_4-vu-verify
