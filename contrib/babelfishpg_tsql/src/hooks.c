@@ -209,6 +209,11 @@ static bool is_partitioned_table_reloptions_allowed(Datum reloptions);
  *****************************************/
 static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 
+/*****************************************
+ * 			parser Hook
+ *****************************************/
+static bool is_babelfish_builtin_type(Oid typnamespace);
+
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
@@ -472,6 +477,7 @@ InstallExtendedHooks(void)
 	prev_pltsql_is_partitioned_table_reloptions_allowed_hook = pltsql_is_partitioned_table_reloptions_allowed_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed; 
 
+	is_babelfish_builtin_type_hook = is_babelfish_builtin_type;
 }
 
 void
@@ -542,6 +548,7 @@ UninstallExtendedHooks(void)
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
+	is_babelfish_builtin_type_hook = NULL;
 }
 
 /*****************************************
@@ -5273,4 +5280,13 @@ is_partitioned_table_reloptions_allowed(Datum reloptions)
 		}
 	}
 	return true;
+}
+
+static bool
+is_babelfish_builtin_type(Oid typnamespace)
+{
+	// return (sql_dialect == SQL_DIALECT_TSQL && 
+	// 		(pg_strcasecmp(get_namespace_name(typtup->typnamespace), "sys") == 0 ||
+	// 		 typtup->oid == TEXTOID));
+	return (sql_dialect == SQL_DIALECT_TSQL && pg_strcasecmp(get_namespace_name(typnamespace), "sys") == 0);
 }
