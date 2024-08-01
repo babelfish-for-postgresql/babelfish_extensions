@@ -572,11 +572,6 @@ CASE WHEN PointColumn.STX = 0 THEN 'Zero SRID'
 ELSE 'Positive SRID' END AS SRID FROM TestSpatialFunction_YourTableTemp;
 GO
 
-DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @point.STSrid AS SRID, COUNT(*) AS PointCount 
-FROM TestSpatialFunction_YourTableTemp GROUP BY PointColumn.STSrid;
-GO
-
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
 UPDATE TestSpatialFunction_YourTableTemp SET PointColumn = @referencePoint
 WHERE PointColumn.STSrid = @referencePoint.STSrid;

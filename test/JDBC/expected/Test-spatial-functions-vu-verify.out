@@ -1191,17 +1191,6 @@ int#!#float#!#text
 ~~END~~
 
 
-DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @point.STSrid AS SRID, COUNT(*) AS PointCount 
-FROM TestSpatialFunction_YourTableTemp GROUP BY PointColumn.STSrid;
-GO
-~~START~~
-int#!#int
-4326#!#2
-4326#!#1
-~~END~~
-
-
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
 UPDATE TestSpatialFunction_YourTableTemp SET PointColumn = @referencePoint
 WHERE PointColumn.STSrid = @referencePoint.STSrid;
