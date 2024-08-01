@@ -1551,7 +1551,7 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 
 							args = list_make1(makeConst(TEXTOID,
 														-1,
-														tsql_get_server_collation_oid_internal(false),
+														tsql_get_database_or_server_collation_oid_internal(false),
 														-1,
 														PointerGetDatum(cstring_to_text(msg)),
 														false,
@@ -1605,7 +1605,7 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 			typenameTypeIdAndMod(NULL, (const TypeName *)varcharTypeName, &baseTypeId, &baseTypeMod);
 
 			tempcon = makeConst(baseTypeId, -1,
-								tsql_get_server_collation_oid_internal(false),
+								tsql_get_database_or_server_collation_oid_internal(false),
 								-1, PointerGetDatum(cstring_to_text(value)),
 								false, false);
 

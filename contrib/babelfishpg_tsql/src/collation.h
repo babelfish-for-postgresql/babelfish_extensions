@@ -52,7 +52,7 @@ typedef struct collation_callbacks
 	/* Function pointers set up by the plugin */
 	char	   *(*EncodingConversion) (const char *s, int len, int src_encoding, int dest_encoding, int *encodedByteLen);
 
-	Oid			(*get_server_collation_oid_internal) (bool missingOk);
+	Oid			(*get_database_or_server_collation_oid_internal) (bool missingOk);
 
 	coll_info_t (*lookup_collation_table_callback) (Oid oid);
 
@@ -60,7 +60,7 @@ typedef struct collation_callbacks
 
 	Datum		(*collation_list_internal) (PG_FUNCTION_ARGS);
 
-	Datum		(*is_collated_ci_as_internal) (PG_FUNCTION_ARGS);
+	Datum		(*is_collated_ci_internal) (PG_FUNCTION_ARGS);
 
 	Datum		(*is_collated_ai_internal) (PG_FUNCTION_ARGS);
 
@@ -68,7 +68,7 @@ typedef struct collation_callbacks
 
 	bytea	   *(*tdscollationproperty_helper) (const char *collationaname, const char *property);
 
-	bool		(*is_server_collation_CI_AS) (void);
+	bool		(*is_server_collation_CI) (void);
 
 	bool		(*is_valid_server_collation_name) (const char *collationname);
 
@@ -84,20 +84,20 @@ typedef struct collation_callbacks
 
 	const char *(*translate_bbf_collation_to_tsql_collation) (const char *collname);
 
-	void		(*set_db_collation) (const char *collname);
+	void		(*set_db_collation) (Oid db_coll);
 
 } collation_callbacks;
 
 extern collation_callbacks *collation_callbacks_ptr;
 
 /* Wrappers to call any callback functions from collation_callbacks_ptr. */
-extern Oid	tsql_get_server_collation_oid_internal(bool missingOk);
+extern Oid	tsql_get_database_or_server_collation_oid_internal(bool missingOk);
 extern Datum tsql_collation_list_internal(PG_FUNCTION_ARGS);
-extern Datum tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS);
+extern Datum tsql_is_collated_ci_internal(PG_FUNCTION_ARGS);
 extern Datum tsql_is_collated_ai_internal(PG_FUNCTION_ARGS);
 extern int	tsql_collationproperty_helper(const char *collationaname, const char *property);
 extern bytea *tsql_tdscollationproperty_helper(const char *collationaname, const char *property);
-extern bool tsql_is_server_collation_CI_AS(void);
+extern bool tsql_is_server_collation_CI(void);
 extern bool tsql_is_valid_server_collation_name(const char *collationname);
 extern int	tsql_find_locale(const char *locale);
 extern Oid	tsql_get_oid_from_collidx(int collidx);
@@ -119,7 +119,7 @@ extern Node *pltsql_predicate_transformer(Node *expr);
 
 void set_db_collation_internal(int16 db_id);
 extern bool is_new_db;
-void tsql_set_db_collation(void);
+void tsql_set_db_collation(Oid database_collation_oid);
 extern const char *database_collation_name;
 
 /* Expression kind codes for preprocess_expression */

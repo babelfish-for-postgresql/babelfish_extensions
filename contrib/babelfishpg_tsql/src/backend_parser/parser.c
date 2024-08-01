@@ -53,7 +53,7 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 	/*
 	 * parse identifiers case-insensitively if the database collation is CI_AS
 	 */
-	pltsql_case_insensitive_identifiers = tsql_is_server_collation_CI_AS();
+	pltsql_case_insensitive_identifiers = tsql_is_server_collation_CI();
 	INSTR_TIME_SET_CURRENT(parseStart);
 
 	/* initialize the flex scanner */

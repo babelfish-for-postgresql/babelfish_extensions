@@ -1559,14 +1559,14 @@ end
 $body$
 language 'plpgsql' STABLE;
 
-CREATE OR REPLACE FUNCTION sys.is_collated_ci_as_internal(IN input_string TEXT) RETURNS BOOL
-AS 'babelfishpg_tsql', 'is_collated_ci_as_internal'
+CREATE OR REPLACE FUNCTION sys.is_collated_ci_internal(IN input_string TEXT) RETURNS BOOL
+AS 'babelfishpg_tsql', 'is_collated_ci_internal'
 LANGUAGE C VOLATILE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.is_collated_ci_as(IN input_string TEXT)
+CREATE OR REPLACE FUNCTION sys.is_collated_ci(IN input_string TEXT)
 RETURNS BOOL AS
 $$
-	SELECT sys.is_collated_ci_as_internal(input_string);
+	SELECT sys.is_collated_ci_internal(input_string);
 $$
 LANGUAGE SQL VOLATILE PARALLEL SAFE;
 
@@ -4396,7 +4396,7 @@ BEGIN
        return input_string;
    elsif sys.is_collated_ai(input_string) then
        return pg_catalog.replace(input_string, pattern, replacement);
-   elsif sys.is_collated_ci_as(input_string) then
+   elsif sys.is_collated_ci(input_string) then
        return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
    else
        return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
