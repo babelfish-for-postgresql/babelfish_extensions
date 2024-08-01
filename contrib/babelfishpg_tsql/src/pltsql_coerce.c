@@ -380,7 +380,7 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 
 /* Following constants value are defined based on the special function list */
 #define SFUNC_MAX_ARGS 3			/* maximum number of args special function in special function list can have */
-#define SFUNC_MAX_VALID_TYPES 6		/* maximum number of valid types supported argument of function in special function list can have */
+#define SFUNC_MAX_VALID_TYPES 8		/* maximum number of valid types supported argument of function in special function list can have */
 
 /* struct to store details of valid types supported for a argument */
 typedef struct tsql_valid_arg_type
@@ -402,6 +402,7 @@ typedef struct tsql_special_function
 
 tsql_special_function_t tsql_special_function_list[] = 
 {
+	{"sys", "replace", "replace", 3, {{8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
 	{"sys", "translate", "translate", 3, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}} , {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
 	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
@@ -1176,6 +1177,7 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 	bool						is_func_validated;
 	int							ncandidates;
 	Oid							rettype;
+	Oid							sys_oid = get_namespace_oid("sys", false);
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
@@ -1203,6 +1205,22 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[1])
 				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[1])
 				|| input_typeids[1] == UNKNOWNOID)
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+	else if (strlen(proc_name) == 7 && strncmp(proc_name,"replace", 7) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[2])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[2]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+		}
+		else
 		{
 			expr_result_type = get_sys_varcharoid();
 		}
@@ -1242,6 +1260,10 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 			current_candidate != NULL;
 			current_candidate = current_candidate->next)
 	{
+		/* we should only consider candidates for special function from sys schema */
+		if (get_func_namespace(current_candidate->oid) != sys_oid)
+			continue;
+
 		rettype = get_func_rettype(current_candidate->oid);
 		if (expr_result_type == rettype)
 		{
