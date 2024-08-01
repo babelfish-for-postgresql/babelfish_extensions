@@ -507,6 +507,7 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 				remove_entry_from_bbf_partition_depend(dbid, logical_schemaname, relname);
 		}
 		relation_close(relation, AccessShareLock);
+		pfree(logical_schemaname);
 	}
 }
 
