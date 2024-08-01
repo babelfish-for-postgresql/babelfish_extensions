@@ -3554,18 +3554,18 @@ alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int 
 		ScanKeyEntryInitialize(&key[1], 0,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber, InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 		ScanKeyEntryInitialize(&key[2], 0,
 					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber, InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ, CStringGetTextDatum(object_name));
 		ScanKeyEntryInitialize(&key[3], 0,
 					Anum_bbf_schema_perms_object_type,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_type));
 

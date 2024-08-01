@@ -150,7 +150,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_partition_function_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),

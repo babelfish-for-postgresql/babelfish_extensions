@@ -432,7 +432,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* TODO: Extract options */
 
-	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_server_collation_oid_internal(false)));
+	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_database_or_server_collation_oid_internal(false)));
 	if (!HeapTupleIsValid(tuple))
 	{
 		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);

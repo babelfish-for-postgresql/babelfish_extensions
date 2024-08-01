@@ -74,7 +74,7 @@ typedef enum
 PG_FUNCTION_INFO_V1(init_collid_trans_tab);
 PG_FUNCTION_INFO_V1(init_like_ilike_table);
 PG_FUNCTION_INFO_V1(get_server_collation_oid);
-PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
+PG_FUNCTION_INFO_V1(is_collated_ci_internal);
 PG_FUNCTION_INFO_V1(is_collated_ai_internal);
 
 /* this function is no longer needed and is only a placeholder for upgrade script */
@@ -116,14 +116,14 @@ collation_list(PG_FUNCTION_ARGS)
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_OID(tsql_get_server_collation_oid_internal(false));
+	PG_RETURN_OID(tsql_get_database_or_server_collation_oid_internal(false));
 }
 
 
 Datum
-is_collated_ci_as_internal(PG_FUNCTION_ARGS)
+is_collated_ci_internal(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(tsql_is_collated_ci_as_internal(fcinfo));
+	PG_RETURN_DATUM(tsql_is_collated_ci_internal(fcinfo));
 }
 
 Datum
@@ -200,7 +200,7 @@ transform_funcexpr(Node *node)
 
 				/* text */
 
-				tsql_get_server_collation_oid_internal(true);
+				tsql_get_database_or_server_collation_oid_internal(true);
 
 				if (!OidIsValid(server_collation_oid))
 					return node;
@@ -322,7 +322,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
 
-	tsql_get_server_collation_oid_internal(true);
+	tsql_get_database_or_server_collation_oid_internal(true);
 
 	if (!OidIsValid(server_collation_oid))
 		return node;
@@ -867,7 +867,7 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 {
 	int			collidx_of_cs_as;
 
-	tsql_get_server_collation_oid_internal(true);
+	tsql_get_database_or_server_collation_oid_internal(true);
 
 	if (!OidIsValid(server_collation_oid))
 		return node;
@@ -1159,7 +1159,7 @@ init_and_check_collation_callbacks(void)
 }
 
 Oid
-tsql_get_server_collation_oid_internal(bool missingOk)
+tsql_get_database_or_server_collation_oid_internal(bool missingOk)
 {
 	if (OidIsValid(server_collation_oid) && !is_new_db)
 		return server_collation_oid;
@@ -1167,7 +1167,7 @@ tsql_get_server_collation_oid_internal(bool missingOk)
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	server_collation_oid = (*collation_callbacks_ptr->get_server_collation_oid_internal) (missingOk);
+	server_collation_oid = (*collation_callbacks_ptr->get_database_or_server_collation_oid_internal) (missingOk);
 	return server_collation_oid;
 }
 
@@ -1181,12 +1181,12 @@ tsql_collation_list_internal(PG_FUNCTION_ARGS)
 }
 
 Datum
-tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS)
+tsql_is_collated_ci_internal(PG_FUNCTION_ARGS)
 {
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	return (*collation_callbacks_ptr->is_collated_ci_as_internal) (fcinfo);
+	return (*collation_callbacks_ptr->is_collated_ci_internal) (fcinfo);
 }
 
 Datum
@@ -1217,12 +1217,12 @@ tsql_collationproperty_helper(const char *collationaname, const char *property)
 }
 
 bool
-tsql_is_server_collation_CI_AS(void)
+tsql_is_server_collation_CI(void)
 {
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	return (*collation_callbacks_ptr->is_server_collation_CI_AS) ();
+	return (*collation_callbacks_ptr->is_server_collation_CI) ();
 }
 
 bool
@@ -1321,7 +1321,7 @@ has_ilike_node_and_ci_as_coll(Node *expr)
 			/* Initialize collation callbacks */
 			init_and_check_collation_callbacks();
 			if ((*collation_callbacks_ptr->has_ilike_node) (predicate) &&
-				DatumGetBool(DirectFunctionCall1Coll(tsql_is_collated_ci_as_internal, inputcoll, ObjectIdGetDatum(inputcoll))))
+				DatumGetBool(DirectFunctionCall1Coll(tsql_is_collated_ci_internal, inputcoll, ObjectIdGetDatum(inputcoll))))
 				return true;
 		}
 		else if (IsA(predicate, BoolExpr))
@@ -1642,29 +1642,38 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 }
 
 void
-tsql_set_db_collation()
+tsql_set_db_collation(Oid database_collation_oid)
 {
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	(*collation_callbacks_ptr->set_db_collation) (database_collation_name);
+	(*collation_callbacks_ptr->set_db_collation) (database_collation_oid);
 	return;
 }
 
 void
 set_db_collation_internal(int16 db_id)
 {
-	HeapTuple	tuple;
+	HeapTuple	tuple_sysdb;
 	Form_sysdatabases sysdb;
+	Oid database_collation_oid;
 
-	tuple = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(db_id));
+	Oid nspoid = get_namespace_oid("sys", false);
 
-	if (!HeapTupleIsValid(tuple))
+	tuple_sysdb = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(db_id));
+
+	if (!HeapTupleIsValid(tuple_sysdb))
 		return;
 
-	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
-	database_collation_name = pstrdup(sysdb->default_collation.data);
-	ReleaseSysCache(tuple);
-	tsql_set_db_collation();
+	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple_sysdb));
+
+	database_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP,
+											Anum_pg_collation_oid,
+											NameGetDatum(&sysdb->default_collation),
+											Int32GetDatum(-1),
+											ObjectIdGetDatum(nspoid));
+
+	ReleaseSysCache(tuple_sysdb);
+	tsql_set_db_collation(database_collation_oid);
 }
 

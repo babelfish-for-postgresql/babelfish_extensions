@@ -83,7 +83,7 @@ typedef struct collation_callbacks
 	/* Function pointers set up by the plugin */
 	char	   *(*EncodingConversion) (const char *s, int len, int src_encoding, int dest_encoding, int *encodedByteLen);
 
-	Oid			(*get_server_collation_oid_internal) (bool missingOk);
+	Oid			(*get_database_or_server_collation_oid_internal) (bool missingOk);
 
 	coll_info	(*lookup_collation_table_callback) (Oid oid);
 
@@ -91,7 +91,7 @@ typedef struct collation_callbacks
 
 	Datum		(*collation_list_internal) (PG_FUNCTION_ARGS);
 
-	Datum		(*is_collated_ci_as_internal) (PG_FUNCTION_ARGS);
+	Datum		(*is_collated_ci_internal) (PG_FUNCTION_ARGS);
 
 	Datum		(*is_collated_ai_internal) (PG_FUNCTION_ARGS);
 
@@ -99,7 +99,7 @@ typedef struct collation_callbacks
 
 	bytea	   *(*tdscollationproperty_helper) (const char *collationaname, const char *property);
 
-	bool		(*is_server_collation_CI_AS) (void);
+	bool		(*is_server_collation_CI) (void);
 
 	bool		(*is_valid_server_collation_name) (const char *collationname);
 
@@ -115,27 +115,27 @@ typedef struct collation_callbacks
 
 	const char *(*translate_bbf_collation_to_tsql_collation) (const char *collname);
 
-	void		(*set_db_collation) (const char *collname);
+	void		(*set_db_collation) (Oid db_coll);
 
 } collation_callbacks;
 
 extern int	find_cs_as_collation(int collidx);
 extern int	find_any_collation(const char *collation_name, bool check_for_server_collation_name_guc);
-extern Oid	get_server_collation_oid_internal(bool missingOk);
+extern Oid	get_database_or_server_collation_oid_internal(bool missingOk);
 extern coll_info lookup_collation_table(Oid collid);
 extern int8_t cmp_collation(uint16_t coll1, uint16_t coll2);
-extern bool collation_is_CI_AS(Oid colloid);
+extern bool collation_is_CI(Oid colloid);
 extern bool is_valid_server_collation_name(const char *collname);
 extern Oid	get_tsql_collation_oid(int persist_coll_id);
 extern int	get_persist_collation_id(Oid coll_oid);
 extern int	find_locale(const char *given_locale);
-extern int	get_server_collation_collidx(void);
+extern int	get_database_or_server_collation_collidx(void);
 extern Datum collation_list_internal(PG_FUNCTION_ARGS);
-extern Datum is_collated_ci_as_internal(PG_FUNCTION_ARGS);
+extern Datum is_collated_ci_internal(PG_FUNCTION_ARGS);
 extern Datum is_collated_ai_internal(PG_FUNCTION_ARGS);
 extern int	collationproperty_helper(const char *collationaname, const char *property);
 extern bytea *tdscollationproperty_helper(const char *collationname, const char *property);
-extern bool is_server_collation_CI_AS(void);
+extern bool is_server_collation_CI(void);
 extern int	translate_collation(const char *collation_name, bool check_for_server_collation_name_guc);
 extern int	init_collid_trans_tab_internal(void);
 extern int	init_like_ilike_table_internal(void);
@@ -145,7 +145,7 @@ extern const char *translate_bbf_collation_to_tsql_collation(const char *collnam
 Oid			get_oid_from_collidx(int collidx);
 extern bool has_ilike_node(Node *expr);
 extern Oid	babelfish_define_type_default_collation(Oid typeNamespace);
-extern void	set_db_collation(const char *collname);
+extern void	set_db_collation(Oid db_coll);
 
 extern collation_callbacks *get_collation_callbacks(void);
 

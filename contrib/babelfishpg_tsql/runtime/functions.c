@@ -2022,7 +2022,7 @@ search_partition(PG_FUNCTION_ARGS)
 	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_partition_function_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_func_name));
 	
 	/* Scan using index. */
@@ -2092,7 +2092,7 @@ search_partition(PG_FUNCTION_ARGS)
 								ObjectIdGetDatum(get_namespace_oid("sys", false)));
 
 	cxt.function_oid = cmpfunction_oid;
-	cxt.colloid = tsql_get_server_collation_oid_internal(false);
+	cxt.colloid = tsql_get_database_or_server_collation_oid_internal(false);
 	
 	/* Perform binary search on sorted range values. */
 	result = tsql_bsearch_arg(&arg, range_values, nelems, sizeof(Datum), tsql_compare_values, &cxt);
@@ -2879,7 +2879,7 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	int			i;
 	Oid			sys_varcharoid = get_sys_varcharoid();
-	Oid			colloid = tsql_get_server_collation_oid_internal(false);
+	Oid			colloid = tsql_get_database_or_server_collation_oid_internal(false);
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
