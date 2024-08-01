@@ -936,9 +936,18 @@ public:
 						}
 					}
 				}
-				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE() || id->keyword()->SUBSTRING())
+				if (id->keyword()->TRIM())
 				{
-					size_t startPosition = id->keyword()->start->getStartIndex();
+					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
+				}
+				if (id->keyword()->TRANSLATE())
+				{
+					size_t startPosition = id->keyword()->TRANSLATE()->getSymbol()->getStartIndex();
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
+				}
+				if (id->keyword()->SUBSTRING())
+				{
+					size_t startPosition = id->keyword()->SUBSTRING()->getSymbol()->getStartIndex();
 					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
 				}
 			}

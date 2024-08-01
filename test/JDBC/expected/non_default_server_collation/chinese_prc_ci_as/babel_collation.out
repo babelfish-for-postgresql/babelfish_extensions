@@ -395,32 +395,32 @@ bike
 ~~END~~
 
 ~~START~~
-varchar
+text
 B A R bar B A RBar
 ~~END~~
 
 ~~START~~
-varchar
+text
 empty pattern
 ~~END~~
 
 ~~START~~
-varchar
+text
 <NULL>
 ~~END~~
 
 ~~START~~
-varchar
+text
 <NULL>
 ~~END~~
 
 ~~START~~
-varchar
+text
 bar bar FooBar
 ~~END~~
 
 ~~START~~
-varchar
+text
 nothing to do
 ~~END~~
 

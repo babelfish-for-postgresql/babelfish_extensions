@@ -4364,34 +4364,20 @@ $$
 $$
 LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.replace (input_string sys.VARCHAR, pattern sys.VARCHAR, replacement sys.VARCHAR)
-RETURNS sys.VARCHAR AS
-$BODY$
-BEGIN
-   if PG_CATALOG.length(pattern) = 0 then
+CREATE OR REPLACE FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) returns TEXT as
+$body$
+begin
+   if pattern is null or replacement is null then
+       return null;
+   elsif pattern = '' then
        return input_string;
    elsif sys.is_collated_ci_as(input_string) then
        return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
    else
        return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
    end if;
-END
-$BODY$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
-
-CREATE OR REPLACE FUNCTION sys.replace (input_string sys.NVARCHAR, pattern sys.NVARCHAR, replacement sys.NVARCHAR)
-RETURNS sys.NVARCHAR AS
-$BODY$
-BEGIN
-   if PG_CATALOG.length(pattern) = 0 then
-       return input_string;
-   elsif sys.is_collated_ci_as(input_string) then
-       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
-   else
-       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
-   end if;
-END
-$BODY$
+end
+$body$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
 
 CREATE OR REPLACE FUNCTION objectproperty(

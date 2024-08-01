@@ -470,7 +470,7 @@ host_id
 linked_srv_4229
 BABEL-4175
 sp_who
-BABEL_4330-before-15_8-or-16_4
+BABEL_4330
 kill
 BABEL-4217
 Test_ISNULL
@@ -512,7 +512,6 @@ ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
 left-before-15_8-or-16_4
 right-before-15_8-or-16_4
-replace-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
 BABEL-4815
