@@ -21,6 +21,6 @@ runs:
           sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "update sys.babelfish_sysdatabases set default_collation = 'bbf_unicode_cp1_ci_ai' where name = 'master';"
           sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "select default_collation from sys.babelfish_sysdatabases where name = 'master';"
           # sudo sed -i "s/databaseName = master/databaseName = test_db_collation/g" src/main/resources/config.txt
-          # sudo sed -i "s/databaseCollationName = default/databaseCollationName = bbf_unicode_cp1_ci_ai/g" src/main/resources/config.txt
+          sudo sed -i "s/databaseCollationName = default/databaseCollationName = bbf_unicode_cp1_ci_ai/g" src/main/resources/config.txt
           mvn test
       shell: bash
