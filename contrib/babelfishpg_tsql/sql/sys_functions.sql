@@ -4411,6 +4411,8 @@ $BODY$
 BEGIN
    if PG_CATALOG.length(pattern) = 0 then
        return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
    elsif sys.is_collated_ci_as(input_string) then
        return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
    else
