@@ -1,10 +1,24 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
+-- tsql
+CREATE TABLE babelfish_migration_mode_table (id_num INT IDENTITY(1,1), mig_mode VARCHAR(10))
+GO
+INSERT INTO babelfish_migration_mode_table SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~ROW COUNT: 1~~
+
+
+-- test multi-db mode
+SELECT set_config('role', 'jdbc_user', false);
 GO
 ~~START~~
-bool
-t
+text
+jdbc_user
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
+GO
+~~START~~
+text
+multi-db
 ~~END~~
 
 
@@ -245,12 +259,24 @@ GO
 DROP TABLE t3
 GO
 
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
+SELECT set_config('role', 'jdbc_user', false);
 GO
 ~~START~~
-bool
-t
+text
+jdbc_user
 ~~END~~
 
+
+-- Reset migration mode to default
+DECLARE @mig_mode VARCHAR(10)
+SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_table WHERE id_num = 1)
+SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+Drop Table IF EXISTS babelfish_migration_mode_table
+GO
