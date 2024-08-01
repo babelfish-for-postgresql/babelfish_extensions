@@ -1,3 +1,4 @@
+-- db_collation_expected
 SELECT name, is_nullable, column_id 
 FROM sys.all_columns 
 WHERE name in ('sac_int_col', 'sac_text_col_not_null', 'sac_date_col')
