@@ -58,7 +58,7 @@ static UTransliterator *cached_transliterator = NULL;
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
 static int
-patindex_ai_match_text(char *input_str, char *pattern, Oid cid);
+patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid cid, bool is_cs_ai);
 
 extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 int ptype,
@@ -1408,12 +1408,29 @@ translate_char_pos(const char* str,		/* UTF-8 string */
 }
 
 static int
-icu_compare_utf8_coll(pg_locale_t locale, UChar *uchar1, int32_t ulen1,
-					  UChar *uchar2, int32_t ulen2)
+icu_compare_utf8_coll(UCollator  *coll, UChar *uchar1, int32_t ulen1,
+					  UChar *uchar2, int32_t ulen2, bool is_cs_ai)
 {
-	return ucol_strcoll(locale->info.icu.ucol,
-							uchar1, ulen1,
-							uchar2, ulen2);
+	UErrorCode	status = U_ZERO_ERROR;
+	UCollator   *cloned_coll = ucol_safeClone(coll, NULL, NULL, &status);
+
+	if (U_FAILURE(status))
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("failed to clone collator in icu compare: %s", u_errorName(status))));
+
+	if (is_cs_ai)
+	{
+		ucol_setAttribute(cloned_coll, UCOL_CASE_FIRST, UCOL_OFF, &status);
+		if (U_FAILURE(status))
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("failed to set attribute for ucollator: %s", u_errorName(status))));
+	}
+
+	return ucol_strcoll(cloned_coll,
+						uchar1, ulen1,
+						uchar2, ulen2);
 }
 
 bool
@@ -1475,7 +1492,7 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 							u_errorName(status))));
 
 			/* for CS_AI collations usearch can give false positives so we double check the results here */
-			if (!(is_CS_AI && icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), substr_uchar, substr_ulen) != 0))
+			if (!(is_CS_AI && icu_compare_utf8_coll(mylocale->info.icu.ucol, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), substr_uchar, substr_ulen, false) != 0))
 			{
 				u8_pos = translate_char_pos(VARDATA_ANY(src_text), src_len_utf8,
 										src_uchar, src_ulen, u16_pos,
@@ -1565,7 +1582,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 							u_errorName(status))));
 
 			/* for CS_AI collations usearch can give false positives so we double check the results here */
-			if (is_CS_AI && icu_compare_utf8_coll(mylocale, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), from_uchar, from_ulen) != 0)
+			if (is_CS_AI && icu_compare_utf8_coll(mylocale->info.icu.ucol, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), from_uchar, from_ulen, false) != 0)
 				continue;
 
 			/* reject if overlaps with the last successful match */
@@ -1651,7 +1668,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
  * Only matches if substr is prefix of src_text
  */
 static bool
-icu_find_matched_length(char *src_text, int src_len, char *substr_text, int substr_len, Oid collid, int *matched_len)
+icu_find_matched_length(char *src_text, int src_len, char *substr_text, int substr_len, Oid collid, int *matched_len, bool is_cs_ai)
 {
     pg_locale_t mylocale = 0;
 
@@ -1690,15 +1707,16 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
 
 		/* substr should start matching from the first position in src string */
 		u16_pos = usearch_preceding(usearch, 1, &status);
-		if (!U_FAILURE(status) && u16_pos != USEARCH_DONE)
+		if (!U_FAILURE(status) && u16_pos != USEARCH_DONE && (!is_cs_ai ||
+		    icu_compare_utf8_coll(mylocale->info.icu.ucol, src_uchar, usearch_getMatchedLength(usearch), substr_uchar, substr_len_utf8, false) == 0))
 		{
-			u8_pos = translate_char_pos(VARDATA_ANY(src_text), src_len_utf8,
-										src_uchar, src_ulen, u16_pos,
-										NULL);
+			u8_pos = translate_char_pos(src_text, src_len_utf8,
+										src_uchar, src_ulen,
+										u16_pos, NULL);
 			matched_length_u16 = usearch_getMatchedLength(usearch);
-			u8_endpos = translate_char_pos(VARDATA_ANY(src_text), src_len_utf8,
-										src_uchar, src_ulen, u16_pos + matched_length_u16,
-										NULL);
+			u8_endpos = translate_char_pos(src_text, src_len_utf8,
+										   src_uchar, src_ulen,
+										   u16_pos + matched_length_u16, NULL);
 			*matched_len = u8_endpos - u8_pos;
 		}
 		else
@@ -1720,18 +1738,19 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
 }
 
 static int
-patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
+patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid cid, bool is_cs_ai)
 {
 	bool start_offset = false;
 	int  itr = 0;
+
+	if (pattern == NULL || strlen(pattern) == 0)
+		return 0;
 
 	while (*pattern == '%')
 	{
 		pattern++;
 		start_offset = true;
 	}
-	if (strlen(pattern) == 0)
-		return 1;
 
 	while (*input_str != '\0')
 	{
@@ -1747,7 +1766,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 		{
 			if (*p == '%')
 			{
-				if (patindex_ai_match_text(t, p, cid))
+				if (patindex_ai_match_text(mylocale, t, p, cid, is_cs_ai))
 					return itr;
 				else
 					return 0;
@@ -1786,11 +1805,18 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 					}
 					if (*p == '-' && prev)
 					{
+						UChar *t_uchar, *p_uchar, *prev_uchar;
+						int32_t t_ulen, prev_ulen, p_ulen;
 						NextChar(p, plen);
 						Assert(cid != InvalidOid);
-						if (varstr_cmp(t, pg_mblen(t), prev, pg_mblen(prev), cid) >= 0 && varstr_cmp(t, pg_mblen(t), p, pg_mblen(p), cid) <= 0)
+						t_ulen = icu_to_uchar(&t_uchar, t, pg_mblen(t));
+						prev_ulen = icu_to_uchar(&prev_uchar, prev, pg_mblen(prev));
+						p_ulen = icu_to_uchar(&p_uchar, p, pg_mblen(p));
+
+						if (icu_compare_utf8_coll(mylocale->info.icu.ucol, t_uchar, t_ulen, prev_uchar, prev_ulen, is_cs_ai) >=0 &&
+						    icu_compare_utf8_coll(mylocale->info.icu.ucol, t_uchar, t_ulen, p_uchar, p_ulen, is_cs_ai) <=0)
 						{
-							find_match = true;
+							find_match = true; 
 						}
 						prev = NULL;
 						NextChar(p, plen);
@@ -1838,7 +1864,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 				{
 					NextChar(p, plen);
 				}
-				if (icu_find_matched_length(t, strlen(t), p_start, len-plen, cid, &matched_len))
+				if (icu_find_matched_length(t, strlen(t), p_start, len-plen, cid, &matched_len, is_cs_ai))
 				{
 					while (matched_len--)
 						NextChar(t, tlen);
@@ -1865,7 +1891,7 @@ patindex_ai_match_text(char *input_str, char *pattern, Oid cid)
 		*/
 		while (plen > 0 && *p == '%')
 			NextChar(p, plen);
-		if (tlen == 0 && plen <= 0 && !match_failed)
+		if (plen <= 0 && !match_failed)
 			return itr;
 
 		if (start_offset)
@@ -1881,12 +1907,27 @@ PG_FUNCTION_INFO_V1(patindex_ai_collations);
 Datum
 patindex_ai_collations(PG_FUNCTION_ARGS)
 {
+	pg_locale_t  mylocale = 0;
 	char         *pattern = text_to_cstring(PG_GETARG_TEXT_P(0));
 	char         *input_str = text_to_cstring(PG_GETARG_TEXT_P(1));
 	Oid          cid = PG_GET_COLLATION();
-	int 		 result;
+	int 		 result = 0;
+	bool		 is_CS_AI = false;
+	coll_info_t  coll_info_of_inputcollid = tsql_lookup_collation_table_internal(cid);
 
-	result = patindex_ai_match_text(input_str, pattern, cid);
+	if (OidIsValid(coll_info_of_inputcollid.oid) &&
+		coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
+	{
+		is_CS_AI = true;
+	}
+
+	if (!lc_collate_is_c(cid))
+	{
+		mylocale = pg_newlocale_from_collation(cid);
+		
+		if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
+			result = patindex_ai_match_text(mylocale, input_str, pattern, cid, is_CS_AI);
+	}
 
 	pfree(input_str);
 	pfree(pattern);
