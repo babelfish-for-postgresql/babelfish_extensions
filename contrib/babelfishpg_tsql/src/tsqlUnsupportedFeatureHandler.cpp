@@ -1759,7 +1759,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 	if (grant->permission_object())
 	{
 		auto perm_obj = grant->permission_object();
-		auto obj_type = perm_obj->object_type();
+		auto obj_type = perm_obj->permission_object_type();
 		if (obj_type && obj_type->SCHEMA())
 		{
 			if (grant->ALL())
@@ -1860,7 +1860,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 	if (revoke->permission_object())
 	{
 		auto perm_obj = revoke->permission_object();
-		auto obj_type = perm_obj->object_type();
+		auto obj_type = perm_obj->permission_object_type();
 		if (obj_type && obj_type->SCHEMA())
 		{
 			if (revoke->ALL())

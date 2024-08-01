@@ -220,14 +220,14 @@ GRANT SELECT ON table::t1 TO guest; -- unsupported object
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GRANT ON TABLE' is not currently supported in Babelfish)~~
+~~ERROR (Message: syntax error near 'table' at line 1 and character position 16)~~
 
 
 REVOKE SELECT ON table::t1 FROM guest; -- unsupported object
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'REVOKE ON TABLE' is not currently supported in Babelfish)~~
+~~ERROR (Message: syntax error near 'table' at line 1 and character position 17)~~
 
 
 GRANT ALL ON OBJECT::t1 TO guest WITH GRANT OPTION AS superuser;
@@ -254,6 +254,519 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'REVOKE AS' is not currently supported in Babelfish)~~
+
+
+
+---
+---  Check for supported and unsupported GRANT syntax
+---
+GRANT EXECUTE ON APPLICATION ROLE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON APPLICATIONROLE' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON ASSEMBLY::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON ASSEMBLY' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON ASYMMETRIC KEY::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON ASYMMETRICKEY' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON AVAILABILITY GROUP::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON AVAILABILITYGROUP' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON CERTIFICATE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON CERTIFICATE' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON CONTRACT::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON CONTRACT' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON DATABASE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON DATABASE' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON DATABASE SCOPED CREDENTIAL::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON DATABASESCOPEDCREDENTIAL' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON ENDPOINT::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON ENDPOINT' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON FULLTEXT CATALOG::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON FULLTEXTCATALOG' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON FULLTEXT STOPLIST::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON FULLTEXTSTOPLIST' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON LOGIN::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON LOGIN' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON MESSAGE TYPE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON MESSAGETYPE' is not currently supported in Babelfish)~~
+
+
+GRANT SELECT ON OBJECT::t1 TO public;
+GO
+
+GRANT EXECUTE ON REMOTE SERVICE BINDING::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON REMOTESERVICEBINDING' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON ROLE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON ROLE' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON ROUTE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON ROUTE' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON SCHEMA::scm TO public;
+GO
+
+GRANT EXECUTE ON SEARCH PROPERTY LIST::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON SEARCHPROPERTYLIST' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON SERVER ROLE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON SERVERROLE' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON SERVICE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON SERVICE' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON SYMMETRIC KEY::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON SYMMETRICKEY' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON TYPE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON TYPE' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON USER::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GRANT ON USER' is not currently supported in Babelfish)~~
+
+
+GRANT EXECUTE ON XML SCHEMA COLLECTION::scm TO public;
+GO
+
+
+---
+---  Check for supported and unsupported REVOKE syntax
+---
+REVOKE EXECUTE ON APPLICATION ROLE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON APPLICATIONROLE' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON ASSEMBLY::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON ASSEMBLY' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON ASYMMETRIC KEY::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON ASYMMETRICKEY' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON AVAILABILITY GROUP::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON AVAILABILITYGROUP' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON CERTIFICATE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON CERTIFICATE' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON CONTRACT::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON CONTRACT' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON DATABASE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON DATABASE' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON DATABASE SCOPED CREDENTIAL::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON DATABASESCOPEDCREDENTIAL' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON ENDPOINT::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON ENDPOINT' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON FULLTEXT CATALOG::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON FULLTEXTCATALOG' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON FULLTEXT STOPLIST::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON FULLTEXTSTOPLIST' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON LOGIN::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON LOGIN' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON MESSAGE TYPE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON MESSAGETYPE' is not currently supported in Babelfish)~~
+
+
+REVOKE SELECT ON OBJECT::t1 TO public;
+GO
+
+REVOKE EXECUTE ON REMOTE SERVICE BINDING::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON REMOTESERVICEBINDING' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON ROLE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON ROLE' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON ROUTE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON ROUTE' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON SCHEMA::scm TO public;
+GO
+
+REVOKE EXECUTE ON SEARCH PROPERTY LIST::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON SEARCHPROPERTYLIST' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON SERVER ROLE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON SERVERROLE' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON SERVICE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON SERVICE' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON SYMMETRIC KEY::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON SYMMETRICKEY' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON TYPE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON TYPE' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON USER::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'REVOKE ON USER' is not currently supported in Babelfish)~~
+
+
+REVOKE EXECUTE ON XML SCHEMA COLLECTION::scm TO public;
+GO
+
+
+---
+---  Check for supported and unsupported DENY syntax
+---
+DENY EXECUTE ON APPLICATION ROLE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON ASSEMBLY::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON ASYMMETRIC KEY::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON AVAILABILITY GROUP::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON CERTIFICATE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON CONTRACT::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON DATABASE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON DATABASE SCOPED CREDENTIAL::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON ENDPOINT::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON FULLTEXT CATALOG::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON FULLTEXT STOPLIST::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON LOGIN::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON MESSAGE TYPE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY SELECT ON OBJECT::t1 TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON REMOTE SERVICE BINDING::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON ROLE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON ROUTE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON SCHEMA::scm TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON SEARCH PROPERTY LIST::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON SERVER ROLE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON SERVICE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON SYMMETRIC KEY::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON TYPE::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON USER::test TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
+
+
+DENY EXECUTE ON XML SCHEMA COLLECTION::scm TO public;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DENY' is not currently supported in Babelfish)~~
 
 
 
