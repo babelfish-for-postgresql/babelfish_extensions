@@ -1545,13 +1545,13 @@ GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
 SELECT DISTINCT
-CAST(TABLE_QUALIFIER AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(TABLE_QUALIFIER AS sys.sysname) COLLATE sys.database_default AS TABLE_QUALIFIER,
 CAST(TABLE_OWNER AS sys.sysname) AS TABLE_OWNER,
-CAST(TABLE_NAME AS sys.sysname) AS TABLE_NAME,
+CAST(TABLE_NAME AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
 CAST(GRANTOR AS sys.sysname) AS GRANTOR,
 CAST(GRANTEE AS sys.sysname) AS GRANTEE,
-CAST(PRIVILEGE AS sys.sysname) AS PRIVILEGE,
-CAST(IS_GRANTABLE AS sys.sysname) AS IS_GRANTABLE
+CAST(PRIVILEGE AS sys.sysname) COLLATE sys.database_default AS PRIVILEGE,
+CAST(IS_GRANTABLE AS sys.sysname) COLLATE sys.database_default AS IS_GRANTABLE
 FROM sys.sp_column_privileges_view
 
 UNION 
