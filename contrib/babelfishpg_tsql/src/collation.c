@@ -8,6 +8,7 @@
 #include "utils/syscache.h"
 #include "utils/memutils.h"
 #include "utils/builtins.h"
+#include "utils/varlena.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_collation.h"
 #include "catalog/namespace.h"
@@ -18,7 +19,6 @@
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
-#include "utils/varlena.h"
 #ifdef USE_ICU
 #include <unicode/utrans.h>
 #include "utils/removeaccent.map"
@@ -1813,8 +1813,8 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 						prev_ulen = icu_to_uchar(&prev_uchar, prev, pg_mblen(prev));
 						p_ulen = icu_to_uchar(&p_uchar, p, pg_mblen(p));
 
-						if (icu_compare_utf8_coll(mylocale->info.icu.ucol, t_uchar, t_ulen, prev_uchar, prev_ulen, is_cs_ai) >=0 &&
-						    icu_compare_utf8_coll(mylocale->info.icu.ucol, t_uchar, t_ulen, p_uchar, p_ulen, is_cs_ai) <=0)
+						if (icu_compare_utf8_coll(mylocale->info.icu.ucol, t_uchar, t_ulen, prev_uchar, prev_ulen, is_cs_ai) >= 0 &&
+						    icu_compare_utf8_coll(mylocale->info.icu.ucol, t_uchar, t_ulen, p_uchar, p_ulen, is_cs_ai) <= 0)
 						{
 							find_match = true; 
 						}
