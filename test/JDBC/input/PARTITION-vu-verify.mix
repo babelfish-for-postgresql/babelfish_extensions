@@ -1431,3 +1431,238 @@ GO
 
 SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
 GO
+
+-- tsql
+----------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION name identifiers tests
+----------------------------------------------------------
+SET QUOTED_IDENTIFIER ON;
+GO
+
+SELECT $PARTITION."IntPartitionFunction" (100)
+GO
+
+SELECT $PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+
+SELECT "master".$PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+
+SELECT $PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+
+SELECT [master].$PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+
+SELECT $PARTITION.[IntPartitionFunction] (100)
+GO
+
+SELECT [master].$PARTITION.[IntPartitionFunction] (100)
+GO
+
+SELECT $PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+
+SELECT master.$PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+
+------------------------------------------
+--- DOLLAR PARTITION FUNCTION Negative test
+------------------------------------------
+-- explicit NULL value test
+SELECT $PARTITION.IntPartitionFunction(NULL)
+GO
+
+SELECT master.$PARTITION.IntPartitionFunction(NULL)
+GO
+
+-- variable as NULL value
+declare @var int = NULL
+SELECT $PARTITION.IntPartitionFunction(@var)
+GO
+
+-- non-existent database
+SELECT NonExistentDatabase.$PARTITION.IntPartitionFunction(10)
+GO
+
+-- error during implicit Conversion of values to partition function parameter type
+SELECT $PARTITION.IntPartitionFunction('xyz')
+GO
+
+-- using query 
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+---------------------------------------------------------------------
+--- Test for all the Supported Datatypes for Dollar Partition Function
+---------------------------------------------------------------------
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_int_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.BigIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_bigint_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.SmallIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallint_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.TinyIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_tinyint_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.DecimalPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_decimal_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.NumericPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_numeric_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.MoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_money_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.SmallMoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallmoney_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.DatePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_date_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.DateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.DateTime2PartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime2_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.SmallDateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smalldatetime_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.CharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_char_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.VarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.NVarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nvarchar_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.NCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nchar_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.BinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_binary_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.VarBinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varbinary_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.UniqueIdentifierPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_uniqueidentifier_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.SqlVariantPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_sqlvariant_table
+ORDER BY PartitionNumber, Id;
+GO
+
+----------------------------------------------
+--- DOLLAR PARTITION FUNCTION Dependency test
+----------------------------------------------
+-- non-null test
+SELECT * FROM DollarPartitionFunctionView
+GO
+
+EXEC DollarPartitionFunctionProc
+GO
+
+SELECT * FROM DollarPartitionFunctionFunc()
+GO
+
+-- null test
+SELECT * FROM DollarPartitionFunctionNullView
+GO
+
+EXEC DollarPartitionFunctionNullProc
+GO
+
+SELECT * FROM DollarPartitionFunctionNullFunc()
+GO
+
+SELECT * FROM SysSearchPartitionDepView
+GO
+
+SELECT * FROM SysSearchPartitionNULLDepView
+GO
+------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION Cross Database test
+------------------------------------------------------
+-- in current database with explicity lookup
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+
+-- use different database
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+
+-- test using guest login
+CREATE LOGIN partition_l2 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER partition_u2 FOR LOGIN partition_l2;
+GO
+
+-- tsql  user=partition_l2 password=12345678 database=partitiondb
+SELECT CURRENT_USER
+GO
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+
+-- tsql
+USE PartitionDb;
+GO
+
+DROP USER partition_u2
+GO

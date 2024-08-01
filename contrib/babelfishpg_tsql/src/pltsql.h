@@ -1872,6 +1872,8 @@ typedef struct tsql_compare_context
 	bool contains_duplicate; /* true if the array contains duplicate values */
 } tsql_compare_context;
 
+extern int tsql_compare_values(const void *a, const void *b, void *arg);
+
 extern tsql_identity_insert_fields tsql_identity_insert;
 extern check_lang_as_clause_hook_type check_lang_as_clause_hook;
 extern write_stored_proc_probin_hook_type write_stored_proc_probin_hook;
@@ -2271,7 +2273,7 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 /*
  * Functions in pltsql_coerce.c
  */
-extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, Oid *input_typeids);
+extern bool validate_special_function(char *proc_nsname, char *proc_name,  List* fargs, int nargs, Oid *input_typeids);
 extern void init_special_function_list(void);
 
 #endif							/* PLTSQL_H */
