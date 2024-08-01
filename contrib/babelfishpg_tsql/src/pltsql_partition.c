@@ -93,7 +93,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	if (stmt->relation->relpersistence == RELPERSISTENCE_TEMP)
 		ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Creation of tempopary partitioned tables is not supported in Babelfish.")));
+					 errmsg("Creation of temporary partitioned tables is not supported in Babelfish.")));
 	
 	/*
 	 * Get partition function name for the provided partition scheme,
@@ -465,8 +465,7 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 		form = RelationGetForm(relation);
 		relname = RelationGetRelationName(relation);
 
-		
-		/* Skip if table is neither a permanent table nor a partition/partitioned table. */
+		/* Proceed further only for permanent and partition/partitioned table. */
 		if ((!(form->relkind == RELKIND_PARTITIONED_TABLE || form->relispartition)
 			|| form->relpersistence != RELPERSISTENCE_PERMANENT))
 		{
