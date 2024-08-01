@@ -1,3 +1,4 @@
+-- db_collation_expected
 -- parallel_query_expected
 -- nvarchar is not supported in PG
 create table testing1(col nvarchar(60)); -- expect this to fail in the Postgres dialect
@@ -130,7 +131,7 @@ select c1 from testing4 where c1 LIKE concat('_on','_s');
 GO
 select c1 from testing4 where c1 LIKE concat('a','%d');
 GO
-select c1 from testing4 where c1 NOT LIKE lower('%s');
+select c1 from testing4 where c1 NOT LIKE lower('%s') COLLATE sql_latin1_general_cp1_ci_as;
 GO
 -- test sub-queries
 Select * from testing4 where c1 LIKE (select c1 from testing4 where c1 LIKE 'AbcD');

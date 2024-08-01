@@ -1,3 +1,4 @@
+-- db_collation_expected
 SELECT * FROM babelfish_sysdatabases_vu_prepare_view
 GO
 
