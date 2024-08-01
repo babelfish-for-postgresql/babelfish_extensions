@@ -1,4 +1,3 @@
--- db_collation_expected
 SELECT name 
 ,compatibility_level
 ,collation_name
@@ -85,3 +84,8 @@ SELECT name
 FROM sys.databases 
 WHERE name = 'sys_databases_vu_db1';
 GO
+~~START~~
+varchar#!#tinyint#!#varchar#!#nvarchar#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#tinyint#!#nvarchar#!#bit#!#bit#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#uniqueidentifier#!#bit#!#tinyint#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#uniqueidentifier#!#uniqueidentifier#!#int#!#smallint#!#nvarchar#!#int#!#nvarchar#!#bit#!#bit#!#smallint#!#tinyint#!#nvarchar#!#int#!#int#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#nvarchar#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit
+sys_databases_vu_db1#!#120#!#bbf_unicode_cp1_ci_ai#!#Not Applicable#!#0#!#MULTI_USER#!#0#!#0#!#0#!#0#!#ONLINE#!#0#!#0#!#1#!#ON#!#1#!#1#!#FULL#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#NOTHING#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#NONE#!#0#!#0#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#0#!#Not Applicable#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#0
+~~END~~
+
