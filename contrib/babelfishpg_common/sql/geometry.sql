@@ -341,7 +341,7 @@ CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOMETRY)
 CREATE OR REPLACE FUNCTION sys.STArea(sys.GEOMETRY)
 	RETURNS float8
 	AS '$libdir/postgis-3','ST_Area'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOMETRY)
 	RETURNS integer
@@ -350,53 +350,41 @@ CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT
-    AS $$
-    DECLARE
-		srid1 integer;
-		srid2 integer;
-		Equals_result integer;
+	AS $$
 	BEGIN
-		srid1 := STSrid(geom1);
-		srid2 := STSrid(geom2);
-		IF srid1 != srid2 THEN
+		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
 		ELSE
 			Return sys.STEquals_helper($1,$2);
 		END IF;
 	END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT
-    AS $$
-    DECLARE
-		srid1 integer;
-		srid2 integer;
-		Compare_result integer;
+	AS $$
 	BEGIN
-		srid1 := STSrid(geom1);
-		srid2 := STSrid(geom2);
-		IF srid1 != srid2 THEN
+		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
 		ELSE
 			Return sys.STContains_helper($1,$2);
 		END IF;
 	END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ST_Equals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
 	RETURNS boolean
-    AS $$
-    DECLARE
-        Result integer;
-    BEGIN
-	    Result := STEquals(leftarg,rightarg);
-        IF Result IS NULL THEN
+	AS $$
+	DECLARE
+		Result integer;
+	BEGIN
+		Result := STEquals(leftarg,rightarg);
+		IF Result IS NULL THEN
 			RETURN false;
 		END IF;
 		RETURN Result;
-    END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.= (
     LEFTARG = sys.GEOMETRY,
@@ -409,16 +397,16 @@ CREATE OPERATOR sys.= (
 CREATE OR REPLACE FUNCTION sys.ST_NotEquals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
 	RETURNS boolean
 	AS $$
-    DECLARE
-        Result integer;
-    BEGIN
+	DECLARE
+		Result integer;
+	BEGIN
 		Result := STEquals(leftarg,rightarg);
-        IF Result IS NULL THEN
+		IF Result IS NULL THEN
 			RETURN true;
 		END IF;
 		RETURN 1 - Result;
-    END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.<> (
     LEFTARG = sys.GEOMETRY,

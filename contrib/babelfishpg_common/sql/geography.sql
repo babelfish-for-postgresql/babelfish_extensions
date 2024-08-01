@@ -445,7 +445,7 @@ CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOGRAPHY)
 CREATE OR REPLACE FUNCTION sys.STArea(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','ST_Area'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOGRAPHY)
 	RETURNS integer
@@ -454,53 +454,41 @@ CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOGRAPHY)
 
 CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
-    AS $$
-    DECLARE
-		srid1 integer;
-		srid2 integer;
-		Equals_result integer;
+	AS $$
 	BEGIN
-		srid1 := STSrid(geom1);
-		srid2 := STSrid(geom2);
-		IF srid1 != srid2 THEN
+		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
 		ELSE
 			Return sys.STEquals_helper($1,$2);
 		END IF;
 	END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
-    AS $$
-    DECLARE
-		srid1 integer;
-		srid2 integer;
-		Compare_result integer;
+	AS $$
 	BEGIN
-		srid1 := STSrid(geom1);
-		srid2 := STSrid(geom2);
-		IF srid1 != srid2 THEN
+		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
 		ELSE
 			Return sys.STContains_helper($1,$2);
 		END IF;
 	END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE  OR REPLACE FUNCTION sys.ST_Equals(leftarg sys.GEOGRAPHY, rightarg sys.GEOGRAPHY)
-    RETURNS boolean
-    AS $$
-    DECLARE
-        Result integer;
-    BEGIN
-	    Result := STEquals(leftarg,rightarg);
-        IF Result IS NULL THEN
+	RETURNS boolean
+	AS $$
+	DECLARE
+		Result integer;
+	BEGIN
+		Result := STEquals(leftarg,rightarg);
+		IF Result IS NULL THEN
 			RETURN false;
 		END IF;
 		RETURN Result;
-    END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.= (
     LEFTARG = sys.GEOGRAPHY,
@@ -513,16 +501,16 @@ CREATE OPERATOR sys.= (
 CREATE OR REPLACE FUNCTION sys.ST_NotEquals(leftarg sys.GEOGRAPHY, rightarg sys.GEOGRAPHY)
 	RETURNS boolean
 	AS $$
-    DECLARE
-        Result integer;
-    BEGIN
+	DECLARE
+		Result integer;
+	BEGIN
 		Result := STEquals(leftarg,rightarg);
-        IF Result IS NULL THEN
+		IF Result IS NULL THEN
 			RETURN true;
 		END IF;
 		RETURN 1 - Result;
-    END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.<> (
     LEFTARG = sys.GEOGRAPHY,
@@ -562,12 +550,12 @@ CREATE OR REPLACE FUNCTION sys.ST_Transform(sys.GEOGRAPHY, integer)
 CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
 	AS '$libdir/postgis-3','ST_Equals'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STContains_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
 	AS '$libdir/postgis-3','within'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.stgeogfromtext_helper(text, integer)
 	RETURNS sys.GEOGRAPHY
