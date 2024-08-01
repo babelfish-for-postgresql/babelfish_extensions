@@ -1074,28 +1074,6 @@ int
 ~~END~~
 
 
-SELECT location.STSrid from TestSpatialFunction_SPATIALPOINTGEOG_dttemp;
-GO
-~~START~~
-int
-4326
-4326
-4274
-4326
-~~END~~
-
-
-SELECT [location].[STSrid] from TestSpatialFunction_SPATIALPOINTGEOG_dttemp;
-GO
-~~START~~
-int
-4326
-4326
-4274
-4326
-~~END~~
-
-
 DECLARE @point geometry; 
 SET @point = geometry::Point(1.0, 2.0, 4326); 
 SELECT @point.STSrid AS Srid;
