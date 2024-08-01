@@ -1,0 +1,1269 @@
+-- NULL
+SELECT substring(NULL, 2, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+SELECT substring(CAST(NULL AS int), 2, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type int is invalid for argument 1 of substring function.)~~
+
+
+SELECT substring(CAST(NULL AS varbinary), 2, 1)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+SELECT substring(CAST(NULL AS decimal), 2, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type decimal is invalid for argument 1 of substring function.)~~
+
+
+SELECT substring('abc', NULL, 1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT substring('abc', CAST(NULL AS text), 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type text is invalid for argument 2 of substring function.)~~
+
+
+SELECT substring('abc', CAST(NULL AS varchar), 1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT substring('abc', CAST(NULL AS int), 1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT substring('abc', 2, NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT substring('abc', 2, CAST(NULL AS text))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type text is invalid for argument 3 of substring function.)~~
+
+
+SELECT substring('abc', 2, CAST(NULL AS varchar))
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT substring('abc', 2, CAST(NULL AS int))
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT substring(NULL, 2, NULL)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+SELECT substring('abc', NULL, NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT substring(NULL, NULL, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+SELECT substring(NULL, NULL, NULL)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+-- Different no. of arguments
+SELECT substring('abc', 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The sys.substring function requires 3 arguments)~~
+
+
+SELECT substring('abc', 1, 1, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The sys.substring function requires 3 arguments)~~
+
+
+-- edge case values for second parameter
+SELECT substring('AbdefGhi', 0, 1)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SELECT '|' + substring('AbdefGhi', -1, 1) + '|'
+GO
+~~START~~
+varchar
+||
+~~END~~
+
+
+SELECT substring('AbdefGhi', 1, 1)
+GO
+~~START~~
+varchar
+A
+~~END~~
+
+
+SELECT substring('AbdefGhi', 8, 1)
+GO
+~~START~~
+varchar
+i
+~~END~~
+
+
+SELECT substring('AbdefGhi', 9, 1)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SELECT substring('AbdefGhi', 2147483648, 1)
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- edge case values for third parameter
+SELECT substring('AbdefGhi', 1, 0)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SELECT substring('AbdefGhi', 8, 0)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SELECT substring('AbdefGhi', 1, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+
+SELECT substring('AbdefGhi', 8, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+
+SELECT substring('AbdefGhi', 2, 9)
+GO
+~~START~~
+varchar
+bdefGhi
+~~END~~
+
+
+SELECT substring('AbdefGhi', 2, 2147483648)
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- input type char
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+varchar
+?d
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+varchar
+ 
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+varchar
+bc?defghi??    
+~~END~~
+
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+varchar
+ 
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+varchar
+尔·拉莫斯          
+~~END~~
+
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 4, 2) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 0, 1) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 13, 1) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+ 
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 2, -1) COLLATE CHINESE_PRC_CI_AS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 2, 15) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+尔·拉莫斯          
+~~END~~
+
+
+-- input type varchar
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+varchar
+?d
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+varchar
+bc?defghi??
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+varchar
+尔·拉莫斯
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 4, 2) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 0, 1) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 13, 1) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT substring(@inputString, 2, -1) COLLATE CHINESE_PRC_CI_AS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯' 
+SELECT substring(@inputString, 2, 15) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+尔·拉莫斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT substring(a, 4, 2) FROM babel_3658_substring_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+
+SELECT substring(a, 4, 2) COLLATE CHINESE_PRC_CI_AS FROM babel_3658_substring_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT substring(a, 4, 2) FROM babel_3658_substring_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+
+SELECT substring(a, 4, 2) COLLATE CHINESE_PRC_CS_AS FROM babel_3658_substring_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT substring(a, 4, 2) FROM babel_3658_substring_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+
+SELECT substring(a, 4, 2) COLLATE CHINESE_PRC_CI_AI FROM babel_3658_substring_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+拉莫
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT substring(a, 4, 2) FROM babel_3658_substring_arabic_ci_as
+GO
+~~START~~
+varchar
+ه 
+~~END~~
+
+
+SELECT substring(a, 4, 2) COLLATE ARABIC_CI_AS FROM babel_3658_substring_arabic_ci_as
+GO
+~~START~~
+varchar
+ه 
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT substring(a, 4, 2) FROM babel_3658_substring_arabic_cs_as
+GO
+~~START~~
+varchar
+ه 
+~~END~~
+
+
+SELECT substring(a, 4, 2) COLLATE ARABIC_CS_AS FROM babel_3658_substring_arabic_cs_as
+GO
+~~START~~
+varchar
+ه 
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT substring(a, 4, 2) FROM babel_3658_substring_arabic_ci_ai
+GO
+~~START~~
+varchar
+ه 
+~~END~~
+
+
+SELECT substring(a, 4, 2) COLLATE ARABIC_CI_AI FROM babel_3658_substring_arabic_ci_ai
+GO
+~~START~~
+varchar
+ه 
+~~END~~
+
+
+-- input type nchar
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+nvarchar
+?d
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+nvarchar
+ 
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+nvarchar
+bc?defghi??    
+~~END~~
+
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+nvarchar
+拉莫
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+nvarchar
+ 
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+nvarchar
+尔·拉莫斯          
+~~END~~
+
+
+-- with table column of type nchar
+SELECT substring(a, 4, 2) FROM babel_3658_substring_t1 
+GO
+~~START~~
+nvarchar
+🙂d
+拉莫
+~~END~~
+
+
+-- input type nvarchar
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+nvarchar
+🙂d
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+nvarchar
+bc🙂defghi🙂🙂
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+nvarchar
+拉莫
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+nvarchar
+尔·拉莫斯
+~~END~~
+
+
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+varbinary
+6465
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+varbinary
+
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+varbinary
+
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+varbinary
+626364656667680000
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 4, 2)
+GO
+~~START~~
+varbinary
+6465
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 0, 1)
+GO
+~~START~~
+varbinary
+
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 13, 1)
+GO
+~~START~~
+varbinary
+
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 2, -1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT substring(@inputString, 2, 15)
+GO
+~~START~~
+varbinary
+62636465666768
+~~END~~
+
+
+SELECT substring(0x0a0b0c, 1,2), substring(0x0a0b0c,2,1)
+GO
+~~START~~
+varbinary#!#varbinary
+0A0B#!#0B
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_3658_substring_dep_view
+GO
+~~START~~
+nvarchar
+🙂
+~~END~~
+
+
+EXEC babel_3658_substring_dep_proc
+GO
+~~START~~
+nvarchar
+🙂
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_dep_func()
+GO
+~~START~~
+nvarchar
+🙂
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_itvf_func()
+GO
+~~START~~
+nvarchar
+🙂
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_dep_view_1
+GO
+~~START~~
+nvarchar
+🙂
+拉
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_dep_view_2
+GO
+~~START~~
+nvarchar
+🙂
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_dep_view_3
+GO
+~~START~~
+varchar
+d
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_dep_view_4
+GO
+~~START~~
+varchar
+d
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_dep_view_5
+GO
+~~START~~
+varbinary
+62
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_dep_view_6
+GO
+~~START~~
+varchar
+?
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_dep_view_7
+GO
+~~START~~
+nvarchar
+🙂
+~~END~~
+
+
+SELECT * FROM babel_3658_substring_dep_view_8
+GO
+~~START~~
+varbinary
+62
+~~END~~
+
+
+-- input type UDT
+-- in table babel_3658_substring_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT substring(a, 4, 2) FROM babel_3658_substring_UDT
+GO
+~~START~~
+varbinary
+6465
+~~END~~
+
+
+SELECT substring(b, 4, 2) FROM babel_3658_substring_UDT
+GO
+~~START~~
+varchar
+de
+~~END~~
+
+
+-- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+DECLARE @inputString date = '2016-12-21';
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type date is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetime is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type time is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString decimal = 123456;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type decimal is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString numeric = 12345.12;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString float = 12345.1;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type float is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString real = 12345.1;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type real is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString bigint = 12345678;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type bigint is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString int = 12345678;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type int is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString smallint = 12356;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smallint is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString tinyint = 235;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString money = 12356;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type money is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString smallmoney = 12356;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString bit = 1;
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type bit is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of substring function.)~~
+
+
+SELECT substring(a, 4, 2) from babel_3658_substring_image;
+GO
+~~START~~
+varbinary
+3631
+~~END~~
+
+SELECT substring(a, 0, 1) from babel_3658_substring_image;
+GO
+~~START~~
+varbinary
+
+~~END~~
+
+SELECT substring(a, 13, 1) from babel_3658_substring_image;
+GO
+~~START~~
+varbinary
+36
+~~END~~
+
+SELECT substring(a, 2, -1) from babel_3658_substring_image;
+GO
+~~START~~
+varbinary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+SELECT substring(a, 2, 15) from babel_3658_substring_image;
+GO
+~~START~~
+varbinary
+463936313946462D384238362D4430
+~~END~~
+
+
+-- input datatype text
+SELECT substring(a, 4, 2) FROM babel_3658_substring_text
+GO
+~~START~~
+varchar
+?d
+~~END~~
+
+SELECT substring(a, 0, 1) from babel_3658_substring_text;
+GO
+~~START~~
+varchar
+
+~~END~~
+
+SELECT substring(a, 13, 1) from babel_3658_substring_text;
+GO
+~~START~~
+varchar
+
+~~END~~
+
+SELECT substring(a, 2, -1) from babel_3658_substring_text;
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+SELECT substring(a, 2, 15) from babel_3658_substring_text;
+GO
+~~START~~
+varchar
+bc?defghi??
+~~END~~
+
+
+-- input datatype ntext
+SELECT substring(b, 4, 2) FROM babel_3658_substring_text
+GO
+~~START~~
+nvarchar
+🙂d
+~~END~~
+
+SELECT substring(b, 0, 1) from babel_3658_substring_text;
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+SELECT substring(b, 13, 1) from babel_3658_substring_text;
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+SELECT substring(b, 2, -1) from babel_3658_substring_text;
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+SELECT substring(b, 2, 15) from babel_3658_substring_text;
+GO
+~~START~~
+nvarchar
+bc🙂defghi🙂🙂
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geometry is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT substring(@inputString, 4, 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type geography is invalid for argument 1 of substring function.)~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT substring(CAST(@inputString AS VARCHAR(50)), 4, 1)
+GO
+~~START~~
+varchar
+6
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT substring(CAST(@inputString AS VARCHAR(50)), 4, 1)
+GO
+~~START~~
+varchar
+d
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT substring(CAST(@inputString AS VARCHAR(50)), 4, 1)
+GO
+~~START~~
+varchar
+N
+~~END~~
+

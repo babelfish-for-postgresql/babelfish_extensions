@@ -1,0 +1,44 @@
+-- tsql
+-- Insert all possible UNICODE/UTF-8 valid characters
+CREATE TABLE all_utf8_chars(col1 BYTEA, col2 TEXT)
+GO
+
+-- psql
+DO $$
+DECLARE
+    cnt INT:= 1;
+    var TEXT;
+BEGIN
+    WHILE cnt <= 1114112 LOOP
+        BEGIN
+            var := chr(cnt);
+            IF var <> '\' THEN
+                INSERT INTO master_dbo.all_utf8_chars VALUES (cast(var as bytea), var);
+            ELSE
+                INSERT INTO master_dbo.all_utf8_chars VALUES (cast('\\' as bytea), '\');
+            END IF;
+        EXCEPTION
+            WHEN program_limit_exceeded THEN
+        END;       
+        cnt := cnt + 1;
+    END LOOP;
+END;         
+$$;
+GO
+
+-- tsql
+-- Verify like with AI collations against all possible characters
+-- except BBF_ESC_CHAR_REPLC and '[' which are special characters
+SELECT COUNT(*)FROM all_utf8_chars
+    WHERE col1 != cast(chr(65535) as bytea) AND col2 != '[' AND
+        col2 NOT LIKE sys.remove_accents_internal(col2) COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+DROP TABLE all_utf8_chars
+GO

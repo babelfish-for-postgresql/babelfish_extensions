@@ -192,7 +192,7 @@ protected:
 		antlrcpp::Any visitFreetext_function(TSqlParser::Freetext_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "FREETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitFreetext_predicate(TSqlParser::Freetext_predicateContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "CONTAINS/FREETEXT predicate", &st_escape_hatch_fulltext, getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitOdbc_scalar_function(TSqlParser::Odbc_scalar_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_PARTITION_FUNCTION, "partition function", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override;
 
 		antlrcpp::Any visitHierarchyid_coloncolon(TSqlParser::Hierarchyid_coloncolonContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitOdbc_literal_expr(TSqlParser::Odbc_literal_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_ODBC_LITERAL, "odbc literal", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -1484,6 +1484,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTrigger_column_updated(TSq
 	return visitChildren(ctx);
 }
 
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx)
+{
+	return visitChildren(ctx);
+}
+
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx)
 {
 	if (ctx->DOT().empty())
@@ -1784,7 +1789,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 	if (grant->permission_object())
 	{
 		auto perm_obj = grant->permission_object();
-		auto obj_type = perm_obj->object_type();
+		auto obj_type = perm_obj->permission_object_type();
 		if (obj_type && obj_type->SCHEMA())
 		{
 			if (grant->ALL())
@@ -1887,7 +1892,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 	if (revoke->permission_object())
 	{
 		auto perm_obj = revoke->permission_object();
-		auto obj_type = perm_obj->object_type();
+		auto obj_type = perm_obj->permission_object_type();
 		if (obj_type && obj_type->SCHEMA())
 		{
 			if (revoke->ALL())

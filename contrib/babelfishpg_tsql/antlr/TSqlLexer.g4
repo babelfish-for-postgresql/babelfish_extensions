@@ -1032,6 +1032,7 @@ TRANSACTION:                                     T R A N S A C T I O N;
 TRANSACTION_ID:                                  T R A N S A C T I O N  UNDERLINE  I D;
 TRANSFER:                                        T R A N S F E R;
 TRANSFORM_NOISE_WORDS:                           T R A N S F O R M  UNDERLINE  N O I S E  UNDERLINE  W O R D S;
+TRANSLATE:                                       T R A N S L A T E;
 TRIGGER:                                         T R I G G E R;
 TRIM:                                            T R I M;
 TRIPLE_DES:                                      T R I P L E  UNDERLINE  D E S;

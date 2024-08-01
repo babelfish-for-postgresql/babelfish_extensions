@@ -181,7 +181,7 @@ select
 ;
 go
 ~~START~~
-text#!#varchar#!#int#!#int#!#int#!#int#!#int
+varchar#!#varchar#!#int#!#int#!#int#!#int#!#int
 a #!#a #!#1#!#97#!#4#!#4#!#3
 ~~END~~
 

@@ -1,3 +1,13 @@
+---------------------------------------------------
+--- Check for inconsistent metadata after upgrade
+----------------------------------------------------
+SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+GO
+~~START~~
+int
+0
+~~END~~
+
 
 --------------------------------------------------
 --- CREATE PARTITION FUNCTION/SCHEME/TABLE using procedure
@@ -853,6 +863,169 @@ int
 ~~END~~
 
 
+SELECT * FROM GetPartitionSchemeOrFilegroupForTableOrIndex
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+partition_vu_prepare_bigint_table#!#<NULL>#!#BigIntPartitionScheme
+partition_vu_prepare_bigint_table#!#partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63#!#BigIntPartitionScheme
+partition_vu_prepare_binary_table#!#<NULL>#!#BinaryPartitionScheme
+partition_vu_prepare_binary_table#!#partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503#!#BinaryPartitionScheme
+partition_vu_prepare_char_table#!#<NULL>#!#CharPartitionScheme
+partition_vu_prepare_char_table#!#partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f#!#CharPartitionScheme
+partition_vu_prepare_date_table#!#<NULL>#!#DatePartitionScheme
+partition_vu_prepare_date_table#!#partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844#!#DatePartitionScheme
+partition_vu_prepare_datetime_table#!#<NULL>#!#DateTimePartitionScheme
+partition_vu_prepare_datetime_table#!#partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e#!#DateTimePartitionScheme
+partition_vu_prepare_datetime2_table#!#<NULL>#!#DateTime2PartitionScheme
+partition_vu_prepare_datetime2_table#!#partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6#!#DateTime2PartitionScheme
+partition_vu_prepare_decimal_table#!#<NULL>#!#DecimalPartitionScheme
+partition_vu_prepare_decimal_table#!#partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9#!#DecimalPartitionScheme
+partition_vu_prepare_int_table#!#<NULL>#!#IntPartitionScheme
+partition_vu_prepare_int_table#!#partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046#!#IntPartitionScheme
+partition_vu_prepare_int_table#!#partition_vu_prepare_int_table_id_key#!#IntPartitionScheme
+partition_vu_prepare_money_table#!#<NULL>#!#MoneyPartitionScheme
+partition_vu_prepare_money_table#!#partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee#!#MoneyPartitionScheme
+partition_vu_prepare_nchar_table#!#<NULL>#!#NCharPartitionScheme
+partition_vu_prepare_nchar_table#!#partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1#!#NCharPartitionScheme
+partition_vu_prepare_normal_table#!#<NULL>#!#PRIMARY
+partition_vu_prepare_normal_table#!#partition_vu_prepare_normal_inded6315af14d88f45711ba24e46851b8f#!#PRIMARY
+partition_vu_prepare_numeric_table#!#<NULL>#!#NumericPartitionScheme
+partition_vu_prepare_numeric_table#!#partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963#!#NumericPartitionScheme
+partition_vu_prepare_nvarchar_table#!#<NULL>#!#NVarCharPartitionScheme
+partition_vu_prepare_nvarchar_table#!#partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec#!#NVarCharPartitionScheme
+partition_vu_prepare_smalldatetime_table#!#<NULL>#!#SmallDateTimePartitionScheme
+partition_vu_prepare_smalldatetime_table#!#partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8#!#SmallDateTimePartitionScheme
+partition_vu_prepare_smallint_table#!#<NULL>#!#SmallIntPartitionScheme
+partition_vu_prepare_smallint_table#!#partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#SmallIntPartitionScheme
+partition_vu_prepare_smallmoney_table#!#<NULL>#!#SmallMoneyPartitionScheme
+partition_vu_prepare_smallmoney_table#!#partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#SmallMoneyPartitionScheme
+partition_vu_prepare_sqlvariant_table#!#<NULL>#!#SqlVariantPartitionScheme
+partition_vu_prepare_sqlvariant_table#!#partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#SqlVariantPartitionScheme
+partition_vu_prepare_tinyint_table#!#<NULL>#!#TinyIntPartitionScheme
+partition_vu_prepare_tinyint_table#!#partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#TinyIntPartitionScheme
+partition_vu_prepare_uniqueidentifier_table#!#<NULL>#!#UniqueIdentifierPartitionScheme
+partition_vu_prepare_uniqueidentifier_table#!#partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf#!#UniqueIdentifierPartitionScheme
+partition_vu_prepare_varbinary_table#!#<NULL>#!#VarBinaryPartitionScheme
+partition_vu_prepare_varbinary_table#!#partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386#!#VarBinaryPartitionScheme
+partition_vu_prepare_varchar_table#!#<NULL>#!#VarCharPartitionScheme
+partition_vu_prepare_varchar_table#!#partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08#!#VarCharPartitionScheme
+~~END~~
+
+
+SELECT * FROM GetFileGroupMappingOfPartitionScheme
+GO
+~~START~~
+nvarchar#!#nvarchar#!#int
+IntPartitionScheme#!#PRIMARY#!#1
+IntPartitionScheme#!#PRIMARY#!#2
+IntPartitionScheme#!#PRIMARY#!#3
+IntPartitionScheme#!#PRIMARY#!#4
+SmallIntPartitionScheme#!#PRIMARY#!#1
+SmallIntPartitionScheme#!#PRIMARY#!#2
+SmallIntPartitionScheme#!#PRIMARY#!#3
+SmallIntPartitionScheme#!#PRIMARY#!#4
+SmallIntPartitionScheme#!#PRIMARY#!#5
+~~END~~
+
+
+SELECT * FROM GetPartitionedTablePartitioningColumn
+GO
+~~START~~
+varchar#!#varchar#!#tinyint
+partition_vu_prepare_bigint_table#!#id#!#1
+partition_vu_prepare_binary_table#!#id#!#1
+partition_vu_prepare_char_table#!#id#!#1
+partition_vu_prepare_date_table#!#id#!#1
+partition_vu_prepare_datetime_table#!#id#!#1
+partition_vu_prepare_datetime2_table#!#id#!#1
+partition_vu_prepare_decimal_table#!#id#!#1
+partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_money_table#!#id#!#1
+partition_vu_prepare_nchar_table#!#id#!#1
+partition_vu_prepare_numeric_table#!#id#!#1
+partition_vu_prepare_nvarchar_table#!#id#!#1
+partition_vu_prepare_smalldatetime_table#!#id#!#1
+partition_vu_prepare_smallint_table#!#id#!#1
+partition_vu_prepare_smallmoney_table#!#id#!#1
+partition_vu_prepare_sqlvariant_table#!#id#!#1
+partition_vu_prepare_tinyint_table#!#id#!#1
+partition_vu_prepare_uniqueidentifier_table#!#id#!#1
+partition_vu_prepare_varbinary_table#!#id#!#1
+partition_vu_prepare_varchar_table#!#id#!#1
+~~END~~
+
+
+SELECT * FROM GetPartitionedIndexPartitioningColumn
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint
+partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63#!#partition_vu_prepare_bigint_table#!#id#!#1
+partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63#!#partition_vu_prepare_bigint_table#!#id#!#1
+partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503#!#partition_vu_prepare_binary_table#!#id#!#1
+partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503#!#partition_vu_prepare_binary_table#!#id#!#1
+partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f#!#partition_vu_prepare_char_table#!#id#!#1
+partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f#!#partition_vu_prepare_char_table#!#id#!#1
+partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844#!#partition_vu_prepare_date_table#!#id#!#1
+partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844#!#partition_vu_prepare_date_table#!#id#!#1
+partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e#!#partition_vu_prepare_datetime_table#!#id#!#1
+partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e#!#partition_vu_prepare_datetime_table#!#id#!#1
+partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6#!#partition_vu_prepare_datetime2_table#!#id#!#1
+partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6#!#partition_vu_prepare_datetime2_table#!#id#!#1
+partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9#!#partition_vu_prepare_decimal_table#!#id#!#1
+partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9#!#partition_vu_prepare_decimal_table#!#id#!#1
+partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046#!#partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046#!#partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046#!#partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_int_table_id_key#!#partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_int_table_id_key#!#partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_int_table_id_key#!#partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee#!#partition_vu_prepare_money_table#!#id#!#1
+partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee#!#partition_vu_prepare_money_table#!#id#!#1
+partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1#!#partition_vu_prepare_nchar_table#!#id#!#1
+partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1#!#partition_vu_prepare_nchar_table#!#id#!#1
+partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963#!#partition_vu_prepare_numeric_table#!#id#!#1
+partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963#!#partition_vu_prepare_numeric_table#!#id#!#1
+partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec#!#partition_vu_prepare_nvarchar_table#!#id#!#1
+partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec#!#partition_vu_prepare_nvarchar_table#!#id#!#1
+partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8#!#partition_vu_prepare_smalldatetime_table#!#id#!#1
+partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8#!#partition_vu_prepare_smalldatetime_table#!#id#!#1
+partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_prepare_smallint_table#!#id#!#1
+partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_prepare_smallint_table#!#id#!#1
+partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
+partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
+partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#partition_vu_prepare_sqlvariant_table#!#id#!#1
+partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#partition_vu_prepare_sqlvariant_table#!#id#!#1
+partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
+partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
+partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf#!#partition_vu_prepare_uniqueidentifier_table#!#id#!#1
+partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf#!#partition_vu_prepare_uniqueidentifier_table#!#id#!#1
+partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386#!#partition_vu_prepare_varbinary_table#!#id#!#1
+partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386#!#partition_vu_prepare_varbinary_table#!#id#!#1
+partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08#!#partition_vu_prepare_varchar_table#!#id#!#1
+partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08#!#partition_vu_prepare_varchar_table#!#id#!#1
+~~END~~
+
+
+SELECT * FROM GetSysPartitionsMetadata
+GO
+~~START~~
+varchar#!#int#!#int
+363863941f079adaa9aa733200e57c9f_partition_0_id_key#!#1#!#2
+363863941f079adaa9aa733200e57c9f_partition_0#!#1#!#0
+363863941f079adaa9aa733200e57c9f_partition_0_value_idx#!#1#!#3
+363863941f079adaa9aa733200e57c9f_partition_1_id_key#!#2#!#2
+363863941f079adaa9aa733200e57c9f_partition_1#!#2#!#0
+363863941f079adaa9aa733200e57c9f_partition_1_value_idx#!#2#!#3
+363863941f079adaa9aa733200e57c9f_partition_2_id_key#!#3#!#2
+363863941f079adaa9aa733200e57c9f_partition_2#!#3#!#0
+363863941f079adaa9aa733200e57c9f_partition_2_value_idx#!#3#!#3
+363863941f079adaa9aa733200e57c9f_partition_3_value_idx#!#4#!#3
+363863941f079adaa9aa733200e57c9f_partition_3#!#4#!#0
+363863941f079adaa9aa733200e57c9f_partition_3_id_key#!#4#!#2
+partition_vu_prepare_normal_inded6315af14d88f45711ba24e46851b8f#!#1#!#2
+partition_vu_prepare_normal_table#!#1#!#0
+~~END~~
 
 
 
@@ -1283,6 +1456,7 @@ partition_vu_prepare_decimal_table
 partition_vu_prepare_int_table
 partition_vu_prepare_money_table
 partition_vu_prepare_nchar_table
+partition_vu_prepare_normal_table
 partition_vu_prepare_numeric_table
 partition_vu_prepare_nvarchar_table
 partition_vu_prepare_smalldatetime_table
@@ -1314,6 +1488,7 @@ partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046
 partition_vu_prepare_int_table_id_key
 partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee
 partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1
+partition_vu_prepare_normal_inded6315af14d88f45711ba24e46851b8f
 partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963
 partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec
 partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8
@@ -1367,7 +1542,7 @@ SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('partition_vu
 GO
 ~~START~~
 int
-2
+5
 ~~END~~
 
 
@@ -2678,7 +2853,7 @@ ON IntPartitionScheme(id);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Creation of tempopary partitioned tables is not supported in Babelfish.)~~
+~~ERROR (Message: Creation of temporary partitioned tables is not supported in Babelfish.)~~
 
 
 
@@ -3152,3 +3327,558 @@ master_dbo."363863941f079adaa9aa733200e57c9f_partition_2"
 master_dbo."363863941f079adaa9aa733200e57c9f_partition_3"
 ~~END~~
 
+
+-- tsql
+----------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION name identifiers tests
+----------------------------------------------------------
+SET QUOTED_IDENTIFIER ON;
+GO
+
+SELECT $PARTITION."IntPartitionFunction" (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT $PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT "master".$PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+
+SELECT $PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT [master].$PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT $PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT [master].$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT $PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT master.$PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+------------------------------------------
+--- DOLLAR PARTITION FUNCTION Negative test
+------------------------------------------
+-- explicit NULL value test
+SELECT $PARTITION.IntPartitionFunction(NULL)
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT master.$PARTITION.IntPartitionFunction(NULL)
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- variable as NULL value
+declare @var int = NULL
+SELECT $PARTITION.IntPartitionFunction(@var)
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- non-existent database
+SELECT NonExistentDatabase.$PARTITION.IntPartitionFunction(10)
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid database name 'NonExistentDatabase'.)~~
+
+
+-- error during implicit Conversion of values to partition function parameter type
+SELECT $PARTITION.IntPartitionFunction('xyz')
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyz")~~
+
+
+-- using query 
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "Apple")~~
+
+---------------------------------------------------------------------
+--- Test for all the Supported Datatypes for Dollar Partition Function
+---------------------------------------------------------------------
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_int_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+SELECT $PARTITION.BigIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_bigint_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#bigint
+1#!#<NULL>
+2#!#1
+3#!#100
+5#!#10000
+5#!#1000000000
+~~END~~
+
+
+SELECT $PARTITION.SmallIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallint_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#smallint
+1#!#<NULL>
+2#!#-32768
+3#!#1
+4#!#32767
+~~END~~
+
+
+SELECT $PARTITION.TinyIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_tinyint_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#tinyint
+1#!#<NULL>
+2#!#1
+3#!#128
+4#!#255
+~~END~~
+
+
+SELECT $PARTITION.DecimalPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_decimal_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#numeric
+1#!#<NULL>
+2#!#1.00000
+3#!#100.00000
+4#!#200.00000
+5#!#300.00000
+~~END~~
+
+
+SELECT $PARTITION.NumericPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_numeric_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#numeric
+1#!#<NULL>
+2#!#1.00
+3#!#10.00
+4#!#20.00
+5#!#30.00
+~~END~~
+
+
+SELECT $PARTITION.MoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_money_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#money
+1#!#<NULL>
+1#!#1.0000
+2#!#2.5679
+4#!#4.9100
+~~END~~
+
+
+SELECT $PARTITION.SmallMoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallmoney_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#smallmoney
+1#!#<NULL>
+1#!#1.0000
+2#!#2.5679
+4#!#4.9100
+~~END~~
+
+
+SELECT $PARTITION.DatePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_date_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#date
+1#!#<NULL>
+2#!#2022-01-01
+3#!#2022-07-01
+4#!#2023-01-01
+~~END~~
+
+
+SELECT $PARTITION.DateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#datetime
+1#!#<NULL>
+2#!#2019-01-01 00:00:00.0
+3#!#2022-01-01 00:00:00.0
+4#!#2022-07-01 00:00:00.0
+~~END~~
+
+
+SELECT $PARTITION.DateTime2PartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime2_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#datetime2
+1#!#<NULL>
+2#!#2019-01-01 00:00:00.000
+3#!#2022-01-01 00:00:00.000
+4#!#2022-07-01 00:00:00.000
+~~END~~
+
+
+SELECT $PARTITION.SmallDateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smalldatetime_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#smalldatetime
+1#!#<NULL>
+2#!#2019-01-01 00:00:00.0
+3#!#2022-01-01 00:00:00.0
+4#!#2022-07-01 00:00:00.0
+~~END~~
+
+
+SELECT $PARTITION.CharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_char_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#char
+1#!#<NULL>
+2#!#A    
+3#!#D    
+5#!#K    
+7#!#U    
+~~END~~
+
+
+SELECT $PARTITION.VarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#varchar
+1#!#<NULL>
+2#!#Apple
+3#!#Banana
+4#!#Cherry
+5#!#Date
+6#!#Mango
+~~END~~
+
+
+SELECT $PARTITION.NVarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nvarchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#nvarchar
+1#!#<NULL>
+2#!#Apple
+3#!#Banana
+4#!#Cherry
+5#!#Date
+6#!#Mango
+~~END~~
+
+
+SELECT $PARTITION.NCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#nchar
+1#!#<NULL>
+2#!#A    
+3#!#B    
+5#!#K    
+7#!#U    
+~~END~~
+
+
+SELECT $PARTITION.BinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_binary_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#binary
+~~END~~
+
+
+SELECT $PARTITION.VarBinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varbinary_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#varbinary
+1#!#<NULL>
+2#!#0000000000000000
+3#!#4000000000000000
+4#!#8000000000000000
+5#!#C000000000000000
+~~END~~
+
+
+SELECT $PARTITION.UniqueIdentifierPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_uniqueidentifier_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#uniqueidentifier
+1#!#<NULL>
+2#!#00000000-0000-0000-0000-000000000000
+3#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
+4#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
+~~END~~
+
+
+SELECT $PARTITION.SqlVariantPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_sqlvariant_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#sql_variant
+1#!#<NULL>
+2#!#abc  
+3#!#Apple
+4#!#Banana
+5#!#Some text
+6#!#xyz  
+~~END~~
+
+
+----------------------------------------------
+--- DOLLAR PARTITION FUNCTION Dependency test
+----------------------------------------------
+-- non-null test
+SELECT * FROM DollarPartitionFunctionView
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+EXEC DollarPartitionFunctionProc
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+SELECT * FROM DollarPartitionFunctionFunc()
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+-- null test
+SELECT * FROM DollarPartitionFunctionNullView
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC DollarPartitionFunctionNullProc
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM DollarPartitionFunctionNullFunc()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM SysSearchPartitionDepView
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT * FROM SysSearchPartitionNULLDepView
+GO
+~~START~~
+int
+2
+~~END~~
+
+------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION Cross Database test
+------------------------------------------------------
+-- in current database with explicity lookup
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- use different database
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- test using guest login
+CREATE LOGIN partition_l2 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER partition_u2 FOR LOGIN partition_l2;
+GO
+
+-- tsql  user=partition_l2 password=12345678 database=partitiondb
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+partition_u2
+~~END~~
+
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- tsql
+USE PartitionDb;
+GO
+
+DROP USER partition_u2
+GO

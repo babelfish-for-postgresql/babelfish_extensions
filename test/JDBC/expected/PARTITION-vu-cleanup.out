@@ -31,6 +31,44 @@ GO
 DROP FUNCTION PartitionSchemeContainsDuplicateIDs
 GO
 
+DROP VIEW GetPartitionSchemeOrFilegroupForTableOrIndex
+GO
+
+DROP VIEW GetFileGroupMappingOfPartitionScheme
+GO
+
+DROP VIEW GetPartitionedTablePartitioningColumn
+GO
+
+DROP VIEW GetPartitionedIndexPartitioningColumn
+GO
+
+DROP VIEW GetSysPartitionsMetadata
+GO
+
+DROP VIEW DollarPartitionFunctionView
+GO
+
+DROP PROCEDURE DollarPartitionFunctionProc
+GO
+
+DROP FUNCTION DollarPartitionFunctionFunc
+GO
+
+DROP VIEW DollarPartitionFunctionNullView
+GO
+
+DROP PROCEDURE DollarPartitionFunctionNullProc
+GO
+
+DROP FUNCTION DollarPartitionFunctionNullFunc
+GO
+
+DROP VIEW SysSearchPartitionDepView
+GO
+
+DROP VIEW SysSearchPartitionNULLDepView
+GO
 --------------------------------------------------
 --- DROP Partitioned Index
 --------------------------------------------------
@@ -99,6 +137,10 @@ GO
 
 DROP INDEX [PARTITION_INDEX 유니코드스키마👻  ] ON [PARTITION_TABLE  유니코드스키마👻  ]
 GO
+
+DROP INDEX partition_vu_prepare_normal_index ON partition_vu_prepare_normal_table
+GO
+
 
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -186,6 +228,9 @@ DROP TABLE PARTITION_TABLEログインαιώνια
 GO
 
 DROP TABLE [PARTITION_TABLE  유니코드스키마👻  ]
+GO
+
+DROP TABLE partition_vu_prepare_normal_table
 GO
 
 SET QUOTED_IDENTIFIER ON;
@@ -409,6 +454,9 @@ USE PartitionDb;
 GO
 
 DROP LOGIN partition_l1;
+GO
+
+DROP LOGIN partition_l2
 GO
 
 USE master

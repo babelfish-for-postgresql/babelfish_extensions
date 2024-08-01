@@ -792,6 +792,17 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg anyelement, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'search_partition'
+LANGUAGE C STABLE;
+
+-- Duplicate function with arg TEXT since ANYELEMNT cannot handle constant NULL and string literal (unknown type).
+CREATE OR REPLACE FUNCTION sys.search_partition(IN func_name sys.NVARCHAR(128), IN arg text, IN db_name sys.NVARCHAR(128) DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'search_partition'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.NVARCHAR, object_piece int)
 RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'parsename'
@@ -1519,10 +1530,13 @@ STRICT
 LANGUAGE SQL IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
--- sys.varchar has default length of 1, so we have to pass in 'number' to be the
--- type modifier.
 BEGIN
-	EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
+    IF number < 0 THEN
+        result := NULL;
+    ELSE
+        -- TSQL has a limitation of 8000 character spaces for space function.
+        result := PG_CATALOG.repeat(' ',least(number, 8000));
+    END IF;
 END;
 $$
 STRICT
@@ -2019,16 +2033,97 @@ CREATE AGGREGATE sys.count_big("any")
 	parallel = safe
 );
 
-CREATE OR REPLACE FUNCTION sys.REPLICATE(string TEXT, number INTEGER)
-RETURNS VARCHAR AS
+-- wrapper functions for replicate
+CREATE OR REPLACE FUNCTION sys.replicate(string ANYELEMENT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
 $BODY$
-SELECT 
-    CASE 
-        WHEN number >= 0 THEN repeat(string, number)
-        ELSE null
-    END;
+DECLARE
+    string_arg_datatype text;
+    string_arg_typeid oid;
+    string_basetype oid;
+BEGIN
+    string_arg_typeid := pg_typeof(string)::oid;
+    string_arg_datatype := sys.translate_pg_type_to_tsql(string_arg_typeid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(string_arg_typeid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for replicate function
+    IF string_arg_datatype IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of replicate function.', string_arg_datatype;
+    END IF;
+
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string::sys.varchar, i);
+END;
 $BODY$
-LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.replicate(string sys.NCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.replicate(string sys.NVARCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Adding following definition will make sure that replicate with text input
+-- will use following definition instead of PG replicate
+CREATE OR REPLACE FUNCTION sys.replicate(string TEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Adding following definition will make sure that replicate with ntext input
+-- will use following definition instead of PG replicate
+CREATE OR REPLACE FUNCTION sys.replicate(string NTEXT, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- @@ functions
 CREATE OR REPLACE FUNCTION sys.rowcount()
@@ -3068,23 +3163,186 @@ IS 'This function returns column or parameter information. Currently only works 
 -- substring --
 CREATE OR REPLACE FUNCTION sys.substring(string TEXT, i INTEGER, j INTEGER)
 RETURNS sys.VARCHAR
-AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string NTEXT, i INTEGER, j INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER)
 RETURNS sys.VARCHAR
-AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER)
+CREATE OR REPLACE FUNCTION sys.substring(string sys.BPCHAR, i INTEGER, j INTEGER)
 RETURNS sys.VARCHAR
-AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.substring(string sys.NVARCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
-AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
-AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARBINARY, i INTEGER, j INTEGER)
+RETURNS sys.VARBINARY
+AS 'babelfishpg_tsql', 'tsql_varbinary_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string ANYELEMENT, i INTEGER, j INTEGER)
+RETURNS sys.VARBINARY
+AS
+$BODY$
+DECLARE
+    type_oid oid;
+    string_arg_datatype text;
+    string_basetype oid;
+BEGIN
+    type_oid := pg_typeof(string);
+    string_arg_datatype := sys.translate_pg_type_to_tsql(type_oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(type_oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
+    -- restricting arguments with invalid datatypes for substring function
+    IF string_arg_datatype NOT IN ('binary', 'image') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of substring function.', string_arg_datatype;
+    END IF;
+
+    RETURN sys.substring(string::sys.VARBINARY, i, j);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- wrapper functions for upper --
+-- Function to handle datatypes which are implicitly convertable to VARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(ANYELEMENT)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    type_oid oid;
+    typ_base_oid oid;
+    typnam text;
+BEGIN
+    typnam := NULL;
+    type_oid := pg_typeof($1);
+    typnam := sys.translate_pg_type_to_tsql(type_oid);
+    IF typnam IS NULL THEN
+        typ_base_oid := sys.bbf_get_immediate_base_type_of_UDT(type_oid);
+        typnam := sys.translate_pg_type_to_tsql(typ_base_oid);
+    END IF;
+    IF typnam IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', typnam;
+    END IF;
+    IF $1 IS NULL THEN
+        RETURN NULL;
+    END IF;
+    -- Call the underlying function after preprocessing
+    RETURN pg_catalog.upper($1::sys.varchar);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Function to handle NCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.upper($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NVARCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.upper($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle TEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(TEXT)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.upper($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NTEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(NTEXT)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.upper($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- wrapper functions for lower --
+-- Function to handle datatypes which are implicitly convertable to VARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(ANYELEMENT)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    type_oid oid;
+    typ_base_oid oid;
+    typnam text;
+BEGIN
+    typnam := NULL;
+    type_oid := pg_typeof($1);
+    typnam := sys.translate_pg_type_to_tsql(type_oid);
+    IF typnam IS NULL THEN
+        typ_base_oid := sys.bbf_get_immediate_base_type_of_UDT(type_oid);
+        typnam := sys.translate_pg_type_to_tsql(typ_base_oid);
+    END IF;
+    IF typnam IN ('image', 'sql_variant', 'xml', 'geometry', 'geography') THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of lower function.', typnam;
+    END IF;
+    IF $1 IS NULL THEN
+        RETURN NULL;
+    END IF;
+    -- Call the underlying function after preprocessing
+    RETURN pg_catalog.lower($1::sys.varchar);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- Function to handle NCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.lower($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NVARCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.lower($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle TEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(TEXT)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.lower($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NTEXT because of return type VARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(NTEXT)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.lower($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- wrapper functions for TRIM
 CREATE OR REPLACE FUNCTION sys.TRIM(string sys.BPCHAR)
@@ -3714,6 +3972,31 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+-- wrapper functions for translate --
+CREATE OR REPLACE FUNCTION sys.translate(string sys.VARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+    
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.translate(string sys.NVARCHAR, characters sys.VARCHAR, translations sys.VARCHAR)
+RETURNS sys.NVARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- For getting host os from PG_VERSION_STR
 CREATE OR REPLACE FUNCTION sys.get_host_os()

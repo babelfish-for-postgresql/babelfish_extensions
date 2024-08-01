@@ -38,7 +38,7 @@ int#!#varchar
 SELECT * FROM bbf_fpn_server.master.sys.data_spaces
 GO
 ~~START~~
-varchar#!#int#!#char#!#nvarchar#!#bit#!#bit
+nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
 PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 ~~END~~
 
@@ -59,7 +59,7 @@ int#!#varchar
 SELECT * FROM bbf_fpn_server..sys.data_spaces
 GO
 ~~START~~
-varchar#!#int#!#char#!#nvarchar#!#bit#!#bit
+nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
 PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 ~~END~~
 
