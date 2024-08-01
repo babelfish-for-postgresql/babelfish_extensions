@@ -1,8 +1,12 @@
--- db_collation_expected
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 SELECT pg_reload_conf();
 GO
+~~START~~
+bool
+t
+~~END~~
+
 
 -- tsql
 CREATE DATABASE db1;
@@ -13,9 +17,27 @@ GO
 
 SELECT name, compatibility_level, collation_name FROM sys.databases ORDER BY name;
 GO
+~~START~~
+varchar#!#tinyint#!#varchar
+db1#!#120#!#bbf_unicode_cp1_ci_ai
+db2#!#120#!#bbf_unicode_cp1_ci_ai
+master#!#120#!#bbf_unicode_cp1_ci_ai
+msdb#!#120#!#bbf_unicode_cp1_ci_as
+tempdb#!#120#!#bbf_unicode_cp1_ci_as
+~~END~~
+
 
 SELECT name, snapshot_isolation_state, catalog_collation_type_desc FROM sys.databases ORDER BY name;
 GO
+~~START~~
+varchar#!#tinyint#!#nvarchar
+db1#!#1#!#Not Applicable
+db2#!#1#!#Not Applicable
+master#!#1#!#Not Applicable
+msdb#!#1#!#Not Applicable
+tempdb#!#1#!#Not Applicable
+~~END~~
+
 
 DROP DATABASE db1;
 DROP DATABASE db2;
@@ -25,3 +47,8 @@ GO
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
 SELECT pg_reload_conf();
 GO
+~~START~~
+bool
+t
+~~END~~
+

@@ -1,3 +1,4 @@
+-- db_collation_expected
 -- test LIKE to ILIKE transformation
 create table like_tesing1 (c1 varchar(20), c2 char(20), c3 nvarchar(20))
 GO
@@ -49,7 +50,7 @@ GO
 select c1 from like_tesing1 where c1 NOT LIKE lower('%s')
 GO
 -- test sub-queries
-Select count(*) from like_tesing1 where c1 LIKE (select c1 from like_tesing1 where c1 LIKE 'AbcD')
+Select count(*) from like_tesing1 where c1 LIKE (select c1 from like_tesing1 where c1 LIKE 'AbcD' COLLATE sql_latin1_general_cp1_ci_as)
 GO
 Select count(*) from like_tesing1 where c2 NOT LIKE (select c2 from like_tesing1 where c2 NOT LIKE 'jo%' AND c2 NOT LIKE 'ä%')
 GO

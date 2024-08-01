@@ -64,12 +64,14 @@ GO
 ~~START~~
 varchar
 abcD
+äb?D
 ~~END~~
 
 select c1 from like_tesing1 where c1 LIKE 'äb%'
 GO
 ~~START~~
 varchar
+abcD
 äb?D
 ~~END~~
 
@@ -77,6 +79,8 @@ select c1 from like_tesing1 where c1 LIKE 'äḃĆ_'
 GO
 ~~START~~
 varchar
+abcD
+äb?D
 ~~END~~
 
 -- test not like
@@ -142,6 +146,7 @@ GO
 ~~START~~
 varchar
 abcD
+äb?D
 ~~END~~
 
 select c1 from like_tesing1 where c1 NOT LIKE lower('%s')
@@ -157,21 +162,21 @@ Select count(*) from like_tesing1 where c1 LIKE (select c1 from like_tesing1 whe
 GO
 ~~START~~
 int
-1
+2
 ~~END~~
 
 Select count(*) from like_tesing1 where c2 NOT LIKE (select c2 from like_tesing1 where c2 NOT LIKE 'jo%' AND c2 NOT LIKE 'ä%')
 GO
 ~~START~~
 int
-4
+0
 ~~END~~
 
 Select count(*) from like_tesing1 where c3 LIKE (select c3 from like_tesing1 where c3 NOT LIKE'jo%' AND c3 NOT LIKE 'ä%')
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 with p1 as (select c1 from like_tesing1 where c1 LIKE '__Ć_'),
@@ -180,7 +185,9 @@ select * from p1 union all select * from p2
 GO
 ~~START~~
 nvarchar
+abcD
 äbĆD
+ABCd
 äƀCd
 ~~END~~
 

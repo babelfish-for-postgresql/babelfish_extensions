@@ -1,3 +1,4 @@
+-- db_collation_expected
 -- Testing bbf_original_table_name with special characters (BABEL-3398)
 SET QUOTED_IDENTIFIER ON;
 go
