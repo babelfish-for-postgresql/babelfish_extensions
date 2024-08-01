@@ -465,17 +465,30 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 		form = RelationGetForm(relation);
 		relname = RelationGetRelationName(relation);
 
-		/* Find dbid and logical schema name of table. */
-		physical_schemaname = get_namespace_name(form->relnamespace);
-		logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
-		dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
-		pfree(physical_schemaname);
-
-		if (!logical_schemaname) /* not a TSQL schema */
+		
+		/* Skip if table is neither a permanent table nor a partition/partitioned table. */
+		if ((!(form->relkind == RELKIND_PARTITIONED_TABLE || form->relispartition)
+			|| form->relpersistence != RELPERSISTENCE_PERMANENT))
 		{
 			relation_close(relation, AccessShareLock);
 			continue;
 		}
+
+		physical_schemaname = get_namespace_name(form->relnamespace);
+
+		/* Find logical schema name from physical schema name. */
+		logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
+		
+		if (!logical_schemaname) /* not a TSQL schema */
+		{
+			pfree(physical_schemaname);
+			relation_close(relation, AccessShareLock);
+			continue;
+		}
+
+		/* Find dbid from physical schema name for a TSQL schema. */
+		dbid = get_dbid_from_physical_schema_name(physical_schemaname, false);
+		pfree(physical_schemaname);
 
 		if (form->relispartition) /* relation is partition of table */
 		{
