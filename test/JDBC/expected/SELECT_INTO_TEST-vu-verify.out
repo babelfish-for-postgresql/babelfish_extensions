@@ -220,6 +220,10 @@ go
 --dependent objects
 create index IDX_REPRODUCTION on select_into_pre_exist_repro(select_into_pre_exist_COL);
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "select_into_pre_exist_col" does not exist)~~
+
 drop table if exists select_into_pre_exist;
 go
 drop table if exists select_into_pre_exist_repro;
