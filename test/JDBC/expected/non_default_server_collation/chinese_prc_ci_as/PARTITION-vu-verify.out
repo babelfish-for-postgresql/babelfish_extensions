@@ -3216,3 +3216,558 @@ master_dbo."363863941f079adaa9aa733200e57c9f_partition_2"
 master_dbo."363863941f079adaa9aa733200e57c9f_partition_3"
 ~~END~~
 
+
+-- tsql
+----------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION name identifiers tests
+----------------------------------------------------------
+SET QUOTED_IDENTIFIER ON;
+GO
+
+SELECT $PARTITION."IntPartitionFunction" (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT $PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT "master".$PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+
+SELECT $PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT [master].$PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT $PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT [master].$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT $PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT master.$PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+------------------------------------------
+--- DOLLAR PARTITION FUNCTION Negative test
+------------------------------------------
+-- explicit NULL value test
+SELECT $PARTITION.IntPartitionFunction(NULL)
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT master.$PARTITION.IntPartitionFunction(NULL)
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- variable as NULL value
+declare @var int = NULL
+SELECT $PARTITION.IntPartitionFunction(@var)
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- non-existent database
+SELECT NonExistentDatabase.$PARTITION.IntPartitionFunction(10)
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid database name 'NonExistentDatabase'.)~~
+
+
+-- error during implicit Conversion of values to partition function parameter type
+SELECT $PARTITION.IntPartitionFunction('xyz')
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyz")~~
+
+
+-- using query 
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "Apple")~~
+
+---------------------------------------------------------------------
+--- Test for all the Supported Datatypes for Dollar Partition Function
+---------------------------------------------------------------------
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_int_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+SELECT $PARTITION.BigIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_bigint_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#bigint
+1#!#<NULL>
+2#!#1
+3#!#100
+5#!#10000
+5#!#1000000000
+~~END~~
+
+
+SELECT $PARTITION.SmallIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallint_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#smallint
+1#!#<NULL>
+2#!#-32768
+3#!#1
+4#!#32767
+~~END~~
+
+
+SELECT $PARTITION.TinyIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_tinyint_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#tinyint
+1#!#<NULL>
+2#!#1
+3#!#128
+4#!#255
+~~END~~
+
+
+SELECT $PARTITION.DecimalPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_decimal_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#numeric
+1#!#<NULL>
+2#!#1.00000
+3#!#100.00000
+4#!#200.00000
+5#!#300.00000
+~~END~~
+
+
+SELECT $PARTITION.NumericPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_numeric_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#numeric
+1#!#<NULL>
+2#!#1.00
+3#!#10.00
+4#!#20.00
+5#!#30.00
+~~END~~
+
+
+SELECT $PARTITION.MoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_money_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#money
+1#!#<NULL>
+1#!#1.0000
+2#!#2.5679
+4#!#4.9100
+~~END~~
+
+
+SELECT $PARTITION.SmallMoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallmoney_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#smallmoney
+1#!#<NULL>
+1#!#1.0000
+2#!#2.5679
+4#!#4.9100
+~~END~~
+
+
+SELECT $PARTITION.DatePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_date_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#date
+1#!#<NULL>
+2#!#2022-01-01
+3#!#2022-07-01
+4#!#2023-01-01
+~~END~~
+
+
+SELECT $PARTITION.DateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#datetime
+1#!#<NULL>
+2#!#2019-01-01 00:00:00.0
+3#!#2022-01-01 00:00:00.0
+4#!#2022-07-01 00:00:00.0
+~~END~~
+
+
+SELECT $PARTITION.DateTime2PartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime2_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#datetime2
+1#!#<NULL>
+2#!#2019-01-01 00:00:00.000
+3#!#2022-01-01 00:00:00.000
+4#!#2022-07-01 00:00:00.000
+~~END~~
+
+
+SELECT $PARTITION.SmallDateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smalldatetime_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#smalldatetime
+1#!#<NULL>
+2#!#2019-01-01 00:00:00.0
+3#!#2022-01-01 00:00:00.0
+4#!#2022-07-01 00:00:00.0
+~~END~~
+
+
+SELECT $PARTITION.CharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_char_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#char
+1#!#<NULL>
+2#!#A    
+3#!#D    
+5#!#K    
+7#!#U    
+~~END~~
+
+
+SELECT $PARTITION.VarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#varchar
+1#!#<NULL>
+2#!#Apple
+3#!#Banana
+4#!#Cherry
+5#!#Date
+6#!#Mango
+~~END~~
+
+
+SELECT $PARTITION.NVarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nvarchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#nvarchar
+1#!#<NULL>
+2#!#Apple
+3#!#Banana
+4#!#Cherry
+5#!#Date
+6#!#Mango
+~~END~~
+
+
+SELECT $PARTITION.NCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#nchar
+1#!#<NULL>
+2#!#A    
+3#!#B    
+5#!#K    
+7#!#U    
+~~END~~
+
+
+SELECT $PARTITION.BinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_binary_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#binary
+~~END~~
+
+
+SELECT $PARTITION.VarBinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varbinary_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#varbinary
+1#!#<NULL>
+2#!#0000000000000000
+3#!#4000000000000000
+4#!#8000000000000000
+5#!#C000000000000000
+~~END~~
+
+
+SELECT $PARTITION.UniqueIdentifierPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_uniqueidentifier_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#uniqueidentifier
+1#!#<NULL>
+2#!#00000000-0000-0000-0000-000000000000
+3#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
+4#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
+~~END~~
+
+
+SELECT $PARTITION.SqlVariantPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_sqlvariant_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#sql_variant
+1#!#<NULL>
+2#!#abc  
+3#!#Apple
+4#!#Banana
+5#!#Some text
+6#!#xyz  
+~~END~~
+
+
+----------------------------------------------
+--- DOLLAR PARTITION FUNCTION Dependency test
+----------------------------------------------
+-- non-null test
+SELECT * FROM DollarPartitionFunctionView
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+EXEC DollarPartitionFunctionProc
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+SELECT * FROM DollarPartitionFunctionFunc()
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+-- null test
+SELECT * FROM DollarPartitionFunctionNullView
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC DollarPartitionFunctionNullProc
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM DollarPartitionFunctionNullFunc()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM SysSearchPartitionDepView
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT * FROM SysSearchPartitionNULLDepView
+GO
+~~START~~
+int
+2
+~~END~~
+
+------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION Cross Database test
+------------------------------------------------------
+-- in current database with explicity lookup
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- use different database
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- test using guest login
+CREATE LOGIN partition_l2 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER partition_u2 FOR LOGIN partition_l2;
+GO
+
+-- tsql  user=partition_l2 password=12345678 database=partitiondb
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+partition_u2
+~~END~~
+
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- tsql
+USE PartitionDb;
+GO
+
+DROP USER partition_u2
+GO

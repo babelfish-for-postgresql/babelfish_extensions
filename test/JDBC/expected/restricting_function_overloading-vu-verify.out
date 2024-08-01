@@ -17,9 +17,6 @@ GO
 ~~ERROR (Message: Function 'overloadedfunction' already exists with the same name)~~
 
 
-DROP FUNCTION OverloadedFunction;
-GO
-
 -- Overloaded function with same number of argument and same argument type
 CREATE PROCEDURE OverloadedFunction_1 @num1 INT AS BEGIN SELECT @num1 + 1 END
 GO
@@ -38,9 +35,6 @@ GO
 ~~ERROR (Message: Function 'overloadedfunction_1' already exists with the same name)~~
 
 
-DROP PROCEDURE OverloadedFunction_1;
-GO
-
 -- Overloaded procedures
 CREATE PROCEDURE OverloadedProcedure AS BEGIN SELECT 1 END
 GO
@@ -51,9 +45,6 @@ GO
 
 ~~ERROR (Message: Function 'overloadedprocedure' already exists with the same name)~~
 
-
-DROP PROCEDURE OverloadedProcedure;
-GO
 
 -- Objects with same name table, function and procedure
 CREATE TABLE OverloadedObject(a int);
@@ -68,12 +59,6 @@ GO
 
 ~~ERROR (Message: Function 'overloadedobject' already exists with the same name)~~
 
-
-DROP TABLE OverloadedObject;
-GO
-
-DROP PROCEDURE OverloadedObject;
-GO
 
 -- Overloaded function with different number of arguments
 CREATE FUNCTION OverloadedFunction_2(@num1 INT) RETURNS INT AS BEGIN RETURN @num1 + 1 END
@@ -93,9 +78,6 @@ GO
 ~~ERROR (Message: Function 'overloadedfunction_2' already exists with the same name)~~
 
 
-DROP FUNCTION OverloadedFunction_2;
-GO
-
 -- Overloaded function with same number of arguments but different types
 CREATE FUNCTION OverloadedFunction_3(@num1 INT, @num2 INT) RETURNS INT AS BEGIN RETURN @num1 + @num2 END
 GO
@@ -106,9 +88,6 @@ GO
 
 ~~ERROR (Message: Function 'overloadedfunction_3' already exists with the same name)~~
 
-
-DROP FUNCTION OverloadedFunction_3;
-GO
 
 -- psql
 -- Not restricting function overloading via PG port
@@ -170,6 +149,23 @@ GO
 DROP FUNCTION OverloadedFunction(float, float);
 GO
 
+SET search_path TO non_existent_schema, "$user", public;
+GO
+
+CREATE OR REPLACE FUNCTION OverloadedFunction_f1()
+RETURNS INT
+AS
+$$
+BEGIN
+RETURN 1;
+END;
+$$
+LANGUAGE plpgsql;
+GO
+
+SET search_path TO "$user", public;
+GO
+
 -- Overloaded procedures via PG port
 CREATE OR REPLACE PROCEDURE OverloadedProcedure(IN a FLOAT, IN b FLOAT, OUT c FLOAT)
 LANGUAGE plpgsql
@@ -196,3 +192,146 @@ GO
 
 DROP PROCEDURE OverloadedProcedure(float, float);
 GO
+
+-- tsql
+-- Case 1: Function/Procedure Overloading in different schemas
+CREATE FUNCTION restrict_func_overloading_s1.overloaded_function() RETURNS INT AS BEGIN RETURN 1; END;
+GO
+
+CREATE FUNCTION restrict_func_overloading_s2.overloaded_function() RETURNS INT AS BEGIN RETURN 2; END;
+GO
+
+SELECT restrict_func_overloading_s1.overloaded_function();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT restrict_func_overloading_s2.overloaded_function();
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+CREATE PROCEDURE restrict_func_overloading_s1.overloaded_proc AS BEGIN SELECT 'restrict_func_overloading_s1'; END;
+GO
+
+CREATE PROCEDURE restrict_func_overloading_s2.overloaded_proc AS BEGIN SELECT 'restrict_func_overloading_s2'; END;
+GO
+
+EXEC restrict_func_overloading_s1.overloaded_proc;
+GO
+~~START~~
+varchar
+restrict_func_overloading_s1
+~~END~~
+
+
+EXEC restrict_func_overloading_s2.overloaded_proc;
+GO
+~~START~~
+varchar
+restrict_func_overloading_s2
+~~END~~
+
+
+-- Case 2: Function/Procedure Overloading in the same schema is not allowed
+-- should throw error
+CREATE FUNCTION restrict_func_overloading_s1.overloaded_function(@a INT) RETURNS INT AS BEGIN RETURN @a; END;
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloaded_function' already exists with the same name)~~
+
+
+-- Case 3: Function/Procedure Creation Without specifying schema defaults to current schema i.e. dbo
+CREATE FUNCTION overloaded_function() RETURNS INT AS BEGIN RETURN 4; END;
+GO
+
+CREATE PROCEDURE overloaded_proc AS BEGIN SELECT 'overloaded proc'; END;
+GO
+
+-- should return 4
+SELECT dbo.overloaded_function();
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+EXEC dbo.overloaded_proc;
+GO
+~~START~~
+varchar
+overloaded proc
+~~END~~
+
+
+-- Case 4: Same object name during Function/Procedure creation is not allowed
+CREATE FUNCTION restrict_func_overloading_s1.overloaded_object() RETURNS INT AS BEGIN RETURN 6; END;
+GO
+
+-- should throw error since same name object already exist in the schema
+CREATE PROCEDURE restrict_func_overloading_s1.overloaded_object AS BEGIN SELECT 'same object name'; END;
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloaded_object' already exists with the same name)~~
+
+
+-- Case 5: Function/Procedure creation with name similar to sys or pg_catalog objects
+-- creates function in default schema i.e. dbo
+CREATE FUNCTION to_date() RETURNS INT AS BEGIN RETURN 1; END;
+GO
+
+SELECT to_date();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT pg_catalog.to_date('20170103','YYYYMMDD');
+GO
+~~START~~
+date
+2017-01-03
+~~END~~
+
+
+-- Case 6: When current default schema in the search path is invalid
+SELECT CURRENT_SETTING('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+-- Making a non existent schema as current default schema
+SELECT SET_CONFIG('search_path', 'master_non_existent_schema, master_dbo, "$user", sys, pg_catalog', false);
+GO
+~~START~~
+text
+master_non_existent_schema, master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+-- should create the function in next valid schema in the search path i.e. dbo
+CREATE FUNCTION overloaded_function_f1() RETURNS INT AS BEGIN RETURN 1; END
+GO
+
+-- Reset search path
+SELECT SET_CONFIG('search_path', 'master_dbo, "$user", sys, pg_catalog', false);
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+

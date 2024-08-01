@@ -983,6 +983,26 @@ public:
 			{
 				auto id = fpnsds->id().back();
 
+				if (id->keyword()->NULLIF()) /* NULLIF */
+				{
+					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+					{
+						auto first_arg = ctx->function_arg_list()->expression().front();
+						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
+							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
+					}
+				}
+				if (id->keyword()->CHECKSUM())
+				{
+					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+					{
+						for (auto arg: ctx->function_arg_list()->expression())
+						{
+							if (dynamic_cast<TSqlParser::Constant_exprContext*>(arg) && static_cast<TSqlParser:: Constant_exprContext*>(arg)->constant()->NULL_P())
+								throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "Argument NULL is invalid for CHECKSUM().", getLineAndPos(arg));
+						}
+					}
+				}
 				if (id->keyword()->TRIM())
 				{
 					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
@@ -991,6 +1011,26 @@ public:
 				{
 					size_t startPosition = id->keyword()->TRANSLATE()->getSymbol()->getStartIndex();
 					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
+				}
+				if (id->keyword()->SUBSTRING())
+				{
+					size_t startPosition = id->keyword()->SUBSTRING()->getSymbol()->getStartIndex();
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
+				}
+			}
+
+			if (ctx->func_proc_name_server_database_schema()->procedure)
+			{
+				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
+				{
+					has_identity_function = true;
+				}
+				
+				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
+						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
 				}
 			}
 		}
@@ -1238,6 +1278,39 @@ public:
 		 */
 		if (!(in_create_or_alter_function || in_create_or_alter_procedure || in_create_or_alter_trigger))
 			rewrite_string_agg_query(ctx);
+	}
+
+	/*
+	 * The $PARTITION function handling is implemented in the
+	 * tsqlCommonMutator to support its usage not only from direct calls
+	 * but also within Views, Procedures, and Functions.
+	 */
+	void exitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override
+	{
+		/*
+		 * Re-write db_name.$PARTITION.partition_func_name(exp)
+		 * to sys.search_partition(partition_func_name, exp, db_name)
+		 * where db_name is optional.
+		 */
+
+		/* Replace "$PARTITION" with "sys.search_partition(partition_func_name, ".*/
+		rewritten_query_fragment.emplace(std::make_pair(ctx->DOLLAR_PARTITION()->getSymbol()->getStartIndex(),
+					std::make_pair(::getFullText(ctx->DOLLAR_PARTITION()),  "sys.search_partition('" + stripQuoteFromId(ctx->func_name) + "', ")));
+		
+		/* Remove dot after the $PARTITION, partition function name and "(" from query. */
+		rewritten_query_fragment.emplace(std::make_pair(ctx->DOT().back()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->DOT().back()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->id().back()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id().back()), "")));
+		rewritten_query_fragment.emplace(std::make_pair(ctx->LR_BRACKET()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->LR_BRACKET()),"")));
+		
+		/* Re-write db_name only if exits in the query. */
+		if (ctx->db_name)
+		{
+			/* Replace the ")" with the ", db_name) ". */
+			rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()), ", '" + stripQuoteFromId(ctx->db_name) + "')")));
+			/* Remove db_name and dot after that from query. */
+			rewritten_query_fragment.emplace(std::make_pair(ctx->id().front()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id().front()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->DOT().front()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->DOT().front()), "")));
+		}
 	}
 };
 
@@ -2105,7 +2178,7 @@ public:
 					}
 				}
 			}
-			else if (grant->ON() && grant->permission_object() && grant->permission_object()->object_type() && grant->permission_object()->object_type()->SCHEMA())
+			else if (grant->ON() && grant->permission_object() && grant->permission_object()->permission_object_type() && grant->permission_object()->permission_object_type()->SCHEMA())
 			{
 				if (grant->principals() && grant->permissions())
 				{
@@ -2142,7 +2215,7 @@ public:
 				}
 			}
 
-			else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->object_type() && revoke->permission_object()->object_type()->SCHEMA())
+			else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->permission_object_type() && revoke->permission_object()->permission_object_type()->SCHEMA())
 			{
 				if (revoke->principals() && revoke->permissions())
 				{
@@ -2588,68 +2661,7 @@ public:
 				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SESSION_USER()), "sys.session_user()")));
 		}
 
-		handleGeospatialFunctionsInFunctionCall(ctx);
-
-		/* analyze scalar function call */
-		if (ctx->func_proc_name_server_database_schema())
-		{
-			if (ctx->func_proc_name_server_database_schema()->schema)
-				schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
-
-			auto fpnsds = ctx->func_proc_name_server_database_schema();
-
-			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
-			{
-				auto id = fpnsds->id().back();
-
-				if (id->keyword()->NULLIF()) /* NULLIF */
-				{
-					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
-					{
-						auto first_arg = ctx->function_arg_list()->expression().front();
-						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
-							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
-					}
-				}
-				if (id->keyword()->TRANSLATE()) /* TRANSLATE */
-				{
-					size_t startPosition = id->keyword()->TRANSLATE()->getSymbol()->getStartIndex();
-					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
-				}
-
-                              if (id->keyword()->CHECKSUM())
-                              {
-                                      if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
-                                      {
-                                              for (auto arg: ctx->function_arg_list()->expression())
-                                              {
-                                                      if (dynamic_cast<TSqlParser::Constant_exprContext*>(arg) && static_cast<TSqlParser:: Constant_exprContext*>(arg)->constant()->NULL_P())
-                                                              throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "Argument NULL is invalid for CHECKSUM().", getLineAndPos(arg));
-                                              }
-                                      }
-                              }
-				
-				if (id->keyword()->TRIM())
-				{
-					rewritten_query_fragment.emplace(std::make_pair(id->keyword()->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(id->keyword()->TRIM()), "sys.trim")));
-				}
-			}
-
-			if (ctx->func_proc_name_server_database_schema()->procedure)
-			{
-				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
-				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
-				{
-					has_identity_function = true;
-				}
-				
-				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
-				{
-					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
-						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
-				}
-			}
-		}
+		tsqlCommonMutator::exitFunction_call(ctx);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -6066,7 +6078,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				}
 			}
 		}
-		else if (grant->ON() && grant->permission_object() && grant->permission_object()->object_type() && grant->permission_object()->object_type()->SCHEMA())
+		else if (grant->ON() && grant->permission_object() && grant->permission_object()->permission_object_type() && grant->permission_object()->permission_object_type()->SCHEMA())
 		{
 			if (grant->principals() && grant->permissions())
 			{
@@ -6161,7 +6173,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 			}
 		}
 
-		else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->object_type() && revoke->permission_object()->object_type()->SCHEMA())
+		else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->permission_object_type() && revoke->permission_object()->permission_object_type()->SCHEMA())
 		{
 			if (revoke->principals() && revoke->permissions())
 			{
