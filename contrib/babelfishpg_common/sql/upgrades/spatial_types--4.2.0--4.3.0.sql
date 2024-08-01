@@ -14,14 +14,8 @@ CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOMETRY)
 CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT
 	AS $$
-	DECLARE
-		srid1 integer;
-		srid2 integer;
-		Equals_result integer;
 	BEGIN
-		srid1 := STSrid(geom1);
-		srid2 := STSrid(geom2);
-		IF srid1 != srid2 THEN
+		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
 		ELSE
 			Return sys.STEquals_helper($1,$2);
@@ -33,13 +27,8 @@ CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY
 	RETURNS sys.BIT
 	AS $$
 	DECLARE
-		srid1 integer;
-		srid2 integer;
-		Compare_result integer;
 	BEGIN
-		srid1 := STSrid(geom1);
-		srid2 := STSrid(geom2);
-		IF srid1 != srid2 THEN
+		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
 		ELSE
 			Return sys.STContains_helper($1,$2);
@@ -98,14 +87,8 @@ CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOGRAPHY)
 CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
 	AS $$
-	DECLARE
-		srid1 integer;
-		srid2 integer;
-		Equals_result integer;
 	BEGIN
-		srid1 := STSrid(geom1);
-		srid2 := STSrid(geom2);
-		IF srid1 != srid2 THEN
+		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
 		ELSE
 			Return sys.STEquals_helper($1,$2);
@@ -116,14 +99,8 @@ CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY
 CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
 	AS $$
-	DECLARE
-		srid1 integer;
-		srid2 integer;
-		Compare_result integer;
 	BEGIN
-		srid1 := STSrid(geom1);
-		srid2 := STSrid(geom2);
-		IF srid1 != srid2 THEN
+		IF STSrid(geom1) != STSrid(geom2) THEN
 			RETURN NULL;
 		ELSE
 			Return sys.STContains_helper($1,$2);
