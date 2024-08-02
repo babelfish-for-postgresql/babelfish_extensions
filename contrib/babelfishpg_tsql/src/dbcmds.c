@@ -612,7 +612,6 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
 	}
-	is_new_db = false;
 	PG_END_TRY();
 }
 
