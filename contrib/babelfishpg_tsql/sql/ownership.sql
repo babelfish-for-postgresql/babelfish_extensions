@@ -357,7 +357,7 @@ FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ex
 WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   OR Ext.orig_loginname = suser_name()
   OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
-  OR Ext.type = 'R';
+  OR Ext.type = 'R'
 UNION ALL
 SELECT
 CAST('public' AS SYS.SYSNAME) AS name,
