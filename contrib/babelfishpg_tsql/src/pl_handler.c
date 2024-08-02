@@ -2648,6 +2648,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (from_windows && orig_loginname)
 							{
+								
+								/* 
+								 * Check whether the domain name is supported 
+								 * or not
+								*/
+								if((strcasestr(orig_loginname, "nt service")) != NULL) 
+									ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												errmsg("'NT Service' domain is not yet supported in babelfish")));
+
 								/*
 								 * The login name must contain '\' if it is
 								 * windows login or else throw error.
