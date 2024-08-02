@@ -2321,6 +2321,9 @@ object_id(PG_FUNCTION_ARGS)
 					 !strcmp(object_type, "pc") || !strcmp(object_type, "tf") || !strcmp(object_type, "rf") ||
 					 !strcmp(object_type, "x") || !strcmp(object_type, "tr") || !strcmp(object_type, "ta"))
 			{
+				/* If the object type is specified as 'p' and it's actually a trigger, then return NULL. */
+				if (!strcmp(object_type, "p") && tsql_get_trigger_oid(object_name, schema_oid, user_id))
+					PG_RETURN_NULL();
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
 			}
