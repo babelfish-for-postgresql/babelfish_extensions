@@ -3476,8 +3476,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				if (drop_stmt->removeType != OBJECT_SCHEMA)
 				{
-					if (sql_dialect == SQL_DIALECT_TSQL)
-						bbf_ExecDropStmt(drop_stmt);
+					bbf_ExecDropStmt(drop_stmt);
 					break;
 				}
 
@@ -6224,26 +6223,11 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	Oid				schema_oid;
 	ListCell		*cell;
 	const char		*logicalschema = NULL;
-
-	/*
-	 * BABEL-4390
-	 * List of procedure names that are not allowed to be dropped. These procedures 
-	 * are considered essential or restricted due to security or operational reasons.
-	 */
-	const char		*restricted_procedures[] = {
-		"xp_qv",
-		"xp_instance_regread",
-		"sp_addlinkedsrvlogin",
-		"sp_droplinkedsrvlogin",
-		"sp_dropserver",
-		"sp_enum_oledb_providers",
-		"sp_testlinkedserver"
-	};
-	const int		RESTRICTED_PROCEDURES_COUNT = sizeof(restricted_procedures) / sizeof(restricted_procedures[0]);
+	bool			is_missing = sql_dialect == SQL_DIALECT_TSQL ? true : stmt->missing_ok;
 
 	db_id = get_cur_db_id();
 
-	if (stmt->removeType == OBJECT_SCHEMA)
+	if (stmt->removeType == OBJECT_SCHEMA && sql_dialect == SQL_DIALECT_TSQL)
 	{
 		foreach(cell, stmt->objects)
 		{
@@ -6267,7 +6251,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 										 lfirst(cell),
 										 &relation,
 										 AccessShareLock,
-										 true);
+										 is_missing);
 
 			if (!relation)
 				continue;
@@ -6280,34 +6264,37 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			if (schema_name != NULL)
-				logicalschema = get_logical_schema_name(schema_name, true);
-
-			if (schema_name && major_name)
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				if (stmt->removeType == OBJECT_TABLE)
+				if (schema_name != NULL)
+					logicalschema = get_logical_schema_name(schema_name, true);
+
+				if (schema_name && major_name)
 				{
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
-					delete_extended_property(db_id, type, schema_name,
-											 major_name, NULL);
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
-					delete_extended_property(db_id, type, schema_name,
-											 major_name, NULL);
+					if (stmt->removeType == OBJECT_TABLE)
+					{
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
+						delete_extended_property(db_id, type, schema_name,
+												major_name, NULL);
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+						delete_extended_property(db_id, type, schema_name,
+												major_name, NULL);
+					}
+					else if (stmt->removeType == OBJECT_VIEW)
+					{
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
+						delete_extended_property(db_id, type, schema_name,
+												major_name, NULL);
+					}
+					else if (stmt->removeType == OBJECT_SEQUENCE)
+					{
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
+						delete_extended_property(db_id, type, schema_name,
+												major_name, NULL);
+					}
 				}
-				else if (stmt->removeType == OBJECT_VIEW)
-				{
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
-					delete_extended_property(db_id, type, schema_name,
-											 major_name, NULL);
-				}
-				else if (stmt->removeType == OBJECT_SEQUENCE)
-				{
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
-					delete_extended_property(db_id, type, schema_name,
-											 major_name, NULL);
-				}
+				clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 			}
-			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 	else if (stmt->removeType == OBJECT_PROCEDURE ||
@@ -6323,10 +6310,14 @@ bbf_ExecDropStmt(DropStmt *stmt)
 										 lfirst(cell),
 										 &relation,
 										 AccessShareLock,
-										 true);
+										 is_missing);
 			Assert(relation == NULL);
 			if (!OidIsValid(address.objectId))
 				continue;
+				
+			/* Restrict dropping of extended stored procedures for non-superuser roles */
+			if (stmt->removeType == OBJECT_PROCEDURE && !superuser())
+				check_restricted_stored_procedure(address.objectId);
 
 			/* Get major_name */
 			relation = table_open(address.classId, AccessShareLock);
@@ -6351,38 +6342,26 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			if (schema_name != NULL)
-				logicalschema = get_logical_schema_name(schema_name, true);
 
-			/* Restrict dropping of extended stored procedures */
-			if (stmt->removeType == OBJECT_PROCEDURE && major_name)
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				int i;
-				for (i = 0; i < RESTRICTED_PROCEDURES_COUNT; i++)
+				if (schema_name != NULL)
+					logicalschema = get_logical_schema_name(schema_name, true);
+
+				if (schema_name && major_name)
 				{
-					if (pg_strcasecmp(major_name, restricted_procedures[i]) == 0)
-					{
-						ereport(ERROR,
-							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("Cannot drop the procedure \'%s\', because it does not exist or you do not have permission.", major_name)));
-						break;
-					}
+					if (stmt->removeType == OBJECT_PROCEDURE)
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
+					else if (stmt->removeType == OBJECT_FUNCTION)
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
+					else if (stmt->removeType == OBJECT_TYPE)
+						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
+
+					delete_extended_property(db_id, type, schema_name, major_name,
+											NULL);
 				}
+				clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 			}
-
-			if (schema_name && major_name)
-			{
-				if (stmt->removeType == OBJECT_PROCEDURE)
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
-				else if (stmt->removeType == OBJECT_FUNCTION)
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
-				else if (stmt->removeType == OBJECT_TYPE)
-					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
-
-				delete_extended_property(db_id, type, schema_name, major_name,
-										 NULL);
-			}
-			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 }
