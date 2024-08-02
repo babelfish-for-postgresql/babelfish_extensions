@@ -157,3 +157,23 @@ drop table if exists select_into_pre_exist;
 go
 drop table if exists select_into_pre_exist_repro;
 go
+-- column length >=64 todo
+create table select_into(select_into_COL_select_into_COL_select_into_COL_select_into_COL_ int);
+go
+select select_into_COL_select_into_COL_select_into_COL_select_into_COL_ from select_into;
+go
+-- Create a new table select_into_REPO with column select_into_COL 
+select select_into_COL_select_into_COL_select_into_COL_select_into_COL_ into select_into_REPO from select_into;
+go
+-- Indexing over column select_into_COL
+create index IDX_REPRODUCTION on select_into_REPO(select_into_COL_select_into_COL_select_into_COL_select_into_COL_);
+go
+-- output is the lowercase name,original_name
+select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrelid=pg_class.oid where pg_class.relname='select_into_repo' and attname like '%select_into%'order by attname asc;
+go
+-- dropping the table select_into
+drop table if exists select_into;
+go
+-- dropping the table select_into_REPO
+drop table if exists select_into_REPO;
+go

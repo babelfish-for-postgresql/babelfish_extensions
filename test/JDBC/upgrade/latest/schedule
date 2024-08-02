@@ -561,5 +561,4 @@ replicate
 space
 SELECT_INTO_TEST
 binary-datatype-operators
-SELECT_INTO_TEST
 
