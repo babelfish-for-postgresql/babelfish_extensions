@@ -191,7 +191,7 @@ set_search_path_for_user_schema(const char *db_name, const char *user)
 		physical_schema = get_physical_schema_name(pstrdup(db_name), schema);
 	}
 
-	path = psprintf(buffer, physical_schema);
+	path = psprintf(buffer, quote_identifier(physical_schema));
 	SetConfigOption("search_path",
 					path,
 					PGC_SUSET,
