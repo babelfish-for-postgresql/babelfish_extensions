@@ -2319,15 +2319,10 @@ object_id(PG_FUNCTION_ARGS)
 			else if (!strcmp(object_type, "af") || !strcmp(object_type, "fn") || !strcmp(object_type, "fs") ||
 					 !strcmp(object_type, "ft") || !strcmp(object_type, "if") || !strcmp(object_type, "p") ||
 					 !strcmp(object_type, "pc") || !strcmp(object_type, "tf") || !strcmp(object_type, "rf") ||
-					 !strcmp(object_type, "x"))
+					 !strcmp(object_type, "x") || !strcmp(object_type, "tr") || !strcmp(object_type, "ta"))
 			{
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
-			}
-			else if (!strcmp(object_type, "tr") || !strcmp(object_type, "ta"))
-			{
-				/* search in pg_trigger by name and schema oid */
-				result = tsql_get_trigger_oid(object_name, schema_oid, user_id);
 			}
 			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
 					 !strcmp(object_type, "sn") || !strcmp(object_type, "sq") || !strcmp(object_type, "tt"))
@@ -2367,12 +2362,6 @@ object_id(PG_FUNCTION_ARGS)
 			if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
 				result = relid;
-			}
-
-			if (!OidIsValid(result))	/* search only if not found earlier */
-			{
-				/* search in pg_trigger by name and schema oid */
-				result = tsql_get_trigger_oid(object_name, schema_oid, user_id);
 			}
 
 			if (!OidIsValid(result))
