@@ -13,8 +13,8 @@ AS
     select * from alter_proc_orders
 GO
 
--- Test Case: Modify the procedure body
-ALTER PROCEDURE alter_proc_p1
+-- Test Case: Modify the procedure body, and check information_schema updated with spaces
+ALTER           PROCEDURE alter_proc_p1
 AS
     select * from alter_proc_orders
 GO

@@ -27,8 +27,8 @@ GO
 ~~ERROR (Message: No existing procedure found with the name for ALTER PROCEDURE)~~
 
 
--- Test Case: Modify the procedure body
-ALTER PROCEDURE alter_proc_p1
+-- Test Case: Modify the procedure body, and check information_schema updated with spaces
+ALTER           PROCEDURE alter_proc_p1
 AS
     select * from alter_proc_orders
 GO
@@ -56,7 +56,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p1#!#SQL#!#CREATE PROCEDURE alter_proc_p1<newline>AS<newline>    select * from alter_proc_orders
+alter_proc_p1#!#SQL#!#CREATE           PROCEDURE alter_proc_p1<newline>AS<newline>    select * from alter_proc_orders
 ~~END~~
 
 

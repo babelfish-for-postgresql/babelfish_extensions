@@ -3477,10 +3477,14 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 
 	if (HeapTupleIsValid(oldtup))
 	{
-		if(original_query && strncasecmp("alter", original_query, 5) == 0) {
-			/* Modify the original string definiton for information_schema.routines */
-			char* newQuery = psprintf("CREATE %s", (queryString + 6));
-			new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(newQuery);
+		char* alter_str = strtok(original_query, " ");
+		if(alter_str && strncasecmp("alter", alter_str, 5) == 0) {
+			char* proc_str = strtok(NULL, " ");
+			if(proc_str && strncasecmp("proc", proc_str, 4) == 0) {
+				/* Modify the original string definiton for information_schema.routines */
+				char* newQuery = psprintf("CREATE %s", (queryString + 6));
+				new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(newQuery);
+			}
 		}
 		tuple = heap_modify_tuple(oldtup, bbf_function_ext_rel_dsc,
 								  new_record, new_record_nulls,
