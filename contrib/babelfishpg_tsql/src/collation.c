@@ -1412,6 +1412,7 @@ icu_compare_utf8_coll(UCollator  *coll, UChar *uchar1, int32_t ulen1,
 {
 	UErrorCode	status = U_ZERO_ERROR;
 	UCollator   *cloned_coll = ucol_safeClone(coll, NULL, NULL, &status);
+	int i;
 
 	if (U_FAILURE(status))
 		ereport(ERROR,
@@ -1427,9 +1428,13 @@ icu_compare_utf8_coll(UCollator  *coll, UChar *uchar1, int32_t ulen1,
 					errmsg("failed to set attribute for ucollator: %s", u_errorName(status))));
 	}
 
-	return ucol_strcoll(cloned_coll,
+	i = ucol_strcoll(cloned_coll,
 						uchar1, ulen1,
 						uchar2, ulen2);
+
+	ucol_close(cloned_coll);
+
+	return i;
 }
 
 bool
