@@ -11851,16 +11851,17 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
-CREATE OR REPLACE FUNCTION sys.is_collated_ci_internal(IN input_string TEXT) RETURNS BOOL
-AS 'babelfishpg_tsql', 'is_collated_ci_internal'
-LANGUAGE C VOLATILE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.is_collated_ci(IN input_string TEXT)
-RETURNS BOOL AS
-$$
-	SELECT sys.is_collated_ci_internal(input_string);
-$$
-LANGUAGE SQL VOLATILE PARALLEL SAFE;
+-- CREATE OR REPLACE FUNCTION sys.is_collated_ci_internal(IN input_string TEXT) RETURNS BOOL
+-- AS 'babelfishpg_tsql', 'is_collated_ci_internal'
+-- LANGUAGE C VOLATILE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.is_collated_ci(IN input_string TEXT)
+-- RETURNS BOOL AS
+-- $$
+-- 	SELECT sys.is_collated_ci_internal(input_string);
+-- $$
+-- LANGUAGE SQL VOLATILE PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

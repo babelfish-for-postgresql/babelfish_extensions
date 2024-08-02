@@ -91,7 +91,7 @@ typedef struct collation_callbacks
 
 	Datum		(*collation_list_internal) (PG_FUNCTION_ARGS);
 
-	Datum		(*is_collated_ci_internal) (PG_FUNCTION_ARGS);
+	Datum		(*is_collated_ci_as_internal) (PG_FUNCTION_ARGS);
 
 	Datum		(*is_collated_ai_internal) (PG_FUNCTION_ARGS);
 
@@ -133,7 +133,7 @@ extern int	get_persist_collation_id(Oid coll_oid);
 extern int	find_locale(const char *given_locale);
 extern int	get_database_or_server_collation_collidx(void);
 extern Datum collation_list_internal(PG_FUNCTION_ARGS);
-extern Datum is_collated_ci_internal(PG_FUNCTION_ARGS);
+extern Datum is_collated_ci_as_internal(PG_FUNCTION_ARGS);
 extern Datum is_collated_ai_internal(PG_FUNCTION_ARGS);
 extern int	collationproperty_helper(const char *collationaname, const char *property);
 extern bytea *tdscollationproperty_helper(const char *collationname, const char *property);

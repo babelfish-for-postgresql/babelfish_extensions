@@ -76,7 +76,7 @@ typedef enum
 PG_FUNCTION_INFO_V1(init_collid_trans_tab);
 PG_FUNCTION_INFO_V1(init_like_ilike_table);
 PG_FUNCTION_INFO_V1(get_server_collation_oid);
-PG_FUNCTION_INFO_V1(is_collated_ci_internal);
+PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
 PG_FUNCTION_INFO_V1(is_collated_ai_internal);
 
 /* this function is no longer needed and is only a placeholder for upgrade script */
@@ -123,9 +123,9 @@ get_server_collation_oid(PG_FUNCTION_ARGS)
 
 
 Datum
-is_collated_ci_internal(PG_FUNCTION_ARGS)
+is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(tsql_is_collated_ci_internal(fcinfo));
+	PG_RETURN_DATUM(tsql_is_collated_ci_as_internal(fcinfo));
 }
 
 Datum
@@ -1183,12 +1183,12 @@ tsql_collation_list_internal(PG_FUNCTION_ARGS)
 }
 
 Datum
-tsql_is_collated_ci_internal(PG_FUNCTION_ARGS)
+tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	return (*collation_callbacks_ptr->is_collated_ci_internal) (fcinfo);
+	return (*collation_callbacks_ptr->is_collated_ci_as_internal) (fcinfo);
 }
 
 Datum
@@ -1332,7 +1332,7 @@ has_ilike_node_and_ci_as_coll(Node *expr)
 			/* Initialize collation callbacks */
 			init_and_check_collation_callbacks();
 			if ((*collation_callbacks_ptr->has_ilike_node) (predicate) &&
-				DatumGetBool(DirectFunctionCall1Coll(tsql_is_collated_ci_internal, inputcoll, ObjectIdGetDatum(inputcoll))))
+				DatumGetBool(DirectFunctionCall1Coll(tsql_is_collated_ci_as_internal, inputcoll, ObjectIdGetDatum(inputcoll))))
 				return true;
 		}
 		else if (IsA(predicate, BoolExpr))

@@ -1248,7 +1248,7 @@ BABELFISH_CLUSTER_COLLATION_OID()
 }
 
 /*
- * collation_is_CI - Returns true if collation with given colloid is CI_AS.
+ * collation_is_CI - Returns true if collation with given colloid is CI.
  */
 bool
 collation_is_CI(Oid colloid)
@@ -1322,7 +1322,7 @@ has_ilike_node(Node *expr)
 }
 
 Datum
-is_collated_ci_internal(PG_FUNCTION_ARGS)
+is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
 	Oid			colloid = PG_GET_COLLATION();
 
@@ -1606,7 +1606,7 @@ get_collation_callbacks(void)
 	{
 		collation_callbacks_var.get_database_or_server_collation_oid_internal = &get_database_or_server_collation_oid_internal;
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
-		collation_callbacks_var.is_collated_ci_internal = &is_collated_ci_internal;
+		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
 		collation_callbacks_var.is_collated_ai_internal = &is_collated_ai_internal;
 		collation_callbacks_var.collationproperty_helper = &collationproperty_helper;
 		collation_callbacks_var.tdscollationproperty_helper = &tdscollationproperty_helper;
