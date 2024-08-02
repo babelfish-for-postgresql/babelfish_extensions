@@ -652,6 +652,52 @@ WHERE (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = C
 
 GRANT SELECT ON sys.user_token TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = suser_name()
+  OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+  OR Ext.type = 'R')
+  AND Ext.type != 'Z'
+UNION ALL
+SELECT
+CAST('public' AS SYS.SYSNAME) AS name,
+CAST(-1 AS INT) AS principal_id,
+CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
+CAST('R' AS CHAR(1)) as type,
+CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
+CAST(0 AS INT) AS is_disabled,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(NULL AS SYS.SYSNAME) AS default_database_name,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(NULL AS INT) AS credential_id,
+CAST(1 AS INT) AS owning_principal_id,
+CAST(0 AS sys.BIT) AS is_fixed_role;
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
 $$
