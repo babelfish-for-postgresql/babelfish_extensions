@@ -93,7 +93,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	if (stmt->relation->relpersistence == RELPERSISTENCE_TEMP)
 		ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Creation of tempopary partitioned tables is not supported in Babelfish.")));
+					 errmsg("Creation of temporary partitioned tables is not supported in Babelfish.")));
 	
 	/*
 	 * Get partition function name for the provided partition scheme,
@@ -465,17 +465,29 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 		form = RelationGetForm(relation);
 		relname = RelationGetRelationName(relation);
 
-		/* Find dbid and logical schema name of table. */
-		physical_schemaname = get_namespace_name(form->relnamespace);
-		logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
-		dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
-		pfree(physical_schemaname);
-
-		if (!logical_schemaname) /* not a TSQL schema */
+		/* Proceed further only for permanent and partition/partitioned table. */
+		if (!(form->relkind == RELKIND_PARTITIONED_TABLE || form->relispartition)
+			|| form->relpersistence != RELPERSISTENCE_PERMANENT)
 		{
 			relation_close(relation, AccessShareLock);
 			continue;
 		}
+
+		physical_schemaname = get_namespace_name(form->relnamespace);
+
+		/* Find logical schema name from physical schema name. */
+		logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
+		
+		if (!logical_schemaname) /* not a TSQL schema */
+		{
+			pfree(physical_schemaname);
+			relation_close(relation, AccessShareLock);
+			continue;
+		}
+
+		/* Find dbid from physical schema name for a TSQL schema. */
+		dbid = get_dbid_from_physical_schema_name(physical_schemaname, false);
+		pfree(physical_schemaname);
 
 		if (form->relispartition) /* relation is partition of table */
 		{
@@ -495,6 +507,7 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 				remove_entry_from_bbf_partition_depend(dbid, logical_schemaname, relname);
 		}
 		relation_close(relation, AccessShareLock);
+		pfree(logical_schemaname);
 	}
 }
 

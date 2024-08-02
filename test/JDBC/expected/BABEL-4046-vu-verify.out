@@ -51,7 +51,7 @@ AAA#!#A%
 				INNER JOIN t4 SR ON DM.baseloc = SR.loc AND DM.deptno = SR.deptno order by DM.empno;
 GO
 ~~START~~
-int#!#nvarchar#!#text
+int#!#nvarchar#!#nvarchar
 7782#!#CLARK#!#NEW YORK
 ~~END~~
 
@@ -60,7 +60,7 @@ int#!#nvarchar#!#text
 	select DM.empno, DM.ename, DM.baseloc from EMP_T DM where DM.baseloc in (select baseloc from t4)  order by DM.empno
 GO
 ~~START~~
-int#!#nvarchar#!#text
+int#!#nvarchar#!#nvarchar
 7369#!#SMITH#!#BOSTON
 7499#!#ALLEN#!#CHICAGO
 7521#!#WARD#!#CHICAGO

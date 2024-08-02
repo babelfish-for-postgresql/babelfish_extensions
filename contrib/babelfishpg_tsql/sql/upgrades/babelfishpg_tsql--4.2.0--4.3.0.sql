@@ -347,6 +347,7 @@ CREATE OR REPLACE FUNCTION sys.is_collated_ai(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ai_internal'
 LANGUAGE C VOLATILE PARALLEL SAFE;
 
+<<<<<<< HEAD
 
 CREATE OR REPLACE FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) returns TEXT as
 $body$
@@ -366,6 +367,8 @@ end
 $body$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
 
+=======
+>>>>>>> upstream/BABEL_4_X_DEV
 CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind PG_CATALOG.TEXT,
 										 expressionToSearch PG_CATALOG.TEXT,
 										 start_location INTEGER DEFAULT 0)
@@ -651,6 +654,52 @@ CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
 WHERE (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo';
 
 GRANT SELECT ON sys.user_token TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = suser_name()
+  OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+  OR Ext.type = 'R')
+  AND Ext.type != 'Z'
+UNION ALL
+SELECT
+CAST('public' AS SYS.SYSNAME) AS name,
+CAST(-1 AS INT) AS principal_id,
+CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
+CAST('R' AS CHAR(1)) as type,
+CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
+CAST(0 AS INT) AS is_disabled,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(NULL AS SYS.SYSNAME) AS default_database_name,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(NULL AS INT) AS credential_id,
+CAST(1 AS INT) AS owning_principal_id,
+CAST(0 AS sys.BIT) AS is_fixed_role;
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
@@ -11588,6 +11637,252 @@ $$
 	SELECT sys.is_collated_ci_internal(input_string);
 $$
 LANGUAGE SQL VOLATILE PARALLEL SAFE;
+-- Rename functions for dependencies
+DO $$
+DECLARE
+  exception_message text;
+BEGIN
+  -- Rename replace for dependencies
+  ALTER FUNCTION sys.replace(TEXT, TEXT, TEXT) RENAME TO replace_deprecated_in_3_7_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+  GET STACKED DIAGNOSTICS
+  exception_message = MESSAGE_TEXT;
+  RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.replace (input_string sys.VARCHAR, pattern sys.VARCHAR, replacement sys.VARCHAR)
+RETURNS sys.VARCHAR AS
+$BODY$
+BEGIN
+   if PG_CATALOG.length(pattern) = 0 then
+       return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
+   elsif sys.is_collated_ci(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
+   end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.replace (input_string sys.NVARCHAR, pattern sys.NVARCHAR, replacement sys.NVARCHAR)
+RETURNS sys.NVARCHAR AS
+$BODY$
+BEGIN
+   if PG_CATALOG.length(pattern) = 0 then
+       return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
+   elsif sys.is_collated_ci(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
+   end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
+	IN "@tab"        sys.VARCHAR(257) DEFAULT NULL,
+	IN "@orderby"    sys.VARCHAR(1000) DEFAULT '',
+	IN "@printrc"    sys.bit DEFAULT 1,
+	IN "@hiddencols" sys.VARCHAR(1000) DEFAULT NULL)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @rc INT
+	DECLARE @id INT
+	DECLARE @objtype sys.VARCHAR(2)	
+	DECLARE @msg sys.VARCHAR(200)	
+	
+	IF @tab IS NULL
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END
+	
+	IF TRIM(@tab) = ''
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END	
+	
+	-- Since we cannot find #tmp tables in the Babelfish catalogs, we cannot check 
+	-- their existence other than by trying to select from them
+	-- Function sys.babelfish_get_enr_list() could be used to determine if a #tmp table
+	-- exists but the columns and datatypes can still not be retrieved, it would be of 
+	-- little use here. 
+	-- NB: not handling uncommon but valid T-SQL syntax '<schemaname>.#tmp' for #tmp tables
+	IF sys.SUBSTRING(@tab,1,1) <> '#'
+	BEGIN
+		SET @id = sys.OBJECT_ID(@tab)
+		IF @id IS NULL
+		BEGIN
+			IF sys.SUBSTRING(UPPER(@tab),1,4) = 'DBO.'
+			BEGIN
+				SET @id = sys.OBJECT_ID('SYS.' + sys.SUBSTRING(@tab,5))
+			END
+			IF @id IS NULL
+			BEGIN		
+				SET @msg = 'Table or view '''+@tab+''' not found'
+				RAISERROR(@msg, 16, 1)
+				RETURN		
+			END
+		END
+	END
+	
+	SELECT @objtype = type COLLATE DATABASE_DEFAULT FROM sys.sysobjects WHERE id = @id 
+	IF @objtype NOT IN ('U', 'S', 'V') 
+	BEGIN
+		SET @msg = ''''+@tab+''' is not a table or view'
+		RAISERROR(@msg, 16, 1)
+		RETURN		
+	END
+	
+	-- check for 'ORDER BY', if specified
+	SET @orderby = TRIM(@orderby)
+	IF @orderby <> ''
+	BEGIN
+		IF UPPER(@orderby) NOT LIKE 'ORDER BY%'
+		BEGIN
+			RAISERROR('@orderby parameter must start with ''ORDER BY''', 16, 1)
+			RETURN
+		END
+	END
+	
+	-- columns to hide in final client output
+	-- assuming delimited column names do not contain spaces or commas inside the name
+	-- remove any spaces around the commas:
+	WHILE (sys.CHARINDEX(' ,', @hiddencols) > 0) or (sys.CHARINDEX(', ', @hiddencols) > 0)
+	BEGIN
+		SET @hiddencols = sys.REPLACE(@hiddencols, ' ,', ',')
+		SET @hiddencols = sys.REPLACE(@hiddencols, ', ', ',')
+	END
+	IF sys.LEN(@hiddencols) IS NOT NULL SET @hiddencols = ',' + @hiddencols + ','
+	SET @hiddencols = UPPER(@hiddencols)	
+
+	-- Need to use a guaranteed-uniquely named table as intermediate step since we cannot 
+	-- access the metadata in case a #tmp table is passed as argument
+	-- But when we copy the #tmp table into another table, we get all the attributes and metadata
+	DECLARE @tmptab sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(CAST(NEWID() AS sys.NVARCHAR(36)), '-', '')
+	DECLARE @tmptab2 sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(CAST(NEWID() AS sys.NVARCHAR(36)), '-', '')
+	DECLARE @cmd sys.VARCHAR(1000) = 'SELECT * INTO ' + @tmptab + ' FROM ' + @tab
+	
+	BEGIN TRY
+		-- create the first work table
+		EXECUTE(@cmd)
+
+		-- Get the columns
+		SELECT 
+		   c.name AS colname, c.colid AS colid, t.name AS basetype, 0 AS maxlen
+		INTO #sp_bbf_autoformat
+		FROM sys.syscolumns c left join sys.systypes t 
+		ON c.xusertype = t.xusertype		
+		WHERE c.id = sys.OBJECT_ID(@tmptab)
+		ORDER BY c.colid
+
+		-- Get max length for each column based on the data
+		DECLARE @colname sys.VARCHAR(63), @basetype sys.VARCHAR(63), @maxlen int
+		DECLARE c CURSOR FOR SELECT colname, basetype, maxlen FROM #sp_bbf_autoformat ORDER BY colid
+		OPEN c
+		WHILE 1=1
+		BEGIN
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			SET @cmd = 'DECLARE @i INT SELECT @i=ISNULL(MAX(sys.LEN(CAST([' + @colname + '] AS sys.VARCHAR(500)))),4) FROM ' + @tmptab + ' UPDATE #sp_bbf_autoformat SET maxlen = @i WHERE colname = ''' + @colname + ''''
+			EXECUTE(@cmd)
+		END
+		CLOSE c
+		DEALLOCATE c
+
+		-- Generate the final SELECT
+		DECLARE @selectlist sys.VARCHAR(8000) = ''
+		DECLARE @collist sys.VARCHAR(8000) = ''
+		DECLARE @fmtstart sys.VARCHAR(30) = ''
+		DECLARE @fmtend sys.VARCHAR(30) = ''
+		OPEN c
+		WHILE 1=1
+		BEGIN
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			IF sys.LEN(@colname) > @maxlen SET @maxlen = sys.LEN(@colname)
+			IF @maxlen <= 0 SET @maxlen = 1
+			
+			IF (sys.CHARINDEX(',' + UPPER(@colname) + ',', @hiddencols) > 0) OR (sys.CHARINDEX(',[' + UPPER(@colname) + '],', @hiddencols) > 0) 
+			BEGIN
+				SET @selectlist += ' [' + @colname + '],'			
+			END
+			ELSE 
+			BEGIN
+				SET @fmtstart = ''
+				SET @fmtend = ''
+				IF @basetype IN ('tinyint', 'smallint', 'int', 'bigint', 'decimal', 'numeric', 'real', 'float') 
+				BEGIN
+					SET @fmtstart = 'CAST(right(space('+CAST(@maxlen AS sys.VARCHAR)+')+'
+					SET @fmtend = ','+CAST(@maxlen AS sys.VARCHAR)+') AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'
+				END
+
+				SET @selectlist += ' '+@fmtstart+'CAST([' + @colname + '] AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'+@fmtend+' AS [' + @colname + '],'
+				SET @collist += '['+@colname + '],'
+			END
+		END
+		CLOSE c
+		DEALLOCATE c
+
+		-- Remove redundant commas
+		SET @collist = sys.SUBSTRING(@collist, 1, sys.LEN(@collist)-1)
+		SET @selectlist = sys.SUBSTRING(@selectlist, 1, sys.LEN(@selectlist)-1)	
+		SET @selectlist = 'SELECT ' + @selectlist + ' INTO ' + @tmptab2 + ' FROM ' + @tmptab + ' ' + @orderby
+		
+		-- create the second work table
+		EXECUTE(@selectlist)
+		
+		-- perform the final SELECT to generate the result set for the client
+		EXECUTE('SELECT ' + @collist + ' FROM ' + @tmptab2)
+			
+		-- PRINT rowcount if desired
+		SET @rc = @@rowcount
+		IF @printrc = 1
+		BEGIN
+			PRINT '   '
+			SET @cmd = '(' + CAST(@rc AS sys.VARCHAR) + ' rows affected)'
+			PRINT @cmd
+		END
+		
+		-- Cleanup: these work tables are permanent tables after all
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)	
+	END TRY	
+	BEGIN CATCH
+		-- Cleanup in case of an unexpected error
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)		
+	END CATCH
+
+	RETURN
+END
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_autoformat(IN sys.VARCHAR(257), IN sys.VARCHAR(1000), sys.bit, sys.VARCHAR(1000)) TO PUBLIC;
+
+-- DROP deprecated function of replace (if exists)
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- DROP replace_deprecated_in_3_7_0_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replace_deprecated_in_3_7_0_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
