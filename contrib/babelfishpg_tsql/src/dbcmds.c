@@ -433,7 +433,11 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	/* TODO: Extract options */
 
 	if (database_collation_name == NULL)
-		database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(GetConfigOption("babelfishpg_tsql.server_collation_name", false, false));
+	{
+		database_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+		if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
+			database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(database_collation_name);
+	}
 	namestrcpy(&default_collation, database_collation_name);
 	database_collation_name = NULL;
 
