@@ -2855,7 +2855,7 @@ ON IntPartitionScheme(id);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Creation of tempopary partitioned tables is not supported in Babelfish.)~~
+~~ERROR (Message: Creation of temporary partitioned tables is not supported in Babelfish.)~~
 
 
 

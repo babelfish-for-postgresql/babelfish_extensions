@@ -530,8 +530,10 @@ rtrim
 left
 right
 translate
+substring
 reverse
 replicate
 space
+replace
 binary-datatype-operators
 

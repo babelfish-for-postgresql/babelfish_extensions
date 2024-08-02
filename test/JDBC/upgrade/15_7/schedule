@@ -483,7 +483,7 @@ drop_index
 linked_srv_4229
 BABEL-4175
 sp_who
-BABEL_4330
+BABEL_4330-before-15_8-or-16_4
 kill
 set_tran_isolvl
 BABEL-4217
@@ -522,6 +522,7 @@ ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
 left-before-15_8-or-16_4
 right-before-15_8-or-16_4
+replace-before-15_8-or-16_4
 BABEL-4641
 BABEL-4863
 babel_test_int4_numeric_oper
@@ -534,6 +535,7 @@ babel_726
 BABEL-4869
 upper_lower-before-15_8-or-16_4
 translate-before-15_8-or-16_4
+substring-before-15_8-or-16_4
 BABEL-4815
 reverse-before-15_8-or-16_4
 BABEL-3401

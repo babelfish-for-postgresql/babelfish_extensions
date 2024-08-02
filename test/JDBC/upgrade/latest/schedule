@@ -536,6 +536,7 @@ ltrim
 rtrim
 left
 right
+replace
 BABEL-4863
 babel_test_int4_numeric_oper
 babel_test_int8_numeric_oper
@@ -546,6 +547,7 @@ BABEL-4869
 babel_4328_datetime
 babel_4328_datetime2
 translate
+substring
 babel_4328_datetimeoffset
 babel_726
 BABEL-3401

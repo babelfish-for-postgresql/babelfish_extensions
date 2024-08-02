@@ -122,6 +122,7 @@ ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
 
     sql/$(EXTENSION)--4.2.0--4.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D PREV_VERSION=4.2.0 -D CUR_VERSION=4.3.0 $< | sed 's/^# /-- /g' > $@
+
 else
 # The flag is present build the .in file including the spatial type files
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
@@ -144,6 +145,7 @@ else
 
     sql/$(EXTENSION)--4.2.0--4.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=4.2.0 -D CUR_VERSION=4.3.0 $< | sed 's/^# /-- /g' > $@
+
 endif
 
 sql/babelfishpg_common--%.sql: sql/upgrades/babelfishpg_common--%.sql

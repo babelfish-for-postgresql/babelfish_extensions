@@ -455,7 +455,7 @@ host_id
 linked_srv_4229
 BABEL-4175
 sp_who
-BABEL_4330
+BABEL_4330-before-15_8-or-16_4
 BABEL-4410
 AUTO_ANALYZE-before-15-5-or-14-10
 default_params
@@ -480,11 +480,13 @@ ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
 left-before-15_8-or-16_4
 right-before-15_8-or-16_4
+replace-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
 babel_4328_datetime-before-16_3
 babel_4328_datetime2-before-16_3
 translate-before-15_8-or-16_4
+substring-before-15_8-or-16_4
 babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 replicate-before-15_8-or-16_4

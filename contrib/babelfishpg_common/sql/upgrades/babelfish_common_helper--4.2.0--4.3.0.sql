@@ -7,6 +7,18 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+DO $$
+DECLARE 
+    schema_oid oid;
+    cast_source oid;
+    cast_target oid;
+BEGIN
+    select oid INTO schema_oid from pg_namespace where nspname='sys';
+    select oid into cast_source from pg_type where typname='bbf_binary' and typnamespace=schema_oid;
+    select oid into cast_target from pg_type where typname='varchar' and typnamespace=schema_oid;
+    UPDATE pg_catalog.pg_cast SET castcontext='i' WHERE castsource=cast_source AND casttarget=cast_target;
+END $$;
+
 CREATE OR REPLACE FUNCTION sys.binary_lt(leftarg sys.bbf_binary, rightarg sys.bbf_binary)
 RETURNS boolean
 AS 'babelfishpg_common', 'varbinary_lt'

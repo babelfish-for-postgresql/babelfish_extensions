@@ -411,7 +411,7 @@ babel_int4_varbinary_div
 babel_varbinary_int4_div
 sys-sql_expression_dependencies
 smalldatetimefromparts-dep
-BABEL_4330
+BABEL_4330-before-15_8-or-16_4
 BABEL-4231
 BABEL-4384
 default_params
@@ -437,6 +437,7 @@ ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
 left-before-15_8-or-16_4
 right-before-15_8-or-16_4
+replace-before-15_8-or-16_4
 BABEL-4863
 babel_test_int4_numeric_oper_before_16_3
 babel_test_int8_numeric_oper_before_16_3
@@ -447,6 +448,7 @@ babel_4328_datetime
 babel_4328_datetime2
 babel_4328_datetimeoffset
 upper_lower-before-15_8-or-16_4
+substring-before-15_8-or-16_4
 translate-before-15_8-or-16_4
 babel_726
 BABEL-3401

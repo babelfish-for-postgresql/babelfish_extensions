@@ -30,6 +30,16 @@ sysadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
 ~~END~~
 
 
+SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
+FROM sys.server_principals 
+WHERE name =  'public';
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#bit
+public#!#R#!#SERVER_ROLE#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0
+~~END~~
+
+
 -- server_principals view should not show internal role bbf_role_admin
 SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
 FROM sys.server_principals 
@@ -52,6 +62,7 @@ GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#bit
 jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1#!#0
+public#!#R#!#SERVER_ROLE#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0
 sys_server_principals_vu_login_without_sa#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1#!#0
 sysadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
 ~~END~~
