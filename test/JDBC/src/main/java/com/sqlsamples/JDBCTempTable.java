@@ -32,10 +32,10 @@ public class JDBCTempTable {
                 check_oids_equal(bw);
                 test_oid_buffer(bw, logger);
                 psql_test(bw, logger);
+                test_lock_contention(bw, logger);
             }
             concurrency_test(bw);
             test_trigger_on_temp_table(bw, logger);
-            test_lock_contention(bw, logger);
         } catch (Exception e) {
             try {
                 bw.write(e.getMessage());
@@ -361,12 +361,28 @@ public class JDBCTempTable {
     private static void test_lock_contention(BufferedWriter bw, Logger logger) throws Exception {
         String connectionString = initializeConnectionString();
 
-        /* do a sanity check of pg_locks catalog */
+        /* Sanity check of pg_locks catalog */
         Connection c = DriverManager.getConnection(connectionString);
         Statement s = c.createStatement();
+        ResultSet rs;
         s.execute("BEGIN TRAN");
-        int oid = create_table_and_report_oid(c, "CREATE TABLE #t1 (a int)", "#t1");
-        ResultSet rs = s.executeQuery("SELECT * FROM pg_locks WHERE relation = " + String.valueOf(oid));
+        s.execute("CREATE TABLE #t1 (a INT)");
+        rs = s.executeQuery("SELECT relation FROM pg_locks JOIN sys.babelfish_get_enr_list() ON (relation = reloid) where relname = '#t1'");
+        if (rs.next()) {
+            bw.write("Unexpected lock acquisition on a TSQL temp table.\n");
+        }
+        s.execute("ALTER TABLE #t1 ADD b AS a + 1");
+        rs = s.executeQuery("SELECT relation FROM pg_locks JOIN sys.babelfish_get_enr_list() ON (relation = reloid) where relname = '#t1'");
+        if (rs.next()) {
+            bw.write("Unexpected lock acquisition on a TSQL temp table.\n");
+        }
+        s.execute("ALTER TABLE #t1 DROP COLUMN b");
+        rs = s.executeQuery("SELECT relation FROM pg_locks JOIN sys.babelfish_get_enr_list() ON (relation = reloid) where relname = '#t1'");
+        if (rs.next()) {
+            bw.write("Unexpected lock acquisition on a TSQL temp table.\n");
+        }
+        s.execute("DROP TABLE #t1");
+        rs = s.executeQuery("SELECT relation FROM pg_locks JOIN sys.babelfish_get_enr_list() ON (relation = reloid) where relname = '#t1'");
         if (rs.next()) {
             bw.write("Unexpected lock acquisition on a TSQL temp table.\n");
         }

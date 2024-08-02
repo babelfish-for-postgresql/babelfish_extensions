@@ -4685,13 +4685,13 @@ static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
 static bool
 pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg)
 {
-	return (msg->id == SHAREDINVALRELCACHE_ID && msg->rc.local_only);
+	return temp_oid_buffer_size > 0 && (msg->id == SHAREDINVALRELCACHE_ID && msg->rc.local_only);
 }
 
 static EphemeralNamedRelation
 pltsql_get_tsql_enr_from_oid(const Oid oid)
 {
-	return get_ENR_withoid(currentQueryEnv, oid, ENR_TSQL_TEMP);
+	return temp_oid_buffer_size > 0 ? get_ENR_withoid(currentQueryEnv, oid, ENR_TSQL_TEMP) : NULL;
 }
 
 /*
