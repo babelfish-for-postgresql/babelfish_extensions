@@ -15,7 +15,6 @@ SET @point1 = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT @point1.STSrid;
 Go
 
-
 -- Verifying with precision
 DECLARE @point1 geometry, @point2 geometry;
 SET @point1 = geometry::STPointFromText('POINT(-122.354657658684900 47.658678768678100)', 4326);
