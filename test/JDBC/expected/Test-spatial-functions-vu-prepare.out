@@ -1,3 +1,14 @@
+CREATE DATABASE TestSpatialFunction_DB;
+
+USE TestSpatialFunction_DB;
+
+CREATE TABLE TestSpatialFunction_YourTable1Temp ( ID INT PRIMARY KEY, PointColumn geometry ); 
+INSERT INTO TestSpatialFunction_YourTable1Temp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));
+~~ROW COUNT: 3~~
+
+
+USE MASTER
+
 CREATE TABLE TestSpatialFunction_YourTableTemp ( ID INT PRIMARY KEY, PointColumn geometry ); 
 
 INSERT INTO TestSpatialFunction_YourTableTemp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));
@@ -32,6 +43,26 @@ INSERT INTO TestSpatialFunction_SPATIALPOINTGEOG_dttemp (location) VALUES ( geog
 ~~ROW COUNT: 1~~
 
 
+#Tests for Geography type Prepared Statements
+prepst#!#INSERT INTO TestSpatialFunction_SPATIALPOINTGEOG_dttemp(location) values(?) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(290.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-120.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-720.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+
 CREATE TABLE TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location geometry);
 INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) );
 ~~ROW COUNT: 1~~
@@ -46,6 +77,23 @@ INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location) VALUES ( geom
 ~~ROW COUNT: 1~~
 
 INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::Point(47.65100, -22.34900, 4326) );
+~~ROW COUNT: 1~~
+
+
+#Tests for Geometry type Prepared Statements
+prepst#!#INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp(location) values(?) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(290.345 45.1234):4326
 ~~ROW COUNT: 1~~
 
 

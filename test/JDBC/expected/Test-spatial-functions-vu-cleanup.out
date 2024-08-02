@@ -1,3 +1,9 @@
+USE TestSpatialFunction_DB
+
+DROP TABLE IF EXISTS TestSpatialFunction_YourTable1Temp
+
+USE MASTER
+
 DROP TABLE IF EXISTS TestSpatialFunction_YourTableTemp2
 
 DROP TABLE IF EXISTS TestSpatialFunction_TableATemp
@@ -25,3 +31,5 @@ DROP TABLE IF EXISTS TestSpatialFunction_SPATIALPOINTGEOM_dttemp
 DROP TABLE IF EXISTS TestSpatialFunction_SPATIALPOINTGEOG_dttemp
 
 DROP TABLE IF EXISTS TestSpatialFunction_YourTableTemp
+
+DROP DATABASE TestSpatialFunction_DB

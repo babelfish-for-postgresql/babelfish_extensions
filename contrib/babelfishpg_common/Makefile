@@ -145,7 +145,7 @@ else
 
     sql/$(EXTENSION)--4.2.0--4.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=4.2.0 -D CUR_VERSION=4.3.0 $< | sed 's/^# /-- /g' > $@
-    
+
 endif
 
 sql/babelfishpg_common--%.sql: sql/upgrades/babelfishpg_common--%.sql
