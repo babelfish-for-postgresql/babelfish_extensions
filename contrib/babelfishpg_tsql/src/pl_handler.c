@@ -6200,7 +6200,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
 
-				if (original_name != NULL && strcmp(original_name, tle->resname) && strncasecmp(original_name, tle->resname, strlen(original_name)) == 0)
+				if (original_name != NULL && strcmp(original_name, tle->resname) && strlen(original_name) == NAMEDATALEN)
 				{
 					cmd = makeNode(AlterTableCmd);
 					cmd->subtype = AT_SetOptions;
