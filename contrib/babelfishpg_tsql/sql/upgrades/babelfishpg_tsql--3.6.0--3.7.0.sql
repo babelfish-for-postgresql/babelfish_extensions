@@ -10321,6 +10321,80 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.stuff(TEXT, INTEGER, INTEGER, TEXT) RENAME TO stuff_deprecated_3_7;
+    ALTER FUNCTION sys.stuff(ANYELEMENT, INTEGER, INTEGER, ANYELEMENT) RENAME TO stuff_any_deprecated_3_7;
+
+    CREATE OR REPLACE FUNCTION sys.stuff(expr sys.VARBINARY, start INTEGER, length INTEGER, replace_expr sys.VARCHAR)
+    RETURNS VARBINARY
+    AS
+    $BODY$
+    BEGIN
+        IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+            RETURN NULL;
+        END IF;
+        IF start <= 0 OR start > sys.len(expr) OR length < 0 THEN
+            RETURN NULL;
+        END IF;
+        IF replace_expr IS NULL THEN
+            RETURN (SELECT (overlay (expr::sys.VARCHAR placing '' from start for length))::sys.VARCHAR)::VARBINARY;
+        END IF;
+        RETURN (SELECT (overlay (expr::sys.VARCHAR placing replace_expr::sys.VARCHAR from start for length))::sys.VARCHAR)::VARBINARY;
+    END;
+    $BODY$
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+    CREATE OR REPLACE FUNCTION sys.stuff(expr sys.VARCHAR, start INTEGER, length INTEGER, replace_expr sys.VARCHAR)
+    RETURNS sys.VARCHAR
+    AS
+    $BODY$
+    BEGIN
+        IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+            RETURN NULL;
+        END IF;
+        IF start <= 0 OR start > length(expr) OR length < 0 THEN
+            RETURN NULL;
+        END IF;
+        IF replace_expr IS NULL THEN
+            RETURN (SELECT overlay (expr placing '' from start for length));
+        END IF;
+        RETURN (SELECT overlay (expr placing replace_expr from start for length));
+    END;
+    $BODY$
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+    CREATE OR REPLACE FUNCTION sys.stuff(expr sys.NVARCHAR, start INTEGER, length INTEGER, replace_expr sys.NVARCHAR)
+    RETURNS sys.NVARCHAR
+    AS
+    $BODY$
+    BEGIN
+        IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+            RETURN NULL;
+        END IF;
+        IF start <= 0 OR start > length(expr) OR length < 0 THEN
+            RETURN NULL;
+        END IF;
+        IF replace_expr IS NULL THEN
+            RETURN (SELECT overlay (expr placing '' from start for length));
+        END IF;
+        RETURN (SELECT overlay (expr placing replace_expr from start for length));
+    END;
+    $BODY$
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stuff_deprecated_3_7');
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stuff_any_deprecated_3_7');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
