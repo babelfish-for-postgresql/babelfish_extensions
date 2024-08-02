@@ -413,6 +413,7 @@ extern Oid 	bbf_pivot_view_idx_oid;
 extern Oid 	get_bbf_pivot_view_oid(void);
 extern Oid	get_bbf_pivot_view_idx_oid(void);
 extern char	*add_entry_to_bbf_pivot_view(const char *pivot_view_name, Node *src_parsetree, Node *cat_parsetree, const char *source_text, const char *agg_func_name);
+extern bool check_and_validate_uuid_in_bbf_pivot_view(const char *uuid);
 extern void remove_entrys_from_bbf_pivot_view(int16 dbid, const char *logical_schema_name, const char *pivot_view_name);
 extern void clean_up_bbf_pivot_view(int16 dbid);
 

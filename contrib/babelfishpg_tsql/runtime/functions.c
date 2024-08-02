@@ -76,6 +76,7 @@
 #define DATEPART_SMALLMONEY_MAX_VALUE 214748.3647	/* maximum value for datepart smallmoney */
 #define DATEPART_SMALLMONEY_MIN_VALUE -53690		/* minimum value for datepart smallmoney */
 #define PIVOT_METADATA_COUNT 3						/* total of 3 metadata is needed by bbf_pivot function */
+#define PIVOT_UUID_LEN 32
 
 typedef enum
 {
@@ -4453,7 +4454,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	 * if view_uuid is not defined (view_uuid is empty string), then we will get the pivot metadata from
 	 * FunctionCallInfo(fcinfo).
 	 */
-	if (!view_uuid || strlen(view_uuid) == 0)
+	if (!view_uuid || strlen(view_uuid) != PIVOT_UUID_LEN)
 	{	
 		if (fcinfo->context == NULL || !IsA(fcinfo->context, List) || list_length((List *) fcinfo->context) != PIVOT_METADATA_COUNT)
 		{
@@ -4487,6 +4488,17 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		Relation	rel;
+		HeapTuple	tuple;
+		SysScanDesc	scan;
+		ScanKeyData	scanKey[1];
+
+		/* check and validate view_uuid in bbf_pivot_view catalog */
+		if (!check_and_validate_uuid_in_bbf_pivot_view(view_uuid))
+			ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+					errmsg("Babelfish PIVOT is not properly initialized.")));
+
 	   /*
 		* If view_uuid is defined (not empty string), then we know current bbf_pivot function is within
 		* a view stmt.
@@ -4494,10 +4506,6 @@ bbf_pivot(PG_FUNCTION_ARGS)
 		* view_uuid from the function argument and get aggregate function argument from babel-
 		* fish_view_catalog.
 		*/
-		Relation	rel;
-		HeapTuple	tuple;
-		SysScanDesc	scan;
-		ScanKeyData	scanKey[1];
 
 		rel = table_open(get_bbf_pivot_view_oid(), RowExclusiveLock);
 
@@ -4612,7 +4620,7 @@ load_categories_hash(RawStmt *cats_sql,
 	 * if view_uuid is not defined, then we will use the rawparsetree of catefory_sql to get the
 	 * result
 	 */
-	if (!view_uuid || strlen(view_uuid) != 0)
+	if (view_uuid && strlen(view_uuid) == PIVOT_UUID_LEN)
 	{
 		StringInfoData 		buf;
 		
@@ -4724,7 +4732,7 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 	 * if view_uuid is not defined, then we will use the rawparsetree of source_sql to get the
 	 * result
 	 */
-	if (!view_uuid || strlen(view_uuid) != 0)
+	if (view_uuid && strlen(view_uuid) == PIVOT_UUID_LEN)
 	{
 		StringInfoData 		buf;
 		
