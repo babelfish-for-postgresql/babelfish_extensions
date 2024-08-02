@@ -34,10 +34,10 @@ BABEL-1683
 BABEL-1715
 BABEL-1953
 BABEL-1963
-BABEL-4390
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
+restricted_procedures
 BABEL-2170
 BABEL-2203
 BABEL-2208
@@ -449,4 +449,5 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 space
+binary-datatype-operators
 

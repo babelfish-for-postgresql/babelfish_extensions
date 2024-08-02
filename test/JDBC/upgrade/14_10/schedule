@@ -31,11 +31,11 @@ TestSmallMoney
 TestSQLVariant
 TestText
 TestTime
-BABEL-4390
 TestTinyInt
 TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 TestVarChar
+restricted_procedures
 TestXML
 sys-assembly_types
 sys-database_mirroring
@@ -456,4 +456,5 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 space
+binary-datatype-operators
 
