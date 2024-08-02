@@ -76,6 +76,13 @@ jobs:
           base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
           server_collation_name: ${{ matrix.upgrade-path.server_collation_name }}
 
+      - name: Setup upterm session
+        if: always() && steps.setup-upgrade-ver-ca.outcome == 'success'
+        uses: lhotari/action-upterm@v1
+        timeout-minutes: 200
+        with:
+          limit-access-to-actor: true
+
       - name: Upgrade till final version ${{ steps.read-base-and-final-version.outputs.final-version }} and run verify scripts
         id: upgrade-and-test
         if: always() && steps.setup-upgrade-ver-ca.outcome == 'success' 
