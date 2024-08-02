@@ -57,8 +57,7 @@ static UTransliterator *cached_transliterator = NULL;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
-static int
-patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid cid, bool is_cs_ai);
+static int patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid cid, bool is_cs_ai);
 
 extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 int ptype,
@@ -1730,7 +1729,7 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				errmsg("This function requires ICU library, which is not available")));
+				errmsg("ICU fund matched length requires ICU library")));
 #endif
     }
 
@@ -1746,7 +1745,7 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 	if (pattern == NULL || strlen(pattern) == 0)
 		return 0;
 
-	while (*pattern == '%')
+	while (pattern != NULL && *pattern != '\0' && *pattern == '%')
 	{
 		pattern++;
 		start_offset = true;
@@ -1908,8 +1907,8 @@ Datum
 patindex_ai_collations(PG_FUNCTION_ARGS)
 {
 	pg_locale_t  mylocale = 0;
-	char         *pattern = text_to_cstring(PG_GETARG_TEXT_P(0));
-	char         *input_str = text_to_cstring(PG_GETARG_TEXT_P(1));
+	char         *pattern = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char         *input_str = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	Oid          cid = PG_GET_COLLATION();
 	int 		 result = 0;
 	bool		 is_CS_AI = false;
