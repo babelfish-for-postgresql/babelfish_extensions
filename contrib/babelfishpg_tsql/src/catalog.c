@@ -6143,6 +6143,59 @@ static void drop_pivot_view_helper_view(char *view_name)
 	RemoveRelations(n);
 }
 
+/* 
+ * check_and_validate_uuid_in_bbf_pivot_view
+ * 		Check and validate uuid in bbf_pivot_view catalog 
+ */
+bool
+check_and_validate_uuid_in_bbf_pivot_view(const char *uuid)
+{
+	Relation	rel;
+	ScanKeyData	scanKey[1];
+	SysScanDesc	scan;
+	HeapTuple	tuple;
+	bool		result,
+				uuid_is_null,
+				dbid_is_null,
+				schema_name_is_null;
+	char	   *catalog_uuid, 
+			   *catalog_schema_name;
+	int16 		catalog_dbid;
+
+	result = false;
+	catalog_uuid = NULL;
+	catalog_schema_name = NULL;
+	catalog_dbid = -1;
+
+	rel = table_open(get_bbf_pivot_view_oid(), AccessShareLock);
+
+	ScanKeyInit(&scanKey[0],
+			Anum_bbf_pivot_view_pivot_view_uuid,
+			BTEqualStrategyNumber, F_TEXTEQ,
+			CStringGetTextDatum(uuid));
+
+	scan = systable_beginscan(rel, get_bbf_pivot_view_idx_oid(), true, NULL, 1, scanKey);
+
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		catalog_dbid = DatumGetInt16(heap_getattr(tuple, Anum_bbf_pivot_view_dbid, RelationGetDescr(rel), &dbid_is_null));
+		catalog_uuid = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_pivot_view_pivot_view_uuid, RelationGetDescr(rel), &uuid_is_null));
+		catalog_schema_name = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_pivot_view_schema_name, RelationGetDescr(rel), &schema_name_is_null));
+
+
+		if (strcmp(catalog_uuid, uuid) == 0 
+				&& catalog_dbid == get_cur_db_id() 
+				&& strcmp(catalog_schema_name, get_authid_user_ext_schema_name(get_cur_db_name(), get_user_for_database(get_cur_db_name()))) == 0 )
+			result = true;
+	}
+	
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	return result;
+}
+
 /*
  * remove_entrys_from_bbf_pivot_view
  * 		Remove all entries from the sys.bbf_pivot_view catalog table.
