@@ -1,0 +1,97 @@
+CREATE LOGIN babel_4390_user_l1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_4390_user_u1 FOR LOGIN babel_4390_user_l1;
+GO
+
+CREATE SCHEMA babel_4390_test_schema_s1 AUTHORIZATION babel_4390_user_u1;
+GO
+
+CREATE LOGIN babel_4390_user_l2 WITH PASSWORD = '12345678';
+GO
+
+-- tsql user=babel_4390_user_l1 password=12345678
+CREATE PROCEDURE babel_4390_test_schema_s1.xp_qv AS
+BEGIN
+    SELECT 1;
+END
+GO
+
+CREATE PROCEDURE babel_4390_test_schema_s1.sp_addlinkedsrvlogin AS
+BEGIN
+    SELECT 1;
+END
+GO
+
+-- tsql
+CREATE PROCEDURE babel_4390_prepare_p1 AS
+BEGIN
+    EXEC('DROP PROCEDURE dbo.xp_qv');
+END
+GO
+
+CREATE PROCEDURE babel_4390_prepare_p3 AS
+BEGIN
+    EXEC('DROP PROCEDURE dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, int)');
+END
+GO
+
+CREATE PROCEDURE babel_4390_prepare_p4 AS
+BEGIN
+    EXEC('DROP PROCEDURE dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, sys.nvarchar)');
+END
+GO
+
+CREATE PROCEDURE babel_4390_prepare_p5 AS
+BEGIN
+    EXEC('DROP PROCEDURE dbo.sp_addlinkedsrvlogin');
+END
+GO
+
+CREATE PROCEDURE babel_4390_prepare_p6 AS
+BEGIN
+    EXEC('DROP PROCEDURE dbo.sp_droplinkedsrvlogin');
+END
+GO
+
+CREATE PROCEDURE babel_4390_prepare_p7 AS
+BEGIN
+    EXEC('DROP PROCEDURE dbo.sp_dropserver');
+END
+GO
+
+CREATE PROCEDURE babel_4390_prepare_p8 AS
+BEGIN
+    EXEC('DROP PROCEDURE dbo.sp_enum_oledb_providers');
+END
+GO
+
+CREATE PROCEDURE babel_4390_prepare_p9 AS
+BEGIN
+    EXEC('DROP PROCEDURE dbo.sp_testlinkedserver');
+END
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p1 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p3 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p4 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p5 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p6 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p7 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p8 TO guest;
+GO
+
+GRANT EXECUTE ON babel_4390_prepare_p9 TO guest;
+GO
