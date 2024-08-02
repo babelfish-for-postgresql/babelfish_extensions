@@ -65,14 +65,14 @@ SELECT PointA.STAsText(),PointB.STAsText() FROM TestSpatialFunction_TableATemp J
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
-SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn1.STSrid;
+SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn.STX;
 go
 
 DECLARE @isEqual BIT = 1;
@@ -103,7 +103,7 @@ SELECT ID, PointColumn.STEquals(@referencePoint) AS EqualityReferencePoint,
 CASE WHEN PointColumn.STEquals(@referencePoint) = @isEqual THEN 'Close'
 ELSE 'Far'
 END AS Proximity
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -111,7 +111,7 @@ SELECT ID, @referencePoint.STEquals(PointColumn) AS EqualityReferencePoint,
 CASE WHEN @referencePoint.STEquals(PointColumn) = @referencePoint.STY THEN 'Close'
 ELSE 'Far'
 END AS Proximity
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @Ranges TABLE (MinDistance float, MaxDistance float);
@@ -126,7 +126,7 @@ PIVOT ( COUNT(ID) FOR Range IN ([0-5], [5.1-10], [10.1-15], [15.1+])) AS PivotTa
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STEquals(@referencePoint) AS Equality FROM dbo.TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT ID, PointColumn.STEquals(@referencePoint) AS Equality FROM dbo.TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -160,9 +160,9 @@ EXEC sp_executesql @sql, @params, @referencePoint, @isEqual;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
-SELECT TestSpatialFunction_YourTableTemp.PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
-SELECT dbo.TestSpatialFunction_YourTableTemp.PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT TestSpatialFunction_YourTableTemp.PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT dbo.TestSpatialFunction_YourTableTemp.PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @pnt geometry;
@@ -196,7 +196,7 @@ GO
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STEquals(@referencePoint) AS equal,
 cast(@referencePoint.STContains(PointColumn) as int) - LAG(@referencePoint.STX) OVER (ORDER BY ID) AS Equalitygroup
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 
 -- Verifying with precision
@@ -266,15 +266,15 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT PointA.STAsText(),PointB.STAsText() FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON TestSpatialFunction_TableBTemp.PointB.STContains(@referencePoint) = 0 ORDER BY TestSpatialFunction_TableBTemp.PointB.STX;
 GO
 
-SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn1.STSrid;
+SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 
 DECLARE @contains BIT = 1 ;
@@ -307,7 +307,7 @@ SELECT ID, PointColumn.STContains(@referencePoint) AS ReferencePoint,
 CASE WHEN PointColumn.STContains(@referencePoint) = @contains THEN 'contain'
 ELSE 'do_not_contain'
 END AS Proximity
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -315,7 +315,7 @@ SELECT ID, @referencePoint.STContains(PointColumn) AS ReferencePoint,
 CASE WHEN @referencePoint.STContains(PointColumn) = @referencePoint.STY THEN 'contain'
 ELSE 'do_not_contain'
 END AS Proximity
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @Ranges TABLE (MinDistance float, MaxDistance float);
@@ -336,7 +336,7 @@ go
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STContains(@referencePoint) AS contain,
 JSON_QUERY('{"Contain":' + CAST(PointColumn.STContains(@referencePoint) AS NVARCHAR(MAX)) + '}') AS Json
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -364,9 +364,9 @@ EXEC sp_executesql @sql, @params, @referencePoint, @contains;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
-SELECT TestSpatialFunction_YourTableTemp.PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
-SELECT dbo.TestSpatialFunction_YourTableTemp.PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT TestSpatialFunction_YourTableTemp.PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT dbo.TestSpatialFunction_YourTableTemp.PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @pnt geometry;
@@ -519,16 +519,16 @@ SET @point1 = geometry::Point(3.0, 4.0, 4326);
 SELECT PointColumn.STAsText() from TestSpatialFunction_YourTableTemp where PointColumn = @point1;
 GO
 
-SELECT PointColumn.STSrid from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 
-SELECT [PointColumn].[STSrid] from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT [PointColumn].[STSrid] from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 
-SELECT location.STSrid from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.STSrid;
+SELECT location.STSrid from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.STX;
 GO
 
-SELECT [location].[STSrid] from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.STSrid;
+SELECT [location].[STSrid] from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.STX;
 GO
 
 DECLARE @point geometry; 
@@ -547,20 +547,20 @@ DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT * FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON TestSpatialFunction_TableATemp.PointA.STSrid = @point.STSrid;
 GO
 
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY @point.STSrid
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY @point.STX
 GO
 
-SELECT PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 
-SELECT TestSpatialFunction_YourTableTemp.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT TestSpatialFunction_YourTableTemp.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 
-SELECT dbo.YourTable.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT dbo.YourTable.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 
 SELECT ID, PointColumn.STSrid AS SRID,

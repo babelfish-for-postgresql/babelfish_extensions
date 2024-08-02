@@ -33,6 +33,7 @@ CREATE OR REPLACE FUNCTION sys.geographyanalyze(internal)
     AS '$libdir/postgis-3','gserialized_analyze_nd'
     LANGUAGE 'c' VOLATILE STRICT;  
 
+
 CREATE TYPE sys.GEOGRAPHY (
     INTERNALLENGTH = variable,
     INPUT          = sys.geographyin,

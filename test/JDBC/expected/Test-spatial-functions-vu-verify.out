@@ -133,33 +133,32 @@ POINT(1 2)#!#POINT(3 4)
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
 int
-0
 4326
+0
 4326
 ~~END~~
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
 int
+4326
 0
 4326
-4326
 ~~END~~
 
 
-SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn1.STSrid;
+SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn.STX;
 go
-~~START~~
-text
-POINT(3 4)
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "pointcolumn" does not exist)~~
 
 
 DECLARE @isEqual BIT = 1;
@@ -209,12 +208,12 @@ SELECT ID, PointColumn.STEquals(@referencePoint) AS EqualityReferencePoint,
 CASE WHEN PointColumn.STEquals(@referencePoint) = @isEqual THEN 'Close'
 ELSE 'Far'
 END AS Proximity
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
 int#!#bit#!#text
-3#!#<NULL>#!#Far
 1#!#0#!#Far
+3#!#<NULL>#!#Far
 2#!#0#!#Far
 ~~END~~
 
@@ -224,12 +223,12 @@ SELECT ID, @referencePoint.STEquals(PointColumn) AS EqualityReferencePoint,
 CASE WHEN @referencePoint.STEquals(PointColumn) = @referencePoint.STY THEN 'Close'
 ELSE 'Far'
 END AS Proximity
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
 int#!#bit#!#text
-3#!#<NULL>#!#Far
 1#!#0#!#Close
+3#!#<NULL>#!#Far
 2#!#0#!#Close
 ~~END~~
 
@@ -253,12 +252,12 @@ int#!#int#!#int#!#int
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STEquals(@referencePoint) AS Equality FROM dbo.TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT ID, PointColumn.STEquals(@referencePoint) AS Equality FROM dbo.TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
 int#!#bit
-3#!#<NULL>
 1#!#0
+3#!#<NULL>
 2#!#0
 ~~END~~
 
@@ -317,9 +316,9 @@ int#!#bit#!#text
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
-SELECT TestSpatialFunction_YourTableTemp.PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
-SELECT dbo.TestSpatialFunction_YourTableTemp.PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT TestSpatialFunction_YourTableTemp.PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT dbo.TestSpatialFunction_YourTableTemp.PointColumn.STEquals(@referencePoint) AS Equality FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -379,12 +378,12 @@ int#!#bit#!#int
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STEquals(@referencePoint) AS equal,
 cast(@referencePoint.STContains(PointColumn) as int) - LAG(@referencePoint.STX) OVER (ORDER BY ID) AS Equalitygroup
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int#!#bit#!#float
-3#!#<NULL>#!#<NULL>
 1#!#0#!#<NULL>
+3#!#<NULL>#!#<NULL>
 2#!#0#!#0.0
 ~~END~~
 
@@ -527,16 +526,15 @@ POINT(1 2)#!#POINT(3 4)
 ~~END~~
 
 
-SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn1.STSrid;
+SELECT PointColumn1.STAsText() FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn.STX;
 GO
-~~START~~
-text
-POINT(3 4)
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "pointcolumn" does not exist)~~
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
 text
@@ -547,7 +545,7 @@ POINT(5 6)
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STAsText() FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
 text
@@ -605,12 +603,12 @@ SELECT ID, PointColumn.STContains(@referencePoint) AS ReferencePoint,
 CASE WHEN PointColumn.STContains(@referencePoint) = @contains THEN 'contain'
 ELSE 'do_not_contain'
 END AS Proximity
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
 int#!#bit#!#text
-3#!#<NULL>#!#do_not_contain
 1#!#0#!#do_not_contain
+3#!#<NULL>#!#do_not_contain
 2#!#0#!#do_not_contain
 ~~END~~
 
@@ -620,12 +618,12 @@ SELECT ID, @referencePoint.STContains(PointColumn) AS ReferencePoint,
 CASE WHEN @referencePoint.STContains(PointColumn) = @referencePoint.STY THEN 'contain'
 ELSE 'do_not_contain'
 END AS Proximity
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
 int#!#bit#!#text
-3#!#<NULL>#!#do_not_contain
 1#!#0#!#contain
+3#!#<NULL>#!#do_not_contain
 2#!#0#!#contain
 ~~END~~
 
@@ -659,12 +657,12 @@ go
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STContains(@referencePoint) AS contain,
 JSON_QUERY('{"Contain":' + CAST(PointColumn.STContains(@referencePoint) AS NVARCHAR(MAX)) + '}') AS Json
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
 int#!#bit#!#nvarchar
-3#!#<NULL>#!#<NULL>
 1#!#0#!#{"Contain": 0}
+3#!#<NULL>#!#<NULL>
 2#!#0#!#{"Contain": 0}
 ~~END~~
 
@@ -710,9 +708,9 @@ int#!#bit#!#text
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
-SELECT TestSpatialFunction_YourTableTemp.PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
-SELECT dbo.TestSpatialFunction_YourTableTemp.PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT TestSpatialFunction_YourTableTemp.PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT dbo.TestSpatialFunction_YourTableTemp.PointColumn.STContains(@referencePoint) AS contain FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -1056,46 +1054,38 @@ POINT(3 4)
 ~~END~~
 
 
-SELECT PointColumn.STSrid from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int
+4326
 0
 4326
-4326
 ~~END~~
 
 
-SELECT [PointColumn].[STSrid] from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT [PointColumn].[STSrid] from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int
+4326
 0
 4326
-4326
 ~~END~~
 
 
-SELECT location.STSrid from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.STSrid;
+SELECT location.STSrid from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.STX;
 GO
-~~START~~
-int
-4326
-4326
-4326
-4326
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column notation .stx applied to type geography, which is not a composite type)~~
 
 
-SELECT [location].[STSrid] from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.STSrid;
+SELECT [location].[STSrid] from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.STX;
 GO
-~~START~~
-int
-4326
-4326
-4326
-4326
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column notation .stx applied to type geography, which is not a composite type)~~
 
 
 DECLARE @point geometry; 
@@ -1135,18 +1125,18 @@ int#!#geometry#!#int#!#geometry
 ~~END~~
 
 
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int
-0
 4326
+0
 4326
 ~~END~~
 
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY @point.STSrid
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY @point.STX
 GO
 ~~START~~
 int
@@ -1156,27 +1146,27 @@ int
 ~~END~~
 
 
-SELECT PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int
-0
 4326
+0
 4326
 ~~END~~
 
 
-SELECT TestSpatialFunction_YourTableTemp.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT TestSpatialFunction_YourTableTemp.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~START~~
 int
-0
 4326
+0
 4326
 ~~END~~
 
 
-SELECT dbo.YourTable.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
+SELECT dbo.YourTable.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 GO
 ~~ERROR (Code: 33557097)~~
 
