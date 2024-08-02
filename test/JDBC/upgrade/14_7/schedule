@@ -32,9 +32,9 @@ BABEL-1625
 BABEL-1654
 BABEL-1683
 BABEL-1715
-BABEL-4390
 BABEL-1953
 BABEL-1963
+restricted_procedures
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
@@ -414,7 +414,7 @@ datetimeoffset-timezone-before-15_3
 BABEL-4046
 table_constraint_wo_comma-before-15_6-or-16_2
 getdate
-BABEL_4330
+BABEL_4330-before-15_8-or-16_4
 AUTO_ANALYZE-before-15-5-or-14-10
 cast_eliminate
 order_by_offset_fetch_rows-before-15_6-or-16_2
@@ -435,6 +435,7 @@ ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
 left-before-15_8-or-16_4
 right-before-15_8-or-16_4
+replace-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
 babel_726-before-14_12-or-15_7-or-16_3
 BABEL-4869
@@ -446,4 +447,5 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 space
+binary-datatype-operators
 
