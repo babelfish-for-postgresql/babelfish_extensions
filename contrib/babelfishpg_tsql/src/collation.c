@@ -46,11 +46,13 @@
 #define MAX_BYTES_PER_CHAR 4
 #define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
 
-Oid			server_collation_oid = InvalidOid;
+Oid			database_or_server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
 static Oid remove_accents_internal_oid;
 static UTransliterator *cached_transliterator = NULL;
+
+bool is_new_db = false;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
@@ -202,7 +204,7 @@ transform_funcexpr(Node *node)
 
 				tsql_get_database_or_server_collation_oid_internal(true);
 
-				if (!OidIsValid(server_collation_oid))
+				if (!OidIsValid(database_or_server_collation_oid))
 					return node;
 
 				/*
@@ -324,7 +326,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
-	if (!OidIsValid(server_collation_oid))
+	if (!OidIsValid(database_or_server_collation_oid))
 		return node;
 
 
@@ -869,7 +871,7 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
-	if (!OidIsValid(server_collation_oid))
+	if (!OidIsValid(database_or_server_collation_oid))
 		return node;
 
 	/*
@@ -898,8 +900,8 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	return transform_likenode_for_AI(node, op);	
 }
 
-static bool
-supported_AI_collation_for_like(int32_t code_page)
+bool
+supported_collation_for_db_and_like(int32_t code_page)
 {
 	if (code_page == 1250 || code_page == 1252 || code_page == 1257)
 		return true;
@@ -955,7 +957,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
 		{
-			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
+			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
 				return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
@@ -967,7 +969,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
-			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
+			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
 				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
@@ -1161,14 +1163,14 @@ init_and_check_collation_callbacks(void)
 Oid
 tsql_get_database_or_server_collation_oid_internal(bool missingOk)
 {
-	if (OidIsValid(server_collation_oid) && !is_new_db)
-		return server_collation_oid;
+	if (OidIsValid(database_or_server_collation_oid) && !is_new_db)
+		return database_or_server_collation_oid;
 
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	server_collation_oid = (*collation_callbacks_ptr->get_database_or_server_collation_oid_internal) (missingOk);
-	return server_collation_oid;
+	database_or_server_collation_oid = (*collation_callbacks_ptr->get_database_or_server_collation_oid_internal) (missingOk);
+	return database_or_server_collation_oid;
 }
 
 Datum
@@ -1296,6 +1298,15 @@ tsql_translate_bbf_collation_to_tsql_collation(const char *collname)
 	init_and_check_collation_callbacks();
 
 	return (*collation_callbacks_ptr->translate_bbf_collation_to_tsql_collation) (collname);
+}
+
+const char *
+tsql_translate_tsql_collation_to_bbf_collation(const char *collname)
+{
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	return (*collation_callbacks_ptr->translate_tsql_collation_to_bbf_collation) (collname);
 }
 
 bool
@@ -1675,5 +1686,8 @@ set_db_collation_internal(int16 db_id)
 
 	ReleaseSysCache(tuple_sysdb);
 	tsql_set_db_collation(database_collation_oid);
+	is_new_db = true;
+	tsql_get_database_or_server_collation_oid_internal(false);
+	is_new_db = false;
 }
 
