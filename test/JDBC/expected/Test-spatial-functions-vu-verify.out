@@ -147,7 +147,7 @@ bit
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 DECLARE @isEqual BIT = 0;
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp WHERE PointColumn.STEquals(@referencePoint) = @isEqual ORDER BY PointColumn.STX;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp WHERE PointColumn.STEquals(@referencePoint) = @isEqual ORDER BY PointColumn.STSrid;
 go
 ~~START~~
 int
@@ -190,23 +190,23 @@ POINT(1 2)#!#POINT(3 4)
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 go
 ~~START~~
 int
-4326
 0
+4326
 4326
 ~~END~~
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 go
 ~~START~~
 int
-4326
 0
+4326
 4326
 ~~END~~
 
@@ -1196,12 +1196,12 @@ POINT(3 4)
 ~~END~~
 
 
-SELECT PointColumn.STSrid from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT PointColumn.STSrid from TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 GO
 ~~START~~
 int
-4326
 0
+4326
 4326
 ~~END~~
 
@@ -1216,7 +1216,7 @@ int
 ~~END~~
 
 
-SELECT location.STSrid from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+SELECT location.STSrid from TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.STSrid;
 GO
 ~~START~~
 int
@@ -1261,7 +1261,7 @@ int
 
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp WHERE PointColumn.STSrid = @point.STSrid ORDER BY PointColumn.STX;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp WHERE PointColumn.STSrid = @point.STSrid ORDER BY PointColumn.STSrid;
 GO
 ~~START~~
 int
@@ -1271,7 +1271,7 @@ int
 
 
 DECLARE @point geography = geography::Point(1.0, 2.0, 4326);
-SELECT location.STSrid FROM TestSpatialFunction_SPATIALPOINTGEOG_dttemp WHERE location.STSrid = @point.STSrid ORDER BY location.Lat;
+SELECT location.STSrid FROM TestSpatialFunction_SPATIALPOINTGEOG_dttemp WHERE location.STSrid = @point.STSrid ORDER BY location.STSrid;
 GO
 ~~START~~
 int
@@ -1288,7 +1288,7 @@ int
 ~~END~~
 
 
-SELECT * FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON TestSpatialFunction_TableATemp.PointA.STSrid = TestSpatialFunction_TableBTemp.PointB.STSrid ORDER BY TestSpatialFunction_TableBTemp.PointB.STX;
+SELECT * FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON TestSpatialFunction_TableATemp.PointA.STSrid = TestSpatialFunction_TableBTemp.PointB.STSrid ORDER BY TestSpatialFunction_TableBTemp.PointB.STSrid;
 GO
 ~~START~~
 int#!#geometry#!#int#!#geometry
@@ -1297,7 +1297,7 @@ int#!#geometry#!#int#!#geometry
 
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT * FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON TestSpatialFunction_TableATemp.PointA.STSrid = @point.STSrid ORDER BY TestSpatialFunction_TableBTemp.PointB.STX;
+SELECT * FROM TestSpatialFunction_TableATemp JOIN TestSpatialFunction_TableBTemp ON TestSpatialFunction_TableATemp.PointA.STSrid = @point.STSrid ORDER BY TestSpatialFunction_TableBTemp.PointB.STSrid;
 GO
 ~~START~~
 int#!#geometry#!#int#!#geometry
@@ -1305,18 +1305,18 @@ int#!#geometry#!#int#!#geometry
 ~~END~~
 
 
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 GO
 ~~START~~
 int
-4326
 0
+4326
 4326
 ~~END~~
 
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY @point.STX
+SELECT PointColumn.STSrid FROM TestSpatialFunction_YourTableTemp ORDER BY @point.STSrid;
 GO
 ~~START~~
 int
@@ -1326,27 +1326,27 @@ int
 ~~END~~
 
 
-SELECT PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 GO
 ~~START~~
 int
-4326
 0
+4326
 4326
 ~~END~~
 
 
-SELECT TestSpatialFunction_YourTableTemp.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT TestSpatialFunction_YourTableTemp.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 GO
 ~~START~~
 int
-4326
 0
+4326
 4326
 ~~END~~
 
 
-SELECT dbo.YourTable.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+SELECT dbo.YourTable.PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -1355,12 +1355,12 @@ GO
 
 SELECT ID, PointColumn.STSrid AS SRID,
 JSON_QUERY('{"SRID":' + CAST(PointColumn.STSrid AS NVARCHAR(MAX)) + '}') AS SRIDJson 
-FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 GO
 ~~START~~
 int#!#int#!#nvarchar
-1#!#4326#!#{"SRID": 4326}
 3#!#0#!#{"SRID": 0}
+1#!#4326#!#{"SRID": 4326}
 2#!#4326#!#{"SRID": 4326}
 ~~END~~
 
@@ -1389,12 +1389,12 @@ int#!#int
 
 SELECT ID, PointColumn.STSrid AS XCoordinate, 
 CASE WHEN PointColumn.STSrid = 0 THEN 'Zero SRID'
-ELSE 'Positive SRID' END AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
+ELSE 'Positive SRID' END AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 GO
 ~~START~~
 int#!#int#!#text
-1#!#4326#!#Positive SRID
 3#!#0#!#Zero SRID
+1#!#4326#!#Positive SRID
 2#!#4326#!#Positive SRID
 ~~END~~
 
