@@ -2379,19 +2379,17 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM partition_vu_prepare_binary_table WHERE Id >= 0x0000 AND Id < 0x0400
-Gather
-  Workers Planned: 2
-  ->  Parallel Append
-        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
-              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
-        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_2" partition_vu_prepare_binary_table_2
-              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
-        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_3" partition_vu_prepare_binary_table_3
-              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
-        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_4" partition_vu_prepare_binary_table_4
-              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
-        ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_0" partition_vu_prepare_binary_table_5
-              Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+Append
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
+        Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_2" partition_vu_prepare_binary_table_2
+        Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_3" partition_vu_prepare_binary_table_3
+        Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_4" partition_vu_prepare_binary_table_4
+        Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
+  ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_0" partition_vu_prepare_binary_table_5
+        Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
 ~~END~~
 
 ~~START~~
@@ -3534,6 +3532,11 @@ ORDER BY PartitionNumber, Id;
 GO
 ~~START~~
 int#!#binary
+1#!#<NULL>
+2#!#00000000
+2#!#00C00000
+3#!#04000000
+4#!#08000000
 ~~END~~
 
 

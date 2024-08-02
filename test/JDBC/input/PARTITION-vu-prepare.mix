@@ -1079,13 +1079,12 @@ INSERT INTO partition_vu_prepare_nchar_table (Id, Value) VALUES (NULL, 'Value NU
 GO
 
 -- BABEL-4957 needs to fixed first otherwise dump/restore will fail
--- Insert values into partition_vu_prepare_binary_table
--- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0000, 'Value 0x0000');
--- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0400, 'Value 0x0400');
--- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0800, 'Value 0x0800');
--- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0C000, 'Value 0x0C000');
--- INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (NULL, 'Value NULL');
--- GO
+INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0000, 'Value 0x0000');
+INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0400, 'Value 0x0400');
+INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0800, 'Value 0x0800');
+INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (0x0C000, 'Value 0x0C000');
+INSERT INTO partition_vu_prepare_binary_table (Id, Value) VALUES (NULL, 'Value NULL');
+GO
 
 -- Insert values into partition_vu_prepare_varbinary_table
 INSERT INTO partition_vu_prepare_varbinary_table (Id, Value) VALUES (0x0000000000000000, 'Value 0x0000000000000000');

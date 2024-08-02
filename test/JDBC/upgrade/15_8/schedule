@@ -535,4 +535,5 @@ reverse
 replicate
 space
 replace
+binary-datatype-operators
 
