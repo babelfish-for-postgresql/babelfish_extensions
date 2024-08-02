@@ -1457,9 +1457,7 @@ union all
 -- details of system defined procedures
 select
     p.proname::sys.sysname as name 
-  , case
-      when t.typname = 'trigger' then tr.oid else p.oid
-    end as object_id
+  , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
   , cast (case when tr.tgrelid is not null 
@@ -1753,7 +1751,7 @@ CREATE OR REPLACE VIEW sys.triggers
 AS
 SELECT
   CAST(p.proname as sys.sysname) as name,
-  CAST(tr.oid as int) as object_id,
+  CAST(p.oid as int) as object_id,
   CAST(1 as sys.tinyint) as parent_class,
   CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
   CAST(tr.tgrelid as int) AS parent_id,
@@ -1863,7 +1861,7 @@ select
       CAST(tr.name as sys.sysname) as name
     , CAST(tr.object_id as int) as object_id
     , CAST(NULL as int) as principal_id
-    , CAST(p.relnamespace as int) as schema_id
+    , CAST(p.pronamespace as int) as schema_id
     , CAST(tr.parent_id as int) as parent_object_id
     , CAST(tr.type as char(2)) as type
     , CAST(tr.type_desc as sys.nvarchar(60)) as type_desc
@@ -1873,7 +1871,7 @@ select
     , CAST(0 as sys.bit) as is_published
     , CAST(0 as sys.bit) as is_schema_published
   from sys.triggers tr
-  inner join pg_class p on p.oid = tr.parent_id
+  inner join pg_proc p on p.oid = tr.object_id
 union all 
 select
     CAST(def.name as sys.sysname) as name
