@@ -11628,7 +11628,7 @@ BEGIN
        return input_string;
    elsif sys.is_collated_ai(input_string) then
        return pg_catalog.replace(input_string, pattern, replacement);
-   elsif sys.is_collated_ci(input_string) then
+   elsif sys.is_collated_ci_as(input_string) then
        return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
    else
        return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
@@ -11645,7 +11645,7 @@ BEGIN
        return input_string;
    elsif sys.is_collated_ai(input_string) then
        return pg_catalog.replace(input_string, pattern, replacement);
-   elsif sys.is_collated_ci(input_string) then
+   elsif sys.is_collated_ci_as(input_string) then
        return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
    else
        return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
