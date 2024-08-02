@@ -369,11 +369,6 @@ TEST_F(PSQL_DataTypes_Text, Comparison_Operators) {
 }
 
 TEST_F(PSQL_DataTypes_Text, String_Functions) {
-  const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, " int PRIMARY KEY"},
-    {COL2_NAME, " sys.VARCHAR(50)"}
-  };
-
   const vector<string> INSERTED_DATA = {
     "aBcDeFg",
     "   test",

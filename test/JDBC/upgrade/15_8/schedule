@@ -534,4 +534,5 @@ substring
 reverse
 replicate
 space
+replace
 
