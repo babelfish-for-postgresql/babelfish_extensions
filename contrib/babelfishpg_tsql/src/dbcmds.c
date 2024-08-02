@@ -286,10 +286,9 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 				get_collation_oid(list_make1(makeString((char*) database_collation_name)), true)).code_page))
 			{
 				database_collation_name = NULL;
-				
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("\"%s\" is not currently supported for database collation ", database_collation_name)));
+				 errmsg("\"%s\" is not currently supported for database collation ", defGetString(defel))));
 			}
 		}
 		else

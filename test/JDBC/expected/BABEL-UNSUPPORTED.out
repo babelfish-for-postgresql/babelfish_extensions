@@ -513,7 +513,7 @@ CREATE DATABASE db_unsupported9 COLLATE Arabic_CI_AS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only "sql_latin1_general_cp1_ci_as" supported for default collation)~~
+~~ERROR (Message: "arabic_ci_as" is not currently supported for database collation )~~
 
 DROP DATABASE db_unsupported9;
 GO
@@ -2440,7 +2440,7 @@ CREATE DATABASE t448 COLLATE NOT_VALID_COLLATION;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only "sql_latin1_general_cp1_ci_as" supported for default collation)~~
+~~ERROR (Message: Invalid collation "not_valid_collation")~~
 
 
 
