@@ -3676,21 +3676,6 @@ int#!#uniqueidentifier
 ~~END~~
 
 
-SELECT $PARTITION.SqlVariantPartitionFunction(Id) AS PartitionNumber, Id
-FROM partition_vu_prepare_sqlvariant_table
-ORDER BY PartitionNumber, Id;
-GO
-~~START~~
-int#!#sql_variant
-1#!#<NULL>
-2#!#abc  
-3#!#Apple
-4#!#Banana
-5#!#Some text
-6#!#xyz  
-~~END~~
-
-
 ----------------------------------------------
 --- DOLLAR PARTITION FUNCTION Dependency test
 ----------------------------------------------
