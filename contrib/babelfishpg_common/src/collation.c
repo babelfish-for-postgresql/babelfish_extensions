@@ -690,6 +690,17 @@ translate_bbf_collation_to_tsql_collation(const char *collname)
 	return NULL;
 }
 
+/* Translate TSQL collation to it's closest BBF Collation. */
+const char *
+translate_tsql_collation_to_bbf_collation(const char *collname)
+{
+	for (int i = 0; i < TOTAL_COLL_TRANSLATION_COUNT; i++)
+		if (pg_strcasecmp(coll_translations[i].from_collname, collname) == 0)
+			return (coll_translations[i].to_collname);
+
+	return NULL;
+}
+
 /*
  * find_locale - search for the locale in the locales array and returns its index
  * or returns NOT_FOUND.
@@ -1610,6 +1621,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.find_collation_internal = &find_collation;
 		collation_callbacks_var.has_ilike_node = &has_ilike_node;
 		collation_callbacks_var.translate_bbf_collation_to_tsql_collation = &translate_bbf_collation_to_tsql_collation;
+		collation_callbacks_var.translate_tsql_collation_to_bbf_collation = &translate_tsql_collation_to_bbf_collation;
 		collation_callbacks_var.set_db_collation = &set_db_collation;
 	}
 	return &collation_callbacks_var;

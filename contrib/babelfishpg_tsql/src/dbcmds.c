@@ -46,8 +46,6 @@
 
 Oid sys_babelfish_db_seq_oid = InvalidOid;
 
-const char *database_collation_name = NULL;
-
 static Oid get_sys_babelfish_db_seq_oid(void);
 static List *gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
@@ -62,7 +60,8 @@ static List *gen_dropdb_subcmds(const char *schema,
 static Oid	do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
-bool is_new_db = false;
+
+const char* database_collation_name = NULL;
 
 
 static Oid
@@ -272,7 +271,8 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 			database_collation_name = pstrdup(defGetString(defel));
 			if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
 			{
-				if (tsql_find_collation_internal(tsql_translate_bbf_collation_to_tsql_collation(database_collation_name)) == NOT_FOUND)
+				database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(database_collation_name);
+				if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
 				{
 					database_collation_name = NULL;
 					ereport(ERROR,
@@ -280,25 +280,25 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 						errmsg("Invalid collation \"%s\"", defGetString(defel)),
 							parser_errposition(pstate, defel->location)));
 				}
-				else
-					database_collation_name = pstrdup(tsql_translate_bbf_collation_to_tsql_collation(defGetString(defel)));
 			}
-			is_new_db = true;
+
+			if (!supported_collation_for_db_and_like(tsql_lookup_collation_table_internal(
+				get_collation_oid(list_make1(makeString((char*) database_collation_name)), true)).code_page))
+			{
+				database_collation_name = NULL;
+				
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("\"%s\" is not currently supported for database collation ", database_collation_name)));
+			}
 		}
 		else
 		{
-			is_new_db = false;
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("option \"%s\" not recognized", defel->defname),
 					 parser_errposition(pstate, defel->location)));
 		}	
-	}
-
-	if (!is_new_db)
-	{
-		database_collation_name = NULL;
-		is_new_db = true;
 	}
 	
 	return do_create_bbf_db(stmt->dbname, stmt->options, owner);
@@ -432,29 +432,10 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* TODO: Extract options */
 
-	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_database_or_server_collation_oid_internal(false)));
-	if (!HeapTupleIsValid(tuple))
-	{
-		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
-
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("OID corresponding to collation \"%s\" does not exist", server_collation_name)));
-	}
-
-	if (database_collation_name && is_new_db)
-	{
-		memcpy(default_collation.data, database_collation_name, strlen(database_collation_name));
-		default_collation.data[strlen(database_collation_name)] = '\0';
-	}
-	else
-	{
-		default_collation = ((Form_pg_collation) GETSTRUCT(tuple))->collname;
-		database_collation_name = pstrdup(default_collation.data);
-	}
-
-
-	ReleaseSysCache(tuple);
+	if (database_collation_name == NULL)
+		database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(GetConfigOption("babelfishpg_tsql.server_collation_name", false, false));
+	namestrcpy(&default_collation, database_collation_name);
+	database_collation_name = NULL;
 
 	/* single-db mode check. IDs 1-4 are reserved for native system databases */
 	if (SINGLE_DB == get_migration_mode() && dbid > 4)
