@@ -10978,6 +10978,70 @@ from sys.table_types tt
 inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
+SELECT
+  ao.object_id AS object_id
+  , CAST(
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN COALESCE(f.definition, '')
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
+      ELSE NULL
+      END
+    AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(
+      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN
+        CASE WHEN p.proisstrict THEN 1
+        ELSE 0 
+        END
+      ELSE 0
+      END
+    AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
+   )
+LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
+WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
+UNION ALL
+SELECT
+  ao.object_id AS object_id
+  , CAST(
+      CASE WHEN ao.type = 'TR' THEN COALESCE(f.definition, '')
+      ELSE NULL
+      END
+    AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(0 AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(0 as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
+WHERE ao.type = 'TR';
+GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.events 
 AS
 SELECT 

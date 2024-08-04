@@ -2027,7 +2027,7 @@ SELECT
   , null::integer as execute_as_principal_id
   , CAST(0 as sys.bit) as uses_native_compilation
   , CAST(0 as INT) as is_ms_shipped
-FROM sys.objects ao
+FROM sys.all_objects ao
 LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
 LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
 LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
