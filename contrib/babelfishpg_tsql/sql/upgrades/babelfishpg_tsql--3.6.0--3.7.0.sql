@@ -11019,11 +11019,7 @@ WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
 UNION ALL
 SELECT
   ao.object_id AS object_id
-  , CAST(
-      CASE WHEN ao.type = 'TR' THEN COALESCE(f.definition, '')
-      ELSE NULL
-      END
-    AS sys.nvarchar) AS definition
+  , CAST(COALESCE(f.definition, '') AS sys.nvarchar) AS definition
   , CAST(1 as sys.bit)  AS uses_ansi_nulls
   , CAST(1 as sys.bit)  AS uses_quoted_identifier
   , CAST(0 as sys.bit)  AS is_schema_bound
@@ -11032,7 +11028,7 @@ SELECT
   , CAST(0 AS sys.bit) as null_on_null_input
   , null::integer as execute_as_principal_id
   , CAST(0 as sys.bit) as uses_native_compilation
-  , CAST(0 as INT) as is_ms_shipped
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
 FROM sys.all_objects ao
 LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
 LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname

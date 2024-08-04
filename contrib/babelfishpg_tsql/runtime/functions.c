@@ -2128,6 +2128,10 @@ object_id(PG_FUNCTION_ARGS)
 					 !strcmp(object_type, "pc") || !strcmp(object_type, "tf") || !strcmp(object_type, "rf") ||
 					 !strcmp(object_type, "x"))
 			{
+				/*
+				 * If the object type is specified as 'p' and it's actually a trigger,
+				 * then object_id() should return NULL.
+				 */
 				if (!strcmp(object_type, "p") && tsql_get_trigger_oid(object_name, schema_oid, user_id))
 				{
 					pfree(object_name);
