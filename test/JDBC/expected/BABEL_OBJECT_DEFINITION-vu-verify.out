@@ -80,7 +80,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tr1'))
 GO
 ~~START~~
 nvarchar
-<NULL>
+CREATE TRIGGER object_definition_tr1 ON object_definition_t1 INSTEAD OF INSERT<newline>AS<newline>BEGIN<newline>SELECT * FROM object_definition_t1;<newline>END
 ~~END~~
 
 
