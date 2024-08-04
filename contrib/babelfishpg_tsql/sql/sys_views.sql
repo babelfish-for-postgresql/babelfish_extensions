@@ -3141,7 +3141,7 @@ GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 CREATE OR REPLACE VIEW sys.events 
 AS
 SELECT 
-  CAST(pt.tgfoid as int) AS object_id
+  CAST(pt.oid as int) AS object_id
   , CAST(
       CASE 
         WHEN tr.event_manipulation='INSERT' THEN 1

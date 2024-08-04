@@ -2129,10 +2129,11 @@ object_id(PG_FUNCTION_ARGS)
 					 !strcmp(object_type, "x"))
 			{
 				if (!strcmp(object_type, "p") && tsql_get_trigger_oid(object_name, schema_oid, user_id))
-					//PG_RETURN_NULL();
-					{
-						PG_RETURN_NULL();
-					}
+				{
+					pfree(object_name);
+					pfree(object_type);
+					PG_RETURN_NULL();
+				}
 				
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);

@@ -74,8 +74,6 @@ CREATE FUNCTION object_definition_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN
 
 
 -- DML trigger
--- TODO: After BABEL-3927 is fixed, we get the correct trigger definition.
--- Now, it shows NULL.
 SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tr1'))
 GO
 ~~START~~
