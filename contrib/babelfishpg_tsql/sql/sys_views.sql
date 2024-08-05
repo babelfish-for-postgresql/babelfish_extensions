@@ -140,13 +140,14 @@ CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod I
 AS $$
 DECLARE
 	scale INT;
+	v_type TEXT COLLATE sys.database_default := type;
 BEGIN
-	IF type IS NULL THEN 
+	IF v_type IS NULL THEN 
 		RETURN -1;
 	END IF;
 
 	IF typemod = -1 THEN
-		CASE type
+		CASE v_type
 		WHEN 'date' THEN scale = 0;
 		WHEN 'datetime' THEN scale = 3;
 		WHEN 'smalldatetime' THEN scale = 0;
@@ -167,7 +168,7 @@ BEGIN
 		RETURN scale;
 	END IF;
 
-	CASE type 
+	CASE v_type 
 	WHEN 'decimal' THEN scale = (typemod - 4) & 65535;
 	WHEN 'numeric' THEN scale = (typemod - 4) & 65535;
 	WHEN 'smalldatetime' THEN scale = 0;
@@ -224,13 +225,14 @@ CREATE OR REPLACE FUNCTION sys.tsql_type_precision_helper(IN type TEXT, IN typem
 AS $$
 DECLARE
 	precision INT;
+  v_type TEXT COLLATE sys.database_default := type;
 BEGIN
-	IF type IS NULL THEN 
+	IF v_type IS NULL THEN 
 		RETURN -1;
 	END IF;
 
 	IF typemod = -1 THEN
-		CASE type
+		CASE v_type
 		WHEN 'bigint' THEN precision = 19;
 		WHEN 'bit' THEN precision = 1;
 		WHEN 'date' THEN precision = 10;
@@ -253,7 +255,7 @@ BEGIN
 		RETURN precision;
 	END IF;
 
-	CASE type
+	CASE v_type
 	WHEN 'numeric' THEN precision = ((typemod - 4) >> 16) & 65535;
 	WHEN 'decimal' THEN precision = ((typemod - 4) >> 16) & 65535;
 	WHEN 'smalldatetime' THEN precision = 16;
