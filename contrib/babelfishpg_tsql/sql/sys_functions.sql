@@ -1426,7 +1426,7 @@ IMMUTABLE;
 
 -- wrapper functions for stuff --
 CREATE OR REPLACE FUNCTION sys.stuff(expr sys.VARBINARY, start INTEGER, length INTEGER, replace_expr sys.VARCHAR)
-RETURNS VARBINARY
+RETURNS sys.VARBINARY
 AS
 $BODY$
 BEGIN
@@ -1437,9 +1437,9 @@ BEGIN
         RETURN NULL;
     END IF;
     IF replace_expr IS NULL THEN
-        RETURN (SELECT (overlay (expr::sys.VARCHAR placing '' from start for length))::sys.VARCHAR)::VARBINARY;
+        RETURN (SELECT (overlay (expr::sys.VARCHAR placing '' from start for length))::sys.VARCHAR)::sys.VARBINARY;
     END IF;
-    RETURN (SELECT (overlay (expr::sys.VARCHAR placing replace_expr::sys.VARCHAR from start for length))::sys.VARCHAR)::VARBINARY;
+    RETURN (SELECT (overlay (expr::sys.VARCHAR placing replace_expr::sys.VARCHAR from start for length))::sys.VARCHAR)::sys.VARBINARY;
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
