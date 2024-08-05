@@ -2955,27 +2955,20 @@ CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'NT Service' domain is not yet supported in babelfish)~~
+~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
 
 
 CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'NT Service' domain is not yet supported in babelfish)~~
+~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
 
 
-CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test], DEFAULT_LANGUAGE=[us_english]
+CREATE LOGIN [NT SerViCe\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'NT Service' domain is not yet supported in babelfish)~~
-
-
-CREATE LOGIN [NT SerViCe\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test], DEFAULT_LANGUAGE=[us_english]
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'NT Service' domain is not yet supported in babelfish)~~
+~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
 
 

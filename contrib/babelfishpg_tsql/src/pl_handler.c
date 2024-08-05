@@ -2652,11 +2652,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/* 
 								 * Check whether the domain name is supported 
 								 * or not
-								*/
+								 */
 								if((strcasestr(orig_loginname, "nt service")) != NULL) 
 									ereport(ERROR,
 											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												errmsg("'NT Service' domain is not yet supported in babelfish")));
+												errmsg("'NT Service' domain is not yet supported in Babelfish.")));
 
 								/*
 								 * The login name must contain '\' if it is
