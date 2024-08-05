@@ -57,11 +57,9 @@ static List *gen_dropdb_subcmds(const char *schema,
 								const char *dbo,
 								List *db_users,
 								const char *guest_schema);
-static Oid	do_create_bbf_db(const char *dbname, List *options, const char *owner);
-static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
+static Oid	do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const char *owner);
+static void create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
-
-const char* database_collation_name = NULL;
 
 
 static Oid
@@ -258,49 +256,9 @@ gen_dropdb_subcmds(const char *schema,
 Oid
 create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 {
-	ListCell   *option;
 	const char *owner = GetUserNameFromId(GetSessionUserId(), false);
-
-	/* Check options */
-	foreach(option, stmt->options)
-	{
-		DefElem    *defel = (DefElem *) lfirst(option);
-
-		if (strcmp(defel->defname, "collate") == 0)
-		{
-			database_collation_name = pstrdup(defGetString(defel));
-			if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
-			{
-				database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(database_collation_name);
-				if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
-				{
-					database_collation_name = NULL;
-					ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Invalid collation \"%s\"", defGetString(defel)),
-							parser_errposition(pstate, defel->location)));
-				}
-			}
-
-			if (!supported_collation_for_db_and_like(tsql_lookup_collation_table_internal(
-				get_collation_oid(list_make1(makeString((char*) database_collation_name)), true)).code_page))
-			{
-				database_collation_name = NULL;
-				ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("\"%s\" is not currently supported for database collation ", defGetString(defel))));
-			}
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("option \"%s\" not recognized", defel->defname),
-					 parser_errposition(pstate, defel->location)));
-		}	
-	}
 	
-	return do_create_bbf_db(stmt->dbname, stmt->options, owner);
+	return do_create_bbf_db(pstate, stmt->dbname, stmt->options, owner);
 }
 
 /*
@@ -380,7 +338,7 @@ getDbidForLogicalDbRestore(Oid relid)
 }
 
 static Oid
-do_create_bbf_db(const char *dbname, List *options, const char *owner)
+do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const char *owner)
 {
 	int16		dbid;
 	const char *prev_current_user;
@@ -400,13 +358,13 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 				 errmsg("cannot find an available ID for database \"%s\"", dbname)));
 	bbf_set_current_user(prev_current_user);
 
-	create_bbf_db_internal(dbname, options, owner, dbid);
+	create_bbf_db_internal(pstate, dbname, options, owner, dbid);
 
 	return dbid;
 }
 
 static void
-create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid)
+create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid)
 {
 	int16		old_dbid;
 	char	   *old_dbname;
@@ -428,8 +386,53 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	bool 			is_set_userid = false;
 	Oid 			save_userid;
 	const char	*old_createrole_self_grant;
+	ListCell	*option;
+	const char* database_collation_name = NULL;
 
-	/* TODO: Extract options */
+	/* Check options */
+	foreach(option, options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+
+		if (strcmp(defel->defname, "collate") == 0)
+		{
+			database_collation_name = pstrdup(defGetString(defel));
+
+			if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
+			{
+				database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(database_collation_name);
+				if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
+				{
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Invalid collation \"%s\"", defGetString(defel)),
+							parser_errposition(pstate, defel->location)));
+				}
+			}
+			if (!supported_collation_for_db_and_like(tsql_lookup_collation_table_internal(
+				get_collation_oid(list_make1(makeString((char*) database_collation_name)), false)).code_page))
+			{
+				const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+				if (server_collation_name && strcmp(server_collation_name, database_collation_name))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("\"%s\" is not currently supported for database collation ", defGetString(defel)),
+							parser_errposition(pstate, defel->location)));
+
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("\"%s\" is not currently supported for database collation ", defGetString(defel)),
+						parser_errposition(pstate, defel->location)));
+			}
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("option \"%s\" not recognized", defel->defname),
+					 parser_errposition(pstate, defel->location)));
+		}	
+	}
 
 	if (database_collation_name == NULL)
 	{
@@ -438,7 +441,6 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(database_collation_name);
 	}
 	namestrcpy(&default_collation, database_collation_name);
-	database_collation_name = NULL;
 
 	/* single-db mode check. IDs 1-4 are reserved for native system databases */
 	if (SINGLE_DB == get_migration_mode() && dbid > 4)
@@ -817,9 +819,9 @@ create_builtin_dbs(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		do_create_bbf_db("master", NULL, sa_name);
-		do_create_bbf_db("tempdb", NULL, sa_name);
-		do_create_bbf_db("msdb", NULL, sa_name);
+		do_create_bbf_db(NULL, "master", NULL, sa_name);
+		do_create_bbf_db(NULL, "tempdb", NULL, sa_name);
+		do_create_bbf_db(NULL, "msdb", NULL, sa_name);
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -856,7 +858,7 @@ create_msdb_if_not_exists(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		create_bbf_db_internal("msdb", NULL, sa_name, 4);
+		create_bbf_db_internal(NULL, "msdb", NULL, sa_name, 4);
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);

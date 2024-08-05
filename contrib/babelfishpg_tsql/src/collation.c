@@ -52,8 +52,6 @@ extern bool babelfish_dump_restore;
 static Oid remove_accents_internal_oid;
 static UTransliterator *cached_transliterator = NULL;
 
-bool is_new_db = false;
-
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
 
@@ -900,6 +898,11 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	return transform_likenode_for_AI(node, op);	
 }
 
+/*
+ * Currently we support Latin based collations for LIKE for AI
+ * and database level collation 
+ * The following code pages corresponds to the expected collations
+ */
 bool
 supported_collation_for_db_and_like(int32_t code_page)
 {
@@ -1163,7 +1166,7 @@ init_and_check_collation_callbacks(void)
 Oid
 tsql_get_database_or_server_collation_oid_internal(bool missingOk)
 {
-	if (OidIsValid(database_or_server_collation_oid) && !is_new_db)
+	if (OidIsValid(database_or_server_collation_oid))
 		return database_or_server_collation_oid;
 
 	/* Initialise collation callbacks */
@@ -1686,8 +1689,6 @@ set_db_collation_internal(int16 db_id)
 
 	ReleaseSysCache(tuple_sysdb);
 	tsql_set_db_collation(database_collation_oid);
-	is_new_db = true;
-	tsql_get_database_or_server_collation_oid_internal(false);
-	is_new_db = false;
+	database_or_server_collation_oid = InvalidOid;
 }
 
