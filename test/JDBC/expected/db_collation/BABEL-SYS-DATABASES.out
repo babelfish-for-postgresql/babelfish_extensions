@@ -19,8 +19,8 @@ SELECT name, compatibility_level, collation_name FROM sys.databases ORDER BY nam
 GO
 ~~START~~
 varchar#!#tinyint#!#varchar
-db1#!#120#!#bbf_unicode_cp1_ci_ai
-db2#!#120#!#bbf_unicode_cp1_ci_ai
+db1#!#120#!#bbf_unicode_cp1_ci_as
+db2#!#120#!#bbf_unicode_cp1_ci_as
 master#!#120#!#bbf_unicode_cp1_ci_ai
 msdb#!#120#!#bbf_unicode_cp1_ci_as
 tempdb#!#120#!#bbf_unicode_cp1_ci_as
