@@ -1,0 +1,114 @@
+CREATE DATABASE TestSpatialFunction_DB;
+
+USE TestSpatialFunction_DB;
+
+CREATE TABLE TestSpatialFunction_YourTable1Temp ( ID INT PRIMARY KEY, PointColumn geometry ); 
+INSERT INTO TestSpatialFunction_YourTable1Temp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));
+~~ROW COUNT: 3~~
+
+
+USE MASTER
+
+CREATE TABLE TestSpatialFunction_YourTableTemp ( ID INT PRIMARY KEY, PointColumn geometry ); 
+
+INSERT INTO TestSpatialFunction_YourTableTemp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE TestSpatialFunction_YourTableTemp2 ( ID INT PRIMARY KEY, PointColumn1 geometry, PointColumn2 geometry ); 
+INSERT INTO TestSpatialFunction_YourTableTemp2 (ID, PointColumn1, PointColumn2) VALUES (1, geometry::Point(3.0, 4.0, 4326), geometry::Point(3.0, 4.0, 4326));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE TestSpatialFunction_TableATemp (ID INT PRIMARY KEY, PointA geometry); 
+CREATE TABLE TestSpatialFunction_TableBTemp (ID INT PRIMARY KEY, PointB geometry);
+INSERT INTO TestSpatialFunction_TableATemp (ID, PointA) VALUES (1, geometry::Point(1.0, 2.0, 4326)); 
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunction_TableBTemp (ID, PointB) VALUES (1, geometry::Point(3.0, 4.0, 4326));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE TestSpatialFunction_SPATIALPOINTGEOG_dttemp (location geography);
+INSERT INTO TestSpatialFunction_SPATIALPOINTGEOG_dttemp (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunction_SPATIALPOINTGEOG_dttemp (location) VALUES ( geography::STGeomFromText('Point(1.0 2.0)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunction_SPATIALPOINTGEOG_dttemp (location) VALUES ( geography::STGeomFromText('Point(1.0 2.0)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunction_SPATIALPOINTGEOG_dttemp (location) VALUES ( geography::STPointFromText('Point(1.0 2.0)', 4326) );
+~~ROW COUNT: 1~~
+
+
+#Tests for Geography type Prepared Statements
+prepst#!#INSERT INTO TestSpatialFunction_SPATIALPOINTGEOG_dttemp(location) values(?) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(290.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-120.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-720.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location geometry);
+INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::STGeomFromText('Point(1.0 2.0)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::STPointFromText('Point(1.0 2.0)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp (location) VALUES ( geometry::Point(47.65100, -22.34900, 4326) );
+~~ROW COUNT: 1~~
+
+
+#Tests for Geometry type Prepared Statements
+prepst#!#INSERT INTO TestSpatialFunction_SPATIALPOINTGEOM_dttemp(location) values(?) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(290.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW TestSpatialFunction_point_equality1Temp AS SELECT p1.location.STEquals(p2.location) AS equality FROM TestSpatialFunction_SPATIALPOINTGEOM_dttemp p1 CROSS JOIN TestSpatialFunction_SPATIALPOINTGEOM_dttemp p2;
+
+CREATE VIEW TestSpatialFunction_isInTemp AS SELECT p1.location.STContains(p2.location) AS isIN FROM TestSpatialFunction_SPATIALPOINTGEOM_dttemp p1 CROSS JOIN TestSpatialFunction_SPATIALPOINTGEOM_dttemp p2 ORDER BY p1.location.STX;
+
+CREATE VIEW TestSpatialFunction_ValFromGeomTemp AS SELECT location.STArea() FROM TestSpatialFunction_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+
+CREATE VIEW TestSpatialFunction_TextFromGeogTemp AS SELECT  location.STArea() AS Area FROM TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+
+CREATE VIEW TestSpatialFunction_point_EqualityTemp AS SELECT p1.location.STEquals(p2.location) AS Equality FROM TestSpatialFunction_SPATIALPOINTGEOG_dttemp p1 CROSS JOIN TestSpatialFunction_SPATIALPOINTGEOG_dttemp p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW TestSpatialFunction_point_inTemp AS SELECT p1.location.STContains(p2.location) AS isIn FROM TestSpatialFunction_SPATIALPOINTGEOG_dttemp p1 CROSS JOIN TestSpatialFunction_SPATIALPOINTGEOG_dttemp p2;
+
+CREATE VIEW TestSpatialFunction_SRIDFromGeom AS SELECT PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp;
+
+CREATE VIEW TestSpatialFunction_SRIDFromGeog AS SELECT  location.STSrid AS Area FROM TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;

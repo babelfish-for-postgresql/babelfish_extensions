@@ -1,0 +1,35 @@
+USE TestSpatialFunction_DB
+
+DROP TABLE IF EXISTS TestSpatialFunction_YourTable1Temp
+
+USE MASTER
+
+DROP TABLE IF EXISTS TestSpatialFunction_YourTableTemp2
+
+DROP TABLE IF EXISTS TestSpatialFunction_TableATemp
+
+DROP TABLE IF EXISTS TestSpatialFunction_TableBTemp
+
+DROP VIEW IF EXISTS TestSpatialFunction_ValFromGeomTemp
+
+DROP VIEW IF EXISTS TestSpatialFunction_TextFromGeogTemp
+
+DROP VIEW IF EXISTS TestSpatialFunction_point_equality1Temp
+
+DROP VIEW IF EXISTS TestSpatialFunction_isInTemp
+
+DROP VIEW IF EXISTS TestSpatialFunction_point_EqualityTemp
+
+DROP VIEW IF EXISTS TestSpatialFunction_point_inTemp
+
+DROP VIEW IF EXISTS TestSpatialFunction_SRIDFromGeom
+
+DROP VIEW IF EXISTS TestSpatialFunction_SRIDFromGeog
+
+DROP TABLE IF EXISTS TestSpatialFunction_SPATIALPOINTGEOM_dttemp
+
+DROP TABLE IF EXISTS TestSpatialFunction_SPATIALPOINTGEOG_dttemp
+
+DROP TABLE IF EXISTS TestSpatialFunction_YourTableTemp
+
+DROP DATABASE TestSpatialFunction_DB
