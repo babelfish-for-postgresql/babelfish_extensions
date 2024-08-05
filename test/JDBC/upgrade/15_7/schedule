@@ -39,6 +39,7 @@ BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
 BABEL-2170
+restricted_procedures
 BABEL-2203
 BABEL-2208
 BABEL-2257
@@ -549,4 +550,5 @@ babel_4328_datetime2
 babel_4328_datetimeoffset
 BABEL-3820
 space
+binary-datatype-operators
 

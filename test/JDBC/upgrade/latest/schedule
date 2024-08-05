@@ -227,6 +227,7 @@ forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
 fts-contains
+restricted_procedures
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -433,6 +434,7 @@ TestSmallDatetime
 TestSmallInt
 TestSmallMoney
 TestSpatialPoint
+Test-spatial-functions
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -553,4 +555,5 @@ sys_sequences
 sys_partition_functions
 sys_partition_schemes
 space
+binary-datatype-operators
 

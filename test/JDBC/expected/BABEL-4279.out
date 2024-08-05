@@ -1,4 +1,28 @@
 -- tsql
+CREATE TABLE babelfish_migration_mode_table (id_num INT IDENTITY(1,1), mig_mode VARCHAR(10))
+GO
+INSERT INTO babelfish_migration_mode_table SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~ROW COUNT: 1~~
+
+
+-- test multi-db mode
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
+GO
+~~START~~
+text
+multi-db
+~~END~~
+
+
+-- tsql
 CREATE TABLE test_babel_4279_t1([ABC.nfds] INT, [DEf.j] INT);
 GO
 
@@ -80,7 +104,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
+ SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM """test_babel_4279_d.1""_test_babel_4279_s1".test_babel_4279_st1;
 ~~END~~
 
 
@@ -88,7 +112,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
+ SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM """test_babel_4279_d.1""_test_babel_4279_s1".test_babel_4279_st1;
 ~~END~~
 
 
@@ -235,3 +259,24 @@ GO
 DROP TABLE t3
 GO
 
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+-- Reset migration mode to default
+DECLARE @mig_mode VARCHAR(10)
+SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_table WHERE id_num = 1)
+SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+Drop Table IF EXISTS babelfish_migration_mode_table
+GO

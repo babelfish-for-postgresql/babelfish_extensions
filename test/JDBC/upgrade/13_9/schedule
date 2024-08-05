@@ -29,6 +29,7 @@ BABEL-1625
 BABEL-1654
 BABEL-1683
 BABEL-1715
+restricted_procedures
 BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
@@ -357,4 +358,5 @@ stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 reverse-before-15_8-or-16_4
 space
+binary-datatype-operators
 

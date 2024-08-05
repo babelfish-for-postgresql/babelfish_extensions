@@ -5362,6 +5362,52 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
+-- SERVER_PRINCIPALS
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = suser_name()
+  OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+  OR Ext.type = 'R'
+UNION ALL
+SELECT
+CAST('public' AS SYS.SYSNAME) AS name,
+CAST(-1 AS INT) AS principal_id,
+CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
+CAST('R' AS CHAR(1)) as type,
+CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
+CAST(0 AS INT) AS is_disabled,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(NULL AS SYS.SYSNAME) AS default_database_name,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(NULL AS INT) AS credential_id,
+CAST(1 AS INT) AS owning_principal_id,
+CAST(0 AS sys.BIT) AS is_fixed_role;
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
@@ -10394,6 +10440,702 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
+
+create or replace view sys.all_objects as
+select 
+    name collate sys.database_default
+  , cast (object_id as integer) 
+  , cast ( principal_id as integer)
+  , cast (schema_id as integer)
+  , cast (parent_object_id as integer)
+  , type collate sys.database_default
+  , cast (type_desc as sys.nvarchar(60))
+  , cast (create_date as sys.datetime)
+  , cast (modify_date as sys.datetime)
+  , is_ms_shipped
+  , cast (is_published as sys.bit)
+  , cast (is_schema_published as sys.bit)
+from
+(
+-- Currently for pg_class, pg_proc UNIONs, we separated user defined objects and system objects because the 
+-- optimiser will be able to make a better estimation of number of rows(in case the query contains a filter on 
+-- is_ms_shipped column) and in turn chooses a better query plan. 
+
+-- details of system tables
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U'::char(2) as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and tt.typrelid is null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+ 
+union all
+-- details of user defined tables
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U'::char(2) as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and s.nspname <> 'sys' and nis.name is null
+and ext.nspname is not null
+and tt.typrelid is null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+ 
+union all
+-- details of system views
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::char(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'V'
+where t.relkind = 'v'
+and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- Details of user defined views
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::char(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'V'
+where t.relkind = 'v'
+and s.nspname <> 'sys' and nis.name is null
+and ext.nspname is not null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- details of user defined and system foreign key constraints
+select
+    c.conname::sys.sysname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'F'::char(2) as type
+  , 'FOREIGN_KEY_CONSTRAINT'
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'F'
+where has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'f'
+and (s.nspname = 'sys' or ext.nspname is not null)
+union all
+-- details of user defined and system primary key constraints
+select
+    c.conname::sys.sysname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'PK'::char(2) as type
+  , 'PRIMARY_KEY_CONSTRAINT' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'PK'
+where has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'p'
+and (s.nspname = 'sys' or ext.nspname is not null)
+union all
+-- details of system defined procedures
+select
+    p.proname::sys.sysname as name 
+  , case
+    when t.typname = 'trigger' then tr.oid else p.oid
+  end as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , cast (case when tr.tgrelid is not null 
+  		       then tr.tgrelid 
+  		       else 0 end as int) 
+    as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end as type
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid 
+and nis.type = (case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end)
+where (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+and p.proname != 'pltsql_call_handler'
+ 
+union all
+-- details of user defined procedures
+select
+    p.proname::sys.sysname as name 
+  , case
+      when t.typname = 'trigger' then tr.oid else p.oid
+    end as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , cast (case when tr.tgrelid is not null 
+  		       then tr.tgrelid 
+  		       else 0 end as int) 
+    as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end as type
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid 
+and nis.type = (case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end)
+where s.nspname <> 'sys' and nis.name is null
+and ext.nspname is not null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+ 
+union all
+-- details of all default constraints
+select
+    ('DF_' || o.relname || '_' || d.oid)::sys.sysname as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , o.relnamespace as schema_id
+  , d.adrelid as parent_object_id
+  , 'D'::char(2) as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_attrdef d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join pg_class o on d.adrelid = o.oid
+inner join pg_namespace s on s.oid = o.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = ('DF_' || o.relname || '_' || d.oid) and nis.schemaid = s.oid and nis.type = 'D'
+where a.atthasdef = 't' and a.attgenerated = ''
+and (s.nspname = 'sys' or ext.nspname is not null)
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+union all
+-- details of all check constraints
+select
+    c.conname::sys.sysname
+  , c.oid::integer as object_id
+  , NULL::integer as principal_id 
+  , s.oid as schema_id
+  , c.conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_constraint as c
+inner join pg_namespace s on s.oid = c.connamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'C'
+where has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'c' and c.conrelid != 0
+and (s.nspname = 'sys' or ext.nspname is not null)
+union all
+-- details of user defined and system defined sequence objects
+select
+  p.relname::sys.sysname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'SO'::char(2) as type
+  , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class p
+inner join pg_namespace s on s.oid = p.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.relname and nis.schemaid = s.oid and nis.type = 'SO'
+where p.relkind = 'S'
+and (s.nspname = 'sys' or ext.nspname is not null)
+and has_schema_privilege(s.oid, 'USAGE')
+union all
+-- details of user defined table types
+select
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::sys.sysname as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::char(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (tt.schema_id::regnamespace::text = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from sys.table_types tt
+left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || '_' || tt.type_table_object_id)::name and nis.schemaid = tt.schema_id and nis.type = 'TT'
+) ot;
+GRANT SELECT ON sys.all_objects TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.triggers
+AS
+SELECT
+  CAST(p.proname as sys.sysname) as name,
+  CAST(tr.oid as int) as object_id,
+  CAST(1 as sys.tinyint) as parent_class,
+  CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
+  CAST(tr.tgrelid as int) AS parent_id,
+  CAST('TR' as sys.bpchar(2)) AS type,
+  CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
+  CAST(f.create_date as sys.datetime) AS create_date,
+  CAST(f.create_date as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_ms_shipped,
+  CAST(
+      CASE WHEN tr.tgenabled = 'D'
+      THEN 1
+      ELSE 0
+      END
+      AS sys.bit
+  )	AS is_disabled,
+  CAST(0 as sys.bit) AS is_not_for_replication,
+  CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
+FROM pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+and p.prokind = 'f'
+and format_type(p.prorettype, null) = 'trigger';
+GRANT SELECT ON sys.triggers TO PUBLIC;
+
+create or replace view sys.objects as
+select
+      CAST(t.name as sys.sysname) as name 
+    , CAST(t.object_id as int) as object_id
+    , CAST(t.principal_id as int) as principal_id
+    , CAST(t.schema_id as int) as schema_id
+    , CAST(t.parent_object_id as int) as parent_object_id
+    , CAST('U' as char(2)) as type
+    , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
+    , CAST(t.create_date as sys.datetime) as create_date
+    , CAST(t.modify_date as sys.datetime) as modify_date
+    , CAST(t.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(t.is_published as sys.bit) as is_published
+    , CAST(t.is_schema_published as sys.bit) as is_schema_published
+from  sys.tables t
+union all
+select
+      CAST(v.name as sys.sysname) as name
+    , CAST(v.object_id as int) as object_id
+    , CAST(v.principal_id as int) as principal_id
+    , CAST(v.schema_id as int) as schema_id
+    , CAST(v.parent_object_id as int) as parent_object_id
+    , CAST('V' as char(2)) as type
+    , CAST('VIEW' as sys.nvarchar(60)) as type_desc
+    , CAST(v.create_date as sys.datetime) as create_date
+    , CAST(v.modify_date as sys.datetime) as modify_date
+    , CAST(v.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(v.is_published as sys.bit) as is_published
+    , CAST(v.is_schema_published as sys.bit) as is_schema_published
+from  sys.views v
+union all
+select
+      CAST(f.name as sys.sysname) as name
+    , CAST(f.object_id as int) as object_id
+    , CAST(f.principal_id as int) as principal_id
+    , CAST(f.schema_id as int) as schema_id
+    , CAST(f.parent_object_id as int) as parent_object_id
+    , CAST('F' as char(2)) as type
+    , CAST('FOREIGN_KEY_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+    , CAST(f.create_date as sys.datetime) as create_date
+    , CAST(f.modify_date as sys.datetime) as modify_date
+    , CAST(f.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(f.is_published as sys.bit) as is_published
+    , CAST(f.is_schema_published as sys.bit) as is_schema_published
+ from sys.foreign_keys f
+union all
+select
+      CAST(p.name as sys.sysname) as name
+    , CAST(p.object_id as int) as object_id
+    , CAST(p.principal_id as int) as principal_id
+    , CAST(p.schema_id as int) as schema_id
+    , CAST(p.parent_object_id as int) as parent_object_id
+    , CAST('PK' as char(2)) as type
+    , CAST('PRIMARY_KEY_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+    , CAST(p.create_date as sys.datetime) as create_date
+    , CAST(p.modify_date as sys.datetime) as modify_date
+    , CAST(p.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(p.is_published as sys.bit) as is_published
+    , CAST(p.is_schema_published as sys.bit) as is_schema_published
+from sys.key_constraints p
+where p.type = 'PK'
+union all
+select
+      CAST(pr.name as sys.sysname) as name
+    , CAST(pr.object_id as int) as object_id
+    , CAST(pr.principal_id as int) as principal_id
+    , CAST(pr.schema_id as int) as schema_id
+    , CAST(pr.parent_object_id as int) as parent_object_id
+    , CAST(pr.type as char(2)) as type
+    , CAST(pr.type_desc as sys.nvarchar(60)) as type_desc
+    , CAST(pr.create_date as sys.datetime) as create_date
+    , CAST(pr.modify_date as sys.datetime) as modify_date
+    , CAST(pr.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(pr.is_published as sys.bit) as is_published
+    , CAST(pr.is_schema_published as sys.bit) as is_schema_published
+ from sys.procedures pr
+union all
+select
+      CAST(tr.name as sys.sysname) as name
+    , CAST(tr.object_id as int) as object_id
+    , CAST(NULL as int) as principal_id
+    , CAST(p.relnamespace as int) as schema_id
+    , CAST(tr.parent_id as int) as parent_object_id
+    , CAST(tr.type as char(2)) as type
+    , CAST(tr.type_desc as sys.nvarchar(60)) as type_desc
+    , CAST(tr.create_date as sys.datetime) as create_date
+    , CAST(tr.modify_date as sys.datetime) as modify_date
+    , CAST(tr.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(0 as sys.bit) as is_published
+    , CAST(0 as sys.bit) as is_schema_published
+  from sys.triggers tr
+  inner join pg_class p on p.oid = tr.parent_id
+union all 
+select
+    CAST(def.name as sys.sysname) as name
+  , CAST(def.object_id as int) as object_id
+  , CAST(def.principal_id as int) as principal_id
+  , CAST(def.schema_id as int) as schema_id
+  , CAST(def.parent_object_id as int) as parent_object_id
+  , CAST(def.type as char(2)) as type
+  , CAST(def.type_desc as sys.nvarchar(60)) as type_desc
+  , CAST(def.create_date as sys.datetime) as create_date
+  , CAST(def.modified_date as sys.datetime) as modify_date
+  , CAST(def.is_ms_shipped as sys.bit) as is_ms_shipped
+  , CAST(def.is_published as sys.bit) as is_published
+  , CAST(def.is_schema_published as sys.bit) as is_schema_published
+  from sys.default_constraints def
+union all
+select
+    CAST(chk.name as sys.sysname) as name
+  , CAST(chk.object_id as int) as object_id
+  , CAST(chk.principal_id as int) as principal_id
+  , CAST(chk.schema_id as int) as schema_id
+  , CAST(chk.parent_object_id as int) as parent_object_id
+  , CAST(chk.type as char(2)) as type
+  , CAST(chk.type_desc as sys.nvarchar(60)) as type_desc
+  , CAST(chk.create_date as sys.datetime) as create_date
+  , CAST(chk.modify_date as sys.datetime) as modify_date
+  , CAST(chk.is_ms_shipped as sys.bit) as is_ms_shipped
+  , CAST(chk.is_published as sys.bit) as is_published
+  , CAST(chk.is_schema_published as sys.bit) as is_schema_published
+  from sys.check_constraints chk
+union all
+select
+    CAST(p.relname as sys.sysname) as name
+  , CAST(p.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(s.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('SO' as char(2)) as type
+  , CAST('SEQUENCE_OBJECT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+from pg_class p
+inner join sys.schemas s on s.schema_id = p.relnamespace
+and p.relkind = 'S'
+and has_schema_privilege(s.schema_id, 'USAGE')
+union all
+select
+    CAST(('TT_' || tt.name collate "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
+  , CAST(tt.type_table_object_id as int) as object_id
+  , CAST(tt.principal_id as int) as principal_id
+  , CAST(tt.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('TT' as char(2)) as type
+  , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as create_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as modify_date
+  , CAST(1 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+from sys.table_types tt
+inner join pg_class c on tt.type_table_object_id = c.oid;
+GRANT SELECT ON sys.objects TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
+SELECT
+  ao.object_id AS object_id
+  , CAST(
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN COALESCE(f.definition, '')
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
+      ELSE NULL
+      END
+    AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(
+      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN
+        CASE WHEN p.proisstrict THEN 1
+        ELSE 0 
+        END
+      ELSE 0
+      END
+    AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
+   )
+LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
+WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
+UNION ALL
+SELECT
+  ao.object_id AS object_id
+  , CAST(COALESCE(f.definition, '') AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(0 AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
+WHERE ao.type = 'TR';
+GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.events 
+AS
+SELECT 
+  CAST(pt.oid as int) AS object_id
+  , CAST(
+      CASE 
+        WHEN tr.event_manipulation='INSERT' THEN 1
+        WHEN tr.event_manipulation='UPDATE' THEN 2
+        WHEN tr.event_manipulation='DELETE' THEN 3
+        ELSE 1
+      END as int
+  ) AS type
+  , CAST(tr.event_manipulation as sys.nvarchar(60)) AS type_desc
+  , CAST(1 as sys.bit) AS  is_trigger_event
+  , CAST(null as int) AS event_group_type
+  , CAST(null as sys.nvarchar(60)) AS event_group_type_desc
+FROM information_schema.triggers tr
+JOIN pg_catalog.pg_namespace np ON tr.event_object_schema = np.nspname COLLATE sys.database_default
+JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_default AND pc.relnamespace = np.oid
+JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
+AND has_schema_privilege(pc.relnamespace, 'USAGE')
+AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.events TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
