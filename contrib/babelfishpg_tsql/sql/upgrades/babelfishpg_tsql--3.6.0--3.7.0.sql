@@ -10534,7 +10534,9 @@ union all
 -- details of system defined procedures
 select
     p.proname::sys.sysname as name 
-  , p.oid as object_id
+  , case
+    when t.typname = 'trigger' then tr.oid else p.oid
+  end as object_id
   , null::integer as principal_id
   , s.oid as schema_id
   , cast (case when tr.tgrelid is not null 
