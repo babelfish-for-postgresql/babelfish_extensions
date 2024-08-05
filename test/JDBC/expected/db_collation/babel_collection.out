@@ -616,6 +616,8 @@ SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
 GO
 ~~START~~
 varchar
+JONES
+JoneS
 ~~END~~
 
 SET babelfish_showplan_all ON;
