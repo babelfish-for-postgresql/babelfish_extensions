@@ -19,5 +19,10 @@ BEGIN
     UPDATE pg_catalog.pg_cast SET castcontext='i' WHERE castsource=cast_source AND casttarget=cast_target;
 END $$;
 
+CREATE OR REPLACE FUNCTION sys.binary_lt(leftarg sys.bbf_binary, rightarg sys.bbf_binary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_lt'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
