@@ -1459,7 +1459,9 @@ union all
 -- details of system defined procedures
 select
     p.proname::sys.sysname as name 
-  , p.oid as object_id
+  , case
+    when t.typname = 'trigger' then tr.oid else p.oid
+  end as object_id
   , null::integer as principal_id
   , s.oid as schema_id
   , cast (case when tr.tgrelid is not null 
@@ -1534,7 +1536,9 @@ union all
 -- details of user defined procedures
 select
     p.proname::sys.sysname as name 
-  , p.oid as object_id
+  , case
+      when t.typname = 'trigger' then tr.oid else p.oid
+    end as object_id
   , null::integer as principal_id
   , s.oid as schema_id
   , cast (case when tr.tgrelid is not null 
@@ -1753,7 +1757,7 @@ CREATE OR REPLACE VIEW sys.triggers
 AS
 SELECT
   CAST(p.proname as sys.sysname) as name,
-  CAST(p.oid as int) as object_id,
+  CAST(tr.oid as int) as object_id,
   CAST(1 as sys.tinyint) as parent_class,
   CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
   CAST(tr.tgrelid as int) AS parent_id,
@@ -1863,7 +1867,7 @@ select
       CAST(tr.name as sys.sysname) as name
     , CAST(tr.object_id as int) as object_id
     , CAST(NULL as int) as principal_id
-    , CAST(p.pronamespace as int) as schema_id
+    , CAST(p.relnamespace as int) as schema_id
     , CAST(tr.parent_id as int) as parent_object_id
     , CAST(tr.type as char(2)) as type
     , CAST(tr.type_desc as sys.nvarchar(60)) as type_desc
@@ -1873,7 +1877,7 @@ select
     , CAST(0 as sys.bit) as is_published
     , CAST(0 as sys.bit) as is_schema_published
   from sys.triggers tr
-  inner join pg_proc p on p.oid = tr.object_id
+  inner join pg_class p on p.oid = tr.parent_id
 union all 
 select
     CAST(def.name as sys.sysname) as name
@@ -1990,7 +1994,7 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF', 'TR') THEN COALESCE(f.definition, '')
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN COALESCE(f.definition, '')
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       ELSE NULL
       END
@@ -2023,7 +2027,26 @@ LEFT OUTER JOIN sys.babelfish_view_def bvd
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
 LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
 AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
-WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
+WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
+UNION ALL
+SELECT
+  ao.object_id AS object_id
+  , CAST(COALESCE(f.definition, '') AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(0 AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
+WHERE ao.type = 'TR';
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.all_sql_modules AS
@@ -3267,7 +3290,7 @@ GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 CREATE OR REPLACE VIEW sys.events 
 AS
 SELECT 
-  CAST(pt.tgfoid as int) AS object_id
+  CAST(pt.oid as int) AS object_id
   , CAST(
       CASE 
         WHEN tr.event_manipulation='INSERT' THEN 1

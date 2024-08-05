@@ -1559,17 +1559,6 @@ end
 $body$
 language 'plpgsql' STABLE;
 
--- CREATE OR REPLACE FUNCTION sys.is_collated_ci_internal(IN input_string TEXT) RETURNS BOOL
--- AS 'babelfishpg_tsql', 'is_collated_ci_internal'
--- LANGUAGE C VOLATILE PARALLEL SAFE;
-
--- CREATE OR REPLACE FUNCTION sys.is_collated_ci(IN input_string TEXT)
--- RETURNS BOOL AS
--- $$
--- 	SELECT sys.is_collated_ci_internal(input_string);
--- $$
--- LANGUAGE SQL VOLATILE PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.is_collated_ci_as_internal(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ci_as_internal'
 LANGUAGE C VOLATILE PARALLEL SAFE;
