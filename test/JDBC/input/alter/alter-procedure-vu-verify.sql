@@ -14,7 +14,8 @@ AS
 GO
 
 -- Test Case: Modify the procedure body, and check information_schema updated with spaces
-ALTER           PROCEDURE alter_proc_p1
+ALTER       -- test comment
+    PROCEDURE alter_proc_p1
 AS
     select * from alter_proc_orders
 GO
@@ -30,9 +31,9 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 
 -- Test Case: Modify the procedure body, add a parameter, use "proc"
---            instead of "procedure"              
-
-ALTER PROC alter_proc_p1
+--            instead of "procedure"
+       ALTER /* TEST COMMENT */ 
+            PROC alter_proc_p1
     @param INT
 AS
     IF (@param = 1)

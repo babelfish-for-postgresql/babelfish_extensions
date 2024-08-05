@@ -28,7 +28,8 @@ GO
 
 
 -- Test Case: Modify the procedure body, and check information_schema updated with spaces
-ALTER           PROCEDURE alter_proc_p1
+ALTER       -- test comment
+    PROCEDURE alter_proc_p1
 AS
     select * from alter_proc_orders
 GO
@@ -56,15 +57,15 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p1#!#SQL#!#CREATE           PROCEDURE alter_proc_p1<newline>AS<newline>    select * from alter_proc_orders
+alter_proc_p1#!#SQL#!#CREATE       -- test comment<newline>    PROCEDURE alter_proc_p1<newline>AS<newline>    select * from alter_proc_orders
 ~~END~~
 
 
 
-
 -- Test Case: Modify the procedure body, add a parameter, use "proc"
---            instead of "procedure"              
-ALTER PROC alter_proc_p1
+--            instead of "procedure"
+       ALTER /* TEST COMMENT */ 
+            PROC alter_proc_p1
     @param INT
 AS
     IF (@param = 1)
@@ -100,7 +101,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p1#!#SQL#!#CREATE PROC alter_proc_p1<newline>    @param INT<newline>AS<newline>    IF (@param = 1)<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END
+alter_proc_p1#!#SQL#!#CREATE /* TEST COMMENT */ <newline>            PROC alter_proc_p1<newline>    @param INT<newline>AS<newline>    IF (@param = 1)<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END
 ~~END~~
 
 
