@@ -4444,7 +4444,7 @@ BEGIN
 		RETURN NULL;
 	END IF;
 
-	IF property = 'basetype' -- BaseType
+	IF property = 'basetype' COLLATE "C"-- BaseType
 	THEN
 		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
                 FROM sys.all_objects ao
