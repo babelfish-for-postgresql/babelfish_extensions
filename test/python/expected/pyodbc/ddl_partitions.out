@@ -61,9 +61,6 @@ GO
 CREATE PARTITION FUNCTION [SmallMoneyPartitionFunction](smallmoney) AS RANGE RIGHT FOR VALUES (2.5679, 3.5679, 4.9100)
 GO
 
-CREATE PARTITION FUNCTION [SqlVariantPartitionFunction](sql_variant) AS RANGE RIGHT FOR VALUES (N'abc  ', N'Apple', N'Banana', N'Some text', N'xyz  ')
-GO
-
 CREATE PARTITION FUNCTION [TinyIntPartitionFunction](tinyint) AS RANGE RIGHT FOR VALUES (0x00, 0x80, 0xFF)
 GO
 
@@ -134,9 +131,6 @@ CREATE PARTITION SCHEME [SmallIntPartitionScheme] AS PARTITION [SmallIntPartitio
 GO
 
 CREATE PARTITION SCHEME [SmallMoneyPartitionScheme] AS PARTITION [SmallMoneyPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-
-CREATE PARTITION SCHEME [SqlVariantPartitionScheme] AS PARTITION [SqlVariantPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
 GO
 
 CREATE PARTITION SCHEME [TinyIntPartitionScheme] AS PARTITION [TinyIntPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
@@ -298,15 +292,6 @@ GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
-CREATE TABLE [dbo].[partition_vu_prepare_sqlvariant_table](
-	[id] [sql_variant] NULL,
-	[value] [varchar](50) NULL
-) ON [SqlVariantPartitionScheme]([id])
-
-GO
-
-SET ANSI_NULLS ON
-SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[partition_vu_prepare_tinyint_table](
 	[id] [tinyint] NULL,
 	[value] [varchar](50) NULL
@@ -462,12 +447,6 @@ CREATE NONCLUSTERED INDEX [partition_vu_prepare_smallmoney68389bf5dc5c581b33c4db
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallMoneyPartitionScheme]([id])
-GO
-
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47] ON [dbo].[partition_vu_prepare_sqlvariant_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SqlVariantPartitionScheme]([id])
 GO
 
 CREATE NONCLUSTERED INDEX [partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb] ON [dbo].[partition_vu_prepare_tinyint_table]
