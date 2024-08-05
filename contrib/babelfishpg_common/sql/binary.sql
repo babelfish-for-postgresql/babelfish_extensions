@@ -97,7 +97,7 @@ AS 'babelfishpg_common', 'varbinaryvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.BBF_BINARY AS sys.VARCHAR)
-WITH FUNCTION sys.binarysysvarchar (sys.BBF_BINARY, integer, boolean) AS ASSIGNMENT;
+WITH FUNCTION sys.binarysysvarchar (sys.BBF_BINARY, integer, boolean) AS IMPLICIT;
 
 CREATE OR REPLACE FUNCTION sys.binaryvarchar(sys.BBF_BINARY, integer, boolean)
 RETURNS pg_catalog.VARCHAR
@@ -249,7 +249,7 @@ CREATE OPERATOR sys.>= (
 
 CREATE FUNCTION sys.binary_lt(leftarg sys.bbf_binary, rightarg sys.bbf_binary)
 RETURNS boolean
-AS 'babelfishpg_common', 'varbinary_eq'
+AS 'babelfishpg_common', 'varbinary_lt'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.< (

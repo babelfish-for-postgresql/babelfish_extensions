@@ -30,7 +30,7 @@ SELECT @point.STY;
 Go
 
 DECLARE @point geometry;
-SET @point = geometry::POINT(22.34900, -47.65100, 4326);
+SET @point = geometry::Point(22.34900, -47.65100, 4326);
 SELECT STX(@point);
 SELECT STY(@point);
 SELECT @point.STX;
@@ -65,7 +65,7 @@ go
 DECLARE @point1 geometry, @point2 geometry, @point3 geometry;
 SET @point1 = geometry::STPointFromText(null, 4326);
 SET @point2 = geometry::STGeomFromText(null, 4326);
-SET @point3 = geometry::POINT(22.34900, -47.65100, 4326);
+SET @point3 = geometry::Point(22.34900, -47.65100, 4326);
 SELECT @point1.STX;
 SELECT @point1.STY;
 SELECT @point1.STAsText();
@@ -77,7 +77,7 @@ Go
 
 -- Negative test for Geospatial functions
 DECLARE @point1 geometry, @point2 varchar(50), @point3 int;
-SET @point1 = geometry::POINT(22.34900, -47.65100, 4326);;
+SET @point1 = geometry::Point(22.34900, -47.65100, 4326);;
 SET @point2 = 'Test_String';
 SELECT @point1.STDistance(@point2);
 Go
@@ -669,7 +669,7 @@ SELECT @point.STAsText();
 Go
 
 DECLARE @point geography;
-SET @point = geography::POINT(22.34900, -47.65100, 4326);
+SET @point = geography::Point(22.34900, -47.65100, 4326);
 SELECT STAsText(@point);
 SELECT @point.STAsText();
 Go
@@ -683,7 +683,7 @@ SELECT @point.Lat;
 Go
 
 DECLARE @point geography;
-SET @point = geography::POINT(22.34900, -47.65100, 4326);
+SET @point = geography::Point(22.34900, -47.65100, 4326);
 SELECT Long(@point);
 SELECT Lat(@point);
 SELECT @point.Long;
@@ -759,7 +759,7 @@ go
 DECLARE @point1 geography, @point2 geography, @point3 geography;
 SET @point1 = geography::STPointFromText(null, 4326);
 SET @point2 = geography::STGeomFromText(null, 4326);
-SET @point3 = geography::POINT(22.34900, -47.65100, 4326);
+SET @point3 = geography::Point(22.34900, -47.65100, 4326);
 SELECT @point1.Long;
 SELECT @point1.Lat;
 SELECT @point1.STAsText();
@@ -771,7 +771,7 @@ Go
 
 -- Negative test for Geospatial functions
 DECLARE @point1 geography, @point2 varchar(50), @point3 int;
-SET @point1 = geography::POINT(22.34900, -47.65100, 4326);
+SET @point1 = geography::Point(22.34900, -47.65100, 4326);
 SET @point2 = 'Test_String';
 SELECT @point2.STDistance(@point1);
 Go

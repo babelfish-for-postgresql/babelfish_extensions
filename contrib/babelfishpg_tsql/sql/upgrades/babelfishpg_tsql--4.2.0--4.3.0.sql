@@ -347,25 +347,6 @@ CREATE OR REPLACE FUNCTION sys.is_collated_ai(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ai_internal'
 LANGUAGE C VOLATILE PARALLEL SAFE;
 
-
-CREATE OR REPLACE FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) returns TEXT as
-$body$
-begin
-   if pattern is null or replacement is null then
-       return null;
-   elsif pattern = '' then
-       return input_string;
-   elsif sys.is_collated_ai(input_string) then
-       return pg_catalog.replace(input_string, pattern, replacement);
-   elsif sys.is_collated_ci_as(input_string) then
-       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
-   else
-       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
-   end if;
-end
-$body$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
-
 CREATE OR REPLACE FUNCTION sys.charindex(expressionToFind PG_CATALOG.TEXT,
 										 expressionToSearch PG_CATALOG.TEXT,
 										 start_location INTEGER DEFAULT 0)
@@ -651,6 +632,52 @@ CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
 WHERE (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo';
 
 GRANT SELECT ON sys.user_token TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = suser_name()
+  OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+  OR Ext.type = 'R')
+  AND Ext.type != 'Z'
+UNION ALL
+SELECT
+CAST('public' AS SYS.SYSNAME) AS name,
+CAST(-1 AS INT) AS principal_id,
+CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
+CAST('R' AS CHAR(1)) as type,
+CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
+CAST(0 AS INT) AS is_disabled,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(NULL AS SYS.SYSNAME) AS default_database_name,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(NULL AS INT) AS credential_id,
+CAST(1 AS INT) AS owning_principal_id,
+CAST(0 AS sys.BIT) AS is_fixed_role;
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
@@ -6312,7 +6339,9 @@ union all
 -- details of system defined procedures
 select
     p.proname::sys.sysname as name 
-  , p.oid as object_id
+  , case
+    when t.typname = 'trigger' then tr.oid else p.oid
+  end as object_id
   , null::integer as principal_id
   , s.oid as schema_id
   , cast (case when tr.tgrelid is not null 
@@ -6387,7 +6416,9 @@ union all
 -- details of user defined procedures
 select
     p.proname::sys.sysname as name 
-  , p.oid as object_id
+  , case
+      when t.typname = 'trigger' then tr.oid else p.oid
+    end as object_id
   , null::integer as principal_id
   , s.oid as schema_id
   , cast (case when tr.tgrelid is not null 
@@ -11577,6 +11608,539 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql;
+
+-- Rename functions for dependencies
+DO $$
+DECLARE
+  exception_message text;
+BEGIN
+  -- Rename replace for dependencies
+  ALTER FUNCTION sys.replace(TEXT, TEXT, TEXT) RENAME TO replace_deprecated_in_3_7_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+  GET STACKED DIAGNOSTICS
+  exception_message = MESSAGE_TEXT;
+  RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.replace (input_string sys.VARCHAR, pattern sys.VARCHAR, replacement sys.VARCHAR)
+RETURNS sys.VARCHAR AS
+$BODY$
+BEGIN
+   if PG_CATALOG.length(pattern) = 0 then
+       return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
+   elsif sys.is_collated_ci_as(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
+   end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.replace (input_string sys.NVARCHAR, pattern sys.NVARCHAR, replacement sys.NVARCHAR)
+RETURNS sys.NVARCHAR AS
+$BODY$
+BEGIN
+   if PG_CATALOG.length(pattern) = 0 then
+       return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
+   elsif sys.is_collated_ci_as(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
+   end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
+	IN "@tab"        sys.VARCHAR(257) DEFAULT NULL,
+	IN "@orderby"    sys.VARCHAR(1000) DEFAULT '',
+	IN "@printrc"    sys.bit DEFAULT 1,
+	IN "@hiddencols" sys.VARCHAR(1000) DEFAULT NULL)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @rc INT
+	DECLARE @id INT
+	DECLARE @objtype sys.VARCHAR(2)	
+	DECLARE @msg sys.VARCHAR(200)	
+	
+	IF @tab IS NULL
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END
+	
+	IF TRIM(@tab) = ''
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END	
+	
+	-- Since we cannot find #tmp tables in the Babelfish catalogs, we cannot check 
+	-- their existence other than by trying to select from them
+	-- Function sys.babelfish_get_enr_list() could be used to determine if a #tmp table
+	-- exists but the columns and datatypes can still not be retrieved, it would be of 
+	-- little use here. 
+	-- NB: not handling uncommon but valid T-SQL syntax '<schemaname>.#tmp' for #tmp tables
+	IF sys.SUBSTRING(@tab,1,1) <> '#'
+	BEGIN
+		SET @id = sys.OBJECT_ID(@tab)
+		IF @id IS NULL
+		BEGIN
+			IF sys.SUBSTRING(UPPER(@tab),1,4) = 'DBO.'
+			BEGIN
+				SET @id = sys.OBJECT_ID('SYS.' + sys.SUBSTRING(@tab,5))
+			END
+			IF @id IS NULL
+			BEGIN		
+				SET @msg = 'Table or view '''+@tab+''' not found'
+				RAISERROR(@msg, 16, 1)
+				RETURN		
+			END
+		END
+	END
+	
+	SELECT @objtype = type COLLATE DATABASE_DEFAULT FROM sys.sysobjects WHERE id = @id 
+	IF @objtype NOT IN ('U', 'S', 'V') 
+	BEGIN
+		SET @msg = ''''+@tab+''' is not a table or view'
+		RAISERROR(@msg, 16, 1)
+		RETURN		
+	END
+	
+	-- check for 'ORDER BY', if specified
+	SET @orderby = TRIM(@orderby)
+	IF @orderby <> ''
+	BEGIN
+		IF UPPER(@orderby) NOT LIKE 'ORDER BY%'
+		BEGIN
+			RAISERROR('@orderby parameter must start with ''ORDER BY''', 16, 1)
+			RETURN
+		END
+	END
+	
+	-- columns to hide in final client output
+	-- assuming delimited column names do not contain spaces or commas inside the name
+	-- remove any spaces around the commas:
+	WHILE (sys.CHARINDEX(' ,', @hiddencols) > 0) or (sys.CHARINDEX(', ', @hiddencols) > 0)
+	BEGIN
+		SET @hiddencols = sys.REPLACE(@hiddencols, ' ,', ',')
+		SET @hiddencols = sys.REPLACE(@hiddencols, ', ', ',')
+	END
+	IF sys.LEN(@hiddencols) IS NOT NULL SET @hiddencols = ',' + @hiddencols + ','
+	SET @hiddencols = UPPER(@hiddencols)	
+
+	-- Need to use a guaranteed-uniquely named table as intermediate step since we cannot 
+	-- access the metadata in case a #tmp table is passed as argument
+	-- But when we copy the #tmp table into another table, we get all the attributes and metadata
+	DECLARE @tmptab sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(CAST(NEWID() AS sys.NVARCHAR(36)), '-', '')
+	DECLARE @tmptab2 sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(CAST(NEWID() AS sys.NVARCHAR(36)), '-', '')
+	DECLARE @cmd sys.VARCHAR(1000) = 'SELECT * INTO ' + @tmptab + ' FROM ' + @tab
+	
+	BEGIN TRY
+		-- create the first work table
+		EXECUTE(@cmd)
+
+		-- Get the columns
+		SELECT 
+		   c.name AS colname, c.colid AS colid, t.name AS basetype, 0 AS maxlen
+		INTO #sp_bbf_autoformat
+		FROM sys.syscolumns c left join sys.systypes t 
+		ON c.xusertype = t.xusertype		
+		WHERE c.id = sys.OBJECT_ID(@tmptab)
+		ORDER BY c.colid
+
+		-- Get max length for each column based on the data
+		DECLARE @colname sys.VARCHAR(63), @basetype sys.VARCHAR(63), @maxlen int
+		DECLARE c CURSOR FOR SELECT colname, basetype, maxlen FROM #sp_bbf_autoformat ORDER BY colid
+		OPEN c
+		WHILE 1=1
+		BEGIN
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			SET @cmd = 'DECLARE @i INT SELECT @i=ISNULL(MAX(sys.LEN(CAST([' + @colname + '] AS sys.VARCHAR(500)))),4) FROM ' + @tmptab + ' UPDATE #sp_bbf_autoformat SET maxlen = @i WHERE colname = ''' + @colname + ''''
+			EXECUTE(@cmd)
+		END
+		CLOSE c
+		DEALLOCATE c
+
+		-- Generate the final SELECT
+		DECLARE @selectlist sys.VARCHAR(8000) = ''
+		DECLARE @collist sys.VARCHAR(8000) = ''
+		DECLARE @fmtstart sys.VARCHAR(30) = ''
+		DECLARE @fmtend sys.VARCHAR(30) = ''
+		OPEN c
+		WHILE 1=1
+		BEGIN
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			IF sys.LEN(@colname) > @maxlen SET @maxlen = sys.LEN(@colname)
+			IF @maxlen <= 0 SET @maxlen = 1
+			
+			IF (sys.CHARINDEX(',' + UPPER(@colname) + ',', @hiddencols) > 0) OR (sys.CHARINDEX(',[' + UPPER(@colname) + '],', @hiddencols) > 0) 
+			BEGIN
+				SET @selectlist += ' [' + @colname + '],'			
+			END
+			ELSE 
+			BEGIN
+				SET @fmtstart = ''
+				SET @fmtend = ''
+				IF @basetype IN ('tinyint', 'smallint', 'int', 'bigint', 'decimal', 'numeric', 'real', 'float') 
+				BEGIN
+					SET @fmtstart = 'CAST(right(space('+CAST(@maxlen AS sys.VARCHAR)+')+'
+					SET @fmtend = ','+CAST(@maxlen AS sys.VARCHAR)+') AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'
+				END
+
+				SET @selectlist += ' '+@fmtstart+'CAST([' + @colname + '] AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'+@fmtend+' AS [' + @colname + '],'
+				SET @collist += '['+@colname + '],'
+			END
+		END
+		CLOSE c
+		DEALLOCATE c
+
+		-- Remove redundant commas
+		SET @collist = sys.SUBSTRING(@collist, 1, sys.LEN(@collist)-1)
+		SET @selectlist = sys.SUBSTRING(@selectlist, 1, sys.LEN(@selectlist)-1)	
+		SET @selectlist = 'SELECT ' + @selectlist + ' INTO ' + @tmptab2 + ' FROM ' + @tmptab + ' ' + @orderby
+		
+		-- create the second work table
+		EXECUTE(@selectlist)
+		
+		-- perform the final SELECT to generate the result set for the client
+		EXECUTE('SELECT ' + @collist + ' FROM ' + @tmptab2)
+			
+		-- PRINT rowcount if desired
+		SET @rc = @@rowcount
+		IF @printrc = 1
+		BEGIN
+			PRINT '   '
+			SET @cmd = '(' + CAST(@rc AS sys.VARCHAR) + ' rows affected)'
+			PRINT @cmd
+		END
+		
+		-- Cleanup: these work tables are permanent tables after all
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)	
+	END TRY	
+	BEGIN CATCH
+		-- Cleanup in case of an unexpected error
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)		
+	END CATCH
+
+	RETURN
+END
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_autoformat(IN sys.VARCHAR(257), IN sys.VARCHAR(1000), sys.bit, sys.VARCHAR(1000)) TO PUBLIC;
+
+-- DROP deprecated function of replace (if exists)
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- DROP replace_deprecated_in_3_7_0_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replace_deprecated_in_3_7_0_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE VIEW sys.triggers
+AS
+SELECT
+  CAST(p.proname as sys.sysname) as name,
+  CAST(tr.oid as int) as object_id,
+  CAST(1 as sys.tinyint) as parent_class,
+  CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
+  CAST(tr.tgrelid as int) AS parent_id,
+  CAST('TR' as sys.bpchar(2)) AS type,
+  CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
+  CAST(f.create_date as sys.datetime) AS create_date,
+  CAST(f.create_date as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_ms_shipped,
+  CAST(
+      CASE WHEN tr.tgenabled = 'D'
+      THEN 1
+      ELSE 0
+      END
+      AS sys.bit
+  )	AS is_disabled,
+  CAST(0 as sys.bit) AS is_not_for_replication,
+  CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
+FROM pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+and p.prokind = 'f'
+and format_type(p.prorettype, null) = 'trigger';
+GRANT SELECT ON sys.triggers TO PUBLIC;
+
+create or replace view sys.objects as
+select
+      CAST(t.name as sys.sysname) as name 
+    , CAST(t.object_id as int) as object_id
+    , CAST(t.principal_id as int) as principal_id
+    , CAST(t.schema_id as int) as schema_id
+    , CAST(t.parent_object_id as int) as parent_object_id
+    , CAST('U' as char(2)) as type
+    , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
+    , CAST(t.create_date as sys.datetime) as create_date
+    , CAST(t.modify_date as sys.datetime) as modify_date
+    , CAST(t.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(t.is_published as sys.bit) as is_published
+    , CAST(t.is_schema_published as sys.bit) as is_schema_published
+from  sys.tables t
+union all
+select
+      CAST(v.name as sys.sysname) as name
+    , CAST(v.object_id as int) as object_id
+    , CAST(v.principal_id as int) as principal_id
+    , CAST(v.schema_id as int) as schema_id
+    , CAST(v.parent_object_id as int) as parent_object_id
+    , CAST('V' as char(2)) as type
+    , CAST('VIEW' as sys.nvarchar(60)) as type_desc
+    , CAST(v.create_date as sys.datetime) as create_date
+    , CAST(v.modify_date as sys.datetime) as modify_date
+    , CAST(v.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(v.is_published as sys.bit) as is_published
+    , CAST(v.is_schema_published as sys.bit) as is_schema_published
+from  sys.views v
+union all
+select
+      CAST(f.name as sys.sysname) as name
+    , CAST(f.object_id as int) as object_id
+    , CAST(f.principal_id as int) as principal_id
+    , CAST(f.schema_id as int) as schema_id
+    , CAST(f.parent_object_id as int) as parent_object_id
+    , CAST('F' as char(2)) as type
+    , CAST('FOREIGN_KEY_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+    , CAST(f.create_date as sys.datetime) as create_date
+    , CAST(f.modify_date as sys.datetime) as modify_date
+    , CAST(f.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(f.is_published as sys.bit) as is_published
+    , CAST(f.is_schema_published as sys.bit) as is_schema_published
+ from sys.foreign_keys f
+union all
+select
+      CAST(p.name as sys.sysname) as name
+    , CAST(p.object_id as int) as object_id
+    , CAST(p.principal_id as int) as principal_id
+    , CAST(p.schema_id as int) as schema_id
+    , CAST(p.parent_object_id as int) as parent_object_id
+    , CAST('PK' as char(2)) as type
+    , CAST('PRIMARY_KEY_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+    , CAST(p.create_date as sys.datetime) as create_date
+    , CAST(p.modify_date as sys.datetime) as modify_date
+    , CAST(p.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(p.is_published as sys.bit) as is_published
+    , CAST(p.is_schema_published as sys.bit) as is_schema_published
+from sys.key_constraints p
+where p.type = 'PK'
+union all
+select
+      CAST(pr.name as sys.sysname) as name
+    , CAST(pr.object_id as int) as object_id
+    , CAST(pr.principal_id as int) as principal_id
+    , CAST(pr.schema_id as int) as schema_id
+    , CAST(pr.parent_object_id as int) as parent_object_id
+    , CAST(pr.type as char(2)) as type
+    , CAST(pr.type_desc as sys.nvarchar(60)) as type_desc
+    , CAST(pr.create_date as sys.datetime) as create_date
+    , CAST(pr.modify_date as sys.datetime) as modify_date
+    , CAST(pr.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(pr.is_published as sys.bit) as is_published
+    , CAST(pr.is_schema_published as sys.bit) as is_schema_published
+ from sys.procedures pr
+union all
+select
+      CAST(tr.name as sys.sysname) as name
+    , CAST(tr.object_id as int) as object_id
+    , CAST(NULL as int) as principal_id
+    , CAST(p.relnamespace as int) as schema_id
+    , CAST(tr.parent_id as int) as parent_object_id
+    , CAST(tr.type as char(2)) as type
+    , CAST(tr.type_desc as sys.nvarchar(60)) as type_desc
+    , CAST(tr.create_date as sys.datetime) as create_date
+    , CAST(tr.modify_date as sys.datetime) as modify_date
+    , CAST(tr.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(0 as sys.bit) as is_published
+    , CAST(0 as sys.bit) as is_schema_published
+  from sys.triggers tr
+  inner join pg_class p on p.oid = tr.parent_id
+union all 
+select
+    CAST(def.name as sys.sysname) as name
+  , CAST(def.object_id as int) as object_id
+  , CAST(def.principal_id as int) as principal_id
+  , CAST(def.schema_id as int) as schema_id
+  , CAST(def.parent_object_id as int) as parent_object_id
+  , CAST(def.type as char(2)) as type
+  , CAST(def.type_desc as sys.nvarchar(60)) as type_desc
+  , CAST(def.create_date as sys.datetime) as create_date
+  , CAST(def.modified_date as sys.datetime) as modify_date
+  , CAST(def.is_ms_shipped as sys.bit) as is_ms_shipped
+  , CAST(def.is_published as sys.bit) as is_published
+  , CAST(def.is_schema_published as sys.bit) as is_schema_published
+  from sys.default_constraints def
+union all
+select
+    CAST(chk.name as sys.sysname) as name
+  , CAST(chk.object_id as int) as object_id
+  , CAST(chk.principal_id as int) as principal_id
+  , CAST(chk.schema_id as int) as schema_id
+  , CAST(chk.parent_object_id as int) as parent_object_id
+  , CAST(chk.type as char(2)) as type
+  , CAST(chk.type_desc as sys.nvarchar(60)) as type_desc
+  , CAST(chk.create_date as sys.datetime) as create_date
+  , CAST(chk.modify_date as sys.datetime) as modify_date
+  , CAST(chk.is_ms_shipped as sys.bit) as is_ms_shipped
+  , CAST(chk.is_published as sys.bit) as is_published
+  , CAST(chk.is_schema_published as sys.bit) as is_schema_published
+  from sys.check_constraints chk
+union all
+select
+    CAST(p.relname as sys.sysname) as name
+  , CAST(p.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(s.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('SO' as char(2)) as type
+  , CAST('SEQUENCE_OBJECT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+from pg_class p
+inner join sys.schemas s on s.schema_id = p.relnamespace
+and p.relkind = 'S'
+and has_schema_privilege(s.schema_id, 'USAGE')
+union all
+select
+    CAST(('TT_' || tt.name collate "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
+  , CAST(tt.type_table_object_id as int) as object_id
+  , CAST(tt.principal_id as int) as principal_id
+  , CAST(tt.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('TT' as char(2)) as type
+  , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as create_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as modify_date
+  , CAST(1 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+from sys.table_types tt
+inner join pg_class c on tt.type_table_object_id = c.oid;
+GRANT SELECT ON sys.objects TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
+SELECT
+  ao.object_id AS object_id
+  , CAST(
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN COALESCE(f.definition, '')
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
+      ELSE NULL
+      END
+    AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(
+      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN
+        CASE WHEN p.proisstrict THEN 1
+        ELSE 0 
+        END
+      ELSE 0
+      END
+    AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
+   )
+LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
+WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
+UNION ALL
+SELECT
+  ao.object_id AS object_id
+  , CAST(COALESCE(f.definition, '') AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(0 AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
+WHERE ao.type = 'TR';
+GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.events 
+AS
+SELECT 
+  CAST(pt.oid as int) AS object_id
+  , CAST(
+      CASE 
+        WHEN tr.event_manipulation='INSERT' THEN 1
+        WHEN tr.event_manipulation='UPDATE' THEN 2
+        WHEN tr.event_manipulation='DELETE' THEN 3
+        ELSE 1
+      END as int
+  ) AS type
+  , CAST(tr.event_manipulation as sys.nvarchar(60)) AS type_desc
+  , CAST(1 as sys.bit) AS  is_trigger_event
+  , CAST(null as int) AS event_group_type
+  , CAST(null as sys.nvarchar(60)) AS event_group_type_desc
+FROM information_schema.triggers tr
+JOIN pg_catalog.pg_namespace np ON tr.event_object_schema = np.nspname COLLATE sys.database_default
+JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_default AND pc.relnamespace = np.oid
+JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
+AND has_schema_privilege(pc.relnamespace, 'USAGE')
+AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.events TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

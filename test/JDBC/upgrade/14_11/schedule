@@ -31,7 +31,6 @@ TestSmallMoney
 TestSQLVariant
 TestText
 TestTime
-BABEL-4390
 TestTinyInt
 TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
@@ -41,6 +40,7 @@ sys-assembly_types
 sys-database_mirroring
 sys-databases
 sys-numbered_procedures
+restricted_procedures
 BABEL-3121
 sys-events
 sys-suser_sid
@@ -413,7 +413,7 @@ babel_int4_varbinary_div
 babel_varbinary_int4_div
 sys-sql_expression_dependencies
 smalldatetimefromparts-dep
-BABEL_4330
+BABEL_4330-before-15_8-or-16_4
 BABEL-4231
 BABEL-4384
 default_params
@@ -443,6 +443,7 @@ ltrim-before-15_8-or-16_4
 rtrim-before-15_8-or-16_4
 left-before-15_8-or-16_4
 right-before-15_8-or-16_4
+replace-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
 babel_4328_datetime-before-16_3
@@ -453,4 +454,5 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 space
+binary-datatype-operators
 

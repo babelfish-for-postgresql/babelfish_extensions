@@ -1,3 +1,4 @@
+-- sla 55000
 -- psql
 -- check whether we can query system views before setting the GUC. Should return zero rows
 select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";

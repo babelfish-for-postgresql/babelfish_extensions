@@ -158,22 +158,22 @@ SELECT REPLACE('This café is cozy.', 'tea', 'coffee' COLLATE Latin1_General_CI_
 SELECT REPLACE('The café serves café au lait.', 'café', 'coffee' COLLATE Latin1_General_CI_AI)
 GO
 ~~START~~
-text
+varchar
 This coffee is cozy.
 ~~END~~
 
 ~~START~~
-text
+varchar
 The coffee shops are open for business.
 ~~END~~
 
 ~~START~~
-text
+varchar
 This café is cozy.
 ~~END~~
 
 ~~START~~
-text
+varchar
 The coffee serves coffee au lait.
 ~~END~~
 
@@ -182,12 +182,12 @@ SELECT REPLACE('café is cozy.', 'café', 'coffee' COLLATE Latin1_General_CI_AI)
 SELECT REPLACE('The café is good.', 'is', 'was' COLLATE Latin1_General_CI_AI)
 GO
 ~~START~~
-text
+varchar
 coffee is cozy.
 ~~END~~
 
 ~~START~~
-text
+varchar
 The café was good.
 ~~END~~
 
@@ -195,7 +195,7 @@ The café was good.
 SELECT REPLACE(REPLACE('The café is open.', 'café', 'coffee' COLLATE Latin1_General_CI_AI), 'open', 'closed' COLLATE Latin1_General_CI_AI)
 GO
 ~~START~~
-text
+varchar
 The coffee is closed.
 ~~END~~
 
@@ -204,12 +204,12 @@ SELECT REPLACE('The café is great.', 'gřeat', N'>>>>>>' COLLATE Latin1_General
 SELECT REPLACE('This café is cozy.', 'café', N'cAfë' COLLATE Latin1_General_CI_AI)
 GO
 ~~START~~
-text
+nvarchar
 The café is >>>>>>.
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 This cAfë is cozy.
 ~~END~~
 
@@ -219,17 +219,17 @@ SELECT REPLACE('', '', 'coffee' COLLATE Latin1_General_CI_AI)
 SELECT REPLACE('This café is cozy.', 'café', '' COLLATE Latin1_General_CI_AI)
 GO
 ~~START~~
-text
+varchar
 This café is cozy.
 ~~END~~
 
 ~~START~~
-text
+varchar
 
 ~~END~~
 
 ~~START~~
-text
+varchar
 This  is cozy.
 ~~END~~
 
@@ -237,7 +237,7 @@ This  is cozy.
 SELECT REPLACE('This café is cozy.', 'CAFÉ', 'coffee' COLLATE Latin1_General_CI_AI)
 GO
 ~~START~~
-text
+varchar
 This coffee is cozy.
 ~~END~~
 
@@ -245,7 +245,7 @@ This coffee is cozy.
 SELECT REPLACE('This café is café.', 'café', 'coffee' COLLATE Latin1_General_CI_AI)
 GO
 ~~START~~
-text
+varchar
 This coffee is coffee.
 ~~END~~
 
@@ -253,7 +253,7 @@ This coffee is coffee.
 SELECT REPLACE('This café is !.', '!', 'coffee' COLLATE Latin1_General_CI_AI)
 GO
 ~~START~~
-text
+varchar
 This café is coffee.
 ~~END~~
 
@@ -262,12 +262,12 @@ SELECT REPLACE('This café is cozy.', ' ', ' ' COLLATE Latin1_General_CI_AI)
 SELECT REPLACE(N'The café is!.', '!', '@@' COLLATE Latin1_General_CI_AI)
 GO
 ~~START~~
-text
+varchar
 This café is cozy.
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 The café is@@.
 ~~END~~
 
@@ -276,7 +276,7 @@ The café is@@.
 SELECT REPLACE ('ABCABCABCABCABC','abcÀBć' collate Latin1_General_CI_AI, 'abcabc')
 GO
 ~~START~~
-text
+varchar
 abcabcabcabcABC
 ~~END~~
 
@@ -287,17 +287,17 @@ SELECT REPLACE ('ÆAEaaaaaaÆ','AE' collate Latin1_General_CI_AI, '!---!')
 SELECT REPLACE ('eeeeeeeeeAAAAAA','AE' collate Latin1_General_CI_AI, '!---!')
 GO
 ~~START~~
-text
+varchar
 aaaaaa!---!aaaaaa!---!aaaa
 ~~END~~
 
 ~~START~~
-text
+varchar
 !---!!---!aaaaaa!---!
 ~~END~~
 
 ~~START~~
-text
+varchar
 eeeeeeeeeAAAAAA
 ~~END~~
 
@@ -305,7 +305,7 @@ eeeeeeeeeAAAAAA
 SELECT REPLACE(id, 'Æ' COLLATE Latin1_General_CI_AI, '!---!') FROM #BABEL_4850_TEMP
 GO
 ~~START~~
-text
+nvarchar
 AAAA!---!
 !---!AAA!---!
 !---!AAA!---!
@@ -315,7 +315,7 @@ AAAAAABBBBBBBEEEEEEAAAAA
 SELECT REPLACE(id, 'Æ' COLLATE Latin1_General_CI_AI, '!---!') FROM BABEL_4850_T
 GO
 ~~START~~
-text
+nvarchar
 AAAA!---!
 !---!AAA!---!
 !---!AAA!---!
@@ -473,22 +473,22 @@ SELECT REPLACE('This café is cozy.', 'tea', 'coffee' COLLATE Latin1_General_CS_
 SELECT REPLACE('The café serves café au lait.', 'café', 'coffee' COLLATE Latin1_General_CS_AI)
 GO
 ~~START~~
-text
+varchar
 This coffee is cozy.
 ~~END~~
 
 ~~START~~
-text
+varchar
 The coffee shops are open for business.
 ~~END~~
 
 ~~START~~
-text
+varchar
 This café is cozy.
 ~~END~~
 
 ~~START~~
-text
+varchar
 The coffee serves coffee au lait.
 ~~END~~
 
@@ -497,12 +497,12 @@ SELECT REPLACE('café is cozy.', 'café', 'coffee' COLLATE Latin1_General_CS_AI)
 SELECT REPLACE('The café is good.', 'is', 'was' COLLATE Latin1_General_CS_AI)
 GO
 ~~START~~
-text
+varchar
 coffee is cozy.
 ~~END~~
 
 ~~START~~
-text
+varchar
 The café was good.
 ~~END~~
 
@@ -510,7 +510,7 @@ The café was good.
 SELECT REPLACE(REPLACE('The café is open.', 'café', 'coffee' COLLATE Latin1_General_CS_AI), 'open', 'closed' COLLATE Latin1_General_CS_AI)
 GO
 ~~START~~
-text
+varchar
 The coffee is closed.
 ~~END~~
 
@@ -519,12 +519,12 @@ SELECT REPLACE('The café is great.', 'gřeat', N'>>>>>>' COLLATE Latin1_General
 SELECT REPLACE('This café is cozy.', 'café', N'cAfë' COLLATE Latin1_General_CS_AI)
 GO
 ~~START~~
-text
+nvarchar
 The café is >>>>>>.
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 This cAfë is cozy.
 ~~END~~
 
@@ -534,17 +534,17 @@ SELECT REPLACE('', '', 'coffee' COLLATE Latin1_General_CS_AI)
 SELECT REPLACE('This café is cozy.', 'café', '' COLLATE Latin1_General_CS_AI)
 GO
 ~~START~~
-text
+varchar
 This café is cozy.
 ~~END~~
 
 ~~START~~
-text
+varchar
 
 ~~END~~
 
 ~~START~~
-text
+varchar
 This  is cozy.
 ~~END~~
 
@@ -552,7 +552,7 @@ This  is cozy.
 SELECT REPLACE('This café is cozy.', 'CAFÉ', 'coffee' COLLATE Latin1_General_CS_AI)
 GO
 ~~START~~
-text
+varchar
 This café is cozy.
 ~~END~~
 
@@ -560,7 +560,7 @@ This café is cozy.
 SELECT REPLACE('This café is café.', 'café', 'coffee' COLLATE Latin1_General_CS_AI)
 GO
 ~~START~~
-text
+varchar
 This coffee is coffee.
 ~~END~~
 
@@ -568,7 +568,7 @@ This coffee is coffee.
 SELECT REPLACE('This café is !.', '!', 'coffee' COLLATE Latin1_General_CS_AI)
 GO
 ~~START~~
-text
+varchar
 This café is coffee.
 ~~END~~
 
@@ -577,12 +577,12 @@ SELECT REPLACE('This café is cozy.', ' ', ' ' COLLATE Latin1_General_CS_AI)
 SELECT REPLACE(N'The café is!.', '!', '@@' COLLATE Latin1_General_CS_AI)
 GO
 ~~START~~
-text
+varchar
 This café is cozy.
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 The café is@@.
 ~~END~~
 
@@ -591,7 +591,7 @@ The café is@@.
 SELECT REPLACE ('ABCABCABCABCABC','abcÀBć' collate Latin1_General_CS_AI, 'abcabc')
 GO
 ~~START~~
-text
+varchar
 ABCABCABCABCABC
 ~~END~~
 
@@ -602,17 +602,17 @@ SELECT REPLACE ('ÆAEaaaaaaÆ','AE' collate Latin1_General_CS_AI, '!---!')
 SELECT REPLACE ('eeeeeeeeeAAAAAA','AE' collate Latin1_General_CS_AI, '!---!')
 GO
 ~~START~~
-text
+varchar
 aaaaaa!---!aaaaaa!---!aaaa
 ~~END~~
 
 ~~START~~
-text
+varchar
 !---!!---!aaaaaa!---!
 ~~END~~
 
 ~~START~~
-text
+varchar
 eeeeeeeeeAAAAAA
 ~~END~~
 
@@ -620,7 +620,7 @@ eeeeeeeeeAAAAAA
 SELECT REPLACE(id, 'Æ' COLLATE Latin1_General_CS_AI, '!---!') FROM #BABEL_4850_TEMP
 GO
 ~~START~~
-text
+nvarchar
 AAAA!---!
 AeAAAaE
 AeAAAaE
@@ -630,7 +630,7 @@ AAAAAABBBBBBBEEEEEEAAAAA
 SELECT REPLACE(id, 'Æ' COLLATE Latin1_General_CS_AI, '!---!') FROM BABEL_4850_T
 GO
 ~~START~~
-text
+nvarchar
 AAAA!---!
 AeAAAaE
 AeAAAaE
