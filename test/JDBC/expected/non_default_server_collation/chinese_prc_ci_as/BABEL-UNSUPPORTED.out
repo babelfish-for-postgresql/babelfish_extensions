@@ -2959,6 +2959,10 @@ GO
 
 
 -- create login from windows
+-- Add 'dummydomain' domain entry
+exec sys.babelfish_add_domain_mapping_entry 'dummydomain', 'dummydomain.babel';
+GO
+
 CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS
 GO
 ~~ERROR (Code: 33557097)~~
@@ -2979,4 +2983,15 @@ GO
 
 ~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
 
+
+CREATE LOGIN [dummydomain\NT Service] FROM WINDOWS
+GO
+
+-- Dropping 'nt service@DUMMYDOMAIN.BABEL'
+DROP LOGIN [dummydomain\NT Service]
+GO
+
+-- Remove entry for 'dummydomain'
+exec babelfish_remove_domain_mapping_entry 'dummydomain'
+GO
 

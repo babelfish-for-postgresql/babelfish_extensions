@@ -2653,7 +2653,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * Check whether the domain name is supported 
 								 * or not
 								 */
-								if((strcasestr(orig_loginname, "nt service")) != NULL) 
+								char *nt_service_pointer = strcasestr(orig_loginname, "nt service");
+								if(nt_service_pointer != NULL && nt_service_pointer==orig_loginname) 
 									ereport(ERROR,
 											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 												errmsg("'NT Service' domain is not yet supported in Babelfish.")));
