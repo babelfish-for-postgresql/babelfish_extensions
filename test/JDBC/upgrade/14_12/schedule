@@ -40,8 +40,8 @@ sys-assembly_types
 sys-database_mirroring
 sys-databases
 sys-numbered_procedures
-BABEL-4390
 BABEL-3121
+restricted_procedures
 sys-events
 sys-suser_sid
 sys-trigger_events
@@ -455,4 +455,5 @@ BABEL-3401
 reverse-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 space
+binary-datatype-operators
 

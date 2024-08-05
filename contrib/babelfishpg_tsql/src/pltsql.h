@@ -2080,6 +2080,7 @@ extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
 extern int32 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr);
+extern void check_restricted_stored_procedure(Oid proc_id);
 
 /*
  * Scanner functions in pl_scanner.c
