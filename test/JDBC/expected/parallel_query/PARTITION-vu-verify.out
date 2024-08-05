@@ -402,23 +402,6 @@ GO
 ~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
 
 
-CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
-AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'), 'abc');
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
-
-
--- duplicate value with different basetype 
-CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
-AS RANGE RIGHT FOR VALUES (1, cast('abc' as varchar(10)), CONVERT(DATETIME, '2023-05-01'), cast('abc' as nvarchar(10)));
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
-
-
 --------------------------------------------------
 --- Unsupported Options with Partition Function 
 --------------------------------------------------
@@ -429,6 +412,22 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'PARTIION FUNCTION with LEFT option' is not currently supported in Babelfish)~~
+
+
+-- sql_variant is not yet supported in Babelfish
+CREATE PARTITION FUNCTION SqlVariantPartitionFunction (sql_variant)
+AS RANGE RIGHT
+FOR VALUES (
+    CAST('abc' AS char(5)),
+    CAST(N'xyz' AS nchar(5)),
+    CAST('Apple' AS VARCHAR(10)),
+    CAST(N'Banana' AS NVARCHAR(10)),
+    CAST('Some text' AS SQL_VARIANT)
+);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'sql_variant' is not yet supported for partition function in Babelfish.)~~
 
 
 -- by default it is LEFT and it should throw error
@@ -638,7 +637,6 @@ PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#R 
 SmallDateTimePartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallMoneyPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
-SqlVariantPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
 TinyIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 UniqueIdentifierPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 VarBinaryPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
@@ -732,11 +730,6 @@ SmallIntPartitionFunction#!#1#!#3#!#32767
 SmallMoneyPartitionFunction#!#1#!#1#!#2.5679
 SmallMoneyPartitionFunction#!#1#!#2#!#3.5679
 SmallMoneyPartitionFunction#!#1#!#3#!#4.9100
-SqlVariantPartitionFunction#!#1#!#1#!#abc  
-SqlVariantPartitionFunction#!#1#!#2#!#Apple
-SqlVariantPartitionFunction#!#1#!#3#!#Banana
-SqlVariantPartitionFunction#!#1#!#4#!#Some text
-SqlVariantPartitionFunction#!#1#!#5#!#xyz  
 TinyIntPartitionFunction#!#1#!#1#!#0
 TinyIntPartitionFunction#!#1#!#2#!#128
 TinyIntPartitionFunction#!#1#!#3#!#255
@@ -793,7 +786,6 @@ PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#bi
 SmallDateTimePartitionFunction#!#smalldatetime#!#1#!#4#!#16#!#0#!#<NULL>
 SmallIntPartitionFunction#!#smallint#!#1#!#2#!#5#!#0#!#<NULL>
 SmallMoneyPartitionFunction#!#smallmoney#!#1#!#4#!#10#!#4#!#<NULL>
-SqlVariantPartitionFunction#!#sql_variant#!#1#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as
 TinyIntPartitionFunction#!#tinyint#!#1#!#1#!#3#!#0#!#<NULL>
 UniqueIdentifierPartitionFunction#!#uniqueidentifier#!#1#!#16#!#0#!#0#!#<NULL>
 VarBinaryPartitionFunction#!#varbinary#!#1#!#8000#!#0#!#0#!#<NULL>
@@ -827,7 +819,6 @@ PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#Part
 SmallDateTimePartitionScheme#!#SmallDateTimePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallIntPartitionScheme#!#SmallIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallMoneyPartitionScheme#!#SmallMoneyPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
-SqlVariantPartitionScheme#!#SqlVariantPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 TinyIntPartitionScheme#!#TinyIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 UniqueIdentifierPartitionScheme#!#UniqueIdentifierPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 VarBinaryPartitionScheme#!#VarBinaryPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
@@ -900,8 +891,6 @@ partition_vu_prepare_smallint_table#!#<NULL>#!#SmallIntPartitionScheme
 partition_vu_prepare_smallint_table#!#partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#SmallIntPartitionScheme
 partition_vu_prepare_smallmoney_table#!#<NULL>#!#SmallMoneyPartitionScheme
 partition_vu_prepare_smallmoney_table#!#partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#SmallMoneyPartitionScheme
-partition_vu_prepare_sqlvariant_table#!#<NULL>#!#SqlVariantPartitionScheme
-partition_vu_prepare_sqlvariant_table#!#partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#SqlVariantPartitionScheme
 partition_vu_prepare_tinyint_table#!#<NULL>#!#TinyIntPartitionScheme
 partition_vu_prepare_tinyint_table#!#partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#TinyIntPartitionScheme
 partition_vu_prepare_uniqueidentifier_table#!#<NULL>#!#UniqueIdentifierPartitionScheme
@@ -948,7 +937,6 @@ partition_vu_prepare_nvarchar_table#!#id#!#1
 partition_vu_prepare_smalldatetime_table#!#id#!#1
 partition_vu_prepare_smallint_table#!#id#!#1
 partition_vu_prepare_smallmoney_table#!#id#!#1
-partition_vu_prepare_sqlvariant_table#!#id#!#1
 partition_vu_prepare_tinyint_table#!#id#!#1
 partition_vu_prepare_uniqueidentifier_table#!#id#!#1
 partition_vu_prepare_varbinary_table#!#id#!#1
@@ -994,8 +982,6 @@ partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_p
 partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_prepare_smallint_table#!#id#!#1
 partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
 partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
-partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#partition_vu_prepare_sqlvariant_table#!#id#!#1
-partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#partition_vu_prepare_sqlvariant_table#!#id#!#1
 partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
 partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
 partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf#!#partition_vu_prepare_uniqueidentifier_table#!#id#!#1
@@ -1462,7 +1448,6 @@ partition_vu_prepare_nvarchar_table
 partition_vu_prepare_smalldatetime_table
 partition_vu_prepare_smallint_table
 partition_vu_prepare_smallmoney_table
-partition_vu_prepare_sqlvariant_table
 partition_vu_prepare_tinyint_table
 partition_vu_prepare_uniqueidentifier_table
 partition_vu_prepare_varbinary_table
@@ -1494,7 +1479,6 @@ partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec
 partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8
 partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579
 partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8
-partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47
 partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb
 partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf
 partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386
@@ -1726,7 +1710,6 @@ ANALYZE master_dbo.partition_vu_prepare_nchar_table;
 ANALYZE master_dbo.partition_vu_prepare_binary_table;
 ANALYZE master_dbo.partition_vu_prepare_varbinary_table;
 ANALYZE master_dbo.partition_vu_prepare_uniqueidentifier_table;
-ANALYZE master_dbo.partition_vu_prepare_sqlvariant_table;
 GO
 
 -- tsql
@@ -2159,30 +2142,6 @@ Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
-SELECT * FROM partition_vu_prepare_sqlvariant_table;
-GO
-~~START~~
-text
-Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Append
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table_1
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_2" partition_vu_prepare_sqlvariant_table_2
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_3" partition_vu_prepare_sqlvariant_table_3
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_4" partition_vu_prepare_sqlvariant_table_4
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_5" partition_vu_prepare_sqlvariant_table_5
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_0" partition_vu_prepare_sqlvariant_table_6
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.098 ms
-~~END~~
-
-
-
 -----------------------------------------------------------------------------------------
 --- Query plan of select on partitioned tables with predicate and enforced index scan
 -----------------------------------------------------------------------------------------
@@ -2574,25 +2533,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.190 ms
-~~END~~
-
-
-SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10));
-GO
-~~START~~
-text
-Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10))
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table
-        Index Cond: ((id >= 'abc  '::sql_variant) AND (id < 'Apple'::sql_variant))
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 7.286 ms
+Babelfish T-SQL Batch Parsing Time: 0.198 ms
 ~~END~~
 
 
@@ -3732,21 +3673,6 @@ int#!#uniqueidentifier
 2#!#00000000-0000-0000-0000-000000000000
 3#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
 4#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
-~~END~~
-
-
-SELECT $PARTITION.SqlVariantPartitionFunction(Id) AS PartitionNumber, Id
-FROM partition_vu_prepare_sqlvariant_table
-ORDER BY PartitionNumber, Id;
-GO
-~~START~~
-int#!#sql_variant
-1#!#<NULL>
-2#!#abc  
-3#!#Apple
-4#!#Banana
-5#!#Some text
-6#!#xyz  
 ~~END~~
 
 
