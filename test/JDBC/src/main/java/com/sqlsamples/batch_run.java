@@ -9,8 +9,6 @@ import static com.sqlsamples.Config.*;
 import static com.sqlsamples.Statistics.exec_times;
 import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
-import static com.sqlsamples.Config.checkParallelQueryExpected;
-import static com.sqlsamples.Config.checkParallelQueryExpected;
 
 public class batch_run {
 
