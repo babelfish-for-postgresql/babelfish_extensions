@@ -4561,57 +4561,57 @@ $BODY$
 DECLARE
 ret_val INT;
 BEGIN
-	index_or_statistics_name = LOWER(TRIM(index_or_statistics_name));
-	property = LOWER(TRIM(property));
+	index_or_statistics_name = LOWER(TRIM(index_or_statistics_name)) COLLATE sys.database_default;
+	property = LOWER(TRIM(property)) COLLATE sys.database_default;
     SELECT INTO ret_val
     CASE
        
         WHEN (SELECT CAST(type AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default) = 3 -- is XML index
         THEN CAST(NULL AS int)
 	    
-        WHEN property = 'indexdepth'
+        WHEN property = 'indexdepth' COLLATE sys.database_default
         THEN CAST(0 AS int)
 
-        WHEN property = 'indexfillfactor'
+        WHEN property = 'indexfillfactor' COLLATE sys.database_default
         THEN (SELECT CAST(fill_factor AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
 
-        WHEN property = 'indexid'
+        WHEN property = 'indexid' COLLATE sys.database_default
         THEN (SELECT CAST(index_id AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
 
-        WHEN property = 'isautostatistics'
+        WHEN property = 'isautostatistics' COLLATE sys.database_default
         THEN CAST(0 AS int)
 
-        WHEN property = 'isclustered'
+        WHEN property = 'isclustered' COLLATE sys.database_default
         THEN (SELECT CAST(CASE WHEN type = 1 THEN 1 ELSE 0 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'isdisabled'
+        WHEN property = 'isdisabled' COLLATE sys.database_default
         THEN (SELECT CAST(is_disabled AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'isfulltextkey'
+        WHEN property = 'isfulltextkey' COLLATE sys.database_default
         THEN CAST(0 AS int)
         
-        WHEN property = 'ishypothetical'
+        WHEN property = 'ishypothetical' COLLATE sys.database_default
         THEN (SELECT CAST(is_hypothetical AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'ispadindex'
+        WHEN property = 'ispadindex' COLLATE sys.database_default
         THEN (SELECT CAST(is_padded AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'ispagelockdisallowed'
+        WHEN property = 'ispagelockdisallowed' COLLATE sys.database_default
         THEN (SELECT CAST(CASE WHEN allow_page_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'isrowlockdisallowed'
+        WHEN property = 'isrowlockdisallowed' COLLATE sys.database_default
         THEN (SELECT CAST(CASE WHEN allow_row_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id=$1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'isstatistics'
+        WHEN property = 'isstatistics' COLLATE sys.database_default
         THEN CAST(0 AS int)
         
-        WHEN property = 'isunique'
+        WHEN property = 'isunique' COLLATE sys.database_default
         THEN (SELECT CAST(is_unique AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'iscolumnstore'
+        WHEN property = 'iscolumnstore' COLLATE sys.database_default
         THEN CAST(0 AS int)
         
-        WHEN property = 'isoptimizedforsequentialkey'
+        WHEN property = 'isoptimizedforsequentialkey' COLLATE sys.database_default
         THEN CAST(0 AS int)
     ELSE
         CAST(NULL AS int)
