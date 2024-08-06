@@ -8,7 +8,6 @@
 #include "utils/syscache.h"
 #include "utils/memutils.h"
 #include "utils/builtins.h"
-#include "utils/varlena.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_collation.h"
 #include "catalog/namespace.h"
@@ -45,7 +44,6 @@
  */
 #define MAX_BYTES_PER_CHAR 4
 #define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
-
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
@@ -1774,6 +1772,10 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 		start_offset = true;
 	}
 
+	/* pattern only contained % wildcard */
+	if (pattern == NULL || *pattern == '\0')
+		return 1;
+
 	while (*input_str != '\0')
 	{
 		char  *t = input_str;
@@ -1934,12 +1936,31 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 	Oid          cid = PG_GET_COLLATION();
 	int 		 result = 0;
 	bool		 is_CS_AI = false;
-	coll_info_t  coll_info_of_inputcollid = tsql_lookup_collation_table_internal(cid);
+	coll_info_t  coll_info_of_inputcollid;
 
-	if (OidIsValid(coll_info_of_inputcollid.oid) &&
-		coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
+	if (!OidIsValid(cid))
 	{
-		is_CS_AI = true;
+		/*
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for string comparison"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+	}
+
+	coll_info_of_inputcollid = tsql_lookup_collation_table_internal(cid);
+
+	if (OidIsValid(coll_info_of_inputcollid.oid))
+	{
+		is_CS_AI = coll_info_of_inputcollid.collateflags == 0x000e;  /* CS_AI ? */
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("patindex is not supported with non babelfish non deterministic collations")));
 	}
 
 	if (!lc_collate_is_c(cid))
