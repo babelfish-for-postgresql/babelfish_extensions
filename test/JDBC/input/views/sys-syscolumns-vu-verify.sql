@@ -1,4 +1,3 @@
--- db_collation_expected
 USE sys_syscolumns_vu_prepare_db1;
 GO
 

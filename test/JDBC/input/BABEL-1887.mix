@@ -1,4 +1,3 @@
--- db_collation_expected
 -- Some columns have not been queried from the view because either they are not implemented
 -- yet as part of the sys.dm_exec_sessions view (adding tests for them here is a TODO)
 -- or their value changes backend to backend

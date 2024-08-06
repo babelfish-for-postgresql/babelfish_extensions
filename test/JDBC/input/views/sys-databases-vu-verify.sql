@@ -1,4 +1,3 @@
--- db_collation_expected
 SELECT name 
 ,compatibility_level
 ,collation_name
