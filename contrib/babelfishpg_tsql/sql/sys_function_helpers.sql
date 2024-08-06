@@ -9874,7 +9874,7 @@ BEGIN
 	ELSE
 		RAISE invalid_parameter_value;
 	END IF;
-	v_res_length := substring(p_datatype, MASK_REGEXP)::SMALLINT;
+	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
 	IF v_res_length IS NULL THEN
 		RETURN v_result;
 	ELSE
@@ -9945,7 +9945,7 @@ BEGIN
 		RAISE invalid_parameter_value;
 	END IF;
 
-	v_res_length := substring(p_datatype, MASK_REGEXP)::SMALLINT;
+	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
 	IF v_res_length IS NULL THEN
 		RETURN v_result;
 	ELSE

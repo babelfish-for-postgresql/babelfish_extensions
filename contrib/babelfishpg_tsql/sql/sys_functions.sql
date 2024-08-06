@@ -2817,7 +2817,7 @@ STABLE
 AS $$
 DECLARE
     db_name text COLLATE sys.database_default; 
-    bbf_schema_name text;
+    bbf_schema_name text COLLATE sys.database_default;
     pg_schema text COLLATE sys.database_default;
     implied_dbo_permissions boolean;
     fully_supported boolean;
@@ -2900,7 +2900,7 @@ BEGIN
         db_name = babelfish_remove_delimiter_pair(cs_as_securable);
         IF db_name IS NULL THEN
             RETURN NULL;
-        ELSIF (SELECT COUNT(name) FROM sys.databases WHERE name = db_name) != 1 THEN
+        ELSIF (SELECT COUNT(name) FROM sys.databases WHERE name = db_name COLLATE sys.database_default) != 1 THEN
             RETURN 0;
         END IF;
     ELSIF cs_as_securable_class = 'schema' THEN
@@ -2908,7 +2908,7 @@ BEGIN
         IF bbf_schema_name IS NULL THEN
             RETURN NULL;
         ELSIF (SELECT COUNT(nspname) FROM sys.babelfish_namespace_ext ext
-                WHERE ext.orig_name = bbf_schema_name 
+                WHERE ext.orig_name = bbf_schema_name COLLATE sys.database_default 
                     AND ext.dbid = sys.db_id()) != 1 THEN
             RETURN 0;
         END IF;
@@ -2956,7 +2956,7 @@ BEGIN
     -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
     pg_schema := (SELECT nspname 
                     FROM sys.babelfish_namespace_ext ext 
-                    WHERE ext.orig_name = bbf_schema_name 
+                    WHERE ext.orig_name = bbf_schema_name COLLATE sys.database_default 
                         AND CAST(ext.dbid AS oid) = CAST(database_id AS oid));
 
     IF pg_schema IS NULL THEN

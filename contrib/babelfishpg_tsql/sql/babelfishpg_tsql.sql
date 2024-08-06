@@ -641,41 +641,41 @@ BEGIN
 		RETURN 0;
 	END IF;
 	CASE datatype
-		WHEN 'text' THEN tds_id = 35;
-		WHEN 'uniqueidentifier' THEN tds_id = 36;
-		WHEN 'tinyint' THEN tds_id = 38;
-		WHEN 'smallint' THEN tds_id = 38;
-		WHEN 'int' THEN tds_id = 38;
-		WHEN 'bigint' THEN tds_id = 38;
-		WHEN 'ntext' THEN tds_id = 99;
-		WHEN 'bit' THEN tds_id = 104;
-		WHEN 'float' THEN tds_id = 109;
-		WHEN 'real' THEN tds_id = 109;
-		WHEN 'varchar' THEN tds_id = 167;
-		WHEN 'nvarchar' THEN tds_id = 231;
-		WHEN 'nchar' THEN tds_id = 239;
-		WHEN 'money' THEN tds_id = 110;
-		WHEN 'smallmoney' THEN tds_id = 110;
-		WHEN 'char' THEN tds_id = 175;
-		WHEN 'date' THEN tds_id = 40;
-		WHEN 'datetime' THEN tds_id = 111;
-		WHEN 'smalldatetime' THEN tds_id = 111;
-		WHEN 'numeric' THEN tds_id = 108;
-		WHEN 'xml' THEN tds_id = 241;
-		WHEN 'decimal' THEN tds_id = 106;
-		WHEN 'varbinary' THEN tds_id = 165;
-		WHEN 'binary' THEN tds_id = 173;
-		WHEN 'image' THEN tds_id = 34;
-		WHEN 'time' THEN tds_id = 41;
-		WHEN 'datetime2' THEN tds_id = 42;
-		WHEN 'sql_variant' THEN tds_id = 98;
-		WHEN 'datetimeoffset' THEN tds_id = 43;
-		WHEN 'timestamp' THEN tds_id = 173;
-		WHEN 'vector' THEN tds_id = 167; -- Same as varchar 
-		WHEN 'sparsevec' THEN tds_id = 167; -- Same as varchar 
-		WHEN 'halfvec' THEN tds_id = 167; -- Same as varchar 
-		WHEN 'geometry' THEN tds_id = 240;
-		WHEN 'geography' THEN tds_id = 240;
+		WHEN 'text' COLLATE sys.database_default THEN tds_id = 35;
+		WHEN 'uniqueidentifier' COLLATE sys.database_default THEN tds_id = 36;
+		WHEN 'tinyint' COLLATE sys.database_default THEN tds_id = 38;
+		WHEN 'smallint' COLLATE sys.database_default THEN tds_id = 38;
+		WHEN 'int' COLLATE sys.database_default THEN tds_id = 38;
+		WHEN 'bigint' COLLATE sys.database_default THEN tds_id = 38;
+		WHEN 'ntext' COLLATE sys.database_default THEN tds_id = 99;
+		WHEN 'bit' COLLATE sys.database_default THEN tds_id = 104;
+		WHEN 'float' COLLATE sys.database_default THEN tds_id = 109;
+		WHEN 'real' COLLATE sys.database_default THEN tds_id = 109;
+		WHEN 'varchar' COLLATE sys.database_default THEN tds_id = 167;
+		WHEN 'nvarchar' COLLATE sys.database_default THEN tds_id = 231;
+		WHEN 'nchar' COLLATE sys.database_default THEN tds_id = 239;
+		WHEN 'money' COLLATE sys.database_default THEN tds_id = 110;
+		WHEN 'smallmoney' COLLATE sys.database_default THEN tds_id = 110;
+		WHEN 'char' COLLATE sys.database_default THEN tds_id = 175;
+		WHEN 'date' COLLATE sys.database_default THEN tds_id = 40;
+		WHEN 'datetime' COLLATE sys.database_default THEN tds_id = 111;
+		WHEN 'smalldatetime' COLLATE sys.database_default THEN tds_id = 111;
+		WHEN 'numeric' COLLATE sys.database_default THEN tds_id = 108;
+		WHEN 'xml' COLLATE sys.database_default THEN tds_id = 241;
+		WHEN 'decimal' COLLATE sys.database_default THEN tds_id = 106;
+		WHEN 'varbinary' COLLATE sys.database_default THEN tds_id = 165;
+		WHEN 'binary' COLLATE sys.database_default THEN tds_id = 173;
+		WHEN 'image' COLLATE sys.database_default THEN tds_id = 34;
+		WHEN 'time' COLLATE sys.database_default THEN tds_id = 41;
+		WHEN 'datetime2' COLLATE sys.database_default THEN tds_id = 42;
+		WHEN 'sql_variant' COLLATE sys.database_default THEN tds_id = 98;
+		WHEN 'datetimeoffset' COLLATE sys.database_default THEN tds_id = 43;
+		WHEN 'timestamp' COLLATE sys.database_default THEN tds_id = 173;
+		WHEN 'vector' COLLATE sys.database_default THEN tds_id = 167; -- Same as varchar 
+		WHEN 'sparsevec' COLLATE sys.database_default THEN tds_id = 167; -- Same as varchar 
+		WHEN 'halfvec' COLLATE sys.database_default THEN tds_id = 167; -- Same as varchar 
+		WHEN 'geometry' COLLATE sys.database_default THEN tds_id = 240;
+		WHEN 'geography' COLLATE sys.database_default THEN tds_id = 240;
 		ELSE tds_id = 0;
 	END CASE;
 	RETURN tds_id;
@@ -2255,20 +2255,20 @@ BEGIN
 	role  := TRIM(trailing from LOWER(role));
 	login := TRIM(trailing from LOWER(login));
 	
-	login_valid = (login = suser_name()) OR 
+	login_valid = (login = suser_name() COLLATE sys.database_default) OR 
 		(EXISTS (SELECT name
 	 			FROM sys.server_principals
 		 	 	WHERE 
-				LOWER(name) = login 
+				LOWER(name) = login COLLATE sys.database_default
 				AND type = 'S'));
  	
  	IF NOT login_valid THEN
  		RETURN NULL;
     
-    ELSIF role = 'public' THEN
+    ELSIF role = 'public' COLLATE sys.database_default THEN
     	RETURN 1;
 	
- 	ELSIF role = 'sysadmin' THEN
+ 	ELSIF role = 'sysadmin' COLLATE sys.database_default THEN
 	  	has_role = pg_has_role(login::TEXT, role::TEXT, 'MEMBER');
 	    IF has_role THEN
 			RETURN 1;
@@ -2276,7 +2276,7 @@ BEGIN
 			RETURN 0;
 		END IF;
 	
-    ELSIF role IN (
+    ELSIF role COLLATE sys.database_default IN (
             'serveradmin',
             'securityadmin',
             'setupadmin',
