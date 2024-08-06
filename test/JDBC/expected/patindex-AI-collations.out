@@ -1033,8 +1033,23 @@ int#!#nvarchar#!#bigint
 ~~END~~
 
 
+
+SELECT Id, TestText,
+       PATINDEX(N'%çalış%' COLLATE Turkish_CI_AI, TestText) AS Position
+FROM #TestStrings;
 DROP TABLE #TestStrings
 GO
+~~START~~
+int#!#nvarchar#!#bigint
+1#!#Çalışkan#!#1
+2#!#kalem#!#0
+3#!#KÜTÜPHANE#!#0
+4#!#Örnek#!#0
+5#!#çalışkan#!#1
+6#!#kalem#!#0
+7#!#öRnek#!#0
+~~END~~
+
 
 CREATE TABLE #TestStrings (
     Id INT PRIMARY KEY,

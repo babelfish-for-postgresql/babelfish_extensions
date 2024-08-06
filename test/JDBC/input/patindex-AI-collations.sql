@@ -430,6 +430,10 @@ SELECT Id, TestText,
 FROM #TestStrings;
 GO
 
+SELECT Id, TestText,
+       PATINDEX(N'%çalış%' COLLATE Turkish_CI_AI, TestText) AS Position
+FROM #TestStrings;
+
 DROP TABLE #TestStrings
 GO
 
