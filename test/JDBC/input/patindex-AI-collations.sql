@@ -402,3 +402,7 @@ GO
 SELECT PATINDEX(N'%[-AE]%', N'Æ' COLLATE Latin1_General_CI_AI)
 SELECT PATINDEX(N'%%', N'Æ' COLLATE Latin1_General_CI_AI)
 GO
+
+SELECT PATINDEX('[a-', '[a-' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('[a-]', '-' COLLATE Latin1_General_CI_AI)
+GO

@@ -1827,7 +1827,7 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 						next_char(&p, &plen);
 						continue;
 					}
-					if (*p == '-' && prev)
+					if (*p == '-' && prev && plen > 1 && *(p+1) != ']')
 					{
 						UChar *t_uchar, *p_uchar, *prev_uchar;
 						int32_t t_ulen, prev_ulen, p_ulen;
@@ -1850,8 +1850,9 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 						int p_start_len = plen, matched_idx = 0;
 						char *p_start = p;
 						text *src_text, *substr_text;
+						prev = NULL;
 
-						/* find the string till the next special character, '-' is a special char only if prev exists */
+						/* find the string till the next special character, '-' is a special char only if prev and next exists */
 						while (plen > 0 && *p != ']' && !(prev && *p == '-'))
 						{
 							prev = p;

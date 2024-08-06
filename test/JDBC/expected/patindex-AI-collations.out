@@ -972,3 +972,17 @@ bigint
 1
 ~~END~~
 
+
+SELECT PATINDEX('[a-', '[a-' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('[a-]', '-' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+~~START~~
+bigint
+1
+~~END~~
+
