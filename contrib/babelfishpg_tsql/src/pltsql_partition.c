@@ -23,6 +23,7 @@
 #include "catalog/pg_type.h"
 #include "common/md5.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
@@ -627,46 +628,46 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 void
 bbf_rename_handle_partitioned_table(RenameStmt *stmt)
 {
-	char		*physical_schema_name = stmt->relation->schemaname;
 	char		*table_name = stmt->relation->relname;
+	char		*physical_schema_name;
 	char		*logical_schema_name;
 	bool		is_partition_table, is_partitioned_table;
 	Form_pg_class	form;
 	HeapTuple	tuple;
-	Oid		relid;
+	Oid		nsp_oid;
 	int16		dbid;
+	RangeVar	*new_rel = makeRangeVar(stmt->relation->schemaname, stmt->newname, -1);
+	Oid		relid = RangeVarGetRelid(new_rel, NoLock, true);;
 
-	/* Find logical schema name from the physical schema name. */
-	logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, true);
-
-	if (!logical_schema_name) /* not a TSQL schema */
-		return;
-	
-	/* Find relation's pg_class tuple using the name and schema name. */
-	tuple =	SearchSysCache2(RELNAMENSP,
-					CStringGetDatum(stmt->newname),
-					ObjectIdGetDatum(get_namespace_oid(physical_schema_name, false)));
+	/* Get the namespace OID and type of the table. */
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 
 	if (!HeapTupleIsValid(tuple)) /* Sanity check. */
-	{
-		pfree(logical_schema_name);
 		return;
-	}
-	
+
 	form = (Form_pg_class) GETSTRUCT(tuple);
-	relid = form->oid;
 	is_partition_table = form->relispartition;
 	is_partitioned_table = (form->relkind == RELKIND_PARTITIONED_TABLE);
+	nsp_oid = form->relnamespace;
 	ReleaseSysCache(tuple);
 
 	/* Proceed further only if table is a partition or partitioned table. */
 	if (!is_partition_table && !is_partitioned_table)
+		return;
+
+	/* Get the physical schema name from namespace OID. */
+	physical_schema_name = get_namespace_name(nsp_oid);
+
+	/* Find the logical schema name from physical schema name. */
+	logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, true);
+
+	if (!logical_schema_name) /* not a TSQL schema */
 	{
-		pfree(logical_schema_name);
+		pfree(physical_schema_name);
 		return;
 	}
 
-	/* Find dbid from the physical schema name. */
+	/* Find the dbid from the physical schema name. */
 	dbid = get_dbid_from_physical_schema_name(physical_schema_name, false);
 
 	/*
@@ -691,6 +692,8 @@ bbf_rename_handle_partitioned_table(RenameStmt *stmt)
 		rename_table_update_bbf_partitions_name(stmt, relid);
 		rename_table_update_bbf_partition_depend_catalog(stmt, logical_schema_name, dbid);
 	}
+
+	pfree(physical_schema_name);
 	pfree(logical_schema_name);
 }
 

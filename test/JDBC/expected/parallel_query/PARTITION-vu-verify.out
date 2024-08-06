@@ -2774,15 +2774,20 @@ GO
 
 -- using search_path
 SET search_path = public, master_dbo;
-ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_0"
-RENAME TO xyz
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_1"
+RENAME TO xyz1
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot rename babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_1'.
+    Server SQLState: 0A000)~~
+
 
 -- tsql
 -- Attempt to rename partition of babelfish partitioned table from tsql endpoint
 -- NOTE: object not found error because sp_rename lookup in sys.objects which 
 -- will not list child objects
-EXEC sp_rename '363863941f079adaa9aa733200e57c9f_partition_0', 'xyz', 'OBJECT'
+EXEC sp_rename '363863941f079adaa9aa733200e57c9f_partition_2', 'xyz2', 'OBJECT'
 GO
 ~~ERROR (Code: 33557097)~~
 
