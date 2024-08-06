@@ -380,7 +380,7 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 #define TOTAL_TSQL_PRECEDENCE_COUNT (sizeof(tsql_precedence_infos)/sizeof(tsql_precedence_infos[0]))
 
 /* Following constants value are defined based on the special function list */
-#define SFUNC_MAX_ARGS 3			/* maximum number of args special function in special function list can have */
+#define SFUNC_MAX_ARGS 4			/* maximum number of args special function in special function list can have */
 #define SFUNC_MAX_VALID_TYPES 8		/* maximum number of valid types supported argument of function in special function list can have */
 
 /* struct to store details of valid types supported for a argument */
@@ -404,6 +404,7 @@ typedef struct tsql_special_function
 tsql_special_function_t tsql_special_function_list[] = 
 {
 	{"sys", "replace", "replace", 3, {{8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
+	{"sys", "stuff", "stuff", 4, {{8, {"char","varchar","nchar","nvarchar","binary","varbinary","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"tinyint","smallint","int","bigint"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}} , {4, {"tinyint","smallint","int","bigint"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","binary","varbinary","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
 	{"sys", "translate", "translate", 3, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}} , {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
 	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
@@ -1250,6 +1251,30 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 			expr_result_type = get_sys_varcharoid();
 		}
 	}
+	else if (strlen(proc_name) == 5 && strncmp(proc_name, "stuff", 5) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(input_typeids[0]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary"); 
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[3])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[3])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(input_typeids[3]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar"); 
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[0])
+				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[0])
+				|| (*common_utility_plugin_ptr->is_tsql_text_datatype)(input_typeids[0])
+				|| input_typeids[0] == UNKNOWNOID)
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
 
 	if (!OidIsValid(expr_result_type))
 		return NULL;
@@ -1308,7 +1333,15 @@ tsql_func_select_candidate(List *names,
 	bool			  candidates_are_opers = false;
 
 	if (is_special)
+	{
+		/*
+		 * In case of dump restore we don't require special handling as PG handling will be sufficient
+		 */
+		if (babelfish_dump_restore)
+			return NULL;
+
 		return tsql_func_select_candidate_for_special_func(names, fargs, nargs, input_typeids, candidates);
+	}
 
 	if (unknowns_resolved)
 	{
