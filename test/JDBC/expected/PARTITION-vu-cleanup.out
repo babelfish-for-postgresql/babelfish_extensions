@@ -72,9 +72,6 @@ GO
 --------------------------------------------------
 --- DROP Partitioned Index
 --------------------------------------------------
-DROP INDEX partition_vu_prepare_sqlvariant_index ON partition_vu_prepare_sqlvariant_table;
-GO
-
 DROP INDEX partition_vu_prepare_uniqueidentifier_index ON partition_vu_prepare_uniqueidentifier_table;
 GO
 
@@ -161,9 +158,6 @@ GO
 --------------------------------------------------
 --- DROP Partitioned Table
 --------------------------------------------------
-DROP TABLE partition_vu_prepare_sqlvariant_table;
-GO
-
 DROP TABLE partition_vu_prepare_uniqueidentifier_table;
 GO
 
@@ -310,9 +304,6 @@ GO
 DROP PARTITION SCHEME UniqueIdentifierPartitionScheme
 GO
 
-DROP PARTITION SCHEME SqlVariantPartitionScheme
-GO
-
 DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
 
@@ -392,9 +383,6 @@ DROP PARTITION FUNCTION VarBinaryPartitionFunction
 GO
 
 DROP PARTITION FUNCTION UniqueIdentifierPartitionFunction 
-GO
-
-DROP PARTITION FUNCTION SqlVariantPartitionFunction 
 GO
 
 DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz

@@ -532,6 +532,7 @@ right
 translate
 substring
 reverse
+stuff
 replicate
 space
 replace

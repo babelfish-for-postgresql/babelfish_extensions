@@ -285,6 +285,7 @@ Oid			tsql_datetime2_oid = InvalidOid;
 Oid			tsql_smalldatetime_oid = InvalidOid;
 Oid			tsql_datetimeoffset_oid = InvalidOid;
 Oid			tsql_decimal_oid = InvalidOid;
+Oid			tsql_sqlvariant_oid = InvalidOid;
 Oid			tsql_geography_oid = InvalidOid;
 Oid			tsql_geometry_oid = InvalidOid;
 
@@ -472,6 +473,14 @@ is_tsql_decimal_datatype(Oid oid)
 	if (tsql_decimal_oid == InvalidOid)
 		tsql_decimal_oid = lookup_tsql_datatype_oid("decimal");
 	return tsql_decimal_oid == oid;
+}
+
+bool
+is_tsql_sqlvariant_datatype(Oid oid)
+{
+	if (tsql_sqlvariant_oid == InvalidOid)
+		tsql_sqlvariant_oid = lookup_tsql_datatype_oid("sql_variant");
+	return tsql_sqlvariant_oid == oid;
 }
 
 /*

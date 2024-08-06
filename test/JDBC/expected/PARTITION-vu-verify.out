@@ -402,23 +402,6 @@ GO
 ~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
 
 
-CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
-AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'), 'abc');
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
-
-
--- duplicate value with different basetype 
-CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
-AS RANGE RIGHT FOR VALUES (1, cast('abc' as varchar(10)), CONVERT(DATETIME, '2023-05-01'), cast('abc' as nvarchar(10)));
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
-
-
 --------------------------------------------------
 --- Unsupported Options with Partition Function 
 --------------------------------------------------
@@ -429,6 +412,22 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'PARTIION FUNCTION with LEFT option' is not currently supported in Babelfish)~~
+
+
+-- sql_variant is not yet supported in Babelfish
+CREATE PARTITION FUNCTION SqlVariantPartitionFunction (sql_variant)
+AS RANGE RIGHT
+FOR VALUES (
+    CAST('abc' AS char(5)),
+    CAST(N'xyz' AS nchar(5)),
+    CAST('Apple' AS VARCHAR(10)),
+    CAST(N'Banana' AS NVARCHAR(10)),
+    CAST('Some text' AS SQL_VARIANT)
+);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'sql_variant' is not yet supported for partition function in Babelfish.)~~
 
 
 -- by default it is LEFT and it should throw error
@@ -638,7 +637,6 @@ PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#R 
 SmallDateTimePartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallMoneyPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
-SqlVariantPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
 TinyIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 UniqueIdentifierPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 VarBinaryPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
@@ -732,11 +730,6 @@ SmallIntPartitionFunction#!#1#!#3#!#32767
 SmallMoneyPartitionFunction#!#1#!#1#!#2.5679
 SmallMoneyPartitionFunction#!#1#!#2#!#3.5679
 SmallMoneyPartitionFunction#!#1#!#3#!#4.9100
-SqlVariantPartitionFunction#!#1#!#1#!#abc  
-SqlVariantPartitionFunction#!#1#!#2#!#Apple
-SqlVariantPartitionFunction#!#1#!#3#!#Banana
-SqlVariantPartitionFunction#!#1#!#4#!#Some text
-SqlVariantPartitionFunction#!#1#!#5#!#xyz  
 TinyIntPartitionFunction#!#1#!#1#!#0
 TinyIntPartitionFunction#!#1#!#2#!#128
 TinyIntPartitionFunction#!#1#!#3#!#255
@@ -793,7 +786,6 @@ PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#bi
 SmallDateTimePartitionFunction#!#smalldatetime#!#1#!#4#!#16#!#0#!#<NULL>
 SmallIntPartitionFunction#!#smallint#!#1#!#2#!#5#!#0#!#<NULL>
 SmallMoneyPartitionFunction#!#smallmoney#!#1#!#4#!#10#!#4#!#<NULL>
-SqlVariantPartitionFunction#!#sql_variant#!#1#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as
 TinyIntPartitionFunction#!#tinyint#!#1#!#1#!#3#!#0#!#<NULL>
 UniqueIdentifierPartitionFunction#!#uniqueidentifier#!#1#!#16#!#0#!#0#!#<NULL>
 VarBinaryPartitionFunction#!#varbinary#!#1#!#8000#!#0#!#0#!#<NULL>
@@ -827,7 +819,6 @@ PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#Part
 SmallDateTimePartitionScheme#!#SmallDateTimePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallIntPartitionScheme#!#SmallIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallMoneyPartitionScheme#!#SmallMoneyPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
-SqlVariantPartitionScheme#!#SqlVariantPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 TinyIntPartitionScheme#!#TinyIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 UniqueIdentifierPartitionScheme#!#UniqueIdentifierPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 VarBinaryPartitionScheme#!#VarBinaryPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
@@ -900,8 +891,6 @@ partition_vu_prepare_smallint_table#!#<NULL>#!#SmallIntPartitionScheme
 partition_vu_prepare_smallint_table#!#partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#SmallIntPartitionScheme
 partition_vu_prepare_smallmoney_table#!#<NULL>#!#SmallMoneyPartitionScheme
 partition_vu_prepare_smallmoney_table#!#partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#SmallMoneyPartitionScheme
-partition_vu_prepare_sqlvariant_table#!#<NULL>#!#SqlVariantPartitionScheme
-partition_vu_prepare_sqlvariant_table#!#partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#SqlVariantPartitionScheme
 partition_vu_prepare_tinyint_table#!#<NULL>#!#TinyIntPartitionScheme
 partition_vu_prepare_tinyint_table#!#partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#TinyIntPartitionScheme
 partition_vu_prepare_uniqueidentifier_table#!#<NULL>#!#UniqueIdentifierPartitionScheme
@@ -948,7 +937,6 @@ partition_vu_prepare_nvarchar_table#!#id#!#1
 partition_vu_prepare_smalldatetime_table#!#id#!#1
 partition_vu_prepare_smallint_table#!#id#!#1
 partition_vu_prepare_smallmoney_table#!#id#!#1
-partition_vu_prepare_sqlvariant_table#!#id#!#1
 partition_vu_prepare_tinyint_table#!#id#!#1
 partition_vu_prepare_uniqueidentifier_table#!#id#!#1
 partition_vu_prepare_varbinary_table#!#id#!#1
@@ -994,8 +982,6 @@ partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_p
 partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_prepare_smallint_table#!#id#!#1
 partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
 partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
-partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#partition_vu_prepare_sqlvariant_table#!#id#!#1
-partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#partition_vu_prepare_sqlvariant_table#!#id#!#1
 partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
 partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
 partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf#!#partition_vu_prepare_uniqueidentifier_table#!#id#!#1
@@ -1462,7 +1448,6 @@ partition_vu_prepare_nvarchar_table
 partition_vu_prepare_smalldatetime_table
 partition_vu_prepare_smallint_table
 partition_vu_prepare_smallmoney_table
-partition_vu_prepare_sqlvariant_table
 partition_vu_prepare_tinyint_table
 partition_vu_prepare_uniqueidentifier_table
 partition_vu_prepare_varbinary_table
@@ -1494,7 +1479,6 @@ partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec
 partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8
 partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579
 partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8
-partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47
 partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb
 partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf
 partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386
@@ -1726,7 +1710,6 @@ ANALYZE master_dbo.partition_vu_prepare_nchar_table;
 ANALYZE master_dbo.partition_vu_prepare_binary_table;
 ANALYZE master_dbo.partition_vu_prepare_varbinary_table;
 ANALYZE master_dbo.partition_vu_prepare_uniqueidentifier_table;
-ANALYZE master_dbo.partition_vu_prepare_sqlvariant_table;
 GO
 
 -- tsql
@@ -1759,7 +1742,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.782 ms
+Babelfish T-SQL Batch Parsing Time: 0.752 ms
 ~~END~~
 
 
@@ -1778,7 +1761,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.120 ms
+Babelfish T-SQL Batch Parsing Time: 0.129 ms
 ~~END~~
 
 
@@ -1796,7 +1779,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.131 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -1814,7 +1797,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.120 ms
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 
@@ -1833,7 +1816,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.121 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -1852,7 +1835,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -1870,7 +1853,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.121 ms
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
 ~~END~~
 
 
@@ -1888,7 +1871,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.131 ms
 ~~END~~
 
 
@@ -1906,7 +1889,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.123 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -1924,7 +1907,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.122 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -1942,7 +1925,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.098 ms
 ~~END~~
 
 
@@ -1960,7 +1943,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -1982,7 +1965,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.124 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -2002,7 +1985,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -2022,7 +2005,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -2044,7 +2027,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -2063,7 +2046,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -2082,7 +2065,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.098 ms
 ~~END~~
 
 
@@ -2100,29 +2083,8 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.106 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
-
-
-SELECT * FROM partition_vu_prepare_sqlvariant_table;
-GO
-~~START~~
-text
-Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table
-Append
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table_1
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_2" partition_vu_prepare_sqlvariant_table_2
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_3" partition_vu_prepare_sqlvariant_table_3
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_4" partition_vu_prepare_sqlvariant_table_4
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_5" partition_vu_prepare_sqlvariant_table_5
-  ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_0" partition_vu_prepare_sqlvariant_table_6
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
-~~END~~
-
 
 
 -----------------------------------------------------------------------------------------
@@ -2160,7 +2122,7 @@ Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_key" on "36386
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 34.743 ms
+Babelfish T-SQL Batch Parsing Time: 11.417 ms
 ~~END~~
 
 
@@ -2175,7 +2137,7 @@ Index Scan using "548bb344374ce8d65342b36428375873_partition_1_id_idx" on "548bb
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.201 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -2190,7 +2152,7 @@ Index Scan using "12025e103721b70925744c196ce004cd_partition_1_id_idx" on "12025
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.419 ms
+Babelfish T-SQL Batch Parsing Time: 7.570 ms
 ~~END~~
 
 
@@ -2205,7 +2167,7 @@ Index Scan using "61446d711d19b5970809387caa7fd3d3_partition_1_id_idx" on "61446
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
 ~~END~~
 
 
@@ -2220,7 +2182,7 @@ Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.571 ms
+Babelfish T-SQL Batch Parsing Time: 6.722 ms
 ~~END~~
 
 
@@ -2235,7 +2197,7 @@ Index Scan using "57405760297bb338f333c148aac5f845_partition_1_id_idx" on "57405
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.237 ms
+Babelfish T-SQL Batch Parsing Time: 0.194 ms
 ~~END~~
 
 
@@ -2253,7 +2215,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.223 ms
+Babelfish T-SQL Batch Parsing Time: 0.230 ms
 ~~END~~
 
 
@@ -2271,7 +2233,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.154 ms
+Babelfish T-SQL Batch Parsing Time: 0.163 ms
 ~~END~~
 
 
@@ -2286,7 +2248,7 @@ Index Scan using "4867824426e52acac5c93d9cbe8aa366_partition_1_id_idx" on "48678
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.603 ms
+Babelfish T-SQL Batch Parsing Time: 0.273 ms
 ~~END~~
 
 
@@ -2301,7 +2263,7 @@ Index Scan using "751ce655481adf15600727bf291667f7_partition_1_id_idx" on "751ce
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
 ~~END~~
 
 
@@ -2316,7 +2278,7 @@ Index Scan using "5ed003cf80dacbb8cce0b21e175f7f94_partition_1_id_idx" on "5ed00
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.159 ms
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -2331,7 +2293,7 @@ Index Scan using b5c2e665ec4a1219ba8510e33e45379b_partition_1_id_idx on b5c2e665
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.226 ms
+Babelfish T-SQL Batch Parsing Time: 0.246 ms
 ~~END~~
 
 
@@ -2346,7 +2308,7 @@ Index Scan using "5d20bd977eb6e6f1304dec45598c09f5_partition_1_id_idx" on "5d20b
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.241 ms
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
 ~~END~~
 
 
@@ -2361,7 +2323,7 @@ Index Scan using "933a5c7f0de13890324e53ee0711424b_partition_1_id_idx" on "933a5
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.170 ms
+Babelfish T-SQL Batch Parsing Time: 0.168 ms
 ~~END~~
 
 
@@ -2376,7 +2338,7 @@ Index Scan using "320465af1d1bd21f5b29c57f9f4e5c51_partition_1_id_idx" on "32046
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.161 ms
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
 ~~END~~
 
 
@@ -2408,7 +2370,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.159 ms
+Babelfish T-SQL Batch Parsing Time: 0.184 ms
 ~~END~~
 
 
@@ -2432,7 +2394,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.824 ms
+Babelfish T-SQL Batch Parsing Time: 7.260 ms
 ~~END~~
 
 
@@ -2447,7 +2409,7 @@ Index Scan using "77718961234110c3a22a3c977bc252d8_partition_1_id_idx" on "77718
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.166 ms
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
 ~~END~~
 
 
@@ -2462,22 +2424,7 @@ Index Scan using f3baf999c06d6ea82082a4c549baeb77_partition_1_id_idx on f3baf999
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.188 ms
-~~END~~
-
-
-SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10));
-GO
-~~START~~
-text
-Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10))
-Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table
-  Index Cond: ((id >= 'abc  '::sql_variant) AND (id < 'Apple'::sql_variant))
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 7.191 ms
+Babelfish T-SQL Batch Parsing Time: 0.198 ms
 ~~END~~
 
 
@@ -3617,21 +3564,6 @@ int#!#uniqueidentifier
 2#!#00000000-0000-0000-0000-000000000000
 3#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
 4#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
-~~END~~
-
-
-SELECT $PARTITION.SqlVariantPartitionFunction(Id) AS PartitionNumber, Id
-FROM partition_vu_prepare_sqlvariant_table
-ORDER BY PartitionNumber, Id;
-GO
-~~START~~
-int#!#sql_variant
-1#!#<NULL>
-2#!#abc  
-3#!#Apple
-4#!#Banana
-5#!#Some text
-6#!#xyz  
 ~~END~~
 
 
