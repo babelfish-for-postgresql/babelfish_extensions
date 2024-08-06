@@ -958,3 +958,17 @@ bigint
 1
 ~~END~~
 
+
+SELECT PATINDEX(N'%[-AE]%', N'Æ' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX(N'%%', N'Æ' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+~~START~~
+bigint
+1
+~~END~~
+

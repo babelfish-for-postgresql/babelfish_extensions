@@ -46,8 +46,6 @@
 #define MAX_BYTES_PER_CHAR 4
 #define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
 
-#define NextChar(p, plen) \
-	do { int __l = pg_mblen(p); (p) +=__l; (plen) -=__l; } while (0)
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
@@ -1408,31 +1406,39 @@ translate_char_pos(const char* str,		/* UTF-8 string */
 
 static int
 icu_compare_utf8_coll(UCollator  *coll, UChar *uchar1, int32_t ulen1,
-					  UChar *uchar2, int32_t ulen2, bool is_cs_ai)
+					  UChar *uchar2, int32_t ulen2, bool is_cs_ai_range_cmp)
 {
 	UErrorCode	status = U_ZERO_ERROR;
-	UCollator   *cloned_coll = ucol_safeClone(coll, NULL, NULL, &status);
+	UCollator   *collator;
 	int i;
 
-	if (U_FAILURE(status))
-		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("failed to clone collator in icu compare: %s", u_errorName(status))));
-
-	if (is_cs_ai)
+	if (is_cs_ai_range_cmp)
 	{
-		ucol_setAttribute(cloned_coll, UCOL_CASE_FIRST, UCOL_OFF, &status);
+		collator = ucol_safeClone(coll, NULL, NULL, &status);
+
+		if (U_FAILURE(status))
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("failed to clone collator in icu compare: %s", u_errorName(status))));
+
+		ucol_setAttribute(collator, UCOL_CASE_FIRST, UCOL_OFF, &status);
+
 		if (U_FAILURE(status))
 			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("failed to set attribute for ucollator: %s", u_errorName(status))));
 	}
+	else
+	{
+		collator = coll;
+	}
 
-	i = ucol_strcoll(cloned_coll,
-						uchar1, ulen1,
-						uchar2, ulen2);
+	i = ucol_strcoll(collator,
+					 uchar1, ulen1,
+					 uchar2, ulen2);
 
-	ucol_close(cloned_coll);
+	if (is_cs_ai_range_cmp)
+		ucol_close(collator);
 
 	return i;
 }
@@ -1714,14 +1720,12 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
 		if (!U_FAILURE(status) && u16_pos != USEARCH_DONE && (!is_cs_ai ||
 		    icu_compare_utf8_coll(mylocale->info.icu.ucol, src_uchar, usearch_getMatchedLength(usearch), substr_uchar, substr_len_utf8, false) == 0))
 		{
-			u8_pos = translate_char_pos(src_text, src_len_utf8,
-										src_uchar, src_ulen,
-										u16_pos, NULL);
+			/* u16 position will only be zero */
 			matched_length_u16 = usearch_getMatchedLength(usearch);
 			u8_endpos = translate_char_pos(src_text, src_len_utf8,
 										   src_uchar, src_ulen,
-										   u16_pos + matched_length_u16, NULL);
-			*matched_len = u8_endpos - u8_pos;
+										   matched_length_u16, NULL);
+			*matched_len = u8_endpos;
 		}
 		else
 			u8_pos = -1;
@@ -1734,11 +1738,25 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				errmsg("ICU fund matched length requires ICU library")));
+				errmsg("ICU find matched length requires ICU library")));
 #endif
     }
 
 	return false;
+}
+
+static void
+next_char(char **p, int *plen)
+{
+	int l = pg_mblen(*p);
+
+	if (l > *plen)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("malformed string")));
+
+	(*p) += l;
+	*plen -= l;
 }
 
 static int
@@ -1778,40 +1796,40 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 			else if (*p == '_')
 			{
 				/* _ matches any single character, and we know there is one */
-				NextChar(t, tlen);
-				NextChar(p, plen);
+				next_char(&t, &tlen);
+				next_char(&p, &plen);
 				continue;
 			}
 			else if (*p == '[')
 			{
 				/* Tsql deal with [ and ] wild character */
 				bool find_match = false, reverse_mode = false, close_bracket = false;
-				const char * prev = NULL;
+				const char *prev = NULL;
 
-				NextChar(p, plen);
+				next_char(&p, &plen);
 				if (plen > 0 && *p == '^')
 				{
 					reverse_mode = true;
-					NextChar(p, plen);
+					next_char(&p, &plen);
 				}
 				while (plen > 0)
 				{
 					if (*p == ']')
 					{
 						close_bracket = true;
-						NextChar(p, plen);
+						next_char(&p, &plen);
 						break;
 					}
 					if (find_match)
 					{
-						NextChar(p, plen);
+						next_char(&p, &plen);
 						continue;
 					}
 					if (*p == '-' && prev)
 					{
 						UChar *t_uchar, *p_uchar, *prev_uchar;
 						int32_t t_ulen, prev_ulen, p_ulen;
-						NextChar(p, plen);
+						next_char(&p, &plen);
 						Assert(cid != InvalidOid);
 						t_ulen = icu_to_uchar(&t_uchar, t, pg_mblen(t));
 						prev_ulen = icu_to_uchar(&prev_uchar, prev, pg_mblen(prev));
@@ -1823,20 +1841,19 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 							find_match = true; 
 						}
 						prev = NULL;
-						NextChar(p, plen);
+						next_char(&p, &plen);
 					}
 					else
 					{
 						int p_start_len = plen, matched_idx = 0;
 						char *p_start = p;
 						text *src_text, *substr_text;
-						prev = p;
 
-						/* find the string till the next special character */
-						while (plen > 0 && *p != ']' && *p != '-')
+						/* find the string till the next special character, '-' is a special char only if prev exists */
+						while (plen > 0 && *p != ']' && !(prev && *p == '-'))
 						{
 							prev = p;
-							NextChar(p, plen);
+							next_char(&p, &plen);
 						}
 						
 						src_text = cstring_to_text_with_len(p_start, p_start_len - plen);
@@ -1852,7 +1869,7 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 				}
 
 				if (close_bracket && (find_match ^ reverse_mode)) /* found a match */
-					NextChar(t, tlen);
+					next_char(&t, &tlen);
 				else
 				{
 					match_failed = true;
@@ -1866,12 +1883,12 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 
 				while (plen > 0 && *p != '[' && *p != '_' && *p != '%')
 				{
-					NextChar(p, plen);
+					next_char(&p, &plen);
 				}
 				if (icu_find_matched_length(t, strlen(t), p_start, len-plen, cid, &matched_len, is_cs_ai))
 				{
 					while (matched_len--)
-						NextChar(t, tlen);
+						next_char(&t, &tlen);
 				}
 				else
 				{
@@ -1884,7 +1901,7 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 		if (tlen > 0 && !match_failed)
 		{
 			while (tlen > 0 && *t == ' ')
-				NextChar(t, tlen);
+				next_char(&t, &tlen);
 			if (tlen <= 0 && plen <=0)
 				return itr;
 		}
@@ -1894,7 +1911,7 @@ patindex_ai_match_text(pg_locale_t mylocale, char *input_str, char *pattern, Oid
 		* pattern can match a zero-length string, ie, it's zero or more %'s.
 		*/
 		while (plen > 0 && *p == '%')
-			NextChar(p, plen);
+			next_char(&p, &plen);
 		if (plen <= 0 && !match_failed)
 			return itr;
 

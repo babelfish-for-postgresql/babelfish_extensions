@@ -398,3 +398,7 @@ SELECT PATINDEX(N'%[A-AE]%', N'Æ' COLLATE Latin1_General_CI_AI)
 SELECT PATINDEX(N'%[ae-e]%', N'Æ' COLLATE Latin1_General_CI_AI)
 SELECT PATINDEX(N'%[AE-E]%', N'Æ' COLLATE Latin1_General_CI_AI)
 GO
+
+SELECT PATINDEX(N'%[-AE]%', N'Æ' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX(N'%%', N'Æ' COLLATE Latin1_General_CI_AI)
+GO
