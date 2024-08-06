@@ -156,7 +156,7 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt,const char *queryString,ParseState *pstate);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -6077,7 +6077,7 @@ get_identity_into_args(Node *node)
 }
 
 static List *
-transformSelectIntoStmt(CreateTableAsStmt *stmt,const char *queryString,ParseState *pstate)
+transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
 	List *result;
 	List *column_original_name_list;
@@ -6085,20 +6085,12 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt,const char *queryString,ParseSta
 	AlterTableStmt *altstmt;
 	IntoClause *into;
 	Node *n;
-	SelectStmt* selectSt;
-	ListCell* column_info;
-	List *res;
 
 	n = stmt->query;
 	into = stmt->into;
 	result = NIL;
 	altstmt = NULL;
 	column_original_name_list = NIL;
-	
-	res = raw_parser(queryString,RAW_PARSE_DEFAULT);
-	Assert(res->length == 1 && IsA(parsetree_nth_stmt(res, 0), SelectStmt));
-	selectSt = (SelectStmt *) parsetree_nth_stmt(res, 0);
-	
 
 	if (n && n->type == T_Query)
 	{
@@ -6108,7 +6100,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt,const char *queryString,ParseSta
 		Index identity_ressortgroupref = 0;
 		List *modifiedTargetList = NIL;
 
-		forboth (elements, q->targetList, column_info, selectSt->targetList)
+		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 
@@ -6198,16 +6190,9 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt,const char *queryString,ParseSta
 				newstmt = NULL;
 
 				if (tle->resname != NULL)
-				{
-					if (((ResTarget*)lfirst(column_info))->name_location != -1)
-					{
-						original_name = extract_identifier(pstate->p_sourcetext+((ResTarget*)lfirst(column_info))->name_location,NULL);
-					}
-					else
-					{
-						original_name = extract_identifier(pstate->p_sourcetext+((ResTarget*)lfirst(column_info))->location,NULL);
-					}
-					tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
+				{	
+					original_name = tle->resname;
+					tle->resname = downcase_truncate_identifier(tle->resname, strlen(tle->resname), false);
 				}	
 
 				current_resno += 1;
@@ -6279,7 +6264,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	ObjectAddress address;
 	ObjectAddress secondaryObject = InvalidObjectAddress;
 	List *stmts;
-	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree,queryString,pstate);
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
 	{
 		Node *stmt = (Node *)linitial(stmts);
