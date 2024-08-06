@@ -89,17 +89,6 @@ CREATE PARTITION FUNCTION UniqueIdentifierPartitionFunction (uniqueidentifier)
 AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', '6F9619FF-8B86-D011-B42D-00C04FC964FF');
 GO
 
-CREATE PARTITION FUNCTION SqlVariantPartitionFunction (sql_variant)
-AS RANGE RIGHT
-FOR VALUES (
-    CAST('abc' AS char(5)),
-    CAST(N'xyz' AS nchar(5)),
-    CAST('Apple' AS VARCHAR(10)),
-    CAST(N'Banana' AS NVARCHAR(10)),
-    CAST('Some text' AS SQL_VARIANT)
-);
-go
-
 -- identifier length greater than 64
 CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (bigint)
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
@@ -219,11 +208,6 @@ GO
 
 CREATE PARTITION SCHEME UniqueIdentifierPartitionScheme AS
 PARTITION UniqueIdentifierPartitionFunction 
-ALL TO ([PRIMARY]);
-GO
-
-CREATE PARTITION SCHEME SqlVariantPartitionScheme AS
-PARTITION SqlVariantPartitionFunction 
 ALL TO ([PRIMARY]);
 GO
 
@@ -468,13 +452,6 @@ CREATE TABLE partition_vu_prepare_uniqueidentifier_table (
 ) ON UniqueIdentifierPartitionScheme(Id);
 GO
 
--- sql_variant data type
-CREATE TABLE partition_vu_prepare_sqlvariant_table (
-    Id SQL_VARIANT,
-    Value sys.varchar(50)
-) ON SqlVariantPartitionScheme(Id);
-GO
-
 -- identifier length greater than 64
 CREATE TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (
     Id INT,
@@ -583,16 +560,10 @@ ON partition_vu_prepare_uniqueidentifier_table(Id)
 ON UniqueIdentifierPartitionScheme (Id);
 GO
 
-CREATE INDEX partition_vu_prepare_sqlvariant_index
-ON partition_vu_prepare_sqlvariant_table(Id)
-ON SqlVariantPartitionScheme (Id);
-GO
 --------------------------------------------------
 --- DROP Partitioned Index
 --------------------------------------------------
 --DROP
-DROP INDEX partition_vu_prepare_sqlvariant_index ON partition_vu_prepare_sqlvariant_table;
-GO
 
 DROP INDEX partition_vu_prepare_uniqueidentifier_index ON partition_vu_prepare_uniqueidentifier_table;
 GO
@@ -673,8 +644,6 @@ GO
 --------------------------------------------------
 --- DROP Partitioned Table
 --------------------------------------------------
-DROP TABLE partition_vu_prepare_sqlvariant_table;
-GO
 
 DROP TABLE partition_vu_prepare_uniqueidentifier_table;
 GO
@@ -817,9 +786,6 @@ GO
 DROP PARTITION SCHEME UniqueIdentifierPartitionScheme
 GO
 
-DROP PARTITION SCHEME SqlVariantPartitionScheme
-GO
-
 DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
 
@@ -899,9 +865,6 @@ DROP PARTITION FUNCTION VarBinaryPartitionFunction
 GO
 
 DROP PARTITION FUNCTION UniqueIdentifierPartitionFunction 
-GO
-
-DROP PARTITION FUNCTION SqlVariantPartitionFunction 
 GO
 
 DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz

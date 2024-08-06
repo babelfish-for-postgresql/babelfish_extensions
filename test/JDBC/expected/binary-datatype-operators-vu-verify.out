@@ -1,0 +1,155 @@
+-- inside view
+SELECT * FROM binary_datatype_operators_less_than_view
+GO
+~~START~~
+binary#!#binary#!#varchar
+111111#!#121212#!#col1 < col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_less_than_equal_view
+GO
+~~START~~
+binary#!#binary#!#varchar
+121212#!#121212#!#col1 <= col2 
+111111#!#121212#!#col1 <= col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_greater_than_view
+GO
+~~START~~
+binary#!#binary#!#varchar
+121212#!#111111#!#col1 > col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_greater_than_equal_view
+GO
+~~START~~
+binary#!#binary#!#varchar
+121212#!#121212#!#col1 >= col2 
+121212#!#111111#!#col1 >= col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_equal_view
+GO
+~~START~~
+binary#!#binary#!#varchar
+121212#!#121212#!#col1 = col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_not_equal_view
+GO
+~~START~~
+binary#!#binary#!#varchar
+111111#!#121212#!#col1 <> col2 
+121212#!#111111#!#col1 <> col2 
+~~END~~
+
+
+-- inside procedure
+EXEC binary_datatype_operators_less_than_proc
+GO
+~~START~~
+binary#!#binary#!#varchar
+111111#!#121212#!#col1 < col2 
+~~END~~
+
+
+EXEC binary_datatype_operators_less_than_equal_proc
+GO
+~~START~~
+binary#!#binary#!#varchar
+121212#!#121212#!#col1 <= col2 
+111111#!#121212#!#col1 <= col2 
+~~END~~
+
+
+EXEC binary_datatype_operators_greater_than_proc
+GO
+~~START~~
+binary#!#binary#!#varchar
+121212#!#111111#!#col1 > col2 
+~~END~~
+
+
+EXEC binary_datatype_operators_greater_than_equal_proc
+GO
+~~START~~
+binary#!#binary#!#varchar
+121212#!#121212#!#col1 >= col2 
+121212#!#111111#!#col1 >= col2 
+~~END~~
+
+
+EXEC binary_datatype_operators_equal_proc
+GO
+~~START~~
+binary#!#binary#!#varchar
+121212#!#121212#!#col1 = col2 
+~~END~~
+
+
+EXEC binary_datatype_operators_not_equal_proc
+GO
+~~START~~
+binary#!#binary#!#varchar
+111111#!#121212#!#col1 <> col2 
+121212#!#111111#!#col1 <> col2 
+~~END~~
+
+
+-- inside function
+SELECT * FROM binary_datatype_operators_less_than_func()
+GO
+~~START~~
+binary#!#binary#!#varchar
+11#!#12#!#col1 < col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_less_than_equal_func()
+GO
+~~START~~
+binary#!#binary#!#varchar
+12#!#12#!#col1 <= col2 
+11#!#12#!#col1 <= col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_greater_than_func()
+GO
+~~START~~
+binary#!#binary#!#varchar
+12#!#11#!#col1 > col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_greater_than_equal_func()
+GO
+~~START~~
+binary#!#binary#!#varchar
+12#!#12#!#col1 >= col2 
+12#!#11#!#col1 >= col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_equal_func()
+GO
+~~START~~
+binary#!#binary#!#varchar
+12#!#12#!#col1 = col2 
+~~END~~
+
+
+SELECT * FROM binary_datatype_operators_not_equal_func()
+GO
+~~START~~
+binary#!#binary#!#varchar
+11#!#12#!#col1 <> col2 
+12#!#11#!#col1 <> col2 
+~~END~~
+

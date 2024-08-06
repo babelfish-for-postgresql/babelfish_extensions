@@ -229,7 +229,7 @@ FULLTEXT_INDEX
 fts-contains
 fts-contains-utils
 BABEL-4785
-BABEL-4390
+restricted_procedures
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -436,6 +436,7 @@ TestSmallDatetime
 TestSmallInt
 TestSmallMoney
 TestSpatialPoint
+Test-spatial-functions
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -552,6 +553,7 @@ babel_4328_datetimeoffset
 babel_726
 BABEL-3401
 BABEL-3820
+stuff
 PARTITION
 BABEL-5071
 string_agg
@@ -559,4 +561,5 @@ reverse
 sys_sequences
 replicate
 space
+binary-datatype-operators
 

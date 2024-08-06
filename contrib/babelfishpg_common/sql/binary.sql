@@ -249,7 +249,7 @@ CREATE OPERATOR sys.>= (
 
 CREATE FUNCTION sys.binary_lt(leftarg sys.bbf_binary, rightarg sys.bbf_binary)
 RETURNS boolean
-AS 'babelfishpg_common', 'varbinary_eq'
+AS 'babelfishpg_common', 'varbinary_lt'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.< (

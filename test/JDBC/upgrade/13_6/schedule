@@ -24,8 +24,8 @@ BABEL-1466
 BABEL-1475
 BABEL-1493
 BABEL-1510
-BABEL-4390
 BABEL-1566
+restricted_procedures
 BABEL-1625
 BABEL-1654
 BABEL-1683
@@ -352,6 +352,8 @@ BABEL-4869
 translate-before-15_8-or-16_4
 substring-before-15_8-or-16_4
 reverse-before-15_8-or-16_4
+stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 space
+binary-datatype-operators
 
