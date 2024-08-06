@@ -2647,6 +2647,39 @@ GO
 ~~ERROR (Message: Cannot drop the babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.)~~
 
 
+-- psql
+--------------------------------------------------------------------
+-- user should not be allowed to rename partition of
+-- babelfish partitioned table neither from psql nor tsql endpoint
+--------------------------------------------------------------------
+-- Attempt to rename partition of babelfish partitioned table from psql endpoint
+-- explicit schema name specified
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+RENAME TO xyz
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot rename babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.
+    Server SQLState: 0A000)~~
+
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_0"
+RENAME TO xyz
+GO
+
+-- tsql
+-- Attempt to rename partition of babelfish partitioned table from tsql endpoint
+-- NOTE: object not found error because sp_rename lookup in sys.objects which 
+-- will not list child objects
+EXEC sp_rename '363863941f079adaa9aa733200e57c9f_partition_0', 'xyz', 'OBJECT'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is no object with the given @objname.)~~
+
+
 --------------------------------------------------------------------
 --- Unsupported Option with CREATE TABLE with PARTITION SCHEME
 --------------------------------------------------------------------

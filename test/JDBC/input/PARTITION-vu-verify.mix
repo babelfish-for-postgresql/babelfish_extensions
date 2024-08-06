@@ -1084,6 +1084,30 @@ DROP TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
 GO
 
 --------------------------------------------------------------------
+-- user should not be allowed to rename partition of
+-- babelfish partitioned table neither from psql nor tsql endpoint
+--------------------------------------------------------------------
+-- Attempt to rename partition of babelfish partitioned table from psql endpoint
+-- psql
+-- explicit schema name specified
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+RENAME TO xyz
+GO
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_0"
+RENAME TO xyz
+GO
+
+-- Attempt to rename partition of babelfish partitioned table from tsql endpoint
+-- NOTE: object not found error because sp_rename lookup in sys.objects which 
+-- will not list child objects
+-- tsql
+EXEC sp_rename '363863941f079adaa9aa733200e57c9f_partition_0', 'xyz', 'OBJECT'
+GO
+--------------------------------------------------------------------
+
 --- Unsupported Option with CREATE TABLE with PARTITION SCHEME
 --------------------------------------------------------------------
 -- Computed column as partitioning column is not yet supported in babelfish

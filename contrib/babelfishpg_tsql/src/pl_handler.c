@@ -3684,10 +3684,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 											params, queryEnv, dest, qc);
 				
 				if (stmt->renameType == OBJECT_TABLE)
-				{
-					rename_table_update_bbf_partitions_name(stmt);
-					rename_table_update_bbf_partition_depend_catalog(stmt);
-				}
+					bbf_rename_handle_partitioned_table(stmt);
 				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
 					rename_update_bbf_catalog(stmt);
