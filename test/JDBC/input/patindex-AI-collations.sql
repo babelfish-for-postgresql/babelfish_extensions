@@ -11,14 +11,14 @@ GO
 
 -- _ wildcard one single character to match
 SELECT PATINDEX('_', 'b' COLLATE Latin1_General_CI_AI)
-SELECT PATINDEX('%[A-Z]_[^A-Y]%', 'aBz' COLLATE Latin1_General_CI_AI)
-SELECT PATINDEX('%aZď_[^A-Y]%', 'hqyazdjz' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('%[A-Z]_[^A-Y]%', 'aBž' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('%aZď_[^A-Y]%', 'hqyÁzdjz' COLLATE Latin1_General_CI_AI)
 GO
 
 -- _ wildcard one single character to match
-SELECT PATINDEX('_', 'b' COLLATE Latin1_General_CI_AI)
-SELECT PATINDEX('%[A-Z]_[^A-Y]%', 'aBz' COLLATE Latin1_General_CI_AI)
-SELECT PATINDEX('%aZď_[^A-Y]%', 'hqyazdjz' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('_', 'ě' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('%[A-Z]_[^A-Y]%', 'âBz' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('%aZď_[^A-Y]%', 'hqyâzdjż' COLLATE Latin1_General_CI_AI)
 GO
 
 -- Basic Accent Insensitivity
@@ -45,10 +45,10 @@ SELECT PATINDEX('%100.00%', @testString COLLATE Latin1_General_CI_AI) AS Positio
 GO
 
 -- multiple occurrence
-DECLARE @testString NVARCHAR(100) = 'Pattern with pattern and another pattern';
+DECLARE @testString NVARCHAR(100) = 'Patterñ with pattern and another pattern';
 SELECT PATINDEX('%pattern%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 1
 GO
-DECLARE @testString NVARCHAR(100) = 'patterPattern with pattern and another pattern';
+DECLARE @testString NVARCHAR(100) = 'patterPattèrn with pâttérn and another pattêrn';
 SELECT PATINDEX('%pattern%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 7
 GO
 
@@ -60,7 +60,7 @@ SELECT PATINDEX('%anything%', @nullString COLLATE Latin1_General_CI_AI) AS Posit
 GO
 
 -- multiple wild cards
-DECLARE @testString NVARCHAR(100) = 'Pattern matching with _ and % wildcards';
+DECLARE @testString NVARCHAR(100) = 'Patteřn matching wiťh _ and % wildćards';
 -- `%` matches any sequence of characters
 SELECT PATINDEX('%with %wildcards%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 18
 -- `_` matches exactly one character
@@ -69,26 +69,26 @@ GO
 
 
 -- Wildcard Combination in Patterns
-DECLARE @testString NVARCHAR(100) = 'Example of pattern matching with special cases';
+DECLARE @testString NVARCHAR(100) = 'Example of pattérn matching wìth speciál cases';
 -- `%` and `_` used together
-SELECT PATINDEX('%pattern%_with%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 11
+SELECT PATINDEX('%pattêrn%_wíth%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 11
 
 -- Single `_` used in the middle
-SELECT PATINDEX('%pattern _matching%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 11
+SELECT PATINDEX('%pattern _mátching%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 11
 GO
 
 -- consecutive wildcards
-DECLARE @testString NVARCHAR(100) = 'Data with multiple %% wildcards';
+DECLARE @testString NVARCHAR(100) = 'Dàtá with multiplé %% wildcařds';
 -- Multiple `%` wildcards
-SELECT PATINDEX('%multiple % wildcards%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 9
+SELECT PATINDEX('%multíple % wildcaṛds%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 9
 GO
 
 -- Leading and Trailing Wildcards
-DECLARE @testString NVARCHAR(100) = 'Example string for testing patterns';
+DECLARE @testString NVARCHAR(100) = 'Example ştriñAEg for tésting patterns';
 -- Wildcards at both ends
-SELECT PATINDEX('%string for%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 9
+SELECT PATINDEX('%strińÆg for%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 9
 -- Wildcard in the middle
-SELECT PATINDEX('%string%for%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 9
+SELECT PATINDEX('%strińÆg%for%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 9
 GO
 
 -- Complex Pattern with Special Characters
@@ -101,13 +101,13 @@ GO
 -- Wildcards with Mixed Case
 DECLARE @testString NVARCHAR(100) = 'Case Insensitive Pattern Matching';
 -- Case-insensitive wildcard match
-SELECT PATINDEX('%pattern matching%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 19
+SELECT PATINDEX('%pattern matćhing%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 19
 GO
 
 -- Long String with Wildcard
-DECLARE @testString NVARCHAR(MAX) = REPLICATE('Long text with many characters to test the pattern matching functionality. ', 10);
+DECLARE @testString NVARCHAR(MAX) = REPLICATE('Long text with many characters to téšt the páttAern matching functionality. ', 10);
 -- Long string with wildcard pattern
-SELECT PATINDEX('%test %the% pattern%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: Position in the long text
+SELECT PATINDEX('%teśt %the% pattÆrn%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: Position in the long text
 GO
 
 -- Overlapping Patterns
@@ -124,13 +124,13 @@ SELECT PATINDEX('%[_]%', @testString COLLATE Latin1_General_CI_AI) AS Position; 
 GO
 
 -- Wildcard with Special Characters
-DECLARE @testString NVARCHAR(100) = 'File name: data_*.txt';
+DECLARE @testString NVARCHAR(100) = 'File name: dața_*.txt';
 -- Wildcard with special characters
-SELECT PATINDEX('%data_%.txt%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 11
+SELECT PATINDEX('%dáta_%.ťxt%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 11
 GO
 
 -- Patterns with Trailing Wildcard and Special Characters
-DECLARE @testString NVARCHAR(100) = 'Number: 12345-6789 and 98765-4321';
+DECLARE @testString NVARCHAR(100) = 'Numbér: 12345-6789 and 98765-4321';
 SELECT PATINDEX('%12345-%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 10
 GO
 
@@ -163,8 +163,8 @@ SELECT PATINDEX('%a1_b2%c3_%', @testString COLLATE Latin1_General_CI_AI) AS Posi
 GO
 
 -- Long pattern with multiple wildcards
-DECLARE @testString NVARCHAR(100) = REPLICATE('X', 50) + 'Y' + REPLICATE('X', 50) + 'Z' + REPLICATE('X', 50);
-SELECT PATINDEX('%X%Y%Z%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 51 (matches "Y" and "Z")
+DECLARE @testString NVARCHAR(100) = REPLICATE('X', 50) + 'ý' + REPLICATE('X', 50) + 'Ź' + REPLICATE('X', 50);
+SELECT PATINDEX('%X%Y%Ż%', @testString COLLATE Latin1_General_CI_AI) AS Position; -- Expected: 51 (matches "Y" and "Z")
 GO
 
 
@@ -175,21 +175,21 @@ GO
 
 
 -- Pattern with letter ranges
-DECLARE @testString NVARCHAR(100) = 'Alphabet sequence: ABC, DEF, GHI';
+DECLARE @testString NVARCHAR(100) = 'Alphabet sequence: âbC, ďEf, GħI';
 SELECT PATINDEX('%[A-C][A-C][A-C]%', @testString COLLATE Latin1_General_CI_AI) 
 GO
 
 -- Pattern with alphanumeric ranges
-DECLARE @testString NVARCHAR(100) = 'Code ranges: A1B2, C3D4, E5F6';
+DECLARE @testString NVARCHAR(100) = 'Code rańges: Á1B2, C3D4, E5F6';
 SELECT PATINDEX('%[A-C][1-4][A-C][1-4]%', @testString COLLATE Latin1_General_CI_AI) 
 GO
 
 -- Pattern with special characters and ranges
-DECLARE @testString NVARCHAR(100) = 'Special chars: !@#, $%^, &*()';
+DECLARE @testString NVARCHAR(100) = 'Special chárs: !@#, $%^, &*()';
 SELECT PATINDEX('%[!@#][$%^&][*()]%', @testString COLLATE Latin1_General_CI_AI)
 GO
 
-SELECT PATINDEX('%abcd%', '   ' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX('%àbćd%', '   ' COLLATE Latin1_General_CI_AI)
 SELECT PATINDEX('%abcd%', 'xyz   ' COLLATE Latin1_General_CI_AI)
 GO
 
@@ -200,7 +200,7 @@ GO
 -- BASIC TESTS
 
 -- [] wildcard single character to match or not match
-SELECT PATINDEX('%[A-Z]%', 'a' COLLATE Latin1_General_CS_AI)
+SELECT PATINDEX('%[A-Z]%', 'á' COLLATE Latin1_General_CS_AI)
 SELECT PATINDEX('%[A-Z]%', 'b' COLLATE Latin1_General_CS_AI)
 SELECT PATINDEX('%[A-Z]%', 'z' COLLATE Latin1_General_CS_AI)
 SELECT PATINDEX('[^A-Z]', 'z' COLLATE Latin1_General_CS_AI)
@@ -210,13 +210,13 @@ GO
 
 -- _ wildcard one single character to match
 SELECT PATINDEX('_', 'b' COLLATE Latin1_General_CS_AI)
-SELECT PATINDEX('%[A-Z]_[^A-Y]%', 'aBz' COLLATE Latin1_General_CS_AI)
-SELECT PATINDEX('%aZď_[^A-Y]%', 'hqyazdjz' COLLATE Latin1_General_CS_AI)
+SELECT PATINDEX('%[A-Ž]_[^À-Y]%', 'aBz' COLLATE Latin1_General_CS_AI)
+SELECT PATINDEX('%áZď_[^Á-Y]%', 'hqyaždjž' COLLATE Latin1_General_CS_AI)
 GO
 
 -- _ wildcard one single character to match
 SELECT PATINDEX('_', 'b' COLLATE Latin1_General_CS_AI)
-SELECT PATINDEX('%[A-Z]_[^A-Y]%', 'aBz' COLLATE Latin1_General_CS_AI)
+SELECT PATINDEX('%[A-Z]_[^A-Y]%', 'áBż' COLLATE Latin1_General_CS_AI)
 SELECT PATINDEX('%aZď_[^A-Y]%', 'hqyazdjz' COLLATE Latin1_General_CS_AI)
 GO
 
@@ -228,13 +228,15 @@ GO
 
 -- Mixed Case and Accent Sensitivity
 DECLARE @testString NVARCHAR(100) = 'Résumé';
-SELECT PATINDEX('%résumé%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 1
-SELECT PATINDEX('%RESUME%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 1
+SELECT PATINDEX('%résumé%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 0
+SELECT PATINDEX('%RESUME%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 0
+SELECT PATINDEX('%Resume%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 1
 GO
 
 -- not found
 DECLARE @testString NVARCHAR(100) = 'Example string';
 SELECT PATINDEX('%notfound%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 0
+SELECT PATINDEX('%Example String%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 0
 GO
 
 -- pattern with special character
@@ -244,11 +246,11 @@ SELECT PATINDEX('%100.00%', @testString COLLATE Latin1_General_CS_AI) AS Positio
 GO
 
 -- multiple occurrence
-DECLARE @testString NVARCHAR(100) = 'Pattern with pattern and another pattern';
-SELECT PATINDEX('%pattern%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 1
+DECLARE @testString NVARCHAR(100) = 'Pattern with páttern and another pattern';
+SELECT PATINDEX('%pattern%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 14
 GO
 DECLARE @testString NVARCHAR(100) = 'patterPattern with pattern and another pattern';
-SELECT PATINDEX('%pattern%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 7
+SELECT PATINDEX('%pattérn%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 20
 GO
 
 -- empty null string
@@ -259,9 +261,9 @@ SELECT PATINDEX('%anything%', @nullString COLLATE Latin1_General_CS_AI) AS Posit
 GO
 
 -- multiple wild cards
-DECLARE @testString NVARCHAR(100) = 'Pattern matching with _ and % wildcards';
+DECLARE @testString NVARCHAR(100) = 'Pattern matching wìth _ and % wildcards';
 -- `%` matches any sequence of characters
-SELECT PATINDEX('%with %wildcards%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 18
+SELECT PATINDEX('%witħ %wildçards%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 18
 -- `_` matches exactly one character
 SELECT PATINDEX('%with _ and %wildcards%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 18
 GO
@@ -304,9 +306,9 @@ SELECT PATINDEX('%pattern matching%', @testString COLLATE Latin1_General_CS_AI) 
 GO
 
 -- Long String with Wildcard
-DECLARE @testString NVARCHAR(MAX) = REPLICATE('Long text with many characters to test the pattern matching functionality. ', 10);
+DECLARE @testString NVARCHAR(MAX) = REPLICATE('Long text with many characters to tést the pattern matching functionality. ', 10);
 -- Long string with wildcard pattern
-SELECT PATINDEX('%test %the% pattern%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: Position in the long text
+SELECT PATINDEX('%teşt %thé% pattern%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: Position in the long text
 GO
 
 -- Overlapping Patterns
@@ -362,7 +364,7 @@ SELECT PATINDEX('%a1_b2%c3_%', @testString COLLATE Latin1_General_CS_AI) AS Posi
 GO
 
 -- Long pattern with multiple wildcards
-DECLARE @testString NVARCHAR(100) = REPLICATE('X', 50) + 'Y' + REPLICATE('X', 50) + 'Z' + REPLICATE('X', 50);
+DECLARE @testString NVARCHAR(100) = REPLICATE('X', 50) + 'Ý' + REPLICATE('X', 50) + 'Z' + REPLICATE('X', 50);
 SELECT PATINDEX('%X%Y%Z%', @testString COLLATE Latin1_General_CS_AI) AS Position; -- Expected: 51 (matches "Y" and "Z")
 GO
 
@@ -374,7 +376,7 @@ GO
 
 
 -- Pattern with letter ranges
-DECLARE @testString NVARCHAR(100) = 'Alphabet sequence: ABC, DEF, GHI';
+DECLARE @testString NVARCHAR(100) = 'Alphabet sequence: ABĆ, DEF, GHI';
 SELECT PATINDEX('%[A-C][A-C][A-C]%', @testString COLLATE Latin1_General_CS_AI) 
 GO
 
@@ -388,7 +390,7 @@ DECLARE @testString NVARCHAR(100) = 'Special chars: !@#, $%^, &*()';
 SELECT PATINDEX('%[!@#][$%^&][*()]%', @testString COLLATE Latin1_General_CS_AI)
 GO
 
-SELECT PATINDEX('%abcd%', '   ' COLLATE Latin1_General_CS_AI)
+SELECT PATINDEX('%abćd%', '   ' COLLATE Latin1_General_CS_AI)
 SELECT PATINDEX('%abcd%', 'xyz   ' COLLATE Latin1_General_CS_AI)
 GO
 
