@@ -408,3 +408,48 @@ GO
 SELECT PATINDEX('[a-', '[a-' COLLATE Latin1_General_CI_AI)
 SELECT PATINDEX('[a-]', '-' COLLATE Latin1_General_CI_AI)
 GO
+
+CREATE TABLE #TestStrings (
+    Id INT PRIMARY KEY,
+    TestText NVARCHAR(100)
+);
+GO
+
+INSERT INTO #TestStrings (Id, TestText) VALUES
+(1, N'Çalışkan'),
+(2, N'kalem'),
+(3, N'KÜTÜPHANE'),
+(4, N'Örnek'),
+(5, N'çalışkan'),
+(6, N'kalem'),
+(7, N'öRnek');
+GO
+
+SELECT Id, TestText,
+       PATINDEX(N'%çalış%', TestText COLLATE Turkish_CI_AI) AS Position
+FROM #TestStrings;
+GO
+
+DROP TABLE #TestStrings
+GO
+
+CREATE TABLE #TestStrings (
+    Id INT PRIMARY KEY,
+    TestText NVARCHAR(100) COLLATE Turkish_CI_AI
+);
+GO
+
+INSERT INTO #TestStrings (Id, TestText) VALUES
+(1, N'Çalışkan'),
+(2, N'kalem'),
+(3, N'KÜTÜPHANE'),
+(4, N'Örnek'),
+(5, N'çalışkan'),
+(6, N'kalem'),
+(7, N'öRnek');
+GO
+
+SELECT Id, TestText,
+       PATINDEX(N'%çalış%', TestText) AS Position
+FROM #TestStrings;
+GO
