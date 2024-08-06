@@ -185,3 +185,36 @@ GO
 -- Expect this to error with no param provided
 exec alter_proc_p3
 go
+
+
+-- Test Case: confirm information_schema.routines is updated properly with comments
+alter 
+
+/*
+ * test comment 1
+ */
+
+-- test comment 2
+
+procedure alter_proc_p4 as select 3
+go
+
+exec alter_proc_p4
+go
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
+go
+
+-- Test Case: confirm information_schema.routines is updated properly with comments
+alter 
+
+-- test comment 1
+
+procedure alter_proc_p4 as select 4
+go
+
+exec alter_proc_p4
+go
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
+go

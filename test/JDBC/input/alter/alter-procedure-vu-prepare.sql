@@ -18,6 +18,9 @@ go
 create procedure alter_proc_p3 as select 1
 go
 
+create procedure alter_proc_p4 as select 1
+go
+
 create function alter_proc_f1() 
 returns int
 AS BEGIN

@@ -310,3 +310,56 @@ go
 
 ~~ERROR (Message: procedure alter_proc_p3 expects parameter "@z", which was not supplied.)~~
 
+
+
+
+
+
+-- Test Case: confirm information_schema.routines is updated properly with comments
+alter 
+/*
+ * test comment 1
+ */
+-- test comment 2
+procedure alter_proc_p4 as select 3
+go
+
+exec alter_proc_p4
+go
+~~START~~
+int
+3
+~~END~~
+
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p4#!#SQL#!#CREATE <newline>/*<newline> * test comment 1<newline> */<newline>-- test comment 2<newline>procedure alter_proc_p4 as select 3
+~~END~~
+
+
+
+
+-- Test Case: confirm information_schema.routines is updated properly with comments
+alter 
+-- test comment 1
+procedure alter_proc_p4 as select 4
+go
+
+exec alter_proc_p4
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p4#!#SQL#!#CREATE <newline>-- test comment 1<newline>procedure alter_proc_p4 as select 4
+~~END~~
+
