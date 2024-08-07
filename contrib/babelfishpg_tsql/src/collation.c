@@ -1711,11 +1711,9 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
 						errmsg("failed to perform ICU search: %s",
 							   u_errorName(status))));
 
-		usearch_setAttribute(usearch, USEARCH_OVERLAP, USEARCH_ON, &status);
-
 		/* substr should start matching from the first position in src string */
-		u16_pos = usearch_preceding(usearch, 1, &status);
-		if (!U_FAILURE(status) && u16_pos != USEARCH_DONE && (!is_cs_ai ||
+		u16_pos = usearch_first(usearch, &status);
+		if (!U_FAILURE(status) && u16_pos != USEARCH_DONE && u16_pos == 0 && (!is_cs_ai ||
 		    icu_compare_utf8_coll(mylocale->info.icu.ucol, src_uchar, usearch_getMatchedLength(usearch), substr_uchar, substr_len_utf8, false) == 0))
 		{
 			/* u16 position will only be zero */

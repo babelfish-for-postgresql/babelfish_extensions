@@ -510,4 +510,6 @@ GO
 -- Surrogate pair charcters
 SELECT PATINDEX(N'%😀%', N'😀' COLLATE Latin1_General_CI_AI)
 SELECT PATINDEX(N'%Z%', N'ABC😀ZABC' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX(N'😀%', N'😀A' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX(N'%D😀%', N'ABCD😀ABCD' COLLATE Latin1_General_CI_AI)
 GO
