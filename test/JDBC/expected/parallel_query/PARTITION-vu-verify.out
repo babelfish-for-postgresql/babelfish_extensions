@@ -402,23 +402,6 @@ GO
 ~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
 
 
-CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
-AS RANGE RIGHT FOR VALUES (1, 'abc', CONVERT(DATETIME, '2023-05-01'), 'abc');
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
-
-
--- duplicate value with different basetype 
-CREATE PARTITION FUNCTION SqlVariantPartitionFunctionContainsDuplicateValue (sql_variant)
-AS RANGE RIGHT FOR VALUES (1, cast('abc' as varchar(10)), CONVERT(DATETIME, '2023-05-01'), cast('abc' as nvarchar(10)));
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Duplicate values are not allowed in partition function boundary values list.)~~
-
-
 --------------------------------------------------
 --- Unsupported Options with Partition Function 
 --------------------------------------------------
@@ -429,6 +412,22 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'PARTIION FUNCTION with LEFT option' is not currently supported in Babelfish)~~
+
+
+-- sql_variant is not yet supported in Babelfish
+CREATE PARTITION FUNCTION SqlVariantPartitionFunction (sql_variant)
+AS RANGE RIGHT
+FOR VALUES (
+    CAST('abc' AS char(5)),
+    CAST(N'xyz' AS nchar(5)),
+    CAST('Apple' AS VARCHAR(10)),
+    CAST(N'Banana' AS NVARCHAR(10)),
+    CAST('Some text' AS SQL_VARIANT)
+);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The type 'sql_variant' is not yet supported for partition function in Babelfish.)~~
 
 
 -- by default it is LEFT and it should throw error
@@ -638,7 +637,6 @@ PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#R 
 SmallDateTimePartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 SmallMoneyPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
-SqlVariantPartitionFunction#!#R #!#RANGE#!#6#!#1#!#0
 TinyIntPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 UniqueIdentifierPartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
 VarBinaryPartitionFunction#!#R #!#RANGE#!#5#!#1#!#0
@@ -732,11 +730,6 @@ SmallIntPartitionFunction#!#1#!#3#!#32767
 SmallMoneyPartitionFunction#!#1#!#1#!#2.5679
 SmallMoneyPartitionFunction#!#1#!#2#!#3.5679
 SmallMoneyPartitionFunction#!#1#!#3#!#4.9100
-SqlVariantPartitionFunction#!#1#!#1#!#abc  
-SqlVariantPartitionFunction#!#1#!#2#!#Apple
-SqlVariantPartitionFunction#!#1#!#3#!#Banana
-SqlVariantPartitionFunction#!#1#!#4#!#Some text
-SqlVariantPartitionFunction#!#1#!#5#!#xyz  
 TinyIntPartitionFunction#!#1#!#1#!#0
 TinyIntPartitionFunction#!#1#!#2#!#128
 TinyIntPartitionFunction#!#1#!#3#!#255
@@ -793,7 +786,6 @@ PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#bi
 SmallDateTimePartitionFunction#!#smalldatetime#!#1#!#4#!#16#!#0#!#<NULL>
 SmallIntPartitionFunction#!#smallint#!#1#!#2#!#5#!#0#!#<NULL>
 SmallMoneyPartitionFunction#!#smallmoney#!#1#!#4#!#10#!#4#!#<NULL>
-SqlVariantPartitionFunction#!#sql_variant#!#1#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as
 TinyIntPartitionFunction#!#tinyint#!#1#!#1#!#3#!#0#!#<NULL>
 UniqueIdentifierPartitionFunction#!#uniqueidentifier#!#1#!#16#!#0#!#0#!#<NULL>
 VarBinaryPartitionFunction#!#varbinary#!#1#!#8000#!#0#!#0#!#<NULL>
@@ -827,7 +819,6 @@ PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder#!#Part
 SmallDateTimePartitionScheme#!#SmallDateTimePartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallIntPartitionScheme#!#SmallIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 SmallMoneyPartitionScheme#!#SmallMoneyPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
-SqlVariantPartitionScheme#!#SqlVariantPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 TinyIntPartitionScheme#!#TinyIntPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 UniqueIdentifierPartitionScheme#!#UniqueIdentifierPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
 VarBinaryPartitionScheme#!#VarBinaryPartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
@@ -900,8 +891,6 @@ partition_vu_prepare_smallint_table#!#<NULL>#!#SmallIntPartitionScheme
 partition_vu_prepare_smallint_table#!#partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#SmallIntPartitionScheme
 partition_vu_prepare_smallmoney_table#!#<NULL>#!#SmallMoneyPartitionScheme
 partition_vu_prepare_smallmoney_table#!#partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#SmallMoneyPartitionScheme
-partition_vu_prepare_sqlvariant_table#!#<NULL>#!#SqlVariantPartitionScheme
-partition_vu_prepare_sqlvariant_table#!#partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#SqlVariantPartitionScheme
 partition_vu_prepare_tinyint_table#!#<NULL>#!#TinyIntPartitionScheme
 partition_vu_prepare_tinyint_table#!#partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#TinyIntPartitionScheme
 partition_vu_prepare_uniqueidentifier_table#!#<NULL>#!#UniqueIdentifierPartitionScheme
@@ -948,7 +937,6 @@ partition_vu_prepare_nvarchar_table#!#id#!#1
 partition_vu_prepare_smalldatetime_table#!#id#!#1
 partition_vu_prepare_smallint_table#!#id#!#1
 partition_vu_prepare_smallmoney_table#!#id#!#1
-partition_vu_prepare_sqlvariant_table#!#id#!#1
 partition_vu_prepare_tinyint_table#!#id#!#1
 partition_vu_prepare_uniqueidentifier_table#!#id#!#1
 partition_vu_prepare_varbinary_table#!#id#!#1
@@ -994,8 +982,6 @@ partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_p
 partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_prepare_smallint_table#!#id#!#1
 partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
 partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
-partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#partition_vu_prepare_sqlvariant_table#!#id#!#1
-partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47#!#partition_vu_prepare_sqlvariant_table#!#id#!#1
 partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
 partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
 partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf#!#partition_vu_prepare_uniqueidentifier_table#!#id#!#1
@@ -1462,7 +1448,6 @@ partition_vu_prepare_nvarchar_table
 partition_vu_prepare_smalldatetime_table
 partition_vu_prepare_smallint_table
 partition_vu_prepare_smallmoney_table
-partition_vu_prepare_sqlvariant_table
 partition_vu_prepare_tinyint_table
 partition_vu_prepare_uniqueidentifier_table
 partition_vu_prepare_varbinary_table
@@ -1494,7 +1479,6 @@ partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec
 partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8
 partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579
 partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8
-partition_vu_prepare_sqlvariant2cb9b179fd5df94b1777b1976b05ad47
 partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb
 partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf
 partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386
@@ -1726,7 +1710,6 @@ ANALYZE master_dbo.partition_vu_prepare_nchar_table;
 ANALYZE master_dbo.partition_vu_prepare_binary_table;
 ANALYZE master_dbo.partition_vu_prepare_varbinary_table;
 ANALYZE master_dbo.partition_vu_prepare_uniqueidentifier_table;
-ANALYZE master_dbo.partition_vu_prepare_sqlvariant_table;
 GO
 
 -- tsql
@@ -1762,7 +1745,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.744 ms
+Babelfish T-SQL Batch Parsing Time: 0.768 ms
 ~~END~~
 
 
@@ -1784,7 +1767,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.126 ms
 ~~END~~
 
 
@@ -1826,7 +1809,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
 ~~END~~
 
 
@@ -1848,7 +1831,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -1870,7 +1853,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -1891,7 +1874,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -1912,7 +1895,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -1933,7 +1916,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -1954,7 +1937,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -1975,7 +1958,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -1996,7 +1979,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -2020,7 +2003,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -2043,7 +2026,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -2066,7 +2049,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -2090,7 +2073,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -2100,8 +2083,9 @@ GO
 text
 Query Text: SELECT * FROM partition_vu_prepare_binary_table
 Gather
-  Workers Planned: 3
-  ->  Parallel Append
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_2" partition_vu_prepare_binary_table_2
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_3" partition_vu_prepare_binary_table_3
@@ -2111,7 +2095,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -2133,7 +2117,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -2154,32 +2138,8 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
-
-
-SELECT * FROM partition_vu_prepare_sqlvariant_table;
-GO
-~~START~~
-text
-Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Append
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table_1
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_2" partition_vu_prepare_sqlvariant_table_2
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_3" partition_vu_prepare_sqlvariant_table_3
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_4" partition_vu_prepare_sqlvariant_table_4
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_5" partition_vu_prepare_sqlvariant_table_5
-        ->  Seq Scan on "69727aecbd7d094d31958d173a958827_partition_0" partition_vu_prepare_sqlvariant_table_6
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
-~~END~~
-
 
 
 -----------------------------------------------------------------------------------------
@@ -2220,7 +2180,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 34.406 ms
+Babelfish T-SQL Batch Parsing Time: 11.344 ms
 ~~END~~
 
 
@@ -2238,7 +2198,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.198 ms
+Babelfish T-SQL Batch Parsing Time: 0.184 ms
 ~~END~~
 
 
@@ -2256,7 +2216,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.314 ms
+Babelfish T-SQL Batch Parsing Time: 7.534 ms
 ~~END~~
 
 
@@ -2274,7 +2234,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.157 ms
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -2292,7 +2252,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.493 ms
+Babelfish T-SQL Batch Parsing Time: 6.750 ms
 ~~END~~
 
 
@@ -2310,7 +2270,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.158 ms
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -2331,7 +2291,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.218 ms
+Babelfish T-SQL Batch Parsing Time: 0.230 ms
 ~~END~~
 
 
@@ -2352,7 +2312,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.156 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 
@@ -2370,7 +2330,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.605 ms
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
 ~~END~~
 
 
@@ -2388,7 +2348,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.174 ms
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
 ~~END~~
 
 
@@ -2406,7 +2366,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.163 ms
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
 ~~END~~
 
 
@@ -2424,7 +2384,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.161 ms
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
 ~~END~~
 
 
@@ -2442,7 +2402,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -2460,7 +2420,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.160 ms
+Babelfish T-SQL Batch Parsing Time: 0.166 ms
 ~~END~~
 
 
@@ -2478,7 +2438,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.162 ms
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
 ~~END~~
 
 
@@ -2510,7 +2470,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.165 ms
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
 ~~END~~
 
 
@@ -2520,8 +2480,9 @@ GO
 text
 Query Text: SELECT * FROM partition_vu_prepare_binary_table WHERE Id >= 0x0000 AND Id < 0x0400
 Gather
-  Workers Planned: 3
-  ->  Parallel Append
+  Workers Planned: 1
+  Single Copy: true
+  ->  Append
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_1" partition_vu_prepare_binary_table_1
               Filter: (((id)::bbf_varbinary >= '0x0000'::bbf_varbinary) AND ((id)::bbf_varbinary < '0x0400'::bbf_varbinary))
         ->  Seq Scan on "3a3cd2fe373a5dc4b9281d49f7960143_partition_2" partition_vu_prepare_binary_table_2
@@ -2536,7 +2497,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.791 ms
+Babelfish T-SQL Batch Parsing Time: 6.912 ms
 ~~END~~
 
 
@@ -2554,7 +2515,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.163 ms
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -2572,25 +2533,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.187 ms
-~~END~~
-
-
-SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10));
-GO
-~~START~~
-text
-Query Text: SELECT * FROM partition_vu_prepare_sqlvariant_table WHERE Id >= CAST('abc' AS char(5)) AND Id < CAST('Apple' AS VARCHAR(10))
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Index Scan using "69727aecbd7d094d31958d173a958827_partition_1_id_idx" on "69727aecbd7d094d31958d173a958827_partition_1" partition_vu_prepare_sqlvariant_table
-        Index Cond: ((id >= 'abc  '::sql_variant) AND (id < 'Apple'::sql_variant))
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 7.057 ms
+Babelfish T-SQL Batch Parsing Time: 0.198 ms
 ~~END~~
 
 
@@ -2813,6 +2756,44 @@ GO
 ~~ERROR (Message: Cannot drop the babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.)~~
 
 
+-- psql
+--------------------------------------------------------------------
+-- user should not be allowed to rename partition of
+-- babelfish partitioned table neither from psql nor tsql endpoint
+--------------------------------------------------------------------
+-- Attempt to rename partition of babelfish partitioned table from psql endpoint
+-- explicit schema name specified
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+RENAME TO xyz
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot rename babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_0'.
+    Server SQLState: 0A000)~~
+
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_1"
+RENAME TO xyz1
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Cannot rename babelfish partition table '363863941f079adaa9aa733200e57c9f_partition_1'.
+    Server SQLState: 0A000)~~
+
+
+-- tsql
+-- Attempt to rename partition of babelfish partitioned table from tsql endpoint
+-- NOTE: object not found error because sp_rename lookup in sys.objects which 
+-- will not list child objects
+EXEC sp_rename '363863941f079adaa9aa733200e57c9f_partition_2', 'xyz2', 'OBJECT'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is no object with the given @objname.)~~
+
+
 --------------------------------------------------------------------
 --- Unsupported Option with CREATE TABLE with PARTITION SCHEME
 --------------------------------------------------------------------
@@ -2853,7 +2834,7 @@ ON IntPartitionScheme(id);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Creation of tempopary partitioned tables is not supported in Babelfish.)~~
+~~ERROR (Message: Creation of temporary partitioned tables is not supported in Babelfish.)~~
 
 
 
@@ -3327,3 +3308,548 @@ master_dbo."363863941f079adaa9aa733200e57c9f_partition_2"
 master_dbo."363863941f079adaa9aa733200e57c9f_partition_3"
 ~~END~~
 
+
+-- tsql
+----------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION name identifiers tests
+----------------------------------------------------------
+SET QUOTED_IDENTIFIER ON;
+GO
+
+SELECT $PARTITION."IntPartitionFunction" (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT $PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT "master".$PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+
+SELECT $PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT [master].$PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT $PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT [master].$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT $PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT master.$PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+------------------------------------------
+--- DOLLAR PARTITION FUNCTION Negative test
+------------------------------------------
+-- explicit NULL value test
+SELECT $PARTITION.IntPartitionFunction(NULL)
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT master.$PARTITION.IntPartitionFunction(NULL)
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- variable as NULL value
+declare @var int = NULL
+SELECT $PARTITION.IntPartitionFunction(@var)
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- non-existent database
+SELECT NonExistentDatabase.$PARTITION.IntPartitionFunction(10)
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid database name 'NonExistentDatabase'.)~~
+
+
+-- error during implicit Conversion of values to partition function parameter type
+SELECT $PARTITION.IntPartitionFunction('xyz')
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyz")~~
+
+
+-- using query 
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "Apple")~~
+
+---------------------------------------------------------------------
+--- Test for all the Supported Datatypes for Dollar Partition Function
+---------------------------------------------------------------------
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_int_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+SELECT $PARTITION.BigIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_bigint_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#bigint
+1#!#<NULL>
+2#!#1
+3#!#100
+5#!#10000
+5#!#1000000000
+~~END~~
+
+
+SELECT $PARTITION.SmallIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallint_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#smallint
+1#!#<NULL>
+2#!#-32768
+3#!#1
+4#!#32767
+~~END~~
+
+
+SELECT $PARTITION.TinyIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_tinyint_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#tinyint
+1#!#<NULL>
+2#!#1
+3#!#128
+4#!#255
+~~END~~
+
+
+SELECT $PARTITION.DecimalPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_decimal_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#numeric
+1#!#<NULL>
+2#!#1.00000
+3#!#100.00000
+4#!#200.00000
+5#!#300.00000
+~~END~~
+
+
+SELECT $PARTITION.NumericPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_numeric_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#numeric
+1#!#<NULL>
+2#!#1.00
+3#!#10.00
+4#!#20.00
+5#!#30.00
+~~END~~
+
+
+SELECT $PARTITION.MoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_money_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#money
+1#!#<NULL>
+1#!#1.0000
+2#!#2.5679
+4#!#4.9100
+~~END~~
+
+
+SELECT $PARTITION.SmallMoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallmoney_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#smallmoney
+1#!#<NULL>
+1#!#1.0000
+2#!#2.5679
+4#!#4.9100
+~~END~~
+
+
+SELECT $PARTITION.DatePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_date_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#date
+1#!#<NULL>
+2#!#2022-01-01
+3#!#2022-07-01
+4#!#2023-01-01
+~~END~~
+
+
+SELECT $PARTITION.DateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#datetime
+1#!#<NULL>
+2#!#2019-01-01 00:00:00.0
+3#!#2022-01-01 00:00:00.0
+4#!#2022-07-01 00:00:00.0
+~~END~~
+
+
+SELECT $PARTITION.DateTime2PartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime2_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#datetime2
+1#!#<NULL>
+2#!#2019-01-01 00:00:00.000
+3#!#2022-01-01 00:00:00.000
+4#!#2022-07-01 00:00:00.000
+~~END~~
+
+
+SELECT $PARTITION.SmallDateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smalldatetime_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#smalldatetime
+1#!#<NULL>
+2#!#2019-01-01 00:00:00.0
+3#!#2022-01-01 00:00:00.0
+4#!#2022-07-01 00:00:00.0
+~~END~~
+
+
+SELECT $PARTITION.CharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_char_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#char
+1#!#<NULL>
+2#!#A    
+3#!#D    
+5#!#K    
+7#!#U    
+~~END~~
+
+
+SELECT $PARTITION.VarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#varchar
+1#!#<NULL>
+2#!#Apple
+3#!#Banana
+4#!#Cherry
+5#!#Date
+6#!#Mango
+~~END~~
+
+
+SELECT $PARTITION.NVarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nvarchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#nvarchar
+1#!#<NULL>
+2#!#Apple
+3#!#Banana
+4#!#Cherry
+5#!#Date
+6#!#Mango
+~~END~~
+
+
+SELECT $PARTITION.NCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nchar_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#nchar
+1#!#<NULL>
+2#!#A    
+3#!#B    
+5#!#K    
+7#!#U    
+~~END~~
+
+
+SELECT $PARTITION.BinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_binary_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#binary
+1#!#<NULL>
+2#!#00000000
+2#!#00C00000
+3#!#04000000
+4#!#08000000
+~~END~~
+
+
+SELECT $PARTITION.VarBinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varbinary_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#varbinary
+1#!#<NULL>
+2#!#0000000000000000
+3#!#4000000000000000
+4#!#8000000000000000
+5#!#C000000000000000
+~~END~~
+
+
+SELECT $PARTITION.UniqueIdentifierPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_uniqueidentifier_table
+ORDER BY PartitionNumber, Id;
+GO
+~~START~~
+int#!#uniqueidentifier
+1#!#<NULL>
+2#!#00000000-0000-0000-0000-000000000000
+3#!#6F9619FF-8B86-D011-B42D-00C04FC964FF
+4#!#FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF
+~~END~~
+
+
+----------------------------------------------
+--- DOLLAR PARTITION FUNCTION Dependency test
+----------------------------------------------
+-- non-null test
+SELECT * FROM DollarPartitionFunctionView
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+EXEC DollarPartitionFunctionProc
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+SELECT * FROM DollarPartitionFunctionFunc()
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+2#!#1
+2#!#100
+4#!#10000
+~~END~~
+
+
+-- null test
+SELECT * FROM DollarPartitionFunctionNullView
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC DollarPartitionFunctionNullProc
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM DollarPartitionFunctionNullFunc()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM SysSearchPartitionDepView
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT * FROM SysSearchPartitionNULLDepView
+GO
+~~START~~
+int
+2
+~~END~~
+
+------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION Cross Database test
+------------------------------------------------------
+-- in current database with explicity lookup
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- use different database
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- test using guest login
+CREATE LOGIN partition_l2 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER partition_u2 FOR LOGIN partition_l2;
+GO
+
+-- tsql  user=partition_l2 password=12345678 database=partitiondb
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+partition_u2
+~~END~~
+
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- tsql
+USE PartitionDb;
+GO
+
+DROP USER partition_u2
+GO

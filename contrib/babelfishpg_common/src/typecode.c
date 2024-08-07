@@ -285,6 +285,7 @@ Oid			tsql_datetime2_oid = InvalidOid;
 Oid			tsql_smalldatetime_oid = InvalidOid;
 Oid			tsql_datetimeoffset_oid = InvalidOid;
 Oid			tsql_decimal_oid = InvalidOid;
+Oid			tsql_sqlvariant_oid = InvalidOid;
 Oid			tsql_geography_oid = InvalidOid;
 Oid			tsql_geometry_oid = InvalidOid;
 
@@ -300,6 +301,22 @@ lookup_tsql_datatype_oid(const char *typename)
 
 	typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
 	return typoid;
+}
+
+/* type_infos will return const char * so caller should not attempt to modify it */
+const char *
+resolve_pg_type_to_tsql(Oid oid)
+{
+	ht_oid2typecode_entry_t *entry;
+
+	if (OidIsValid(oid))
+	{
+		entry = hash_search(ht_oid2typecode, &oid, HASH_FIND, NULL);
+
+		if (entry && entry->persist_id < TOTAL_TYPECODE_COUNT)
+			return type_infos[entry->persist_id].tsql_typname;
+	}
+	return NULL;
 }
 
 bool
@@ -456,6 +473,14 @@ is_tsql_decimal_datatype(Oid oid)
 	if (tsql_decimal_oid == InvalidOid)
 		tsql_decimal_oid = lookup_tsql_datatype_oid("decimal");
 	return tsql_decimal_oid == oid;
+}
+
+bool
+is_tsql_sqlvariant_datatype(Oid oid)
+{
+	if (tsql_sqlvariant_oid == InvalidOid)
+		tsql_sqlvariant_oid = lookup_tsql_datatype_oid("sql_variant");
+	return tsql_sqlvariant_oid == oid;
 }
 
 /*

@@ -4074,7 +4074,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
  *		values are found.
  *		Returns -1 if a < b, 1 if a > b and 0 if a == b.
  */
-static int
+int
 tsql_compare_values(const void *a, const void *b, void *arg)
 {
 	Datum		*da = (Datum *) a;
@@ -4240,6 +4240,10 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("The type '%s(max)' is not valid for this operation.", tsql_typename)));
 	}
+	else if ((*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype) (typ->typoid))
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("The type '%s' is not yet supported for partition function in Babelfish.", tsql_typename)));
 
 	/* check if the given number of boundaries are exceeding allowed limit */
 	nargs = list_length(arg);

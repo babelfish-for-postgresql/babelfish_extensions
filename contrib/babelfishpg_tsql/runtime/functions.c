@@ -6,6 +6,7 @@
 
 #include "postgres.h"
 #include "access/hash.h"
+#include "access/nbtree.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -59,6 +60,7 @@
 #include "../src/catalog.h"
 #include "../src/timezone.h"
 #include "../src/collation.h"
+#include "../src/hooks.h"
 #include "../src/rolecmds.h"
 #include "utils/fmgroids.h"
 #include "utils/acl.h"
@@ -67,6 +69,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
+#include "parser/parse_oper.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -139,6 +142,7 @@ PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
+PG_FUNCTION_INFO_V1(search_partition);
 PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(object_name);
 PG_FUNCTION_INFO_V1(type_id);
@@ -1917,6 +1921,193 @@ checksum(PG_FUNCTION_ARGS)
 }
 
 /*
+ * tsql_bsearch_arg
+ *	This function performs a binary search on a sorted array to find the
+ *	position of a given key value. It compares the key with array elements
+ *	using the provided comparator function and argument.
+ *	
+ *	Note: This is a modified version of the standard bsearch_arg() function
+ *	to return the index of key instead of a boolean indicating the presence of
+ *	the key value.
+ */
+static int
+tsql_bsearch_arg(const void *key, const void *base0,
+			size_t nmemb, size_t size,
+			int (*compar) (const void *, const void *, void *),
+			void *arg)
+{
+	const char *base = (const char *) base0;
+	int			lim,
+				cmp;
+	const void *p;
+
+	for (lim = nmemb; lim != 0; lim >>= 1)
+	{
+		p = base + (lim >> 1) * size;
+		cmp = (*compar) (key, p, arg);
+		if (cmp == 0)
+			return (((const char *)p - (const char *)base0) / size) + 2;
+		if (cmp > 0)
+		{						/* key > p: move right */
+			base = (const char *) p + size;
+			lim--;
+		}						/* else move left */
+	}
+	return ((base - (const char *)base0) / size) + 1;
+}
+
+
+/*
+ * search_partition
+ *	This function performs a search to find the partition number
+ *	for a given value in a specified partition function by retrieving
+ *	the partition function metadata, and performing a binary search 
+ *	on the sorted array of partition range values.
+ *
+ *	Returns:
+ *		- The index of the partition to which the input value belongs.
+ *		- 1, if the provided value is NULL and partition function exists in provided database.
+ */
+Datum
+search_partition(PG_FUNCTION_ARGS)
+{
+	char			*partition_func_name = text_to_cstring(PG_GETARG_TEXT_P(0));
+	int32			result;
+	Relation		rel;
+	HeapTuple		tuple;
+	SysScanDesc		scan;
+	ScanKeyData		scanKey[2];
+	int16			dbid;
+	ArrayType		*values;
+	bool			isnull;
+	Datum			arg;
+	Oid			argtypeid;
+	char			*func_param_typname = NULL;
+	Oid			func_param_typoid;
+	Oid			sqlvariant_typoid;
+	Datum			*range_values;
+	bool			*nulls;
+	int			nelems;
+	Oid			cmpfunction_oid;
+	tsql_compare_context	cxt;
+	Oid			*arg_types;
+
+	if (!PG_ARGISNULL(2)) /* Database is specified. */
+	{
+		char *db_name = text_to_cstring(PG_GETARG_TEXT_P(2));
+		dbid = get_db_id(db_name);
+		if (!DbidIsValid(dbid))
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("Invalid database name '%s'.", db_name)));
+		pfree(db_name);
+	}
+	else /* Database is not specified. */
+		dbid = get_cur_db_id();
+	
+	/* Get OID of sql_variant type. */
+	sqlvariant_typoid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("sql_variant");
+	
+	/*
+	 * Get metadata of partition function for the provided partition
+	 * function name, if it exists in the provided database.
+	 */
+	rel = table_open(get_bbf_partition_function_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_function_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_function_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_func_name));
+	
+	/* Scan using index. */
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
+			false, NULL, 2, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		func_param_typname = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_type, RelationGetDescr(rel), &isnull));
+		values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
+		deconstruct_array(values, sqlvariant_typoid,
+					-1, false, 'i', &range_values, &nulls, &nelems);
+	}
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	/* Raise error if provided partition function doesn't exist in the provided database. */
+	if (!func_param_typname)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("Invalid object name '%s'.", partition_func_name)));
+	
+	/*
+	 * If the partition function exists in the provided database and
+	 * provided value is NULL then return 1 because NULL values will always
+	 * belong to first partition.
+	 */
+	if (PG_ARGISNULL(1))
+	{
+		pfree(partition_func_name);
+		pfree(func_param_typname);
+		pfree(nulls);
+		pfree(range_values);
+		PG_RETURN_INT32(1);
+	}
+
+	argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	arg = PG_GETARG_DATUM(1);
+
+	/* Get OID of partition function parameter type. */
+	func_param_typoid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (func_param_typname);
+
+	/* 
+	 * Implicitly convert input value to parameter type of
+	 * partition function and it will raise error if conversion fails.
+	 */
+	arg = pltsql_exec_tsql_cast_value(arg, &isnull, argtypeid, -1, func_param_typoid, -1);
+
+	/* Cast it to sql_variant */
+	arg = pltsql_exec_tsql_cast_value(arg, &isnull,
+						func_param_typoid, -1,
+						sqlvariant_typoid, -1);
+
+	/*
+	 * Find oid of comparator function for sqlvariant type, which will be
+	 * used for comparison during binary search. Here, we are searching the
+	 * for "sqlvarint_cmp" function in "sys" schema with sqlvariant arg types
+	 * to ensure that we get a unique result.
+	 */
+	arg_types = (Oid *) palloc(2 * sizeof(Oid));
+	arg_types[0] = sqlvariant_typoid;
+	arg_types[1] = sqlvariant_typoid;
+	cmpfunction_oid = GetSysCacheOid3(PROCNAMEARGSNSP, Anum_pg_proc_oid,
+								CStringGetDatum("sqlvariant_cmp"),
+								PointerGetDatum(buildoidvector(arg_types, 2)),
+								ObjectIdGetDatum(get_namespace_oid("sys", false)));
+
+	cxt.function_oid = cmpfunction_oid;
+	cxt.colloid = tsql_get_server_collation_oid_internal(false);
+	
+	/* Perform binary search on sorted range values. */
+	result = tsql_bsearch_arg(&arg, range_values, nelems, sizeof(Datum), tsql_compare_values, &cxt);
+
+	/* Free the allocated memory. */
+	pfree(arg_types);
+	pfree(partition_func_name);
+	pfree(func_param_typname);
+	pfree(nulls);
+	pfree(range_values);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
  * object_id
  * 	Returns the object ID with object name and object type as input where object type is optional
  * Returns NULL
@@ -2130,6 +2321,17 @@ object_id(PG_FUNCTION_ARGS)
 					 !strcmp(object_type, "pc") || !strcmp(object_type, "tf") || !strcmp(object_type, "rf") ||
 					 !strcmp(object_type, "x"))
 			{
+				/*
+				 * If the object type is not specified as 'tr' and it's actually a trigger,
+				 * then object_id() should return NULL.
+				 */
+				if (OidIsValid(tsql_get_trigger_oid(object_name, schema_oid, user_id)))
+				{
+					pfree(object_name);
+					pfree(object_type);
+					PG_RETURN_NULL();
+				}
+				
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
 			}

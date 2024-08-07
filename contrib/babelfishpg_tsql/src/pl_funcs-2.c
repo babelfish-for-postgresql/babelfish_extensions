@@ -12,6 +12,7 @@
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 #include "utils/syscache.h"
+#include "catalog/pg_proc.h"
 
 static int
 cmpfunc(const void *a, const void *b)
@@ -348,6 +349,60 @@ coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
 		return -1;
 
 	return exprTypmod((Node *) linitial(cexpr->args));
+}
+
+void
+check_restricted_stored_procedure(Oid proc_id)
+{
+	HeapTuple		proctup;
+	Form_pg_proc		procform;
+	const char		*procname;
+	Oid		schema_oid = InvalidOid;
+	Oid		dbo_oid = InvalidOid;
+	bool		is_restricted = false;
+
+	/*
+	 * List of procedure names that are not allowed to be dropped. These procedures 
+	 * are considered essential or restricted due to security or operational reasons.
+	 */
+	static const char	*restricted_procedures[] = {
+		"xp_qv",
+		"xp_instance_regread",
+		"sp_addlinkedsrvlogin",
+		"sp_droplinkedsrvlogin",
+		"sp_dropserver",
+		"sp_enum_oledb_providers",
+		"sp_testlinkedserver"
+	};
+	static const int	RESTRICTED_PROCEDURES_COUNT = sizeof(restricted_procedures) / sizeof(restricted_procedures[0]);
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_id));
+
+	procform = (Form_pg_proc) GETSTRUCT(proctup);
+	procname = pstrdup(NameStr(procform->proname));
+	schema_oid = procform->pronamespace;
+	dbo_oid = get_namespace_oid("master_dbo", true);
+
+	if (OidIsValid(schema_oid) && OidIsValid(dbo_oid) && schema_oid == dbo_oid)
+	{
+		/* Check if the procedure name is in the restricted list */
+		for (int i = 0; i < RESTRICTED_PROCEDURES_COUNT; i++)
+		{
+			if (pg_strcasecmp(procname, restricted_procedures[i]) == 0)
+			{
+				is_restricted = true;
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(proctup);
+	if (is_restricted)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be owner of procedure %s", procname)));
+	}
 }
 
 /***********************************************************************************

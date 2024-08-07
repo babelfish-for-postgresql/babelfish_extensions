@@ -3345,8 +3345,8 @@ BEGIN
 	-- Need to use a guaranteed-uniquely named table as intermediate step since we cannot 
 	-- access the metadata in case a #tmp table is passed as argument
 	-- But when we copy the #tmp table into another table, we get all the attributes and metadata
-	DECLARE @tmptab sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(NEWID(), '-', '')
-	DECLARE @tmptab2 sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(NEWID(), '-', '')
+	DECLARE @tmptab sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(CAST(NEWID() AS sys.NVARCHAR(36)), '-', '')
+	DECLARE @tmptab2 sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(CAST(NEWID() AS sys.NVARCHAR(36)), '-', '')
 	DECLARE @cmd sys.VARCHAR(1000) = 'SELECT * INTO ' + @tmptab + ' FROM ' + @tab
 	
 	BEGIN TRY

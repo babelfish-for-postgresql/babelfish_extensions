@@ -23,6 +23,7 @@
 #include "catalog/pg_type.h"
 #include "common/md5.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
@@ -48,6 +49,7 @@ static void set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *ran
 					int total_partitions, bool is_binary_datatype);
 static void set_node_value_from_datum(A_Const *node, Datum val, bool is_binary_datatype);
 static CreateStmt *create_partition_stmt(char *physical_schema_name, char *relname);
+static void rename_table_update_bbf_partitions_name(RenameStmt *stmt, Oid parentrelid);
 
 
 /*
@@ -93,7 +95,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	if (stmt->relation->relpersistence == RELPERSISTENCE_TEMP)
 		ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Creation of tempopary partitioned tables is not supported in Babelfish.")));
+					 errmsg("Creation of temporary partitioned tables is not supported in Babelfish.")));
 	
 	/*
 	 * Get partition function name for the provided partition scheme,
@@ -465,17 +467,29 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 		form = RelationGetForm(relation);
 		relname = RelationGetRelationName(relation);
 
-		/* Find dbid and logical schema name of table. */
-		physical_schemaname = get_namespace_name(form->relnamespace);
-		logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
-		dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
-		pfree(physical_schemaname);
-
-		if (!logical_schemaname) /* not a TSQL schema */
+		/* Proceed further only for permanent and partition/partitioned table. */
+		if (!(form->relkind == RELKIND_PARTITIONED_TABLE || form->relispartition)
+			|| form->relpersistence != RELPERSISTENCE_PERMANENT)
 		{
 			relation_close(relation, AccessShareLock);
 			continue;
 		}
+
+		physical_schemaname = get_namespace_name(form->relnamespace);
+
+		/* Find logical schema name from physical schema name. */
+		logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
+		
+		if (!logical_schemaname) /* not a TSQL schema */
+		{
+			pfree(physical_schemaname);
+			relation_close(relation, AccessShareLock);
+			continue;
+		}
+
+		/* Find dbid from physical schema name for a TSQL schema. */
+		dbid = get_dbid_from_physical_schema_name(physical_schemaname, false);
+		pfree(physical_schemaname);
 
 		if (form->relispartition) /* relation is partition of table */
 		{
@@ -495,6 +509,7 @@ bbf_drop_handle_partitioned_table(DropStmt *stmt)
 				remove_entry_from_bbf_partition_depend(dbid, logical_schemaname, relname);
 		}
 		relation_close(relation, AccessShareLock);
+		pfree(logical_schemaname);
 	}
 }
 
@@ -605,19 +620,95 @@ bbf_validate_partitioned_index_alignment(IndexStmt *stmt)
 }
 
 /*
+ * bbf_rename_handle_partitioned_table
+ * 	1. For a rename operation on a babelfish partitioned table, rename all of its partition and
+ * 	   and update the table_name in sys.babelfish_partition_depend catalog.
+ * 	2. For a rename operation on a babelfish partition table, raise error.
+ */
+void
+bbf_rename_handle_partitioned_table(RenameStmt *stmt)
+{
+	char		*table_name = stmt->relation->relname;
+	char		*physical_schema_name;
+	char		*logical_schema_name;
+	bool		is_partition_table, is_partitioned_table;
+	Form_pg_class	form;
+	HeapTuple	tuple;
+	Oid		nsp_oid;
+	int16		dbid;
+	RangeVar	*new_rel = makeRangeVar(stmt->relation->schemaname, stmt->newname, -1);
+	Oid		relid = RangeVarGetRelid(new_rel, NoLock, true);;
+
+	/* Get the namespace OID and type of the table. */
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+
+	if (!HeapTupleIsValid(tuple)) /* Sanity check. */
+		return;
+
+	form = (Form_pg_class) GETSTRUCT(tuple);
+	is_partition_table = form->relispartition;
+	is_partitioned_table = (form->relkind == RELKIND_PARTITIONED_TABLE);
+	nsp_oid = form->relnamespace;
+	ReleaseSysCache(tuple);
+
+	/* Proceed further only if table is a partition or partitioned table. */
+	if (!is_partition_table && !is_partitioned_table)
+		return;
+
+	/* Get the physical schema name from namespace OID. */
+	physical_schema_name = get_namespace_name(nsp_oid);
+
+	/* Find the logical schema name from physical schema name. */
+	logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, true);
+
+	if (!logical_schema_name) /* not a TSQL schema */
+	{
+		pfree(physical_schema_name);
+		return;
+	}
+
+	/* Find the dbid from the physical schema name. */
+	dbid = get_dbid_from_physical_schema_name(physical_schema_name, false);
+
+	/*
+	 * For babelfish partition table, user should not
+	 * be allowed to rename it.
+	 */
+	if (is_partition_table)
+	{
+		char	*parent_table_name = get_rel_name(get_partition_parent(relid, false));
+		if (is_bbf_partitioned_table(dbid, logical_schema_name, parent_table_name))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Cannot rename babelfish partition table '%s'.", stmt->relation->relname)));
+		pfree(parent_table_name);
+	}
+	/*
+	 * For babelfish partitioned table, rename all of its partition and
+	 * update the table_name in sys.babelfish_partition_depend catalog.
+	 */
+	else if (is_bbf_partitioned_table(dbid, logical_schema_name, table_name))
+	{
+		rename_table_update_bbf_partitions_name(stmt, relid);
+		rename_table_update_bbf_partition_depend_catalog(stmt, logical_schema_name, dbid);
+	}
+
+	pfree(physical_schema_name);
+	pfree(logical_schema_name);
+}
+
+/*
  * rename_table_update_bbf_partitions_name
  *	For a rename operation on a babelfish partitioned table, it renames all partition
  *	of the table to the new name using hash based on the new name, so that
  *	name of partitions of any partitioned table doesn't conflict.
  */
-void
-rename_table_update_bbf_partitions_name(RenameStmt *stmt)
+static void
+rename_table_update_bbf_partitions_name(RenameStmt *stmt, Oid parentrelid)
 {
 	char		*physical_schema_name = stmt->relation->schemaname;
-	char		*logical_schema_name;
 	char		*table_name = stmt->relation->relname;
 	List		*partition_names = NIL;
-	int16		dbid;
 	char		*new_hash;
 	PlannedStmt	*wrapper;
 	RenameStmt	*rename_partition_stmt = NULL;
@@ -625,28 +716,12 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	Relation	relation;
 	SysScanDesc	scan;
 	ScanKeyData	key;
-	Oid		parentrelid;
 	Oid		inhrelid;
 	HeapTuple	tuple;
 	const char	*old_dialect;
 	StringInfoData	query;
 	char		*partition_name;
 	char		*new_partition_name;
-
-	logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, true);
-
-	if (!logical_schema_name) /* not a TSQL schema */
-		return;
-	
-	dbid = get_dbid_from_physical_schema_name(physical_schema_name, false);
-	
-	if (!is_bbf_partitioned_table(dbid, logical_schema_name, table_name))
-	{
-		pfree(logical_schema_name);
-		return;
-	}
-
-	parentrelid = get_relname_relid(stmt->newname, get_namespace_oid(physical_schema_name, false));
 
 	relation = table_open(InheritsRelationId, AccessShareLock);
 
@@ -744,7 +819,6 @@ rename_table_update_bbf_partitions_name(RenameStmt *stmt)
 	/* Free the allocated memory. */
 	if (partition_names)
 		list_free(partition_names);
-	pfree(logical_schema_name);
 	pfree(new_hash);
 	pfree(query.data);
 }

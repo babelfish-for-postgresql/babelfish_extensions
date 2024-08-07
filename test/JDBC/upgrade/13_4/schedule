@@ -20,13 +20,13 @@ BABEL-1444
 BABEL-1465
 BABEL-1466
 BABEL-1475
-BABEL-4390
 BABEL-1510
 BABEL-1625
 BABEL-1683
 BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
+restricted_procedures
 BABEL-2086
 BABEL-2170
 BABEL-2203
@@ -242,7 +242,10 @@ right-before-15_8-or-16_4
 BABEL-4863-before-16_3-or-15_7-or-14_12
 BABEL-4869
 translate-before-15_8-or-16_4
+substring-before-15_8-or-16_4
 reverse-before-15_8-or-16_4
+stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 space
+binary-datatype-operators
 

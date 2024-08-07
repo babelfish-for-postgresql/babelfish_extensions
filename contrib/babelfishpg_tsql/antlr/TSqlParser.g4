@@ -2890,7 +2890,7 @@ deny_statement
     ;
      
 permission_object
-    : (object_type colon_colon)? full_object_name (LR_BRACKET column_name_list RR_BRACKET)? 
+    : (permission_object_type colon_colon)? full_object_name (LR_BRACKET column_name_list RR_BRACKET)? 
     ;
 
 principals
@@ -2933,6 +2933,28 @@ single_permission
     | SUBSCRIBE QUERY NOTIFICATIONS
     | UNMASK
     | UNSAFE ASSEMBLY
+    ;
+
+permission_object_type
+    : (APPLICATION|SERVER)? ROLE
+    | ASSEMBLY
+    | (ASYMMETRIC|SYMMETRIC) KEY
+    | AVAILABILITY GROUP
+    | CERTIFICATE
+    | CONTRACT
+    | DATABASE (SCOPED CREDENTIAL)?
+    | ENDPOINT
+    | FULLTEXT (CATALOG|STOPLIST)
+    | LOGIN
+    | (MESSAGE)? TYPE
+    | OBJECT
+    | REMOTE SERVICE BINDING
+    | ROUTE
+    | SCHEMA
+    | SEARCH PROPERTY LIST
+    | SERVICE
+    | USER
+    | XML SCHEMA COLLECTION
     ;
 
 object_type
@@ -3795,7 +3817,7 @@ function_call
     ;
 
 partition_function_call
-    : (db_name=id DOT)? DOLLAR_PARTITION DOT func_name=id LR_BRACKET function_arg_list RR_BRACKET
+    : (db_name=id DOT)? DOLLAR_PARTITION DOT func_name=id LR_BRACKET expression RR_BRACKET
     ;
 
 freetext_function
@@ -3875,7 +3897,10 @@ spatial_methods
     ;
         
 geospatial_col
-    : STX
+    : STSRID
+    | STSRID_DOUBLE_QUOTE
+    | STSRID_SQBRACKET
+    | STX
     | STX_SQBRACKET
     | STX_DOUBLE_QUOTE
     | STY
@@ -3892,10 +3917,13 @@ geospatial_col
 geospatial_func_no_arg
     : STASTEXT
     | STASBINARY
+    | STAREA
     ;
 
 geospatial_func_arg
     : STDISTANCE
+    | STEQUALS
+    | STCONTAINS
     ;
 
 hierarchyid_methods
@@ -4998,6 +5026,7 @@ keyword
     | STALE_QUERY_THRESHOLD_DAYS
     | STANDBY
     | START
+    | STAREA
     | STARTED
     | STARTUP_STATE
     | START_DATE
@@ -5011,9 +5040,11 @@ keyword
     | STATS_STREAM
     | STATUS
     | STATUSONLY
+    | STCONTAINS
     | STDEV
     | STDEVP
     | STDISTANCE
+    | STEQUALS
     | STOP
     | STOPAT
     | STOPATMARK
@@ -5023,6 +5054,9 @@ keyword
     | STOP_ON_ERROR
     | STRING_AGG
     | STRING_DELIMITER
+    | STSRID
+    | STSRID_DOUBLE_QUOTE
+    | STSRID_SQBRACKET
     | STUFF
     | STX
     | STX_DOUBLE_QUOTE

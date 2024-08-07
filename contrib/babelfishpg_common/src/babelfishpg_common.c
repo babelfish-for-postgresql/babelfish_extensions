@@ -187,6 +187,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_smalldatetime_datatype = &is_tsql_smalldatetime_datatype;
 		common_utility_plugin_var.is_tsql_datetimeoffset_datatype = &is_tsql_datetimeoffset_datatype;
 		common_utility_plugin_var.is_tsql_decimal_datatype = &is_tsql_decimal_datatype;
+		common_utility_plugin_var.is_tsql_sqlvariant_datatype = &is_tsql_sqlvariant_datatype;
 		common_utility_plugin_var.is_tsql_rowversion_or_timestamp_datatype = &is_tsql_rowversion_or_timestamp_datatype;
 		common_utility_plugin_var.datetime_in_str = &datetime_in_str;
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;
@@ -201,6 +202,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.TdsGetMetaData = &TdsGetMetaData;
 		common_utility_plugin_var.TdsGetVariantBaseType = &TdsGetVariantBaseType;
 		common_utility_plugin_var.lookup_tsql_datatype_oid = &lookup_tsql_datatype_oid;
+		common_utility_plugin_var.resolve_pg_type_to_tsql = &resolve_pg_type_to_tsql;
 		common_utility_plugin_var.GetUTF8CodePoint = &GetUTF8CodePoint;
 		common_utility_plugin_var.TsqlUTF8LengthInUTF16 = &TsqlUTF8LengthInUTF16;
 	}
