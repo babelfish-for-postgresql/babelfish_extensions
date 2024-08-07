@@ -5677,7 +5677,7 @@ remove_entry_from_bbf_partition_depend(int16 dbid, char *schema_name, char *tabl
  * 	RENAME TABLE command to have consistency with the new names.
  */
 void
-rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt)
+rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt, char *logical_schema_name, int16 dbid)
 {
 	Relation	rel;
 	HeapTuple	tuple, new_tuple;
@@ -5687,18 +5687,7 @@ rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt)
 	Datum		new_record[BBF_PARTITION_DEPEND_NUM_COLS];
 	bool		new_record_nulls[BBF_PARTITION_DEPEND_NUM_COLS];
 	bool		new_record_replace[BBF_PARTITION_DEPEND_NUM_COLS];
-	char		*logical_schema_name;
 	char		*table_name = stmt->relation->relname;
-	int16		dbid;
-
-	/* Find the logical schema name from physical schema name. */
-	logical_schema_name = (char *) get_logical_schema_name(stmt->relation->schemaname, true);
-
-	if (!logical_schema_name) /* not a TSQL schema */
-		return;
-
-	/* Find the dbid from physical schema name. */
-	dbid = get_dbid_from_physical_schema_name(stmt->relation->schemaname, false);
 
 	/* Open the catalog table. */
 	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
@@ -5751,9 +5740,6 @@ rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt)
 	systable_endscan(scan);
 	/* Close the catalog table. */
 	table_close(rel, RowExclusiveLock);
-
-	/* Free the allocated memory. */
-	pfree(logical_schema_name);
 }
 
 /*
