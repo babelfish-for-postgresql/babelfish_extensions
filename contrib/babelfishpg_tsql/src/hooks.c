@@ -44,6 +44,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse_param.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
@@ -212,7 +213,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
 /*****************************************
  * 			parser Hook
  *****************************************/
-static bool is_babelfish_builtin_type(Oid typnamespace);
+static Oid set_param_collation(Param *param);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -477,7 +478,7 @@ InstallExtendedHooks(void)
 	prev_pltsql_is_partitioned_table_reloptions_allowed_hook = pltsql_is_partitioned_table_reloptions_allowed_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed; 
 
-	is_babelfish_builtin_type_hook = is_babelfish_builtin_type;
+	handle_param_collation_hook = set_param_collation;
 }
 
 void
@@ -548,7 +549,7 @@ UninstallExtendedHooks(void)
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
-	is_babelfish_builtin_type_hook = NULL;
+	handle_param_collation_hook = NULL;
 }
 
 /*****************************************
@@ -5283,10 +5284,41 @@ is_partitioned_table_reloptions_allowed(Datum reloptions)
 }
 
 static bool
-is_babelfish_builtin_type(Oid typnamespace)
+is_babelfish_builtin_type(Oid typid)
 {
-	// return (sql_dialect == SQL_DIALECT_TSQL && 
-	// 		(pg_strcasecmp(get_namespace_name(typtup->typnamespace), "sys") == 0 ||
-	// 		 typtup->oid == TEXTOID));
-	return (sql_dialect == SQL_DIALECT_TSQL && pg_strcasecmp(get_namespace_name(typnamespace), "sys") == 0);
+	bool res = false;
+	HeapTuple	tp;
+	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		res = pg_strcasecmp(get_namespace_name(typtup->typnamespace), "sys") == 0;
+		ReleaseSysCache(tp);
+	}
+	return res;
+}
+
+/*
+ * set_param_collation - sets the collation of the given parameter
+ * 					   based on the sql dialect.
+ *
+ * 	@param param - parameter to set the collation for
+ * 	@return - collation of the parameter
+ */
+static Oid
+set_param_collation(Param *param)
+{
+	/*
+	 * If sql_dialect is PG then we need to set DEFAULT_COLLATION_OID for any param
+	 * to handle special cases such as checking foreign key when tupe is being inserted
+	 * in the table through TDS endpoint.
+	 */
+	if (sql_dialect == SQL_DIALECT_PG && is_babelfish_builtin_type(param->paramtype))
+	{
+		return DEFAULT_COLLATION_OID;
+	}
+	else
+	{
+		return get_typcollation(param->paramtype);
+	}
 }
