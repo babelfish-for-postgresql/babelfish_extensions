@@ -4283,9 +4283,9 @@ static void bbf_func_ext_update_proc_definition(Oid oid)
 				}
 				appendStringInfoChar(&infoSchemaStr, original_query[i]);
 			}
-			else if(original_query[i] == '/' && original_query[i + 1] == '*' && i < strlen(original_query))
+			else if(i + 1 < strlen(original_query) && original_query[i] == '/' && original_query[i + 1] == '*')
 			{
-				while(original_query[i] != '*' && original_query[i+1] != '/')
+				while(i + 1 < strlen(original_query) && original_query[i] != '*' && original_query[i+1] != '/')
 				{
 					appendStringInfoChar(&infoSchemaStr, original_query[i]);
 					i++;
@@ -4294,7 +4294,7 @@ static void bbf_func_ext_update_proc_definition(Oid oid)
 				appendStringInfoChar(&infoSchemaStr, original_query[i+1]);
 				i++;
 			}
-			else if(strncasecmp(original_query + i, "alter", 5) == 0)
+			else if(i + 5 < strlen(original_query) && strncasecmp(original_query + i, "alter", 5) == 0)
 			{
 				// Change alter to create, add rest of characters, and update
 				appendStringInfoString(&infoSchemaStr, "CREATE");
