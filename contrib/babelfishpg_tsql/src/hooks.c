@@ -3477,50 +3477,6 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 
 	if (HeapTupleIsValid(oldtup))
 	{
-		StringInfoData infoSchemaStr;
-
-		initStringInfo(&infoSchemaStr);
-
-		for(int i = 0; i < strlen(original_query); i++)
-		{
-			if(original_query[i] == '-')
-			{
-				while(original_query[i] != '\n' && i < strlen(original_query))
-				{
-					appendStringInfoChar(&infoSchemaStr, original_query[i]);
-					i++;
-				}
-				appendStringInfoChar(&infoSchemaStr, original_query[i]);
-			}
-			else if(original_query[i] == '/' && original_query[i + 1] == '*' && i < strlen(original_query))
-			{
-				while(original_query[i] != '*' && original_query[i+1] != '/')
-				{
-					appendStringInfoChar(&infoSchemaStr, original_query[i]);
-					i++;
-				}
-				appendStringInfoChar(&infoSchemaStr, original_query[i]);
-				appendStringInfoChar(&infoSchemaStr, original_query[i+1]);
-				i++;
-			}
-			else if(strncasecmp(original_query + i, "create", 6) == 0)
-			{
-				break;
-			}
-			else if(strncasecmp(original_query + i, "alter", 5) == 0)
-			{
-				// Change alter to create, add rest of characters, and update
-				appendStringInfoString(&infoSchemaStr, "CREATE");
-				appendStringInfoString(&infoSchemaStr, original_query + i + 5);
-				new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(infoSchemaStr.data);
-				break;
-			}
-			else
-			{
-				appendStringInfoChar(&infoSchemaStr, original_query[i]);
-			}
-		}
-
 		tuple = heap_modify_tuple(oldtup, bbf_function_ext_rel_dsc,
 								  new_record, new_record_nulls,
 								  new_record_replaces);
