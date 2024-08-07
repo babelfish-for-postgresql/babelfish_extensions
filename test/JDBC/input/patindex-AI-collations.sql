@@ -457,3 +457,57 @@ SELECT Id, TestText,
        PATINDEX(N'%çalış%', TestText) AS Position
 FROM #TestStrings;
 GO
+
+
+-- Computed columns
+CREATE TABLE babel_5118_with_computed_col (pattern NVARCHAR(100), src NVARCHAR(100), patindex AS PATINDEX(pattern, src COLLATE Latin1_General_CS_AI))
+GO
+
+INSERT INTO babel_5118_with_computed_col (pattern, src)
+VALUES
+    ('%[A-C][A-C][A-C]%', 'Alphabet sequence: ABĆ, DEF, GHI'),
+    ('%pattern%_with%', 'Example of pattern matching with special cases'),
+    ('_','b');
+GO
+
+-- Check constraints
+ALTER TABLE babel_5118_with_computed_col ADD CONSTRAINT chkRowCount CHECK (PATINDEX(pattern, src COLLATE Latin1_General_CS_AI) >= 1);
+GO
+
+INSERT INTO babel_5118_with_computed_col (pattern, src) VALUES ('_a','b');
+GO
+
+INSERT INTO babel_5118_with_computed_col (pattern, src) VALUES ('_','b');
+GO
+
+CREATE VIEW babel_5118_VIEW AS SELECT pattern, src, PATINDEX(pattern, src COLLATE Latin1_General_CS_AI) AS PATINDEX FROM babel_5118_with_computed_col ORDER BY pattern
+GO
+
+SELECT * FROM babel_5118_VIEW
+GO
+
+CREATE PROCEDURE babel_5118_with_proc
+AS
+SELECT pattern, src, PATINDEX(pattern, src COLLATE Latin1_General_CS_AI) AS PATINDEX FROM babel_5118_with_computed_col ORDER BY pattern
+GO
+
+EXEC babel_5118_with_proc
+GO
+
+DROP VIEW babel_5118_VIEW
+GO
+
+DROP PROCEDURE babel_5118_with_proc
+GO
+
+DROP TABLE babel_5118_with_computed_col
+GO
+
+-- CONCAT INSIDE PATINDEX
+SELECT PATINDEX(N'%[A-C]%_%[^A-Y]%Z%', CONCAT(REPEAT('b', 50), REPEAT('A', 50), REPEAT('Z', 50), REPEAT('Z', 50)) COLLATE Latin1_General_CI_AI)
+GO
+
+-- Surrogate pair charcters
+SELECT PATINDEX(N'%😀%', N'😀' COLLATE Latin1_General_CI_AI)
+SELECT PATINDEX(N'%Z%', N'ABC😀ZABC' COLLATE Latin1_General_CI_AI)
+GO
