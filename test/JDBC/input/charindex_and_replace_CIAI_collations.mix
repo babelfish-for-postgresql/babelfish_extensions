@@ -1,5 +1,6 @@
 /* CHARINDEX WITH CI_AI COLLATIONS */
 
+-- tsql
 CREATE TABLE #BABEL_4850_TEMP(id NVARCHAR(100))
 GO
 CREATE TABLE BABEL_4850_T(id NVARCHAR(100))
@@ -201,4 +202,17 @@ SELECT REPLACE(id, 'Æ' COLLATE Latin1_General_CS_AI, '!---!') FROM BABEL_4850_T
 GO
 
 DROP TABLE BABEL_4850_T
+GO
+
+-- psql
+CREATE TABLE mismatch_col (col1 text COLLATE "de_DE",col2 text COLLATE "es_ES",col3 text);
+GO
+
+INSERT INTO mismatch_col VALUES ('abc', 'xyz', 'tde');
+GO
+
+SELECT REPLACE(col1, col2, col3) FROM mismatch_col
+GO
+
+DROP TABLE mismatch_col
 GO
