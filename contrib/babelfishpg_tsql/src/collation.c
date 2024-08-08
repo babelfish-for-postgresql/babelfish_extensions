@@ -1334,6 +1334,22 @@ has_ilike_node_and_ci_as_coll(Node *expr)
 	return false;
 }
 
+static void
+check_collation_set(Oid collid)
+{
+	if (!OidIsValid(collid))
+	{
+		/*
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for string comparison"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+	}
+}
+
 PG_FUNCTION_INFO_V1(get_icu_major_version);
 Datum
 get_icu_major_version(PG_FUNCTION_ARGS)
@@ -1446,6 +1462,8 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 {
 	pg_locale_t mylocale = 0;
 
+	check_collation_set(collid);
+
 	if (!lc_collate_is_c(collid))
 		mylocale = pg_newlocale_from_collation(collid);
 	else
@@ -1530,6 +1548,8 @@ bool
 pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, Oid collid, text **r)
 {
 	pg_locale_t mylocale = 0;
+
+	check_collation_set(collid);
 
 	if (!lc_collate_is_c(collid))
 		mylocale = pg_newlocale_from_collation(collid);
@@ -1937,17 +1957,7 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 	bool		 is_CS_AI = false;
 	coll_info_t  coll_info_of_inputcollid;
 
-	if (!OidIsValid(cid))
-	{
-		/*
-		 * This typically means that the parser could not resolve a conflict
-		 * of implicit collations, so report it that way.
-		 */
-		ereport(ERROR,
-				(errcode(ERRCODE_INDETERMINATE_COLLATION),
-				 errmsg("could not determine which collation to use for string comparison"),
-				 errhint("Use the COLLATE clause to set the collation explicitly.")));
-	}
+	check_collation_set(cid);
 
 	coll_info_of_inputcollid = tsql_lookup_collation_table_internal(cid);
 
