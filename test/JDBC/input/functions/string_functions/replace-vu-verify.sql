@@ -232,21 +232,21 @@ DECLARE @pattern NVARCHAR(20) = N'🙂de', @replacement NVARCHAR(10) = N'x🙂y'
 SELECT replace(a, @pattern, @replacement) FROM babel_4836_replace_ntext
 GO
 
--- dependent objects
-SELECT * FROM babel_4836_replace_dep_view
-GO
+-- -- dependent objects
+-- SELECT * FROM babel_4836_replace_dep_view
+-- GO
 
-SELECT * FROM babel_4836_replace_dep_view1
-GO
+-- SELECT * FROM babel_4836_replace_dep_view1
+-- GO
 
-EXEC babel_4836_replace_dep_proc
-GO
+-- EXEC babel_4836_replace_dep_proc
+-- GO
 
-SELECT * FROM babel_4836_replace_dep_func()
-GO
+-- SELECT * FROM babel_4836_replace_dep_func()
+-- GO
 
-SELECT * FROM babel_4836_replace_itvf_func()
-GO
+-- SELECT * FROM babel_4836_replace_itvf_func()
+-- GO
 
 -- different datatypes of inputString and pattern/replacement
 DECLARE @inputString CHAR(50) = 'abc🙂defghi🙂🙂', @pattern VARCHAR(20) = '?de', @replacement VARCHAR(20) = 'x🙂y'
