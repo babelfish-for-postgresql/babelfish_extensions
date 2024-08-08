@@ -1217,13 +1217,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
 )
 AS $$
 BEGIN
-	-- select out_table_qualifier as TABLE_QUALIFIER,
-	-- 		out_table_owner as TABLE_OWNER,
-	-- 		out_table_name as TABLE_NAME,
-	-- 		out_column_name as COLUMN_NAME,
-	-- 		out_key_seq as KEY_SEQ,
-	-- 		out_pk_name as PK_NAME
-	-- from sys.sp_pkeys_internal(@table_name, @table_owner, @table_qualifier);
 	select * from sys.sp_pkeys_view
 	where table_name = @table_name
 		and table_owner = coalesce(@table_owner, 'dbo') 
