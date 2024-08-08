@@ -28,3 +28,9 @@ AS BEGIN
 END
 
 go
+
+create procedure alter_proc_p5 as select 10
+go
+
+alter procedure alter_proc_p5 @dateParam date as select @dateParam
+go

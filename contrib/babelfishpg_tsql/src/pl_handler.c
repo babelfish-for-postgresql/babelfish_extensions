@@ -4257,19 +4257,20 @@ static void bbf_func_ext_update_proc_definition(Oid oid)
 	
 	
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oid));
-	if (!HeapTupleIsValid(proctup)) // throw error
-		return;
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", oid);
+	if(original_query == NULL)
+		elog(ERROR, "lookup failed for original query");
 	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
-	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
-	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
-
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
 	if (HeapTupleIsValid(oldtup))
 	{
 		StringInfoData infoSchemaStr;
 		initStringInfo(&infoSchemaStr);
+		bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
+		bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
+		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+		MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
 		/*
 		 * This solution only works because original_query does not contain
@@ -4296,6 +4297,13 @@ static void bbf_func_ext_update_proc_definition(Oid oid)
 		heap_freetuple(tuple);
 		table_close(bbf_function_ext_rel, RowExclusiveLock);
 	}
+	else
+	{
+		heap_freetuple(oldtup);
+		ReleaseSysCache(proctup);
+		elog(ERROR, "cache lookup failed for function %u", oid);
+	}
+	
 }
 /*
  * Update the pg_type catalog entry for the given name to have

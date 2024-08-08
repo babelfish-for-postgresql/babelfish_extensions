@@ -363,3 +363,19 @@ nvarchar#!#nvarchar#!#nvarchar
 alter_proc_p4#!#SQL#!#CREATE <newline>-- test comment 1<newline>procedure alter_proc_p4 as select 4
 ~~END~~
 
+
+exec alter_proc_p5 @dateParam = '2000-01-01'
+go
+~~START~~
+date
+2000-01-01
+~~END~~
+
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p5';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p5#!#SQL#!#CREATE procedure alter_proc_p5 @dateParam date as select @dateParam
+~~END~~
+
