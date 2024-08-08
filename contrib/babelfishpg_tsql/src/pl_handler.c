@@ -2495,7 +2495,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						CommandCounterIncrement();
 						bbf_func_ext_update_proc_definition(oldoid);
 						if (!isSameProc) {
-						   /*
+						       /*
 							* When the signatures differ we need to manually update the 'function_args' column in 
 							* the 'bbf_schema_permissions' catalog
 							*/
@@ -4269,7 +4269,6 @@ static void bbf_func_ext_update_proc_definition(Oid oid)
 	if (HeapTupleIsValid(oldtup))
 	{
 		StringInfoData infoSchemaStr;
-
 		initStringInfo(&infoSchemaStr);
 
 		/*
@@ -4279,7 +4278,7 @@ static void bbf_func_ext_update_proc_definition(Oid oid)
 		 */
 		if(strlen(original_query) >= 5 && strncasecmp(original_query, "alter", 5) == 0)
 		{
-			// Change alter to create, add rest of characters, and update
+			/* Change alter to create, add rest of characters, and update */
 			appendStringInfoString(&infoSchemaStr, "CREATE");
 			appendStringInfoString(&infoSchemaStr, original_query + 5);
 			new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(infoSchemaStr.data);
