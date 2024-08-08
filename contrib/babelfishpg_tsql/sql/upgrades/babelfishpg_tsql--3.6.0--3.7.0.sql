@@ -11126,6 +11126,22 @@ AND has_schema_privilege(pc.relnamespace, 'USAGE')
 AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.events TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.remove_accents_internal_using_cache(IN TEXT) RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'remove_accents_internal_using_cache'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.get_icu_major_version() RETURNS INT4
+AS 'babelfishpg_tsql', 'get_icu_major_version'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.get_icu_minor_version() RETURNS INT4
+AS 'babelfishpg_tsql', 'get_icu_minor_version'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
+
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
