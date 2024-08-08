@@ -28,7 +28,7 @@ GO
 
 
 -- Test Case: Modify the procedure body, and check information_schema updated with spaces
-ALTER       -- test comment
+/* Leading comment not included: BABEL-5140 */ ALTER       -- test comment
     PROCEDURE alter_proc_p1
 AS
     select * from alter_proc_orders

@@ -4272,41 +4272,18 @@ static void bbf_func_ext_update_proc_definition(Oid oid)
 
 		initStringInfo(&infoSchemaStr);
 
-		for(int i = 0; i < strlen(original_query); i++)
+		/*
+		 * This solution only works because original_query does not contain
+		 * any leading characters or comments before "ALTER". When BABEL-5140
+		 * is resolved we will need to refactor this code
+		 */
+		if(strlen(original_query) >= 5 && strncasecmp(original_query, "alter", 5) == 0)
 		{
-			if(original_query[i] == '-')
-			{
-				while(original_query[i] != '\n' && i < strlen(original_query))
-				{
-					appendStringInfoChar(&infoSchemaStr, original_query[i]);
-					i++;
-				}
-				appendStringInfoChar(&infoSchemaStr, original_query[i]);
-			}
-			else if(i + 1 < strlen(original_query) && original_query[i] == '/' && original_query[i + 1] == '*')
-			{
-				while(i + 1 < strlen(original_query) && original_query[i] != '*' && original_query[i+1] != '/')
-				{
-					appendStringInfoChar(&infoSchemaStr, original_query[i]);
-					i++;
-				}
-				appendStringInfoChar(&infoSchemaStr, original_query[i]);
-				appendStringInfoChar(&infoSchemaStr, original_query[i+1]);
-				i++;
-			}
-			else if(i + 5 < strlen(original_query) && strncasecmp(original_query + i, "alter", 5) == 0)
-			{
-				// Change alter to create, add rest of characters, and update
-				appendStringInfoString(&infoSchemaStr, "CREATE");
-				appendStringInfoString(&infoSchemaStr, original_query + i + 5);
-				new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(infoSchemaStr.data);
-				new_record_replaces[Anum_bbf_function_ext_definition - 1] = true;
-				break;
-			}
-			else
-			{
-				appendStringInfoChar(&infoSchemaStr, original_query[i]);
-			}
+			// Change alter to create, add rest of characters, and update
+			appendStringInfoString(&infoSchemaStr, "CREATE");
+			appendStringInfoString(&infoSchemaStr, original_query + 5);
+			new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(infoSchemaStr.data);
+			new_record_replaces[Anum_bbf_function_ext_definition - 1] = true;
 		}
 
 		tuple = heap_modify_tuple(oldtup, bbf_function_ext_rel_dsc,
