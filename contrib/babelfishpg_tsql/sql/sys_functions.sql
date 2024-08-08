@@ -1444,36 +1444,63 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
--- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
-CREATE OR REPLACE FUNCTION sys.stuff(expr TEXT, start INTEGER, length INTEGER, replace_expr TEXT)
-RETURNS TEXT AS
+-- wrapper functions for stuff --
+CREATE OR REPLACE FUNCTION sys.stuff(expr sys.VARBINARY, start INTEGER, length INTEGER, replace_expr sys.VARCHAR)
+RETURNS VARBINARY
+AS
 $BODY$
-SELECT
-CASE
-WHEN start <= 0 or start > length(expr) or length < 0 THEN
-	NULL
-WHEN replace_expr is NULL THEN
-	overlay (expr placing '' from start for length)
-ELSE
-	overlay (expr placing replace_expr from start for length)
+BEGIN
+    IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+        RETURN NULL;
+    END IF;
+    IF start <= 0 OR start > sys.len(expr) OR length < 0 THEN
+        RETURN NULL;
+    END IF;
+    IF replace_expr IS NULL THEN
+        RETURN (SELECT (overlay (expr::sys.VARCHAR placing '' from start for length))::sys.VARCHAR)::VARBINARY;
+    END IF;
+    RETURN (SELECT (overlay (expr::sys.VARCHAR placing replace_expr::sys.VARCHAR from start for length))::sys.VARCHAR)::VARBINARY;
 END;
 $BODY$
-LANGUAGE SQL;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.stuff(expr ANYELEMENT, start INTEGER, length INTEGER, replace_expr ANYELEMENT)
-RETURNS ANYELEMENT AS
+CREATE OR REPLACE FUNCTION sys.stuff(expr sys.VARCHAR, start INTEGER, length INTEGER, replace_expr sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS
 $BODY$
-SELECT
-CASE
-WHEN start <= 0 or start > length(expr) or length < 0 THEN
-	NULL
-WHEN replace_expr is NULL THEN
-	overlay (expr placing '' from start for length)
-ELSE
-	overlay (expr placing replace_expr from start for length)
+BEGIN
+    IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+        RETURN NULL;
+    END IF;
+    IF start <= 0 OR start > length(expr) OR length < 0 THEN
+        RETURN NULL;
+    END IF;
+    IF replace_expr IS NULL THEN
+        RETURN (SELECT overlay (expr placing '' from start for length));
+    END IF;
+    RETURN (SELECT overlay (expr placing replace_expr from start for length));
 END;
 $BODY$
-LANGUAGE SQL;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.stuff(expr sys.NVARCHAR, start INTEGER, length INTEGER, replace_expr sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+        RETURN NULL;
+    END IF;
+    IF start <= 0 OR start > length(expr) OR length < 0 THEN
+        RETURN NULL;
+    END IF;
+    IF replace_expr IS NULL THEN
+        RETURN (SELECT overlay (expr placing '' from start for length));
+    END IF;
+    RETURN (SELECT overlay (expr placing replace_expr from start for length));
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.len(expr TEXT) RETURNS INTEGER AS
 $BODY$
@@ -1583,6 +1610,9 @@ declare
 begin
   if pattern is null or expression is null then
     return null;
+  end if;
+  if sys.is_collated_ai(expression) then
+    return sys.patindex_ai_collations(pattern, expression);
   end if;
   if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i');

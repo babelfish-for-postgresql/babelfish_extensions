@@ -25,6 +25,6 @@ extern void bbf_create_partition_tables(CreateStmt *stmt);
 extern void bbf_drop_handle_partitioned_table(DropStmt *stmt);
 extern void bbf_alter_handle_partitioned_table(AlterTableStmt *stmt);
 extern bool bbf_validate_partitioned_index_alignment(IndexStmt *stmt);
-extern void rename_table_update_bbf_partitions_name(RenameStmt *stmt);
+extern void bbf_rename_handle_partitioned_table(RenameStmt *stmt);
 
 #endif							/* PLTSQL_PARTITION_H */

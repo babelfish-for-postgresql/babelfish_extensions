@@ -1795,7 +1795,7 @@ aijklmn
 select STUFF(N'abcdef', 2, 3, NULL);
 GO
 ~~START~~
-text
+nvarchar
 aef
 ~~END~~
 
@@ -1803,21 +1803,21 @@ aef
 select STUFF('abcdef', 2, 3, 'ijklmn');
 GO
 ~~START~~
-text
+varchar
 aijklmnef
 ~~END~~
 
 select STUFF('abcdef', 2, 3, N'ijklmn');
 GO
 ~~START~~
-text
+nvarchar
 aijklmnef
 ~~END~~
 
 select STUFF(N'abcdef', 2, 3, 'ijklmn');
 GO
 ~~START~~
-text
+nvarchar
 aijklmnef
 ~~END~~
 
@@ -1825,21 +1825,21 @@ aijklmnef
 SELECT STUFF(CAST('abcdef' as text), 2, 3, CAST('ijklmn' as text));
 GO
 ~~START~~
-text
+varchar
 aijklmnef
 ~~END~~
 
 SELECT STUFF(CAST('abcdef' as text), 2, 3, 'ijklmn');
 GO
 ~~START~~
-text
+varchar
 aijklmnef
 ~~END~~
 
 SELECT STUFF('abcdef', 2, 3, CAST('ijklmn' as text));
 GO
 ~~START~~
-text
+varchar
 aijklmnef
 ~~END~~
 
@@ -1854,14 +1854,14 @@ aijklmnef
 SELECT STUFF('abcdef', 2, 3, CAST('ijklmn' as sys.varchar));
 GO
 ~~START~~
-text
+varchar
 aijklmnef
 ~~END~~
 
 SELECT STUFF(CAST('abcdef' as sys.varchar), 2, 3, 'ijklmn');
 GO
 ~~START~~
-text
+varchar
 aijklmnef
 ~~END~~
 

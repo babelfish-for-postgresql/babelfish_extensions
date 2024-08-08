@@ -4939,6 +4939,11 @@ END;
 $BODY$
 LANGUAGE 'plpgsql' STABLE;
 
+CREATE OR REPLACE FUNCTION sys.patindex_ai_collations(in pattern character varying, in expression character varying) returns bigint
+AS 'babelfishpg_tsql', 'patindex_ai_collations'
+LANGUAGE C
+IMMUTABLE STRICT;
+
 create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
 $body$
 declare
@@ -4948,6 +4953,9 @@ declare
 begin
   if pattern is null or expression is null then
     return null;
+  end if;
+  if sys.is_collated_ai(expression) then
+    return sys.patindex_ai_collations(pattern, expression);
   end if;
   if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i');
@@ -11608,6 +11616,80 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.stuff(TEXT, INTEGER, INTEGER, TEXT) RENAME TO stuff_deprecated_4_3;
+    ALTER FUNCTION sys.stuff(ANYELEMENT, INTEGER, INTEGER, ANYELEMENT) RENAME TO stuff_any_deprecated_4_3;
+
+    CREATE OR REPLACE FUNCTION sys.stuff(expr sys.VARBINARY, start INTEGER, length INTEGER, replace_expr sys.VARCHAR)
+    RETURNS sys.VARBINARY
+    AS
+    $BODY$
+    BEGIN
+        IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+            RETURN NULL;
+        END IF;
+        IF start <= 0 OR start > sys.len(expr) OR length < 0 THEN
+            RETURN NULL;
+        END IF;
+        IF replace_expr IS NULL THEN
+            RETURN (SELECT (overlay (expr::sys.VARCHAR placing '' from start for length))::sys.VARCHAR)::sys.VARBINARY;
+        END IF;
+        RETURN (SELECT (overlay (expr::sys.VARCHAR placing replace_expr::sys.VARCHAR from start for length))::sys.VARCHAR)::sys.VARBINARY;
+    END;
+    $BODY$
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+    CREATE OR REPLACE FUNCTION sys.stuff(expr sys.VARCHAR, start INTEGER, length INTEGER, replace_expr sys.VARCHAR)
+    RETURNS sys.VARCHAR
+    AS
+    $BODY$
+    BEGIN
+        IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+            RETURN NULL;
+        END IF;
+        IF start <= 0 OR start > length(expr) OR length < 0 THEN
+            RETURN NULL;
+        END IF;
+        IF replace_expr IS NULL THEN
+            RETURN (SELECT overlay (expr placing '' from start for length));
+        END IF;
+        RETURN (SELECT overlay (expr placing replace_expr from start for length));
+    END;
+    $BODY$
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+    CREATE OR REPLACE FUNCTION sys.stuff(expr sys.NVARCHAR, start INTEGER, length INTEGER, replace_expr sys.NVARCHAR)
+    RETURNS sys.NVARCHAR
+    AS
+    $BODY$
+    BEGIN
+        IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+            RETURN NULL;
+        END IF;
+        IF start <= 0 OR start > length(expr) OR length < 0 THEN
+            RETURN NULL;
+        END IF;
+        IF replace_expr IS NULL THEN
+            RETURN (SELECT overlay (expr placing '' from start for length));
+        END IF;
+        RETURN (SELECT overlay (expr placing replace_expr from start for length));
+    END;
+    $BODY$
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stuff_deprecated_4_3');
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stuff_any_deprecated_4_3');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 -- Rename functions for dependencies
 DO $$
