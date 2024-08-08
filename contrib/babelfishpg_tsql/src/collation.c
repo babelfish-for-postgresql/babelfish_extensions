@@ -560,7 +560,7 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 
 		if (char_len == 1)
 		{
-			appendBinaryStringInfo(&result, input_str++, 1);
+			appendBinaryStringInfo(&result, (const char *) input_str++, 1);
 			continue;
 		}
 
@@ -601,7 +601,7 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 
 		store_coded_char(normalized_char, utf8_normalized_str);
 
-		appendBinaryStringInfo(&result, normalized_char, strlen((const char *) normalized_char));
+		appendBinaryStringInfo(&result, (const char *) normalized_char, strlen((const char *) normalized_char));
 	}
 
 	if (len > 0)
