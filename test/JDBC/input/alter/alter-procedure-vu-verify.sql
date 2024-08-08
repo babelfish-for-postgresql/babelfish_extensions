@@ -219,6 +219,7 @@ go
 select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
 go
 
+-- Test Case: confirm procedure altered in 'alter-procedure-vu-prepare' is properly updated
 exec alter_proc_p5 @dateParam = '2000-01-01'
 go
 

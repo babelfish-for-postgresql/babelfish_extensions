@@ -364,6 +364,7 @@ alter_proc_p4#!#SQL#!#CREATE <newline>-- test comment 1<newline>procedure alter_
 ~~END~~
 
 
+-- Test Case: confirm procedure altered in 'alter-procedure-vu-prepare' is properly updated
 exec alter_proc_p5 @dateParam = '2000-01-01'
 go
 ~~START~~
