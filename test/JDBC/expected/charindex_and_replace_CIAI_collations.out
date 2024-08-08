@@ -1,4 +1,5 @@
 
+-- tsql
 /* CHARINDEX WITH CI_AI COLLATIONS */
 CREATE TABLE #BABEL_4850_TEMP(id NVARCHAR(100))
 GO
@@ -639,4 +640,33 @@ AAAAAABBBBBBBEEEEEEAAAAA
 
 
 DROP TABLE BABEL_4850_T
+GO
+
+-- psql
+CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);
+CREATE COLLATION ignore_accents (provider = icu, locale = 'nd-u-kc-true-ks-level1', deterministic = false);
+GO
+
+CREATE TABLE mismatch_col (col1 text COLLATE case_insensitive, col2 text COLLATE ignore_accents, col3 text);
+GO
+
+INSERT INTO mismatch_col VALUES ('abc', 'xyz', 'tde');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT REPLACE(col1, col2, col3) FROM mismatch_col
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: could not determine which collation to use for string comparison
+  Hint: Use the COLLATE clause to set the collation explicitly.
+    Server SQLState: 42P22)~~
+
+
+DROP TABLE mismatch_col
+GO
+
+DROP COLLATION case_insensitive;
+DROP COLLATION ignore_accents;
 GO
