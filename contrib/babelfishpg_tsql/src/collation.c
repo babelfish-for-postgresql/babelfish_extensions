@@ -19,6 +19,11 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
 #include <unicode/utrans.h>
+#ifdef USE_ICU
+#include "utils/removeaccent.map"
+#include <unicode/ucol.h>
+#include <unicode/usearch.h>
+#endif
 
 #include "pltsql.h"
 #include "src/collation.h"
@@ -450,6 +455,11 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	return ret;
 }
 
+/*
+ * Only use cached mappings for removing accents when the
+ * current ICU version matches to the one used to generate
+ * the cache. Otherwise we fallback on the ICU function
+ */
 static void
 get_remove_accents_internal_oid()
 {
@@ -457,7 +467,154 @@ get_remove_accents_internal_oid()
 	if (OidIsValid(remove_accents_internal_oid))
 		return;
 
+#ifdef USE_ICU
+	if (U_ICU_VERSION_MAJOR_NUM == pltsql_remove_accent_map_icu_major_version && U_ICU_VERSION_MINOR_NUM == pltsql_remove_accent_map_icu_min_version)
+	{
+		elog(LOG, "Using cached mappings to remove accents");
+		remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal_using_cache")), -1, funcargtypes, true);
+		return;
+	}
+#endif
+	elog(LOG, "Using ICU function to remove accents");
 	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
+}
+
+/*
+ * store 32bit character representation into multibyte stream
+ */
+static inline void
+store_coded_char(unsigned char *dest, uint32 code)
+{
+	if (code & 0xff000000)
+	{
+		*dest++ = code >> 24;
+	}
+	if (code & 0x00ff0000)
+	{
+		*dest++ = code >> 16;
+	}
+	if (code & 0x0000ff00)
+	{
+		*dest++ = code >> 8;
+	}
+	if (code & 0x000000ff)
+	{
+		*dest++ = code;
+	}
+	*dest = '\0';
+	return;
+}
+
+static int
+compare_remove_accent_map_pair(const void *p1, const void *p2)
+{
+	uint32		v1,
+				v2;
+
+	v1 = *(const uint32 *) p1;
+	v2 = ((const remove_accent_map_pair *) p2)->original_char;
+	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
+}
+
+PG_FUNCTION_INFO_V1(remove_accents_internal_using_cache);
+Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
+{
+	unsigned char *input_str,
+	              *input_str_start,
+	              *normalized_char;
+	int           len,
+	              char_len;
+	text          *return_result;
+	StringInfoData result;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	input_str = (unsigned char *) text_to_cstring(PG_GETARG_TEXT_PP(0));
+	input_str_start = input_str;
+	len = strlen((char *) input_str);
+	initStringInfo(&result);
+	normalized_char = (unsigned char *) palloc(sizeof(uint32) + 1);
+
+	for (; len > 0; len -= char_len)
+	{
+		unsigned char b1 = 0;
+		unsigned char b2 = 0;
+		unsigned char b3 = 0;
+		unsigned char b4 = 0;
+		uint32 utf8_char;
+		uint32 utf8_normalized_str;
+		remove_accent_map_pair *pr;
+
+		/* "break" cases all represent errors */
+		if (*input_str == '\0')
+			break;
+
+		char_len = pg_utf_mblen(input_str);
+		
+		if (len < char_len)
+			break;
+
+		if (!pg_utf8_islegal(input_str, char_len))
+			break;
+
+		if (char_len == 1)
+		{
+			appendBinaryStringInfo(&result, (const char *) input_str++, 1);
+			continue;
+		}
+
+		/* collect coded char of length l */
+		if (char_len == 2)
+		{
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else if (char_len == 3)
+		{
+			b2 = *input_str++;
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else if (char_len == 4)
+		{
+			b1 = *input_str++;
+			b2 = *input_str++;
+			b3 = *input_str++;
+			b4 = *input_str++;
+		}
+		else
+		{
+			elog(ERROR, "unsupported character length %d", char_len);
+		}
+
+		utf8_char = (b1 << 24 | b2 << 16 | b3 << 8 | b4);
+
+		pr = bsearch(&utf8_char, pltsql_remove_accent_map, lengthof(pltsql_remove_accent_map),
+							sizeof(remove_accent_map_pair), compare_remove_accent_map_pair);
+
+		/* Use the mapping if availaible or else the character */
+		if (pr && pr->normalized_char)
+			utf8_normalized_str = pr->normalized_char;
+		else
+			utf8_normalized_str = utf8_char;
+
+		store_coded_char(normalized_char, utf8_normalized_str);
+
+		appendBinaryStringInfo(&result, (const char *) normalized_char, strlen((const char *) normalized_char));
+	}
+
+	if (len > 0)
+		ereport(ERROR,
+			(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+			 errmsg("invalid byte sequence for encoding UTF-8 while removing accents")));
+
+	return_result = cstring_to_text_with_len(result.data, result.len);
+	pfree(result.data);
+	pfree(input_str_start);
+	pfree(normalized_char);
+
+	PG_RETURN_VARCHAR_P(return_result);
 }
 
 /*
@@ -552,13 +709,6 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 						&status);
 
 	/* Allocated capacity may not be enough to hold un-accented string. This shouldn't occur ideally but still defensive code. */
-	if (status == U_BUFFER_OVERFLOW_ERROR)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					errmsg("Buffer overflow occurred while normalising the string. Error: %s", u_errorName(status))));
-	}
-
 	if (U_FAILURE(status))
 	{
 		ereport(ERROR,
@@ -1165,4 +1315,32 @@ has_ilike_node_and_ci_as_coll(Node *expr)
 		}
 	}
 	return false;
+}
+
+PG_FUNCTION_INFO_V1(get_icu_major_version);
+Datum
+get_icu_major_version(PG_FUNCTION_ARGS)
+{
+#ifdef USE_ICU
+	PG_RETURN_INT32(U_ICU_VERSION_MAJOR_NUM);
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("ICU library is not found")));
+	PG_RETURN_NULL();
+#endif
+}
+
+PG_FUNCTION_INFO_V1(get_icu_minor_version);
+Datum
+get_icu_minor_version(PG_FUNCTION_ARGS)
+{
+#ifdef USE_ICU
+	PG_RETURN_INT32(U_ICU_VERSION_MINOR_NUM);
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+				errmsg("ICU library is not found")));
+	PG_RETURN_NULL();
+#endif
 }
