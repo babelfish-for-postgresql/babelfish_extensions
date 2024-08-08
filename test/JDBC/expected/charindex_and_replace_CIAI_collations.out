@@ -643,7 +643,11 @@ DROP TABLE BABEL_4850_T
 GO
 
 -- psql
-CREATE TABLE mismatch_col (col1 text COLLATE "de_DE",col2 text COLLATE "es_ES",col3 text);
+CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);
+CREATE COLLATION ignore_accents (provider = icu, locale = 'nd-u-kc-true-ks-level1', deterministic = false);
+GO
+
+CREATE TABLE mismatch_col (col1 text COLLATE case_insensitive, col2 text COLLATE ignore_accents, col3 text);
 GO
 
 INSERT INTO mismatch_col VALUES ('abc', 'xyz', 'tde');
@@ -661,4 +665,8 @@ GO
 
 
 DROP TABLE mismatch_col
+GO
+
+DROP COLLATION case_insensitive;
+DROP COLLATION ignore_accents;
 GO
