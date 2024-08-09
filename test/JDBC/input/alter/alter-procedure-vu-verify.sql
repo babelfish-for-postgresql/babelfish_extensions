@@ -13,8 +13,9 @@ AS
     select * from alter_proc_orders
 GO
 
--- Test Case: Modify the procedure body
-ALTER PROCEDURE alter_proc_p1
+-- Test Case: Modify the procedure body, and check information_schema updated with spaces
+/* Leading comment not included: BABEL-5140 */ ALTER       -- test comment
+    PROCEDURE alter_proc_p1
 AS
     select * from alter_proc_orders
 GO
@@ -25,10 +26,14 @@ go
 exec alter_proc_p2
 go
 
--- Test Case: Modify the procedure body, add a parameter, use "proc"
---            instead of "procedure"              
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
 
-ALTER PROC alter_proc_p1
+-- Test Case: Modify the procedure body, add a parameter, use "proc"
+--            instead of "procedure"
+       ALTER /* TEST COMMENT */ 
+            PROC alter_proc_p1
     @param INT
 AS
     IF (@param = 1)
@@ -47,6 +52,10 @@ GO
 
 exec alter_proc_p1 @param = 2
 GO
+
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
 
 -- Test Case: Expect error because no parameter provided
 exec alter_proc_p2
@@ -73,6 +82,10 @@ GO
 exec alter_proc_p1 @param = '2020-01-02'
 GO
 
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
+
 -- Test Case: Modify the procedure body to call another modified proc
 alter procedure alter_proc_p2
 AS
@@ -80,6 +93,10 @@ AS
 GO
 
 exec alter_proc_p2
+go
+
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p2';
 go
 
 -- Test Case: attempt to alter function, expect error for being unsupported
@@ -126,6 +143,10 @@ go
 select * from alter_proc_users
 go
 
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p3';
+go
+
 -- Test Case: Transaction - begin, alter proc, modify row, commit
 --                        - expect both changes to not go through 
 
@@ -163,4 +184,44 @@ GO
 
 -- Expect this to error with no param provided
 exec alter_proc_p3
+go
+
+
+-- Test Case: confirm information_schema.routines is updated properly with comments
+alter 
+
+/*
+ * test comment 1
+ */
+
+-- test comment 2
+
+procedure alter_proc_p4 as select 3
+go
+
+exec alter_proc_p4
+go
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
+go
+
+-- Test Case: confirm information_schema.routines is updated properly with comments
+alter 
+
+-- test comment 1
+
+procedure alter_proc_p4 as select 4
+go
+
+exec alter_proc_p4
+go
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
+go
+
+-- Test Case: confirm procedure altered in 'alter-procedure-vu-prepare' is properly updated
+exec alter_proc_p5 @dateParam = '2000-01-01'
+go
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
 go
