@@ -2648,16 +2648,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (from_windows && orig_loginname)
 							{
-								
-								/* 
-								 * Check whether the domain name is supported 
-								 * or not
-								 */
-								char *nt_service_pointer = strcasestr(orig_loginname, "nt service");
-								if(nt_service_pointer != NULL && nt_service_pointer == orig_loginname) 
-									ereport(ERROR,
-											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												errmsg("'NT Service' domain is not yet supported in Babelfish.")));
+								char* domain_name = get_windows_domain_name(orig_loginname);
 
 								/*
 								 * The login name must contain '\' if it is
@@ -2697,6 +2688,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (windows_login_contains_invalid_chars(orig_loginname))
 									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
+
+								/* 
+								 * Check whether the domain name is supported 
+								 * or not
+								 */
+								if(windows_domain_is_not_supported(domain_name))
+									ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												errmsg("'%s' domain is not yet supported in Babelfish.", domain_name)));
 
 								/*
 								 * Check whether the domain name contains invalid characters or not.
