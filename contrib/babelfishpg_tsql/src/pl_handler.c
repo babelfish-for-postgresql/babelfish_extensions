@@ -141,6 +141,7 @@ static void call_prev_ProcessUtility(PlannedStmt *pstmt,
 static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc);
 static void pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl);
+static void bbf_func_ext_update_proc_definition(Oid oid);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -2490,6 +2491,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						pg_proc_update_oid_acl(address, oldoid, proacl);
 						/* Update function/procedure related metadata in babelfish catalog */
 						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
+						/* Increase counter after bbf_func_ext modified in  pltsql_store_func_default_positions*/
+						CommandCounterIncrement();
+						bbf_func_ext_update_proc_definition(oldoid);
 						if (!isSameProc) {
 						       /*
 							* When the signatures differ we need to manually update the 'function_args' column in 
@@ -4235,6 +4239,85 @@ pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
 	table_close(rel, RowExclusiveLock);
 }
 
+/*
+ * Update the function definition of an alter procedure query 
+ * "ALTER ..." to "CREATE ..." in bbf_function_ext
+ */
+static void bbf_func_ext_update_proc_definition(Oid oid)
+{
+	Relation	bbf_function_ext_rel;
+	TupleDesc	bbf_function_ext_rel_dsc;
+	Datum 		new_record[BBF_FUNCTION_EXT_NUM_COLS];
+	bool		new_record_replaces[BBF_FUNCTION_EXT_NUM_COLS];
+	bool		new_record_nulls[BBF_FUNCTION_EXT_NUM_COLS];
+	char 		*original_query = get_original_query_string();
+	HeapTuple	tuple,
+				proctup,
+				oldtup;
+	StringInfoData infoSchemaStr;
+
+	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
+	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
+
+	if(original_query == NULL)
+	{
+		table_close(bbf_function_ext_rel, RowExclusiveLock);
+		elog(ERROR, "lookup failed for original query");
+	}
+
+	/*
+	 * This solution only works because original_query does not contain
+	 * any leading characters or comments before "ALTER". When BABEL-5140
+	 * is resolved we will need to refactor this code
+	 */
+	if(!(strlen(original_query) >= 5 && strncasecmp(original_query, "alter", 5) == 0))
+	{
+		table_close(bbf_function_ext_rel, RowExclusiveLock);
+		elog(ERROR, "original query: %s, is improperly formatted", original_query);
+	}
+
+	/*
+	 * Procedure has already been modified, by alter proc
+	 * we expect it to still exist in pg_proc and bbf_function_ext
+	 */
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oid));
+	if (!HeapTupleIsValid(proctup))
+	{
+		table_close(bbf_function_ext_rel, RowExclusiveLock);
+		elog(ERROR, "cache lookup failed for function %u", oid);
+	}
+
+	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
+
+	if(!HeapTupleIsValid(oldtup))
+	{
+		ReleaseSysCache(proctup);
+		table_close(bbf_function_ext_rel, RowExclusiveLock);
+		elog(ERROR, "cache lookup failed for function %u", oid);
+	}
+
+	initStringInfo(&infoSchemaStr);
+	
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
+
+	/* Change alter to create, add rest of characters, and update */
+	appendStringInfoString(&infoSchemaStr, "CREATE");
+	appendStringInfoString(&infoSchemaStr, original_query + 5);
+	new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(infoSchemaStr.data);
+	new_record_replaces[Anum_bbf_function_ext_definition - 1] = true;
+
+	tuple = heap_modify_tuple(oldtup, bbf_function_ext_rel_dsc,
+								new_record, new_record_nulls,
+								new_record_replaces);
+	CatalogTupleUpdate(bbf_function_ext_rel, &tuple->t_self, tuple);
+	heap_freetuple(oldtup);
+
+	/* Clean up */
+	ReleaseSysCache(proctup);
+	heap_freetuple(tuple);
+	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
 /*
  * Update the pg_type catalog entry for the given name to have
  * typbyval set to the given value.
