@@ -57,8 +57,8 @@ ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ADD  CONSTRAINT [babel_1654_vu_prepa
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 
-SET ANSI_NULLS ON
-SET QUOTED_IDENTIFIER ON
+SET ANSI_NULLS OFF
+SET QUOTED_IDENTIFIER OFF
 CREATE TRIGGER [dbo].[babel_1654_vu_prepare_updemployeedatas] ON [dbo].[babel_1654_vu_prepare_employeedata]  AFTER UPDATE,INSERT AS   
 	select COLUMNS_UPDATED();
 	update babel_1654_vu_prepare_t set a = 'sss' , b = 'sss' where id = 1;
@@ -66,8 +66,8 @@ CREATE TRIGGER [dbo].[babel_1654_vu_prepare_updemployeedatas] ON [dbo].[babel_16
 ALTER TABLE [dbo].[babel_1654_vu_prepare_employeedata] ENABLE TRIGGER [babel_1654_vu_prepare_updemployeedatas]
 GO
 
-SET ANSI_NULLS ON
-SET QUOTED_IDENTIFIER ON
+SET ANSI_NULLS OFF
+SET QUOTED_IDENTIFIER OFF
 CREATE TRIGGER babel_1654_vu_prepare_trig_t on babel_1654_vu_prepare_t after update as
 	select COLUMNS_UPDATED();
 ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ENABLE TRIGGER [babel_1654_vu_prepare_trig_t]
