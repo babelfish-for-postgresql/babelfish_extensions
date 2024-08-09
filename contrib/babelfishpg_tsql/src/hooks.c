@@ -2009,7 +2009,11 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 					 * for the last_dot position
 					 */
 					if (*colname_start == '-' && *(colname_start+1) == '-')
+					{
+						last_dot++;
+						colname_start = last_dot;
 						break;
+					}
 					if(open_square_bracket == 0 && *colname_start == '"')
 					{
 						double_quotes++;
