@@ -214,6 +214,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
  * 			parser Hook
  *****************************************/
 static Oid set_param_collation(Param *param);
+static Oid default_collation_for_builtin_type(Type typ);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -479,6 +480,7 @@ InstallExtendedHooks(void)
 	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed; 
 
 	handle_param_collation_hook = set_param_collation;
+	handle_default_collation_hook = default_collation_for_builtin_type;
 }
 
 void
@@ -550,6 +552,7 @@ UninstallExtendedHooks(void)
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
 	handle_param_collation_hook = NULL;
+	handle_default_collation_hook = NULL;
 }
 
 /*****************************************
@@ -5321,4 +5324,44 @@ set_param_collation(Param *param)
 	{
 		return get_typcollation(param->paramtype);
 	}
+}
+
+/*
+ * default_collation_for_builtin_type - returns the default collation for the given
+ * 									   builtin type.
+ *
+ * 	@param typ - given type (as type struct)
+ * 	@return - default collation for the given builtin type based on dialect
+ */
+static Oid
+default_collation_for_builtin_type(Type typ)
+{
+	Form_pg_type	typtup;
+	Oid				oid = InvalidOid;
+
+	typtup = (Form_pg_type) GETSTRUCT(typ);
+	if (OidIsValid(typtup->typcollation) &&
+		sql_dialect == SQL_DIALECT_TSQL &&
+		pg_strcasecmp(get_namespace_name(typtup->typnamespace), "sys") == 0)
+	{
+		/*
+		 * Always set CLUSTER_COLLATION_OID() for babelfish collatable types so that
+		 * we can set collation according to database or server level later.
+		 */
+		oid = CLUSTER_COLLATION_OID();
+	}
+	else
+	{
+		oid = typtup->typcollation;
+	}
+
+	/*
+	 * Special handling for TEXT datatype as Babelfish does not define sys.TEXT.
+	 */
+	if (oid == DEFAULT_COLLATION_OID)
+	{
+		oid = CLUSTER_COLLATION_OID();
+	}
+
+	return oid;
 }
