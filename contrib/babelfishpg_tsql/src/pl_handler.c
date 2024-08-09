@@ -4254,56 +4254,68 @@ static void bbf_func_ext_update_proc_definition(Oid oid)
 	HeapTuple	tuple,
 				proctup,
 				oldtup;
-	
-	
+	StringInfoData infoSchemaStr;
+
+	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
+	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
+
+	if(original_query == NULL)
+	{
+		table_close(bbf_function_ext_rel, RowExclusiveLock);
+		elog(ERROR, "lookup failed for original query");
+	}
+
+	/*
+	 * This solution only works because original_query does not contain
+	 * any leading characters or comments before "ALTER". When BABEL-5140
+	 * is resolved we will need to refactor this code
+	 */
+	if(!(strlen(original_query) >= 5 && strncasecmp(original_query, "alter", 5) == 0))
+	{
+		elog(ERROR, "original query: %s, is improperly formatted", original_query);
+	}
+
+	/*
+	 * Procedure has already been modified, by alter proc
+	 * we expect it to still exist in pg_proc and bbf_function_ext
+	 */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oid));
 	if (!HeapTupleIsValid(proctup))
+	{
+		table_close(bbf_function_ext_rel, RowExclusiveLock);
 		elog(ERROR, "cache lookup failed for function %u", oid);
-	if(original_query == NULL)
-		elog(ERROR, "lookup failed for original query");
+	}
+
 	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
 
-	if (HeapTupleIsValid(oldtup))
+	if(!HeapTupleIsValid(oldtup))
 	{
-		StringInfoData infoSchemaStr;
-		initStringInfo(&infoSchemaStr);
-		bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
-		bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
-		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-		MemSet(new_record_replaces, false, sizeof(new_record_replaces));
-
-		/*
-		 * This solution only works because original_query does not contain
-		 * any leading characters or comments before "ALTER". When BABEL-5140
-		 * is resolved we will need to refactor this code
-		 */
-		if(strlen(original_query) >= 5 && strncasecmp(original_query, "alter", 5) == 0)
-		{
-			/* Change alter to create, add rest of characters, and update */
-			appendStringInfoString(&infoSchemaStr, "CREATE");
-			appendStringInfoString(&infoSchemaStr, original_query + 5);
-			new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(infoSchemaStr.data);
-			new_record_replaces[Anum_bbf_function_ext_definition - 1] = true;
-		}
-
-		tuple = heap_modify_tuple(oldtup, bbf_function_ext_rel_dsc,
-								  new_record, new_record_nulls,
-								  new_record_replaces);
-		CatalogTupleUpdate(bbf_function_ext_rel, &tuple->t_self, tuple);
-		heap_freetuple(oldtup);
-
-		/* Clean up */
 		ReleaseSysCache(proctup);
-		heap_freetuple(tuple);
 		table_close(bbf_function_ext_rel, RowExclusiveLock);
-	}
-	else
-	{
-		heap_freetuple(oldtup);
-		ReleaseSysCache(proctup);
 		elog(ERROR, "cache lookup failed for function %u", oid);
 	}
+
+	initStringInfo(&infoSchemaStr);
 	
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
+
+	/* Change alter to create, add rest of characters, and update */
+	appendStringInfoString(&infoSchemaStr, "CREATE");
+	appendStringInfoString(&infoSchemaStr, original_query + 5);
+	new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(infoSchemaStr.data);
+	new_record_replaces[Anum_bbf_function_ext_definition - 1] = true;
+
+	tuple = heap_modify_tuple(oldtup, bbf_function_ext_rel_dsc,
+								new_record, new_record_nulls,
+								new_record_replaces);
+	CatalogTupleUpdate(bbf_function_ext_rel, &tuple->t_self, tuple);
+	heap_freetuple(oldtup);
+
+	/* Clean up */
+	ReleaseSysCache(proctup);
+	heap_freetuple(tuple);
+	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 /*
  * Update the pg_type catalog entry for the given name to have
