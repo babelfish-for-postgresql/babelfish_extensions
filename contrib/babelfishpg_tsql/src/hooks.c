@@ -214,7 +214,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
  * 			parser Hook
  *****************************************/
 static Oid set_param_collation(Param *param);
-static Oid default_collation_for_builtin_type(Type typ);
+static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -5334,7 +5334,7 @@ set_param_collation(Param *param)
  * 	@return - default collation for the given builtin type based on dialect
  */
 static Oid
-default_collation_for_builtin_type(Type typ)
+default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 {
 	Form_pg_type	typtup;
 	Oid				oid = InvalidOid;
@@ -5356,9 +5356,11 @@ default_collation_for_builtin_type(Type typ)
 	}
 
 	/*
-	 * Special handling for TEXT datatype as Babelfish does not define sys.TEXT.
+	 * Special handling for PG datatypes such as TEXT because Babelfish does not define sys.TEXT.
+	 * This is required as Babelfish currently does not handle collation of String Const node correctly.
+	 * TODO: Fix the handling of the collation for String Const node.
 	 */
-	if (oid == DEFAULT_COLLATION_OID)
+	if (handle_pg_type && oid == DEFAULT_COLLATION_OID)
 	{
 		oid = CLUSTER_COLLATION_OID();
 	}
