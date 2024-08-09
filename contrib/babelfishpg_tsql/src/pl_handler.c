@@ -4272,6 +4272,7 @@ static void bbf_func_ext_update_proc_definition(Oid oid)
 	 */
 	if(!(strlen(original_query) >= 5 && strncasecmp(original_query, "alter", 5) == 0))
 	{
+		table_close(bbf_function_ext_rel, RowExclusiveLock);
 		elog(ERROR, "original query: %s, is improperly formatted", original_query);
 	}
 
