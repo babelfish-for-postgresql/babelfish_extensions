@@ -1,3 +1,4 @@
+-- db_collation_expected
 
 select * from information_schema.domains where DOMAIN_SCHEMA = 'isc_domains_vu_prepare_s' ORDER BY DOMAIN_NAME
 go
