@@ -3836,29 +3836,40 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_CreateDomainStmt:
 			{
-				CreateDomainStmt *create_domain = (CreateDomainStmt *) parsetree;
+				HeapTuple			typeTup;
+				Form_pg_type		baseType;
+				int32				basetypeMod;
+				CreateDomainStmt	*create_domain = (CreateDomainStmt *) parsetree;
 
-				if (!create_domain->collClause)
+				if (sql_dialect == SQL_DIALECT_TSQL && !create_domain->collClause)
 				{
-					CollateClause *n;
-					/*
-					* Always set collation corresponding to database default or server default
-					* for new type being defined.
-					*/
-					char *coll = get_collation_name(tsql_get_database_or_server_collation_oid_internal(false));
+					/* check if base type is collatable? */
+					typeTup = typenameType(NULL, create_domain->typeName, &basetypeMod);
+					baseType = (Form_pg_type) GETSTRUCT(typeTup);
 
-					if (coll == NULL)
+					if (OidIsValid(baseType->typcollation))
 					{
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								errmsg("Default collation couldn't be determined for new data type.")));
-					}
+						CollateClause *n;
+						/*
+						* Always set collation corresponding to database default or server default
+						* for new type being defined.
+						*/
+						char *coll = get_collation_name(tsql_get_database_or_server_collation_oid_internal(false));
 
-					n = makeNode(CollateClause);
-					n->arg = NULL;
-					n->collname = list_make1(makeString(coll));
-					n->location = -1;
-					create_domain->collClause = n;
+						if (coll == NULL)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("Default collation couldn't be determined for new data type.")));
+						}
+
+						n = makeNode(CollateClause);
+						n->arg = NULL;
+						n->collname = list_make1(makeString(coll));
+						n->location = -1;
+						create_domain->collClause = n;
+					}
+					ReleaseSysCache(typeTup);
 				}
 
 				if (prev_ProcessUtility)
