@@ -3838,6 +3838,29 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				CreateDomainStmt *create_domain = (CreateDomainStmt *) parsetree;
 
+				if (!create_domain->collClause)
+				{
+					CollateClause *n;
+					/*
+					* Always set collation corresponding to database default or server default
+					* for new type being defined.
+					*/
+					char *coll = get_collation_name(tsql_get_database_or_server_collation_oid_internal(false));
+
+					if (coll == NULL)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Default collation couldn't be determined for new data type.")));
+					}
+
+					n = makeNode(CollateClause);
+					n->arg = NULL;
+					n->collname = list_make1(makeString(coll));
+					n->location = -1;
+					create_domain->collClause = n;
+				}
+
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 										queryEnv, dest, qc);
