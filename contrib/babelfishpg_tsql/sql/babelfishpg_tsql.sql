@@ -385,112 +385,6 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
--- internal function in order to workaround BABEL-1597 for BABEL-1784
-drop function if exists sys.sp_columns_100_internal(
-	in_table_name sys.nvarchar(384),
-    in_table_owner sys.nvarchar(384),
-    in_table_qualifier sys.nvarchar(384),
-    in_column_name sys.nvarchar(384),
-	in_NameScope int,
-    in_ODBCVer int,
-    in_fusepattern smallint);
-create function sys.sp_columns_100_internal(
-	in_table_name sys.nvarchar(384),
-    in_table_owner sys.nvarchar(384) = '', 
-    in_table_qualifier sys.nvarchar(384) = '',
-    in_column_name sys.nvarchar(384) = '',
-	in_NameScope int = 0,
-    in_ODBCVer int = 2,
-    in_fusepattern smallint = 1)
-returns table (
-	out_table_qualifier sys.sysname,
-	out_table_owner sys.sysname,
-	out_table_name sys.sysname,
-	out_column_name sys.sysname,
-	out_data_type smallint,
-	out_type_name sys.sysname,
-	out_precision int,
-	out_length int,
-	out_scale smallint,
-	out_radix smallint,
-	out_nullable smallint,
-	out_remarks varchar(254),
-	out_column_def sys.nvarchar(4000),
-	out_sql_data_type smallint,
-	out_sql_datetime_sub smallint,
-	out_char_octet_length int,
-	out_ordinal_position int,
-	out_is_nullable varchar(254),
-	out_ss_is_sparse smallint,
-	out_ss_is_column_set smallint,
-	out_ss_is_computed smallint,
-	out_ss_is_identity smallint,
-	out_ss_udt_catalog_name varchar(254),
-	out_ss_udt_schema_name varchar(254),
-	out_ss_udt_assembly_type_name varchar(254),
-	out_ss_xml_schemacollection_catalog_name varchar(254),
-	out_ss_xml_schemacollection_schema_name varchar(254),
-	out_ss_xml_schemacollection_name varchar(254),
-	out_ss_data_type sys.tinyint
-)
-as $$
-begin
-	IF in_fusepattern = 1 THEN
-		return query
-	    select table_qualifier, 
-				table_owner,
-				table_name,
-				column_name,
-				data_type,
-				type_name,
-				precision,
-				length,
-				scale,
-				radix,
-				nullable,
-				remarks,
-				column_def,
-				sql_data_type,
-				sql_datetime_sub,
-				char_octet_length,
-				ordinal_position,
-				is_nullable,
-				ss_is_sparse,
-				ss_is_column_set,
-				ss_is_computed,
-				ss_is_identity,
-				ss_udt_catalog_name,
-				ss_udt_schema_name,
-				ss_udt_assembly_type_name,
-				ss_xml_schemacollection_catalog_name,
-				ss_xml_schemacollection_schema_name,
-				ss_xml_schemacollection_name,
-				ss_data_type
-		from sys.sp_columns_100_view
-	    where lower(table_name) similar to lower(in_table_name) COLLATE "C" -- TBD - this should be changed to ci_as
-	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner collate sys.database_default)
-	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier collate sys.database_default)
-	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name collate sys.database_default)
-		order by table_qualifier,
-		         table_owner,
-			 table_name,
-			 ordinal_position;
-	ELSE 
-		return query
-	    select table_qualifier, precision from sys.sp_columns_100_view
-	      where in_table_name = table_name collate sys.bbf_unicode_general_ci_as
-	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner collate sys.database_default)
-	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier collate sys.database_default)
-	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name collate sys.database_default)
-		order by table_qualifier,
-		         table_owner,
-			 table_name,
-			 ordinal_position;
-	END IF;
-end;
-$$
-LANGUAGE plpgsql STABLE;
-
 CREATE OR REPLACE PROCEDURE sys.sp_columns (
 	"@table_name" sys.nvarchar(384),
     "@table_owner" sys.nvarchar(384) = '', 
@@ -1179,37 +1073,6 @@ WHERE t5.contype = 'p'
 
 GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
 
--- internal function in order to workaround BABEL-1597
-create or replace function sys.sp_pkeys_internal(
-	in_table_name sys.nvarchar(384),
-	in_table_owner sys.nvarchar(384) = '',
-	in_table_qualifier sys.nvarchar(384) = ''
-)
-returns table(
-	out_table_qualifier sys.sysname,
-	out_table_owner sys.sysname,
-	out_table_name sys.sysname,
-	out_column_name sys.sysname,
-	out_key_seq smallint,
-	out_pk_name sys.sysname
-)
-as $$
-begin
-	return query
-	select * from sys.sp_pkeys_view
-	where table_name = in_table_name
-		and table_owner = coalesce(in_table_owner,'dbo') 
-		and ((SELECT
-		         coalesce(in_table_qualifier,'')) = '' or
-		         table_qualifier = in_table_qualifier )
-	order by table_qualifier,
-	         table_owner,
-		 table_name,
-		 key_seq;
-end;
-$$
-LANGUAGE plpgsql STABLE;
-
 CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
 	"@table_name" sys.nvarchar(384),
 	"@table_owner" sys.nvarchar(384) = 'dbo',
@@ -1290,43 +1153,6 @@ FROM pg_catalog.pg_class t1
 WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
-
-create function sys.sp_statistics_internal(
-    in_table_name sys.sysname,
-    in_table_owner sys.sysname = '',
-    in_table_qualifier sys.sysname = '',
-    in_index_name sys.sysname = '',
-	in_is_unique char = 'N',
-	in_accuracy char = 'Q'
-)
-returns table(
-    out_table_qualifier sys.sysname,
-    out_table_owner sys.sysname,
-    out_table_name sys.sysname,
-	out_non_unique smallint,
-	out_index_qualifier sys.sysname,
-	out_index_name sys.sysname,
-	out_type smallint,
-	out_seq_in_index smallint,
-	out_column_name sys.sysname,
-	out_collation sys.varchar(1),
-	out_cardinality int,
-	out_pages int,
-	out_filter_condition sys.varchar(128)
-)
-as $$
-begin
-    return query
-    select * from sys.sp_statistics_view
-    where in_table_name = table_name
-        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner )
-        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier )
-        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name )
-        and ((UPPER(in_is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(in_is_unique) = 'N'))
-    order by non_unique, type, index_name, seq_in_index;
-end;
-$$
-LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_statistics(
     "@table_name" sys.sysname,
