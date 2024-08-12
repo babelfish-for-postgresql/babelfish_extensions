@@ -99,6 +99,7 @@ extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
 extern bool pltsql_nocount;
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
+extern TargetEntry *get_tle_by_resno(List *tlist,AttrNumber resno);
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -156,7 +157,7 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt,ParseState *pstate);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -6076,8 +6077,9 @@ get_identity_into_args(Node *node)
 	return val;
 }
 
+
 static List *
-transformSelectIntoStmt(CreateTableAsStmt *stmt)
+transformSelectIntoStmt(CreateTableAsStmt *stmt, ParseState *pstate)
 {
 	List *result;
 	List *column_original_name_list;
@@ -6085,12 +6087,18 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	AlterTableStmt *altstmt;
 	IntoClause *into;
 	Node *n;
+	List *res;
+	SelectStmt *selectSt;
 
 	n = stmt->query;
 	into = stmt->into;
 	result = NIL;
 	altstmt = NULL;
 	column_original_name_list = NIL;
+
+	res = raw_parser(pstate->p_sourcetext,RAW_PARSE_DEFAULT);
+	Assert(res->length == 1 && IsA(parsetree_nth_stmt(res, 0), SelectStmt));
+	selectSt = (SelectStmt *) parsetree_nth_stmt(res, 0);
 
 	if (n && n->type == T_Query)
 	{
@@ -6186,13 +6194,22 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			{
 				AlterTableStmt *newstmt;
 				AlterTableCmd *cmd;
+				TargetEntry *target;
+
 				char* original_name = NULL;
 				newstmt = NULL;
-
+				
 				if (tle->resname != NULL)
 				{	
 					original_name = tle->resname;
 					tle->resname = downcase_truncate_identifier(tle->resname, strlen(tle->resname), false);
+					if(tle->resjunk)
+						continue;
+					Assert(selectSt);
+					target = get_tle_by_resno(selectSt->targetList,
+														tle->resno);
+					original_name = target->resname;
+
 				}	
 
 				current_resno += 1;
@@ -6264,7 +6281,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	ObjectAddress address;
 	ObjectAddress secondaryObject = InvalidObjectAddress;
 	List *stmts;
-	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree,pstate);
 	while (stmts != NIL)
 	{
 		Node *stmt = (Node *)linitial(stmts);

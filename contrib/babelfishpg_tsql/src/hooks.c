@@ -2076,9 +2076,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		{
 			char	   *alias = palloc0(alias_len + 1);
 			const char	*original_name = NULL;
-			const char *query = pstate->p_sourcetext;
 			int actual_alias_len = 0;
-			List *parsed_stmt;
 
 			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
 			while(*colname_start != '\0' && (*colname_start == '(' || scanner_isspace(*colname_start)))
@@ -2110,17 +2108,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			{
 				memcpy(alias, original_name, actual_alias_len);
 			}
-
-			parsed_stmt = raw_parser(query,RAW_PARSE_DEFAULT);
-			if(IsA(parsetree_nth_stmt(parsed_stmt, 0), SelectStmt) && ((SelectStmt*)parsetree_nth_stmt(parsed_stmt, 0))->intoClause != NULL )
-			{
-				res->name = (char*)original_name;
-			}
-			else
-			{
-				res->name = alias;
-			}
-			
+			res->name = alias;
 		}
 	}
 	/* Update table set qualified column name, resolve qualifiers here */
