@@ -853,7 +853,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		estate->db_name = stmt->db_name;
 		if (user)
-			SetCurrentRoleId(GetSessionUserId(), false);
+		{
+			set_session_properties(stmt->db_name);
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
@@ -1304,7 +1306,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		}
 
 		if (stmt->is_cross_db)
-			SetCurrentRoleId(current_user_id, false);
+		{
+			set_session_properties(cur_dbname);
+		}
 
 		/*
 		 * If we aren't saving the plan, unset the pointer.  Note that it
@@ -1322,7 +1326,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	PG_END_TRY();
 
 	if (stmt->is_cross_db)
-		SetCurrentRoleId(current_user_id, false);
+	{
+		set_session_properties(cur_dbname);
+	}
 
 	if (need_path_reset)
 	{
