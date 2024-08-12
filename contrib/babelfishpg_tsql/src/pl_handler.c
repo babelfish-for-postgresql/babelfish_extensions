@@ -2648,7 +2648,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (from_windows && orig_loginname)
 							{
-								char* domain_name = get_windows_domain_name(orig_loginname);
+								char* domain_name = NULL;
 
 								/*
 								 * The login name must contain '\' if it is
@@ -2693,6 +2693,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * Check whether the domain name is supported 
 								 * or not
 								 */
+								domain_name = get_windows_domain_name(orig_loginname);
 								if(windows_domain_is_not_supported(domain_name))
 									ereport(ERROR,
 											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
