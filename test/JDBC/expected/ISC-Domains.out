@@ -93,10 +93,6 @@ master#!#isc_domains#!#varchar_t#!#nvarchar#!#8#!#16#!#<NULL>#!#<NULL>#!#bbf_uni
 -- Test cross db references
 Create database isc_domain_db
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Database 'isc_domain_db' already exists. Choose a different database name.)~~
-
 
 use isc_domain_db
 go
@@ -159,4 +155,7 @@ int
 
 
 USE master
+go
+
+DROP DATABASE isc_domain_db
 go

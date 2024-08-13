@@ -117,3 +117,6 @@ go
 
 USE master
 go
+
+DROP DATABASE isc_domain_db
+go
