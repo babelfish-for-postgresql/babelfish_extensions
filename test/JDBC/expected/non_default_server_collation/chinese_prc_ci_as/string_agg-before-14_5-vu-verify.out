@@ -5,7 +5,7 @@ GO
 ~~START~~
 varchar
 abc                 ?defghi             ??                  
-比尔·拉            莫斯                
+比尔·拉                莫斯                  
 <NULL>
 Rohit               Bhagat              
 ~~END~~
@@ -16,7 +16,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-比尔·拉            -莫斯                
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -28,7 +28,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-比尔·拉            -莫斯                
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -40,7 +40,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-比尔·拉            -莫斯                
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -52,7 +52,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-比尔·拉            -莫斯                
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -64,7 +64,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-比尔·拉            -莫斯                
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -76,7 +76,7 @@ GO
 ~~START~~
 varchar
 abc                 ?    ?defghi             ?    ??                  
-比尔·拉            ?    莫斯                
+比尔·拉                ?    莫斯                  
 <NULL>
 Rohit               ?    Bhagat              
 ~~END~~
@@ -88,7 +88,7 @@ GO
 ~~START~~
 varchar
 abc                 ??defghi             ???                  
-比尔·拉            ?莫斯                
+比尔·拉                ?莫斯                  
 <NULL>
 Rohit               ?Bhagat              
 ~~END~~
@@ -100,7 +100,7 @@ GO
 ~~START~~
 varchar
 abc                 ?    ?defghi             ?    ??                  
-比尔·拉            ?    莫斯                
+比尔·拉                ?    莫斯                  
 <NULL>
 Rohit               ?    Bhagat              
 ~~END~~
@@ -112,7 +112,7 @@ GO
 ~~START~~
 varchar
 abc                 ??defghi             ???                  
-比尔·拉            ?莫斯                
+比尔·拉                ?莫斯                  
 <NULL>
 Rohit               ?Bhagat              
 ~~END~~
@@ -124,7 +124,7 @@ GO
 ~~START~~
 varchar
 abc                 尸   ?defghi             尸   ??                  
-比尔·拉            尸   莫斯                
+比尔·拉                尸   莫斯                  
 <NULL>
 Rohit               尸   Bhagat              
 ~~END~~
@@ -136,7 +136,7 @@ GO
 ~~START~~
 varchar
 abc                 尸?defghi             尸??                  
-比尔·拉            尸莫斯                
+比尔·拉                尸莫斯                  
 <NULL>
 Rohit               尸Bhagat              
 ~~END~~
@@ -148,7 +148,7 @@ GO
 ~~START~~
 varchar
 abc                 尸   ?defghi             尸   ??                  
-比尔·拉            尸   莫斯                
+比尔·拉                尸   莫斯                  
 <NULL>
 Rohit               尸   Bhagat              
 ~~END~~
@@ -160,7 +160,7 @@ GO
 ~~START~~
 varchar
 abc                 尸?defghi             尸??                  
-比尔·拉            尸莫斯                
+比尔·拉                尸莫斯                  
 <NULL>
 Rohit               尸Bhagat              
 ~~END~~
@@ -725,7 +725,7 @@ Rohit尸Bhagat
 SELECT * FROM babel_5156_string_agg_dep_view1
 GO
 ~~START~~
-varchar
+text
 abc-?defghi-??
 比尔·拉-莫斯
 <NULL>
@@ -755,8 +755,8 @@ abc-🙂defghi-🙂🙂
 SELECT babel_5156_string_agg_itvf_func1()
 GO
 ~~START~~
-nvarchar
-abc-🙂defghi-🙂🙂
+text
+abc-?defghi-??
 比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
@@ -766,8 +766,8 @@ Rohit-Bhagat
 SELECT * FROM babel_5156_string_agg_dep_view2
 GO
 ~~START~~
-nvarchar
-abc-🙂defghi-🙂🙂
+text
+abc-?defghi-??
 比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
@@ -796,8 +796,8 @@ abc-🙂defghi-🙂🙂
 SELECT babel_5156_string_agg_itvf_func2()
 GO
 ~~START~~
-nvarchar
-abc-🙂defghi-🙂🙂
+text
+abc-?defghi-??
 比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
@@ -1212,37 +1212,6 @@ GO
 
 
 
-SELECT STRING_AGG(col_geometry, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of string_agg function.)~~
-
-
-DECLARE @sep geometry = geometry::STGeomFromText('POINT (1 2)', 0);
-SELECT STRING_AGG(col_geometry, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of string_agg function.)~~
-
-
-
-SELECT STRING_AGG(col_geography, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of string_agg function.)~~
-
-
-DECLARE @sep geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT STRING_AGG(col_geography, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of string_agg function.)~~
-
-
 -- psql
 -- all of the following queries should use PG_CATALOG.string_agg function
 SELECT STRING_AGG(col_text, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
@@ -1271,8 +1240,8 @@ SELECT STRING_AGG(col_char, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP 
 GO
 ~~START~~
 text
-abc                 -?defghi             -??                  
-比尔·拉            -莫斯                
+abc                 -🙂defghi             -🙂🙂                  
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
