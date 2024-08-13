@@ -1718,6 +1718,13 @@ tsql_set_db_collation(Oid database_collation_oid)
 	return;
 }
 
+/* 
+ * We need to communicate to common extension
+ * that user has invoked USE DB command
+ * Hence, we need to update the cache related to -
+ * 1. database collation oid
+ * 2. database collation index
+ */
 void
 set_db_collation_internal(int16 db_id)
 {
@@ -1730,7 +1737,7 @@ set_db_collation_internal(int16 db_id)
 	tuple_sysdb = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(db_id));
 
 	if (!HeapTupleIsValid(tuple_sysdb))
-		return;
+		elog(ERROR, "cache lookup failed for database %u", db_id);
 
 	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple_sysdb));
 

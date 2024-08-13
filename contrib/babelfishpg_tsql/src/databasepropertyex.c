@@ -23,6 +23,7 @@ get_collation_name(Datum dbname)
 {
 	HeapTuple	tuple;
 	Form_sysdatabases sysdb;
+	char *collation_name;
 
 	tuple = SearchSysCache1(SYSDATABASENAME, dbname);
 
@@ -30,9 +31,10 @@ get_collation_name(Datum dbname)
 		return NULL;
 
 	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	collation_name = pstrdup(NameStr(sysdb->default_collation));
 
 	ReleaseSysCache(tuple);
-	return sysdb->default_collation.data;
+	return collation_name;
 }
 
 PG_FUNCTION_INFO_V1(databasepropertyex);

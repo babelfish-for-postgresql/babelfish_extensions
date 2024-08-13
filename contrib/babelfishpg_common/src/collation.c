@@ -33,7 +33,6 @@ static int	server_collation_collidx = NOT_FOUND;
 static Oid	server_collation_oid = InvalidOid;
 static bool db_collation_is_CI = true;
 
-// static char *database_collation_name = NULL;
 static Oid database_collation_oid = InvalidOid;
 static int database_collation_collidx = NOT_FOUND;
 
@@ -637,6 +636,24 @@ translate_collation_utility(const char *collname)
 	return idx;
 }
 
+/* 
+ * Translate TSQL collation to it's closest BBF Collation. 
+ * This is different from translate_collation_utility in regard
+ * that the former returns index of the translated collation but 
+ * this function returns the translated collation name
+ * We have made this function as a part of rendezvous variable
+ * hence can be accessed from tsql extension as well
+ */
+const char *
+translate_tsql_collation_to_bbf_collation(const char *collname)
+{
+	for (int i = 0; i < TOTAL_COLL_TRANSLATION_COUNT; i++)
+		if (pg_strcasecmp(coll_translations[i].from_collname, collname) == 0)
+			return (coll_translations[i].to_collname);
+
+	return collname;
+}
+
 /*
  * translate_collation - Returns index of babelfish collation corresponding to supplied collation_name
  * by looking into coll_translations array or returns NOT_FOUND.
@@ -686,17 +703,6 @@ translate_bbf_collation_to_tsql_collation(const char *collname)
 	for (int i = 0; i < TOTAL_REVERSE_COLL_TRANSLATION_COUNT; i++)
 		if (pg_strcasecmp(reverse_coll_translations[i].from_collname, collname) == 0)
 			return (reverse_coll_translations[i].to_collname);
-
-	return NULL;
-}
-
-/* Translate TSQL collation to it's closest BBF Collation. */
-const char *
-translate_tsql_collation_to_bbf_collation(const char *collname)
-{
-	for (int i = 0; i < TOTAL_COLL_TRANSLATION_COUNT; i++)
-		if (pg_strcasecmp(coll_translations[i].from_collname, collname) == 0)
-			return (coll_translations[i].to_collname);
 
 	return NULL;
 }
@@ -1028,11 +1034,14 @@ lookup_collation_table(Oid coll_oid)
 /*
  * get_database_or_server_collation_collidx -
  * Get the Index of default collation from coll_infos array, or return NOT_FOUND if not found
+ * Firstly, we check whether database_collation_collidx (corresponds to database level collidx) 
+ * is FOUND or not - which should have been set during USE command
+ * If NOT_FOUND, then we fallback to server level collidx
  */
 int
 get_database_or_server_collation_collidx(void)
 {
-	if (NOT_FOUND != database_collation_collidx)
+	if (database_collation_collidx != NOT_FOUND)
 		return database_collation_collidx;
 	init_server_collation_name();
 	if (NOT_FOUND == server_collation_collidx)
@@ -1291,13 +1300,13 @@ collation_is_CI(Oid colloid)
 	 * colStrength primary, or level1, corresponds to a CI_AI collation,
 	 * unless colCaseLevel=yes, or kc-true, is also specified.
 	 */
-	if ((strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) || strstr(lowerstr(collcollate), lowerstr("colStrength=primary"))) &&
-		0 == strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")))    /* without a colCaseLevel - not CS_AI */
+	if ((strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) != NULL || strstr(lowerstr(collcollate), lowerstr("colStrength=primary")) != NULL) &&
+		strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")) == 0)    /* without a colCaseLevel - not CS_AI */
 			return true;
 	 
 	/* Starting from PG16, locale string is canonicalized to a language tag. */
-	if ((0 != strstr(lowerstr(collcollate), "level2") || 0 != strstr(lowerstr(collcollate), "level1"))  &&    /* CI_AS OR CI_AI */
-		0 == strstr(lowerstr(collcollate), "kc-true"))
+	if ((strstr(lowerstr(collcollate), "level2") != 0 || strstr(lowerstr(collcollate), "level1") != 0)  &&    /* CI_AS OR CI_AI */
+		strstr(lowerstr(collcollate), "kc-true") == 0)
 		return true;
 
 	return false;
@@ -1715,5 +1724,5 @@ void
 set_db_collation(Oid db_coll)
 {
 	database_collation_oid = db_coll;
-	database_collation_collidx = find_any_collation((lookup_collation_table(database_collation_oid).collname), true);
+	database_collation_collidx = find_any_collation((lookup_collation_table(database_collation_oid).collname), false);
 }
