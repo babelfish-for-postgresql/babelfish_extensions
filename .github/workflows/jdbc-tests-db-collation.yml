@@ -5,6 +5,7 @@ jobs:
   run-babelfish-jdbc-tests:
     env:
       INSTALL_DIR: psql
+      databaseCollationName: bbf_unicode_cp1_ci_ai
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -59,7 +60,18 @@ jobs:
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'
         timeout-minutes: 60
-        uses: ./.github/composite-actions/run-jdbc-db-collation-tests
+        run: |
+          export PATH=/opt/mssql-tools/bin:$PATH
+          # Will uncomment it later when we plan to run JDBC tests for db level collation on a different db than master
+          # sqlcmd -S localhost -U "jdbc_user" -P 12345678 -i .github/scripts/db_collation.sql
+          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
+          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+          cd test/JDBC/
+          export databaseCollationName=${{env.databaseCollationName}}
+          sudo ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "update sys.babelfish_sysdatabases set default_collation = '${{env.databaseCollationName}}' where name = 'master';"
+          sudo ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "select default_collation from sys.babelfish_sysdatabases where name = 'master';"
+          mvn test
+          unset databaseCollationName
 
       - name: Start secondary server
         id: start-secondary
