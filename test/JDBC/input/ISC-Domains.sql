@@ -104,3 +104,16 @@ DROP TYPE isc_domains.my_tbl_type
 DROP SCHEMA isc_domains
 DROP DATABASE isc_domain_db
 go
+
+-- Test cross db references with Collation BBF_Unicode_CP1_CI_AI
+Create database isc_domain_db collate BBF_Unicode_CP1_CI_AI
+go
+
+use isc_domain_db
+go
+
+select COUNT(*) from information_schema.domains
+go
+
+USE master
+go
