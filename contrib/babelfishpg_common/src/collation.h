@@ -99,7 +99,7 @@ typedef struct collation_callbacks
 
 	bytea	   *(*tdscollationproperty_helper) (const char *collationaname, const char *property);
 
-	bool		(*is_server_collation_CI) (void);
+	bool		(*is_database_or_server_collation_CI) (void);
 
 	bool		(*is_valid_server_collation_name) (const char *collationname);
 
@@ -137,7 +137,7 @@ extern Datum is_collated_ci_as_internal(PG_FUNCTION_ARGS);
 extern Datum is_collated_ai_internal(PG_FUNCTION_ARGS);
 extern int	collationproperty_helper(const char *collationaname, const char *property);
 extern bytea *tdscollationproperty_helper(const char *collationname, const char *property);
-extern bool is_server_collation_CI(void);
+extern bool is_database_or_server_collation_CI(void);
 extern int	translate_collation(const char *collation_name, bool check_for_server_collation_name_guc);
 extern int	init_collid_trans_tab_internal(void);
 extern int	init_like_ilike_table_internal(void);

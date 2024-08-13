@@ -563,7 +563,7 @@ collation_is_case_insensitive_and_accent_sensitive(int collidx)
 }
 
 bool
-is_server_collation_CI(void)
+is_database_or_server_collation_CI(void)
 {
 	get_database_or_server_collation_oid_internal(false);
 	return db_collation_is_CI;
@@ -1621,7 +1621,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.tdscollationproperty_helper = &tdscollationproperty_helper;
 		collation_callbacks_var.lookup_collation_table_callback = &lookup_collation_table;
 		collation_callbacks_var.lookup_like_ilike_table = &lookup_like_ilike_table;
-		collation_callbacks_var.is_server_collation_CI = &is_server_collation_CI;
+		collation_callbacks_var.is_database_or_server_collation_CI = &is_database_or_server_collation_CI;
 		collation_callbacks_var.is_valid_server_collation_name = &is_valid_server_collation_name;
 		collation_callbacks_var.find_locale = &find_locale;
 		collation_callbacks_var.EncodingConversion = &encoding_conv_util;

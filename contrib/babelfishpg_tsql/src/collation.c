@@ -1223,12 +1223,12 @@ tsql_collationproperty_helper(const char *collationaname, const char *property)
 }
 
 bool
-tsql_is_server_collation_CI(void)
+tsql_is_database_or_server_collation_CI(void)
 {
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	return (*collation_callbacks_ptr->is_server_collation_CI) ();
+	return (*collation_callbacks_ptr->is_database_or_server_collation_CI) ();
 }
 
 bool
