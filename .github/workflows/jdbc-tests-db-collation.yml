@@ -10,13 +10,6 @@ jobs:
       - uses: actions/checkout@v2
         id: checkout
 
-      - name: Setup upterm session
-        if: always()
-        uses: lhotari/action-upterm@v1
-        timeout-minutes: 120
-        with:
-          limit-access-to-actor: true
-
       - name: Install Dependencies
         id: install-dependencies
         if: always()
