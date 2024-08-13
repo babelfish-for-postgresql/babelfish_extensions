@@ -1490,7 +1490,7 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 		int32_t src_len_utf8 = VARSIZE_ANY_EXHDR(src_text);
 		int32_t substr_len_utf8 = VARSIZE_ANY_EXHDR(substr_text);
 		int32_t src_ulen, substr_ulen;
-		int32_t u8_pos = -1, pos_prev_loop = -1;;
+		int32_t u8_pos = -1, pos_prev_loop = -1;
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
 		UChar *src_uchar, *substr_uchar;
@@ -1593,7 +1593,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		int32_t src_len = VARSIZE_ANY_EXHDR(src_text);
 		int32_t from_str_len = VARSIZE_ANY_EXHDR(from_text);
 		int32_t to_str_len = VARSIZE_ANY_EXHDR(to_text);
-		int32_t previous_pos, pos_prev_loop = -1;;
+		int32_t previous_pos, pos_prev_loop = -1;
 		int32_t src_ulen, from_ulen;		/* in utf-16 units */
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
