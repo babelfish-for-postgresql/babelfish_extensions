@@ -936,7 +936,7 @@ public:
 						}
 					}
 				}
-				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE() || id->keyword()->SUBSTRING())
+				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE() || id->keyword()->SUBSTRING() || id->keyword()->STRING_AGG())
 				{
 					size_t startPosition = id->keyword()->start->getStartIndex();
 					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
@@ -1183,6 +1183,15 @@ public:
 			rewritten_query_fragment.emplace(std::make_pair(ctx->OPENQUERY()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->OPENQUERY()), "openquery_internal")));
 			rewritten_query_fragment.emplace(std::make_pair(linked_srv->start->getStartIndex(), std::make_pair(linked_srv_name, str)));
 		}	
+	}
+
+	void exitSTRING_AGG(TSqlParser::STRING_AGGContext *ctx) override
+	{
+		if (ctx->STRING_AGG())
+		{
+			size_t startPosition = ctx->STRING_AGG()->getSymbol()->getStartIndex();
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
+		}
 	}
 };
 
