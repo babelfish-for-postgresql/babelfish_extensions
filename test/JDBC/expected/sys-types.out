@@ -201,3 +201,162 @@ GO
 
 DROP TYPE tbl_type_sys_types1;
 GO
+
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+USE db1
+GO
+
+CREATE TYPE my_type FROM int;
+GO
+
+CREATE TYPE my_type2 FROM varchar(20);
+GO
+
+-- output is one as sys.types view by default picks from bbf_unicode_cp1_ci_as 
+select count(*) from sys.types where collation_name='bbf_unicode_cp1_ci_ai';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from sys.types where collation_name='BBF_unicode_CP1_ci_ai';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select cast(name as varchar(20)) 
+		, max_length
+		, precision
+		, scale
+		, cast(collation_name as varchar(30)) 
+from sys.types where is_user_defined = 1 order by name asc;
+GO
+~~START~~
+varchar#!#smallint#!#tinyint#!#tinyint#!#varchar
+my_type#!#4#!#10#!#0#!#<NULL>
+my_type2#!#20#!#0#!#0#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT count(*) FROM sys.types WHERE name = 'my_type';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) FROM sys.types WHERE name = 'MY_TYPE';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+CREATE TYPE tbl_type_sys_types AS TABLE(a INT);
+GO
+
+SELECT count(*) FROM sys.types WHERE name = 'tbl_type_sys_types';
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT count(*) FROM sys.types WHERE name = 'TBL_type_SYS_types';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+-- my_type should not be visible here
+SELECT count(*) FROM sys.types WHERE name = 'my_type';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+CREATE TYPE my_type1 FROM int;
+GO
+
+SELECT count(*) FROM sys.types WHERE name = 'my_type1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) FROM sys.types WHERE name = 'tbl_type_sys_types';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+CREATE TYPE tbl_type_sys_types1 AS TABLE(a INT);
+GO
+
+SELECT count(*) FROM sys.types WHERE name = 'tbl_type_sys_types1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE db1
+GO
+
+SELECT count(*) FROM sys.types WHERE name = 'my_type1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) FROM sys.types WHERE name = 'tbl_type_sys_types1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP TYPE my_type;
+GO
+
+DROP TYPE my_type2
+GO
+
+DROP TYPE tbl_type_sys_types;
+GO
+
+USE master;
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP TYPE my_type1;
+GO
+
+DROP TYPE tbl_type_sys_types1;
+GO
