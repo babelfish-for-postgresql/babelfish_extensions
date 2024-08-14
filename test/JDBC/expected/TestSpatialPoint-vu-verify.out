@@ -3396,13 +3396,6 @@ text
 jdbc_user
 ~~END~~
 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
-~~START~~
-text
-multi-db
-~~END~~
-
 
 CREATE DATABASE db1;
 GO

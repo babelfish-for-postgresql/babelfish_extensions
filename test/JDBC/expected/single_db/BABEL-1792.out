@@ -1,0 +1,77 @@
+USE MASTER;
+GO
+
+CREATE DATABASE db1;
+GO
+
+USE db1;
+GO
+
+CREATE TABLE t1 (id INT, c1 INT);
+GO
+
+INSERT INTO t1 (id, c1) VALUES (1, 2);
+GO
+~~ROW COUNT: 1~~
+
+
+USE MASTER;
+GO
+
+-- Cannot find db1 table t1
+INSERT INTO t1 (id, c1) VALUES (2, 4);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t1" does not exist)~~
+
+
+BEGIN TRAN;
+GO
+
+USE db1;
+GO
+
+INSERT INTO t1 (id, c1) VALUES (3, 8);
+GO
+~~ROW COUNT: 1~~
+
+
+ROLLBACK;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT current_schema();
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+INSERT INTO t1 (id, c1) VALUES (4, 16);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM t1;
+GO
+~~START~~
+int#!#int
+1#!#2
+4#!#16
+~~END~~
+
+
+USE MASTER;
+GO
+
+DROP DATABASE db1;
+GO
