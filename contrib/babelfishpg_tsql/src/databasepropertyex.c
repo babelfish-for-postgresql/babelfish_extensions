@@ -17,25 +17,7 @@
 #include "utils/varlena.h"
 #include "catalog.h"
 #include "catalog.h"
-
-static char*
-get_collation_name(Datum dbname)
-{
-	HeapTuple	tuple;
-	Form_sysdatabases sysdb;
-	char *collation_name;
-
-	tuple = SearchSysCache1(SYSDATABASENAME, dbname);
-
-	if (!HeapTupleIsValid(tuple))
-		return NULL;
-
-	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
-	collation_name = pstrdup(NameStr(sysdb->default_collation));
-
-	ReleaseSysCache(tuple);
-	return collation_name;
-}
+#include "collation.h"
 
 PG_FUNCTION_INFO_V1(databasepropertyex);
 
@@ -55,7 +37,7 @@ databasepropertyex(PG_FUNCTION_ARGS)
 
 	if (strcasecmp(property, "Collation") == 0)
 	{
-		char *database_collation_name = get_collation_name(PG_GETARG_DATUM(0));
+		char *database_collation_name = get_collation_name_for_db(dbname);
 
 		if (database_collation_name)
 			vch = (*common_utility_plugin_ptr->tsql_varchar_input) (database_collation_name, strlen(database_collation_name), -1);

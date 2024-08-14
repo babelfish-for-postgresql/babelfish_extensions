@@ -364,6 +364,33 @@ do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const ch
 }
 
 static void
+check_database_collation_name(const char* database_collation_name)
+{
+	coll_info_t coll_info_of_inputcollid;
+
+	if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Invalid collation \"%s\"", database_collation_name)));
+	}
+
+	/* Block any non-LATIN and CS_AS collation */
+	coll_info_of_inputcollid = tsql_lookup_collation_table_internal(
+		get_collation_oid(list_make1(makeString((char*) database_collation_name)), false));
+
+	if (!supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page) 
+		|| coll_info_of_inputcollid.collateflags == 0x000c /* CS_AS */)
+	{
+		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+		if (server_collation_name && strcmp(server_collation_name, database_collation_name))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("\"%s\" is not currently supported for database collation ", database_collation_name)));
+	}
+}
+
+static void
 create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid)
 {
 	int16		old_dbid;
@@ -388,7 +415,6 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	const char	*old_createrole_self_grant;
 	ListCell	*option;
 	const char* database_collation_name = NULL;
-	coll_info_t coll_info_of_inputcollid;
 
 	/* Check options */
 	foreach(option, options)
@@ -398,29 +424,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		if (strcmp(defel->defname, "collate") == 0)
 		{
 			database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(defGetString(defel));
-
-			if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
-			{
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Invalid collation \"%s\"", defGetString(defel)),
-						parser_errposition(pstate, defel->location)));
-			}
-
-			/* Block any non-LATIN and CS_AS collation */
-			coll_info_of_inputcollid = tsql_lookup_collation_table_internal(
-				get_collation_oid(list_make1(makeString((char*) database_collation_name)), false));
-
-			if (!supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page) 
-				|| coll_info_of_inputcollid.collateflags == 0x000c /* CS_AS */)
-			{
-				const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
-				if (server_collation_name && strcmp(server_collation_name, database_collation_name))
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("\"%s\" is not currently supported for database collation ", defGetString(defel)),
-							parser_errposition(pstate, defel->location)));
-			}
+			check_database_collation_name(database_collation_name);
 		}
 		else
 		{

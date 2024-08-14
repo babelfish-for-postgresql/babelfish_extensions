@@ -1708,6 +1708,11 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 	return false;
 }
 
+/* 
+ * We are processesing USE DB command
+ * Communicate the same to common extension
+ * so that collation related information gets updated
+ */ 
 void
 tsql_set_db_collation(Oid database_collation_oid)
 {
@@ -1718,6 +1723,26 @@ tsql_set_db_collation(Oid database_collation_oid)
 	return;
 }
 
+/* Find the collation corresponding to a specific database */
+char*
+get_collation_name_for_db(const char* dbname)
+{
+	HeapTuple	tuple;
+	Form_sysdatabases sysdb;
+	char *collation_name;
+
+	tuple = SearchSysCache1(SYSDATABASENAME, PointerGetDatum(cstring_to_text(dbname)));
+
+	if (!HeapTupleIsValid(tuple))
+		return NULL;
+
+	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	collation_name = pstrdup(NameStr(sysdb->default_collation));
+
+	ReleaseSysCache(tuple);
+	return collation_name;
+}
+
 /* 
  * We need to communicate to common extension
  * that user has invoked USE DB command
@@ -1726,28 +1751,13 @@ tsql_set_db_collation(Oid database_collation_oid)
  * 2. database collation index
  */
 void
-set_db_collation_internal(int16 db_id)
+set_db_collation_internal(const char *db_name)
 {
-	HeapTuple	tuple_sysdb;
-	Form_sysdatabases sysdb;
 	Oid database_collation_oid;
 
-	Oid nspoid = get_namespace_oid("sys", false);
+	/* Get collation oid corresponding to collation name */
+	database_collation_oid = get_collation_oid(list_make1(makeString((char*)get_collation_name_for_db(db_name))), false);
 
-	tuple_sysdb = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(db_id));
-
-	if (!HeapTupleIsValid(tuple_sysdb))
-		elog(ERROR, "cache lookup failed for database %u", db_id);
-
-	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple_sysdb));
-
-	database_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP,
-											Anum_pg_collation_oid,
-											NameGetDatum(&sysdb->default_collation),
-											Int32GetDatum(-1),
-											ObjectIdGetDatum(nspoid));
-
-	ReleaseSysCache(tuple_sysdb);
 	tsql_set_db_collation(database_collation_oid);
 	database_or_server_collation_oid = InvalidOid;
 }

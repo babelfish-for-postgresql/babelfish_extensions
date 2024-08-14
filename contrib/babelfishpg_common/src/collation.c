@@ -611,11 +611,19 @@ find_any_collation(const char *collation_name, bool check_for_server_collation_n
 static int
 translate_collation_utility(const char *collname)
 {
+	return find_collation(translate_tsql_collation_to_bbf_collation(collname));
+}
+
+/* 
+ * Translate TSQL collation to it's closest BBF Collation. 
+ */
+const char *
+translate_tsql_collation_to_bbf_collation(const char *collname)
+{
 	int			first = 0;
 	int			last = TOTAL_COLL_TRANSLATION_COUNT - 1;
 	int			middle = 25;	/* optimization: usually it's the default
 								 * collation (first + last) / 2; */
-	int			idx = NOT_FOUND;
 	int			compare;
 
 	while (first <= last)
@@ -625,32 +633,13 @@ translate_collation_utility(const char *collname)
 			first = middle + 1;
 		else if (compare == 0)
 		{
-			idx = find_collation(coll_translations[middle].to_collname);
-			break;
+			return (coll_translations[middle].to_collname);
 		}
 		else
 			last = middle - 1;
 
 		middle = (first + last) / 2;
 	}
-	return idx;
-}
-
-/* 
- * Translate TSQL collation to it's closest BBF Collation. 
- * This is different from translate_collation_utility in regard
- * that the former returns index of the translated collation but 
- * this function returns the translated collation name
- * We have made this function as a part of rendezvous variable
- * hence can be accessed from tsql extension as well
- */
-const char *
-translate_tsql_collation_to_bbf_collation(const char *collname)
-{
-	for (int i = 0; i < TOTAL_COLL_TRANSLATION_COUNT; i++)
-		if (pg_strcasecmp(coll_translations[i].from_collname, collname) == 0)
-			return (coll_translations[i].to_collname);
-
 	return collname;
 }
 
