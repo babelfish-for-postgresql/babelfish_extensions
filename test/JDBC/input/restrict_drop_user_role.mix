@@ -1,0 +1,121 @@
+-- tsql
+create login no_priv_login1 with password = '12345678'
+go
+
+create role dont_drop_role
+go
+
+create login no_priv_login2 with password = '12345678'
+go
+
+create user no_priv_user2 for login no_priv_login2
+go
+
+create database restrict_user_db1
+go
+
+use restrict_user_db1
+go
+
+create role dont_drop_role
+go
+
+create user no_priv_user1 for login no_priv_login1
+go
+
+use master
+go
+
+-- case-1 - when current user is guest
+-- permission denied
+-- tsql user=no_priv_login1 password=12345678
+select current_user,db_name()
+go
+
+drop role dont_drop_role
+go
+
+drop user no_priv_user2
+go
+
+-- tsql
+select current_user,db_name()
+go
+
+create user no_priv_user1 for login no_priv_login1
+go
+
+-- case-2 - when current user has no privilege
+-- permission denied
+-- tsql user=no_priv_login1 password=12345678
+use master
+go
+
+select current_user
+go
+
+drop role dont_drop_role
+go
+
+drop user no_priv_user2
+go
+
+-- case-3 - when current login has privilege
+-- tsql
+
+-- 3.1 - when login is database owner
+Alter authorization on database::restrict_user_db1 to no_priv_login2
+go
+
+-- allowed
+-- tsql user=no_priv_login2 password=12345678 database=restrict_user_db1
+select current_user
+go
+
+drop role dont_drop_role
+go
+
+drop user no_priv_user1
+go
+
+create role dont_drop_role
+go
+
+create user no_priv_user1 for login no_priv_login1
+go
+
+-- 3.2 - when login is sysadmin
+-- allowed
+-- tsql
+drop user no_priv_user1
+go
+
+drop user no_priv_user2
+go
+
+drop role dont_drop_role
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'no_priv_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+
+-- tsql
+drop login no_priv_login1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'no_priv_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- tsql
+drop login no_priv_login2
+go
+
+drop database restrict_user_db1
+go

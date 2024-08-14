@@ -3430,6 +3430,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									(errcode(ERRCODE_OBJECT_IN_USE),
 									 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
 					}
+					/* If user/role, check for current_user's privileges */
+					else if (drop_user || drop_role)
+					{
+						const char *db_owner_name;
+
+						/* must be database owner to drop user/role*/
+						db_owner_name = get_db_owner_name(get_cur_db_name());
+						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									 errmsg("User does not have permission to perform this action.")));
+					}
 
 					/*
 					 * We have performed all the permissions checks.

@@ -1,0 +1,167 @@
+-- tsql
+create login no_priv_login1 with password = '12345678'
+go
+
+create role dont_drop_role
+go
+
+create login no_priv_login2 with password = '12345678'
+go
+
+create user no_priv_user2 for login no_priv_login2
+go
+
+create database restrict_user_db1
+go
+
+use restrict_user_db1
+go
+
+create role dont_drop_role
+go
+
+create user no_priv_user1 for login no_priv_login1
+go
+
+use master
+go
+
+-- tsql user=no_priv_login1 password=12345678
+-- case-1 - when current user is guest
+-- permission denied
+select current_user,db_name()
+go
+~~START~~
+varchar#!#nvarchar
+guest#!#master
+~~END~~
+
+
+drop role dont_drop_role
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+drop user no_priv_user2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+-- tsql
+select current_user,db_name()
+go
+~~START~~
+varchar#!#nvarchar
+dbo#!#master
+~~END~~
+
+
+create user no_priv_user1 for login no_priv_login1
+go
+
+-- tsql user=no_priv_login1 password=12345678
+-- case-2 - when current user has no privilege
+-- permission denied
+use master
+go
+
+select current_user
+go
+~~START~~
+varchar
+no_priv_user1
+~~END~~
+
+
+drop role dont_drop_role
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+drop user no_priv_user2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+-- tsql
+
+-- case-3 - when current login has privilege
+-- 3.1 - when login is database owner
+Alter authorization on database::restrict_user_db1 to no_priv_login2
+go
+
+-- tsql user=no_priv_login2 password=12345678 database=restrict_user_db1
+-- allowed
+select current_user
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+drop role dont_drop_role
+go
+
+drop user no_priv_user1
+go
+
+create role dont_drop_role
+go
+
+create user no_priv_user1 for login no_priv_login1
+go
+
+-- tsql
+-- 3.2 - when login is sysadmin
+-- allowed
+drop user no_priv_user1
+go
+
+drop user no_priv_user2
+go
+
+drop role dont_drop_role
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'no_priv_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+
+-- tsql
+drop login no_priv_login1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'no_priv_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+drop login no_priv_login2
+go
+
+drop database restrict_user_db1
+go
