@@ -1193,10 +1193,7 @@ Oid
 get_database_or_server_collation_oid_internal(bool missingOk)
 {
 	if (OidIsValid(database_collation_oid))
-	{
-		db_collation_is_CI = collation_is_CI(database_collation_oid);
 		return database_collation_oid;
-	}
 		
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
@@ -1714,4 +1711,5 @@ set_db_collation(Oid db_coll)
 {
 	database_collation_oid = db_coll;
 	database_collation_collidx = find_any_collation((lookup_collation_table(database_collation_oid).collname), false);
+	db_collation_is_CI = collation_is_CI(database_collation_oid);
 }
