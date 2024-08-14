@@ -73,6 +73,7 @@ typedef ResetConnectionData *ResetConnection;
 TdsRequestCtrlData *TdsRequestCtrl = NULL;
 
 ResetConnection resetCon = NULL;
+static bool resetTdsConnectionFlag = false;
 
 /* Local functions */
 static void ResetTDSConnection(void);
@@ -160,6 +161,14 @@ ResetTDSConnection(void)
 
 	/* send an environement change token */
 	TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+}
+
+/*
+ * SetResetTDSConnectionFlag - Sets reset tds connection flag
+ */
+void SetResetTDSConnectionFlag()
+{
+	resetTdsConnectionFlag = true;	
 }
 
 /*
@@ -261,7 +270,7 @@ GetTDSRequest(bool *resetProtocol)
 		 * memory context before exit so that we can process the request
 		 * later.
 		 */
-		if (status & TDS_PACKET_HEADER_STATUS_RESETCON)
+		if ((status & TDS_PACKET_HEADER_STATUS_RESETCON) || resetTdsConnectionFlag == true)
 		{
 			MemoryContextSwitchTo(TopMemoryContext);
 
@@ -276,6 +285,7 @@ GetTDSRequest(bool *resetProtocol)
 			ResetTDSConnection();
 			TdsErrorContext->err_text = "Fetching TDS Request";
 			*resetProtocol = true;
+			resetTdsConnectionFlag = false;
 			return NULL;
 		}
 

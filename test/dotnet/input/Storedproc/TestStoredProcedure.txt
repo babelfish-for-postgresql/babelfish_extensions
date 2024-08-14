@@ -272,3 +272,11 @@ storedproc#!#prep#!#sp_test25#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|inputoutpu
 
 DROP PROCEDURE sp_test25
 # Test (24): End
+
+# Test (25): Test sys.sp_reset_connection stored procedure
+CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
+INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
+SELECT * from #babel_temp_table
+storedproc#!#prep#!#sys.sp_reset_connection#!#
+SELECT * from #babel_temp_table
+# Test (25): End

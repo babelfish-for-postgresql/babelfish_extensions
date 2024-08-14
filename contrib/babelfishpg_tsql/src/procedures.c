@@ -78,6 +78,7 @@ PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 PG_FUNCTION_INFO_V1(sp_execute_postgresql);
 PG_FUNCTION_INFO_V1(sp_enum_oledb_providers_internal);
+PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 PG_FUNCTION_INFO_V1(sp_renamedb_internal);
 
 extern void delete_cached_batch(int handle);
@@ -4195,6 +4196,17 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	PG_RETURN_VOID();
+}
+
+Datum
+sp_reset_connection_internal(PG_FUNCTION_ARGS)
+{
+	if (*pltsql_protocol_plugin_ptr) 
+	{
+		(*pltsql_protocol_plugin_ptr)->set_reset_tds_connection_flag();
+	}
 
 	PG_RETURN_VOID();
 }

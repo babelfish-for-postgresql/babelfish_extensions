@@ -1,0 +1,25 @@
+CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
+INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT * from #babel_temp_table
+GO
+~~START~~
+int#!#int
+1#!#100
+2#!#200
+3#!#300
+~~END~~
+
+
+EXEC sys.sp_reset_connection
+GO
+
+SELECT * from #babel_temp_table
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#babel_temp_table" does not exist)~~
+
