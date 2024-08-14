@@ -2460,7 +2460,31 @@ SELECT  configuration_id,
         description, 
         is_dynamic, 
         is_advanced 
-FROM sys.babelfish_configurations;
+FROM sys.babelfish_configurations
+UNION ALL
+SELECT 
+CAST(103 as INT) AS configuration_id,
+CAST('user connections' AS SYS.NVARCHAR(35)) AS name,
+CAST(s.setting AS sys.sql_variant) AS value,
+CAST(s.min_val AS sys.sql_variant) AS minimum,
+CAST(s.max_val AS sys.sql_variant) AS maximum,
+CAST(s.setting AS sys.sql_variant) AS value_in_use,
+CAST(s.short_desc AS sys.nvarchar(255)) AS description,
+CAST(0 AS sys.BIT) AS is_dynamic,
+CAST(1 AS sys.BIT) AS is_advanced
+FROM pg_catalog.pg_settings s where name = 'max_connections'
+UNION ALL
+SELECT 
+CAST(505 as INT) AS configuration_id,
+CAST('network packet size (B)' AS SYS.NVARCHAR(35)) AS name,
+CAST(s.setting AS sys.sql_variant) AS value,
+CAST(s.min_val AS sys.sql_variant) AS minimum,
+CAST(s.max_val AS sys.sql_variant) AS maximum,
+CAST(s.setting AS sys.sql_variant) AS value_in_use,
+CAST(s.short_desc AS sys.nvarchar(255)) AS description,
+CAST(1 AS sys.BIT) AS is_dynamic,
+CAST(1 AS sys.BIT) AS is_advanced
+FROM pg_catalog.pg_settings s where name = 'babelfishpg_tds.tds_default_packet_size';
 GRANT SELECT ON sys.configurations TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.syscurconfigs

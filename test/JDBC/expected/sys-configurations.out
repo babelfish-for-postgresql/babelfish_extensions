@@ -9,6 +9,8 @@ int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#nvarcha
 1126#!#default full-text language#!#1033#!#0#!#2147483647#!#1033#!#default full-text language#!#1#!#1
 1127#!#two digit year cutoff#!#2049#!#1753#!#9999#!#2049#!#two digit year cutoff#!#1#!#1
 1555#!#transform noise words#!#0#!#0#!#1#!#0#!#Transform noise words for full-text query#!#1#!#1
+103#!#user connections#!#100#!#1#!#262143#!#100#!#Sets the maximum number of concurrent connections.#!#0#!#1
+505#!#network packet size (B)#!#4096#!#512#!#32767#!#4096#!#Sets the default packet size forall the clients being connected#!#1#!#1
 ~~END~~
 
 
