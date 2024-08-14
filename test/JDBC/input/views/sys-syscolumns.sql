@@ -1,4 +1,4 @@
--- sla 13000
+-- sla 16000
 create database db1;
 go
 
@@ -154,7 +154,6 @@ go
 DROP PROCEDURE syscolumns_demo_proc3
 go
 
--- sla 13000
 create database db1 COLLATE BBF_Unicode_CP1_CI_AI;
 go
 

@@ -119,7 +119,7 @@ varchar#!#tinyint#!#varchar#!#smallint#!#int
 <NULL>#!#64#!#varchar#!#<NULL>#!#<NULL>
 <NULL>#!#8#!#int4#!#10#!#0
 <NULL>#!#8#!#int8#!#19#!#0
-bbf_unicode_cp1_ci_as#!#8#!#bpchar#!#0#!#0
+chinese_prc_ci_as#!#8#!#bpchar#!#0#!#0
 <NULL>#!#8#!#numeric#!#5#!#4
 ~~END~~
 
@@ -133,7 +133,7 @@ varchar#!#tinyint#!#varchar#!#smallint#!#int
 <NULL>#!#64#!#varchar#!#<NULL>#!#<NULL>
 <NULL>#!#8#!#int4#!#10#!#0
 <NULL>#!#8#!#int8#!#19#!#0
-bbf_unicode_cp1_ci_as#!#8#!#bpchar#!#0#!#0
+chinese_prc_ci_as#!#8#!#bpchar#!#0#!#0
 <NULL>#!#8#!#numeric#!#5#!#4
 ~~END~~
 
@@ -147,7 +147,7 @@ int#!#int#!#int#!#varchar
 0#!#1#!#1#!#<NULL>
 0#!#0#!#1#!#<NULL>
 0#!#0#!#1#!#<NULL>
-0#!#0#!#1#!#bbf_unicode_cp1_ci_as
+0#!#0#!#1#!#chinese_prc_ci_as
 0#!#0#!#1#!#<NULL>
 ~~END~~
 
@@ -161,7 +161,7 @@ int#!#int#!#int#!#varchar
 0#!#1#!#1#!#<NULL>
 0#!#0#!#1#!#<NULL>
 0#!#0#!#1#!#<NULL>
-0#!#0#!#1#!#bbf_unicode_cp1_ci_as
+0#!#0#!#1#!#chinese_prc_ci_as
 0#!#0#!#1#!#<NULL>
 ~~END~~
 
