@@ -237,7 +237,7 @@ SELECT current_setting('search_path')
 GO
 ~~START~~
 text
-"""龙漫远; 龍漫遠.??€?""_dbo", "$user", sys, pg_catalog
+"""???; ???.¢£€¥""_dbo", "$user", sys, pg_catalog
 ~~END~~
 
 
