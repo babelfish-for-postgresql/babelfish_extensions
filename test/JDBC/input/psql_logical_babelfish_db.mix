@@ -68,6 +68,57 @@ go
 
 select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
 go
+-- tsql
+use master
+go
+
+drop database logical_database_db1
+go
+
+-- using Collation BBF_Unicode_CP1_CI_AI
+-- tsql
+-- should return data of master as the current database is master
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
+go
+
+create database logical_database_db1 collate BBF_Unicode_CP1_CI_AI
+go
+
+-- try to set GUC from TSQL endpoint. Should not effect information_schema_tsql.columns view 
+-- from TSQL endpoint it is a PG GUC
+select set_config('psql_logical_babelfish_db_name', 'logical_database_db1', false)
+go
+
+-- should return data of master as the current database is master
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
+go
+
+use logical_database_db1
+go
+
+-- should return data of logical_database_db1 as the current database is logical_database_db1
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
+go
+
+alter server role sysadmin add member logical_database_l1
+go
+
+-- psql user=logical_database_l1 password=12345678
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
+go
+
+-- any user can set the GUC
+set psql_logical_babelfish_db_name = 'logical_database_db1'
+go
+
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' order by "COLUMN_NAME";
+go
+-- tsql
+use master
+go
+
+drop database logical_database_db1
+go
 
 -- psql
 -- Cleanup
@@ -85,7 +136,4 @@ use master
 go
 
 drop login logical_database_l1
-go
-
-drop database logical_database_db1
 go
