@@ -1492,7 +1492,7 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len_utf8);
 		substr_ulen = icu_to_uchar(&substr_uchar, VARDATA_ANY(substr_text), substr_len_utf8);
 
-		is_substr_starts_with_surrogate = U16_IS_SURROGATE(substr_uchar[0]);
+		is_substr_starts_with_surrogate = ((substr_uchar[0] & 0xF800) == 0xD800);
 
 		usearch = usearch_openFromCollator(substr_uchar,
 										substr_ulen,
@@ -1609,7 +1609,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len);
 		from_ulen = icu_to_uchar(&from_uchar, VARDATA_ANY(from_text), from_str_len);
 
-		is_substr_starts_with_surrogate = U16_IS_SURROGATE(from_uchar[0]);
+		is_substr_starts_with_surrogate = ((from_uchar[0] & 0xF800) == 0xD800);
 
 		usearch = usearch_openFromCollator(from_uchar, /* needle */
 										from_ulen,
