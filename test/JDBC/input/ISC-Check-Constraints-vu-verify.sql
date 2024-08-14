@@ -1,4 +1,3 @@
--- db_collation_expected
 select length(tsql_get_constraintdef(oid)) from pg_constraint where contype='c' and conrelid = (select oid from pg_class where relname='isc_check_constraints_t1');
 go
 

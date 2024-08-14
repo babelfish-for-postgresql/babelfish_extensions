@@ -1,4 +1,3 @@
--- db_collation_expected
 -- Testing only PG base types since system_type_id keeps changing for others
 -- UDT tests cannot be added because user_type_id keeps changing as well
 

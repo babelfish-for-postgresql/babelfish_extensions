@@ -1,4 +1,3 @@
--- db_collation_expected
 -- test LIKE to ILIKE transformation
 create table like_tesing1 (c1 varchar(20), c2 char(20), c3 nvarchar(20))
 GO

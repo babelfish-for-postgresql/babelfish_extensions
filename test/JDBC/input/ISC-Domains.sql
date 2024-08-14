@@ -1,4 +1,3 @@
--- db_collation_expected
 create schema isc_domains
 go
 

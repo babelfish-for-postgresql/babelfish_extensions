@@ -1,4 +1,3 @@
--- db_collation_expected
 USE isc_columns_db1
 GO
 

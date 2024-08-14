@@ -1,4 +1,3 @@
--- db_collation_expected
 SELECT * FROM sys_database_mirroring_vu_prepare_view
 GO
 

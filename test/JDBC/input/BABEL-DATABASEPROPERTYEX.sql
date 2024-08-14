@@ -1,4 +1,3 @@
--- db_collation_expected
 -- test databasepropertyex() function
 select databasepropertyex(N'master',N'Collation')
 GO

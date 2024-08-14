@@ -19,15 +19,12 @@ import static com.sqlsamples.JDBCTempTable.*;
 import static com.sqlsamples.Statistics.exec_times;
 import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
-import static com.sqlsamples.Config.checkParallelQueryExpected;
-import static com.sqlsamples.Config.checkDbCollationExpected;
 
 public class TestQueryFile {
     
     static String timestamp = new SimpleDateFormat("dd-MM-yyyy'T'HH:mm:ss.SSS").format(new Date());
     static String generatedFilesDirectoryPath = testFileRoot + "/expected/";
     static String parallelQueryGeneratedFilesDirectoryPath = testFileRoot + "/expected/parallel_query/";
-    static String dbCollationGeneratedFilesDirectoryPath = testFileRoot + "/expected/db_collation/";
     static String sqlServerGeneratedFilesDirectoryPath = testFileRoot + "/sql_expected/";
     static String outputFilesDirectoryPath = testFileRoot + "/output/";
     static Logger summaryLogger = LogManager.getLogger("testSummaryLogger");    //logger to write summary of tests executed
@@ -440,7 +437,6 @@ public class TestQueryFile {
         BufferedWriter bw = new BufferedWriter(fw);
         curr_exec_time = 0L;
         checkParallelQueryExpected = false;
-        checkDbCollationExpected = false;
         if (inputFileName.equals("temp_table_jdbc")) {
             JDBCTempTable.runTest(bw, logger);
             sla = defaultSLA*1000000L * 2; /* Increase SLA to avoid flakiness */
@@ -453,18 +449,17 @@ public class TestQueryFile {
         }
         File expectedFile;
         File nonDefaultServerCollationExpectedFile;
+        File dbCollationExpectedFile;
 
         if (isParallelQueryMode && checkParallelQueryExpected){
             expectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + outputFileName + ".out");
             nonDefaultServerCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
-        }
-        else if (isdbCollationMode && checkDbCollationExpected){
-            expectedFile = new File(dbCollationGeneratedFilesDirectoryPath + outputFileName + ".out");
-            nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+            dbCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "db_collation/" + outputFileName + ".out");
         }
         else{
             expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
             nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+            dbCollationExpectedFile = new File(generatedFilesDirectoryPath + "db_collation/" + outputFileName + ".out");
         }
 
         File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
@@ -479,6 +474,10 @@ public class TestQueryFile {
         if (serverCollationName != "default" && nonDefaultServerCollationExpectedFile.exists()){    /* If server collation name is non-default then use it's corresponding expected file if exists */
             // get the diff
             result = compareOutFiles(outputFile, nonDefaultServerCollationExpectedFile);
+        }
+        else if (isdbCollationMode && dbCollationExpectedFile.exists()){    /* If database collation name is non-default then use it's corresponding expected file if exists */
+            // get the diff
+            result = compareOutFiles(outputFile, dbCollationExpectedFile);
         }
         else if (expectedFile.exists()) {
             // get the diff

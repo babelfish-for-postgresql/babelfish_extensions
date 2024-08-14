@@ -1,4 +1,3 @@
--- db_collation_expected
 select cast(databasepropertyex('master','collation') as varchar(50))
 go
 create database mydb

@@ -1,4 +1,3 @@
--- db_collation_expected
 DROP TABLE IF EXISTS sys_all_columns_table
 GO
 

@@ -1,4 +1,3 @@
--- db_collation_expected
 SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_constraints_vu_prepare_t1%'
 GO
 

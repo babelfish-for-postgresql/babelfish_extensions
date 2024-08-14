@@ -1,4 +1,3 @@
--- db_collation_expected
 #testing for all the datatypes of agrument#
 
 #int, default value and nvarchar#

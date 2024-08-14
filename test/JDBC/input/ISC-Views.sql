@@ -1,4 +1,3 @@
--- db_collation_expected
 create table var(a char(10), b nchar(9), c nvarchar(8), d varchar(7), e text, f ntext, g varbinary(10), h binary(9), i image, j xml)
 go
 
@@ -240,7 +239,6 @@ go
 DROP SCHEMA sch1
 go
 -- Using Collation with BBF_Unicode_CP1_CI_AI
--- db_collation_expected
 create table var(a char(10), b nchar(9), c nvarchar(8), d varchar(7), e text, f ntext, g varbinary(10), h binary(9), i image, j xml)
 go
 

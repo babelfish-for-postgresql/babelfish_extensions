@@ -1,4 +1,3 @@
--- db_collation_expected
 -- tsql
 
 drop table if exists babel_3234_t1;

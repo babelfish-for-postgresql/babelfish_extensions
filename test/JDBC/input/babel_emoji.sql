@@ -1,4 +1,3 @@
--- db_collation_expected
 -- Test SYS.NCHAR, SYS.NVARCHAR and SYS.VARCHAR
 -- nchar is already available in postgres dialect
 select CAST('£' AS nchar(1));

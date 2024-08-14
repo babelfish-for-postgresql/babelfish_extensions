@@ -1,4 +1,3 @@
--- db_collation_expected
 -- Check column collation when we add explicit COLLATE clause for both the non-computed and computed column
 CREATE TABLE babel_2765_t1 (non_computed VARCHAR(200) COLLATE SQL_Latin1_General_CP1_CI_AI, computed AS substring(non_computed, 1, 5) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO

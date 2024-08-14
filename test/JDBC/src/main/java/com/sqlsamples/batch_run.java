@@ -297,11 +297,6 @@ public class batch_run {
                         continue;
                     }
 
-                    if (strLine.toLowerCase().startsWith("-- db_collation_expected")){
-                        checkDbCollationExpected = true;
-                        continue;
-                    }
-
                     // execute statement as a normal SQL statement
                     if (isSQLFile) {
                         if (!strLine.equalsIgnoreCase("GO")) {

@@ -1,4 +1,3 @@
--- db_collation_expected
 -- test databasepropertyex() function
 -- invalid db name, should return NULL
 select databasepropertyex(N'invalid_dbname',N'Edition');

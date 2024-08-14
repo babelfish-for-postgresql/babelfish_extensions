@@ -1,4 +1,3 @@
--- db_collation_expected
 select collname from PG_COLLATION where oid = (
     select attcollation from pg_attribute where attname = 'col_a' and
     attrelid = (

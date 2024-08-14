@@ -5,7 +5,7 @@ jobs:
   run-babelfish-jdbc-tests:
     env:
       INSTALL_DIR: psql
-      databaseCollationName: bbf_unicode_cp1_ci_ai
+      DATABASE_COLLATION_NAME: bbf_unicode_cp1_ci_ai
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -66,10 +66,10 @@ jobs:
           # sqlcmd -S localhost -U "jdbc_user" -P 12345678 -i .github/scripts/db_collation.sql
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
-          cd test/JDBC/
-          export databaseCollationName=${{env.databaseCollationName}}
-          sudo ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "update sys.babelfish_sysdatabases set default_collation = '${{env.databaseCollationName}}' where name = 'master';"
+          sudo ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "update sys.babelfish_sysdatabases set default_collation = '${{env.DATABASE_COLLATION_NAME}}' where name = 'master';"
           sudo ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "select default_collation from sys.babelfish_sysdatabases where name = 'master';"
+          cd test/JDBC/
+          export databaseCollationName=${{env.DATABASE_COLLATION_NAME}}
           mvn test
           unset databaseCollationName
 
