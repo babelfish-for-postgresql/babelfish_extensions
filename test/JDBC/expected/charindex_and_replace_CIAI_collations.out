@@ -642,6 +642,66 @@ AAAAAABBBBBBBEEEEEEAAAAA
 DROP TABLE BABEL_4850_T
 GO
 
+/* Substring to find starts with surrogate pair BABEL-5169 */
+SELECT CHARINDEX(N'🙂dEf', N'abc🙂def🙂defgh🙂dEfi🙂🙂' COLLATE Latin1_General_CS_AI)
+SELECT CHARINDEX(N'🙂D', N'abc🙂d🙂d🙂D' COLLATE Latin1_General_CS_AI)
+SELECT CHARINDEX(N'🙂dEf', N'abc🙂defgh🙂dEfi🙂🙂' COLLATE Latin1_General_CI_AI)
+SELECT CHARINDEX(N'🙂', N'abc🙂defgh🙂dEfi🙂🙂' COLLATE Latin1_General_CS_AI)
+SELECT CHARINDEX(N'🙂', N'abc🙂defgh🙂dEfi🙂🙂' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+int
+14
+~~END~~
+
+~~START~~
+int
+8
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+
+/* Substring to find starts with surrogate pair BABEL-5169 */
+SELECT REPLACE(N'abc🙂defghi🙂🙂', N'🙂def', N'jhi🙂' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE(N'abc🙂🙂🙂🙂🙂defghi🙂🙂', N'🙂', N'<---->' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE(N'abc🙂🙂🙂🙂', N'🙂', N'<---->' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE(N'🙂abc🙂', N'🙂', N'<---->' COLLATE Latin1_General_CI_AI)
+GO
+~~START~~
+nvarchar
+abcjhi🙂ghi🙂🙂
+~~END~~
+
+~~START~~
+nvarchar
+abc<----><----><----><----><---->defghi<----><---->
+~~END~~
+
+~~START~~
+nvarchar
+abc<----><----><----><---->
+~~END~~
+
+~~START~~
+nvarchar
+<---->abc<---->
+~~END~~
+
+
 -- psql
 CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);
 CREATE COLLATION ignore_accents (provider = icu, locale = 'nd-u-kc-true-ks-level1', deterministic = false);
