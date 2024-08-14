@@ -52,7 +52,7 @@
 #define UCHAR_IS_SURROGATE(c) ((c & 0xF800) == 0xD800)
 
 /* Find length of given Uchar */
-#define UCHAR_LENGTH(c) ( UCHAR_IS_SURROGATE(c) ? 2 : 1)
+#define UCHAR_LENGTH(c) (UCHAR_IS_SURROGATE(c) ? 2 : 1)
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
