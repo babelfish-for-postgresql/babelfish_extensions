@@ -1588,7 +1588,6 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		StringInfoData resbuf;
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(collid);
 		bool is_CS_AI = false;
-		int pos = USEARCH_DONE;
 
 		if (OidIsValid(coll_info_of_inputcollid.oid) &&
 		    coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
@@ -1612,8 +1611,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		initStringInfo(&resbuf);
 		previous_pos = 0;
 
-		pos = usearch_first(usearch, &status);
-		for (;
+		for (int pos = usearch_first(usearch, &status);
 		     pos != USEARCH_DONE;
 		     pos = usearch_next(usearch, &status))
 		{
