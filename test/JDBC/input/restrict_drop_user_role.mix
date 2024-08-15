@@ -78,6 +78,23 @@ go
 drop user no_priv_user1
 go
 
+-- error
+-- try to drop non existing role/user
+drop role fake_role
+go
+
+drop user fake_user
+go
+
+-- should deny
+-- try to drop dbo user, db_owner role
+drop role db_owner
+go
+
+drop user dbo
+go
+
+
 create role dont_drop_role
 go
 

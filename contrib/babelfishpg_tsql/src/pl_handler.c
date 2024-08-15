@@ -3285,9 +3285,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									RoleSpec   *rolspec = lfirst(item);
 									char	   *user_name;
+									char       *db_principal;
 
 									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
+									role_name = rolspec->rolename;
+									if (drop_user)
+										db_principal = "user";
+									else
+										db_principal = "role";
 
+									/* If user is dbo or role is db_owner, restrict dropping */
+									if ((drop_user && strncmp(role_name, "dbo", 3) == 0) || (drop_role && strncmp(role_name, "db_owner", 8) == 0))
+										ereport(ERROR,
+												(errcode(ERRCODE_CHECK_VIOLATION),
+												errmsg("Cannot drop the %s '%s'.", db_principal, role_name)));
+									
 									/*
 									 * If a role has members, do not drop it.
 									 * Note that here we don't handle invalid
@@ -3431,17 +3443,24 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
 					}
 					/* If user/role, check for current_user's privileges */
-					else if (drop_user || drop_role)
-					{
-						const char *db_owner_name;
+						else if (drop_user || drop_role)
+						{
+							const char *db_owner_name;
+							char       *db_principal;
+							int			role_oid = get_role_oid(role_name, true);
 
-						/* must be database owner to drop user/role*/
-						db_owner_name = get_db_owner_name(get_cur_db_name());
-						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
-							ereport(ERROR,
-									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-									 errmsg("User does not have permission to perform this action.")));
-					}
+							if (drop_user)
+								db_principal = "user";
+							else
+								db_principal = "role";
+							
+							/* must be database owner to drop user/role */
+							db_owner_name = get_db_owner_name(get_cur_db_name());
+							if ((!stmt->missing_ok && !OidIsValid(role_oid)) || !is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)))
+								ereport(ERROR,
+										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+										errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal, role_name)));
+						}
 
 					/*
 					 * We have performed all the permissions checks.
