@@ -15,7 +15,6 @@ import java.sql.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -223,6 +222,10 @@ public class JDBCPreparedStatement {
                 logger.error("Parse Exception: " + e.getMessage(), e);
             } catch (NumberFormatException e) {
                 logger.error("Number Format Exception: " + e.getMessage(), e);
+            } catch (AbstractMethodError e) {
+                logger.error("Abstract Method Error: " + e.getMessage(), e);
+            } catch (NullPointerException e) {
+                logger.error("Null Pointer Exception: " + e.getMessage(), e);
             }
         }
     }

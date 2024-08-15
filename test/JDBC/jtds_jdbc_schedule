@@ -1,0 +1,36 @@
+# Schedule file for JDBC Test Framework running with jTDS driver instead of
+# mssql-jdbc driver. When 'useJTDSInsteadOfMSSQLJDBC' config option is set to
+# 'true' this file is used instead of 'jdbc_schedule' file.
+
+# About the test that were copied with "jtds-" prefix:
+#
+# jTDS has different behaviour from mssql-jdbc when error happens in a batch with multiple statements.
+# If a batch contains multiple DML statements and one of them is causing an error (like constraint violation),
+# then with mssql-jdbc stmt.execute() returns successfully, number of updated rows can be read from
+# stmt.getUpdateCount() and the Exception is thrown on stmt.getMoreResults() only after all successful
+# update counts are read.
+#
+# With jTDS, if none of the statements return a result set (no selects in batch, only DML), then the Exception
+# is thrown on stmt.execute(). If this exception is caught and handled, then update counts from successul
+# DML statements can be read with stmt.getUpdateCount().
+# And if the successful batch statements return one or more result sets, then stmt.execute() succeeds,
+# and update counts and result sets can be read successfully up to the errored one. And the Exception
+# is thrown on rs.next() after the last successful result set is exhausted.
+#
+# This jTDS behaviour is the same with both Babelfish and MSSQL.
+
+# sqlBatch
+# jTDS reports column type as nvarchar instead of date, behavior on MSSQL and Babelfish is the same
+jtds-TestSQLQueries
+
+# errorHandling
+jtds-TestSimpleErrors
+jtds-TestErrorsWithTryCatch
+
+# storedProcedures
+# jTDS reports column type as nvarchar instead of date, behavior on MSSQL and Babelfish is the same
+jtds-TestStoredProcedures
+
+# transactions
+TestTransactionsSQLBatch
+jtds-TestTransactionSupportForProcedure
