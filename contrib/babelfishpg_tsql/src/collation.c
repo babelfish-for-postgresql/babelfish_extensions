@@ -45,6 +45,15 @@
 #define MAX_BYTES_PER_CHAR 4
 #define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
 
+/*
+ * Check if Uchar is lead surrogate pair, If Uchar is in
+ * the range D800 - DBFF then it is a lead surrogate pair
+ */
+#define UCHAR_IS_SURROGATE(c) ((c & 0xF800) == 0xD800)
+
+/* Find length of given Uchar */
+#define UCHAR_LENGTH(c) (UCHAR_IS_SURROGATE(c) ? 2 : 1)
+
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
@@ -1475,12 +1484,13 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 		int32_t src_len_utf8 = VARSIZE_ANY_EXHDR(src_text);
 		int32_t substr_len_utf8 = VARSIZE_ANY_EXHDR(substr_text);
 		int32_t src_ulen, substr_ulen;
-		int32_t u8_pos = -1;
+		int32_t u8_pos = -1, pos_prev_loop = -1;
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
 		UChar *src_uchar, *substr_uchar;
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(collid);
 		bool is_CS_AI = false;
+		bool is_substr_starts_with_surrogate;
 
 		if (OidIsValid(coll_info_of_inputcollid.oid) &&
 		    coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
@@ -1490,6 +1500,8 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 
 		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len_utf8);
 		substr_ulen = icu_to_uchar(&substr_uchar, VARDATA_ANY(substr_text), substr_len_utf8);
+
+		is_substr_starts_with_surrogate = UCHAR_IS_SURROGATE(substr_uchar[0]);
 
 		usearch = usearch_openFromCollator(substr_uchar,
 										substr_ulen,
@@ -1507,7 +1519,7 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 					 errmsg("failed to perform ICU search: %s",
 							u_errorName(status))));
 
-		for (int u16_pos = usearch_first(usearch, &status);
+		for (int32_t u16_pos = usearch_first(usearch, &status);
 		     u16_pos != USEARCH_DONE;
 		     u16_pos = usearch_next(usearch, &status))
 		{
@@ -1516,6 +1528,27 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("failed to perform ICU search: %s",
 							u_errorName(status))));
+
+			/* ICU bug, When pattern start with a surrogate pair ICU usearch_next stops moving forward entering an infinite loop */
+			if (u16_pos == pos_prev_loop)
+			{
+				int32_t next_char_idx = u16_pos + UCHAR_LENGTH(src_uchar[u16_pos]);
+
+				if (is_substr_starts_with_surrogate && next_char_idx < src_ulen)
+				{
+					usearch_setOffset(usearch, next_char_idx, &status);
+
+					if (U_FAILURE(status))
+						ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+						        errmsg("failed to set offset in ICU search: %s", u_errorName(status))));
+
+					continue;
+				}
+				else
+					break;
+			}
+
+			pos_prev_loop = u16_pos;
 
 			/* for CS_AI collations usearch can give false positives so we double check the results here */
 			if (!(is_CS_AI && icu_compare_utf8_coll(mylocale->info.icu.ucol, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), substr_uchar, substr_ulen, false) != 0))
@@ -1564,7 +1597,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		int32_t src_len = VARSIZE_ANY_EXHDR(src_text);
 		int32_t from_str_len = VARSIZE_ANY_EXHDR(from_text);
 		int32_t to_str_len = VARSIZE_ANY_EXHDR(to_text);
-		int32_t previous_pos;
+		int32_t previous_pos, pos_prev_loop = -1;
 		int32_t src_ulen, from_ulen;		/* in utf-16 units */
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
@@ -1573,6 +1606,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		StringInfoData resbuf;
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(collid);
 		bool is_CS_AI = false;
+		bool is_substr_starts_with_surrogate;
 
 		if (OidIsValid(coll_info_of_inputcollid.oid) &&
 		    coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
@@ -1582,6 +1616,8 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 
 		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len);
 		from_ulen = icu_to_uchar(&from_uchar, VARDATA_ANY(from_text), from_str_len);
+
+		is_substr_starts_with_surrogate = UCHAR_IS_SURROGATE(from_uchar[0]);
 
 		usearch = usearch_openFromCollator(from_uchar, /* needle */
 										from_ulen,
@@ -1596,7 +1632,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		initStringInfo(&resbuf);
 		previous_pos = 0;
 
-		for (int pos = usearch_first(usearch, &status);
+		for (int32_t pos = usearch_first(usearch, &status);
 		     pos != USEARCH_DONE;
 		     pos = usearch_next(usearch, &status))
 		{
@@ -1608,6 +1644,27 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("failed to perform ICU search: %s",
 							u_errorName(status))));
+
+			/* ICU bug, When pattern start with a surrogate pair ICU usearch_next stops moving forward entering an infinite loop */
+			if (pos == pos_prev_loop)
+			{
+				int32_t next_char_idx = pos + UCHAR_LENGTH(src_uchar[pos]);
+
+				if (is_substr_starts_with_surrogate && next_char_idx < src_ulen)
+				{
+					usearch_setOffset(usearch, next_char_idx, &status);
+
+					if (U_FAILURE(status))
+						ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+						        errmsg("failed to set offset in ICU search: %s", u_errorName(status))));
+
+					continue;
+				}
+				else
+					break;
+			}
+
+			pos_prev_loop = pos;
 
 			/* for CS_AI collations usearch can give false positives so we double check the results here */
 			if (is_CS_AI && icu_compare_utf8_coll(mylocale->info.icu.ucol, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), from_uchar, from_ulen, false) != 0)
