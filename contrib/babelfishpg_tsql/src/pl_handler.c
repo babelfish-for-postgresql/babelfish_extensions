@@ -3443,24 +3443,24 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
 					}
 					/* If user/role, check for current_user's privileges */
-						else if (drop_user || drop_role)
-						{
-							const char *db_owner_name;
-							char       *db_principal;
-							int			role_oid = get_role_oid(role_name, true);
+					else if (drop_user || drop_role)
+					{
+						const char *db_owner_name;
+						char       *db_principal;
+						int			role_oid = get_role_oid(role_name, true);
 
-							if (drop_user)
-								db_principal = "user";
-							else
-								db_principal = "role";
-							
-							/* must be database owner to drop user/role */
-							db_owner_name = get_db_owner_name(get_cur_db_name());
-							if ((!stmt->missing_ok && !OidIsValid(role_oid)) || !is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)))
-								ereport(ERROR,
-										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-										errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal, role_name)));
-						}
+						if (drop_user)
+							db_principal = "user";
+						else
+							db_principal = "role";
+						
+						/* must be database owner to drop user/role */
+						db_owner_name = get_db_owner_name(get_cur_db_name());
+						if ((!stmt->missing_ok && !OidIsValid(role_oid)) || !is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)))
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal, role_name)));
+					}
 
 					/*
 					 * We have performed all the permissions checks.
