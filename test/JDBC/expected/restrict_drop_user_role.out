@@ -130,6 +130,34 @@ go
 ~~ERROR (Message: Cannot drop the user 'fake_user', because it does not exist or you do not have permission.)~~
 
 
+drop user db
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'db', because it does not exist or you do not have permission.)~~
+
+
+drop role db_own
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_own', because it does not exist or you do not have permission.)~~
+
+
+drop user dbo_u1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'dbo_u1', because it does not exist or you do not have permission.)~~
+
+
+drop role db_owner_r1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_owner_r1', because it does not exist or you do not have permission.)~~
+
+
 -- should deny
 -- try to drop dbo user, db_owner role
 drop role db_owner

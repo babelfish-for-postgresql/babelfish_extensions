@@ -86,6 +86,18 @@ go
 drop user fake_user
 go
 
+drop user db
+go
+
+drop role db_own
+go
+
+drop user dbo_u1
+go
+
+drop role db_owner_r1
+go
+
 -- should deny
 -- try to drop dbo user, db_owner role
 drop role db_owner
