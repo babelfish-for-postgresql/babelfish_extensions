@@ -18,8 +18,7 @@ go
 
 use vector_db
 go
-use master
-go 
+
 -- tsql user=vector_login password=12345678
 use vector_db;
 go
@@ -663,11 +662,12 @@ go
 
 Drop table document_embeddings
 go
--- tsql
-use master
+
+use master 
 go
 
-exec sp_execute_postgresql 'drop extension vector';
+-- tsql 
+use master 
 go
 
 drop database vector_db;
