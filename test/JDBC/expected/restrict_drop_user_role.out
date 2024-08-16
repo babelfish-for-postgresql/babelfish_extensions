@@ -41,14 +41,14 @@ drop role dont_drop_role
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the role 'master_dont_drop_role', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the role 'dont_drop_role', because it does not exist or you do not have permission.)~~
 
 
 drop user no_priv_user2
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the user 'master_no_priv_user2', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the user 'no_priv_user2', because it does not exist or you do not have permission.)~~
 
 
 -- tsql
@@ -81,14 +81,14 @@ drop role dont_drop_role
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the role 'master_dont_drop_role', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the role 'dont_drop_role', because it does not exist or you do not have permission.)~~
 
 
 drop user no_priv_user2
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the user 'master_no_priv_user2', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the user 'no_priv_user2', because it does not exist or you do not have permission.)~~
 
 
 -- tsql
@@ -120,14 +120,14 @@ drop role fake_role
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the role 'restrict_user_db1_fake_role', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the role 'fake_role', because it does not exist or you do not have permission.)~~
 
 
 drop user fake_user
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the user 'restrict_user_db1_fake_user', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the user 'fake_user', because it does not exist or you do not have permission.)~~
 
 
 -- should deny

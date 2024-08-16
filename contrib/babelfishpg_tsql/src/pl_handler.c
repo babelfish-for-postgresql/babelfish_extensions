@@ -3286,26 +3286,45 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									RoleSpec   *rolspec = lfirst(item);
 									char	   *user_name;
 									char       *db_principal;
+									const char *db_owner_name;
+									int	      	role_oid;
+									int       	rolename_len;
+									char	   *logical_role_name = NULL;
 
 									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
-									role_name = rolspec->rolename;
+									db_owner_name = get_db_owner_name(get_cur_db_name());
+									role_oid = get_role_oid(user_name, true);
+									logical_role_name = rolspec->rolename;
+									rolename_len = strlen(logical_role_name);
+
 									if (drop_user)
 										db_principal = "user";
 									else
 										db_principal = "role";
 
 									/* If user is dbo or role is db_owner, restrict dropping */
-									if ((drop_user && strncmp(role_name, "dbo", 3) == 0) || (drop_role && strncmp(role_name, "db_owner", 8) == 0))
+									if ((drop_user && strncmp(logical_role_name, "dbo", rolename_len) == 0) ||
+										(drop_role && strncmp(logical_role_name, "db_owner", rolename_len) == 0))
 										ereport(ERROR,
 												(errcode(ERRCODE_CHECK_VIOLATION),
-												errmsg("Cannot drop the %s '%s'.", db_principal, role_name)));
+												errmsg("Cannot drop the %s '%s'.", db_principal, logical_role_name)));
+
+									/* 
+									 * Check for current_user's privileges 
+									 * must be database owner to drop user/role
+									 */
+									if ((!stmt->missing_ok && !OidIsValid(role_oid)) ||
+										!is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)))
+										ereport(ERROR,
+												(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+												errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal, logical_role_name)));
 									
 									/*
 									 * If a role has members, do not drop it.
 									 * Note that here we don't handle invalid
 									 * roles.
 									 */
-									if (drop_role && !is_empty_role(get_role_oid(user_name, true)))
+									if (drop_role && !is_empty_role(role_oid))
 										ereport(ERROR,
 												(errcode(ERRCODE_CHECK_VIOLATION),
 												 errmsg("The role has members. It must be empty before it can be dropped.")));
@@ -3318,7 +3337,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 * if enabled. 3. Otherwise throw an
 									 * error.
 									 */
-									if (drop_user && strcmp(rolspec->rolename, "guest") == 0)
+									if (drop_user && strcmp(logical_role_name, "guest") == 0)
 									{
 										if (guest_has_dbaccess(db_name))
 										{
@@ -3327,7 +3346,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 														(errcode(ERRCODE_CHECK_VIOLATION),
 														 errmsg("Cannot disable access to the guest user in master or tempdb.")));
 
-											alter_user_can_connect(false, rolspec->rolename, db_name);
+											alter_user_can_connect(false, logical_role_name, db_name);
 											return;
 										}
 										else
@@ -3441,25 +3460,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							ereport(ERROR,
 									(errcode(ERRCODE_OBJECT_IN_USE),
 									 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
-					}
-					/* If user/role, check for current_user's privileges */
-					else if (drop_user || drop_role)
-					{
-						const char *db_owner_name;
-						char       *db_principal;
-						int			role_oid = get_role_oid(role_name, true);
-
-						if (drop_user)
-							db_principal = "user";
-						else
-							db_principal = "role";
-						
-						/* must be database owner to drop user/role */
-						db_owner_name = get_db_owner_name(get_cur_db_name());
-						if ((!stmt->missing_ok && !OidIsValid(role_oid)) || !is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)))
-							ereport(ERROR,
-									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-									errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal, role_name)));
 					}
 
 					/*
