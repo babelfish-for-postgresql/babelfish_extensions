@@ -18,7 +18,8 @@ go
 
 use vector_db
 go
-
+use master
+go 
 -- tsql user=vector_login password=12345678
 use vector_db;
 go
