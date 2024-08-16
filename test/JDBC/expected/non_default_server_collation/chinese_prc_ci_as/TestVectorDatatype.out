@@ -1453,7 +1453,7 @@ go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 vector_db#!#dbo#!#t#!#a#!#1#!#<NULL>#!#YES#!#vector#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-vector_db#!#dbo#!#t#!#b#!#2#!#<NULL>#!#YES#!#varchar#!#-1#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+vector_db#!#dbo#!#t#!#b#!#2#!#<NULL>#!#YES#!#varchar#!#-1#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 select count(*) from sys.columns where object_id = sys.object_id('t')
