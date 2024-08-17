@@ -148,6 +148,90 @@ GO
 DROP DATABASE babelfish_migration_mode_db2
 GO
 
+-- Tests for db level collation 
+-- Test create user database
+CREATE DATABASE babelfish_migration_mode_db1 COLLATE BBF_Unicode_CP1_CI_AI
+GO
+
+-- should fail
+CREATE DATABASE babelfish_migration_mode_db1 COLLATE BBF_Unicode_CP1_CI_AI
+GO
+
+CREATE DATABASE babelfish_migration_mode_db2 COLLATE BBF_Unicode_CP1_CI_AI
+GO
+
+SELECT name FROM sys.sysdatabases 
+WHERE name LIKE 'babelfish_migration_mode%'
+ORDER BY name
+GO
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db1_dbo'
+GO
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db1_db_owner'
+GO
+SELECT COUNT(*) FROM pg_namespace WHERE nspname = 'babelfish_migration_mode_db1_dbo'
+GO
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db2_dbo'
+GO
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db2_db_owner'
+GO
+SELECT COUNT(*) FROM pg_namespace WHERE nspname = 'babelfish_migration_mode_db2_dbo'
+GO
+
+USE babelfish_migration_mode_db1
+GO
+
+SELECT 1
+GO
+
+USE babelfish_migration_mode_db2
+GO
+
+SELECT 1
+GO
+
+USE master
+GO
+
+SELECT set_config('role', 'jdbc_user', false)
+GO
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false)
+GO
+
+SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+
+-- should fail
+USE babelfish_migration_mode_db2
+GO
+
+SELECT set_config('role', 'jdbc_user', false)
+GO
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false)
+GO
+
+SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+
+-- should success
+USE babelfish_migration_mode_db2
+GO
+
+SELECT 1
+GO
+
+USE master
+GO
+
+DROP DATABASE babelfish_migration_mode_db1
+GO
+
+DROP DATABASE babelfish_migration_mode_db2
+GO
+
 SELECT set_config('role', 'jdbc_user', false)
 GO
 
