@@ -1082,6 +1082,73 @@ GO
 DROP DATABASE db2;
 GO
 
+-- Tests for db level collation
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+CREATE DATABASE db2 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+USE db1;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(1, 2, 0), 1),
+    (geometry::Point(3, 4, 0), 2),
+    (geometry::Point(5, 6, 0), 3);
+GO
+
+USE db2;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(7, 8, 0), 4),
+    (geometry::Point(9, 10, 0), 5),
+    (geometry::Point(11, 12, 0), 6);
+GO
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db1].[dbo].[SpatialData] ' +
+    N'UNION ALL ' +
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db2].[dbo].[SpatialData] ORDER BY SpatialPoint.STX';
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+
+USE master
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+
 SELECT set_config('role', 'jdbc_user', false);
 GO
 
