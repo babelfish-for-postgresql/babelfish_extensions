@@ -109,3 +109,84 @@ GO
 -- Clean up
 DROP DATABASE db1;
 GO
+
+-- Tests for db level collation
+-- Test properties after USE
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+SELECT current_setting('role');
+GO
+SELECT current_setting('search_path');
+GO
+SELECT session_user, current_user, user;
+GO
+SELECT user_name();
+GO
+
+USE db1;
+GO
+
+SELECT current_setting('role');
+GO
+SELECT current_setting('search_path');
+GO
+SELECT session_user, current_user, user;
+GO
+SELECT user_name();
+GO
+
+-- Error: Test DROP
+DROP DATABASE db1;
+GO
+
+SELECT current_setting('role');
+GO
+SELECT current_setting('search_path');
+GO
+SELECT session_user, current_user, user;
+GO
+SELECT user_name();
+GO
+
+-- Test DROP when using another database
+USE MASTER;
+GO
+
+SELECT current_setting('role');
+GO
+SELECT current_setting('search_path');
+GO
+SELECT session_user, current_user, user;
+GO
+SELECT user_name();
+GO
+
+DROP DATABASE db1;
+GO
+
+SELECT current_setting('role');
+GO
+SELECT current_setting('search_path');
+GO
+SELECT session_user, current_user, user;
+GO
+SELECT user_name();
+GO
+
+-- Test CREATE
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+SELECT current_setting('role');
+GO
+SELECT current_setting('search_path');
+GO
+SELECT session_user, current_user, user;
+GO
+SELECT user_name();
+GO
+
+-- Clean up
+DROP DATABASE db1;
+GO
