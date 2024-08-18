@@ -219,7 +219,7 @@ select count(*) from sys.types where collation_name='bbf_unicode_cp1_ci_ai';
 GO
 ~~START~~
 int
-1
+9
 ~~END~~
 
 
@@ -227,7 +227,7 @@ select count(*) from sys.types where collation_name='BBF_unicode_CP1_ci_ai';
 GO
 ~~START~~
 int
-1
+9
 ~~END~~
 
 
