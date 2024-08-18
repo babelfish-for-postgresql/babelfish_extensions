@@ -1561,6 +1561,97 @@ END;
 $$
 LANGUAGE 'pltsql';
 
+create or replace view sys.types As
+with RECURSIVE type_code_list as
+(
+    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
+    from sys.babelfish_typecode_list()
+),
+tt_internal as MATERIALIZED
+(
+  select * from sys.table_types_internal
+)
+-- For System types
+select
+  CAST(ti.tsql_type_name as sys.sysname) as name
+  , cast(t.oid as int) as system_type_id
+  , cast(t.oid as int) as user_type_id
+  , cast(s.oid as int) as schema_id
+  , cast(NULL as INT) as principal_id
+  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as precision
+  , sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as scale
+  , CASE
+    WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
+    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
+    END as collation_name
+  , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
+  , CAST(0 as sys.bit) as is_user_defined
+  , CASE ti.tsql_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
+  , CAST(0 as int) as default_object_id
+  , CAST(0 as int) as rule_object_id
+  , CAST(0 as sys.bit) as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+inner join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+where
+ti.tsql_type_name IS NOT NULL
+and pg_type_is_visible(t.oid)
+and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
+union all 
+-- For User Defined Types
+select cast(t.typname as sys.sysname) as name
+  , cast(t.typbasetype as int) as system_type_id
+  , cast(t.oid as int) as user_type_id
+  , cast(t.typnamespace as int) as schema_id
+  , null::integer as principal_id
+  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) end as precision
+  , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) end as scale
+  , CASE
+    WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
+    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
+    END as collation_name
+  , case when tt.typrelid is not null then cast(0 as sys.bit)
+         else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
+    end
+    as is_nullable
+  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
+  , CAST(1 as sys.bit) as is_user_defined
+  , CASE tsql_base_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
+  , CAST(0 as int) as default_object_id
+  , CAST(0 as int) as rule_object_id
+  , case when tt.typrelid is not null then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_table_type
+from pg_type t
+join sys.schemas sch on t.typnamespace = sch.schema_id
+left join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+left join tt_internal tt on t.typrelid = tt.typrelid
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+-- we want to show details of user defined datatypes created under babelfish database
+where 
+ ti.tsql_type_name IS NULL
+and
+  (
+    -- show all user defined datatypes created under babelfish database except table types
+    t.typtype = 'd'
+    or
+    -- only for table types
+    tt.typrelid is not null  
+  );
+GRANT SELECT ON sys.types TO PUBLIC;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
