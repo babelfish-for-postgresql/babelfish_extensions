@@ -11,6 +11,15 @@ go
 create user no_priv_user2 for login no_priv_login2
 go
 
+create login no_priv_login3 with password = '12345678'
+go
+
+create user no_priv_user3 for login no_priv_login3
+go
+
+create role no_priv_role3;
+go
+
 create database restrict_user_db1
 go
 
@@ -83,7 +92,7 @@ go
 drop role fake_role
 go
 
-drop user fake_user
+drop user fake_user;
 go
 
 drop user db
@@ -125,6 +134,25 @@ go
 drop role dont_drop_role
 go
 
+-- 3.3 - when drop user/role has IF EXISTS clause
+-- Should not throw error for the case where IF EXISTS clause is included
+drop role if exists fake_role;
+go
+
+drop user if exists fake_user;
+go
+
+-- both of the following statements should be executed successfully since user/role exists
+drop user if exists no_priv_user3;
+go
+
+drop user if exists no_priv_role3;
+go
+
+select count(*) from sys.database_principals where name like '%no_priv_%3';
+go
+
+
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
@@ -144,6 +172,9 @@ go
 
 -- tsql
 drop login no_priv_login2
+go
+
+drop login no_priv_login3
 go
 
 drop database restrict_user_db1

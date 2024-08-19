@@ -3285,27 +3285,22 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									RoleSpec   *rolspec = lfirst(item);
 									char	   *user_name;
-									char       *db_principal;
+									const char *db_principal_type = drop_user ? "user" : "role";
 									const char *db_owner_name;
 									int	       role_oid;
 									int        rolename_len;
 
 									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
-									db_owner_name = get_db_owner_name(get_cur_db_name());
+									db_owner_name = get_db_owner_name(db_name);
 									role_oid = get_role_oid(user_name, true);
 									rolename_len = strlen(rolspec->rolename);
-
-									if (drop_user)
-										db_principal = "user";
-									else
-										db_principal = "role";
 
 									/* If user is dbo or role is db_owner, restrict dropping */
 									if ((drop_user && rolename_len == 3 && strncmp(rolspec->rolename, "dbo", 3) == 0) ||
 										(drop_role && rolename_len == 8 && strncmp(rolspec->rolename, "db_owner", 8) == 0))
 										ereport(ERROR,
 												(errcode(ERRCODE_CHECK_VIOLATION),
-												errmsg("Cannot drop the %s '%s'.", db_principal, rolspec->rolename)));
+												 errmsg("Cannot drop the %s '%s'.", db_principal_type, rolspec->rolename)));
 
 									/* 
 									 * Check for current_user's privileges 
@@ -3315,7 +3310,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										!is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)))
 										ereport(ERROR,
 												(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-												errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal, rolspec->rolename)));
+												 errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal_type, rolspec->rolename)));
 									
 									/*
 									 * If a role has members, do not drop it.
