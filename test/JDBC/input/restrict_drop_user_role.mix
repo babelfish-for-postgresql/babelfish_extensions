@@ -219,6 +219,9 @@ go
 drop user user1;
 go
 
+drop user if exists user1;
+go
+
 use master
 go
 
