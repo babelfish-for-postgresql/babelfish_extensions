@@ -157,7 +157,7 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt,ParseState *pstate);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -6079,7 +6079,7 @@ get_identity_into_args(Node *node)
 
 
 static List *
-transformSelectIntoStmt(CreateTableAsStmt *stmt, ParseState *pstate)
+transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
 	List *result;
 	List *column_original_name_list;
@@ -6111,7 +6111,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt, ParseState *pstate)
 			{	
 
 				original_name = tle->resname;
-				tle->resname = downcase_truncate_identifier(tle->resname, strlen(tle->resname), false);
+				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 
 				// check if the original_name is already in lowercase
 				if (original_name != NULL && strcmp(original_name, tle->resname))
@@ -6271,7 +6271,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	ObjectAddress address;
 	ObjectAddress secondaryObject = InvalidObjectAddress;
 	List *stmts;
-	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree,pstate);
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
 	{
 		Node *stmt = (Node *)linitial(stmts);
