@@ -239,12 +239,61 @@ go
 -- Indexing over column select_into_COL
 create index IDX_REPRODUCTION on select_into_REPO(select_into_COL_select_into_COL_select_into_COL_select_into_COL_);
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "select_into_col_select_into_colb68a72f6d624cf699ece5bf8f6446ce4" does not exist)~~
+
 -- output is the lowercase name,original_name
 select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrelid=pg_class.oid where pg_class.relname='select_into_repo' and attname like '%select_into%'order by attname asc;
 go
 ~~START~~
 varchar#!#varchar
-select_into_col_select_into_colb68a72f6d624cf699ece5bf8f6446ce4#!#{bbf_original_name=select_into_COL_select_into_COL_select_into_COL_select_into_COL_}
+select_into_COL_select_into_COLb68a72f6d624cf699ece5bf8f6446ce4#!#<NULL>
+~~END~~
+
+-- dropping the table select_into
+drop table if exists select_into;
+go
+-- dropping the table select_into_REPO
+drop table if exists select_into_REPO;
+go
+
+
+-- test for IDENTITY Function
+sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function','ignore'
+go
+-- create a new table select_into 1
+create table select_into(select_into_COL int);
+go
+select select_into_COL from select_into;
+go
+~~START~~
+int
+~~END~~
+
+-- Create a new table select_into_REPO with column select_into_COL -- throws error
+select identity(int,1,1) as select_into_COL,* into select_into_REPO from select_into
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "select_into_col" of relation "select_into_repo" already exists)~~
+
+-- adding column sto repro -- should work
+select identity(int,1,1) as select_into_COL1,* into select_into_REPO from select_into
+go
+select * from select_into_REPO
+go
+~~START~~
+int#!#int
+~~END~~
+
+-- output is the lowercase name,original_name
+select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrelid=pg_class.oid where pg_class.relname='select_into_repo' and attname like '%select_into%'order by attname asc;
+go
+~~START~~
+varchar#!#varchar
+select_into_col#!#{bbf_original_name=select_into_COL}
+select_into_col1#!#{bbf_original_name=select_into_COL1}
 ~~END~~
 
 -- dropping the table select_into

@@ -6087,18 +6087,12 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt, ParseState *pstate)
 	AlterTableStmt *altstmt;
 	IntoClause *into;
 	Node *n;
-	List *res;
-	SelectStmt *selectSt;
 
 	n = stmt->query;
 	into = stmt->into;
 	result = NIL;
 	altstmt = NULL;
 	column_original_name_list = NIL;
-
-	res = raw_parser(pstate->p_sourcetext,RAW_PARSE_DEFAULT);
-	Assert(res->length == 1 && IsA(parsetree_nth_stmt(res, 0), SelectStmt));
-	selectSt = (SelectStmt *) parsetree_nth_stmt(res, 0);
 
 	if (n && n->type == T_Query)
 	{
@@ -6111,6 +6105,38 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt, ParseState *pstate)
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
+			char* original_name = NULL;
+
+			if (tle->resname != NULL && !tle->resjunk && strlen(tle->resname) < NAMEDATALEN -1)
+			{	
+
+				original_name = tle->resname;
+				tle->resname = downcase_truncate_identifier(tle->resname, strlen(tle->resname), false);
+
+				// check if the original_name is already in lowercase
+				if (original_name != NULL && strcmp(original_name, tle->resname))
+				{
+					AlterTableStmt *newstmt;
+					AlterTableCmd *cmd;
+
+					newstmt = NULL;
+
+					cmd = makeNode(AlterTableCmd);
+					cmd->subtype = AT_SetOptions;
+					cmd->name = tle->resname;
+					cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(original_name)), -1));
+					cmd->behavior = DROP_RESTRICT;
+					cmd->missing_ok = false;
+
+					newstmt = makeNode(AlterTableStmt);
+					newstmt->relation = into->rel;
+					newstmt->cmds = NIL;
+					newstmt->objtype = OBJECT_TABLE;
+					newstmt->cmds = lappend(newstmt->cmds, cmd);
+					column_original_name_list = lappend(column_original_name_list, newstmt);
+				}
+
+			}	
 
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
@@ -6192,47 +6218,11 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt, ParseState *pstate)
 			}
 			else
 			{
-				AlterTableStmt *newstmt;
-				AlterTableCmd *cmd;
-				TargetEntry *target;
-
-				char* original_name = NULL;
-				newstmt = NULL;
 				
-				if (tle->resname != NULL)
-				{	
-					original_name = tle->resname;
-					tle->resname = downcase_truncate_identifier(tle->resname, strlen(tle->resname), false);
-					if(tle->resjunk)
-						continue;
-					Assert(selectSt);
-					target = get_tle_by_resno(selectSt->targetList,
-														tle->resno);
-					original_name = target->resname;
-
-				}	
-
 				current_resno += 1;
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
 				
-				// check if the original_name is already in lowercase
-				if (original_name != NULL && strcmp(original_name, tle->resname))
-				{
-					cmd = makeNode(AlterTableCmd);
-					cmd->subtype = AT_SetOptions;
-					cmd->name = tle->resname;
-					cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(original_name)), -1));
-					cmd->behavior = DROP_RESTRICT;
-					cmd->missing_ok = false;
-
-					newstmt = makeNode(AlterTableStmt);
-					newstmt->relation = into->rel;
-					newstmt->cmds = NIL;
-					newstmt->objtype = OBJECT_TABLE;
-					newstmt->cmds = lappend(newstmt->cmds, cmd);
-					column_original_name_list = lappend(column_original_name_list, newstmt);
-				}
 			}
 		}
 		
