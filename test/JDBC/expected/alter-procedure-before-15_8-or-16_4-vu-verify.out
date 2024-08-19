@@ -1,0 +1,198 @@
+-- Test Case: Expect error for procedure with same name
+CREATE PROCEDURE alter_proc_p1 @param1 int
+AS
+    select * from alter_proc_orders
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'alter_proc_p1' already exists with the same name)~~
+
+
+-- Test Case: Expect error for altering proc that does not exist
+ALTER PROCEDURE alter_fake_proc @param1 int
+AS
+    select * from alter_proc_orders
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: No existing procedure found with the name for ALTER PROCEDURE)~~
+
+
+-- Test Case: Expect p1 and p2 to be altered properly with new definition
+exec alter_proc_p1
+go
+~~START~~
+int#!#int#!#int#!#int#!#date
+1#!#1#!#1#!#5#!#2023-06-25
+2#!#1#!#1#!#6#!#2023-06-25
+~~END~~
+
+
+exec alter_proc_p2
+go
+~~START~~
+int#!#int#!#int#!#int#!#date
+1#!#1#!#1#!#5#!#2023-06-25
+2#!#1#!#1#!#6#!#2023-06-25
+~~END~~
+
+
+-- Information_schema routine definition should still show "alter"
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p1';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p1#!#SQL#!#ALTER       -- test comment<newline>    PROCEDURE alter_proc_p1<newline>AS<newline>    select * from alter_proc_orders
+~~END~~
+
+
+
+-- Test Case: Modify the procedure body, add a parameter, use "proc"
+--            instead of "procedure"
+       ALTER /* TEST COMMENT */ 
+            PROC alter_proc_p1
+    @param INT
+AS
+    IF (@param = 1)
+    BEGIN
+        select * from alter_proc_users
+    END
+    ELSE
+    BEGIN
+        select * from alter_proc_orders
+    END
+GO
+
+exec alter_proc_p1 @param = 1
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#j#!#o#!#testemail
+1#!#e#!#l#!#testemail2
+3#!#newuser#!#lastname#!#testemail3
+~~END~~
+
+
+exec alter_proc_p1 @param = 2
+GO
+~~START~~
+int#!#int#!#int#!#int#!#date
+1#!#1#!#1#!#5#!#2023-06-25
+2#!#1#!#1#!#6#!#2023-06-25
+~~END~~
+
+
+-- Test Case: Expect error because no parameter provided
+exec alter_proc_p2
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure alter_proc_p1 expects parameter "@param", which was not supplied.)~~
+
+
+
+-- Test Case: Alter the parameter type and procedure body
+ALTER PROCEDURE alter_proc_p1
+    @param date
+AS
+    IF (@param = '2020-01-01')
+    BEGIN
+        select * from alter_proc_users
+    END
+    ELSE
+    BEGIN
+        select * from alter_proc_orders
+    END
+GO
+
+exec alter_proc_p1 @param = '2020-01-01'
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#j#!#o#!#testemail
+1#!#e#!#l#!#testemail2
+3#!#newuser#!#lastname#!#testemail3
+~~END~~
+
+
+exec alter_proc_p1 @param = '2020-01-02'
+GO
+~~START~~
+int#!#int#!#int#!#int#!#date
+1#!#1#!#1#!#5#!#2023-06-25
+2#!#1#!#1#!#6#!#2023-06-25
+~~END~~
+
+
+-- Test Case: attempt to alter function, expect error for being unsupported
+alter function alter_proc_f1()
+returns int
+as
+BEGIN
+    return 5
+END
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ALTER FUNCTION' is not currently supported in Babelfish)~~
+
+
+-- Test Case: Confirm transaction updates procedure correctly
+exec alter_proc_p3 @z = 500
+go
+~~START~~
+int
+1000
+~~END~~
+
+
+-- Ensure information schema uses "CREATE" instead of "ALTER" with updated definition
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p3';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p3#!#SQL#!#alter procedure alter_proc_p3 @z int as select 500 + @z
+~~END~~
+
+
+-- Expect this to error with no param provided
+exec alter_proc_p3
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure alter_proc_p3 expects parameter "@z", which was not supplied.)~~
+
+
+-- Expect procedure altered correctly and information_schema contains comments
+exec alter_proc_p4
+go
+~~START~~
+int
+3
+~~END~~
+
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p4#!#SQL#!#alter <newline>/*<newline> * test comment 1<newline> */<newline>-- test comment 2<newline>procedure alter_proc_p4 as select 3
+~~END~~
+
+
+-- Test Case: confirm procedure altered to add parameter
+exec alter_proc_p5 @dateParam = '2000-01-01'
+go
+~~START~~
+date
+2000-01-01
+~~END~~
+
+
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p5';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_proc_p5#!#SQL#!#alter procedure alter_proc_p5 @dateParam date as select @dateParam
+~~END~~
+

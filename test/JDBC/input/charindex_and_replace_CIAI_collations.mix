@@ -1,5 +1,6 @@
 /* CHARINDEX WITH CI_AI COLLATIONS */
 
+-- tsql
 CREATE TABLE #BABEL_4850_TEMP(id NVARCHAR(100))
 GO
 CREATE TABLE BABEL_4850_T(id NVARCHAR(100))
@@ -201,4 +202,40 @@ SELECT REPLACE(id, 'Æ' COLLATE Latin1_General_CS_AI, '!---!') FROM BABEL_4850_T
 GO
 
 DROP TABLE BABEL_4850_T
+GO
+
+/* Substring to find starts with surrogate pair BABEL-5169 */
+SELECT CHARINDEX(N'🙂dEf', N'abc🙂def🙂defgh🙂dEfi🙂🙂' COLLATE Latin1_General_CS_AI)
+SELECT CHARINDEX(N'🙂D', N'abc🙂d🙂d🙂D' COLLATE Latin1_General_CS_AI)
+SELECT CHARINDEX(N'🙂dEf', N'abc🙂defgh🙂dEfi🙂🙂' COLLATE Latin1_General_CI_AI)
+SELECT CHARINDEX(N'🙂', N'abc🙂defgh🙂dEfi🙂🙂' COLLATE Latin1_General_CS_AI)
+SELECT CHARINDEX(N'🙂', N'abc🙂defgh🙂dEfi🙂🙂' COLLATE Latin1_General_CI_AI)
+GO
+
+/* Substring to find starts with surrogate pair BABEL-5169 */
+SELECT REPLACE(N'abc🙂defghi🙂🙂', N'🙂def', N'jhi🙂' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE(N'abc🙂🙂🙂🙂🙂defghi🙂🙂', N'🙂', N'<---->' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE(N'abc🙂🙂🙂🙂', N'🙂', N'<---->' COLLATE Latin1_General_CI_AI)
+SELECT REPLACE(N'🙂abc🙂', N'🙂', N'<---->' COLLATE Latin1_General_CI_AI)
+GO
+
+-- psql
+CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);
+CREATE COLLATION ignore_accents (provider = icu, locale = 'nd-u-kc-true-ks-level1', deterministic = false);
+GO
+
+CREATE TABLE mismatch_col (col1 text COLLATE case_insensitive, col2 text COLLATE ignore_accents, col3 text);
+GO
+
+INSERT INTO mismatch_col VALUES ('abc', 'xyz', 'tde');
+GO
+
+SELECT REPLACE(col1, col2, col3) FROM mismatch_col
+GO
+
+DROP TABLE mismatch_col
+GO
+
+DROP COLLATION case_insensitive;
+DROP COLLATION ignore_accents;
 GO

@@ -4257,7 +4257,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 
 	input_values = palloc(nargs * sizeof(Datum));
 
-	for (int i = 0; i < nargs; i++)
+	for (volatile int i = 0; i < nargs; i++)
 	{
 		Datum val;
 

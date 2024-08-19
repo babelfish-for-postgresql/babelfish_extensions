@@ -16,10 +16,6 @@ all
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
 
-# TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
-ignore#!#tds_faultinjection
-ignore#!#babel_tds_fault_injection
-
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
 ignore#!#BABEL-2934-vu-prepare
@@ -370,3 +366,6 @@ ignore#!#replace-before-14_3-vu-verify
 ignore#!#replace-before-14_3-vu-cleanup
 ignore#!#BABEL_4330-before-15_8-or-16_4-vu-prepare
 ignore#!#BABEL_4330-before-15_8-or-16_4-vu-verify
+ignore#!#alter-procedure-before-15_8-or-16_4-vu-prepare
+ignore#!#alter-procedure-before-15_8-or-16_4-vu-verify
+ignore#!#alter-procedure-before-15_8-or-16_4-vu-cleanup

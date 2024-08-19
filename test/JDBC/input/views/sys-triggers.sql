@@ -35,6 +35,10 @@ SELECT 1
 END
 GO
 
+select case when object_id([name]) = object_id then 'equal' else 'not equal' end 
+from sys.triggers where [name] = 'trig2'
+go
+
 -- test instead of insert trigger
 SELECT 
     name,
