@@ -1582,8 +1582,8 @@ select
   , sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as precision
   , sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as scale
   , CASE
-    WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
-    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
+        WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
+        ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
     END as collation_name
   , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
   , CAST(0 as sys.bit) as is_user_defined
@@ -1615,8 +1615,8 @@ select cast(t.typname as sys.sysname) as name
   , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) end as precision
   , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) end as scale
   , CASE
-    WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
-    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
+        WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
+        ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
     END as collation_name
   , case when tt.typrelid is not null then cast(0 as sys.bit)
          else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
