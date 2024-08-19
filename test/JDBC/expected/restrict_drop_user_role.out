@@ -322,6 +322,9 @@ go
 ~~ERROR (Message: Cannot drop the user 'user1', because it does not exist or you do not have permission.)~~
 
 
+drop user if exists user1;
+go
+
 use master
 go
 
