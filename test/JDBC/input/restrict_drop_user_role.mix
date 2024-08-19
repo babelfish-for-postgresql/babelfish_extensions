@@ -152,8 +152,30 @@ go
 select count(*) from sys.database_principals where name like '%no_priv_%3';
 go
 
+-- 3.4 - Try dropping role created from PG role
+-- psql
+create role master_pguser1;
+go
+
+-- tsql
+drop user pguser1;
+go
+
+drop role pguser1;
+go
+
+-- it will still try to drop it, but permission denied will be generated since
+-- bbf_role_admin won't have privilege to drop non-babelfish roles
+drop user if exists pguser1;
+go
+
+drop role if exists pguser1;
+go
 
 -- psql
+drop role master_pguser1;
+go
+
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'no_priv_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;

@@ -225,8 +225,46 @@ int
 ~~END~~
 
 
+-- psql
+-- 3.4 - Try dropping role created from PG role
+create role master_pguser1;
+go
+
+-- tsql
+drop user pguser1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'pguser1', because it does not exist or you do not have permission.)~~
+
+
+drop role pguser1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'pguser1', because it does not exist or you do not have permission.)~~
+
+
+-- it will still try to drop it, but permission denied will be generated since
+-- bbf_role_admin won't have privilege to drop non-babelfish roles
+drop user if exists pguser1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to drop role)~~
+
+
+drop role if exists pguser1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to drop role)~~
+
 
 -- psql
+drop role master_pguser1;
+go
+
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'no_priv_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;

@@ -3287,13 +3287,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									char	   *user_name;
 									const char *db_principal_type = drop_user ? "user" : "role";
 									const char *db_owner_name;
-									int	       role_oid;
-									int        rolename_len;
+									int			role_oid;
+									int			rolename_len;
+									bool		is_tsql_db_principal = false;
 
 									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
 									db_owner_name = get_db_owner_name(db_name);
 									role_oid = get_role_oid(user_name, true);
 									rolename_len = strlen(rolspec->rolename);
+									is_tsql_db_principal = OidIsValid(role_oid) &&
+														   ((drop_user && is_user(role_oid)) ||
+															(drop_role && is_role(role_oid)));
 
 									/* If user is dbo or role is db_owner, restrict dropping */
 									if ((drop_user && rolename_len == 3 && strncmp(rolspec->rolename, "dbo", 3) == 0) ||
@@ -3306,7 +3310,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 * Check for current_user's privileges 
 									 * must be database owner to drop user/role
 									 */
-									if ((!stmt->missing_ok && !OidIsValid(role_oid)) ||
+									if ((!stmt->missing_ok && !is_tsql_db_principal) ||
 										!is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)))
 										ereport(ERROR,
 												(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
