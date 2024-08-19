@@ -3241,7 +3241,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 * must be database owner to drop user/role
 									 */
 									if ((!stmt->missing_ok && !is_tsql_db_principal) ||
-										!is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)))
+										!is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)) ||
+										(is_tsql_db_principal && !is_member_of_role(get_role_oid(db_owner_name, false), role_oid)))
 										ereport(ERROR,
 												(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 												 errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal_type, rolspec->rolename)));
