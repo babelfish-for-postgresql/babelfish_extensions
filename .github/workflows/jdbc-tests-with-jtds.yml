@@ -1,0 +1,107 @@
+name: JDBC Tests With jTDS
+on: [push, pull_request]
+
+jobs:
+  run-babelfish-jdbc-tests-with-jtds:
+    env:
+      INSTALL_DIR: psql
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Build Modified Postgres
+        id: build-modified-postgres
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+      
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+      
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+
+      - name: Build tds_fdw Extension
+        id: build-tds_fdw-extension
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/build-tds_fdw-extension
+
+      - name: Build vector Extension
+        id: build-vector-extension
+        if: always() &&  steps.build-tds_fdw-extension.outcome == 'success'
+        uses: ./.github/composite-actions/build-vector-extension
+
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() &&  steps.build-vector-extension.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
+
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-postgis-extension.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+
+      - name: Run JDBC Tests
+        id: jdbc
+        if: always() && steps.install-extensions.outcome == 'success'
+        timeout-minutes: 120
+        run: |
+          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
+          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+          cd test/JDBC/
+          # set env variable useJTDSInsteadOfMSSQLJDBC to true to run tests from file jtds_jdbc_schedule
+          export useJTDSInsteadOfMSSQLJDBC=true
+          mvn -B -ntp test
+          # reset env variable
+          unset useJTDSInsteadOfMSSQLJDBC
+
+      - name: Cleanup babelfish database
+        id: cleanup
+        if: always() && steps.install-extensions.outcome == 'success'
+        run: |
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+
+      - name: Upload Log
+        if: always() && steps.jdbc.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: postgres-log
+          path: ~/psql/data/logfile
+      
+      # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
+      - name: Rename Test Summary Files
+        id: test-file-rename
+        if: always() && steps.jdbc.outcome == 'failure'
+        run: |
+          cd test/JDBC/Info
+          timestamp=`ls -Art | tail -n 1`
+          cd $timestamp
+          mv $timestamp.diff ../output-diff.diff
+          mv "$timestamp"_runSummary.log ../run-summary.log
+      
+      - name: Upload Run Summary 
+        if: always() && steps.test-file-rename == 'success'
+        uses: actions/upload-artifact@v2
+        with:
+          name: run-summary.log
+          path: test/JDBC/Info/run-summary.log
+      
+      - name: Upload Output Diff
+        if: always() && steps.jdbc.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: output-diff.diff
+          path: test/JDBC/Info/output-diff.diff
+      
+      - name: Check and upload coredumps
+        if: always() && steps.jdbc.outcome == 'failure'
+        uses: ./.github/composite-actions/upload-coredump

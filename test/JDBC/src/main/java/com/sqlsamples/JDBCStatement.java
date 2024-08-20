@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.SQLWarning;
@@ -37,6 +36,10 @@ public class JDBCStatement {
             bw.write(strLine);
             bw.newLine();
 
+            if (SQL.isEmpty()) {
+                return;
+            }
+
             SQLWarning sqlwarn = null;
             boolean resultSetExist = false;
             boolean warningExist = false;
@@ -49,9 +52,11 @@ public class JDBCStatement {
                 handleSQLExceptionWithFile(e, bw, logger);
                 resultsProcessed++;
             }
-            CompareResults.processResults(stmt_bbl, bw, resultsProcessed, resultSetExist, warningExist,logger);
+            CompareResults.processResults(stmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
+        } catch (IllegalStateException e) {
+            logger.error("Illegal State Exception: " + e.getMessage(), e);
         }
     }
 }
