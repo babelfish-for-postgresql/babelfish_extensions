@@ -6183,9 +6183,9 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
-			char* original_name = NULL;
+			char *original_name = NULL;
 
-			if (tle->resname != NULL && !tle->resjunk && strlen(tle->resname) < NAMEDATALEN -1)
+			if (tle->resname != NULL && !tle->resjunk && strlen(tle->resname) < NAMEDATALEN - 1)
 			{	
 
 				original_name = tle->resname;
@@ -6301,7 +6301,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				
 			}
 		}
-		
 		q->targetList = modifiedTargetList;
 
 		if (seen_identity)
