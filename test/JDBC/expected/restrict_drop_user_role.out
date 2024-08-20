@@ -211,10 +211,24 @@ drop user if exists fake_user;
 go
 
 -- both of the following statements should be executed successfully since user/role exists
+drop role if exists no_priv_user3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'no_priv_user3', because it does not exist or you do not have permission.)~~
+
+
 drop user if exists no_priv_user3;
 go
 
 drop user if exists no_priv_role3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'no_priv_role3', because it does not exist or you do not have permission.)~~
+
+
+drop role if exists no_priv_role3;
 go
 
 select count(*) from sys.database_principals where name like '%no_priv_%3';
@@ -251,14 +265,14 @@ drop user if exists pguser1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied to drop role)~~
+~~ERROR (Message: Cannot drop the user 'pguser1', because it does not exist or you do not have permission.)~~
 
 
 drop role if exists pguser1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied to drop role)~~
+~~ERROR (Message: Cannot drop the role 'pguser1', because it does not exist or you do not have permission.)~~
 
 
 -- psql
@@ -301,18 +315,43 @@ go
 drop database restrict_user_db1
 go
 
--- tsql
+-- psql
 -- 3.5 - Try dropping user created for another database
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+GO
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
 create database restrict_user_db1;
+go
+
+create database restrict_user_db1_restrict_user_db1;
 go
 
 create login restrict_user_l1 with password = '12345678'
 go
 
+use restrict_user_db1
+go
+
 create user restrict_user_db1_user1 for login restrict_user_l1;
 go
 
-use restrict_user_db1
+use restrict_user_db1_restrict_user_db1
 go
 
 drop user user1;
@@ -324,6 +363,10 @@ go
 
 drop user if exists user1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'user1', because it does not exist or you do not have permission.)~~
+
 
 use master
 go
@@ -339,7 +382,13 @@ bool
 
 
 -- tsql
+use restrict_user_db1
+go
+
 drop user restrict_user_db1_user1;
+go
+
+use master
 go
 
 drop login restrict_user_l1;
@@ -347,3 +396,18 @@ go
 
 drop database restrict_user_db1;
 go
+
+drop database restrict_user_db1_restrict_user_db1;
+go
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
