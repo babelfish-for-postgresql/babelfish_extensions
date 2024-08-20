@@ -3176,14 +3176,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									int			role_oid;
 									int			rolename_len;
 									bool		is_tsql_db_principal = false;
+									bool		is_psql_db_principal = false;
+									Oid			dbowner;
 
 									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
 									db_owner_name = get_db_owner_name(db_name);
+									dbowner = get_role_oid(db_owner_name, false);
 									role_oid = get_role_oid(user_name, true);
 									rolename_len = strlen(rolspec->rolename);
 									is_tsql_db_principal = OidIsValid(role_oid) &&
 														   ((drop_user && is_user(role_oid)) ||
 															(drop_role && is_role(role_oid)));
+									is_psql_db_principal = OidIsValid(role_oid) && !is_tsql_db_principal;
 
 									/* If user is dbo or role is db_owner, restrict dropping */
 									if ((drop_user && rolename_len == 3 && strncmp(rolspec->rolename, "dbo", 3) == 0) ||
@@ -3197,7 +3201,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 * must be database owner to drop user/role
 									 */
 									if ((!stmt->missing_ok && !is_tsql_db_principal) ||
-										!is_member_of_role(GetUserId(), get_role_oid(db_owner_name, false)))
+										!is_member_of_role(GetUserId(), dbowner) ||
+										(is_tsql_db_principal && !is_member_of_role(dbowner, role_oid)) || is_psql_db_principal)
 										ereport(ERROR,
 												(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 												 errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal_type, rolspec->rolename)));
