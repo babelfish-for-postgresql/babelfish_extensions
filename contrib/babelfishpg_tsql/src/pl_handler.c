@@ -6191,7 +6191,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				original_name = tle->resname;
 				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 
-				// check if the original_name is already in lowercase
+				/* check if the original_name is already in lowercase */
 				if (original_name != NULL && strcmp(original_name, tle->resname) && strlen(tle->resname) < NAMEDATALEN - 1)
 				{
 					AlterTableStmt *newstmt;
