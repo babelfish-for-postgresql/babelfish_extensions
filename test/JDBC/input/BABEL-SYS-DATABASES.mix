@@ -10,6 +10,9 @@ GO
 CREATE DATABASE db2;
 GO
 
+CREATE DATABASE db3 COLLATE bbf_unicode_cp1_ci_ai;
+GO
+
 SELECT name, compatibility_level, collation_name FROM sys.databases ORDER BY name;
 GO
 
@@ -18,6 +21,7 @@ GO
 
 DROP DATABASE db1;
 DROP DATABASE db2;
+DROP DATABASE db3;
 GO
 
 -- psql
