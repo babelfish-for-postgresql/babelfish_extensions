@@ -443,6 +443,7 @@ Test-sp_helpsrvrolemember
 Test-sp_helpuser
 Test-sp_rename
 Test-sp_rename-dep
+Test-sp_reset_connection
 Test-sp_set_session_context
 Test-sp_set_session_context-dep
 TestSQLVariant
