@@ -106,8 +106,16 @@ go
 -- 3.1 - when login is database owner
 Alter authorization on database::restrict_user_db1 to no_priv_login2
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ALTER AUTHORIZATION ON' is not currently supported in Babelfish)~~
+
 
 -- tsql user=no_priv_login2 password=12345678 database=restrict_user_db1
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot open database "restrict_user_db1" requested by the login. The login failed )~~
+
 -- allowed
 select current_user
 go
@@ -301,7 +309,6 @@ WHERE sys.suser_name(usesysid) = 'no_priv_login2' AND backend_type = 'client bac
 go
 ~~START~~
 bool
-t
 ~~END~~
 
 
