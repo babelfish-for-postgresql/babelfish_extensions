@@ -239,16 +239,12 @@ go
 -- Indexing over column select_into_COL
 create index IDX_REPRODUCTION on select_into_REPO(select_into_COL_select_into_COL_select_into_COL_select_into_COL_);
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "select_into_col_select_into_colb68a72f6d624cf699ece5bf8f6446ce4" does not exist)~~
-
 -- output is the lowercase name,original_name
 select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrelid=pg_class.oid where pg_class.relname='select_into_repo' and attname like '%select_into%'order by attname asc;
 go
 ~~START~~
 varchar#!#varchar
-select_into_COL_select_into_COLb68a72f6d624cf699ece5bf8f6446ce4#!#<NULL>
+select_into_col_select_into_colb68a72f6d624cf699ece5bf8f6446ce4#!#<NULL>
 ~~END~~
 
 -- dropping the table select_into

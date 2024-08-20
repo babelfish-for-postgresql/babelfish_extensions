@@ -6185,14 +6185,14 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 			char *original_name = NULL;
 
-			if (tle->resname != NULL && !tle->resjunk && strlen(tle->resname) < NAMEDATALEN - 1)
+			if (tle->resname != NULL && !tle->resjunk)
 			{	
 
 				original_name = tle->resname;
 				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 
 				// check if the original_name is already in lowercase
-				if (original_name != NULL && strcmp(original_name, tle->resname))
+				if (original_name != NULL && strcmp(original_name, tle->resname) && strlen(tle->resname) < NAMEDATALEN - 1)
 				{
 					AlterTableStmt *newstmt;
 					AlterTableCmd *cmd;
