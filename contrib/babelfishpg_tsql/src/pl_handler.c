@@ -99,7 +99,6 @@ extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
 extern bool pltsql_nocount;
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
-extern TargetEntry *get_tle_by_resno(List *tlist,AttrNumber resno);
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -6157,7 +6156,6 @@ get_identity_into_args(Node *node)
 	return val;
 }
 
-
 static List *
 transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
@@ -6198,8 +6196,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				{
 					AlterTableStmt *newstmt;
 					AlterTableCmd *cmd;
-
-					newstmt = NULL;
 
 					cmd = makeNode(AlterTableCmd);
 					cmd->subtype = AT_SetOptions;
