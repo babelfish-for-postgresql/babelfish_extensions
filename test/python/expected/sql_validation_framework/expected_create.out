@@ -90,7 +90,6 @@ Could not find tests for view sys.sp_stored_procedures_view
 Could not find tests for view sys.sp_table_privileges_view
 Could not find upgrade tests for function assemblyproperty
 Could not find upgrade tests for function connectionproperty
-Could not find upgrade tests for function databasepropertyex
 Could not find upgrade tests for function pltsql_call_handler
 Could not find upgrade tests for function pltsql_inline_handler
 Could not find upgrade tests for function pltsql_validator
