@@ -60,18 +60,18 @@ GO
 USE test_db_collation_vu_prepare_db11;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db11_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db11_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -83,18 +83,18 @@ GO
 USE test_db_collation_vu_prepare_db121;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db121_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db121_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -106,18 +106,18 @@ GO
 USE test_db_collation_vu_prepare_db122;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db122_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db122_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -129,18 +129,18 @@ GO
 USE test_db_collation_vu_prepare_db131;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db131_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db131_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -152,18 +152,18 @@ GO
 USE test_db_collation_vu_prepare_db132;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db132_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db132_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -175,18 +175,18 @@ GO
 USE test_db_collation_vu_prepare_db133;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db133_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db133_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -198,18 +198,18 @@ GO
 USE test_db_collation_vu_prepare_db134;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db134_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db134_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -221,18 +221,18 @@ GO
 USE test_db_collation_vu_prepare_db135;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db135_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db135_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -244,18 +244,18 @@ GO
 USE test_db_collation_vu_prepare_db136;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select COLUMN_NAME, COLLATION_NAME FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db136_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY COLUMN_NAME;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db136_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -267,18 +267,18 @@ GO
 USE test_db_collation_vu_prepare_db137;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db137_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db137_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -290,18 +290,18 @@ GO
 USE test_db_collation_vu_prepare_db138;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db138_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db138_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -313,18 +313,18 @@ GO
 USE test_db_collation_vu_prepare_db139;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db139_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db139_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -336,18 +336,18 @@ GO
 USE test_db_collation_vu_prepare_db141;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db141_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db141_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -359,18 +359,18 @@ GO
 USE test_db_collation_vu_prepare_db142;
 GO
 
-SELECT name, collation_name from sys.columns WHERE name = 'c' or name = 'nc' or name = 'v' or name = 'nv' or name = 't' or name = 'nt' or name = 'sqlv' or name = 'sn' ORDER BY name;
+SELECT name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db142_t1' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db142_t2' AND
-(COLUMN_NAME = 'c' or COLUMN_NAME = 'nc' or COLUMN_NAME = 'v' or COLUMN_NAME = 'nv' or COLUMN_NAME = 't' or COLUMN_NAME = 'nt' or COLUMN_NAME = 'sqlv' or COLUMN_NAME = 'sn') ORDER BY column_name;
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
 GO
 
-SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name;
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
 GO
 
 CREATE TYPE ct FROM NVARCHAR(11);
@@ -420,7 +420,7 @@ INSERT INTO #test_db_collation_vu_prepare_db121_temp_t2 VALUES
 ('chaptéR', 'TEññiȘ');
 GO
 
-SELECT t1.a, t2.a FROM #test_db_collation_vu_prepare_db121_temp_t1 t1 INNER JOIN #test_db_collation_vu_prepare_db121_temp_t2 t2 on t1.a = t2.a;
+SELECT t1.a, t2.a FROM #test_db_collation_vu_prepare_db121_temp_t1 t1 INNER JOIN #test_db_collation_vu_prepare_db121_temp_t2 t2 on t1.a = t2.a ORDER BY t1.a;
 GO
 
 -- Drop the temp tables
@@ -439,17 +439,17 @@ GO
 
 -- Case 4.4: SELECT INTO
 -- Create a new table named "EmployeeData" based on the "Employees" table
-SELECT * INTO test_db_collation_vu_prepare_db121_si1 FROM test_db_collation_vu_prepare_db121_t1;
+SELECT * INTO test_db_collation_vu_prepare_db121_si1 FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
 GO
 
-SELECT * FROM test_db_collation_vu_prepare_db121_si1;
+SELECT * FROM test_db_collation_vu_prepare_db121_si1 ORDER BY nv;
 GO
 
 -- Create a new table with employees hired after 2015
-SELECT * INTO test_db_collation_vu_prepare_db121_si2 FROM test_db_collation_vu_prepare_db121_t1 t1 WHERE t1.nv > 'naive';
+SELECT * INTO test_db_collation_vu_prepare_db121_si2 FROM test_db_collation_vu_prepare_db121_t1 t1 WHERE t1.nv > 'naive' ORDER BY nv;
 GO
 
-SELECT * FROM test_db_collation_vu_prepare_db121_si2;
+SELECT * FROM test_db_collation_vu_prepare_db121_si2 ORDER BY nv;
 GO
 
 
@@ -457,7 +457,7 @@ GO
 USE test_db_collation_vu_prepare_db121;
 GO
 
-SELECT nv FROM test_db_collation_vu_prepare_db121_t1 where nv = 'cafe' or nv = 'JALAPeno' or nv = 'ñáIVE' or nv = 'pínata';
+SELECT nv FROM test_db_collation_vu_prepare_db121_t1 where nv IN ('cafe', 'JALAPeno', 'ñáIVE', 'pínata') ORDER BY nv;
 GO
 
 SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
@@ -466,7 +466,7 @@ GO
 SELECT nv FROM test_db_collation_vu_prepare_db121_t1 GROUP BY nv;
 GO
 
-CREATE VIEW test_db_collation_vu_prepare_db121_v1 AS SELECT nv FROM test_db_collation_vu_prepare_db121_t1;
+CREATE VIEW test_db_collation_vu_prepare_db121_v1 AS SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
 GO
 
 SELECT * FROM test_db_collation_vu_prepare_db121_v1;
@@ -505,7 +505,7 @@ EXEC test_db_collation_vu_prepare_db121_p1 @param = 'pínata'
 GO
 
 -- should return 10 rows instead of 12
-SELECT t1.nv FROM test_db_collation_vu_prepare_db121_t1 t1 INNER JOIN test_db_collation_vu_prepare_db121_t2 t2 on t1.nv = t2.nv;
+SELECT t1.nv FROM test_db_collation_vu_prepare_db121_t1 t1 INNER JOIN test_db_collation_vu_prepare_db121_t2 t2 on t1.nv = t2.nv ORDER BY t1.nv;
 GO
 
 -- COMMENTING IT FOR NOW AS PREP EXEC IS NOT GIVING CORRECT OUTOUT
@@ -556,7 +556,7 @@ GO
 USE test_db_collation_vu_prepare_db121;
 GO
 
-SELECT t1.nv, t2.nv FROM test_db_collation_vu_prepare_db121_t1 t1 JOIN test_db_collation_vu_prepare_db11.dbo.test_db_collation_vu_prepare_db11_t1 t2 on t1.nv = t2.nv;
+SELECT t1.nv, t2.nv FROM test_db_collation_vu_prepare_db121_t1 t1 JOIN test_db_collation_vu_prepare_db11.dbo.test_db_collation_vu_prepare_db11_t1 t2 on t1.nv = t2.nv ORDER BY t1.nv;
 GO
 
 INSERT INTO test_db_collation_vu_prepare_db11.dbo.test_db_collation_vu_prepare_db11_t1 VALUES
@@ -574,7 +574,7 @@ GO
 SELECT nv FROM test_db_collation_vu_prepare_db11_t1 WHERE nv = 'Řandom';
 GO
 
-SELECT t1.nv, t2.nv FROM test_db_collation_vu_prepare_db11_t1 t1 JOIN test_db_collation_vu_prepare_db121.dbo.test_db_collation_vu_prepare_db121_t1 t2 on t1.nv = t2.nv;
+SELECT t1.nv, t2.nv FROM test_db_collation_vu_prepare_db11_t1 t1 JOIN test_db_collation_vu_prepare_db121.dbo.test_db_collation_vu_prepare_db121_t1 t2 on t1.nv = t2.nv ORDER BY t1.nv;
 GO
 
 

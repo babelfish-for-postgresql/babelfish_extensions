@@ -307,7 +307,7 @@ RETURN
 (
     SELECT t1.nv
     FROM test_db_collation_vu_prepare_db121_t1 t1
-    INNER JOIN test_db_collation_vu_prepare_db121_t2 t2 ON t1.nv = t2.nv
+    INNER JOIN test_db_collation_vu_prepare_db121_t2 t2 ON t1.nv = t2.nv ORDER BY t1.nv
 );
 GO
 

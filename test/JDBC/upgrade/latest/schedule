@@ -562,4 +562,4 @@ sys_sequences
 replicate
 space
 binary-datatype-operators
-
+test_db_collation
