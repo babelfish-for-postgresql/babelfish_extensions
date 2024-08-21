@@ -380,7 +380,7 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 
 /* Following constants value are defined based on the special function list */
 #define SFUNC_MAX_ARGS 4			/* maximum number of args special function in special function list can have */
-#define SFUNC_MAX_VALID_TYPES 19		/* maximum number of valid types supported argument of function in special function list can have */
+#define SFUNC_MAX_VALID_TYPES 17		/* maximum number of valid types supported argument of function in special function list can have */
 
 /* struct to store details of valid types supported for a argument */
 typedef struct tsql_valid_arg_type
@@ -405,12 +405,12 @@ tsql_special_function_t tsql_special_function_list[] =
 	{"sys", "replace", "replace", 3, {{8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
 	{"sys", "string_agg", "string_agg", 2, 
 		{
-			{19, 
-				{"char","varchar","nchar","nvarchar","text","ntext","int","bigint","smallint","tinyint","numeric","float","real","bit","decimal","smallmoney","money","datetime","datetime2"}, 
-				{InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid,  InvalidOid}
+			{17, 
+				{"char","varchar","nchar","nvarchar","int","bigint","smallint","tinyint","numeric","float","real","bit","decimal","smallmoney","money","datetime","datetime2"}, 
+				{InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}
 			}, 
-			{6, {"char","varchar","nchar","nvarchar","text","ntext"}, 
-				{InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}
+			{4, {"char","varchar","nchar","nvarchar"}, 
+				{InvalidOid, InvalidOid, InvalidOid, InvalidOid}
 			}
 		}
 	},
@@ -1289,7 +1289,6 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[0])
 				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[0])
-				|| (*common_utility_plugin_ptr->is_tsql_text_datatype)(input_typeids[0])
 				|| input_typeids[0] == UNKNOWNOID)
 		{
 			expr_result_type = get_sys_varcharoid();
