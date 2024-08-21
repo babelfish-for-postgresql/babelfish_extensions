@@ -90,9 +90,16 @@ jobs:
         id: replication
         if: always() && steps.setup-pub-sub.outcome == 'success'
         timeout-minutes: 60
-        uses: ./.github/composite-actions/run-jdbc-tests
-        with:
-          input_dir: 'replication'
+        run: |
+          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
+          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+          sudo ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -p 5433 -c "update sys.babelfish_sysdatabases set default_collation = '${{env.DATABASE_COLLATION_NAME}}' where name = 'master';"
+          sudo ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -p 5433 -c "select default_collation from sys.babelfish_sysdatabases where name = 'master';"
+          cd test/JDBC/
+          export databaseCollationName=${{env.DATABASE_COLLATION_NAME}}
+          export inputFilesPath=replication
+          mvn test
+          unset databaseCollationName
 
       - name: Cleanup babelfish database
         id: cleanup
