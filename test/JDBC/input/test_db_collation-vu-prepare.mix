@@ -1,0 +1,343 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+-- Case 1.1: CREATE DATABASE WITH NO COLLATE CLAUSE
+
+-- Should pick up server level collation
+CREATE DATABASE test_db_collation_vu_prepare_db11;
+GO
+
+-- Case 1.2: CREATE DATABASE WITH COLLATE CLAUSE EQUIVALENT TO tsql
+CREATE DATABASE test_db_collation_vu_prepare_db121 COLLATE Latin1_General_CI_AI;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db122 COLLATE sql_latin1_general_cp1_ci_ai;
+GO
+
+-- Case 1.3: CREATE DATABASE WITH COLLATE CLAUSE WITH BBF SPECIFIC COLLATION
+CREATE DATABASE test_db_collation_vu_prepare_db131 COLLATE bbf_unicode_cp1250_ci_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db132 COLLATE bbf_unicode_cp1257_ci_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db133 COLLATE bbf_unicode_cp1_ci_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db134 COLLATE estonian_ci_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db135 COLLATE finnish_swedish_ci_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db136 COLLATE french_ci_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db137 COLLATE modern_spanish_ci_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db138 COLLATE polish_ci_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db139 COLLATE traditional_spanish_ci_ai;
+GO
+
+-- Case 1.4: CREATE DATABASE WITH COLLATE CLAUSE WITH SERVER LEVEL COLLATION
+CREATE DATABASE test_db_collation_vu_prepare_db141 COLLATE sql_latin1_general_cp1_ci_as;
+GO
+
+-- Pass for non-default server collation, fail for normal JDBC run
+CREATE DATABASE test_db_collation_vu_prepare_db142 COLLATE chinese_prc_ci_as;
+GO
+
+-- Case 1.5: CREATE DATABASE WITH COLLATION CREATED FROM PG-ENDPOINT
+-- psql
+CREATE COLLATION sys.my_collation (provider = icu, locale = '@colStrength=secondary', deterministic = false);
+GO
+
+-- tsql
+-- should fail
+CREATE DATABASE test_db_collation_vu_prepare_db151 COLLATE my_collation;
+GO
+
+-- Case 1.6: CREATE DATABASE WITH COLLATE NULL
+-- all tests should throw error
+CREATE DATABASE test_db_collation_vu_prepare_db161 COLLATE NULL;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db161 COLLATE [NULL];
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db161 COLLATE 'NULL';
+GO
+
+-- Case 1.7: CREATE DATABASE WITH CS_AS/CS_AI COLLATION
+-- all tests should throw error
+CREATE DATABASE test_db_collation_vu_prepare_db171 COLLATE bbf_unicode_cp1250_cs_as;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db172 COLLATE bbf_unicode_cp1257_cs_as;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db173 COLLATE bbf_unicode_cp1_cs_as;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db174 COLLATE estonian_cs_as;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db175 COLLATE finnish_swedish_cs_as;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db176 COLLATE french_cs_as;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db177 COLLATE modern_spanish_cs_as;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db178 COLLATE polish_cs_as;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db179 COLLATE traditional_spanish_cs_as;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db1710 COLLATE bbf_unicode_cp1250_cs_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db1711 COLLATE bbf_unicode_cp1257_cs_ai;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db1712 COLLATE bbf_unicode_cp1_cs_ai;
+GO
+
+-- Case 1.8: CREATE DATABASE WITH non-Latin COLLATION
+-- all tests should throw error
+CREATE DATABASE test_db_collation_vu_prepare_db181 COLLATE Greek_CI_AS;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db182 COLLATE Greek_CI_AI;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db183 COLLATE Hebrew_CI_AS;
+GO
+
+CREATE DATABASE test_db_collation_vu_prepare_db184 COLLATE Hebrew_CI_AI;
+GO
+
+
+-- CREATE TABLE INSIDE ALL DATABASES WITH STRING DATATYPE COLUMN TO VERIFY THE COLUMN COLLATION
+USE test_db_collation_vu_prepare_db11;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db11_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+
+INSERT INTO test_db_collation_vu_prepare_db11_t1 VALUES
+('café', 'café', 'café', 'café', 'café', 'café', 'café', 'café'),
+('jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño'),
+('résumé', 'résumé', 'résumé', 'résumé', 'résumé', 'résumé', 'résumé', 'résumé'),
+('naïve', 'naïve', 'naïve', 'naïve', 'naïve', 'naïve', 'naïve', 'naïve'),
+('pinata', 'pinata', 'pinata', 'pinata', 'pinata', 'pinata', 'pinata', 'pinata'),
+('Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo'),
+('tELeFONO', 'tELeFONO', 'tELeFONO', 'tELeFONO', 'tELeFONO', 'tELeFONO', 'tELeFONO', 'tELeFONO'),
+('película', 'película', 'película', 'película', 'película', 'película', 'película', 'película'),
+('arbol', 'arbol', 'arbol', 'arbol', 'arbol', 'arbol', 'arbol', 'arbol'),
+('canapé', 'canapé', 'canapé', 'canapé', 'canapé', 'canapé', 'canapé', 'canapé'),
+('chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR'),
+('tEnniȘ', 'tEnniȘ', 'tEnniȘ', 'tEnniȘ', 'tEnniȘ', 'tEnniȘ', 'tEnniȘ', 'tEnniȘ');
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db11_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db121;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db121_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+INSERT INTO test_db_collation_vu_prepare_db121_t1 VALUES
+('café', 'café', 'café', 'café', 'café', 'café', 'café', 'café'),
+('jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño'),
+('résumé', 'résumé', 'résumé', 'résumé', 'résumé', 'résumé', 'résumé', 'résumé'),
+('naïve', 'naïve', 'naïve', 'naïve', 'naïve', 'naïve', 'naïve', 'naïve'),
+('Piñata', 'Piñata', 'Piñata', 'Piñata', 'Piñata', 'Piñata', 'Piñata', 'Piñata'),
+('Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo'),
+('TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO'),
+('película', 'película', 'película', 'película', 'película', 'película', 'película', 'película'),
+('árbol', 'árbol', 'árbol', 'árbol', 'árbol', 'árbol', 'árbol', 'árbol'),
+('canapé', 'canapé', 'canapé', 'canapé', 'canapé', 'canapé', 'canapé', 'canapé'),
+('chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR'),
+('TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ');
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db121_t2(c char(11) COLLATE Latin1_General_CI_AS, nc nchar(11) COLLATE Latin1_General_CI_AS, v varchar(11) COLLATE Latin1_General_CI_AS, nv nvarchar(11) COLLATE Latin1_General_CI_AS, t text COLLATE Latin1_General_CI_AS, nt ntext COLLATE Latin1_General_CI_AS, sqlv sql_variant COLLATE Latin1_General_CI_AS, sn sysname COLLATE Latin1_General_CI_AS);
+GO
+
+INSERT INTO test_db_collation_vu_prepare_db121_t2 VALUES
+('café', 'café', 'café', 'café', 'café', 'café', 'café', 'café'),
+('jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño'),
+('résumé', 'résumé', 'résumé', 'résumé', 'résumé', 'résumé', 'résumé', 'résumé'),
+('naïve', 'naïve', 'naïve', 'naïve', 'naïve', 'naïve', 'naïve', 'naïve'),
+('Pinata', 'Pinata', 'Pinata', 'Pinata', 'Pinata', 'Pinata', 'Pinata', 'Pinata'),
+('Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo', 'Año Nuevo'),
+('TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO', 'TELÉFONO'),
+('película', 'película', 'película', 'película', 'película', 'película', 'película', 'película'),
+('arbol', 'arbol', 'arbol', 'arbol', 'arbol', 'arbol', 'arbol', 'arbol'),
+('canapé', 'canapé', 'canapé', 'canapé', 'canapé', 'canapé', 'canapé', 'canapé'),
+('chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR', 'chaptéR'),
+('TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ', 'TEññiȘ');
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db121_computed_columns(a nvarchar(11), b AS sys.reverse(a) NOT NULL);
+GO
+
+INSERT INTO test_db_collation_vu_prepare_db121_computed_columns VALUES
+('café'),('Año Nuevo'),('película'),('chaptéR');
+GO
+
+CREATE FUNCTION test_db_collation_vu_prepare_db121_f1()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT t1.nv
+    FROM test_db_collation_vu_prepare_db121_t1 t1
+    INNER JOIN test_db_collation_vu_prepare_db121_t2 t2 ON t1.nv = t2.nv
+);
+GO
+
+CREATE FUNCTION test_db_collation_vu_prepare_db121_f2()
+RETURNS @res_tab TABLE
+(
+    col1 varchar(50),
+    col2 nvarchar(50)
+)
+AS
+BEGIN
+    INSERT INTO @res_tab
+    SELECT v, nv
+    FROM test_db_collation_vu_prepare_db121_t1
+    ORDER BY nv DESC;
+    RETURN;
+END;
+GO
+
+USE test_db_collation_vu_prepare_db122;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db122_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db122_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db131;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db131_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db131_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db132;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db132_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db132_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db133;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db133_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db133_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db134;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db134_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db134_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db135;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db135_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db135_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db136;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db136_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db136_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db137;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db137_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db137_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db138;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db138_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db138_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db139;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db139_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db139_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db141;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db141_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db141_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE test_db_collation_vu_prepare_db142;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db142_t1(c char(11), nc nchar(11), v varchar(11), nv nvarchar(11), t text, nt ntext, sqlv sql_variant, sn sysname);
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db142_t2(c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+GO
+
+USE MASTER;
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
