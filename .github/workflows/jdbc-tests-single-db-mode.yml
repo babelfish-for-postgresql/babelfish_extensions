@@ -19,10 +19,7 @@ jobs:
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
-        with:
-          install_dir: 'psql'
-          code_coverage: 'yes'
-      
+
       - name: Compile ANTLR
         id: compile-antlr
         if: always() && steps.build-modified-postgres.outcome == 'success'
