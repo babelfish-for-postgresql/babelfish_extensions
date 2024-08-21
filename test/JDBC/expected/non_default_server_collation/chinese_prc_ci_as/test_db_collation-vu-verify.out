@@ -14,9 +14,9 @@ SELECT name, collation_name FROM sys.databases ORDER BY name;
 GO
 ~~START~~
 varchar#!#varchar
-master#!#bbf_unicode_cp1_ci_as
-msdb#!#bbf_unicode_cp1_ci_as
-tempdb#!#bbf_unicode_cp1_ci_as
+master#!#chinese_prc_ci_as
+msdb#!#chinese_prc_ci_as
+tempdb#!#chinese_prc_ci_as
 test_db_collation_vu_prepare_db11#!#chinese_prc_ci_as
 test_db_collation_vu_prepare_db121#!#bbf_unicode_cp1_ci_ai
 test_db_collation_vu_prepare_db122#!#bbf_unicode_cp1_ci_ai
@@ -38,9 +38,9 @@ SELECT name, default_collation FROM babelfish_sysdatabases ORDER BY name;
 GO
 ~~START~~
 text#!#varchar
-master#!#bbf_unicode_cp1_ci_as
-msdb#!#bbf_unicode_cp1_ci_as
-tempdb#!#bbf_unicode_cp1_ci_as
+master#!#chinese_prc_ci_as
+msdb#!#chinese_prc_ci_as
+tempdb#!#chinese_prc_ci_as
 test_db_collation_vu_prepare_db11#!#chinese_prc_ci_as
 test_db_collation_vu_prepare_db121#!#bbf_unicode_cp1_ci_ai
 test_db_collation_vu_prepare_db122#!#bbf_unicode_cp1_ci_ai
