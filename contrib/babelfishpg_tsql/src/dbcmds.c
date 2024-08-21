@@ -380,7 +380,8 @@ check_database_collation_name(const char* database_collation_name)
 		get_collation_oid(list_make1(makeString((char*) database_collation_name)), false));
 
 	if (!supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page) 
-		|| coll_info_of_inputcollid.collateflags == 0x000c /* CS_AS */)
+		|| coll_info_of_inputcollid.collateflags == 0x000c /* CS_AS */
+		|| coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI */)
 	{
 		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
 		if (server_collation_name && strcmp(server_collation_name, database_collation_name))
