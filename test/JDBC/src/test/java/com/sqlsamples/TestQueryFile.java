@@ -440,15 +440,15 @@ public class TestQueryFile {
 
         if (isParallelQueryMode && checkParallelQueryExpected){
             expectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + outputFileName + ".out");
-            nonDefaultServerCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
         }
         else if (isSingleDbMode && checkSingleDbModeExpected){
             expectedFile = new File(generatedFilesDirectoryPath + "single_db/" + outputFileName + ".out");
         }
         else{
             expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
-            nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
         }
+        nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+
 
         File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 
