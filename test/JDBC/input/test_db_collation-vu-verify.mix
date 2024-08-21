@@ -460,10 +460,7 @@ GO
 SELECT nv FROM test_db_collation_vu_prepare_db121_t1 where nv IN ('cafe', 'JALAPeno', 'ñáIVE', 'pínata') ORDER BY nv;
 GO
 
-SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
-GO
-
-SELECT nv FROM test_db_collation_vu_prepare_db121_t1 GROUP BY nv;
+SELECT nv FROM test_db_collation_vu_prepare_db121_t1 GROUP BY nv ORDER BY nv;
 GO
 
 CREATE VIEW test_db_collation_vu_prepare_db121_v1 AS SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
@@ -472,10 +469,7 @@ GO
 SELECT * FROM test_db_collation_vu_prepare_db121_v1;
 GO
 
-SELECT * FROM test_db_collation_vu_prepare_db121_v1 ORDER BY nv;
-GO
-
-SELECT * FROM test_db_collation_vu_prepare_db121_v1 GROUP BY nv;
+SELECT * FROM test_db_collation_vu_prepare_db121_v1 GROUP BY nv ORDER BY nv;
 GO
 
 CREATE PROCEDURE test_db_collation_vu_prepare_db121_p1 @param NVARCHAR(50)

@@ -1539,7 +1539,7 @@ Piñata
 ~~END~~
 
 
-SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
+SELECT nv FROM test_db_collation_vu_prepare_db121_t1 GROUP BY nv ORDER BY nv;
 GO
 ~~START~~
 nvarchar
@@ -1555,25 +1555,6 @@ Piñata
 résumé
 TELÉFONO
 TEññiȘ
-~~END~~
-
-
-SELECT nv FROM test_db_collation_vu_prepare_db121_t1 GROUP BY nv;
-GO
-~~START~~
-nvarchar
-naïve
-Piñata
-jalapeño
-árbol
-canapé
-TEññiȘ
-película
-Año Nuevo
-chaptéR
-café
-TELÉFONO
-résumé
 ~~END~~
 
 
@@ -1599,7 +1580,7 @@ TEññiȘ
 ~~END~~
 
 
-SELECT * FROM test_db_collation_vu_prepare_db121_v1 ORDER BY nv;
+SELECT * FROM test_db_collation_vu_prepare_db121_v1 GROUP BY nv ORDER BY nv;
 GO
 ~~START~~
 nvarchar
@@ -1615,25 +1596,6 @@ Piñata
 résumé
 TELÉFONO
 TEññiȘ
-~~END~~
-
-
-SELECT * FROM test_db_collation_vu_prepare_db121_v1 GROUP BY nv;
-GO
-~~START~~
-nvarchar
-naïve
-Piñata
-jalapeño
-árbol
-canapé
-TEññiȘ
-película
-Año Nuevo
-chaptéR
-café
-TELÉFONO
-résumé
 ~~END~~
 
 
