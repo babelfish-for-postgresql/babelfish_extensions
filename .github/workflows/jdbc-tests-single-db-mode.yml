@@ -69,6 +69,7 @@ jobs:
           psql_port: 5433
           tsql_port: 8199
           wal_level: logical
+          migration_mode: "single-db"
 
       - name: Setup Publication and Subscription
         id: setup-pub-sub
@@ -84,6 +85,7 @@ jobs:
         uses: ./.github/composite-actions/run-jdbc-tests
         with:
           input_dir: 'replication'
+          migration_mode: "single-db"
 
       - name: Cleanup babelfish database
         id: cleanup
