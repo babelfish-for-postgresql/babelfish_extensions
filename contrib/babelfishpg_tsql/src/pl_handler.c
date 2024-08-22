@@ -6295,7 +6295,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 
 	result = lappend(result, stmt);
 	if (altstmt)
-		result = lappend(result, altstmt);	
+		result = lappend(result, altstmt);
 
 	return result;
 }
