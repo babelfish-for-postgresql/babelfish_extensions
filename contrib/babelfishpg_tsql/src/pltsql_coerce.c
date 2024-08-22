@@ -1172,6 +1172,38 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 		}
 	}
 
+	/* 
+	 * For string_agg function, 
+	 * Report error if the input expression is type VARCHAR and the separator is type NVARCHAR. 
+	 */
+	if (strlen(func_name) == 10 && strncmp(func_name, "string_agg", 10) == 0)
+	{
+		Node *first_arg = (Node *) linitial(fargs);
+		/* if common_utility_plugin_ptr is not initialised */
+		if (common_utility_plugin_ptr == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("Failed to find common utility plugin.")));
+
+		/* 
+		 * if first argument if of type CHAR/VARCHAR/STRING_LITERAL and second argument is of type NCHAR/NVARCHAR then throw error.
+		 * (STRING_LITERAL can be identified when typeid is UNKNOWNOID and argument value is not NULL)
+		 */
+		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[0])
+			|| (input_typeids[0] == UNKNOWNOID && !(IsA(first_arg, Const) && ((Const *)first_arg)->constisnull)))
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1])
+				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[1]))
+			{
+				ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					errmsg("Argument data type %s is invalid for argument %d of %s function.", 
+							format_type_be(input_typeids[1]), 2, special_func->formatted_funcname)));
+			}
+		}
+	}
+
 	return true;
 }
 

@@ -49,25 +49,17 @@ Rohit               -Bhagat
 DECLARE @sep NCHAR(1) = '-'
 SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc                 -?defghi             -??                  
-比尔·拉            -莫斯                
-<NULL>
-Rohit               -Bhagat              
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep NVARCHAR(10) = '-'
 SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc                 -?defghi             -??                  
-比尔·拉            -莫斯                
-<NULL>
-Rohit               -Bhagat              
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep CHAR(5) = N'🫥'
@@ -97,25 +89,17 @@ Rohit               ?Bhagat
 DECLARE @sep NCHAR(5) = N'🫥'
 SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc                 ?    ?defghi             ?    ??                  
-比尔·拉            ?    莫斯                
-<NULL>
-Rohit               ?    Bhagat              
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep NVARCHAR(10) = N'🫥'
 SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc                 ??defghi             ???                  
-比尔·拉            ?莫斯                
-<NULL>
-Rohit               ?Bhagat              
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep CHAR(5) = N'尸'
@@ -145,25 +129,17 @@ Rohit               尸Bhagat
 DECLARE @sep NCHAR(5) = N'尸'
 SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc                 尸   ?defghi             尸   ??                  
-比尔·拉            尸   莫斯                
-<NULL>
-Rohit               尸   Bhagat              
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep NVARCHAR(10) = N'尸'
 SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc                 尸?defghi             尸??                  
-比尔·拉            尸莫斯                
-<NULL>
-Rohit               尸Bhagat              
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
 
 
 -- input type varchar
@@ -216,25 +192,17 @@ Rohit-Bhagat
 DECLARE @sep NCHAR(1) = '-'
 SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc-?defghi-??
-比尔·拉-莫斯
-<NULL>
-Rohit-Bhagat
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep NVARCHAR(10) = '-'
 SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc-?defghi-??
-比尔·拉-莫斯
-<NULL>
-Rohit-Bhagat
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep CHAR(5) = N'🫥'
@@ -264,25 +232,17 @@ Rohit?Bhagat
 DECLARE @sep NCHAR(5) = N'🫥'
 SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc?    ?defghi?    ??
-比尔·拉?    莫斯
-<NULL>
-Rohit?    Bhagat
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep NVARCHAR(10) = N'🫥'
 SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc??defghi???
-比尔·拉?莫斯
-<NULL>
-Rohit?Bhagat
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep CHAR(5) = N'尸'
@@ -312,25 +272,17 @@ Rohit尸Bhagat
 DECLARE @sep NCHAR(5) = N'尸'
 SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc尸   ?defghi尸   ??
-比尔·拉尸   莫斯
-<NULL>
-Rohit尸   Bhagat
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
 
 
 DECLARE @sep NVARCHAR(10) = N'尸'
 SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~START~~
-varchar
-abc尸?defghi尸??
-比尔·拉尸莫斯
-<NULL>
-Rohit尸Bhagat
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
 
 
 -- with table column of type varchar with collation chinese_prc_ci_as
