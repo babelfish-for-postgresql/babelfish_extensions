@@ -10,10 +10,18 @@ CREATE TABLE [dbo].my_table (
 GO
 
 -- psql
-CREATE TABLE IF NOT EXISTS dbo."my_Table"
-(
-    mycol CHARACTER VARYING(4) 
-);
+DO $$
+DECLARE
+    schema_name TEXT = 'dbo';
+    db_name TEXT = 'dms_test_target_db';
+BEGIN
+    -- In multi-db mode, prepend the database name to the schema name
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := db_name || '_' || schema_name;
+    END IF;
+    
+    EXECUTE 'CREATE TABLE IF NOT EXISTS ' || schema_name || '."my_Table"(mycol CHARACTER VARYING(4));';
+END $$;
 GO
 
 -- tsql
@@ -29,7 +37,18 @@ dms_test_target_db#!#dbo#!#my_table#!#mycol#!#93#!#datetime2#!#26#!#16#!#6#!#<NU
 
 
 -- psql
-DROP TABLE dbo."my_Table", dbo.my_table;
+DO $$
+DECLARE
+    schema_name TEXT = 'dbo';
+    db_name TEXT = 'dms_test_target_db';
+BEGIN
+    -- In multi-db mode, prepend the database name to the schema name
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := db_name || '_' || schema_name;
+    END IF;
+    
+    EXECUTE 'DROP TABLE ' || schema_name ||'."my_Table", ' || schema_name || '.my_table;';
+END $$;
 GO
 
 -- tsql
@@ -81,26 +100,38 @@ int
 SET psql_logical_babelfish_db_name = 'dms_test_target_db';
 GO
 
-CREATE TABLE dbo."bAbel_4544_1" (col_1_psql int)
-GO
-
-CREATE TABLE dbo."Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa" (
-    col_int_63_psql INT, col_varchar_63_psql sys.VARCHAR(97), col_datetime_63_psql sys.DATETIME2(4)
-    );
-GO
-
-CREATE TABLE dbo."BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa" (
-    col_int_64_psql INT, col_varchar_64_psql sys.VARCHAR(98), col_datetime_64_psql sys.DATETIME2(5)
-);
+DO $$
+DECLARE
+    schema_name TEXT = 'dbo';
+    db_name TEXT = 'dms_test_target_db';
+BEGIN
+    -- In multi-db mode, prepend the database name to the schema name
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := db_name || '_' || schema_name;
+    END IF;
+    
+    EXECUTE 'CREATE TABLE ' || schema_name || '."bAbel_4544_1" (col_1_psql int)';
+    EXECUTE 'CREATE TABLE ' || schema_name || '."Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa" (col_int_63_psql INT, col_varchar_63_psql sys.VARCHAR(97), col_datetime_63_psql sys.DATETIME2(4))';
+    EXECUTE 'CREATE TABLE ' || schema_name || '."BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa" (col_int_64_psql INT, col_varchar_64_psql sys.VARCHAR(98), col_datetime_64_psql sys.DATETIME2(5))';
+END $$;
 GO
 ~~WARNING (Code: 0)~~
 
 ~~WARNING (Message: identifier "BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa" will be truncated to "BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaa"  Server SQLState: 42622)~~
 
 
-CREATE TABLE dbo."BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" (
-    col_int_128_psql INT, col_varchar_128_psql sys.VARCHAR(99), col_datetime_128_psql sys.DATETIME2(6)
-);
+DO $$
+DECLARE
+    schema_name TEXT = 'dbo';
+    db_name TEXT = 'dms_test_target_db';
+BEGIN
+    -- In multi-db mode, prepend the database name to the schema name
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := db_name || '_' || schema_name;
+    END IF;
+    
+    EXECUTE 'CREATE TABLE ' || schema_name || '."BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" (col_int_128_psql INT, col_varchar_128_psql sys.VARCHAR(99), col_datetime_128_psql sys.DATETIME2(6))';
+END $$;
 GO
 ~~WARNING (Code: 0)~~
 

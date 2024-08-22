@@ -98,14 +98,14 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-dbo
+db1_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-dbo, "$user", sys, pg_catalog
+db1_dbo, "$user", sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -135,14 +135,14 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-dbo
+db1_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-dbo, "$user", sys, pg_catalog
+db1_dbo, "$user", sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
