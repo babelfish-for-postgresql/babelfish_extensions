@@ -460,6 +460,7 @@ public class TestQueryFile {
         else if (isSingleDbMode && checkSingleDbModeExpected){
             expectedFile = new File(generatedFilesDirectoryPath + "single_db/" + outputFileName + ".out");
             nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "single_db/" + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+            dbCollationExpectedFile = new File(generatedFilesDirectoryPath + "single_db/" + "db_collation/" + outputFileName + ".out");
         }
         else{
             expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
