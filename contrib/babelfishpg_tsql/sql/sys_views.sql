@@ -2484,7 +2484,8 @@ CAST(s.setting AS sys.sql_variant) AS value_in_use,
 CAST(s.short_desc AS sys.nvarchar(255)) AS description,
 CAST(1 AS sys.BIT) AS is_dynamic,
 CAST(1 AS sys.BIT) AS is_advanced
-FROM pg_catalog.pg_settings s where name = 'babelfishpg_tds.tds_default_packet_size';
+FROM pg_catalog.pg_settings s where name = 'babelfishpg_tds.tds_default_packet_size'
+ORDER BY configuration_id;
 GRANT SELECT ON sys.configurations TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.syscurconfigs
