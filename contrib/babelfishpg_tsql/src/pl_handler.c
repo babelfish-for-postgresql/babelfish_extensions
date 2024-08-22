@@ -98,7 +98,6 @@ extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
 extern bool pltsql_nocount;
-extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -6160,7 +6159,6 @@ static List *
 transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
 	List *result;
-	List *column_original_name_list;
 	ListCell *elements;
 	AlterTableStmt *altstmt;
 	IntoClause *into;
@@ -6170,7 +6168,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	into = stmt->into;
 	result = NIL;
 	altstmt = NULL;
-	column_original_name_list = NIL;
 
 	if (n && n->type == T_Query)
 	{
@@ -6185,7 +6182,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 
 			tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
-
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
@@ -6266,11 +6262,9 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			}
 			else
 			{
-				
 				current_resno += 1;
 				tle->resno = current_resno;
 				modifiedTargetList = lappend(modifiedTargetList, tle);
-				
 			}
 		}
 		q->targetList = modifiedTargetList;
@@ -6302,10 +6296,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	result = lappend(result, stmt);
 	
 	if (altstmt)
-		result = lappend(result, altstmt);
-
-	if (column_original_name_list != NIL)
-		result = list_concat(result, column_original_name_list);	
+		result = lappend(result, altstmt);	
 
 	return result;
 }
