@@ -558,6 +558,7 @@ PARTITION
 BABEL-5071
 string_agg_within
 reverse
+string_agg
 sys_sequences
 replicate
 space
