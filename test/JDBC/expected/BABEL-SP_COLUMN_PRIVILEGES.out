@@ -35,13 +35,22 @@ GO
 
 
 -- psql
-REVOKE SELECT ON dbo.t2 FROM dbo;
-GO
-
-REVOKE UPDATE ON dbo.t2 FROM dbo;
-GO
-
-REVOKE INSERT ON dbo.t3 FROM dbo;
+DO $$
+DECLARE
+    db_name TEXT = 'db1';
+    schema_name TEXT = 'dbo';
+    role_name TEXT = 'dbo';
+BEGIN
+    -- In multi-db mode, prepend the database name to the schema name and role name
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := db_name || '_' || schema_name;
+        role_name := db_name || '_' || role_name;
+    END IF;
+    
+    EXECUTE 'REVOKE SELECT ON ' || schema_name || '.t2 FROM ' || role_name;
+    EXECUTE 'REVOKE UPDATE ON ' || schema_name || '.t2 FROM ' || role_name;
+    EXECUTE 'REVOKE INSERT ON ' || schema_name || '.t3 FROM ' || role_name;
+END $$;
 GO
 
 -- tsql
@@ -94,7 +103,20 @@ db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
 
 
 -- psql
-GRANT SELECT (c) ON dbo.t2 TO dbo;
+DO $$
+DECLARE
+    db_name TEXT = 'db1';
+    schema_name TEXT = 'dbo';
+    role_name TEXT = 'dbo';
+BEGIN
+    -- In multi-db mode, prepend the database name to the schema name and role name
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := db_name || '_' || schema_name;
+        role_name := db_name || '_' || role_name;
+    END IF;
+    
+    EXECUTE 'GRANT SELECT (c) ON ' || schema_name || '.t2 TO ' || role_name;
+END $$;
 GO
 
 -- tsql

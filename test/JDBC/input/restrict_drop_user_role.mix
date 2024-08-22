@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- tsql
 create login no_priv_login1 with password = '12345678'
 go
@@ -209,15 +210,6 @@ drop database restrict_user_db1
 go
 
 -- 3.5 - Try dropping user created for another database
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-GO
-SELECT pg_reload_conf();
-GO
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-
 -- tsql
 create database restrict_user_db1;
 go
@@ -270,10 +262,3 @@ go
 
 drop database restrict_user_db1_restrict_user_db1;
 go
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-GO
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
