@@ -26,9 +26,11 @@ public class Config {
     static boolean outputErrorCode = Boolean.parseBoolean(properties.getProperty("outputErrorCode"));
     static String scheduleFileName = properties.getProperty("scheduleFile");
     static boolean isParallelQueryMode = Boolean.parseBoolean(properties.getProperty("isParallelQueryMode"));
+    static boolean isSingleDbMode = Boolean.parseBoolean(properties.getProperty("isSingleDbMode"));
     static String serverCollationName = properties.getProperty("serverCollationName");
     static String parallelQueryTestIgnoreFileName = "./parallel_query_jdbc_schedule";
     static boolean checkParallelQueryExpected = false;
+    static boolean checkSingleDbModeExpected = false;
     static String testFileRoot = properties.getProperty("testFileRoot");
     static boolean isUpgradeTestMode =  Boolean.parseBoolean(properties.getProperty("isUpgradeTestMode"));
     static long defaultSLA = Long.parseLong(properties.getProperty("defaultSLA"));

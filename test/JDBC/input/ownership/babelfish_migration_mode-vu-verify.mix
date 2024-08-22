@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- tsql
 -- Test initial databases
 SELECT COUNT(*) FROM pg_roles where rolname = 'sysadmin';
@@ -39,9 +40,6 @@ GO
 SELECT set_config('role', 'jdbc_user', false)
 GO
 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false)
-GO
-
 SELECT current_setting('babelfishpg_tsql.migration_mode')
 GO
 
@@ -73,6 +71,7 @@ GO
 CREATE DATABASE babelfish_migration_mode_db1
 GO
 
+-- should fail in single-db 
 CREATE DATABASE babelfish_migration_mode_db2
 GO
 
@@ -113,20 +112,13 @@ GO
 SELECT set_config('role', 'jdbc_user', false)
 GO
 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false)
-GO
 
-SELECT current_setting('babelfishpg_tsql.migration_mode')
-GO
 
--- should fail
+-- should fail in single-db
 USE babelfish_migration_mode_db2
 GO
 
 SELECT set_config('role', 'jdbc_user', false)
-GO
-
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false)
 GO
 
 SELECT current_setting('babelfishpg_tsql.migration_mode')
@@ -235,11 +227,7 @@ GO
 SELECT set_config('role', 'jdbc_user', false)
 GO
 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false)
-GO
 
-SELECT current_setting('babelfishpg_tsql.migration_mode')
-GO
 
 INSERT INTO babelfish_migration_mode_catalog_status2 
 SELECT 'sys.babelfish_sysdatabases', COUNT(*) FROM sys.babelfish_sysdatabases

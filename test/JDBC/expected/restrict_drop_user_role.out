@@ -211,10 +211,24 @@ drop user if exists fake_user;
 go
 
 -- both of the following statements should be executed successfully since user/role exists
+drop role if exists no_priv_user3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'no_priv_user3', because it does not exist or you do not have permission.)~~
+
+
 drop user if exists no_priv_user3;
 go
 
 drop user if exists no_priv_role3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'no_priv_role3', because it does not exist or you do not have permission.)~~
+
+
+drop role if exists no_priv_role3;
 go
 
 select count(*) from sys.database_principals where name like '%no_priv_%3';
@@ -251,14 +265,14 @@ drop user if exists pguser1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied to drop role)~~
+~~ERROR (Message: Cannot drop the user 'pguser1', because it does not exist or you do not have permission.)~~
 
 
 drop role if exists pguser1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied to drop role)~~
+~~ERROR (Message: Cannot drop the role 'pguser1', because it does not exist or you do not have permission.)~~
 
 
 -- psql
@@ -299,4 +313,70 @@ drop login no_priv_login3
 go
 
 drop database restrict_user_db1
+go
+
+-- tsql
+-- 3.5 - Try dropping user created for another database
+create database restrict_user_db1;
+go
+
+create database restrict_user_db1_restrict_user_db1;
+go
+
+create login restrict_user_l1 with password = '12345678'
+go
+
+use restrict_user_db1
+go
+
+create user restrict_user_db1_user1 for login restrict_user_l1;
+go
+
+use restrict_user_db1_restrict_user_db1
+go
+
+drop user user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'user1', because it does not exist or you do not have permission.)~~
+
+
+drop user if exists user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'user1', because it does not exist or you do not have permission.)~~
+
+
+use master
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'restrict_user_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+~~END~~
+
+
+-- tsql
+use restrict_user_db1
+go
+
+drop user restrict_user_db1_user1;
+go
+
+use master
+go
+
+drop login restrict_user_l1;
+go
+
+drop database restrict_user_db1;
+go
+
+drop database restrict_user_db1_restrict_user_db1;
 go

@@ -1,13 +1,3 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
 -- tsql
 CREATE DATABASE db1;
 GO
@@ -48,13 +38,3 @@ DROP DATABASE db1;
 DROP DATABASE db2;
 DROP DATABASE db3;
 GO
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-

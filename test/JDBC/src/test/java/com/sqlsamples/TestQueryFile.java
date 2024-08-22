@@ -437,6 +437,7 @@ public class TestQueryFile {
         BufferedWriter bw = new BufferedWriter(fw);
         curr_exec_time = 0L;
         checkParallelQueryExpected = false;
+        checkSingleDbModeExpected = false;
         if (inputFileName.equals("temp_table_jdbc")) {
             JDBCTempTable.runTest(bw, logger);
             sla = defaultSLA*1000000L * 2; /* Increase SLA to avoid flakiness */
@@ -456,11 +457,16 @@ public class TestQueryFile {
             nonDefaultServerCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
             dbCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "db_collation/" + outputFileName + ".out");
         }
+        else if (isSingleDbMode && checkSingleDbModeExpected){
+            expectedFile = new File(generatedFilesDirectoryPath + "single_db/" + outputFileName + ".out");
+            nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "single_db/" + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+        }
         else{
             expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
             nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
             dbCollationExpectedFile = new File(generatedFilesDirectoryPath + "db_collation/" + outputFileName + ".out");
         }
+
 
         File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 

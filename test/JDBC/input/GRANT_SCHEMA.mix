@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- tsql
 -- create objects
 create database babel_4344_d1;
@@ -566,7 +567,19 @@ go
 
 -- psql
 -- grant object permission
-grant select on babel_4344_s1.babel_4344_t1_new to babel_4344_d1_babel_4344_u1;
+DO $$
+DECLARE
+    db_name TEXT = 'babel_4344_d1';
+    schema_name TEXT = 'babel_4344_s1';
+BEGIN
+    -- In multi-db mode, prepend the database name to the schema name
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := db_name || '_' || schema_name;
+    END IF;
+    
+    EXECUTE 'GRANT SELECT ON ' || schema_name || '.babel_4344_t1_new TO babel_4344_d1_babel_4344_u1';
+END $$;
+go
 go
 
 -- tsql
@@ -588,7 +601,18 @@ go
 
 -- psql
 -- revoke schema permission
-revoke select on all tables in schema babel_4344_s1 from babel_4344_d1_babel_4344_u1;
+DO $$
+DECLARE
+    db_name TEXT = 'babel_4344_d1';
+    schema_name TEXT = 'babel_4344_s1';
+BEGIN
+    -- In multi-db mode, prepend the database name to the schema name
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := db_name || '_' || schema_name;
+    END IF;
+    
+    EXECUTE 'REVOKE SELECT ON ALL TABLES IN SCHEMA ' || schema_name || ' FROM babel_4344_d1_babel_4344_u1';
+END $$;
 go
 
 -- tsql user=babel_4344_l1 password=12345678

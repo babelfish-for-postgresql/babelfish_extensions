@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- tsql
 USE MASTER;
 GO
@@ -480,13 +481,6 @@ GO
 DROP LOGIN johndoe;
 GO
 
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-SELECT pg_sleep(1);
-GO
-
 -- tsql
 USE master;
 GO
@@ -907,9 +901,3 @@ GO
 DROP DATABASE db_4934_2;
 GO
 
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-SELECT pg_sleep(1);
-GO

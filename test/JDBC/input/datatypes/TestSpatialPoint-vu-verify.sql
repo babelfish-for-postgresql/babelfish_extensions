@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);
@@ -1012,8 +1013,6 @@ GO
 
 -- test multi-db mode
 SELECT set_config('role', 'jdbc_user', false);
-GO
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
 GO
 
 CREATE DATABASE db1;

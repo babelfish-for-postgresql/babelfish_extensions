@@ -1,4 +1,4 @@
-name: JDBC Tests
+name: JDBC Tests With Multi-DB Migration Mode
 on: [workflow_call]
 
 jobs:

@@ -1,4 +1,5 @@
 -- parallel_query_expected
+-- single_db_mode_expected
 USE MASTER;
 GO
 

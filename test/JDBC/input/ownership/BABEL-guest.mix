@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- Test for JIRA BABEL-2571. The 'guest' schema should exist by default.
 -- Furthermore, the default schema of guest users should be guest instead of dbo
 -- in order to match the behaviour in SQL Server.

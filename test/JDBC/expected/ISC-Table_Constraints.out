@@ -1,13 +1,3 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
 -- tsql
 create table tbl_pk(a int primary key, c int not null unique, d int default 1, check(d > 0));
 go
@@ -545,13 +535,3 @@ void
 -- tsql
 drop login user_tbl_const;
 go
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-

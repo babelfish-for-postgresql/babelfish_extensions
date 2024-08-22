@@ -1,6 +1,3 @@
--- psql
-SHOW "babelfishpg_tsql.migration_mode"; -- make sure it is single-db mode
-GO
 
 -- tsql
 USE master -- 1. test master DB

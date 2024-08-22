@@ -297,6 +297,10 @@ public class batch_run {
                         continue;
                     }
 
+                    if (strLine.toLowerCase().startsWith("-- single_db_mode_expected")){
+                        checkSingleDbModeExpected = true;
+                        continue;
+                    }
                     // execute statement as a normal SQL statement
                     if (isSQLFile) {
                         if (!strLine.equalsIgnoreCase("GO")) {
