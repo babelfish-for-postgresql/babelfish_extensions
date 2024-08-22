@@ -9,9 +9,18 @@ tds_backend = $(tds_top_dir)/src/backend
 tds_include = $(tds_top_dir)/src/include
 TSQL_SRC = ../babelfishpg_tsql
 
+export ANTLR4_JAVA_BIN=java
+export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
+export ANTLR4_RUNTIME_INCLUDE_DIR=/usr/local/include/antlr4-runtime
+export ANTLR4_RUNTIME_LIB_DIR=/usr/local/lib
+
 PG_CFLAGS += -Werror -Wfloat-conversion
 PG_CFLAGS += -fstack-protector-strong
-PG_CPPFLAGS += -I$(TSQL_SRC) -I$(PG_SRC) -I$(tds_top_dir) -DFAULT_INJECTOR
+PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
+PG_CXXFLAGS += -Wno-deprecated -Wno-error=attributes -Wno-suggest-attribute=format # disable some warnings from ANTLR runtime header
+PG_CPPFLAGS += -I$(TSQL_SRC)  -I$(TSQL_SRC)/src -I$(PG_SRC) -I$(tds_top_dir) -DFAULT_INJECTOR
+
+SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB)
 
 # Exclude the following files from the build (sometimes these
 # files are included in another c file)
@@ -23,7 +32,19 @@ tds_temp_srcs = $(shell find $(tds_top_dir) -name "*.c")
 tds_srcs = $(filter-out $(tds_exclude_files), $(tds_temp_srcs))
 
 OBJS = $(patsubst %.c, %.o, $(tds_srcs))
-OBJS += $(WIN32RES)
+OBJS += src/backend/tds/tdsIface.o
+OBJS +=$(TSQL_SRC)/src/tsqlwarmup.o
+OBJS += $(TSQL_SRC)/antlr/libantlr_tsql.a
+
+antlr/Makefile: $(TSQL_SRC)/antlr/CMakeLists.txt $(TSQL_SRC)/antlr/TSqlLexer.g4 $(TSQL_SRC)/antlr/TSqlLexer.g4
+	cd $(TSQL_SRC)/antlr && $(cmake) . && cd $(tds_srcs)
+
+.PHONY: $(TSQL_SRC)/antlr/libantlr_tsql.a  # to allow CMake's make check the build
+$(TSQL_SRC)/antlr/libantlr_tsql.a: $(TSQL_SRC)/antlr/Makefile
+	$(MAKE) -C $(@D) all
+
+src/backend/tds/tdsIface.o: src/backend/tds/tdsIface.cpp
+$(TSQL_SRC)/src/tsqlwarmup.o: $(TSQL_SRC)/src/tsqlwarmup.cpp
 
 $(tds_include)/error_mapping.h: error_mapping.txt generate_error_mapping.pl
 	$(PERL) generate_error_mapping.pl $< > $@

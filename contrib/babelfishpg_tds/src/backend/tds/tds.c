@@ -175,6 +175,7 @@ static int	localNumBackends = 0;
 static bool isLocalStatusTableValid = false;
 
 TdsInstrPlugin **tds_instr_plugin_ptr = NULL;
+bool pltsql_quoted_identifier = true;
 
 extern void _PG_init(void);
 extern void _PG_fini(void);
@@ -199,6 +200,8 @@ static void tds_stats_shmem_shutdown(int code, Datum arg);
 
 static void tdsstat_read_current_status(void);
 static LocalTdsStatus *tdsstat_fetch_stat_local_tdsentry(int beid);
+
+extern bool antlr_warmup_query_tsql(const char *sourceText);
 
 /*
  * Module initialization function
@@ -241,6 +244,7 @@ _PG_init(void)
 	next_ProcessUtility = ProcessUtility_hook;
 	ProcessUtility_hook = tdsutils_ProcessUtility;
 
+	antlr_warmup_query_tsql("select tc.trc_revenuetype,fc.foc_refnum, tg.tgt_taxgroup, fc.foc_transactioncode, fctx.foc_date,fctx.foc_property,ts.tts_property,ts.tts_taxgroup,ts.tts_taxgroup,ts.tts_taxgroup,ts.tts_taxgroup,ts.tts_taxgroup,ts.tts_taxgroup,ts.tts_taxgroup,ts.tts_taxgroup  from p5foliocharge fctx JOIN p5foliocharge fc  ON fc.foc_refnum = fctx.foc_originatingref AND fc.foc_property = fctx.foc_property AND fc.foc_date = fctx.foc_date AND fc.foc_transactioncode = 'ADVDEP' JOIN p5transactioncode tc ON tc.trc_code = fc.foc_transactioncode AND tc.trc_property = fc.foc_property JOIN testview tg ON tg.tgt_taxgroup = fctx.foc_taxgroup  AND fctx.foc_transactioncode = tg.tgt_transactioncode JOIN p5transcodetaxstatus ts ON ts.tts_property = fc.foc_property AND ts.tts_trccode = fc.foc_transactioncode AND ts.tts_taxgroup = tg.tgt_taxgroup WHERE fctx.foc_property = 'MCRATL' AND fctx.foc_date = '2023-07-26' AND fctx.foc_isinclusivetax = '+' AND fctx.foc_isoffset = '-'  ;");
 	inited = true;
 }
 
@@ -256,6 +260,7 @@ _PG_fini(void)
 	ProcessUtility_hook = next_ProcessUtility;
 	shmem_request_hook = prev_shmem_request_hook;
 }
+
 
 static Size
 TdsStatusArraySize()
@@ -305,6 +310,9 @@ tds_shmem_request()
 {
 	if (prev_shmem_request_hook)
 		prev_shmem_request_hook();
+
+	// extern ANTLR_result antlr_parser_cpp(const char *sourceText);
+	// ANTLR_result result = antlr_parser_cpp("SELECT tc.trc_revenuetype ,sum(fctx.foc_amount)  FROM p5foliocharge fctx JOIN p5foliocharge fc  ON fc.foc_refnum = fctx.foc_originatingref AND fc.foc_property = fctx.foc_property AND fc.foc_date = fctx.foc_date AND fc.foc_transactioncode = 'ADVDEP' JOIN p5transactioncode tc ON tc.trc_code = fc.foc_transactioncode AND tc.trc_property = fc.foc_property JOIN testview tg ON tg.tgt_taxgroup = fctx.foc_taxgroup  AND fctx.foc_transactioncode = tg.tgt_transactioncode JOIN p5transcodetaxstatus ts ON ts.tts_property = fc.foc_property AND ts.tts_trccode = fc.foc_transactioncode AND ts.tts_taxgroup = tg.tgt_taxgroup WHERE fctx.foc_property = 'MCRATL' AND fctx.foc_date = '2023-07-26' AND fctx.foc_isinclusivetax = '+' AND fctx.foc_isoffset = '-' GROUP BY tc.trc_revenuetype ;");
 
 	/*
 	 * Request additional shared resources.  (These are no-ops if we're not in

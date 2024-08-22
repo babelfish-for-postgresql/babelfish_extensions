@@ -59,9 +59,10 @@ OBJS += src/hooks.o
 OBJS += src/tsqlNodes.o
 OBJS += src/tsqlHandler.o
 OBJS += src/tsqlUnsupportedFeatureHandler.o
+OBJS += src/tsqlwarmup.o
 OBJS += src/tsqlIface.o
 OBJS += src/special_keywords.o
-OBJS += antlr/libantlr_tsql.a
+# OBJS += antlr/libantlr_tsql.a  don't compile antlr into tsql.so
 OBJS += src/multidb.o
 OBJS += src/json_funcs.o
 OBJS += src/pltsql_ruleutils.o
@@ -199,6 +200,8 @@ src/pl_unreserved_kwlist_d.h: src/pl_unreserved_kwlist.h $(GEN_KEYWORDLIST_DEPS)
 src/pl_scanner.o: src/pl_scanner.c $(KEYWORDS)
 
 src/pl_comp.o: src/plerrcodes.h
+
+src/tsqlwarmup.o: src/tsqlwarmup.cpp
 
 src/tsqlIface.o: src/tsqlIface.cpp
 

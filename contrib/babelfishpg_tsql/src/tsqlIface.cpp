@@ -3444,7 +3444,7 @@ antlr_parser_cpp(const char *sourceText)
 	}
 	INSTR_TIME_SET_CURRENT(parseEnd);
 	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
-	elog(DEBUG1, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
+	elog(WARNING, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
 
 	/* And store time spent in ANTLR parsing so that we can emit it for EXPLAIN info if required */
 	antlr_parse_time = parseEnd;
