@@ -6183,36 +6183,8 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
-			char *original_name = NULL;
 
-			if (tle->resname != NULL && !tle->resjunk)
-			{	
-
-				original_name = tle->resname;
-				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
-
-				/* check if the original_name is already in lowercase */
-				if (original_name != NULL && strcmp(original_name, tle->resname) && strlen(tle->resname) < NAMEDATALEN - 1)
-				{
-					AlterTableStmt *newstmt;
-					AlterTableCmd *cmd;
-
-					cmd = makeNode(AlterTableCmd);
-					cmd->subtype = AT_SetOptions;
-					cmd->name = tle->resname;
-					cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(original_name)), -1));
-					cmd->behavior = DROP_RESTRICT;
-					cmd->missing_ok = false;
-
-					newstmt = makeNode(AlterTableStmt);
-					newstmt->relation = into->rel;
-					newstmt->cmds = NIL;
-					newstmt->objtype = OBJECT_TABLE;
-					newstmt->cmds = lappend(newstmt->cmds, cmd);
-					column_original_name_list = lappend(column_original_name_list, newstmt);
-				}
-
-			}	
+			tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{

@@ -19,7 +19,7 @@ select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrel
 go
 ~~START~~
 varchar#!#varchar
-select_into_col#!#{bbf_original_name=select_into_COL}
+select_into_col#!#<NULL>
 ~~END~~
 
 -- dropping the table select_into
@@ -50,9 +50,9 @@ select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrel
 go
 ~~START~~
 varchar#!#varchar
-select_into_col#!#{bbf_original_name=select_into_COL}
+select_into_col#!#<NULL>
 select_into_col1#!#<NULL>
-select_into_col2#!#{bbf_original_name=select_into_Col2}
+select_into_col2#!#<NULL>
 ~~END~~
 
 -- dropping the table select_into
@@ -113,9 +113,9 @@ select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrel
 go
 ~~START~~
 varchar#!#varchar
-select_into_col#!#{bbf_original_name=select_into_COL}
+select_into_col#!#<NULL>
 select_into_col1#!#<NULL>
-select_into_col2#!#{bbf_original_name=select_into_Col2}
+select_into_col2#!#<NULL>
 ~~END~~
 
 -- dropping the table select_into
@@ -145,7 +145,7 @@ select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrel
 go
 ~~START~~
 varchar#!#varchar
-select_into_col1#!#{bbf_original_name=select_into_COl1}
+select_into_col1#!#<NULL>
 ~~END~~
 
 -- dropping the table select_into
@@ -175,7 +175,7 @@ select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrel
 go
 ~~START~~
 varchar#!#varchar
-select_into_col1#!#{bbf_original_name=select_into_COL1}
+select_into_col1#!#<NULL>
 ~~END~~
 
 -- dropping the table select_into
@@ -207,7 +207,7 @@ select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrel
 go
 ~~START~~
 varchar#!#varchar
-select_into_col1$#!#{bbf_original_name=select_into_COL1$}
+select_into_col1$#!#<NULL>
 ~~END~~
 
 -- dropping the table select_into
@@ -288,8 +288,8 @@ select attname,attoptions from pg_attribute join pg_class on pg_attribute.attrel
 go
 ~~START~~
 varchar#!#varchar
-select_into_col#!#{bbf_original_name=select_into_COL}
-select_into_col1#!#{bbf_original_name=select_into_COL1}
+select_into_col#!#<NULL>
+select_into_col1#!#{bbf_original_name=select}
 ~~END~~
 
 -- dropping the table select_into
