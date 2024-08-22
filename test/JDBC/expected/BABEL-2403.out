@@ -1,13 +1,3 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
 -- tsql
 SELECT 1;
 GO
@@ -64,8 +54,20 @@ name#!#sys#!#rolname#!#{"Rule": "tempdb_dbo must exist in babelfish_authid_user_
 name#!#sys#!#rolname#!#{"Rule": "msdb_db_owner must exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "msdb_dbo must exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_db_owner must also exist in pg_authid"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in pg_authid"}
+name#!#sys#!#nspname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext"}
+name#!#sys#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_db_owner must also exist in pg_authid"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in pg_authid"}
+name#!#sys#!#nspname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext"}
+name#!#sys#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_db_owner must also exist in pg_authid"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in pg_authid"}
+name#!#sys#!#nspname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext"}
+name#!#sys#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
@@ -99,16 +101,6 @@ name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also e
 name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
 name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext"}
 name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
-~~END~~
-
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
 ~~END~~
 
 
@@ -196,16 +188,6 @@ name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also e
 name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
 name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext"}
 name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
-~~END~~
-
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
 ~~END~~
 
 
