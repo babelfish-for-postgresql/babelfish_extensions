@@ -982,9 +982,13 @@ GO
 
 SELECT STRING_AGG(col_bit, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~ERROR (Code: 206)~~
-
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~START~~
+nvarchar
+1-0-1
+0-1
+<NULL>
+0-0
+~~END~~
 
 
 DECLARE @sep bit = 0
