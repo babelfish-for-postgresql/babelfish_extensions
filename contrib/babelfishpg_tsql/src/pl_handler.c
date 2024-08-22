@@ -6180,8 +6180,8 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
-
-			tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
+			if(tle->resname != NULL && !tle->resjunk)
+				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
@@ -6294,7 +6294,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	}
 
 	result = lappend(result, stmt);
-	
 	if (altstmt)
 		result = lappend(result, altstmt);	
 
