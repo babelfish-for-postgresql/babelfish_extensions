@@ -556,7 +556,7 @@ BABEL-3820
 stuff
 PARTITION
 BABEL-5071
-string_agg
+string_agg_within
 reverse
 sys_sequences
 replicate
