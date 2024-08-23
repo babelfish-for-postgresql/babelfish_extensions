@@ -50,6 +50,34 @@ FROM pg_catalog.pg_settings s where name = 'babelfishpg_tds.tds_default_packet_s
 ORDER BY configuration_id;
 GRANT SELECT ON sys.configurations TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.syscurconfigs
+AS
+SELECT  c.value,
+        c.configuration_id AS config,
+        COALESCE(b.comment_syscurconfigs, c.description) AS comment,
+        CASE
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        END AS status
+FROM sys.configurations c LEFT JOIN sys.babelfish_configurations b ON c.configuration_id = b.configuration_id;
+GRANT SELECT ON sys.syscurconfigs TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sysconfigures
+AS
+SELECT  c.value_in_use AS value,
+        c.configuration_id AS config,
+        COALESCE(b.comment_sysconfigures, c.description) AS comment,
+        CASE
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        END AS status
+FROM sys.configurations c LEFT JOIN sys.babelfish_configurations b ON c.configuration_id = b.configuration_id;
+GRANT SELECT ON sys.sysconfigures TO PUBLIC;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 

@@ -354,450 +354,450 @@ select top 3 config from sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ...sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ...syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 alias from syslanguages order by 1
@@ -2954,450 +2954,450 @@ select top 3 config from sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ...sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ...syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 alias from syslanguages order by 1
@@ -5455,450 +5455,450 @@ select top 3 config from sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ...sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.dbo.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.sys.sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb..sysconfigures order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ...syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from ..dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from master..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .master..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from tempdb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .tempdb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.dbo.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb.sys.syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from myschematest_mydb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 config from .myschematest_mydb..syscurconfigs order by 1
 go
 ~~START~~
 int
+103
 115
 124
-1126
 ~~END~~
 
 select top 3 alias from syslanguages order by 1
