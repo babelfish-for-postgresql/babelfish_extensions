@@ -888,11 +888,12 @@ Datum
 varchar2time(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	int32		typmod = PG_GETARG_INT32(1);
 	char	   *str;
 	TimeADT		time;
 
 	str = varchar2cstring(source);
-	time = DatumGetTimeADT(DirectFunctionCall1(time_in, CStringGetDatum(str)));
+	time = DatumGetTimeADT(DirectFunctionCall3(time_in, CStringGetDatum(str),0,typmod));
 	pfree(str);
 	PG_RETURN_TIMEADT(time);
 }
