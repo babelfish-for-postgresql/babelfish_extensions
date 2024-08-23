@@ -1,0 +1,1539 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = true;
+SELECT pg_reload_conf();
+CREATE USER foo WITH LOGIN PASSWORD 'abc';
+CREATE USER su_user WITH SUPERUSER LOGIN PASSWORD 'abc';
+GO
+~~START~~
+bool
+t
+~~END~~
+
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql      user=foo      password=abc
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "foo" is not a Babelfish user )~~
+
+-- Login with non babelfish user should fail
+go
+
+-- tsql      user=su_user      password=abc
+-- Login with a superuser should succeed
+SELECT 1;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- psql
+DROP USER IF EXISTS foo;
+go
+
+SET enable_drop_babelfish_role = true;
+go
+DROP USER IF EXISTS su_user;
+go
+SET enable_drop_babelfish_role = false;
+go
+
+-- tsql
+-- Create Login through tsql
+CREATE LOGIN r1 WITH PASSWORD = 'abc';
+go
+
+CREATE USER r1;
+go
+
+CREATE LOGIN r2 WITH password = 'abc';
+go
+
+CREATE SCHEMA sch2;
+go
+
+CREATE USER r2 WITH DEFAULT_SCHEMA = sch2;
+go
+
+-- tsql      user=r1      password=abc
+-- Login with a Babelfish user should succeed
+SELECT db_name();
+go
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+SELECT current_setting('search_path');
+go
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r1';
+go
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_r1#!#r1#!#r1#!#master#!#dbo
+~~END~~
+
+
+SELECT session_user;
+go
+~~START~~
+nvarchar
+r1
+~~END~~
+
+
+SELECT current_user;
+go
+~~START~~
+varchar
+r1
+~~END~~
+
+
+SELECT user_name(user_id());
+go
+~~START~~
+nvarchar
+r1
+~~END~~
+
+
+ALTER USER r1 WITH DEFAULT_SCHEMA = sch2;
+go
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r1';
+go
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_r1#!#r1#!#r1#!#master#!#sch2
+~~END~~
+
+
+ALTER USER r1 WITH NAME = new_r1;
+go
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'new_r1';
+go
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_new_r1#!#new_r1#!#r1#!#master#!#sch2
+~~END~~
+
+
+ALTER USER r2 WITH DEFAULT_SCHEMA = NULL;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change schema)~~
+
+
+ALTER USER r2 WITH NAME = new_r2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change user name)~~
+
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r2';
+go
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_r2#!#r2#!#r2#!#master#!#sch2
+~~END~~
+
+
+-- tsql      user=r2      password=abc
+SELECT db_name();
+go
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+SELECT current_setting('search_path');
+go
+~~START~~
+text
+master_sch2, "$user", sys, pg_catalog
+~~END~~
+
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r2';
+go
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_r2#!#r2#!#r2#!#master#!#sch2
+~~END~~
+
+
+SELECT session_user;
+go
+~~START~~
+nvarchar
+r2
+~~END~~
+
+
+SELECT current_user;
+go
+~~START~~
+varchar
+r2
+~~END~~
+
+
+SELECT user_name(user_id());
+go
+~~START~~
+nvarchar
+r2
+~~END~~
+
+
+-- tsql
+DROP USER new_r1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN r1;
+go
+
+DROP USER r2;
+go
+
+DROP SCHEMA sch2;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN r2;
+go
+
+-- Test initialization
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+3
+~~END~~
+
+
+CREATE LOGIN r1 WITH PASSWORD = 'abc';
+go
+
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+-- Test initialization with password
+CREATE LOGIN r2 WITH PASSWORD = '123'
+go
+
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+5
+~~END~~
+
+
+-- Test altering the login ability
+SELECT rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'r1';
+go
+~~START~~
+bit
+1
+~~END~~
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'r1';
+go
+~~START~~
+varchar#!#int
+r1#!#0
+~~END~~
+
+
+ALTER LOGIN r1 disable;
+go
+
+SELECT rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'r1';
+go
+~~START~~
+bit
+0
+~~END~~
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'r1';
+go
+~~START~~
+varchar#!#int
+r1#!#1
+~~END~~
+
+
+ALTER LOGIN r1 enable;
+go
+
+SELECT rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'r1';
+go
+~~START~~
+bit
+1
+~~END~~
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'r1';
+go
+~~START~~
+varchar#!#int
+r1#!#0
+~~END~~
+
+
+-- Test altering the password
+ALTER LOGIN r2 WITH PASSWORD = '456'
+go
+
+
+-- psql
+-- Test dropping
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN r1;
+go
+
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN r2;
+go
+
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+3
+~~END~~
+
+
+-- Test membership
+CREATE LOGIN r3 WITH PASSWORD = '789';
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'r3');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin ADD MEMBER r3;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'r3');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin DROP MEMBER r3;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'r3');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN r3;
+GO
+
+-- Test error cases
+ALTER SERVER ROLE db_owner ADD MEMBER dummy;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+
+
+ALTER SERVER ROLE db_owner DROP MEMBER dummy;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+
+
+CREATE LOGIN err_user WITH PASSWORD = '123';
+GO
+
+CREATE USER err_user;
+GO
+
+-- tsql      user=err_user      password=123
+-- Should fail, does not have permission to alter sysadmin
+ALTER SERVER ROLE sysadmin ADD MEMBER err_user
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login err_user does not have permission to alter server role)~~
+
+
+-- Shoud fail, does not have permission to create login
+CREATE LOGIN dummy WITH PASSWORD = '123';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login err_user does not have permission to create new login)~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'err_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP USER err_user;
+GO
+
+DROP LOGIN err_user;
+GO
+
+-- Test User functions
+USE MASTER;
+GO
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+master_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+master_guest
+~~END~~
+
+
+USE MSDB;
+GO
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+msdb_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+msdb_guest
+~~END~~
+
+
+USE TEMPDB;
+GO
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+tempdb_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+tempdb_guest
+~~END~~
+
+
+CREATE DATABASE db1;
+GO
+
+USE db1;
+GO
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db1_guest#!#guest#!##!#db1#!#guest
+db_owner#!#db_owner#!##!#db1#!#
+dbo#!#dbo#!##!#db1#!#dbo
+master_db_owner#!#db_owner#!##!#master#!#
+master_dbo#!#dbo#!##!#master#!#dbo
+master_guest#!#guest#!##!#master#!#guest
+msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_dbo#!#dbo#!##!#msdb#!#dbo
+msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_owner#!#db_owner#!##!#tempdb#!#
+tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
+tempdb_guest#!#guest#!##!#tempdb#!#guest
+~~END~~
+
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+-- Expect NULL
+SELECT user_name(-1);
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT user_id('master_dbo');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Test Login functions
+CREATE LOGIN LoGiN1 WITH PASSWORD = '456';
+GO
+
+SELECT name FROM sys.server_principals WHERE principal_id = suser_id('lOgIn1');
+GO
+~~START~~
+varchar
+LoGiN1
+~~END~~
+
+
+SELECT name FROM sys.server_principals WHERE principal_id = suser_id('login1    ');
+GO
+~~START~~
+varchar
+LoGiN1
+~~END~~
+
+
+SELECT name FROM sys.server_principals WHERE principal_id = suser_id('LOGIN1');
+GO
+~~START~~
+varchar
+LoGiN1
+~~END~~
+
+
+-- Expect NULL
+SELECT suser_id(' login1');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id());
+GO
+~~START~~
+varchar
+jdbc_user
+~~END~~
+
+
+-- Expect NULL
+SELECT suser_id('non_existent_user');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Expect NULL
+SELECT suser_id(NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('login1'));
+GO
+~~START~~
+varchar
+LoGiN1
+~~END~~
+
+
+SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('LOGIN1'));
+GO
+~~START~~
+varchar
+LoGiN1
+~~END~~
+
+
+SELECT name FROM sys.server_principals WHERE name = suser_name();
+GO
+~~START~~
+varchar
+jdbc_user
+~~END~~
+
+
+-- Expect NULL
+SELECT suser_name(-1);
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+-- Expect NULL
+SELECT suser_name(NULL);
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+USE MASTER;
+GO
+
+DROP DATABASE db1;
+GO
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_db_owner#!#db_owner#!##!#master#!#
+master_dbo#!#dbo#!##!#master#!#dbo
+master_guest#!#guest#!##!#master#!#guest
+msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_dbo#!#dbo#!##!#msdb#!#dbo
+msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_owner#!#db_owner#!##!#tempdb#!#
+tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
+tempdb_guest#!#guest#!##!#tempdb#!#guest
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN login1;
+GO
+
+-- tsql
+-- Test multi-db mode
+USE master;
+GO
+
+CREATE DATABASE db1;
+GO
+
+CREATE DATABASE db2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "db1" already exists)~~
+
+
+SELECT rolname, login_name, orig_username, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
+db1_guest#!##!#guest#!#db1#!#guest
+db_owner#!##!#db_owner#!#db1#!#
+dbo#!##!#dbo#!#db1#!#dbo
+master_db_owner#!##!#db_owner#!#master#!#
+master_dbo#!##!#dbo#!#master#!#dbo
+master_guest#!##!#guest#!#master#!#guest
+msdb_db_owner#!##!#db_owner#!#msdb#!#
+msdb_dbo#!##!#dbo#!#msdb#!#dbo
+msdb_guest#!##!#guest#!#msdb#!#guest
+tempdb_db_owner#!##!#db_owner#!#tempdb#!#
+tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
+tempdb_guest#!##!#guest#!#tempdb#!#guest
+~~END~~
+
+
+SELECT name, default_schema_name
+FROM sys.database_principals
+ORDER BY default_schema_name DESC, name;
+GO
+~~START~~
+varchar#!#varchar
+guest#!#guest
+dbo#!#dbo
+db_owner#!#
+INFORMATION_SCHEMA#!#<NULL>
+public#!#<NULL>
+sys#!#<NULL>
+~~END~~
+
+
+SELECT rolname, rolcreaterole FROM pg_roles
+WHERE rolname LIKE '%dbo'
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#bit
+dbo#!#1
+master_dbo#!#1
+msdb_dbo#!#1
+tempdb_dbo#!#1
+~~END~~
+
+
+USE db1;
+GO
+
+SELECT name, default_schema_name
+FROM sys.database_principals
+ORDER BY default_schema_name DESC, name;
+GO
+~~START~~
+varchar#!#varchar
+guest#!#guest
+dbo#!#dbo
+db_owner#!#
+INFORMATION_SCHEMA#!#<NULL>
+public#!#<NULL>
+sys#!#<NULL>
+~~END~~
+
+
+SELECT user_name(user_id('dbo'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+db1_guest
+~~END~~
+
+
+USE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+SELECT user_name(user_id('dbo'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('DBO'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT user_name(user_id('GUEST'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+db1_guest
+~~END~~
+
+
+USE MASTER;
+GO
+
+SELECT user_name(user_id('dbo'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+master_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+master_guest
+~~END~~
+
+
+DROP DATABASE db1;
+GO
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_db_owner#!#db_owner#!##!#master#!#
+master_dbo#!#dbo#!##!#master#!#dbo
+master_guest#!#guest#!##!#master#!#guest
+msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_dbo#!#dbo#!##!#msdb#!#dbo
+msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_owner#!#db_owner#!##!#tempdb#!#
+tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
+tempdb_guest#!#guest#!##!#tempdb#!#guest
+~~END~~
+
+
+DROP DATABASE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_db_owner#!#db_owner#!##!#master#!#
+master_dbo#!#dbo#!##!#master#!#dbo
+master_guest#!#guest#!##!#master#!#guest
+msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_dbo#!#dbo#!##!#msdb#!#dbo
+msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_owner#!#db_owner#!##!#tempdb#!#
+tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
+tempdb_guest#!#guest#!##!#tempdb#!#guest
+~~END~~
+
+
+-- BABEL-2978 - Prevent login from accessing database without creating DB user after DROP/CREATE login 
+CREATE LOGIN lgn_2978 WITH PASSWORD='123';
+GO
+
+CREATE DATABASE db1;
+GO
+
+USE db1;
+GO
+
+CREATE USER lgn_2978;
+GO
+
+CREATE DATABASE db2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "db1" already exists)~~
+
+
+USE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+CREATE USER lgn_2978_2 FROM LOGIN lgn_2978;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Existing user already maps to login 'lgn_2978' in current database.)~~
+
+
+USE master;
+GO
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE login_name LIKE 'lgn_2978%'
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db1_lgn_2978#!#lgn_2978#!#lgn_2978#!#db1#!#dbo
+~~END~~
+
+
+java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
+~~SUCCESS~~
+java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist )~~
+
+java_auth#!#user|-|lgn_2978#!#password|-|123
+~~SUCCESS~~
+java_auth#!#user|-|lgn_2978#!#password|-|123
+~~SUCCESS~~
+
+-- tsql
+-- Login should be succeded
+USE master;
+GO
+
+-- psql
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN lgn_2978;
+GO
+
+-- lgn_2978 login entries should have been invalidated
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE login_name LIKE 'lgn_2978%' OR rolname LIKE '%lgn_2978%'
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db1_lgn_2978#!#lgn_2978#!##!#db1#!#dbo
+~~END~~
+
+
+-- tsql
+-- recreate the login with same name
+CREATE LOGIN lgn_2978 WITH PASSWORD='123';
+GO
+
+-- verify that USER lgn_2978 should have "" as LOGIN since it is dropped
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE login_name LIKE 'lgn_2978%'
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+~~END~~
+
+
+
+java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot open database "db1" requested by the login. The login failed )~~
+
+java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist )~~
+
+
+-- tsql      user=lgn_2978      password=123
+-- It should be failed since there is no relevant login
+USE db1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "lgn_2978" is not able to access the database "db1" under the current security context)~~
+
+
+USE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+USE master;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+guest
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lgn_2978' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+USE master;
+GO
+
+DROP LOGIN lgn_2978;
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+-- Prevent dropping active login
+CREATE LOGIN lgn_3232 WITH PASSWORD='123';
+GO
+
+CREATE USER lgn_3232; 
+GO
+
+-- tsql		user=lgn_3232		password=123
+
+-- tsql
+-- Session 1
+-- Logged into Session 1 with lgn_3232 login
+-- Session 2 - Try to drop lgn_3232 which is active on Session 1
+DROP LOGIN lgn_3232;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not drop login 'lgn_3232' as the user is currently logged in.)~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lgn_3232' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN lgn_3232;
+GO
+
+DROP USER lgn_3232;
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+CREATE DATABASE babel_4935_db
+GO
+
+USE babel_4935_db
+GO
+
+-- Login that is member sysadmin
+CREATE LOGIN babel_4935_sysadmin WITH PASSWORD = '123'
+GO
+
+ALTER ROLE sysadmin ADD MEMBER babel_4935_sysadmin
+GO
+
+-- Logins that are not a member of sysadmin but have users associated
+CREATE LOGIN babel_4935_no_sysadmin1 WITH PASSWORD = '123'
+CREATE LOGIN babel_4935_no_sysadmin2 WITH PASSWORD = '123'
+GO
+
+CREATE USER babel_4935_no_sysadmin1
+CREATE USER babel_4935_no_sysadmin2
+GO
+
+-- Login that is not a member of sysadmin and has no user associated
+CREATE LOGIN babel_4935_guest WITH PASSWORD = '123'
+GO
+
+GRANT CONNECT TO guest
+GO
+
+-- jdbc_user is superuser so should see all the users
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+~~START~~
+varchar
+babel_4935_no_sysadmin1
+babel_4935_no_sysadmin2
+db_owner
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
+
+-- tsql user=babel_4935_sysadmin password=123 database=babel_4935_db
+-- login is member of sysadmin so should see all the users
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+~~START~~
+varchar
+babel_4935_no_sysadmin1
+babel_4935_no_sysadmin2
+db_owner
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
+
+-- tsql user=babel_4935_no_sysadmin1 password=123 database=babel_4935_db
+-- login is not member of sysadmin so should see all the system users and only it's own user
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+~~START~~
+varchar
+babel_4935_no_sysadmin1
+db_owner
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
+
+-- tsql user=babel_4935_guest password=123 database=babel_4935_db
+-- login is not member of sysadmin and no user associated so should only see system users
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+~~START~~
+varchar
+db_owner
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4935_sysadmin' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4935_no_sysadmin1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4935_guest' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+USE master
+GO
+
+DROP DATABASE babel_4935_db
+GO
+
+DROP LOGIN babel_4935_sysadmin
+DROP LOGIN babel_4935_no_sysadmin1
+DROP LOGIN babel_4935_no_sysadmin2
+DROP LOGIN babel_4935_guest
+GO

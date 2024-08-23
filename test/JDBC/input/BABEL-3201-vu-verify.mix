@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 DBCC CHECKIDENT(babel_3201_t_int, NORESEED);
 GO
 

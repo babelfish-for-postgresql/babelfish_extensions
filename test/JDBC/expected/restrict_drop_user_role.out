@@ -315,27 +315,8 @@ go
 drop database restrict_user_db1
 go
 
--- psql
--- 3.5 - Try dropping user created for another database
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-GO
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
-
 -- tsql
+-- 3.5 - Try dropping user created for another database
 create database restrict_user_db1;
 go
 
@@ -399,15 +380,3 @@ go
 
 drop database restrict_user_db1_restrict_user_db1;
 go
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-GO
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-

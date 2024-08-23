@@ -690,9 +690,9 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db1_db_owner#!#db_owner#!##!#db1#!#
+db1_dbo#!#dbo#!##!#db1#!#dbo
 db1_guest#!#guest#!##!#db1#!#guest
-db_owner#!#db_owner#!##!#db1#!#
-dbo#!#dbo#!##!#db1#!#dbo
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#guest
@@ -725,7 +725,7 @@ SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
 GO
 ~~START~~
 varchar
-dbo
+db1_dbo
 ~~END~~
 
 
@@ -896,25 +896,6 @@ void
 -- tsql
 DROP LOGIN login1;
 GO
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-GO
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
 
 -- tsql
 -- Test multi-db mode
@@ -1373,16 +1354,6 @@ DROP USER lgn_3232;
 GO
 
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-GO
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
 SELECT pg_reload_conf();
 GO
