@@ -1,8 +1,3 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-
 -- tsql
 -- Case 1.1: CREATE DATABASE WITH NO COLLATE CLAUSE
 
@@ -335,9 +330,4 @@ CREATE TABLE test_db_collation_vu_prepare_db142_t2(c char(11) COLLATE Latin1_Gen
 GO
 
 USE MASTER;
-GO
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
 GO

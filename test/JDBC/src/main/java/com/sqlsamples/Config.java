@@ -36,6 +36,7 @@ public class Config {
     static long defaultSLA = Long.parseLong(properties.getProperty("defaultSLA"));
     static boolean isdbCollationMode = !properties.getProperty("databaseCollationName").equals("default");
     static String dbCollationIgnoreFileName = "./db_collation_jdbc_schedule";
+    static String singleDBFileName = "./singledb_jdbc_schedule";
 
     static String connectionString = constructConnectionString();
 

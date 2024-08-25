@@ -112,12 +112,34 @@ GO
 DROP DATABASE db1;
 GO
 
+USE master;
+GO
+
 DROP DATABASE db2;
 GO
 
 -- Tests for db level collation
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
+SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'sysadmin';
+GO
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'master_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'master_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'master_dbo';
+GO
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'tempdb_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'tempdb_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'tempdb_dbo';
+GO
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'msdb_dbo';
+GO
+
 -- Test Create User Database
 CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
@@ -129,11 +151,19 @@ GO
 CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
 
+-- single-db
 SELECT COUNT(*) FROM pg_roles where rolname = 'dbo';
 SELECT COUNT(*) FROM pg_roles where rolname = 'db_owner';
 SELECT COUNT(*) FROM pg_namespace where nspname = 'dbo';
 GO
 
+-- multi-db
+SELECT COUNT(*) FROM pg_roles where rolname = 'db1_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'db1_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'db1_dbo';
+GO
+
+-- should raise error in single-db
 CREATE DATABASE db2 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
 
@@ -149,7 +179,7 @@ GO
 SELECT (case when db_id() = db_id('master') then 'true' else 'false' end) result;
 GO
 
--- test error
+-- should raise error in single-db
 USE db2;
 GO
 
@@ -173,10 +203,6 @@ BEGIN
 	SELECT NULL
 	FROM SET_CTE
 END
-GO
-
--- test multi-db mode 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
 GO
 
 SELECT name FROM sys.sysdatabases ORDER BY name;
@@ -205,8 +231,8 @@ GO
 DROP DATABASE db1;
 GO
 
-DROP DATABASE db2;
+USE master;
 GO
 
-SELECT name FROM sys.sysdatabases ORDER BY name;
+DROP DATABASE db2;
 GO

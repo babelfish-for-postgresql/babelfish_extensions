@@ -165,6 +165,7 @@ public class TestQueryFile {
         File scheduleFile = new File(scheduleFileName);
         File parallelQueryTestIgnoreFile = new File(parallelQueryTestIgnoreFileName);
         File dbCollationIgnoreFile = new File(dbCollationIgnoreFileName);
+        File singleDBIgnoreFile = new File(singleDBFileName);
         
         try (BufferedReader br = new BufferedReader(new FileReader(scheduleFile))) {
             String line;
@@ -179,6 +180,19 @@ public class TestQueryFile {
         /* Ignore tests in case of parallel query mode on */
         if (isParallelQueryMode) {
             try (BufferedReader br = new BufferedReader(new FileReader(parallelQueryTestIgnoreFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (!line.startsWith("#") && line.trim().length() > 0 && line.startsWith("ignore#!#"))
+                        testsToIgnore.add(line.split("#!#", -1)[1]);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /* Ignore tests in case of single-db mode test */
+        if (isSingleDbMode) {
+            try (BufferedReader br = new BufferedReader(new FileReader(singleDBIgnoreFile))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     if (!line.startsWith("#") && line.trim().length() > 0 && line.startsWith("ignore#!#"))

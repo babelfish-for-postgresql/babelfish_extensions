@@ -1,14 +1,3 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
--- tsql
 -- Case 2: Validate that correct collation is picked up for all databases
 SELECT name, collation_name FROM sys.databases ORDER BY name;
 GO
@@ -1768,16 +1757,5 @@ pinata#!#Piñata
 résumé#!#résumé
 tELeFONO#!#TELÉFONO
 tEnniȘ#!#TEññiȘ
-~~END~~
-
-
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
 ~~END~~
 

@@ -1,9 +1,3 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-
--- tsql
 -- Case 2: Validate that correct collation is picked up for all databases
 SELECT name, collation_name FROM sys.databases ORDER BY name;
 GO
@@ -569,10 +563,4 @@ SELECT nv FROM test_db_collation_vu_prepare_db11_t1 WHERE nv = 'Řandom';
 GO
 
 SELECT t1.nv, t2.nv FROM test_db_collation_vu_prepare_db11_t1 t1 JOIN test_db_collation_vu_prepare_db121.dbo.test_db_collation_vu_prepare_db121_t1 t2 on t1.nv = t2.nv ORDER BY t1.nv;
-GO
-
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
 GO

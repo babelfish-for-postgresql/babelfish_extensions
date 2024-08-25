@@ -1,13 +1,3 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
 -- tsql
 -- DROP TABLES
 USE test_db_collation_vu_prepare_db11;
@@ -248,12 +238,3 @@ GO
 -- psql
 DROP COLLATION sys.my_collation;
 GO
-
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-

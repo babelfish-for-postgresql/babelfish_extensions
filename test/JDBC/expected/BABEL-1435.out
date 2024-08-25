@@ -271,20 +271,90 @@ int
 DROP DATABASE db1;
 GO
 
+USE master;
+GO
+
 DROP DATABASE db2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop database "db2" because it is currently in use)~~
-
 
 -- Tests for db level collation
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
+SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
 text
-single-db
+master
+msdb
+tempdb
 ~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'sysadmin';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'master_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'master_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'master_dbo';
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'tempdb_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'tempdb_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'tempdb_dbo';
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'msdb_dbo';
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
 
 -- Test Create User Database
 CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
@@ -309,15 +379,32 @@ GO
 ~~ERROR (Message: Database 'db1' already exists. Choose a different database name.)~~
 
 
+-- single-db
 SELECT COUNT(*) FROM pg_roles where rolname = 'dbo';
 SELECT COUNT(*) FROM pg_roles where rolname = 'db_owner';
 SELECT COUNT(*) FROM pg_namespace where nspname = 'dbo';
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+-- multi-db
+SELECT COUNT(*) FROM pg_roles where rolname = 'db1_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'db1_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'db1_dbo';
+GO
 ~~START~~
 int
 1
@@ -328,13 +415,15 @@ int
 1
 ~~END~~
 
+~~START~~
+int
+1
+~~END~~
 
+
+-- should raise error in single-db
 CREATE DATABASE db2 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Only one user database allowed under single-db mode. User database "db1" already exists)~~
-
 
 USE db1;
 GO
@@ -358,13 +447,9 @@ true
 ~~END~~
 
 
--- test error
+-- should raise error in single-db
 USE db2;
 GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db2" does not exist)~~
-
 
 DROP DATABASE db1;
 GO
@@ -393,19 +478,11 @@ int
 ~~END~~
 
 
--- test multi-db mode 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
-~~START~~
-text
-multi-db
-~~END~~
-
-
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
 text
+db2
 master
 msdb
 tempdb
@@ -425,6 +502,10 @@ GO
 
 CREATE DATABASE db2 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database 'db2' already exists. Choose a different database name.)~~
+
 
 SELECT COUNT(*) FROM pg_roles where rolname = 'db1_dbo';
 SELECT COUNT(*) FROM pg_roles where rolname = 'db1_db_owner';
@@ -469,16 +550,8 @@ int
 DROP DATABASE db1;
 GO
 
+USE master;
+GO
+
 DROP DATABASE db2;
 GO
-
-SELECT name FROM sys.sysdatabases ORDER BY name;
-GO
-~~START~~
-text
-db2
-master
-msdb
-tempdb
-~~END~~
-
