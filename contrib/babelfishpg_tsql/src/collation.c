@@ -1764,21 +1764,6 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 	return false;
 }
 
-/* 
- * We are processesing USE DB command
- * Communicate the same to common extension
- * so that collation related information gets updated
- */ 
-void
-tsql_set_db_collation(Oid database_collation_oid)
-{
-	/* Initialise collation callbacks */
-	init_and_check_collation_callbacks();
-
-	(*collation_callbacks_ptr->set_db_collation) (database_collation_oid);
-	return;
-}
-
 /* Find the collation corresponding to a specific database */
 char*
 get_collation_name_for_db(const char* dbname)
@@ -1790,7 +1775,9 @@ get_collation_name_for_db(const char* dbname)
 	tuple = SearchSysCache1(SYSDATABASENAME, PointerGetDatum(cstring_to_text(dbname)));
 
 	if (!HeapTupleIsValid(tuple))
-		return NULL;
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("Could not find database: \"%s\"", dbname)));
 
 	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
 	collation_name = pstrdup(NameStr(sysdb->default_collation));
@@ -1805,6 +1792,10 @@ get_collation_name_for_db(const char* dbname)
  * Hence, we need to update the cache related to -
  * 1. database collation oid
  * 2. database collation index
+ * 
+ * Also, We are processesing USE DB command
+ * Communicate the same to common extension
+ * so that collation related information gets updated
  */
 void
 set_db_collation_internal(const char *db_name)
@@ -1814,7 +1805,16 @@ set_db_collation_internal(const char *db_name)
 	/* Get collation oid corresponding to collation name */
 	database_collation_oid = get_collation_oid(list_make1(makeString((char*)get_collation_name_for_db(db_name))), false);
 
-	tsql_set_db_collation(database_collation_oid);
+	if (!OidIsValid(database_collation_oid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_DATABASE),
+			 errmsg("Could not find database with collation oid \"%u\"", database_collation_oid)));
+
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	(*collation_callbacks_ptr->set_db_collation) (database_collation_oid);
+
 	database_or_server_collation_oid = InvalidOid;
 }
 

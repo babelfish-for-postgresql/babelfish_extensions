@@ -1026,6 +1026,7 @@ lookup_collation_table(Oid coll_oid)
  * Firstly, we check whether database_collation_collidx (corresponds to database level collidx) 
  * is FOUND or not - which should have been set during USE command
  * If NOT_FOUND, then we fallback to server level collidx
+ * It is caller's responsibility to check whether server level collidx is NOT_FOUND or not
  */
 int
 get_database_or_server_collation_collidx(void)
@@ -1234,10 +1235,8 @@ BABELFISH_CLUSTER_COLLATION_OID()
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
 		Oid db_coll = get_database_or_server_collation_oid_internal(false);	/* set and cache
-													 * server_collation_oid */
-
-		if (OidIsValid(db_coll))
-			return db_coll;
+													 * database or server_collation_oid */
+		return db_coll;
 	}
 	return DEFAULT_COLLATION_OID;
 }
@@ -1287,12 +1286,12 @@ collation_is_CI(Oid colloid)
 	 * unless colCaseLevel=yes, or kc-true, is also specified.
 	 */
 	if ((strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) != NULL || strstr(lowerstr(collcollate), lowerstr("colStrength=primary")) != NULL) &&
-		strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")) == 0)    /* without a colCaseLevel - not CS_AI */
+		strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")) == NULL)    /* without a colCaseLevel - not CS_AI */
 			return true;
 	 
 	/* Starting from PG16, locale string is canonicalized to a language tag. */
-	if ((strstr(lowerstr(collcollate), "level2") != 0 || strstr(lowerstr(collcollate), "level1") != 0)  &&    /* CI_AS OR CI_AI */
-		strstr(lowerstr(collcollate), "kc-true") == 0)
+	if ((strstr(lowerstr(collcollate), "level2") != NULL || strstr(lowerstr(collcollate), "level1") != NULL)  &&    /* CI_AS OR CI_AI */
+		strstr(lowerstr(collcollate), "kc-true") == NULL)
 		return true;
 
 	return false;
@@ -1706,6 +1705,9 @@ Oid bbf_get_like_collation(void)
 	return like_cid;
 }
 
+/*
+ * It's caller's responsibility to check whether the Oid is valid or not
+ */
 void
 set_db_collation(Oid db_coll)
 {

@@ -41,6 +41,9 @@ databasepropertyex(PG_FUNCTION_ARGS)
 
 		if (database_collation_name)
 			vch = (*common_utility_plugin_ptr->tsql_varchar_input) (database_collation_name, strlen(database_collation_name), -1);
+
+		if (database_collation_name)
+			pfree(database_collation_name);
 	}
 	else if (strcasecmp(property, "ComparisonStyle") == 0)
 	{

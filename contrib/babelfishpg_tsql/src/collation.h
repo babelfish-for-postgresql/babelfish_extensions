@@ -121,7 +121,6 @@ extern Node *pltsql_planner_node_transformer(PlannerInfo *root,
 extern Node *pltsql_predicate_transformer(Node *expr);
 
 void set_db_collation_internal(const char *db_name);
-void tsql_set_db_collation(Oid database_collation_oid);
 bool supported_collation_for_db_and_like(int32_t code_page);
 char* get_collation_name_for_db(const char* dbname);
 

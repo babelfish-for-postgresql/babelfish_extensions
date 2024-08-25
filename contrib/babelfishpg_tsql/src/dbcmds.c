@@ -364,7 +364,7 @@ do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const ch
 }
 
 static void
-check_database_collation_name(const char* database_collation_name)
+check_database_collation_name(const char *database_collation_name)
 {
 	coll_info_t coll_info_of_inputcollid;
 
@@ -375,7 +375,7 @@ check_database_collation_name(const char* database_collation_name)
 				errmsg("Invalid collation \"%s\"", database_collation_name)));
 	}
 
-	/* Block any non-LATIN and CS_AS collation */
+	/* Block any non-LATIN and CS collation */
 	coll_info_of_inputcollid = tsql_lookup_collation_table_internal(
 		get_collation_oid(list_make1(makeString((char*) database_collation_name)), false));
 
@@ -415,7 +415,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	Oid 			save_userid;
 	const char	*old_createrole_self_grant;
 	ListCell	*option;
-	const char* database_collation_name = NULL;
+	const char *database_collation_name = NULL;
 
 	/* Check options */
 	foreach(option, options)
