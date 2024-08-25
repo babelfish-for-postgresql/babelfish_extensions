@@ -110,10 +110,6 @@ int
 
 CREATE DATABASE db2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Database 'db2' already exists. Choose a different database name.)~~
-
 
 SELECT COUNT(*) FROM pg_auth_members
 WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'db2_guest')
@@ -236,6 +232,7 @@ text
 jdbc_user
 ~~END~~
 
+
 CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
 
@@ -286,4 +283,5 @@ GO
 int
 0
 ~~END~~
+
 

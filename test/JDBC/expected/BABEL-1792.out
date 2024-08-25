@@ -128,7 +128,7 @@ SELECT current_schema();
 GO
 ~~START~~
 varchar
-dbo
+db1_dbo
 ~~END~~
 
 

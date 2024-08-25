@@ -1372,10 +1372,3 @@ GO
 DROP DATABASE db_4934_2;
 GO
 
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-

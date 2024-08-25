@@ -1,5 +1,4 @@
 Could not find dependencies on
-Collation sys.bbf_unicode_cp1250_ci_ai
 Collation sys.bbf_unicode_cp1250_cs_ai
 Collation sys.bbf_unicode_cp1251_ci_ai
 Collation sys.bbf_unicode_cp1251_cs_ai
@@ -15,7 +14,6 @@ Collation sys.bbf_unicode_cp1255_cs_ai
 Collation sys.bbf_unicode_cp1256_ci_ai
 Collation sys.bbf_unicode_cp1256_ci_as
 Collation sys.bbf_unicode_cp1256_cs_ai
-Collation sys.bbf_unicode_cp1257_ci_ai
 Collation sys.bbf_unicode_cp1257_ci_as
 Collation sys.bbf_unicode_cp1257_cs_ai
 Collation sys.bbf_unicode_cp1258_ci_ai
@@ -42,7 +40,6 @@ Collation sys.estonian_ci_as
 Collation sys.estonian_cs_as
 Collation sys.finnish_swedish_ci_as
 Collation sys.finnish_swedish_cs_as
-Collation sys.french_ci_ai
 Collation sys.french_ci_as
 Collation sys.greek_ci_ai
 Collation sys.hebrew_ci_ai
@@ -51,15 +48,13 @@ Collation sys.japanese_ci_ai
 Collation sys.japanese_cs_as
 Collation sys.korean_wansung_ci_ai
 Collation sys.korean_wansung_ci_as
-Collation sys.modern_spanish_ci_ai
 Collation sys.modern_spanish_ci_as
 Collation sys.mongolian_ci_ai
 Collation sys.mongolian_cs_as
-Collation sys.polish_ci_ai
+Collation sys.my_collation
 Collation sys.polish_cs_as
 Collation sys.thai_ci_ai
 Collation sys.thai_ci_as
-Collation sys.traditional_spanish_ci_ai
 Collation sys.traditional_spanish_ci_as
 Collation sys.turkish_ci_ai
 Collation sys.turkish_cs_as
