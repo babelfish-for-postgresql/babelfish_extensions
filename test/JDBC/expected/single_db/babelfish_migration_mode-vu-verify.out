@@ -310,6 +310,178 @@ GO
 ~~ERROR (Message: database "babelfish_migration_mode_db2" does not exist)~~
 
 
+-- Tests for db level collation 
+-- Test create user database
+CREATE DATABASE babelfish_migration_mode_db1 COLLATE BBF_Unicode_CP1_CI_AI
+GO
+
+-- should fail
+CREATE DATABASE babelfish_migration_mode_db1 COLLATE BBF_Unicode_CP1_CI_AI
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database 'babelfish_migration_mode_db1' already exists. Choose a different database name.)~~
+
+
+CREATE DATABASE babelfish_migration_mode_db2 COLLATE BBF_Unicode_CP1_CI_AI
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "babelfish_migration_mode_db1" already exists)~~
+
+
+SELECT name FROM sys.sysdatabases 
+WHERE name LIKE 'babelfish_migration_mode%'
+ORDER BY name
+GO
+~~START~~
+text
+babelfish_migration_mode_db1
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db1_dbo'
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db1_db_owner'
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT COUNT(*) FROM pg_namespace WHERE nspname = 'babelfish_migration_mode_db1_dbo'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db2_dbo'
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db2_db_owner'
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT COUNT(*) FROM pg_namespace WHERE nspname = 'babelfish_migration_mode_db2_dbo'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE babelfish_migration_mode_db1
+GO
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE babelfish_migration_mode_db2
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "babelfish_migration_mode_db2" does not exist)~~
+
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master
+GO
+
+SELECT set_config('role', 'jdbc_user', false)
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~START~~
+text
+single-db
+~~END~~
+
+
+-- should fail
+USE babelfish_migration_mode_db2
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "babelfish_migration_mode_db2" does not exist)~~
+
+
+SELECT set_config('role', 'jdbc_user', false)
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~START~~
+text
+single-db
+~~END~~
+
+
+-- should success
+USE babelfish_migration_mode_db2
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "babelfish_migration_mode_db2" does not exist)~~
+
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master
+GO
+
+DROP DATABASE babelfish_migration_mode_db1
+GO
+
+DROP DATABASE babelfish_migration_mode_db2
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "babelfish_migration_mode_db2" does not exist)~~
+
+
 SELECT set_config('role', 'jdbc_user', false)
 GO
 ~~START~~

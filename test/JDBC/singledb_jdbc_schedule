@@ -7,36 +7,20 @@ ignore#!#test_db_collation-vu-verify
 ignore#!#test_db_collation-vu-cleanup
 
 # ignoring temporarily
-ignore#!#BABEL-1446
-ignore#!#BABEL-1792
-ignore#!#BABEL-2418
-ignore#!#BABEL-2902
 ignore#!#BABEL-CROSS-DB
 ignore#!#BABEL-SYS-DATABASES
 ignore#!#BABEL-guest
 ignore#!#GRANT_SCHEMA
-ignore#!#babelfish_migration_mode-vu-prepare
-ignore#!#babelfish_migration_mode-vu-verify
-ignore#!#babelfish_migration_mode-vu-cleanup
-ignore#!#TestSpatialPoint-vu-prepare
-ignore#!#TestSpatialPoint-vu-verify
-ignore#!#TestSpatialPoint-vu-cleanup
 ignore#!#Test_rename_db_single-db
 ignore#!#column_domain_usage
 ignore#!#contraint_column_usage
 ignore#!#drop_database
-ignore#!#linked_srv_4229-vu-prepare
-ignore#!#linked_srv_4229-vu-verify
-ignore#!#linked_srv_4229-vu-cleanup
 ignore#!#objectproperty
 ignore#!#objectpropertyex
 ignore#!#ownership_restrictions_from_pg
 ignore#!#pg_stat_statements_tsql
 ignore#!#psql_logical_babelfish_db
 ignore#!#routines_definition
-ignore#!#sp_changedbowner-vu-prepare
-ignore#!#sp_changedbowner-vu-verify
-ignore#!#sp_changedbowner-vu-cleanup
 ignore#!#sp_columns_100
 ignore#!#sp_proc
 ignore#!#sp_statistics_100
