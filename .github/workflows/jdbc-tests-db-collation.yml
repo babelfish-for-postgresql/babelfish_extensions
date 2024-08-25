@@ -59,8 +59,6 @@ jobs:
         timeout-minutes: 60
         run: |
           export PATH=/opt/mssql-tools/bin:$PATH
-          # Will uncomment it later when we plan to run JDBC tests for db level collation on a different db than master
-          # sqlcmd -S localhost -U "jdbc_user" -P 12345678 -i .github/scripts/db_collation.sql
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           sudo ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "update sys.babelfish_sysdatabases set default_collation = '${{env.DATABASE_COLLATION_NAME}}' where name = 'master';"
