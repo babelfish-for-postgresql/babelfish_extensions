@@ -1,4 +1,4 @@
-# Schedule File for JDBC Test Framework for local run for database level collation to ignore specific tests
+# Schedule File for JDBC Test Framework for local run for single-db run to ignore specific tests
 # 1. Lines starting with '#' will be treated as comments
 # 2. To ignore any test file, add an entry like ignore#!#<test_file_name>
 
@@ -12,32 +12,7 @@ ignore#!#BABEL-SYS-DATABASES
 ignore#!#BABEL-guest
 ignore#!#GRANT_SCHEMA
 ignore#!#Test_rename_db_single-db
-ignore#!#column_domain_usage
-ignore#!#contraint_column_usage
-ignore#!#drop_database
-ignore#!#objectproperty
-ignore#!#objectpropertyex
-ignore#!#ownership_restrictions_from_pg
 ignore#!#pg_stat_statements_tsql
-ignore#!#psql_logical_babelfish_db
-ignore#!#routines_definition
-ignore#!#sp_columns_100
-ignore#!#sp_proc
-ignore#!#sp_statistics_100
-ignore#!#sys-configurations
-ignore#!#sys-foreign_key_columns
-ignore#!#sys-foreign_keys
-ignore#!#sys-identity_columns
-ignore#!#sys-index_columns
-ignore#!#sys-indexes
-ignore#!#sys-key_constraints
-ignore#!#sys-nestlevel
-ignore#!#sys-sp_tables_view
 ignore#!#sys-syscolumns
-ignore#!#sys-syslanguages
-ignore#!#sys-tables
-ignore#!#sys-triggers
 ignore#!#sys-types
-ignore#!#sys-views
-ignore#!#table_variable_xact_nested_2
 ignore#!#usedb_inside_execute

@@ -429,7 +429,7 @@ single-db
 ~~END~~
 
 
--- should fail
+-- should fail in single-db
 USE babelfish_migration_mode_db2
 GO
 ~~ERROR (Code: 911)~~
