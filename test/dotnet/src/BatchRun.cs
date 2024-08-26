@@ -291,7 +291,8 @@ namespace BabelfishDotnetFramework
 							else if (query.ToLowerInvariant().StartsWith("insert") || query.ToLowerInvariant().StartsWith("update") || query.ToLowerInvariant().StartsWith("alter")
 									 || query.ToLowerInvariant().StartsWith("delete") || query.ToLowerInvariant().StartsWith("begin") || query.ToLowerInvariant().StartsWith("commit")
 									 || query.ToLowerInvariant().StartsWith("rollback") || query.ToLowerInvariant().StartsWith("save") || query.ToLowerInvariant().StartsWith("use")
-									 || query.ToLowerInvariant().StartsWith("create") || query.ToLowerInvariant().StartsWith("drop") || query.ToLowerInvariant().StartsWith("exec") || query.ToLowerInvariant().StartsWith("declare"))
+									 || query.ToLowerInvariant().StartsWith("create") || query.ToLowerInvariant().StartsWith("drop") || query.ToLowerInvariant().StartsWith("exec")
+									 || query.ToLowerInvariant().StartsWith("declare") || query.ToLowerInvariant().StartsWith("set"))
 							{
 								bblCmd?.Dispose();
 								bblCmd = testUtils.CreateDbCommand(null, bblCnn);

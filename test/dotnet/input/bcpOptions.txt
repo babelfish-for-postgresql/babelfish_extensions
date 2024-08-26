@@ -230,6 +230,131 @@ Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
 
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+insert into sourceTable values (1), (2), (3)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+insert into destinationTable values (4)
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, -4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity)
+SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, 2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity)
+SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity(-1, -1))
+SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, 2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity(-1, -1))
+SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity(-1, -1))
+SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, -4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity(-1, -1))
+SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
 # -R 
 Create table sourceTable(a bigint, b bigint not null)
 Create table destinationTable(a bigint, b bigint not null)

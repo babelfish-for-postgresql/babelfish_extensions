@@ -34,7 +34,8 @@ runs:
     run: |
       cd test/dotnet
       dotnet build
-      babel_URL=localhost \
+      VSTEST_DISABLE_STANDARD_OUTPUT_CAPTURING=1 \
+        babel_URL=localhost \
         babel_port=1433 \
         babel_databaseName=master \
         babel_user=jdbc_user \

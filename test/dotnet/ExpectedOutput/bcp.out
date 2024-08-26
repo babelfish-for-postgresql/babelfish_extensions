@@ -449,6 +449,190 @@ bcp#!#in#!#bcp_source#!#destinationTable
 2#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity)
+#Q#Create table destinationTable(a int, b int identity)
+#Q#SET IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -1)
+#Q#insert into sourceTable (a ,b) values (2, -4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-1
+2#!#-4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+1
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity)
+#Q#Create table destinationTable(a int, b int identity)
+#Q#SET IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -1)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-1
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+4
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity(-1, -1))
+#Q#Create table destinationTable(a int, b int identity)
+#Q#SET IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, 2)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#2
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+-1
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity(-1, -1))
+#Q#Create table destinationTable(a int, b int identity)
+#Q#SET IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -2)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-2
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+-2
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity(-1, -1))
+#Q#Create table destinationTable(a int, b int identity(-1, -1))
+#Q#SET IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, 2)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#2
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#-1
+2#!#-2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+-1
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+-2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity(-1, -1))
+#Q#Create table destinationTable(a int, b int identity(-1, -1))
+#Q#SET IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -2)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-2
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#-1
+2#!#-2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+-2
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+-2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity)
+#Q#Create table destinationTable(a int, b int identity(-1, -1))
+#Q#SET IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -1)
+#Q#insert into sourceTable (a ,b) values (2, -4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-1
+2#!#-4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#-1
+2#!#-2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+1
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+-2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity)
+#Q#Create table destinationTable(a int, b int identity(-1, -1))
+#Q#SET IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -1)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-1
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#-1
+2#!#-2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+4
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+-2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
 #Q#create table t_rcv (a int)
 #Q#create table t_rcv2 (b int)
 #Q#create trigger tri on t_rcv for insert as begin insert t_rcv2 select a*-1 from inserted end
