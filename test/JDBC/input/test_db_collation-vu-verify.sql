@@ -54,15 +54,15 @@ GO
 USE test_db_collation_vu_prepare_db11;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db11_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db11_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -77,15 +77,15 @@ GO
 USE test_db_collation_vu_prepare_db121;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db121_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db121_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -100,15 +100,15 @@ GO
 USE test_db_collation_vu_prepare_db122;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db122_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db122_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -123,15 +123,15 @@ GO
 USE test_db_collation_vu_prepare_db131;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db131_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db131_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -146,15 +146,15 @@ GO
 USE test_db_collation_vu_prepare_db132;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db132_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db132_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -169,15 +169,15 @@ GO
 USE test_db_collation_vu_prepare_db133;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db133_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db133_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -192,15 +192,15 @@ GO
 USE test_db_collation_vu_prepare_db134;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db134_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db134_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -215,15 +215,15 @@ GO
 USE test_db_collation_vu_prepare_db135;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db135_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db135_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -238,15 +238,15 @@ GO
 USE test_db_collation_vu_prepare_db136;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select COLUMN_NAME, COLLATION_NAME FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db136_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db136_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -261,15 +261,15 @@ GO
 USE test_db_collation_vu_prepare_db137;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db137_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db137_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -284,15 +284,15 @@ GO
 USE test_db_collation_vu_prepare_db138;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db138_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db138_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -307,15 +307,15 @@ GO
 USE test_db_collation_vu_prepare_db139;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db139_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db139_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -330,15 +330,15 @@ GO
 USE test_db_collation_vu_prepare_db141;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db141_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db141_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
@@ -353,15 +353,15 @@ GO
 USE test_db_collation_vu_prepare_db142;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY name + COALESCE(collation_name, '');
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db142_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db142_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY COLLATION_NAME + COALESCE(collation_name, '');
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
 GO
 
 SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
