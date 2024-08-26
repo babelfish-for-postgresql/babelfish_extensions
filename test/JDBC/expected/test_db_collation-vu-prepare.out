@@ -301,6 +301,15 @@ RETURN
 );
 GO
 
+EXEC sp_describe_first_result_set @tsql = N'SELECT * FROM test_db_collation_vu_prepare_db121_f1()';
+GO
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#nv#!#1#!#17084#!#nvarchar#!#-1#!#0#!#0#!#bbf_unicode_cp1_ci_ai#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#231#!#-1#!#15729673#!#54
+~~END~~
+
+
+
 CREATE FUNCTION test_db_collation_vu_prepare_db121_f2()
 RETURNS @res_tab TABLE
 (
@@ -316,6 +325,15 @@ BEGIN
     RETURN;
 END;
 GO
+
+EXEC sp_describe_first_result_set @tsql = N'SELECT * FROM test_db_collation_vu_prepare_db121_f2()';
+GO
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#col1#!#1#!#17028#!#varchar#!#50#!#0#!#0#!#bbf_unicode_cp1_ci_ai#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#167#!#50#!#15729673#!#54
+0#!#2#!#col2#!#1#!#17084#!#nvarchar#!#100#!#0#!#0#!#bbf_unicode_cp1_ci_ai#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#231#!#100#!#15729673#!#54
+~~END~~
+
 
 USE test_db_collation_vu_prepare_db122;
 GO
