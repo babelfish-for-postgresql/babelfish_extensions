@@ -506,12 +506,12 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
    ```bash
    update sys.babelfish_sysdatabases set default_collation = 'bbf_unicode_cp1_ci_ai' where name = 'master';
    ```
-2. Before running JDBC tests, set the `databaseCollationName` environment variable to the current database collation name:
+2. Before running JDBC tests, set the `isdbCollationMode` environment variable to true:
 
    ```bash
-    export databaseCollationName=<database_collation_name>
-    # Verify if databaseCollationName is set to correct collation name
-    echo $databaseCollationName
+    export isdbCollationMode=true
+    # Verify if isdbCollationMode is set to true
+    echo $isdbCollationMode
    ```
 3. Now Run the tests:
     ```bash
@@ -527,12 +527,12 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     ```bash
     ./cleanup.sh
     ```
-6. Please note that whenever you had changed the database collation update the `databaseCollationName` environment variable with appropriate database collation name and unset when database collation name is set to default database collation.
+6. Please note that whenever you had changed the database collation update the `isdbCollationMode` environment variable with appropriate value and unset when database collation name is set to default database collation.
     ```bash
-    unset databaseCollationName
+    unset isdbCollationMode
     ```
     This ensures that correct expected output is picked for current database collation name.
-    And make sure to revert back the collation of the master database to its previour value using the following query from psql endpoint
+    And make sure to revert back the collation of the master database to its previous value using the following query from psql endpoint
     ```bash
    update sys.babelfish_sysdatabases set default_collation = 'bbf_unicode_cp1_ci_as' where name = 'master';
    ```

@@ -165,7 +165,7 @@ public class TestQueryFile {
         File scheduleFile = new File(scheduleFileName);
         File parallelQueryTestIgnoreFile = new File(parallelQueryTestIgnoreFileName);
         File dbCollationIgnoreFile = new File(dbCollationIgnoreFileName);
-        File singleDBIgnoreFile = new File(singleDBFileName);
+        File singleDBIgnoreFile = new File(singleDBIgnoreFileName);
         
         try (BufferedReader br = new BufferedReader(new FileReader(scheduleFile))) {
             String line;

@@ -34,9 +34,9 @@ public class Config {
     static String testFileRoot = properties.getProperty("testFileRoot");
     static boolean isUpgradeTestMode =  Boolean.parseBoolean(properties.getProperty("isUpgradeTestMode"));
     static long defaultSLA = Long.parseLong(properties.getProperty("defaultSLA"));
-    static boolean isdbCollationMode = !properties.getProperty("databaseCollationName").equals("default");
+    static boolean isdbCollationMode = Boolean.parseBoolean(properties.getProperty("isdbCollationMode"));
     static String dbCollationIgnoreFileName = "./db_collation_jdbc_schedule";
-    static String singleDBFileName = "./singledb_jdbc_schedule";
+    static String singleDBIgnoreFileName = "./singledb_jdbc_schedule";
 
     static String connectionString = constructConnectionString();
 
