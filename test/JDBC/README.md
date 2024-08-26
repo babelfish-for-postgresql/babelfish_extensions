@@ -501,11 +501,11 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
 ## Running Tests with Non Default Database Collation
 
 After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
-1. Create a PostgreSQL database and initialize Babelfish extensions using the [online instructions](../../contrib/README.md). Create a new database (e.g: ```test_db_collation```) with COLLATE clause
+1. Create a PostgreSQL database and initialize Babelfish extensions using the [online instructions](../../contrib/README.md). Update the collation of master database using the following query from psql endpoint
 
    ```bash
-   CREATE DATABASE test_db_collation COLLATE bbf_unicode_cp1_ci_ai;
-    ```
+   update sys.babelfish_sysdatabases set default_collation = 'bbf_unicode_cp1_ci_ai' where name = 'master';
+   ```
 2. Before running JDBC tests, set the `databaseCollationName` environment variable to the current database collation name:
 
    ```bash
@@ -513,17 +513,13 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     # Verify if databaseCollationName is set to correct collation name
     echo $databaseCollationName
    ```
-   and update the `databaseName` with the newly created database
-   ```bash
-    export databaseName=test_db_collation
-   ```
 3. Now Run the tests:
     ```bash
     mvn test
     ```
 4. How to add expected output for some test
     1. By default expected output of a test should be added into `expected` folder.
-    2. If JDBC is running in normal mode with database collation=<database_collation_name> and expected output of some test is different then add this new expected output in `expected/db_collation>` folder.
+    2. If JDBC is running in normal mode with database collation=<database_collation_name> and expected output of some test is different then add this new expected output in `expected/db_collation` folder.
     3. If JDBC is running in parallel query mode with default database collation and expected output of some test is different then the expected output should be added in `expected/parallel_query` folder.(As mentioned in [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled))
     4. If JDBC is running in parallel query mode with database collation=<database_collation_name> and expected output of some test is different then add this new expected output in `expected/parallel_query/db_collation` folder.
 
@@ -536,3 +532,7 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     unset databaseCollationName
     ```
     This ensures that correct expected output is picked for current database collation name.
+    And make sure to revert back the collation of the master database to its previour value using the following query from psql endpoint
+    ```bash
+   update sys.babelfish_sysdatabases set default_collation = 'bbf_unicode_cp1_ci_as' where name = 'master';
+   ```
