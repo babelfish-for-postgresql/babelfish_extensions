@@ -5299,7 +5299,7 @@ is_babelfish_builtin_type(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		res = pg_strcasecmp(get_namespace_name(typtup->typnamespace), "sys") == 0;
+		res = (typtup->typnamespace == sys_schema_oid);
 		ReleaseSysCache(tp);
 	}
 	return res;
@@ -5346,7 +5346,7 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 	typtup = (Form_pg_type) GETSTRUCT(typ);
 	if (OidIsValid(typtup->typcollation) &&
 		sql_dialect == SQL_DIALECT_TSQL &&
-		pg_strcasecmp(get_namespace_name(typtup->typnamespace), "sys") == 0)
+		(typtup->typnamespace == sys_schema_oid))
 	{
 		/*
 		 * Always set CLUSTER_COLLATION_OID() for babelfish collatable types so that
