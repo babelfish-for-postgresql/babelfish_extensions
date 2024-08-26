@@ -3171,15 +3171,48 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									RoleSpec   *rolspec = lfirst(item);
 									char	   *user_name;
+									const char *db_principal_type = drop_user ? "user" : "role";
+									const char *db_owner_name;
+									int			role_oid;
+									int			rolename_len;
+									bool		is_tsql_db_principal = false;
+									bool		is_psql_db_principal = false;
+									Oid			dbowner;
 
 									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
+									db_owner_name = get_db_owner_name(db_name);
+									dbowner = get_role_oid(db_owner_name, false);
+									role_oid = get_role_oid(user_name, true);
+									rolename_len = strlen(rolspec->rolename);
+									is_tsql_db_principal = OidIsValid(role_oid) &&
+														   ((drop_user && is_user(role_oid)) ||
+															(drop_role && is_role(role_oid)));
+									is_psql_db_principal = OidIsValid(role_oid) && !is_tsql_db_principal;
 
+									/* If user is dbo or role is db_owner, restrict dropping */
+									if ((drop_user && rolename_len == 3 && strncmp(rolspec->rolename, "dbo", 3) == 0) ||
+										(drop_role && rolename_len == 8 && strncmp(rolspec->rolename, "db_owner", 8) == 0))
+										ereport(ERROR,
+												(errcode(ERRCODE_CHECK_VIOLATION),
+												 errmsg("Cannot drop the %s '%s'.", db_principal_type, rolspec->rolename)));
+
+									/* 
+									 * Check for current_user's privileges 
+									 * must be database owner to drop user/role
+									 */
+									if ((!stmt->missing_ok && !is_tsql_db_principal) ||
+										!is_member_of_role(GetUserId(), dbowner) ||
+										(is_tsql_db_principal && !is_member_of_role(dbowner, role_oid)) || is_psql_db_principal)
+										ereport(ERROR,
+												(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+												 errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal_type, rolspec->rolename)));
+									
 									/*
 									 * If a role has members, do not drop it.
 									 * Note that here we don't handle invalid
 									 * roles.
 									 */
-									if (drop_role && !is_empty_role(get_role_oid(user_name, true)))
+									if (drop_role && !is_empty_role(role_oid))
 										ereport(ERROR,
 												(errcode(ERRCODE_CHECK_VIOLATION),
 												 errmsg("The role has members. It must be empty before it can be dropped.")));

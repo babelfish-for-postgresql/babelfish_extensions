@@ -1,0 +1,413 @@
+-- tsql
+create login no_priv_login1 with password = '12345678'
+go
+
+create role dont_drop_role
+go
+
+create login no_priv_login2 with password = '12345678'
+go
+
+create user no_priv_user2 for login no_priv_login2
+go
+
+create login no_priv_login3 with password = '12345678'
+go
+
+create user no_priv_user3 for login no_priv_login3
+go
+
+create role no_priv_role3;
+go
+
+create database restrict_user_db1
+go
+
+use restrict_user_db1
+go
+
+create role dont_drop_role
+go
+
+create user no_priv_user1 for login no_priv_login1
+go
+
+use master
+go
+
+-- tsql user=no_priv_login1 password=12345678
+-- case-1 - when current user is guest
+-- permission denied
+select current_user,db_name()
+go
+~~START~~
+varchar#!#nvarchar
+guest#!#master
+~~END~~
+
+
+drop role dont_drop_role
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'dont_drop_role', because it does not exist or you do not have permission.)~~
+
+
+drop user no_priv_user2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'no_priv_user2', because it does not exist or you do not have permission.)~~
+
+
+-- tsql
+select current_user,db_name()
+go
+~~START~~
+varchar#!#nvarchar
+dbo#!#master
+~~END~~
+
+
+create user no_priv_user1 for login no_priv_login1
+go
+
+-- tsql user=no_priv_login1 password=12345678
+-- case-2 - when current user has no privilege
+-- permission denied
+use master
+go
+
+select current_user
+go
+~~START~~
+varchar
+no_priv_user1
+~~END~~
+
+
+drop role dont_drop_role
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'dont_drop_role', because it does not exist or you do not have permission.)~~
+
+
+drop user no_priv_user2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'no_priv_user2', because it does not exist or you do not have permission.)~~
+
+
+-- tsql
+
+-- case-3 - when current login has privilege
+-- 3.1 - when login is database owner
+Alter authorization on database::restrict_user_db1 to no_priv_login2
+go
+
+-- tsql user=no_priv_login2 password=12345678 database=restrict_user_db1
+-- allowed
+select current_user
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+drop role dont_drop_role
+go
+
+drop user no_priv_user1
+go
+
+-- error
+-- try to drop non existing role/user
+drop role fake_role
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'fake_role', because it does not exist or you do not have permission.)~~
+
+
+drop user fake_user;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'fake_user', because it does not exist or you do not have permission.)~~
+
+
+drop user db
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'db', because it does not exist or you do not have permission.)~~
+
+
+drop role db_own
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_own', because it does not exist or you do not have permission.)~~
+
+
+drop user dbo_u1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'dbo_u1', because it does not exist or you do not have permission.)~~
+
+
+drop role db_owner_r1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_owner_r1', because it does not exist or you do not have permission.)~~
+
+
+-- should deny
+-- try to drop dbo user, db_owner role
+drop role db_owner
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_owner'.)~~
+
+
+drop user dbo
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'dbo'.)~~
+
+
+
+create role dont_drop_role
+go
+
+create user no_priv_user1 for login no_priv_login1
+go
+
+-- tsql
+-- 3.2 - when login is sysadmin
+-- allowed
+drop user no_priv_user1
+go
+
+drop user no_priv_user2
+go
+
+drop role dont_drop_role
+go
+
+-- 3.3 - when drop user/role has IF EXISTS clause
+-- Should not throw error for the case where IF EXISTS clause is included
+drop role if exists fake_role;
+go
+
+drop user if exists fake_user;
+go
+
+-- both of the following statements should be executed successfully since user/role exists
+drop role if exists no_priv_user3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'no_priv_user3', because it does not exist or you do not have permission.)~~
+
+
+drop user if exists no_priv_user3;
+go
+
+drop user if exists no_priv_role3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'no_priv_role3', because it does not exist or you do not have permission.)~~
+
+
+drop role if exists no_priv_role3;
+go
+
+select count(*) from sys.database_principals where name like '%no_priv_%3';
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- psql
+-- 3.4 - Try dropping role created from PG role
+create role master_pguser1;
+go
+
+-- tsql
+drop user pguser1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'pguser1', because it does not exist or you do not have permission.)~~
+
+
+drop role pguser1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'pguser1', because it does not exist or you do not have permission.)~~
+
+
+-- it will still try to drop it, but permission denied will be generated since
+-- bbf_role_admin won't have privilege to drop non-babelfish roles
+drop user if exists pguser1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'pguser1', because it does not exist or you do not have permission.)~~
+
+
+drop role if exists pguser1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'pguser1', because it does not exist or you do not have permission.)~~
+
+
+-- psql
+drop role master_pguser1;
+go
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'no_priv_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+
+-- tsql
+drop login no_priv_login1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'no_priv_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+drop login no_priv_login2
+go
+
+drop login no_priv_login3
+go
+
+drop database restrict_user_db1
+go
+
+-- psql
+-- 3.5 - Try dropping user created for another database
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+GO
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+create database restrict_user_db1;
+go
+
+create database restrict_user_db1_restrict_user_db1;
+go
+
+create login restrict_user_l1 with password = '12345678'
+go
+
+use restrict_user_db1
+go
+
+create user restrict_user_db1_user1 for login restrict_user_l1;
+go
+
+use restrict_user_db1_restrict_user_db1
+go
+
+drop user user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'user1', because it does not exist or you do not have permission.)~~
+
+
+drop user if exists user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'user1', because it does not exist or you do not have permission.)~~
+
+
+use master
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'restrict_user_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+~~END~~
+
+
+-- tsql
+use restrict_user_db1
+go
+
+drop user restrict_user_db1_user1;
+go
+
+use master
+go
+
+drop login restrict_user_l1;
+go
+
+drop database restrict_user_db1;
+go
+
+drop database restrict_user_db1_restrict_user_db1;
+go
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
