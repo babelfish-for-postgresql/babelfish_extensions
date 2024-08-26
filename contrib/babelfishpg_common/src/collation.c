@@ -1706,11 +1706,16 @@ Oid bbf_get_like_collation(void)
 }
 
 /*
- * It's caller's responsibility to check whether the Oid is valid or not
+ * The following function expects a valid collation Oid
+ * Caller is reponsible to supply valid Oid
  */
 void
 set_db_collation(Oid db_coll)
 {
+	if (!OidIsValid(db_coll))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_DATABASE),
+			 errmsg("Could not find database with collation oid \"%u\"", db_coll)));
 	database_collation_oid = db_coll;
 	database_collation_collidx = find_any_collation((lookup_collation_table(database_collation_oid).collname), false);
 	db_collation_is_CI = collation_is_CI(database_collation_oid);
