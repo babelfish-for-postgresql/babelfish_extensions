@@ -5845,40 +5845,26 @@ use master
 go
 drop database db1
 go
+alter role sysadmin add member l5;
+go
 
 -- tsql user=l5 password=123
 -- Using Collation BBF_Unicode_CP1_CI_AI
 create database db1 collate BBF_Unicode_CP1_CI_AI
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied to create database)~~
-
 use db1
 go
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db1" does not exist)~~
-
 select current_user
 go
 ~~START~~
 varchar
-guest
+dbo
 ~~END~~
 
 create schema s1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for database jdbc_testdb)~~
-
 create table s1.t1(a int);
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "master_s1" does not exist)~~
-
 use master
 go
 
@@ -5889,54 +5875,38 @@ go
 -- tsql user=l5 password=123
 use db1
 go
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db1" does not exist)~~
-
 select current_user
 go
 ~~START~~
 varchar
-guest
+dbo
 ~~END~~
 
 grant select on schema::s1 to guest;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "master_s1" does not exist)~~
-
 use master
 go
 
 -- tsql user=l6 password=123
 use db1
 go
-~~ERROR (Code: 911)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: database "db1" does not exist)~~
+~~ERROR (Message: The server principal "l6" is not able to access the database "db1" under the current security context)~~
 
 
 -- tsql user=l5 password=123
 use db1
 go
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db1" does not exist)~~
-
 select current_user
 go
 ~~START~~
 varchar
-guest
+dbo
 ~~END~~
 
 grant connect to guest;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Grantor does not have GRANT permission.)~~
-
 use master
 go
 
@@ -5944,15 +5914,11 @@ go
 -- connect permission on database, select permission on schema
 use db1
 go
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db1" does not exist)~~
-
 select * from s1.t1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "master_s1.t1" does not exist)~~
+~~START~~
+int
+~~END~~
 
 use master
 go
@@ -5960,23 +5926,15 @@ go
 -- tsql user=l5 password=123
 use db1
 go
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db1" does not exist)~~
-
 select current_user
 go
 ~~START~~
 varchar
-guest
+dbo
 ~~END~~
 
 revoke select on schema::s1 from guest
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "master_s1" does not exist)~~
-
 use master
 go
 
@@ -5984,15 +5942,11 @@ go
 -- only connect permission on database
 use db1
 go
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db1" does not exist)~~
-
 select * from s1.t1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "master_s1.t1" does not exist)~~
+~~ERROR (Message: permission denied for table t1)~~
 
 use master
 go
@@ -6000,45 +5954,25 @@ go
 -- tsql user=l5 password=123
 use db1
 go
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db1" does not exist)~~
-
 select current_user
 go
 ~~START~~
 varchar
-guest
+dbo
 ~~END~~
 
 revoke connect from guest
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Grantor does not have GRANT permission.)~~
-
 use master
 go
 
 -- tsql user=l5 password=123
 use db1
 go
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db1" does not exist)~~
-
 drop table s1.t1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "master_s1" does not exist)~~
-
 drop schema s1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "master_s1" does not exist)~~
-
 use master
 go
 
@@ -6047,10 +5981,6 @@ use master
 go
 drop database db1
 go
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db1" does not exist)~~
-
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)

@@ -3112,6 +3112,8 @@ use master
 go
 drop database db1
 go
+alter role sysadmin add member l5;
+go
 -- Using Collation BBF_Unicode_CP1_CI_AI
 
 -- tsql user=l5 password=123

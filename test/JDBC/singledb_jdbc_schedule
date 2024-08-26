@@ -11,7 +11,5 @@ ignore#!#test_db_collation-vu-cleanup
 # ignoring temporarily
 ignore#!#BABEL-CROSS-DB
 ignore#!#BABEL-SYS-DATABASES
-ignore#!#GRANT_SCHEMA
-ignore#!#Test_rename_db_single-db
-ignore#!#pg_stat_statements_tsql
-ignore#!#usedb_inside_execute
+
+
