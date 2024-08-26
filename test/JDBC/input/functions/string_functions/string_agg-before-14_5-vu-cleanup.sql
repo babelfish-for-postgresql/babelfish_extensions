@@ -33,3 +33,15 @@ GO
 
 DROP TYPE dbo.babel_5156_string_agg_varUDT
 GO
+
+DROP PROCEDURE babel_5156_cast_bit_to_varchar_proc
+GO
+
+DROP FUNCTION babel_5156_cast_bit_to_varchar_func
+GO
+
+DROP PROCEDURE babel_5156_cast_bit_to_nvarchar_proc
+GO
+
+DROP FUNCTION babel_5156_cast_bit_to_nvarchar_func
+GO

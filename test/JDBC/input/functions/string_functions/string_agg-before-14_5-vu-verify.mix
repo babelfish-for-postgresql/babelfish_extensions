@@ -440,6 +440,24 @@ SELECT STRING_AGG(col_xml, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id
 GO
 
 
+-- Testing implicit cast from bit to varchar
+DECLARE @a bit = 1;
+EXEC babel_5156_cast_bit_to_varchar_proc @a
+GO
+
+DECLARE @a bit = 1;
+SELECT babel_5156_cast_bit_to_varchar_func(@a)
+GO
+
+DECLARE @a bit = 1;
+EXEC babel_5156_cast_bit_to_nvarchar_proc @a
+GO
+
+DECLARE @a bit = 1;
+SELECT babel_5156_cast_bit_to_nvarchar_func(@a)
+GO
+
+
 -- psql
 -- all of the following queries should use PG_CATALOG.string_agg function
 SELECT STRING_AGG(col_text, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;

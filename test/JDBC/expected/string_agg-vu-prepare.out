@@ -500,3 +500,27 @@ RETURNS TABLE
 AS
 RETURN (SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id)
 GO
+
+CREATE PROCEDURE babel_5156_cast_bit_to_varchar_proc @a VARCHAR(100) AS
+    SELECT @a;
+GO
+
+CREATE FUNCTION babel_5156_cast_bit_to_varchar_func(@a VARCHAR(100))
+RETURNS VARCHAR(100)
+AS
+BEGIN
+RETURN @a;
+END
+GO
+
+CREATE PROCEDURE babel_5156_cast_bit_to_nvarchar_proc @a NVARCHAR(100) AS
+    SELECT @a;
+GO
+
+CREATE FUNCTION babel_5156_cast_bit_to_nvarchar_func(@a NVARCHAR(100))
+RETURNS NVARCHAR(100)
+AS
+BEGIN
+RETURN @a;
+END
+GO
