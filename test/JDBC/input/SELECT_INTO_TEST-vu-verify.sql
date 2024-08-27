@@ -367,3 +367,33 @@ go
 -- dropping the table select_into_REPO
 drop table if exists select_into_REPO;
 go
+-- Test Case 17: Multibyte Column Name (Chinese) more then 64 characters
+create table select_into(中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into int);
+go
+insert into select_into values (1), (2), (3);
+go
+select 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into from select_into;
+go
+
+-- Create a new table select_into_REPO with column 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into
+select 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into into select_into_REPO from select_into;
+go
+
+-- Check the data in select_into_REPO
+select * from select_into_REPO;
+go
+
+-- Indexing over column 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into
+create index IDX_REPRODUCTION on select_into_REPO(中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into);
+go
+
+-- output is the lowercase name
+select column_name from information_schema.columns where table_name = 'select_into_REPO'
+go
+-- dropping the table select_into
+drop table if exists select_into;
+go
+
+-- dropping the table select_into_REPO
+drop table if exists select_into_REPO;
+go
