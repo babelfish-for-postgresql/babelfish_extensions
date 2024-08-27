@@ -1174,6 +1174,10 @@ init_and_check_collation_callbacks(void)
 	}
 }
 
+/*
+ * Wrapper of get_database_or_server_collation_oid_internal function in common extension
+ * which returns database collation Oid if valid else return server collation Oid
+ */
 Oid
 tsql_get_database_or_server_collation_oid_internal(bool missingOk)
 {

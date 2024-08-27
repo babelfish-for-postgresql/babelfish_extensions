@@ -562,6 +562,11 @@ collation_is_case_insensitive_and_accent_sensitive(int collidx)
 	return false;
 }
 
+/*
+ * Return true if database collation is case insensitive
+ * If database collation is invalid, determine whether
+ * server level collation is case insensitive or not
+ */
 bool
 is_database_or_server_collation_CI(void)
 {
@@ -1190,6 +1195,12 @@ get_collation_oid_internal(char *collation_name)
 	return collation_oid;
 }
 
+/*
+ * Return database collation Oid if valid
+ * Else return server collation Oid
+ * We follow this mechanism to fall back to server level collation
+ * if database level collation is invalid or not found
+ */
 Oid
 get_database_or_server_collation_oid_internal(bool missingOk)
 {
