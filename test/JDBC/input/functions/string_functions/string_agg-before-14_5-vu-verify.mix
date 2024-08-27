@@ -457,6 +457,20 @@ DECLARE @a bit = 1;
 SELECT babel_5156_cast_bit_to_nvarchar_func(@a)
 GO
 
+-- Tests for STRING_AGG function with WITHIN GROUP 
+-- This is not supported, so an error is thrown
+SELECT STRING_AGG(col_char, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_nchar, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_varchar, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_nvarchar, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+
 
 -- psql
 -- all of the following queries should use PG_CATALOG.string_agg function
