@@ -645,28 +645,28 @@ GO
 ~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
 
 
-SELECT * INTO t222 FROM (SELECT * FROM master..t1);
+SELECT * INTO t222 FROM (SELECT * FROM master..t1) As Subquery;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
 
 
-SELECT * INTO t222 FROM (SELECT * FROM t1, master..t1);
+SELECT * INTO t222 FROM (SELECT * FROM t1, master..t1) As Subquery;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
 
 
-SELECT * INTO t222 FROM (SELECT *, (SELECT * FROM master..t1) FROM t1);
+SELECT * INTO t222 FROM (SELECT *, (SELECT * FROM master..t1) FROM t1) As Subquery;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
 
 
-SELECT * INTO t222 FROM (SELECT *, (SELECT * FROM t1) FROM master..t3);
+SELECT * INTO t222 FROM (SELECT *, (SELECT * FROM t1) FROM master..t3) As Subquery;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -707,10 +707,10 @@ GO
 SELECT * INTO t6 FROM db_4934_1..t1, db_4934_1..t2;
 GO
 
-SELECT * INTO t7 FROM (SELECT * FROM db_4934_1..t1);
+SELECT * INTO t7 FROM (SELECT * FROM db_4934_1..t1) As Subquery;
 GO
 
-SELECT * INTO t8 FROM (SELECT *, (SELECT * FROM db_4934_1..t2) FROM db_4934_1..t1);
+SELECT * INTO t8 FROM (SELECT *, (SELECT * FROM db_4934_1..t2) FROM db_4934_1..t1) As Subquery;
 GO
 
 -- validate the access
@@ -728,7 +728,7 @@ GO
 SELECT * INTO #t1 FROM db_4934_1.dbo.t1;
 GO
 
-SELECT * INTO #t2 FROM (SELECT * FROM db_4934_1.dbo.t1);
+SELECT * INTO #t2 FROM (SELECT * FROM db_4934_1.dbo.t1) As Subquery;
 GO
 
 -- validate the access
