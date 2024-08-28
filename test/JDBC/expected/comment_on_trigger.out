@@ -40,6 +40,7 @@ join pg_trigger
 on pg_description.objoid = pg_trigger.oid 
 where tgname = 'trig1'
 or tgname = 'trig2'
+order by description
 go
 ~~START~~
 text
