@@ -1,0 +1,376 @@
+-- tsql
+-- Test altering a basic function and an inline tvf function on same schema
+create login alter_func_l1 with password = '12345678'
+go
+
+ALTER ROLE sysadmin ADD MEMBER alter_func_l1
+GO
+
+-- tsql user=alter_func_l1 password=12345678
+create database alter_func_db1
+go
+
+use alter_func_db1
+go
+
+create schema alter_func_schema1
+go
+
+
+CREATE TABLE alter_func_users_t ([Id] int, [firstname] varchar(50), [lastname] varchar(50), [email] varchar(50));
+CREATE TABLE alter_func_orders_t ([Id] int, [userid] int, [productid] int, [quantity] int, [orderdate] Date);
+INSERT INTO alter_func_users_t VALUES (1, 'j', 'o', 'testemail'), (1, 'e', 'l', 'testemail2');
+INSERT INTO alter_func_orders_t VALUES (1, 1, 1, 5, '2023-06-25'), (2, 1, 1, 6, '2023-06-25');
+go
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+
+create function alter_func_schema1.f1() returns int begin return 2 end
+go
+
+create function alter_func_schema1.f2() returns TABLE as return (select * from alter_func_users_t)
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_func_schema1' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+~~END~~
+
+
+-- tsql user=alter_func_l1 password=12345678
+select alter_func_schema1.f1()
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select alter_func_schema1.f2()
+go
+~~START~~
+varchar
+(1,j,o,testemail)
+(1,e,l,testemail2)
+~~END~~
+
+
+alter function alter_func_schema1.f1(@param1 int) returns int begin return @param1 end
+go
+
+alter function alter_func_schema1.f2() returns TABLE as return (select * from alter_func_orders_t)
+go
+
+select alter_func_schema1.f1(5)
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select alter_func_schema1.f2()
+go
+~~START~~
+varchar
+(1,1,1,5,2023-06-25)
+(2,1,1,6,2023-06-25)
+~~END~~
+
+
+drop function alter_func_schema1.f1
+go
+
+drop function alter_func_schema1.f2
+go
+
+drop table alter_func_users_t
+go
+
+drop table alter_func_orders_t
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_func_schema1' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+~~END~~
+
+
+-- tsql user=alter_func_l1 password=12345678
+drop schema alter_func_schema1;
+go
+
+use master
+go
+
+drop database alter_func_db1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'alter_func_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql 
+drop login alter_func_l1;
+go
+
+-- psql currentSchema=master_dbo,public
+-- Test defining two functions with same name in psql then attempting to alter in tsql
+create function psql_func_f1()
+returns int
+language plpgsql
+as
+$$
+DECLARE
+BEGIN
+return 1;
+end;
+$$;
+go
+
+create function psql_func_f1(a integer)
+returns int
+language plpgsql
+as
+$$
+BEGIN
+return a;
+end;
+$$;
+go
+
+-- psql currentSchema=master_dbo,public
+drop function psql_func_f1(a integer)
+go
+
+
+CREATE TABLE cars (
+  brand VARCHAR(255),
+  model VARCHAR(255),
+  year INT
+);
+INSERT INTO cars (brand, model, year)
+VALUES ('Ford', 'Mustang', 1964); 
+go
+~~ROW COUNT: 1~~
+
+
+create function psql_func_tvf1() returns table(brand VARCHAR(255), model VARCHAR(255), year INT)
+language plpgsql
+as $$
+begin
+    return query
+select * from cars;
+end;
+$$;
+go
+
+select psql_func_tvf1()
+go
+~~START~~
+record
+(Ford,Mustang,1964)
+~~END~~
+
+
+-- tsql
+-- Test attempting to alter psql functions in tsql
+alter function psql_func_f1() returns int begin return 2 end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: No existing TSQL procedure found with the name for ALTER PROCEDURE)~~
+
+
+alter function psql_func_tvf1() returns table
+as
+return (select * from cars)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: No existing TSQL procedure found with the name for ALTER PROCEDURE)~~
+
+
+-- psql currentSchema=master_dbo,public
+drop function psql_func_f1()
+go
+
+drop function psql_func_tvf1()
+go
+
+drop table cars;
+go
+
+-- tsql
+-- Test creating two of the same functions on different schemas
+create login alter_func_l2 with password = '12345678'
+go
+
+ALTER ROLE sysadmin ADD MEMBER alter_func_l2
+GO
+
+-- tsql user=alter_func_l2 password=12345678
+create database alter_func_db2
+go
+
+use alter_func_db2
+go
+
+create schema alter_func_schema2
+go
+
+create schema alter_func_schema3
+go
+
+create function alter_func_schema2.f1() returns int begin return 2 end
+go
+
+create function alter_func_schema3.f1() returns int begin return 2 end
+go
+
+select alter_func_schema2.f1()
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select alter_func_schema3.f1()
+go
+~~START~~
+int
+2
+~~END~~
+
+
+alter function alter_func_schema2.f1(@param1 int) returns int begin return @param1 end
+go
+
+alter function alter_func_schema3.f1(@param1 int) returns int begin return @param1 end
+go
+
+select alter_func_schema2.f1(5)
+go
+~~START~~
+int
+5
+~~END~~
+
+
+select alter_func_schema3.f1(5)
+go
+~~START~~
+int
+5
+~~END~~
+
+
+drop function alter_func_schema2.f1(@param1 int)
+go
+
+drop function alter_func_schema3.f1(@param1 int)
+go
+
+drop schema alter_func_schema2
+go
+
+drop schema alter_func_schema3
+go
+
+use master
+go
+
+drop database alter_func_db2
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'alter_func_l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql 
+drop login alter_func_l2;
+go
+
+-- psql currentSchema=master_dbo,public
+
+-- Test psql functions altered with security definer do not throw StartTransactionCommand: unexpected state STARTED error 
+create function psql_func_f2()
+returns int
+language plpgsql
+as
+$$
+DECLARE
+BEGIN
+return 1;
+end;
+$$;
+alter function psql_func_f2() security definer;
+go
+
+drop function psql_func_f2;
+go
+
+set babelfishpg_tsql.sql_dialect = "tsql";
+GO
+
+create function f1() returns int begin return 2 end
+go
+
+-- Test alter function using tsql dialect in PSQL port throws error
+alter function f1() returns int begin return 3 end
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: TSQL ALTER PROCEDURE is not supported from PostgreSQL endpoint.
+    Server SQLState: 0A000)~~
+
+
+drop function f1()
+go
+
+select set_config('babelfishpg_tsql.sql_dialect', 'postgres', null);
+go
+~~START~~
+text
+postgres
+~~END~~
+

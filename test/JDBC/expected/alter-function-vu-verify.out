@@ -1,0 +1,246 @@
+-- Test Case 1: Alter function body
+alter function alter_func_f1() returns int begin return 2 end
+go
+
+-- Expect to return 2
+select alter_func_f1()
+go
+~~START~~
+int
+2
+~~END~~
+
+
+-- Confirm information schema is correctly updated with "CREATE FUNC [new definition]" 
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_func_f1';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_func_f1#!#SQL#!#CREATE function alter_func_f1() returns int begin return 2 end
+~~END~~
+
+
+-- Test Case 2: Alter function parameters, body, and return type
+ALTER function alter_func_f2(@param2 varchar(10)) returns varchar(10) begin return @param2 end
+go
+
+select alter_func_f2('testing')
+go
+~~START~~
+varchar
+testing
+~~END~~
+
+
+-- Confirm information schema is correctly updated with "CREATE FUNC [new definition]" 
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_func_f2';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_func_f2#!#SQL#!#CREATE function alter_func_f2(@param2 varchar(10)) returns varchar(10) begin return @param2 end
+~~END~~
+
+
+-- Expect error for no parameter provided
+select alter_func_f2()
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: function alter_func_f2 expects parameter "@param2", which was not supplied.)~~
+
+
+-- Test Case 3: Expect error for altering func that does not exist
+ALTER function alter_fake_func(@param1 int) returns int
+begin
+    return 1
+end
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: No existing procedure found with the name for ALTER PROCEDURE)~~
+
+
+
+-- Test Case 4: Alter parameter type and function body
+ALTER function alter_func_f2(@param2 int) returns varchar(10) 
+begin 
+    if (@param2 = 1)
+    BEGIN
+        return @param2
+    END
+    ELSE
+    BEGIN
+        return -1
+    END
+end
+go
+
+select alter_func_f2(1)
+go
+~~START~~
+varchar
+1
+~~END~~
+
+
+select alter_func_f2(2)
+go
+~~START~~
+varchar
+-1
+~~END~~
+
+
+-- Confirm information schema is correctly updated with "CREATE FUNC [new definition]" 
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_func_f2';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_func_f2#!#SQL#!#CREATE function alter_func_f2(@param2 int) returns varchar(10) <newline>begin <newline>    if (@param2 = 1)<newline>    BEGIN<newline>        return @param2<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        return -1<newline>    END<newline>end
+~~END~~
+
+
+-- Test Case 5: Transaction - begin, alter func, rollback
+--                          - expect alter to not go through
+BEGIN TRANSACTION
+go
+
+ALTER function alter_func_f2(@param2 varchar(10)) returns varchar(10) begin return @param2 end
+go
+
+ROLLBACK
+go
+
+-- Expect error
+select alter_func_f2('test')
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "test")~~
+
+
+-- Expect return 1
+select alter_func_f2(1)
+go
+~~START~~
+varchar
+1
+~~END~~
+
+
+-- Test Case 6: Transaction - begin, alter func, modify row, commit
+--                          - expect both changes to take place 
+BEGIN TRANSACTION
+GO
+
+ALTER function alter_func_f2(@param2 varchar(10)) returns varchar(10) begin return @param2 end
+go
+
+INSERT INTO alter_func_users VALUES (3, 'newuser', 'lastname', 'testemail3')
+go
+~~ROW COUNT: 1~~
+
+
+COMMIT
+GO
+
+select alter_func_f2('test')
+go
+~~START~~
+varchar
+test
+~~END~~
+
+
+select * from alter_func_users
+go
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#j#!#o#!#testemail
+1#!#e#!#l#!#testemail2
+3#!#newuser#!#lastname#!#testemail3
+~~END~~
+
+
+-- Confirm information schema is correctly updated with "CREATE FUNC [new definition]" 
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_func_f2';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_func_f2#!#SQL#!#CREATE function alter_func_f2(@param2 varchar(10)) returns varchar(10) begin return @param2 end
+~~END~~
+
+
+-- Test Case 7: Transaction - begin, alter func, modify row, commit
+--                          - expect both changes to not go through
+BEGIN TRANSACTION
+GO
+
+alter function alter_func_f2() returns int begin return 2 end
+go
+
+INSERT INTO alter_func_users VALUES (4, 'newest_user', 'lastname3', 'testemail4')
+go
+~~ROW COUNT: 1~~
+
+
+ROLLBACK
+GO
+
+-- Expect error for no parameter
+select alter_func_f2()
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: function alter_func_f2 expects parameter "@param2", which was not supplied.)~~
+
+
+-- Expect only 3 rows
+select * from alter_func_users
+go
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#j#!#o#!#testemail
+1#!#e#!#l#!#testemail2
+3#!#newuser#!#lastname#!#testemail3
+~~END~~
+
+
+-- Test Case 8: Expect error from altering function to select from
+--              table row that does not exist
+alter function alter_func_f2() returns TABLE 
+as 
+    return (
+        select address from alter_func_users
+    )
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "address" does not exist)~~
+
+
+-- Test Case 9: Expect error for attempting to alter multi statement tvf
+-- Alter Func Multi-statement tvf support will be added after BABEL-5149 is resolved
+alter function alter_func_f5()
+returns @result TABLE(Id int) as begin
+insert into @result values (2)
+return
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ALTER FUNCTION on multi-statement table valued functions' is not currently supported in Babelfish)~~
+
+
+-- Test Case 10: Expect error for altering function in an illegal way
+--               select statements are not allowed in functions not returning a table
+alter function alter_func_f3(@param1 int) returns int 
+begin 
+    select * from alter_func_users
+    return @param1
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SELECT statement returning result to a client cannot be used in a function)~~
+

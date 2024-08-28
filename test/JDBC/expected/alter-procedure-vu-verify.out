@@ -179,20 +179,6 @@ alter_proc_p2#!#SQL#!#CREATE procedure alter_proc_p2<newline>AS<newline>    exec
 ~~END~~
 
 
-
--- Test Case: attempt to alter function, expect error for being unsupported
-alter function alter_proc_f1()
-returns int
-as
-BEGIN
-    return 5
-END
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER FUNCTION' is not currently supported in Babelfish)~~
-
-
 -- Test Case: Transaction - begin, alter, rollback
 --                        - expect alter to not go through
 BEGIN TRANSACTION
