@@ -640,3 +640,55 @@ go
 -- dropping the table select_into_REPO
 drop table if exists select_into_REPO;
 go
+
+-- Test Case 18: table with multi-part names and clumn name length > 64
+create table dbo.select_into(select_into_COL_select_into_COL_Col_length_greater_then_sixty_four int);
+go
+insert into dbo.select_into values (1), (2), (3);
+go
+~~ROW COUNT: 3~~
+
+select select_into_COL_select_into_COL_Col_length_greater_then_sixty_four from dbo.select_into;
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+-- Create a new table select_into_REPO with column select_into_COL_select_into_COL_Col_length_greater_then_sixty_four using multi-part name
+select dbo.select_into.select_into_COL_select_into_COL_Col_length_greater_then_sixty_four into select_into_REPO from dbo.select_into;
+go
+
+-- Check the data in select_into_REPO
+select * from select_into_REPO;
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+-- Indexing over column select_into_COL_select_into_COL_Col_length_greater_then_sixty_four
+create index IDX_REPRODUCTION on select_into_REPO(select_into_COL_select_into_COL_Col_length_greater_then_sixty_four);
+go
+
+-- output is the lowercase name
+select column_name from information_schema.columns where table_name = 'select_into_REPO'
+go
+~~START~~
+nvarchar
+select_into_col_select_into_colb0110865143217c65f7939886bc07595
+~~END~~
+
+
+-- dropping the table dbo.select_into
+drop table if exists dbo.select_into;
+go
+
+-- dropping the table select_into_REPO
+drop table if exists select_into_REPO;
+go
