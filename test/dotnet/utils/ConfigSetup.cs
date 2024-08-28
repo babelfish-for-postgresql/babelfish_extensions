@@ -56,10 +56,10 @@ namespace BabelfishDotnetFramework
 			{
 				case "oledb":
 					return @"Provider = " + ConfigSetup.Provider + ";Data Source = " + url + "," + port + "; Initial Catalog = " + db
-						   + "; User ID = " + uid + "; Password = " + pwd + ";Pooling=false;";
+						   + "; User ID = " + uid + "; Password = " + pwd + ";";
 				case "sql":
 					return @"Data Source = " + url + "," + port + "; Initial Catalog = " + db
-						   + "; User ID = " + uid + "; Password = " + pwd + ";Pooling=false;";
+						   + "; User ID = " + uid + "; Password = " + pwd + ";";
 				default:
 					throw new Exception("Driver Not Supported");
 			}

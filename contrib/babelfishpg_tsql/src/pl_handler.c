@@ -4675,6 +4675,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->sp_unprepare_callback = &sp_unprepare;
 		(*pltsql_protocol_plugin_ptr)->reset_session_properties = &reset_session_properties;
 		(*pltsql_protocol_plugin_ptr)->bulk_load_callback = &execute_bulk_load_insert;
+		(*pltsql_protocol_plugin_ptr)->pltsql_rollback_txn_callback = &pltsql_rollback_txn;
 		(*pltsql_protocol_plugin_ptr)->pltsql_declare_var_callback = &pltsql_declare_variable;
 		(*pltsql_protocol_plugin_ptr)->pltsql_read_out_param_callback = &pltsql_read_composite_out_param;
 		(*pltsql_protocol_plugin_ptr)->sqlvariant_set_metadata = common_utility_plugin_ptr->TdsSetMetaData;

@@ -906,6 +906,60 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 	return message;
 }
 
+static void
+CleanupBCPDuringError(bool internal_sp_started,
+					 volatile int before_subtxn_id,
+					 volatile int before_lxid,
+					 ResourceOwner oldowner,
+					 MemoryContext oldcontext)
+{
+	int			ret = 0;
+
+	HOLD_CANCEL_INTERRUPTS();
+	HOLD_INTERRUPTS();
+
+	/*
+	 * Discard remaining TDS_BULK_LOAD packets only if End of
+	 * Message has not been reached for the current request.
+	 * Otherwise we have no TDS_BULK_LOAD packets left for the
+	 * current request that need to be discarded.
+	 */
+	if (!TdsGetRecvPacketEomStatus())
+		ret = TdsDiscardAllPendingBcpRequest();
+
+	RESUME_CANCEL_INTERRUPTS();
+
+	if (ret < 0)
+		TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
+
+	if (internal_sp_started && before_lxid == MyProc->lxid && before_subtxn_id == GetCurrentSubTransactionId())
+	{
+		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
+			elog(LOG, "TSQL TXN PG semantics : Rollback internal savepoint");
+		RollbackAndReleaseCurrentSubTransaction();
+		CurrentResourceOwner = oldowner;
+	}
+	else if (!IsTransactionBlockActive())
+	{
+		AbortCurrentTransaction();
+		StartTransactionCommand();
+	}
+	else
+	{
+		/*
+		 * In the case of an error and transaction is active but the earlier savepoint
+		 * did not match, then we shall rollback the current transaction and let the
+		 * the actual error be relayed to the customer.
+		 */
+		elog(LOG, "The current transaction is rolled back since it "
+				"was in inconsistent state during Bulk Copy");
+		pltsql_plugin_handler_ptr->pltsql_rollback_txn_callback();
+	}
+	MemoryContextSwitchTo(oldcontext);
+	RESUME_INTERRUPTS();
+	TdsResetBcpOffset();
+}
+
 /*
  * ProcessBCPRequest - Processes the request and calls the bulk_load_callback
  * for futher execution.
@@ -956,41 +1010,8 @@ ProcessBCPRequest(TDSRequest request)
 		}
 		PG_CATCH();
 		{
-			int			ret = 0;
-
-			HOLD_CANCEL_INTERRUPTS();
-
-			/*
-			 * Discard remaining TDS_BULK_LOAD packets only if End of Message
-			 * has not been reached for the current request. Otherwise we have
-			 * no TDS_BULK_LOAD packets left for the current request that need
-			 * to be discarded.
-			 */
-			if (!TdsGetRecvPacketEomStatus())
-				ret = TdsDiscardAllPendingBcpRequest();
-
-			RESUME_CANCEL_INTERRUPTS();
-
-			HOLD_INTERRUPTS();
-			if (internal_sp_started && before_lxid == MyProc->lxid && before_subtxn_id == GetCurrentSubTransactionId())
-			{
-				if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
-					elog(LOG, "TSQL TXN PG semantics : Rollback internal savepoint");
-				RollbackAndReleaseCurrentSubTransaction();
-				CurrentResourceOwner = oldowner;
-			}
-			else if (!IsTransactionBlockActive())
-			{
-				AbortCurrentTransaction();
-				StartTransactionCommand();
-			}
-			MemoryContextSwitchTo(oldcontext);
-			RESUME_INTERRUPTS();
-			TdsResetBcpOffset();
-
-			if (ret < 0)
-				TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
-
+			CleanupBCPDuringError(internal_sp_started, before_subtxn_id,
+					 before_lxid, oldowner, oldcontext);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -1028,47 +1049,14 @@ ProcessBCPRequest(TDSRequest request)
 		}
 		PG_CATCH();
 		{
-			int			ret = 0;
-
-			HOLD_CANCEL_INTERRUPTS();
-			HOLD_INTERRUPTS();
-
-			/*
-			 * Discard remaining TDS_BULK_LOAD packets only if End of
-			 * Message has not been reached for the current request.
-			 * Otherwise we have no TDS_BULK_LOAD packets left for the
-			 * current request that need to be discarded.
-			 */
-			if (!TdsGetRecvPacketEomStatus())
-				ret = TdsDiscardAllPendingBcpRequest();
-
-			RESUME_CANCEL_INTERRUPTS();
-
-			if (ret < 0)
-				TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
-
 			if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 				ereport(LOG,
-						(errmsg("Bulk Load Request. Number of Rows: %d and Number of columns: %d.",
-								req->rowCount, req->colCount),
-							errhidestmt(true)));
+					(errmsg("Bulk Load Request. Number of Rows: %d and Number of columns: %d.",
+						 req->rowCount, req->colCount),
+						 errhidestmt(true)));
 
-			if (internal_sp_started && before_lxid == MyProc->lxid && before_subtxn_id == GetCurrentSubTransactionId())
-			{
-				if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
-					elog(LOG, "TSQL TXN PG semantics : Rollback internal savepoint");
-				RollbackAndReleaseCurrentSubTransaction();
-				CurrentResourceOwner = oldowner;
-			}
-			else if (!IsTransactionBlockActive())
-			{
-				AbortCurrentTransaction();
-				StartTransactionCommand();
-			}
-			MemoryContextSwitchTo(oldcontext);
-			RESUME_INTERRUPTS();
-			TdsResetBcpOffset();
-
+			CleanupBCPDuringError(internal_sp_started, before_subtxn_id,
+					 before_lxid, oldowner, oldcontext);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -1096,6 +1084,11 @@ ProcessBCPRequest(TDSRequest request)
 		CurrentResourceOwner = oldowner;
 		MemoryContextSwitchTo(oldcontext);
 	}
+	/* Unlikely case where Transaction is active but the savepoints do not match. */
+	else if (internal_sp_started && before_subtxn_id != GetCurrentSubTransactionId())
+		ereport(FATAL,
+				 (errcode(ERRCODE_PROTOCOL_VIOLATION),
+				  errmsg("The current Transaction was found to be in inconsisten state")));
 
 	/*
 	 * Send Done Token if rows processed is a positive number. Command type -
