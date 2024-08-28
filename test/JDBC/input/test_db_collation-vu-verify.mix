@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- tsql
 -- Case 2: Validate that correct collation is picked up for all databases
 SELECT name, collation_name FROM sys.databases ORDER BY name;
