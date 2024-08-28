@@ -524,6 +524,8 @@ select * from master_dbo.onek, (values(147, 'RFAAAA'), (931, 'VJAAAA')) as v (i,
 GO
 ~~START~~
 int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#name#!#name#!#name#!#int4#!#text
+147#!#0#!#1#!#3#!#7#!#7#!#7#!#47#!#147#!#147#!#147#!#14#!#15#!#RFAAAA#!#AAAAAA#!#AAAAxx#!#147#!#RFAAAA
+931#!#1#!#1#!#3#!#1#!#11#!#1#!#31#!#131#!#431#!#931#!#2#!#3#!#VJAAAA#!#BAAAAA#!#HHHHxx#!#931#!#VJAAAA
 ~~END~~
 
 -- a more complex case

@@ -24,3 +24,20 @@ go
 
 DROP DATABASE DB1;
 GO
+
+CREATE DATABASE DB1 COLLATE BBF_Unicode_CP1_CI_AI; 
+GO
+
+-- In case of cross-db, syslanguages should also exist in dbo schema
+SELECT * FROM db1.sys.SySLanGUAgeS WHERE langid = 1;
+GO
+
+SELECT * FROM db1.dbo.SySLanGUAgeS WHERE langid = 1;
+GO
+
+-- These below test cases are just to validate the schema rewrite from dbo to sys in different scenarios.
+select * from DbO.SySLanGUAgeS where langid = (SELECT count(*) FROM DbO.syslanguages WHERE langid = 1);
+go
+
+DROP DATABASE DB1;
+GO

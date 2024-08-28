@@ -1,0 +1,282 @@
+-- tsql
+-- DROP TABLES
+USE test_db_collation_vu_prepare_db11;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db11_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db11_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db121;
+GO
+
+DROP INDEX hash_idx ON test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX clustered_idx ON test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX nonclustered_idx ON test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX unique_idx ON test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX included_column_idx on test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX computed_column_idx on test_db_collation_vu_prepare_db121_computed_columns;
+GO
+
+DROP INDEX composite_idx on test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX filtered_idx on test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP VIEW test_db_collation_vu_prepare_db121_v1;
+GO
+
+DROP PROCEDURE test_db_collation_vu_prepare_db121_p1;
+GO
+
+DROP FUNCTION test_db_collation_vu_prepare_db121_f1;
+GO
+
+DROP FUNCTION test_db_collation_vu_prepare_db121_f2;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_t2;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_computed_columns;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_columns_foreign;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_si1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_si2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db122;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db122_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db122_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db131;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db131_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db131_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db132;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db132_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db132_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db133;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db133_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db133_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db134;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db134_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db134_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db135;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db135_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db135_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db136;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db136_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db136_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db137;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db137_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db137_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db138;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db138_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db138_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db139;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db139_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db139_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db141;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db141_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db141_t2;
+GO
+
+DROP TYPE ct;
+GO
+
+USE test_db_collation_vu_prepare_db142;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_db_collation_vu_prepare_db142" does not exist)~~
+
+
+DROP TABLE test_db_collation_vu_prepare_db142_t1;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db142_t2;
+GO
+
+DROP TYPE ct;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "ct" does not exist)~~
+
+
+USE master;
+GO
+
+-- DROP DATABASES
+DROP DATABASE test_db_collation_vu_prepare_db11;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db121;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db122;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db131;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db132;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db133;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db134;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db135;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db136;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db137;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db138;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db139;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db141;
+GO
+
+DROP DATABASE test_db_collation_vu_prepare_db142;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_db_collation_vu_prepare_db142" does not exist)~~
+
+
+-- psql
+DROP COLLATION sys.my_collation;
+GO

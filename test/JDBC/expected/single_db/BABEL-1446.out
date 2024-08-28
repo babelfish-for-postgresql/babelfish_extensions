@@ -154,3 +154,150 @@ int
 0
 ~~END~~
 
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db_owner');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+CREATE LOGIN login1 WITH PASSWORD = '123';
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'login1');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+CREATE LOGIN login2 WITH PASSWORD = 'abc';
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'login2');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP LOGIN login1;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'login1');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP LOGIN login2;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'login2');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP DATABASE db1;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db_owner');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- test multi-db mode
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'db1_guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db1_db_owner');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+CREATE DATABASE db2 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "db1" already exists)~~
+
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'db2_guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db2_db_owner');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP DATABASE db1;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'db1_guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db1_db_owner');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP DATABASE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'db2_guest')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db2_db_owner');
+GO
+~~START~~
+int
+0
+~~END~~
+
+

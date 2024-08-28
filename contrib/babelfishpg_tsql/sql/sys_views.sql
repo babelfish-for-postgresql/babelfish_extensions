@@ -140,13 +140,14 @@ CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod I
 AS $$
 DECLARE
 	scale INT;
+	v_type TEXT COLLATE sys.database_default := type;
 BEGIN
-	IF type IS NULL THEN 
+	IF v_type IS NULL THEN 
 		RETURN -1;
 	END IF;
 
 	IF typemod = -1 THEN
-		CASE type
+		CASE v_type
 		WHEN 'date' THEN scale = 0;
 		WHEN 'datetime' THEN scale = 3;
 		WHEN 'smalldatetime' THEN scale = 0;
@@ -167,7 +168,7 @@ BEGIN
 		RETURN scale;
 	END IF;
 
-	CASE type 
+	CASE v_type 
 	WHEN 'decimal' THEN scale = (typemod - 4) & 65535;
 	WHEN 'numeric' THEN scale = (typemod - 4) & 65535;
 	WHEN 'smalldatetime' THEN scale = 0;
@@ -224,13 +225,14 @@ CREATE OR REPLACE FUNCTION sys.tsql_type_precision_helper(IN type TEXT, IN typem
 AS $$
 DECLARE
 	precision INT;
+  v_type TEXT COLLATE sys.database_default := type;
 BEGIN
-	IF type IS NULL THEN 
+	IF v_type IS NULL THEN 
 		RETURN -1;
 	END IF;
 
 	IF typemod = -1 THEN
-		CASE type
+		CASE v_type
 		WHEN 'bigint' THEN precision = 19;
 		WHEN 'bit' THEN precision = 1;
 		WHEN 'date' THEN precision = 10;
@@ -253,7 +255,7 @@ BEGIN
 		RETURN precision;
 	END IF;
 
-	CASE type
+	CASE v_type
 	WHEN 'numeric' THEN precision = ((typemod - 4) >> 16) & 65535;
 	WHEN 'decimal' THEN precision = ((typemod - 4) >> 16) & 65535;
 	WHEN 'smalldatetime' THEN precision = 16;
@@ -1111,9 +1113,9 @@ select
   , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
   , sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as precision
   , sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as scale
-  , CASE c.collname
-    WHEN 'default' THEN default_collation_name
-    ELSE  CAST(c.collname as sys.sysname)
+  , CASE
+    WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
+    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
     END as collation_name
   , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
   , CAST(0 as sys.bit) as is_user_defined
@@ -1130,7 +1132,6 @@ from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
 inner join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
-,cast(current_setting('babelfishpg_tsql.server_collation_name') as sys.sysname) as default_collation_name
 where
 ti.tsql_type_name IS NOT NULL
 and pg_type_is_visible(t.oid)
@@ -1145,9 +1146,9 @@ select cast(t.typname as sys.sysname) as name
   , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
   , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) end as precision
   , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) end as scale
-  , CASE c.collname
-    WHEN 'default' THEN default_collation_name
-    ELSE  CAST(c.collname as sys.sysname)
+  , CASE
+    WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
+    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
     END as collation_name
   , case when tt.typrelid is not null then cast(0 as sys.bit)
          else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
@@ -1170,7 +1171,6 @@ left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
 left join tt_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
-, cast(current_setting('babelfishpg_tsql.server_collation_name') as sys.sysname) as default_collation_name
 -- we want to show details of user defined datatypes created under babelfish database
 where 
  ti.tsql_type_name IS NULL

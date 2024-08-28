@@ -188,6 +188,20 @@ SELECT @@TRANCOUNT
 IF @@TRANCOUNT > 0 COMMIT
 GO
 
+-- Create database should not start implicit transaction
+SELECT @@TRANCOUNT
+CREATE DATABASE implicit_tran_db COLLATE BBF_Unicode_CP1_CI_AI;
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+
+-- Drop database should not start implicit transaction
+SELECT @@TRANCOUNT
+DROP DATABASE implicit_tran_db
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+
 /*
  * Declare cursor should start an implicit transaction
  */
