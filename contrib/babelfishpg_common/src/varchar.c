@@ -893,7 +893,7 @@ varchar2time(PG_FUNCTION_ARGS)
 	TimeADT		time;
 
 	str = varchar2cstring(source);
-	time = DatumGetTimeADT(DirectFunctionCall3(time_in, CStringGetDatum(str),0,typmod));
+	time = DatumGetTimeADT(DirectFunctionCall3(time_in, CStringGetDatum(str), InvalidOid, typmod));
 	pfree(str);
 	PG_RETURN_TIMEADT(time);
 }
