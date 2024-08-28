@@ -3601,3 +3601,9 @@ AS SELECT
 FROM sys.objects so
 WHERE FALSE;
 GRANT SELECT ON sys.sequences TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.dm_os_sys_info 
+AS SELECT 
+  CAST(1000000 AS bigint) as ms_ticks, 
+  CAST(1000000 AS bigint) as sqlserver_start_time_ms_ticks;
+GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;
