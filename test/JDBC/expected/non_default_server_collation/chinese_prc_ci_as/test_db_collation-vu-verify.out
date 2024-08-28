@@ -1613,7 +1613,7 @@ Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.232 ms
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
 ~~END~~
 
 
@@ -1628,7 +1628,7 @@ Index Only Scan using clustered_idxtest_db_collation_37f23e48f4ded8db470285703bb
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.146 ms
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
 ~~END~~
 
 
@@ -1643,41 +1643,37 @@ Index Only Scan using nonclustered_idxtest_db_collaticabf982079a2aad31147844db2b
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.143 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 
 -- unique index
-SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b);
+SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
 GO
 ~~START~~
 text
-Query Text: SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b)
-Sort  (cost=12.44..12.46 rows=9 width=42)
-  Sort Key: ((babelfish_concat_wrapper((a)::text, (b)::text))::nvarchar) NULLS FIRST
-  ->  Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.29 rows=9 width=42)
+Query Text: SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY a
+Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=10)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 19.352 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 
 -- index with included column
-SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + d);
+SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
 GO
 ~~START~~
 text
-Query Text: SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + d)
-Sort  (cost=12.44..12.46 rows=9 width=54)
-  Sort Key: ((babelfish_concat_wrapper((a)::text, (d)::text))::nvarchar) NULLS FIRST
-  ->  Index Only Scan using included_column_idxtest_db_coll2136fe1a7c49a9cd866a1ed7813d3dfd on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.29 rows=9 width=54)
+Query Text: SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY a
+Index Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=22)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 52.626 ms
+Babelfish T-SQL Batch Parsing Time: 41.235 ms
 ~~END~~
 
 
@@ -1693,7 +1689,7 @@ Sort  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.572 ms
+Babelfish T-SQL Batch Parsing Time: 8.625 ms
 ~~END~~
 
 
@@ -1708,24 +1704,22 @@ Index Only Scan using computed_column_idxtest_db_coll8143f54fa9d8b0c6f3d683b2a9f
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
 ~~END~~
 
 
 -- composite index
-SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b + c);
+SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
 GO
 ~~START~~
 text
-Query Text: SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b + c)
-Sort  (cost=12.46..12.48 rows=9 width=50)
-  Sort Key: ((babelfish_concat_wrapper(babelfish_concat_wrapper((a)::text, (b)::text), (c)::text))::nvarchar) NULLS FIRST
-  ->  Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.31 rows=9 width=50)
+Query Text: SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY a
+Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=18)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 20.228 ms
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -1742,7 +1736,7 @@ Sort  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.146 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 

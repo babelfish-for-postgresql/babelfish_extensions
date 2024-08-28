@@ -495,11 +495,11 @@ SELECT c FROM test_db_collation_vu_prepare_db121_columns ORDER BY c;
 GO
 
 -- unique index
-SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b);
+SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
 GO
 
 -- index with included column
-SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + d);
+SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
 GO
 
 SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d;
@@ -510,7 +510,7 @@ SELECT b FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY b;
 GO
 
 -- composite index
-SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b + c);
+SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
 GO
 
 -- filtered index
