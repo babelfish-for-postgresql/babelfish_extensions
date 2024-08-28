@@ -1,3 +1,4 @@
+-- tsql
 -- Case 2: Validate that correct collation is picked up for all databases
 SELECT name, collation_name FROM sys.databases ORDER BY name;
 GO
@@ -250,10 +251,17 @@ ct#!#chinese_prc_ci_as
 USE test_db_collation_vu_prepare_db121;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn', 'a', 'b', 'd', 'id') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 ~~START~~
 varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db121_columns_foreign#!#id#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#a#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#b#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#d#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_computed_columns#!#a#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_computed_columns#!#b#!#bbf_unicode_cp1_ci_ai
 test_db_collation_vu_prepare_db121_t1#!#c#!#bbf_unicode_cp1_ci_ai
 test_db_collation_vu_prepare_db121_t1#!#nc#!#bbf_unicode_cp1_ci_ai
 test_db_collation_vu_prepare_db121_t1#!#nt#!#bbf_unicode_cp1_ci_ai
@@ -1339,9 +1347,35 @@ ct#!#chinese_prc_ci_as
 ~~END~~
 
 
+
+-- Case 8.2: CREATE table using DECLARE with collatable datatypes and validate whether correct collation is being picked up or not
+DECLARE @test_db_collation_declare_table TABLE (c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+INSERT INTO @test_db_collation_declare_table  VALUES
+('café', 'café', 'café', 'café', 'café', 'café', 'café', 'café'),
+('jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño');
+SELECT nv FROM @test_db_collation_declare_table WHERE nv = 'cafe' or nv = 'jalapeno' ORDER BY nv;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+nvarchar
+café
+jalapeño
+~~END~~
+
+
 -- Case 4.1: Computed columns
 USE test_db_collation_vu_prepare_db121;
 GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('a', 'b') AND OBJECT_NAME(object_id) = 'test_db_collation_vu_prepare_db121_computed_columns' ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db121_computed_columns#!#a#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_computed_columns#!#b#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
 
 SELECT * FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY a;
 GO
@@ -1534,6 +1568,193 @@ TELÉFONO   #!#TELÉFONO   #!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TE
 TEññi?     #!#TEññiȘ     #!#TEññi?#!#TEññiȘ#!#TEññi?#!#TEññiȘ#!#TEññi?#!#TEññi?
 ~~END~~
 
+
+-- Case 4.5: Verify metadata of primary key, foreign key, unique column and default column
+SELECT OBJECT_NAME(object_id), name, collation_name FROM SYS.COLUMNS WHERE OBJECT_NAME(object_id) = 'test_db_collation_vu_prepare_db121_columns'
+ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db121_columns#!#a#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#b#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#d#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+-- Case 4.6: Verify whether proper index is being picked up using plan
+select set_config('enable_seqscan','off','false');
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+-- psql
+ANALYZE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_columns;
+GO
+
+ANALYZE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_computed_columns;
+GO
+
+-- tsql
+-- hash index
+SELECT a FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
+GO
+~~START~~
+text
+Query Text: SELECT a FROM test_db_collation_vu_prepare_db121_columns ORDER BY a
+Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=8)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.232 ms
+~~END~~
+
+
+-- clustered index
+SELECT b FROM test_db_collation_vu_prepare_db121_columns ORDER BY b;
+GO
+~~START~~
+text
+Query Text: SELECT b FROM test_db_collation_vu_prepare_db121_columns ORDER BY b
+Index Only Scan using clustered_idxtest_db_collation_37f23e48f4ded8db470285703bb5c81d on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=2)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.146 ms
+~~END~~
+
+
+-- nonclustered index
+SELECT c FROM test_db_collation_vu_prepare_db121_columns ORDER BY c;
+GO
+~~START~~
+text
+Query Text: SELECT c FROM test_db_collation_vu_prepare_db121_columns ORDER BY c
+Index Only Scan using nonclustered_idxtest_db_collaticabf982079a2aad31147844db2b6fe49 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=8)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
+~~END~~
+
+
+-- unique index
+SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b);
+GO
+~~START~~
+text
+Query Text: SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b)
+Sort  (cost=12.44..12.46 rows=9 width=42)
+  Sort Key: ((babelfish_concat_wrapper((a)::text, (b)::text))::nvarchar) NULLS FIRST
+  ->  Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.29 rows=9 width=42)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 19.352 ms
+~~END~~
+
+
+-- index with included column
+SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + d);
+GO
+~~START~~
+text
+Query Text: SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + d)
+Sort  (cost=12.44..12.46 rows=9 width=54)
+  Sort Key: ((babelfish_concat_wrapper((a)::text, (d)::text))::nvarchar) NULLS FIRST
+  ->  Index Only Scan using included_column_idxtest_db_coll2136fe1a7c49a9cd866a1ed7813d3dfd on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.29 rows=9 width=54)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 52.626 ms
+~~END~~
+
+
+SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d;
+GO
+~~START~~
+text
+Query Text: SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d
+Sort  (cost=12.41..12.44 rows=9 width=14)
+  Sort Key: d NULLS FIRST
+  ->  Index Only Scan using included_column_idxtest_db_coll2136fe1a7c49a9cd866a1ed7813d3dfd on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=14)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.572 ms
+~~END~~
+
+
+-- index on computed column
+SELECT b FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY b;
+GO
+~~START~~
+text
+Query Text: SELECT b FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY b
+Index Only Scan using computed_column_idxtest_db_coll8143f54fa9d8b0c6f3d683b2a9f2612d on test_db_collation_vu_prepare_db121_computed_columns  (cost=0.13..12.19 rows=4 width=9)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
+
+-- composite index
+SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b + c);
+GO
+~~START~~
+text
+Query Text: SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b + c)
+Sort  (cost=12.46..12.48 rows=9 width=50)
+  Sort Key: ((babelfish_concat_wrapper(babelfish_concat_wrapper((a)::text, (b)::text), (c)::text))::nvarchar) NULLS FIRST
+  ->  Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.31 rows=9 width=50)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 20.228 ms
+~~END~~
+
+
+-- filtered index
+SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d;
+GO
+~~START~~
+text
+Query Text: SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d
+Sort  (cost=12.41..12.44 rows=9 width=14)
+  Sort Key: d NULLS FIRST
+  ->  Index Only Scan using included_column_idxtest_db_coll2136fe1a7c49a9cd866a1ed7813d3dfd on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=14)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.146 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+select set_config('enable_seqscan','on','false');
+GO
+~~START~~
+text
+on
+~~END~~
 
 
 -- Case 6.1: Validate whether correct collation is being picked up or not by SIMPLE SELECT

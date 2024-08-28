@@ -1,3 +1,4 @@
+-- tsql
 -- Case 2: Validate that correct collation is picked up for all databases
 SELECT name, collation_name FROM sys.databases ORDER BY name;
 GO
@@ -77,7 +78,7 @@ GO
 USE test_db_collation_vu_prepare_db121;
 GO
 
-SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn', 'a', 'b', 'd', 'id') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db121_t1' AND
@@ -373,8 +374,20 @@ GO
 SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
 GO
 
+-- Case 8.2: CREATE table using DECLARE with collatable datatypes and validate whether correct collation is being picked up or not
+DECLARE @test_db_collation_declare_table TABLE (c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+INSERT INTO @test_db_collation_declare_table  VALUES
+('café', 'café', 'café', 'café', 'café', 'café', 'café', 'café'),
+('jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño');
+
+SELECT nv FROM @test_db_collation_declare_table WHERE nv = 'cafe' or nv = 'jalapeno' ORDER BY nv;
+GO
+
 -- Case 4.1: Computed columns
 USE test_db_collation_vu_prepare_db121;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('a', 'b') AND OBJECT_NAME(object_id) = 'test_db_collation_vu_prepare_db121_computed_columns' ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
 GO
 
 SELECT * FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY a;
@@ -449,6 +462,66 @@ GO
 SELECT * FROM test_db_collation_vu_prepare_db121_si2 ORDER BY nv;
 GO
 
+-- Case 4.5: Verify metadata of primary key, foreign key, unique column and default column
+SELECT OBJECT_NAME(object_id), name, collation_name FROM SYS.COLUMNS WHERE OBJECT_NAME(object_id) = 'test_db_collation_vu_prepare_db121_columns'
+ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+
+-- Case 4.6: Verify whether proper index is being picked up using plan
+select set_config('enable_seqscan','off','false');
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+-- psql
+ANALYZE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_columns;
+GO
+
+ANALYZE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_computed_columns;
+GO
+
+-- tsql
+-- hash index
+SELECT a FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
+GO
+
+-- clustered index
+SELECT b FROM test_db_collation_vu_prepare_db121_columns ORDER BY b;
+GO
+
+-- nonclustered index
+SELECT c FROM test_db_collation_vu_prepare_db121_columns ORDER BY c;
+GO
+
+-- unique index
+SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b);
+GO
+
+-- index with included column
+SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + d);
+GO
+
+SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d;
+GO
+
+-- index on computed column
+SELECT b FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY b;
+GO
+
+-- composite index
+SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY (a + b + c);
+GO
+
+-- filtered index
+SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+select set_config('enable_seqscan','on','false');
+GO
 
 -- Case 6.1: Validate whether correct collation is being picked up or not by SIMPLE SELECT
 USE test_db_collation_vu_prepare_db121;

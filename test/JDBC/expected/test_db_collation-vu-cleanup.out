@@ -15,6 +15,30 @@ GO
 USE test_db_collation_vu_prepare_db121;
 GO
 
+DROP INDEX hash_idx ON test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX clustered_idx ON test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX nonclustered_idx ON test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX unique_idx ON test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX included_column_idx on test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX computed_column_idx on test_db_collation_vu_prepare_db121_computed_columns;
+GO
+
+DROP INDEX composite_idx on test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP INDEX filtered_idx on test_db_collation_vu_prepare_db121_columns;
+GO
+
 DROP VIEW test_db_collation_vu_prepare_db121_v1;
 GO
 
@@ -34,6 +58,12 @@ DROP TABLE test_db_collation_vu_prepare_db121_t2;
 GO
 
 DROP TABLE test_db_collation_vu_prepare_db121_computed_columns;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_columns_foreign;
 GO
 
 DROP TABLE test_db_collation_vu_prepare_db121_si1;

@@ -290,6 +290,59 @@ GO
 ~~ROW COUNT: 4~~
 
 
+CREATE TABLE test_db_collation_vu_prepare_db121_columns_foreign (id NVARCHAR(50) PRIMARY KEY);
+GO
+
+INSERT INTO test_db_collation_vu_prepare_db121_columns_foreign VALUES('1'), ('2'), ('3'), ('4'), ('5'), ('6'), ('7'), ('8'), ('9');
+GO
+~~ROW COUNT: 9~~
+
+
+CREATE TABLE test_db_collation_vu_prepare_db121_columns(a nvarchar(MAX) PRIMARY KEY, b nvarchar(MAX) REFERENCES test_db_collation_vu_prepare_db121_columns_foreign(id), c nvarchar(MAX) UNIQUE, d nvarchar(MAX) DEFAULT 'Default Value');
+GO
+
+INSERT INTO test_db_collation_vu_prepare_db121_columns (a, b, c) VALUES
+('café','1','café'),('Año Nuevo','2','Año Nuevo'),('película','3','película'),
+('jalapeño','1','jalapeño'),('TELÉFONO','2','TELÉFONO'),('árbol','3','árbol'),
+('canapé','1','canapé'),('TEññiȘ','2','TEññiȘ'),('naïve','3','naïve');
+GO
+~~ROW COUNT: 9~~
+
+
+-- Create indexes
+-- Hash index
+CREATE INDEX hash_idx ON test_db_collation_vu_prepare_db121_columns (a) WITH (HASH = ON)
+GO
+
+-- clustered index
+CREATE CLUSTERED INDEX clustered_idx ON test_db_collation_vu_prepare_db121_columns (b);
+GO
+
+-- nonclustered index
+CREATE NONCLUSTERED INDEX nonclustered_idx ON test_db_collation_vu_prepare_db121_columns (c);
+GO
+
+-- unique index
+CREATE UNIQUE INDEX unique_idx on test_db_collation_vu_prepare_db121_columns (a, b);
+GO
+
+-- index with included column
+CREATE NONCLUSTERED INDEX included_column_idx ON test_db_collation_vu_prepare_db121_columns (a) INCLUDE (d);
+GO
+
+-- index on computed column
+CREATE INDEX computed_column_idx ON test_db_collation_vu_prepare_db121_computed_columns (b);
+GO
+
+-- composite index
+CREATE INDEX composite_idx ON test_db_collation_vu_prepare_db121_columns(a, b, c);
+GO
+
+-- filtered index
+CREATE NONCLUSTERED INDEX filtered_idx ON test_db_collation_vu_prepare_db121_columns (d) WHERE d > 'Default';
+GO
+
+
 CREATE FUNCTION test_db_collation_vu_prepare_db121_f1()
 RETURNS TABLE
 AS
