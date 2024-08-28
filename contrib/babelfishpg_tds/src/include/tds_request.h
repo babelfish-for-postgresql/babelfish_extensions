@@ -295,6 +295,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 			rowData = temp;
 		}
 
+		temp->tvpInfo->rowCount += 1;
 		rowData->columnValues = palloc0(temp->tvpInfo->colCount * sizeof(StringInfoData));
 		rowData->isNull = palloc0(temp->tvpInfo->colCount);
 		(*offset)++;
@@ -303,7 +304,6 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 		{
 			initStringInfo(&rowData->columnValues[i]);
 			rowData->isNull[i] = 'f';
-			temp->tvpInfo->rowCount += 1;
 			switch (colmetadata[i].columnTdsType)
 			{
 				case TDS_TYPE_INTEGER:
