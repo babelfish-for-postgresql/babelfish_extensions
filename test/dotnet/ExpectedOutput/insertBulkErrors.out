@@ -1,0 +1,376 @@
+#Q#Create table sourceTable(a int, b int not null)
+#Q#Create table destinationTable(a int, b int not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#select @@trancount;
+#D#int
+1
+#Q#select @@trancount
+#D#int
+1
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int not null)
+#Q#Create table destinationTable(a int, b int not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#select @@trancount;
+#D#int
+1
+#Q#select @@trancount
+#D#int
+1
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#Select * from destinationTable
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int not null)
+#Q#Create table destinationTable(a int, b int not null)
+#Q#create index idx on destinationTable(a);
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'off', false);
+#D#text
+off
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#SELECT set_config('enable_bitmapscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int not null)
+#Q#Create table destinationTable(a int, b int not null)
+#Q#create index idx on destinationTable(a);
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'off', false);
+#D#text
+off
+#Q#Select * from destinationTable
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#Select * from destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'off', false);
+#D#text
+off
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#SELECT set_config('enable_bitmapscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#create table sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1001, 1), 'Foo'
+#Q#create table destinationTable(c1 int PRIMARY KEY, c2 CHAR(1024))
+#Q#INSERT INTO destinationTable VALUES(1001, 'Foo')
+#Q#create table sourceTable1(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable1 VALUES(1001, 'Foo')
+#Q#INSERT INTO sourceTable1 SELECT generate_series(1, 1000, 1), 'Foo'
+#Q#Select count(c1) from sourceTable
+#D#int
+1001
+#Q#select count(c1) from sourceTable1
+#D#int
+1001
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'off', false);
+#D#text
+off
+#Q#Select count(c1) from destinationTable
+#D#int
+1
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#Select count(c1) from destinationTable
+#D#int
+1
+#Q#SELECT set_config('enable_bitmapscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#drop table sourceTable
+#Q#drop table sourceTable1
+#Q#drop table destinationTable
+#Q#create table sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1001, 1), 'Foo'
+#Q#create table destinationTable(c1 int unique, c2 CHAR(1024))
+#Q#INSERT INTO destinationTable VALUES(1001, 'Foo')
+#Q#create table sourceTable1(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable1 VALUES(1001, 'Foo')
+#Q#INSERT INTO sourceTable1 SELECT generate_series(1, 1000, 1), 'Foo'
+#Q#Select count(c1) from sourceTable
+#D#int
+1001
+#Q#select count(c1) from sourceTable1
+#D#int
+1001
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'off', false);
+#D#text
+off
+#Q#Select count(c1) from destinationTable
+#D#int
+1
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#Select count(c1) from destinationTable
+#D#int
+1
+#Q#SELECT set_config('enable_bitmapscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#drop table sourceTable
+#Q#drop table sourceTable1
+#Q#drop table destinationTable
+#Q#create table sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
+#Q#INSERT INTO sourceTable VALUES (NULL, NULL)
+#Q#create table destinationTable(c1 int NOT NULL, c2 CHAR(1024))
+#Q#create table sourceTable1(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable1 VALUES(NULL, NULL)
+#Q#INSERT INTO sourceTable1 SELECT generate_series(1, 999, 1), 'Foo'
+#Q#Select count(*) from sourceTable
+#D#int
+1001
+#Q#select count(*) from sourceTable1
+#D#int
+1000
+#Q#Select count(*) from destinationTable
+#D#int
+0
+#Q#drop table sourceTable
+#Q#drop table sourceTable1
+#Q#drop table destinationTable
+#Q#create table sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1001, 1), 'Foo'
+#Q#create table destinationTable(c1 int, c2 CHAR(1024), check(c1 < 1000))
+#Q#create table sourceTable1(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable1 VALUES(1001, 'Foo')
+#Q#INSERT INTO sourceTable1 SELECT generate_series(1, 1000, 1), 'Foo'
+#Q#SELECT @@trancount
+#D#int
+1
+#Q#SELECT @@trancount
+#D#int
+1
+#Q#SELECT @@trancount
+#D#int
+1
+#Q#SELECT @@trancount
+#D#int
+1
+#Q#SELECT @@trancount
+#D#int
+1
+#Q#Select count(c1) from sourceTable
+#D#int
+1001
+#Q#select count(c1) from sourceTable1
+#D#int
+1001
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'off', false);
+#D#text
+off
+#Q#Select count(c1) from destinationTable
+#D#int
+0
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#Select count(c1) from destinationTable
+#D#int
+0
+#Q#SELECT set_config('enable_bitmapscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#drop table sourceTable
+#Q#drop table sourceTable1
+#Q#drop table destinationTable
+#Q#create table sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable VALUES (1, 'Foo'), (2, 'Foo')
+#Q#create table destinationTable(c1 int PRIMARY KEY, c2 CHAR(1024))
+#Q#INSERT INTO destinationTable VALUES(2, 'Foo')
+#Q#Select * from sourceTable
+#D#int#!#char
+1#!#Foo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+2#!#Foo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'off', false);
+#D#text
+off
+#Q#Select c1 from destinationTable
+#D#int
+2
+#Q#SELECT set_config('enable_bitmapscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_seqscan', 'off', false);
+#D#text
+off
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#Select c1 from destinationTable
+#D#int
+2
+#Q#SELECT set_config('enable_bitmapscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_seqscan', 'on', false);
+#D#text
+on
+#Q#SELECT set_config('enable_indexscan', 'on', false);
+#D#text
+on
+#Q#drop table sourceTable
+#Q#drop table destinationTable

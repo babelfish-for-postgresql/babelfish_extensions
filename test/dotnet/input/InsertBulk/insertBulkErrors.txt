@@ -1,0 +1,322 @@
+##########################################################
+#################### TEST DETAILS ########################
+### 1. Testing explicit transaction (error case handled in 5.)
+###    a. Commit without error
+###    b. Rollback without error
+### 2. Index with without transaction
+### 3. Primary Key error case
+### 4. Unique constraint with error case
+### 5. Check constraint with error case
+###    a. transaction testing during error scenarios
+###    b. @@trancount test - error should not terminate transaction
+###    c. Test CheckConstraint BCP Option Enabled
+###    d. Test Reusing the same connection for BCP even after error scenarios
+### 6. Reset-connection testing with Primary Key error
+###
+### The above tests test the seq and index.
+##########################################################
+
+####### Testing explicit transaction #######
+# commit and then check for inserts
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+txn#!#begin
+select @@trancount;
+traninsertbulk#!#sourceTable#!#destinationTable
+
+select @@trancount
+txn#!#commit
+
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# rollback and then check for inserts
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+txn#!#begin
+select @@trancount;
+# int
+traninsertbulk#!#sourceTable#!#destinationTable
+
+select @@trancount
+txn#!#rollback
+
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# Index without transaction
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+create index idx on destinationTable(a);
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+
+# Seq scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
+Select * from destinationTable
+
+# Index scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
+Select * from destinationTable
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'on', false);
+drop table sourceTable
+drop table destinationTable
+
+####### Index with transaction #######
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+create index idx on destinationTable(a);
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+
+# transaction rollback test with index
+txn#!#begin
+traninsertbulk#!#sourceTable#!#destinationTable
+txn#!#rollback
+Select * from sourceTable
+
+# Seq scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
+Select * from destinationTable
+
+# Index scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
+Select * from destinationTable
+
+# transaction commit test with index
+txn#!#begin
+traninsertbulk#!#sourceTable#!#destinationTable
+txn#!#commit
+Select * from sourceTable
+
+# Seq scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
+Select * from destinationTable
+
+# Index scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
+Select * from destinationTable
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'on', false);
+drop table sourceTable
+drop table destinationTable
+
+
+####### Primary Key error #######
+
+# last row is error (last packet will be flushed)
+create table sourceTable(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable SELECT generate_series(1, 1001, 1), 'Foo'
+create table destinationTable(c1 int PRIMARY KEY, c2 CHAR(1024))
+INSERT INTO destinationTable VALUES(1001, 'Foo')
+
+insertbulk#!#sourceTable#!#destinationTable
+
+# 1st row is error (remaining packets to be discarded)
+create table sourceTable1(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable1 VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 SELECT generate_series(1, 1000, 1), 'Foo'
+
+insertbulk#!#sourceTable1#!#destinationTable
+
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+
+# Seq scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
+Select count(c1) from destinationTable
+
+# Index scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
+Select count(c1) from destinationTable
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'on', false);
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+
+####### Unique #######
+# last row is error (last packet will be flushed)
+create table sourceTable(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable SELECT generate_series(1, 1001, 1), 'Foo'
+create table destinationTable(c1 int unique, c2 CHAR(1024))
+INSERT INTO destinationTable VALUES(1001, 'Foo')
+
+insertbulk#!#sourceTable#!#destinationTable
+
+# 1st row is error (remaining packets to be discarded)
+create table sourceTable1(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable1 VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 SELECT generate_series(1, 1000, 1), 'Foo'
+
+insertbulk#!#sourceTable1#!#destinationTable
+
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+
+# Seq scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
+Select count(c1) from destinationTable
+
+# Index scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
+Select count(c1) from destinationTable
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'on', false);
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+####### Not Null #######
+# last row is error (last packet will be flushed)
+create table sourceTable(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
+INSERT INTO sourceTable VALUES (NULL, NULL)
+create table destinationTable(c1 int NOT NULL, c2 CHAR(1024))
+
+insertbulk#!#sourceTable#!#destinationTable
+
+# 1st row is error (remaining packets to be discarded)
+create table sourceTable1(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable1 VALUES(NULL, NULL)
+INSERT INTO sourceTable1 SELECT generate_series(1, 999, 1), 'Foo'
+
+insertbulk#!#sourceTable1#!#destinationTable
+
+Select count(*) from sourceTable
+select count(*) from sourceTable1
+
+Select count(*) from destinationTable
+
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+####### Check #######
+##### THESE TESTS ALSO TEST REUSING THE SAME CONNECTION
+##### ON WHICH WE ERROR OUT AND NEED TO RESET TDS STATE
+##### WE ALSO SEE THAT TRANSACTION IS NOT ROLLED BACK FOR
+##### ANY ERROR DURING BULK OPERATION
+
+# last row is error (last packet will be flushed)
+create table sourceTable(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable SELECT generate_series(1, 1001, 1), 'Foo'
+create table destinationTable(c1 int, c2 CHAR(1024), check(c1 < 1000))
+
+
+# 1st row is error (remaining packets to be discarded)
+create table sourceTable1(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable1 VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 SELECT generate_series(1, 1000, 1), 'Foo'
+
+txn#!#begin
+SELECT @@trancount
+traninsertbulk#!#sourceTable#!#destinationTable
+SELECT @@trancount
+traninsertbulk#!#sourceTable1#!#destinationTable
+SELECT @@trancount
+traninsertbulk#!#sourceTable#!#destinationTable
+SELECT @@trancount
+traninsertbulk#!#sourceTable1#!#destinationTable
+SELECT @@trancount
+txn#!#commit
+
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+
+# Seq scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
+Select count(c1) from destinationTable
+
+# Index scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
+Select count(c1) from destinationTable
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'on', false);
+
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+####### Reset-connection with error (retry the insert bulk in a loop) #######
+create table sourceTable(c1 int, c2 CHAR(1024))
+INSERT INTO sourceTable VALUES (1, 'Foo'), (2, 'Foo')
+create table destinationTable(c1 int PRIMARY KEY, c2 CHAR(1024))
+INSERT INTO destinationTable VALUES(2, 'Foo')
+
+insertbulk#!#sourceTable#!#destinationTable
+insertbulk#!#sourceTable#!#destinationTable
+insertbulk#!#sourceTable#!#destinationTable
+insertbulk#!#sourceTable#!#destinationTable
+insertbulk#!#sourceTable#!#destinationTable
+insertbulk#!#sourceTable#!#destinationTable
+insertbulk#!#sourceTable#!#destinationTable
+insertbulk#!#sourceTable#!#destinationTable
+insertbulk#!#sourceTable#!#destinationTable
+insertbulk#!#sourceTable#!#destinationTable
+
+Select * from sourceTable
+
+# Seq scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'off', false);
+Select c1 from destinationTable
+
+# Index scan
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
+Select c1 from destinationTable
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'on', false);
+drop table sourceTable
+drop table destinationTable

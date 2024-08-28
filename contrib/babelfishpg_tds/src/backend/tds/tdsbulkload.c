@@ -17,6 +17,7 @@
 
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "utils/guc.h"
 #include "lib/stringinfo.h"
 #include "pgstat.h"
@@ -101,6 +102,12 @@ do \
 	if ((*message)->len - offset < dataLen) \
 		FetchMoreBcpPlpData(message, dataLen); \
 } while(0)
+
+void
+TdsResetBcpOffset()
+{
+	offset = 0;
+}
 
 static void
 FetchMoreBcpData(StringInfo *message, int dataLenToRead, bool freeMessageData)
@@ -910,10 +917,30 @@ ProcessBCPRequest(TDSRequest request)
 	uint64		retValue = 0;
 	TDSRequestBulkLoad req = (TDSRequestBulkLoad) request;
 	StringInfo	message = req->firstMessage;
+	volatile bool internal_sp_started = false;
+	volatile int before_subtxn_id = 0;
+	volatile int before_lxid = MyProc->lxid;
+	ResourceOwner oldowner = CurrentResourceOwner;
+	MemoryContext oldcontext = CurrentMemoryContext;
 
 	set_ps_display("active");
 	TdsErrorContext->err_text = "Processing Bulk Load Request";
 	pgstat_report_activity(STATE_RUNNING, "Processing Bulk Load Request");
+
+	/*
+	 * If a transaction is active then start a Savepoint to rollback
+	 * later in case of error.
+	 */
+	if (IsTransactionBlockActive())
+	{
+		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
+			elog(LOG, "TSQL TXN Start internal savepoint");
+		BeginInternalSubTransaction(NULL);
+		internal_sp_started = true;
+		before_subtxn_id = GetCurrentSubTransactionId();
+	}
+	else
+		internal_sp_started = false;
 
 	while (1)
 	{
@@ -944,6 +971,23 @@ ProcessBCPRequest(TDSRequest request)
 
 			RESUME_CANCEL_INTERRUPTS();
 
+			HOLD_INTERRUPTS();
+			if (internal_sp_started && before_lxid == MyProc->lxid && before_subtxn_id == GetCurrentSubTransactionId())
+			{
+				if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
+					elog(LOG, "TSQL TXN PG semantics : Rollback internal savepoint");
+				RollbackAndReleaseCurrentSubTransaction();
+				CurrentResourceOwner = oldowner;
+			}
+			else if (!IsTransactionBlockActive())
+			{
+				AbortCurrentTransaction();
+				StartTransactionCommand();
+			}
+			MemoryContextSwitchTo(oldcontext);
+			RESUME_INTERRUPTS();
+			TdsResetBcpOffset();
+
 			if (ret < 0)
 				TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
 
@@ -955,78 +999,102 @@ ProcessBCPRequest(TDSRequest request)
 		 * If the row-count is 0 then there are no rows left to be inserted.
 		 * We should begin with cleanup.
 		 */
-		if (req->rowCount == 0)
+		if (req->rowCount > 0)
 		{
-			/* Using Same callback function to do the clean-up. */
-			pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL);
-			break;
-		}
+			nargs = req->colCount * req->rowCount;
+			values = palloc0(nargs * sizeof(Datum));
+			nulls = palloc0(nargs * sizeof(bool));
 
-		nargs = req->colCount * req->rowCount;
-		values = palloc0(nargs * sizeof(Datum));
-		nulls = palloc0(nargs * sizeof(bool));
-
-		/* Flaten and create a 1-D array of Value & Datums */
-		foreach(lc, req->rowData)
-		{
-			BulkLoadRowData *row = (BulkLoadRowData *) lfirst(lc);
-
-			for (int currentColumn = 0; currentColumn < req->colCount; currentColumn++)
+			/* Flaten and create a 1-D array of Value & Datums */
+			foreach(lc, req->rowData)
 			{
-				if (row->isNull[currentColumn]) /* null */
-					nulls[count] = row->isNull[currentColumn];
-				else
-					values[count] = row->columnValues[currentColumn];
-				count++;
+				BulkLoadRowData *row = (BulkLoadRowData *) lfirst(lc);
+
+				for (int currentColumn = 0; currentColumn < req->colCount; currentColumn++)
+				{
+					if (row->isNull[currentColumn]) /* null */
+						nulls[count] = row->isNull[currentColumn];
+					else
+						values[count] = row->columnValues[currentColumn];
+					count++;
+				}
 			}
 		}
 
-		if (req->rowData)		/* If any row exists then do an insert. */
+		PG_TRY();
 		{
-			PG_TRY();
+			retValue += pltsql_plugin_handler_ptr->bulk_load_callback(req->rowCount ? req->colCount : 0,
+																		req->rowCount, values, nulls);
+		}
+		PG_CATCH();
+		{
+			int			ret = 0;
+
+			HOLD_CANCEL_INTERRUPTS();
+			HOLD_INTERRUPTS();
+
+			/*
+			 * Discard remaining TDS_BULK_LOAD packets only if End of
+			 * Message has not been reached for the current request.
+			 * Otherwise we have no TDS_BULK_LOAD packets left for the
+			 * current request that need to be discarded.
+			 */
+			if (!TdsGetRecvPacketEomStatus())
+				ret = TdsDiscardAllPendingBcpRequest();
+
+			RESUME_CANCEL_INTERRUPTS();
+
+			if (ret < 0)
+				TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
+
+			if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
+				ereport(LOG,
+						(errmsg("Bulk Load Request. Number of Rows: %d and Number of columns: %d.",
+								req->rowCount, req->colCount),
+							errhidestmt(true)));
+
+			if (internal_sp_started && before_lxid == MyProc->lxid && before_subtxn_id == GetCurrentSubTransactionId())
 			{
-				retValue += pltsql_plugin_handler_ptr->bulk_load_callback(req->colCount,
-																		  req->rowCount, values, nulls);
-			}
-			PG_CATCH();
-			{
-				int			ret = 0;
-
-				HOLD_CANCEL_INTERRUPTS();
-				HOLD_INTERRUPTS();
-
-				/*
-				 * Discard remaining TDS_BULK_LOAD packets only if End of
-				 * Message has not been reached for the current request.
-				 * Otherwise we have no TDS_BULK_LOAD packets left for the
-				 * current request that need to be discarded.
-				 */
-				if (!TdsGetRecvPacketEomStatus())
-					ret = TdsDiscardAllPendingBcpRequest();
-
-				RESUME_CANCEL_INTERRUPTS();
-
-				if (ret < 0)
-					TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
-
 				if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
-					ereport(LOG,
-							(errmsg("Bulk Load Request. Number of Rows: %d and Number of columns: %d.",
-									req->rowCount, req->colCount),
-							 errhidestmt(true)));
-
-				RESUME_INTERRUPTS();
-				PG_RE_THROW();
+					elog(LOG, "TSQL TXN PG semantics : Rollback internal savepoint");
+				RollbackAndReleaseCurrentSubTransaction();
+				CurrentResourceOwner = oldowner;
 			}
-			PG_END_TRY();
-			/* Free the List of Rows. */
+			else if (!IsTransactionBlockActive())
+			{
+				AbortCurrentTransaction();
+				StartTransactionCommand();
+			}
+			MemoryContextSwitchTo(oldcontext);
+			RESUME_INTERRUPTS();
+			TdsResetBcpOffset();
+
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+		/* Free the List of Rows. */
+		if (req->rowData)
+		{
 			list_free_deep(req->rowData);
 			req->rowData = NIL;
-			if (values)
-				pfree(values);
-			if (nulls)
-				pfree(nulls);
 		}
+		/* If there we no rows then we have reached the end of the loop. */
+		else
+			break;
+
+		if (values)
+			pfree(values);
+		if (nulls)
+			pfree(nulls);
+	}
+
+	/* If we Started an internal savepoint then release it. */
+	if (internal_sp_started && before_subtxn_id == GetCurrentSubTransactionId())
+	{
+		elog(DEBUG5, "TSQL TXN Release internal savepoint");
+		ReleaseCurrentSubTransaction();
+		CurrentResourceOwner = oldowner;
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	/*

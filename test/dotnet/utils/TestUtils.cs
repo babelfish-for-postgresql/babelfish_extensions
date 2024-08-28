@@ -39,10 +39,50 @@ namespace BabelfishDotnetFramework
 			DbDataReader reader = null;
 			try
 			{
+				/* To Enforce Reset Connection. */
 				reader = bblCmd.ExecuteReader();
-				SqlBulkCopy bulkCopy = new SqlBulkCopy(ConfigSetup.BblConnectionString);
+				using (SqlConnection destinationConnection =
+                       new SqlConnection(ConfigSetup.BblConnectionString))
+				{
+					destinationConnection.Open();
+
+					SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection);
+					bulkCopy.DestinationTableName = destinationTable;
+					bulkCopy.WriteToServer(reader);
+				}
+			}
+			catch (Exception e)
+			{
+				PrintToLogsOrConsole("#################################################################", logger, "information");
+				PrintToLogsOrConsole(
+					$"############# ERROR IN EXECUTING WITH BABEL  ####################\n{e}\n",
+					logger, "information");
+				stCount--;
+				return false;
+			}
+			finally
+			{
+				reader.Close();
+			}
+			return true;
+		}
+
+		public bool insertBulkCopyWithTransaction(DbConnection bblCnn, DbCommand bblCmd, String sourceTable, String destinationTable, DbTransaction transaction, Logger logger, ref int stCount)
+		{
+			bblCmd.CommandText = "Select * from " + sourceTable;
+			bblCmd.Transaction = transaction;
+			DbDataReader reader = null;
+			DataTable dataTable = new DataTable();
+			try
+			{
+				reader = bblCmd.ExecuteReader();
+				dataTable.Load(reader);
+				reader.Close();
+
+				/* Set CheckConstraints default for this API since this is the only mechanism to use BCP Options. */
+				SqlBulkCopy bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn, SqlBulkCopyOptions.CheckConstraints, (SqlTransaction) transaction);
 				bulkCopy.DestinationTableName = destinationTable;
-				bulkCopy.WriteToServer(reader);
+				bulkCopy.WriteToServer(dataTable);
 			}
 			catch (Exception e)
 			{
@@ -403,7 +443,7 @@ namespace BabelfishDotnetFramework
 					dictionary["others"] = result[i].Split("|-|")[1];
 			}
 			return @"Data Source = " + dictionary["url"] + "; Initial Catalog = " + dictionary["db"] +
-												"; User ID = " + dictionary["user"] + "; Password = " + dictionary["pwd"] + ";Pooling=false;" + dictionary["others"];
+												"; User ID = " + dictionary["user"] + "; Password = " + dictionary["pwd"] + ";" + dictionary["others"];
 		}
 
 		/* Depending on the OS we use the appropriate diff command. */

@@ -153,6 +153,7 @@ ResetTDSConnection(void)
 	TdsProtocolInit();
 	TdsResetCache();
 	TdsResponseReset();
+	TdsResetBcpOffset();
 	SetConfigOption("default_transaction_isolation", isolationOld,
 					PGC_BACKEND, PGC_S_CLIENT);
 
