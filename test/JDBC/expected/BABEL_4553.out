@@ -403,3 +403,6 @@ GO
 
 DROP DATABASE dms_test_target_db
 GO
+
+DROP TABLE #bAbEL_4553_2
+GO
