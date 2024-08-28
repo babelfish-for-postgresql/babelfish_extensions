@@ -543,7 +543,7 @@ varchar(PG_FUNCTION_ARGS)
 		 * function, varchar would be called from TDS to send the OUTPUT
 		 * params of stored proc.
 		 */
-		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
 	}
 
 	/* count the number of chars present in input string. */
@@ -1111,7 +1111,7 @@ bpchar(PG_FUNCTION_ARGS)
 		 * function, bpchar would be called from TDS to send the OUTPUT params
 		 * of stored proc.
 		 */
-		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
 	}
 
 	/*

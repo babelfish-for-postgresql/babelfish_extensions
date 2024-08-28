@@ -28,3 +28,23 @@ go
 
 DROP DATABASE db1
 go
+
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI
+go
+
+USE db1
+go
+
+-- should not be visible here
+SELECT COUNT(*) FROM sys.identity_columns WHERE object_id = object_id('sys_identity_columns');
+go
+
+USE master
+go
+
+DROP TABLE IF EXISTS sys_identity_columns
+go
+
+DROP DATABASE db1
+go
+

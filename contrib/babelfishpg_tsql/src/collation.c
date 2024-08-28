@@ -27,6 +27,7 @@
 
 #include "pltsql.h"
 #include "src/collation.h"
+#include "catalog.h"
 
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
@@ -54,7 +55,8 @@
 /* Find length of given Uchar */
 #define UCHAR_LENGTH(c) (UCHAR_IS_SURROGATE(c) ? 2 : 1)
 
-Oid			server_collation_oid = InvalidOid;
+Oid			database_or_server_collation_oid = InvalidOid;
+
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
 static Oid remove_accents_internal_oid;
@@ -125,7 +127,7 @@ collation_list(PG_FUNCTION_ARGS)
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_OID(tsql_get_server_collation_oid_internal(false));
+	PG_RETURN_OID(tsql_get_database_or_server_collation_oid_internal(false));
 }
 
 
@@ -209,9 +211,9 @@ transform_funcexpr(Node *node)
 
 				/* text */
 
-				tsql_get_server_collation_oid_internal(true);
+				tsql_get_database_or_server_collation_oid_internal(true);
 
-				if (!OidIsValid(server_collation_oid))
+				if (!OidIsValid(database_or_server_collation_oid))
 					return node;
 
 				/*
@@ -331,9 +333,9 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
 
-	tsql_get_server_collation_oid_internal(true);
+	tsql_get_database_or_server_collation_oid_internal(true);
 
-	if (!OidIsValid(server_collation_oid))
+	if (!OidIsValid(database_or_server_collation_oid))
 		return node;
 
 
@@ -876,9 +878,9 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 {
 	int			collidx_of_cs_as;
 
-	tsql_get_server_collation_oid_internal(true);
+	tsql_get_database_or_server_collation_oid_internal(true);
 
-	if (!OidIsValid(server_collation_oid))
+	if (!OidIsValid(database_or_server_collation_oid))
 		return node;
 
 	/*
@@ -907,8 +909,13 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	return transform_likenode_for_AI(node, op);	
 }
 
-static bool
-supported_AI_collation_for_like(int32_t code_page)
+/*
+ * Currently we support Latin based collations for LIKE for AI
+ * and database level collation 
+ * The following code pages corresponds to the expected collations
+ */
+bool
+supported_collation_for_db_and_like(int32_t code_page)
 {
 	if (code_page == 1250 || code_page == 1252 || code_page == 1257)
 		return true;
@@ -964,7 +971,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
 		{
-			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
+			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
 				return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
@@ -976,7 +983,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
-			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
+			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
 				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
@@ -1167,17 +1174,21 @@ init_and_check_collation_callbacks(void)
 	}
 }
 
+/*
+ * Wrapper of get_database_or_server_collation_oid_internal function in common extension
+ * which returns database collation Oid if valid else return server collation Oid
+ */
 Oid
-tsql_get_server_collation_oid_internal(bool missingOk)
+tsql_get_database_or_server_collation_oid_internal(bool missingOk)
 {
-	if (OidIsValid(server_collation_oid))
-		return server_collation_oid;
+	if (OidIsValid(database_or_server_collation_oid))
+		return database_or_server_collation_oid;
 
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	server_collation_oid = (*collation_callbacks_ptr->get_server_collation_oid_internal) (missingOk);
-	return server_collation_oid;
+	database_or_server_collation_oid = (*collation_callbacks_ptr->get_database_or_server_collation_oid_internal) (missingOk);
+	return database_or_server_collation_oid;
 }
 
 Datum
@@ -1226,12 +1237,12 @@ tsql_collationproperty_helper(const char *collationaname, const char *property)
 }
 
 bool
-tsql_is_server_collation_CI_AS(void)
+tsql_is_database_or_server_collation_CI(void)
 {
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	return (*collation_callbacks_ptr->is_server_collation_CI_AS) ();
+	return (*collation_callbacks_ptr->is_database_or_server_collation_CI) ();
 }
 
 bool
@@ -1305,6 +1316,15 @@ tsql_translate_bbf_collation_to_tsql_collation(const char *collname)
 	init_and_check_collation_callbacks();
 
 	return (*collation_callbacks_ptr->translate_bbf_collation_to_tsql_collation) (collname);
+}
+
+const char *
+tsql_translate_tsql_collation_to_bbf_collation(const char *collname)
+{
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	return (*collation_callbacks_ptr->translate_tsql_collation_to_bbf_collation) (collname);
 }
 
 bool
@@ -1746,6 +1766,60 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 #endif
 	}
 	return false;
+}
+
+/* Find the collation corresponding to a specific database */
+char*
+get_collation_name_for_db(const char* dbname)
+{
+	HeapTuple	tuple;
+	Form_sysdatabases sysdb;
+	char *collation_name;
+
+	tuple = SearchSysCache1(SYSDATABASENAME, PointerGetDatum(cstring_to_text(dbname)));
+
+	if (!HeapTupleIsValid(tuple))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("Could not find database: \"%s\"", dbname)));
+
+	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	collation_name = pstrdup(NameStr(sysdb->default_collation));
+
+	ReleaseSysCache(tuple);
+	return collation_name;
+}
+
+/* 
+ * We need to communicate to common extension
+ * that user has invoked USE DB command
+ * Hence, we need to update the cache related to -
+ * 1. database collation oid
+ * 2. database collation index
+ * 
+ * Also, We are processesing USE DB command
+ * Communicate the same to common extension
+ * so that collation related information gets updated
+ */
+void
+set_db_collation_internal(const char *db_name)
+{
+	Oid database_collation_oid;
+
+	/* Get collation oid corresponding to collation name */
+	database_collation_oid = get_collation_oid(list_make1(makeString((char*)get_collation_name_for_db(db_name))), false);
+
+	if (!OidIsValid(database_collation_oid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_DATABASE),
+			 errmsg("Could not find database with collation oid \"%u\"", database_collation_oid)));
+
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	(*collation_callbacks_ptr->set_db_collation) (database_collation_oid);
+
+	database_or_server_collation_oid = InvalidOid;
 }
 
 /*
