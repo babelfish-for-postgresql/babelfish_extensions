@@ -537,5 +537,3 @@ replicate
 space
 replace
 binary-datatype-operators
-alter-procedure
-alter-function

@@ -99,16 +99,6 @@ go
 select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p2';
 go
 
--- Test Case: attempt to alter function, expect error for being unsupported
-
-alter function alter_proc_f1()
-returns int
-as
-BEGIN
-    return 5
-END
-go
-
 -- Test Case: Transaction - begin, alter, rollback
 --                        - expect alter to not go through
 BEGIN TRANSACTION
