@@ -1077,6 +1077,19 @@ update_GrantRoleStmt(Node *n, List *privs, List *roles)
 }
 
 void
+update_RevokeRoleStmt(Node *n, List *privs, List *roles)
+{
+	GrantRoleStmt *stmt = (GrantRoleStmt *) n;
+
+	if (!IsA(stmt, GrantRoleStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RevokeRoleStmt")));
+
+	stmt->is_grant = false;
+	stmt->granted_roles = privs;
+	stmt->grantee_roles = roles;
+}
+
+void
 update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv)
 {
 	GrantStmt  *stmt = (GrantStmt *) n;

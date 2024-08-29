@@ -81,5 +81,7 @@ extern char *convertToUPN(char *input);
 extern bool windows_login_contains_invalid_chars(char *input);
 extern bool windows_domain_contains_invalid_chars(char *input);
 extern bool check_windows_logon_length(char *input);
+extern void grant_dbo_to_login(const char* login, const char* db_name);
+extern void revoke_dbo_from_login(const char* login, const char* db_name);
 
 #endif

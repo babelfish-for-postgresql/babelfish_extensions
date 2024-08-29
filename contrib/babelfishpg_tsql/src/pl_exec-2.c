@@ -28,6 +28,7 @@
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
 #include "src/include/lib/qunique.h"
+#include "rolecmds.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
@@ -3869,6 +3870,9 @@ static int
 exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *stmt)
 {
 	char *new_owner_is_user;
+	Oid 		save_userid;
+	int 		save_sec_context;
+	const char *prev_db_owner = get_owner_of_db(stmt->db_name);
 	
 	/* Verify target database exists. */
 	if (!DbidIsValid(get_db_id(stmt->db_name)))
@@ -3921,9 +3925,29 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						errmsg("The proposed new database owner is already a user or aliased in the database.")));				
 	}
-					
-	/* All validations done, perform the actual update */
-	update_db_owner(stmt->new_owner_name, stmt->db_name);	
+
+	/* Save the previous user to be restored after granting dbo role to the login. */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	PG_TRY();
+	{
+		/*
+		* Set current user to bbf_role_admin for grant roles.
+		*/
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+		/* Revoke dbo role from the previous owner */
+		revoke_dbo_from_login(prev_db_owner, stmt->db_name);
+
+		/* Grant dbo role to the new owner */
+		grant_dbo_to_login(stmt->new_owner_name, stmt->db_name);
+		update_db_owner(stmt->new_owner_name, stmt->db_name);	
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 	return PLTSQL_RC_OK;
 }
 
