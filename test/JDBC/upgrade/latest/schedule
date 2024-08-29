@@ -556,4 +556,5 @@ sys_partition_functions
 sys_partition_schemes
 space
 binary-datatype-operators
+SELECT_INTO_TEST
 
