@@ -10,7 +10,7 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 -- (sys.VARCHAR AS pg_catalog.TIME)
 DROP CAST (sys.VARCHAR AS pg_catalog.TIME);
 
-DROP FUNCTION sys.varchar2time();
+DROP FUNCTION sys.varchar2time(sys.VARCHAR);
 
 CREATE OR REPLACE FUNCTION sys.varchar2time(sys.VARCHAR, INT4 DEFAULT -1)
 RETURNS pg_catalog.TIME
