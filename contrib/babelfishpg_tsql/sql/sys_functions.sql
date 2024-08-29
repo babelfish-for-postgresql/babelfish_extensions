@@ -307,7 +307,7 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 CREATE OR REPLACE FUNCTION sys.suser_sid(IN login SYS.SYSNAME, IN Param2 INT DEFAULT NULL)
 RETURNS SYS.VARBINARY(85) AS $$
     SELECT CASE
-    WHEN login = '' 
+    WHEN login = '' COLLATE sys.database_default
         THEN CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85))
     ELSE 
         CAST(CAST(sys.suser_id(login) AS INT) AS SYS.VARBINARY(85))
@@ -2847,7 +2847,7 @@ STABLE
 AS $$
 DECLARE
     db_name text COLLATE sys.database_default; 
-    bbf_schema_name text;
+    bbf_schema_name text COLLATE sys.database_default;
     pg_schema text COLLATE sys.database_default;
     implied_dbo_permissions boolean;
     fully_supported boolean;
@@ -2930,7 +2930,7 @@ BEGIN
         db_name = babelfish_remove_delimiter_pair(cs_as_securable);
         IF db_name IS NULL THEN
             RETURN NULL;
-        ELSIF (SELECT COUNT(name) FROM sys.databases WHERE name = db_name) != 1 THEN
+        ELSIF (SELECT COUNT(name) FROM sys.databases WHERE name = db_name COLLATE sys.database_default) != 1 THEN
             RETURN 0;
         END IF;
     ELSIF cs_as_securable_class = 'schema' THEN
@@ -2938,7 +2938,7 @@ BEGIN
         IF bbf_schema_name IS NULL THEN
             RETURN NULL;
         ELSIF (SELECT COUNT(nspname) FROM sys.babelfish_namespace_ext ext
-                WHERE ext.orig_name = bbf_schema_name 
+                WHERE ext.orig_name = bbf_schema_name COLLATE sys.database_default 
                     AND ext.dbid = sys.db_id()) != 1 THEN
             RETURN 0;
         END IF;
@@ -2986,7 +2986,7 @@ BEGIN
     -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
     pg_schema := (SELECT nspname 
                     FROM sys.babelfish_namespace_ext ext 
-                    WHERE ext.orig_name = bbf_schema_name 
+                    WHERE ext.orig_name = bbf_schema_name COLLATE sys.database_default 
                         AND CAST(ext.dbid AS oid) = CAST(database_id AS oid));
 
     IF pg_schema IS NULL THEN
@@ -4173,8 +4173,8 @@ BEGIN
     END IF;
 
     -- To convert input jsonpath to the required jsonb_path format
-    json_path_convert = regexp_replace(json_path, '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
-    json_path_convert = regexp_replace(json_path_convert, '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
+    json_path_convert = regexp_replace(json_path COLLATE "C", '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
+    json_path_convert = regexp_replace(json_path_convert COLLATE "C", '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
     new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
 
     key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
@@ -4375,21 +4375,21 @@ DECLARE
     is_windows_grp boolean := (CHARINDEX('\', role) != 0);
 BEGIN
     -- Always return 1 for 'public'
-    IF (role = 'public')
+    IF (role = 'public' COLLATE sys.database_default )
     THEN RETURN 1;
     END IF;
 
-    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role AND type != 'S') -- do not consider sql logins
+    IF EXISTS (SELECT orig_loginname FROM sys.babelfish_authid_login_ext WHERE orig_loginname = role COLLATE sys.database_default AND type != 'S') -- do not consider sql logins
     THEN
-        IF ((EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type IN ('SERVER ROLE', 'SQL LOGIN'))) OR is_windows_grp) -- do not consider sql logins, server roles
+        IF ((EXISTS (SELECT name FROM sys.login_token WHERE name = role COLLATE sys.database_default AND type IN ('SERVER ROLE', 'SQL LOGIN'))) OR is_windows_grp) -- do not consider sql logins, server roles
         THEN RETURN NULL; -- Also return NULL if session is not a windows auth session but argument is a windows group
-        ELSIF EXISTS (SELECT name FROM sys.login_token WHERE name = role AND type NOT IN ('SERVER ROLE', 'SQL LOGIN'))
+        ELSIF EXISTS (SELECT name FROM sys.login_token WHERE name = role COLLATE sys.database_default AND type NOT IN ('SERVER ROLE', 'SQL LOGIN'))
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
         ELSE RETURN 0; -- Return 0 if current session user is not a member of role or windows group
         END IF;
-    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role)
+    ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role COLLATE sys.database_default)
     THEN
-        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role)
+        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role COLLATE sys.database_default)
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
         ELSIF (is_windows_grp)
         THEN RETURN NULL; -- Return NULL if session is not a windows auth session but argument is a windows group
@@ -4474,7 +4474,7 @@ BEGIN
 		RETURN NULL;
 	END IF;
 
-	IF property = 'basetype' -- BaseType
+	IF property = 'basetype' COLLATE "C" -- BaseType
 	THEN
 		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
                 FROM sys.all_objects ao
@@ -4580,57 +4580,57 @@ $BODY$
 DECLARE
 ret_val INT;
 BEGIN
-	index_or_statistics_name = LOWER(TRIM(index_or_statistics_name));
-	property = LOWER(TRIM(property));
+	index_or_statistics_name = LOWER(TRIM(index_or_statistics_name)) COLLATE sys.database_default;
+	property = LOWER(TRIM(property)) COLLATE sys.database_default;
     SELECT INTO ret_val
     CASE
        
         WHEN (SELECT CAST(type AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default) = 3 -- is XML index
         THEN CAST(NULL AS int)
 	    
-        WHEN property = 'indexdepth'
+        WHEN property = 'indexdepth' COLLATE sys.database_default
         THEN CAST(0 AS int)
 
-        WHEN property = 'indexfillfactor'
+        WHEN property = 'indexfillfactor' COLLATE sys.database_default
         THEN (SELECT CAST(fill_factor AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
 
-        WHEN property = 'indexid'
+        WHEN property = 'indexid' COLLATE sys.database_default
         THEN (SELECT CAST(index_id AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
 
-        WHEN property = 'isautostatistics'
+        WHEN property = 'isautostatistics' COLLATE sys.database_default
         THEN CAST(0 AS int)
 
-        WHEN property = 'isclustered'
+        WHEN property = 'isclustered' COLLATE sys.database_default
         THEN (SELECT CAST(CASE WHEN type = 1 THEN 1 ELSE 0 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'isdisabled'
+        WHEN property = 'isdisabled' COLLATE sys.database_default
         THEN (SELECT CAST(is_disabled AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'isfulltextkey'
+        WHEN property = 'isfulltextkey' COLLATE sys.database_default
         THEN CAST(0 AS int)
         
-        WHEN property = 'ishypothetical'
+        WHEN property = 'ishypothetical' COLLATE sys.database_default
         THEN (SELECT CAST(is_hypothetical AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'ispadindex'
+        WHEN property = 'ispadindex' COLLATE sys.database_default
         THEN (SELECT CAST(is_padded AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'ispagelockdisallowed'
+        WHEN property = 'ispagelockdisallowed' COLLATE sys.database_default
         THEN (SELECT CAST(CASE WHEN allow_page_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'isrowlockdisallowed'
+        WHEN property = 'isrowlockdisallowed' COLLATE sys.database_default
         THEN (SELECT CAST(CASE WHEN allow_row_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id=$1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'isstatistics'
+        WHEN property = 'isstatistics' COLLATE sys.database_default
         THEN CAST(0 AS int)
         
-        WHEN property = 'isunique'
+        WHEN property = 'isunique' COLLATE sys.database_default
         THEN (SELECT CAST(is_unique AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
         
-        WHEN property = 'iscolumnstore'
+        WHEN property = 'iscolumnstore' COLLATE sys.database_default
         THEN CAST(0 AS int)
         
-        WHEN property = 'isoptimizedforsequentialkey'
+        WHEN property = 'isoptimizedforsequentialkey' COLLATE sys.database_default
         THEN CAST(0 AS int)
     ELSE
         CAST(NULL AS int)

@@ -134,10 +134,10 @@ master#!#dbo#!#dbmeta_tab1#!#col1#!#master#!#dbo#!#dbmeta_tab2#!#fcol1#!#1#!#3#!
 dbmeta#!#getIndexInfo#!#master|dbo|dbmeta_tab1|false|true
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 master#!#dbo#!#dbmeta_tab1#!#0#!#dbmeta_tab1#!#dbmeta_tab1_pkey#!#3#!#1#!#col1#!#A#!#<NULL>#!#0#!#<NULL>
 master#!#dbo#!#dbmeta_tab1#!#0#!#dbmeta_tab1#!#idx2#!#3#!#1#!#col2#!#A#!#<NULL>#!#0#!#<NULL>
 master#!#dbo#!#dbmeta_tab1#!#1#!#dbmeta_tab1#!#idx1#!#3#!#1#!#col2#!#A#!#<NULL>#!#0#!#<NULL>
-master#!#dbo#!#dbmeta_tab1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 dbmeta#!#getIndexInfo#!#master|dbo|dbmeta_tab2|true|true

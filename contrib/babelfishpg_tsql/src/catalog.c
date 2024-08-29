@@ -1215,12 +1215,12 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 
 	ScanKeyEntryInitialize(&scanKey[1], 0, Anum_bbf_view_def_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
+				tsql_get_database_or_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(logical_schema_name));
 
 	ScanKeyEntryInitialize(&scanKey[2], 0, Anum_bbf_view_def_object_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
+				tsql_get_database_or_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(view_name));
 
 	scan = systable_beginscan(bbf_view_def_rel,
@@ -3358,18 +3358,18 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 	ScanKeyEntryInitialize(&key[1], 0,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 	ScanKeyEntryInitialize(&key[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(object_name));
 	ScanKeyEntryInitialize(&key[3], 0,
 				Anum_bbf_schema_perms_object_type,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_type));
 
@@ -3448,12 +3448,12 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 	logical_schema_name = get_logical_schema_name(stmt->relation->schemaname, true);
 	ScanKeyEntryInitialize(&key[1], 0, Anum_bbf_view_def_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false), 
+				tsql_get_database_or_server_collation_oid_internal(false), 
 				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 	ScanKeyEntryInitialize(&key[2], 0,
 				Anum_bbf_view_def_object_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(stmt->relation->relname));
 
 	/* scan */
@@ -3724,14 +3724,14 @@ update_privileges_of_object(const char *schema_name,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(schema_name));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_name));
 	ScanKeyInit(&scanKey[3],
@@ -3742,7 +3742,7 @@ update_privileges_of_object(const char *schema_name,
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(grantee));
 
@@ -3814,21 +3814,21 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(schema_name));
 		ScanKeyEntryInitialize(&scanKey[2], 0,
 					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_name));
 		ScanKeyEntryInitialize(&scanKey[3], 0,
 					Anum_bbf_schema_perms_grantee,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(grantee));
 		scan = systable_beginscan(bbf_schema_rel,
@@ -3848,14 +3848,14 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(schema_name));
 		ScanKeyEntryInitialize(&scanKey[2], 0,
 					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_name));
 
@@ -3899,28 +3899,28 @@ get_privilege_of_object(const char *schema_name,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(schema_name));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_name));
 	ScanKeyEntryInitialize(&scanKey[3], 0,
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(grantee));
 	ScanKeyEntryInitialize(&scanKey[4], 0,
 				Anum_bbf_schema_perms_object_type,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_type));
 	scan = systable_beginscan(bbf_schema_rel,
@@ -3974,28 +3974,28 @@ remove_entry_from_bbf_schema_perms(const char *schema_name,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(schema_name));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_name));
 	ScanKeyEntryInitialize(&scanKey[3], 0,
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(grantee));
 	ScanKeyEntryInitialize(&scanKey[4], 0,
 				Anum_bbf_schema_perms_object_type,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_type));
 	scan = systable_beginscan(bbf_schema_rel,
@@ -4062,7 +4062,7 @@ clean_up_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(schema_name));
 		scan = systable_beginscan(bbf_schema_rel,
@@ -4080,14 +4080,14 @@ clean_up_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(schema_name));
 		ScanKeyEntryInitialize(&scanKey[2], 0,
 					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_name));
 		scan = systable_beginscan(bbf_schema_rel,
@@ -4172,14 +4172,14 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(schema_name));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(grantee));
 
@@ -4283,14 +4283,14 @@ exec_internal_grant_on_function(const char *logicalschema,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(logicalschema));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA));
 
@@ -5159,7 +5159,7 @@ is_partition_function_used(int16 dbid, const char *partition_function_name)
 	ScanKeyEntryInitialize(&scanKey[1], 0, 
 				Anum_bbf_partition_scheme_func_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 
 	scan = systable_beginscan(rel,
@@ -5245,7 +5245,7 @@ remove_entry_from_bbf_partition_function(int16 dbid, const char *partition_funct
 	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_partition_function_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 	/* scan using index */
 	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
@@ -5307,7 +5307,7 @@ partition_function_exists(int16 dbid, const char *partition_function_name)
 	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_partition_function_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 	
 	/* scan using index */
@@ -5345,7 +5345,7 @@ get_partition_count(int16 dbid, const char *partition_function_name)
 	ScanKeyEntryInitialize(&scanKey[1], 0, 
 				Anum_bbf_partition_function_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 	/* scan using index */
 	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
@@ -5390,7 +5390,7 @@ is_partition_scheme_used(int16 dbid, const char *partition_scheme_name)
 	ScanKeyEntryInitialize(&scanKey[1], 0, 
 				Anum_bbf_partition_depend_scheme_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 
 
@@ -5474,7 +5474,7 @@ remove_entry_from_bbf_partition_scheme(int16 dbid, const char *partition_scheme_
 	ScanKeyEntryInitialize(&scanKey[1], 0, 
 				Anum_bbf_partition_scheme_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 	/* scan using index */
 	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
@@ -5536,7 +5536,7 @@ partition_scheme_exists(int16 dbid, const char *partition_scheme_name)
 	ScanKeyEntryInitialize(&scanKey[1], 0, 
 				Anum_bbf_partition_scheme_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
@@ -5574,7 +5574,7 @@ get_partition_function_name(int16 dbid, const char *partition_scheme_name)
 	ScanKeyEntryInitialize(&scanKey[1], 0, 
 				Anum_bbf_partition_scheme_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
@@ -5649,13 +5649,13 @@ remove_entry_from_bbf_partition_depend(int16 dbid, char *schema_name, char *tabl
 	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_partition_depend_table_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(schema_name));
 
 	ScanKeyEntryInitialize(&scanKey[2], 0, 
 				Anum_bbf_partition_depend_table_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(table_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
@@ -5701,13 +5701,13 @@ rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt, char *logical
 	ScanKeyEntryInitialize(&scanKey[1], 0, 
 				Anum_bbf_partition_depend_table_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 
 	ScanKeyEntryInitialize(&scanKey[2], 0, 
 				Anum_bbf_partition_depend_table_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(table_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
@@ -5768,13 +5768,13 @@ is_bbf_partitioned_table(int16 dbid, char *schema_name, char *table_name)
 	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_partition_depend_table_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(schema_name));
 
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_partition_depend_table_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(table_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
@@ -5813,13 +5813,13 @@ get_partition_scheme_for_partitioned_table(int16 dbid, char *schema_name, char *
 	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_partition_depend_table_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(schema_name));
 
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_partition_depend_table_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(table_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),

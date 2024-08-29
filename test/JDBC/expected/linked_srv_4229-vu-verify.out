@@ -67,3 +67,41 @@ int
 USE master
 DROP DATABASE openquery_db
 GO
+
+-- Tests for db level collation
+CREATE DATABASE openquery_db COLLATE BBF_Unicode_CP1_CI_AI
+USE openquery_db
+CREATE TABLE t_openquerydb_babel_4229 (b int)
+INSERT INTO t_openquerydb_babel_4229 VALUES (42291)
+SELECT * FROM OPENQUERY(server_4229, 'SELECT ''Called from openquery_db''')
+SELECT * FROM server_4229.openquery_db.dbo.t_openquerydb_babel_4229
+DROP TABLE t_openquerydb_babel_4229
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'openquery_db'.  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'openquery_db'.  Server SQLState: S0001)~~
+
+~~START~~
+varchar
+Called from openquery_db
+~~END~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'openquery_db'.  Server SQLState: S0001)~~
+
+~~START~~
+int
+42291
+~~END~~
+
+
+USE master
+DROP DATABASE openquery_db
+GO
