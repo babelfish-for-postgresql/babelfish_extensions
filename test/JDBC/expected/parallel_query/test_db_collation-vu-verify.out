@@ -1655,7 +1655,7 @@ Gather  (cost=0.14..12.27 rows=9 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.215 ms
+Babelfish T-SQL Batch Parsing Time: 0.271 ms
 ~~END~~
 
 
@@ -1673,7 +1673,7 @@ Gather  (cost=0.14..12.27 rows=9 width=2)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.146 ms
+Babelfish T-SQL Batch Parsing Time: 0.147 ms
 ~~END~~
 
 
@@ -1691,7 +1691,7 @@ Gather  (cost=0.14..12.27 rows=9 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
 ~~END~~
 
 
@@ -1709,7 +1709,7 @@ Gather  (cost=0.14..12.27 rows=9 width=10)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.160 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 
@@ -1727,7 +1727,7 @@ Gather  (cost=0.14..12.27 rows=9 width=22)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 41.189 ms
+Babelfish T-SQL Batch Parsing Time: 41.141 ms
 ~~END~~
 
 
@@ -1746,7 +1746,7 @@ Gather  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.595 ms
+Babelfish T-SQL Batch Parsing Time: 9.059 ms
 ~~END~~
 
 
@@ -1764,7 +1764,7 @@ Gather  (cost=0.13..12.19 rows=4 width=9)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.141 ms
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
 ~~END~~
 
 
@@ -1782,7 +1782,7 @@ Gather  (cost=0.14..12.27 rows=9 width=18)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.176 ms
+Babelfish T-SQL Batch Parsing Time: 0.286 ms
 ~~END~~
 
 
@@ -1802,7 +1802,7 @@ Gather  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.141 ms
+Babelfish T-SQL Batch Parsing Time: 0.149 ms
 ~~END~~
 
 
@@ -1979,47 +1979,47 @@ TEññiȘ
 
 
 
-
-
-
-
-
--- COMMENTING IT FOR NOW AS PREP EXEC IS NOT GIVING CORRECT OUTOUT
 -- Case 6.2: Validate whether correct collation is being picked up or not by PREPARED STATEMENTS
--- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
--- DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
--- DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
--- DECLARE @prefix4 NVARCHAR(50) = 'pínata';
--- DECLARE @query NVARCHAR(MAX) = N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4';
--- EXEC sp_executesql @query,
---                    N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
---                    @prefix1, @prefix2, @prefix3, @prefix4;
--- GO
--- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
--- EXEC sp_executesql N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1;', N'@prefix1 NVARCHAR(50)', @prefix1;
--- GO
--- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
--- DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
--- DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
--- DECLARE @prefix4 NVARCHAR(50) = 'pínata';
--- DECLARE @query NVARCHAR(MAX) = N'
--- DECLARE @nv NVARCHAR(50);
--- DECLARE CurResult CURSOR FOR
---     SELECT nv FROM test_db_collation_vu_prepare_db121_t1
---     WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4;
--- OPEN CurResult;
--- FETCH NEXT FROM CurResult INTO @nv;
--- WHILE @@FETCH_STATUS = 0
--- BEGIN
---     PRINT @nv;
---     FETCH NEXT FROM CurResult INTO @nv;
--- END
--- CLOSE CurResult;
--- DEALLOCATE CurResult;';
--- EXEC sp_executesql @query,
---                    N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
---                    @prefix1, @prefix2, @prefix3, @prefix4;
--- GO
+-- Simple prep-exec
+DECLARE @prefix1 NVARCHAR(50) = 'cafe';
+DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
+DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
+DECLARE @prefix4 NVARCHAR(50) = 'pínata';
+DECLARE @query NVARCHAR(MAX) = N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4';
+EXEC sp_executesql @query,
+                   N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
+                   @prefix1, @prefix2, @prefix3, @prefix4;
+GO
+~~START~~
+nvarchar
+café
+jalapeño
+naïve
+Piñata
+~~END~~
+
+
+
+--- prep-exec using CURSOR
+DECLARE @query NVARCHAR(MAX) = N'
+DECLARE @nv NVARCHAR(50);
+DECLARE CurResult CURSOR FOR
+SELECT nv FROM test_db_collation_vu_prepare_db121_t1
+WHERE nv = @prefix;
+OPEN CurResult;
+FETCH NEXT FROM CurResult;
+CLOSE CurResult;
+DEALLOCATE CurResult;';
+DECLARE @prefix NVARCHAR(50) = 'cafe';
+EXEC sp_executesql @query, N'@prefix NVARCHAR(50)', @prefix;
+GO
+~~START~~
+nvarchar
+café
+~~END~~
+
+
+
 -- case 9: Cross-database queries (will behave like JOIN)
 USE test_db_collation_vu_prepare_db121;
 GO

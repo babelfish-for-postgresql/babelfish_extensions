@@ -64,6 +64,7 @@
 #include "session.h"
 #include "guc.h"
 #include "catalog.h"
+#include "collation.h"
 
 uint64		rowcount_var = 0;
 List	   *columns_updated_list = NIL;
@@ -7100,7 +7101,12 @@ pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 
 				*typeId = var->datatype->typoid;
 				*typMod = var->datatype->atttypmod;
-				*collation = var->datatype->collation;
+
+				/* Check whether datatype is collatable, if yes then assign database level collation to it */
+				if (OidIsValid(var->datatype->collation))
+					*collation = tsql_get_database_or_server_collation_oid_internal(false);
+				else 
+					*collation = var->datatype->collation;
 				break;
 			}
 
