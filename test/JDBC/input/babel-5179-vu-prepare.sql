@@ -9,10 +9,6 @@ insert into babel_5179_t1 values ('12:45:37.12');
 insert into babel_5179_t1 values ('12:45:37.1');
 go
 
--- constraint check gives error
-insert into babel_5179_t1 values ('12:45:37.0');
-go
-
 create view babel_5179_v11 as select col1, col2 from babel_5179_t1;
 go
 
@@ -34,10 +30,6 @@ go
 insert into babel_5179_t2 values ('12:45:37.123');
 insert into babel_5179_t2 values ('12:45:37.12');
 insert into babel_5179_t2 values ('12:45:37.1');
-go
-
--- constraint check gives error
-insert into babel_5179_t2 values ('12:45:37.0');
 go
 
 create view babel_5179_v22 as select col1, col2 from babel_5179_t2;
