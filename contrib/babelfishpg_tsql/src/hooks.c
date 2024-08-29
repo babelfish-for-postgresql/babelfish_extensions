@@ -5299,25 +5299,158 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
 }
 
+/*
+ * prepare_pivot_view_helper_view_rawstmt
+ *    prepare a RawStmt for pivot view helper view.
+ */
+static RawStmt*
+prepare_pivot_view_helper_view_rawstmt(char *view_name)
+{
+	RawStmt		*rawstmt;
+	SelectStmt  *selectstmt;
+	ColumnRef 		*a_star;
+	ResTarget 		*a_star_restarget;
+
+	a_star = makeNode(ColumnRef);
+	a_star->fields = list_make1(makeNode(A_Star));
+	a_star->location = -1;
+	a_star_restarget = makeNode(ResTarget);
+	a_star_restarget->name = NULL;
+	a_star_restarget->name_location = -1;
+	a_star_restarget->indirection = NIL;
+	a_star_restarget->val = (Node *) a_star;
+	a_star_restarget->location = -1;
+
+	selectstmt = makeNode(SelectStmt);
+	selectstmt->targetList = list_make1(a_star_restarget);
+	selectstmt->fromClause = list_make1(makeRangeVar(NULL, pstrdup(view_name), -1));
+	
+	rawstmt = makeNode(RawStmt);
+	rawstmt->stmt = (Node *) selectstmt;
+	rawstmt->stmt_location = 0;
+	rawstmt->stmt_len = 0;
+
+	return rawstmt;
+}
+
 static void
 pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr)
 {
+	Oid func_arg_typeOid;
+	HeapTuple	tuple;
+	char 			*func_name;
+	char			*pivot_view_uuid;
 	/* if current FuncExpr is a bbf_pivot function, we set the fcinfo context to pivot data */
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	if (IsA(expr, FuncExpr) 
-		&& ((FuncExpr*) expr)->context != NULL
-		&& (IsA(((FuncExpr*) expr)->context, List)))
+	func_arg_typeOid = InvalidOid;
+
+	/* check if the current function call is bbf_pivot */
+	/* bbf_pivot function expect to pass 1 argument */
+	if (fcinfo->nargs != 1)
+		return;
+
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
+	if (HeapTupleIsValid(tuple))
 	{
-		Node *node;	
-		node = list_nth((List *)((FuncExpr*) expr)->context, 0);
-		if (IsA(node, List) 
-				&& IsA(list_nth((List *)node, 0), String) 
-				&& strcmp(((String *)list_nth((List *)node, 0))->sval, "bbf_pivot_func") == 0)
+		Form_pg_proc form = (Form_pg_proc) GETSTRUCT(tuple);
+		func_name = NameStr(form->proname);
+		func_arg_typeOid = form->proargtypes.values[0];
+		ReleaseSysCache(tuple);
+	}
+
+	if (strcmp(func_name, "bbf_pivot") != 0 || func_arg_typeOid != TEXTOID)
+		return;
+
+	/* At this point, we are certain the function is bbf_pivot */
+	pivot_view_uuid = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	if (pivot_view_uuid && strlen(pivot_view_uuid) == 0)
+	{
+		/* 
+		 * non pivot view case
+		 * pivot context list is already prepared at analyzer (within transform_pivot_clause)
+		 */
+		if (IsA(expr, FuncExpr) 
+			&& ((FuncExpr*) expr)->context != NULL
+			&& (IsA(((FuncExpr*) expr)->context, List)))
 		{
-			fcinfo->context = ((FuncExpr*) expr)->context;
+			Node *node;	
+			node = list_nth((List *)((FuncExpr*) expr)->context, 0);
+			if (IsA(node, List) 
+					&& IsA(list_nth((List *)node, 0), String) 
+					&& strcmp(((String *)list_nth((List *)node, 0))->sval, "bbf_pivot_func") == 0)
+			{
+				fcinfo->context = ((FuncExpr*) expr)->context;
+			}
 		}
+	}
+	else if (pivot_view_uuid && strlen(pivot_view_uuid) == PIVOT_UUID_LEN)
+	{
+		/* 
+		 * pivot view case
+		 * pivot context list need to be built here
+		 */
+		Relation	rel;
+		HeapTuple	tp;
+		SysScanDesc	scan;
+		ScanKeyData	scanKey[1];
+		RawStmt		*s_sql;
+		RawStmt		*c_sql;
+		char		*funcName;
+		List 		*pivot_context_list;
+		StringInfoData 		buf;
+		
+		funcName = "";
+		/* get pivot aggregate function name */
+		rel = table_open(get_bbf_pivot_view_oid(), RowExclusiveLock);
+
+		ScanKeyInit(&scanKey[0],
+					Anum_bbf_pivot_view_pivot_view_uuid,
+					BTEqualStrategyNumber, F_TEXTEQ,
+					CStringGetTextDatum(pivot_view_uuid));
+		
+		scan = systable_beginscan(rel, get_bbf_pivot_view_idx_oid(),
+					false, NULL, 1, scanKey);
+
+		tp = systable_getnext(scan);
+		if (HeapTupleIsValid(tp))
+		{
+			bool isnull;
+			funcName = TextDatumGetCString(heap_getattr(tp, Anum_bbf_pivot_view_agg_func_name, RelationGetDescr(rel), &isnull));
+		}
+		
+		systable_endscan(scan);
+		table_close(rel, RowExclusiveLock);
+
+		/* prepare for the pivot view helper view's RawStmt */
+		initStringInfo(&buf);
+		appendStringInfoString(&buf, BBF_PIVOT_VIEW_SRC_PREFIX);
+		appendStringInfoString(&buf, pivot_view_uuid);
+		s_sql = prepare_pivot_view_helper_view_rawstmt(buf.data);
+		
+		resetStringInfo(&buf);
+		appendStringInfoString(&buf, BBF_PIVOT_VIEW_CAT_PREFIX);
+		appendStringInfoString(&buf, pivot_view_uuid);
+		c_sql = prepare_pivot_view_helper_view_rawstmt(buf.data);
+
+		/* combine everything into a context list */
+		pivot_context_list = list_make3(list_make1(makeString("bbf_pivot_func")),
+								list_make2((Node *) copyObject(s_sql),
+											(Node *) copyObject(c_sql)
+											),
+								list_make2(makeString(""),
+											makeString(funcName)
+											)
+								);
+		fcinfo->context = (Node *) pivot_context_list;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+					errmsg("Babelfish PIVOT is not properly initialized.")));
 	}
 }
 
@@ -5561,16 +5694,13 @@ parse_analyze_babelfish_view(ViewStmt *stmt, RawStmt *rawstmt, const char *query
 											"BabelViewMemoryContext",
 											ALLOCSET_DEFAULT_SIZES),
 								false);
-	setQueryEnvInView(currentQueryEnv, true);
-	setQueryEnvViewName(currentQueryEnv, viewName);
+	setQueryEnvViewInfo(currentQueryEnv, viewName, true);
 	PG_TRY();
 	{
 		viewParse = parse_analyze_fixedparams(rawstmt, queryString, NULL, 0, currentQueryEnv);
 	}
 	PG_FINALLY();
 	{
-		setQueryEnvInView(currentQueryEnv, false);
-		setQueryEnvViewName(currentQueryEnv, "");
 		remove_queryEnv();
 	}
 	PG_END_TRY();

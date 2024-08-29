@@ -501,6 +501,7 @@ extern void	rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt, c
 #define Anum_bbf_pivot_view_pivot_view_name 4
 #define Anum_bbf_pivot_view_agg_func_name 5
 #define BBF_PIVOT_VIEW_NUM_COLS 5
+#define PIVOT_UUID_LEN 32
 #define BBF_PIVOT_VIEW_SRC_PREFIX "pvt_sv_"
 #define BBF_PIVOT_VIEW_CAT_PREFIX "pvt_cv_"
 extern Oid	bbf_pivot_view_oid;

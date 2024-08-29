@@ -6217,12 +6217,12 @@ remove_entrys_from_bbf_pivot_view(int16 dbid, const char *logical_schema_name, c
 
 	ScanKeyEntryInitialize(&scanKey[1], 0, Anum_bbf_pivot_view_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
+				tsql_get_database_or_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(logical_schema_name));
 
 	ScanKeyEntryInitialize(&scanKey[2], 0, Anum_bbf_pivot_view_pivot_view_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
+				tsql_get_database_or_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(pivot_view_name));
     
 	scan = systable_beginscan(rel, get_bbf_pivot_view_idx_oid(),
