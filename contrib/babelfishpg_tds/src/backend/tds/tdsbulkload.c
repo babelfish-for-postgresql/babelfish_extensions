@@ -960,6 +960,7 @@ CleanupBCPDuringError(bool internal_sp_started,
 				"was in inconsistent state during Bulk Copy");
 		pltsql_plugin_handler_ptr->pltsql_rollback_txn_callback();
 	}
+
 	MemoryContextSwitchTo(oldcontext);
 	RESUME_INTERRUPTS();
 }
