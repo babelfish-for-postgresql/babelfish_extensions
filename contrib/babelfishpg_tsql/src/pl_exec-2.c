@@ -3599,6 +3599,7 @@ execute_bulk_load_insert(int ncol, int nrow,
 				pfree(cstmt->relation);
 			}
 			pfree(cstmt);
+			cstmt = NULL;
 		}
 
 		/* Reset Insert-Bulk Options. */
