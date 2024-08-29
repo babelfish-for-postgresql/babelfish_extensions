@@ -367,3 +367,95 @@ go
 -- dropping the table select_into_REPO
 drop table if exists select_into_REPO;
 go
+-- Test Case 17: Multibyte Column Name (Chinese) more then 64 characters
+create table select_into(中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into int);
+go
+insert into select_into values (1), (2), (3);
+go
+select 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into from select_into;
+go
+
+-- Create a new table select_into_REPO with column 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into
+select 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into into select_into_REPO from select_into;
+go
+
+-- Check the data in select_into_REPO
+select * from select_into_REPO;
+go
+
+-- Indexing over column 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into
+create index IDX_REPRODUCTION on select_into_REPO(中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into);
+go
+
+-- output is the lowercase name
+select column_name from information_schema.columns where table_name = 'select_into_REPO'
+go
+-- dropping the table select_into
+drop table if exists select_into;
+go
+
+-- dropping the table select_into_REPO
+drop table if exists select_into_REPO;
+go
+
+-- Test Case 17: table with multi-part names
+create table dbo.select_into(select_into_COL int);
+go
+insert into dbo.select_into values (1), (2), (3);
+go
+select select_into_COL from dbo.select_into;
+go
+-- Create a new table select_into_REPO with column select_into_COL using multi-part name
+select dbo.select_into.select_into_COL into select_into_REPO from dbo.select_into;
+go
+
+-- Check the data in select_into_REPO
+select * from select_into_REPO;
+go
+
+-- Indexing over column select_into_COL
+create index IDX_REPRODUCTION on select_into_REPO(select_into_COL);
+go
+
+-- output is the lowercase name
+select column_name from information_schema.columns where table_name = 'select_into_REPO'
+go
+
+-- dropping the table dbo.select_into
+drop table if exists dbo.select_into;
+go
+
+-- dropping the table select_into_REPO
+drop table if exists select_into_REPO;
+go
+
+-- Test Case 18: table with multi-part names and clumn name length > 64
+create table dbo.select_into(select_into_COL_select_into_COL_Col_length_greater_then_sixty_four int);
+go
+insert into dbo.select_into values (1), (2), (3);
+go
+select select_into_COL_select_into_COL_Col_length_greater_then_sixty_four from dbo.select_into;
+go
+-- Create a new table select_into_REPO with column select_into_COL_select_into_COL_Col_length_greater_then_sixty_four using multi-part name
+select dbo.select_into.select_into_COL_select_into_COL_Col_length_greater_then_sixty_four into select_into_REPO from dbo.select_into;
+go
+
+-- Check the data in select_into_REPO
+select * from select_into_REPO;
+go
+
+-- Indexing over column select_into_COL_select_into_COL_Col_length_greater_then_sixty_four
+create index IDX_REPRODUCTION on select_into_REPO(select_into_COL_select_into_COL_Col_length_greater_then_sixty_four);
+go
+
+-- output is the lowercase name
+select column_name from information_schema.columns where table_name = 'select_into_REPO'
+go
+
+-- dropping the table dbo.select_into
+drop table if exists dbo.select_into;
+go
+
+-- dropping the table select_into_REPO
+drop table if exists select_into_REPO;
+go
