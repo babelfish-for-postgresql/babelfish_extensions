@@ -438,7 +438,7 @@ drop table sourceTable
 drop table sourceTable1
 drop table destinationTable
 
-SET implicit_transactions ON
+ SET implicit_transactions ON
 ####### implicit_transactions rollback with and without error #######
 
 # last row is error (last packet will be flushed)
@@ -555,4 +555,4 @@ drop table sourceTable
 drop table sourceTable1
 drop table destinationTable
 
-SET implicit_transactions OFF
+ SET implicit_transactions OFF

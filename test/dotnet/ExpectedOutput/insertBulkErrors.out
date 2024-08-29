@@ -512,7 +512,7 @@ on
 #Q#drop table sourceTable
 #Q#drop table sourceTable1
 #Q#drop table destinationTable
-#Q#SET implicit_transactions ON
+#Q# SET implicit_transactions ON
 #Q#create table sourceTable(c1 int, c2 CHAR(1024))
 #Q#INSERT INTO sourceTable SELECT generate_series(1, 1001, 1), 'Foo'
 #Q#create table destinationTable(c1 int, c2 CHAR(1024), check(c1 < 1000))
@@ -654,4 +654,4 @@ on
 #Q#drop table sourceTable
 #Q#drop table sourceTable1
 #Q#drop table destinationTable
-#Q#SET implicit_transactions OFF
+#Q# SET implicit_transactions OFF

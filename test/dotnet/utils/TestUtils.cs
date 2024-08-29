@@ -42,7 +42,7 @@ namespace BabelfishDotnetFramework
 				/* To Enforce Reset Connection. */
 				reader = bblCmd.ExecuteReader();
 				using (SqlConnection destinationConnection =
-                       new SqlConnection(ConfigSetup.BblConnectionString))
+                       new SqlConnection(ConfigSetup.BCPConnectionString))
 				{
 					destinationConnection.Open();
 
