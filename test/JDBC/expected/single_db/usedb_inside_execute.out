@@ -151,3 +151,149 @@ go
 
 ~~ERROR (Message: database "db3" does not exist)~~
 
+-- Using Collation BBF_Unicode_CP1_CI_AI
+create database db1 collate BBF_Unicode_CP1_CI_AI;
+go
+
+create database db2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "db1" already exists)~~
+
+
+create database db3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "db1" already exists)~~
+
+
+-- should be master
+select db_name();
+go
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+-- should not change the session to db1 after exec
+exec('use db1 select db_name()'); select db_name();
+go
+~~START~~
+nvarchar
+db1
+~~END~~
+
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+-- should change the context to db1
+use db1; select db_name();
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'db1'.  Server SQLState: S0001)~~
+
+~~START~~
+nvarchar
+db1
+~~END~~
+
+
+use db2; create table t1(a int); use master;
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+-- handle the catch scenario, the error should abort the batch and
+-- database would be reset to master 
+EXECUTE('USE db1; EXECUTE(''USE db2 create table t1(a int)''); SELECT db_name();'); select db_name()
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+select db_name()
+go
+~~START~~
+nvarchar
+db1
+~~END~~
+
+
+use db2; drop table t1; use master;
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+-- nested execute; should not change the database context
+execute('USE db2; EXECUTE(''USE db1 SELECT db_name()''); SELECT db_name();'); select db_name();
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+use db2;
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+create procedure use_db as begin EXECUTE('USE db3 SELECT db_name()') end
+go
+
+use master
+go
+
+-- nested execute with procedure
+EXECUTE('USE db1; EXECUTE(''USE db2; exec use_db; SELECT db_name();''); SELECT db_name();') select db_name();
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+-- nested execute with runtime error
+EXECUTE('USE db1; EXECUTE(''USE db2 SELECT 1/0''); SELECT db_name();'); select db_name();
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+use db2; drop procedure use_db; use master;
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+drop database db1;
+go
+
+drop database db2;
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+drop database db3;
+go
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db3" does not exist)~~
+
+

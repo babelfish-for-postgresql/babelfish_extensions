@@ -1,0 +1,2019 @@
+-- tsql
+-- Case 2: Validate that correct collation is picked up for all databases
+SELECT name, collation_name FROM sys.databases ORDER BY name;
+GO
+~~START~~
+varchar#!#varchar
+master#!#chinese_prc_ci_as
+msdb#!#chinese_prc_ci_as
+tempdb#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db121#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db131#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db132#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db133#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db134#!#estonian_ci_ai
+test_db_collation_vu_prepare_db135#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db136#!#french_ci_ai
+test_db_collation_vu_prepare_db137#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db138#!#polish_ci_ai
+test_db_collation_vu_prepare_db139#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db141#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db142#!#chinese_prc_ci_as
+~~END~~
+
+
+SELECT name, default_collation FROM babelfish_sysdatabases ORDER BY name;
+GO
+~~START~~
+text#!#varchar
+master#!#chinese_prc_ci_as
+msdb#!#chinese_prc_ci_as
+tempdb#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db121#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db131#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db132#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db133#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db134#!#estonian_ci_ai
+test_db_collation_vu_prepare_db135#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db136#!#french_ci_ai
+test_db_collation_vu_prepare_db137#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db138#!#polish_ci_ai
+test_db_collation_vu_prepare_db139#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db141#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db142#!#chinese_prc_ci_as
+~~END~~
+
+
+-- Case 3: Validate that correct collation is picked up for all databases using DATABASEPROPERTYEX
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db11', 'Collation');
+GO
+~~START~~
+sql_variant
+chinese_prc_ci_as
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db121', 'Collation');
+GO
+~~START~~
+sql_variant
+bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db122', 'Collation');
+GO
+~~START~~
+sql_variant
+bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db131', 'Collation');
+GO
+~~START~~
+sql_variant
+bbf_unicode_cp1250_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db132', 'Collation');
+GO
+~~START~~
+sql_variant
+bbf_unicode_cp1257_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db133', 'Collation');
+GO
+~~START~~
+sql_variant
+bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db134', 'Collation');
+GO
+~~START~~
+sql_variant
+estonian_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db135', 'Collation');
+GO
+~~START~~
+sql_variant
+finnish_swedish_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db136', 'Collation');
+GO
+~~START~~
+sql_variant
+french_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db137', 'Collation');
+GO
+~~START~~
+sql_variant
+modern_spanish_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db138', 'Collation');
+GO
+~~START~~
+sql_variant
+polish_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db139', 'Collation');
+GO
+~~START~~
+sql_variant
+traditional_spanish_ci_ai
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db141', 'Collation');
+GO
+~~START~~
+sql_variant
+bbf_unicode_cp1_ci_as
+~~END~~
+
+
+SELECT DATABASEPROPERTYEX('test_db_collation_vu_prepare_db142', 'Collation');
+GO
+~~START~~
+sql_variant
+chinese_prc_ci_as
+~~END~~
+
+
+-- Case 4: Verify that the columns are picking correct collation (IMPLICIT COLLATION)
+-- Case 7: Validate collations of datatypes using catalogs like sys.types
+-- Case 8: CREATE custom datatype from system datatype and validate the same using sys.types
+USE test_db_collation_vu_prepare_db11;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db11_t1#!#c#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11_t1#!#nc#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11_t1#!#nt#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11_t1#!#nv#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11_t1#!#sn#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11_t1#!#sqlv#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11_t1#!#t#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11_t1#!#v#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db11_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db11_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db11_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db11_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db11_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db11_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db11_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db11_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db11_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#chinese_prc_ci_as
+nc#!#chinese_prc_ci_as
+v#!#chinese_prc_ci_as
+nv#!#chinese_prc_ci_as
+t#!#chinese_prc_ci_as
+nt#!#chinese_prc_ci_as
+sqlv#!#chinese_prc_ci_as
+sn#!#chinese_prc_ci_as
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db11_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#chinese_prc_ci_as
+nchar#!#chinese_prc_ci_as
+ntext#!#chinese_prc_ci_as
+nvarchar#!#chinese_prc_ci_as
+sql_variant#!#chinese_prc_ci_as
+sysname#!#chinese_prc_ci_as
+text#!#chinese_prc_ci_as
+varchar#!#chinese_prc_ci_as
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#chinese_prc_ci_as
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db121;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn', 'a', 'b', 'd', 'id') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db121_columns_foreign#!#id#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#a#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#b#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#d#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_computed_columns#!#a#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_computed_columns#!#b#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#v#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t2#!#c#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db121_t2#!#nc#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db121_t2#!#nt#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db121_t2#!#nv#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db121_t2#!#sn#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db121_t2#!#sqlv#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db121_t2#!#t#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db121_t2#!#v#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db121_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db121_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_as
+nc#!#bbf_unicode_cp1_ci_as
+v#!#bbf_unicode_cp1_ci_as
+nv#!#bbf_unicode_cp1_ci_as
+t#!#bbf_unicode_cp1_ci_as
+nt#!#bbf_unicode_cp1_ci_as
+sqlv#!#bbf_unicode_cp1_ci_as
+sn#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#bbf_unicode_cp1_ci_ai
+nchar#!#bbf_unicode_cp1_ci_ai
+ntext#!#bbf_unicode_cp1_ci_ai
+nvarchar#!#bbf_unicode_cp1_ci_ai
+sql_variant#!#bbf_unicode_cp1_ci_ai
+sysname#!#bbf_unicode_cp1_ci_ai
+text#!#bbf_unicode_cp1_ci_ai
+varchar#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db122;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db122_t1#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t1#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t1#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t1#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t1#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t1#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t1#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t1#!#v#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db122_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db122_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db122_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#bbf_unicode_cp1_ci_ai
+nchar#!#bbf_unicode_cp1_ci_ai
+ntext#!#bbf_unicode_cp1_ci_ai
+nvarchar#!#bbf_unicode_cp1_ci_ai
+sql_variant#!#bbf_unicode_cp1_ci_ai
+sysname#!#bbf_unicode_cp1_ci_ai
+text#!#bbf_unicode_cp1_ci_ai
+varchar#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db131;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db131_t1#!#c#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db131_t1#!#nc#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db131_t1#!#nt#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db131_t1#!#nv#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db131_t1#!#sn#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db131_t1#!#sqlv#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db131_t1#!#t#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db131_t1#!#v#!#bbf_unicode_cp1250_ci_ai
+test_db_collation_vu_prepare_db131_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db131_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db131_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db131_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db131_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db131_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db131_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db131_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db131_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1250_ci_ai
+nc#!#bbf_unicode_cp1250_ci_ai
+v#!#bbf_unicode_cp1250_ci_ai
+nv#!#bbf_unicode_cp1250_ci_ai
+t#!#bbf_unicode_cp1250_ci_ai
+nt#!#bbf_unicode_cp1250_ci_ai
+sqlv#!#bbf_unicode_cp1250_ci_ai
+sn#!#bbf_unicode_cp1250_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db131_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#bbf_unicode_cp1250_ci_ai
+nchar#!#bbf_unicode_cp1250_ci_ai
+ntext#!#bbf_unicode_cp1250_ci_ai
+nvarchar#!#bbf_unicode_cp1250_ci_ai
+sql_variant#!#bbf_unicode_cp1250_ci_ai
+sysname#!#bbf_unicode_cp1250_ci_ai
+text#!#bbf_unicode_cp1250_ci_ai
+varchar#!#bbf_unicode_cp1250_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#bbf_unicode_cp1250_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db132;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db132_t1#!#c#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db132_t1#!#nc#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db132_t1#!#nt#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db132_t1#!#nv#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db132_t1#!#sn#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db132_t1#!#sqlv#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db132_t1#!#t#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db132_t1#!#v#!#bbf_unicode_cp1257_ci_ai
+test_db_collation_vu_prepare_db132_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db132_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db132_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db132_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db132_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db132_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db132_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db132_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db132_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1257_ci_ai
+nc#!#bbf_unicode_cp1257_ci_ai
+v#!#bbf_unicode_cp1257_ci_ai
+nv#!#bbf_unicode_cp1257_ci_ai
+t#!#bbf_unicode_cp1257_ci_ai
+nt#!#bbf_unicode_cp1257_ci_ai
+sqlv#!#bbf_unicode_cp1257_ci_ai
+sn#!#bbf_unicode_cp1257_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db132_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#bbf_unicode_cp1257_ci_ai
+nchar#!#bbf_unicode_cp1257_ci_ai
+ntext#!#bbf_unicode_cp1257_ci_ai
+nvarchar#!#bbf_unicode_cp1257_ci_ai
+sql_variant#!#bbf_unicode_cp1257_ci_ai
+sysname#!#bbf_unicode_cp1257_ci_ai
+text#!#bbf_unicode_cp1257_ci_ai
+varchar#!#bbf_unicode_cp1257_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#bbf_unicode_cp1257_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db133;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db133_t1#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t1#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t1#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t1#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t1#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t1#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t1#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t1#!#v#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db133_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db133_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db133_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#bbf_unicode_cp1_ci_ai
+nchar#!#bbf_unicode_cp1_ci_ai
+ntext#!#bbf_unicode_cp1_ci_ai
+nvarchar#!#bbf_unicode_cp1_ci_ai
+sql_variant#!#bbf_unicode_cp1_ci_ai
+sysname#!#bbf_unicode_cp1_ci_ai
+text#!#bbf_unicode_cp1_ci_ai
+varchar#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db134;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db134_t1#!#c#!#estonian_ci_ai
+test_db_collation_vu_prepare_db134_t1#!#nc#!#estonian_ci_ai
+test_db_collation_vu_prepare_db134_t1#!#nt#!#estonian_ci_ai
+test_db_collation_vu_prepare_db134_t1#!#nv#!#estonian_ci_ai
+test_db_collation_vu_prepare_db134_t1#!#sn#!#estonian_ci_ai
+test_db_collation_vu_prepare_db134_t1#!#sqlv#!#estonian_ci_ai
+test_db_collation_vu_prepare_db134_t1#!#t#!#estonian_ci_ai
+test_db_collation_vu_prepare_db134_t1#!#v#!#estonian_ci_ai
+test_db_collation_vu_prepare_db134_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db134_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db134_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db134_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db134_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db134_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db134_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db134_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db134_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#estonian_ci_ai
+nc#!#estonian_ci_ai
+v#!#estonian_ci_ai
+nv#!#estonian_ci_ai
+t#!#estonian_ci_ai
+nt#!#estonian_ci_ai
+sqlv#!#estonian_ci_ai
+sn#!#estonian_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db134_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#estonian_ci_ai
+nchar#!#estonian_ci_ai
+ntext#!#estonian_ci_ai
+nvarchar#!#estonian_ci_ai
+sql_variant#!#estonian_ci_ai
+sysname#!#estonian_ci_ai
+text#!#estonian_ci_ai
+varchar#!#estonian_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#estonian_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db135;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db135_t1#!#c#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db135_t1#!#nc#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db135_t1#!#nt#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db135_t1#!#nv#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db135_t1#!#sn#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db135_t1#!#sqlv#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db135_t1#!#t#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db135_t1#!#v#!#finnish_swedish_ci_ai
+test_db_collation_vu_prepare_db135_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db135_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db135_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db135_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db135_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db135_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db135_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db135_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db135_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#finnish_swedish_ci_ai
+nc#!#finnish_swedish_ci_ai
+v#!#finnish_swedish_ci_ai
+nv#!#finnish_swedish_ci_ai
+t#!#finnish_swedish_ci_ai
+nt#!#finnish_swedish_ci_ai
+sqlv#!#finnish_swedish_ci_ai
+sn#!#finnish_swedish_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db135_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#finnish_swedish_ci_ai
+nchar#!#finnish_swedish_ci_ai
+ntext#!#finnish_swedish_ci_ai
+nvarchar#!#finnish_swedish_ci_ai
+sql_variant#!#finnish_swedish_ci_ai
+sysname#!#finnish_swedish_ci_ai
+text#!#finnish_swedish_ci_ai
+varchar#!#finnish_swedish_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#finnish_swedish_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db136;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db136_t1#!#c#!#french_ci_ai
+test_db_collation_vu_prepare_db136_t1#!#nc#!#french_ci_ai
+test_db_collation_vu_prepare_db136_t1#!#nt#!#french_ci_ai
+test_db_collation_vu_prepare_db136_t1#!#nv#!#french_ci_ai
+test_db_collation_vu_prepare_db136_t1#!#sn#!#french_ci_ai
+test_db_collation_vu_prepare_db136_t1#!#sqlv#!#french_ci_ai
+test_db_collation_vu_prepare_db136_t1#!#t#!#french_ci_ai
+test_db_collation_vu_prepare_db136_t1#!#v#!#french_ci_ai
+test_db_collation_vu_prepare_db136_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db136_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db136_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db136_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db136_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db136_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db136_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db136_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select COLUMN_NAME, COLLATION_NAME FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db136_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#french_ci_ai
+nc#!#french_ci_ai
+v#!#french_ci_ai
+nv#!#french_ci_ai
+t#!#french_ci_ai
+nt#!#french_ci_ai
+sqlv#!#french_ci_ai
+sn#!#french_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db136_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#french_ci_ai
+nchar#!#french_ci_ai
+ntext#!#french_ci_ai
+nvarchar#!#french_ci_ai
+sql_variant#!#french_ci_ai
+sysname#!#french_ci_ai
+text#!#french_ci_ai
+varchar#!#french_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#french_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db137;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db137_t1#!#c#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db137_t1#!#nc#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db137_t1#!#nt#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db137_t1#!#nv#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db137_t1#!#sn#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db137_t1#!#sqlv#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db137_t1#!#t#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db137_t1#!#v#!#modern_spanish_ci_ai
+test_db_collation_vu_prepare_db137_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db137_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db137_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db137_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db137_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db137_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db137_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db137_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db137_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#modern_spanish_ci_ai
+nc#!#modern_spanish_ci_ai
+v#!#modern_spanish_ci_ai
+nv#!#modern_spanish_ci_ai
+t#!#modern_spanish_ci_ai
+nt#!#modern_spanish_ci_ai
+sqlv#!#modern_spanish_ci_ai
+sn#!#modern_spanish_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db137_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#modern_spanish_ci_ai
+nchar#!#modern_spanish_ci_ai
+ntext#!#modern_spanish_ci_ai
+nvarchar#!#modern_spanish_ci_ai
+sql_variant#!#modern_spanish_ci_ai
+sysname#!#modern_spanish_ci_ai
+text#!#modern_spanish_ci_ai
+varchar#!#modern_spanish_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#modern_spanish_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db138;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db138_t1#!#c#!#polish_ci_ai
+test_db_collation_vu_prepare_db138_t1#!#nc#!#polish_ci_ai
+test_db_collation_vu_prepare_db138_t1#!#nt#!#polish_ci_ai
+test_db_collation_vu_prepare_db138_t1#!#nv#!#polish_ci_ai
+test_db_collation_vu_prepare_db138_t1#!#sn#!#polish_ci_ai
+test_db_collation_vu_prepare_db138_t1#!#sqlv#!#polish_ci_ai
+test_db_collation_vu_prepare_db138_t1#!#t#!#polish_ci_ai
+test_db_collation_vu_prepare_db138_t1#!#v#!#polish_ci_ai
+test_db_collation_vu_prepare_db138_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db138_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db138_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db138_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db138_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db138_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db138_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db138_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db138_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#polish_ci_ai
+nc#!#polish_ci_ai
+v#!#polish_ci_ai
+nv#!#polish_ci_ai
+t#!#polish_ci_ai
+nt#!#polish_ci_ai
+sqlv#!#polish_ci_ai
+sn#!#polish_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db138_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#polish_ci_ai
+nchar#!#polish_ci_ai
+ntext#!#polish_ci_ai
+nvarchar#!#polish_ci_ai
+sql_variant#!#polish_ci_ai
+sysname#!#polish_ci_ai
+text#!#polish_ci_ai
+varchar#!#polish_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#polish_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db139;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db139_t1#!#c#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db139_t1#!#nc#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db139_t1#!#nt#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db139_t1#!#nv#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db139_t1#!#sn#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db139_t1#!#sqlv#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db139_t1#!#t#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db139_t1#!#v#!#traditional_spanish_ci_ai
+test_db_collation_vu_prepare_db139_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db139_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db139_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db139_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db139_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db139_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db139_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db139_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db139_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#traditional_spanish_ci_ai
+nc#!#traditional_spanish_ci_ai
+v#!#traditional_spanish_ci_ai
+nv#!#traditional_spanish_ci_ai
+t#!#traditional_spanish_ci_ai
+nt#!#traditional_spanish_ci_ai
+sqlv#!#traditional_spanish_ci_ai
+sn#!#traditional_spanish_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db139_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#traditional_spanish_ci_ai
+nchar#!#traditional_spanish_ci_ai
+ntext#!#traditional_spanish_ci_ai
+nvarchar#!#traditional_spanish_ci_ai
+sql_variant#!#traditional_spanish_ci_ai
+sysname#!#traditional_spanish_ci_ai
+text#!#traditional_spanish_ci_ai
+varchar#!#traditional_spanish_ci_ai
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#traditional_spanish_ci_ai
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db141;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db141_t1#!#c#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db141_t1#!#nc#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db141_t1#!#nt#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db141_t1#!#nv#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db141_t1#!#sn#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db141_t1#!#sqlv#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db141_t1#!#t#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db141_t1#!#v#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db141_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db141_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db141_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db141_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db141_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db141_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db141_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db141_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db141_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_as
+nc#!#bbf_unicode_cp1_ci_as
+v#!#bbf_unicode_cp1_ci_as
+nv#!#bbf_unicode_cp1_ci_as
+t#!#bbf_unicode_cp1_ci_as
+nt#!#bbf_unicode_cp1_ci_as
+sqlv#!#bbf_unicode_cp1_ci_as
+sn#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db141_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#bbf_unicode_cp1_ci_as
+nchar#!#bbf_unicode_cp1_ci_as
+ntext#!#bbf_unicode_cp1_ci_as
+nvarchar#!#bbf_unicode_cp1_ci_as
+sql_variant#!#bbf_unicode_cp1_ci_as
+sysname#!#bbf_unicode_cp1_ci_as
+text#!#bbf_unicode_cp1_ci_as
+varchar#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+USE test_db_collation_vu_prepare_db142;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db142_t1#!#c#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db142_t1#!#nc#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db142_t1#!#nt#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db142_t1#!#nv#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db142_t1#!#sn#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db142_t1#!#sqlv#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db142_t1#!#t#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db142_t1#!#v#!#chinese_prc_ci_as
+test_db_collation_vu_prepare_db142_t2#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db142_t2#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db142_t2#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db142_t2#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db142_t2#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db142_t2#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db142_t2#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db142_t2#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db142_t1' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#chinese_prc_ci_as
+nc#!#chinese_prc_ci_as
+v#!#chinese_prc_ci_as
+nv#!#chinese_prc_ci_as
+t#!#chinese_prc_ci_as
+nt#!#chinese_prc_ci_as
+sqlv#!#chinese_prc_ci_as
+sn#!#chinese_prc_ci_as
+~~END~~
+
+
+select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db142_t2' AND
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+GO
+~~START~~
+nvarchar#!#nvarchar
+c#!#bbf_unicode_cp1_ci_ai
+nc#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+nt#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+sn#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT name, collation_name FROM SYS.TYPES WHERE collation_name IS NOT NULL ORDER BY name + COALESCE(collation_name, '');
+GO
+~~START~~
+varchar#!#varchar
+char#!#chinese_prc_ci_as
+nchar#!#chinese_prc_ci_as
+ntext#!#chinese_prc_ci_as
+nvarchar#!#chinese_prc_ci_as
+sql_variant#!#chinese_prc_ci_as
+sysname#!#chinese_prc_ci_as
+text#!#chinese_prc_ci_as
+varchar#!#chinese_prc_ci_as
+~~END~~
+
+
+CREATE TYPE ct FROM NVARCHAR(11);
+GO
+
+SELECT name, collation_name FROM SYS.TYPES WHERE name = 'ct';
+GO
+~~START~~
+varchar#!#varchar
+ct#!#chinese_prc_ci_as
+~~END~~
+
+
+
+-- Case 8.2: CREATE table using DECLARE with collatable datatypes and validate whether correct collation is being picked up or not
+DECLARE @test_db_collation_declare_table TABLE (c char(11) COLLATE Latin1_General_CI_AI, nc nchar(11) COLLATE Latin1_General_CI_AI, v varchar(11) COLLATE Latin1_General_CI_AI, nv nvarchar(11) COLLATE Latin1_General_CI_AI, t text COLLATE Latin1_General_CI_AI, nt ntext COLLATE Latin1_General_CI_AI, sqlv sql_variant COLLATE Latin1_General_CI_AI, sn sysname COLLATE Latin1_General_CI_AI);
+INSERT INTO @test_db_collation_declare_table  VALUES
+('café', 'café', 'café', 'café', 'café', 'café', 'café', 'café'),
+('jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño', 'jalapeño');
+SELECT nv FROM @test_db_collation_declare_table WHERE nv = 'cafe' or nv = 'jalapeno' ORDER BY nv;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+nvarchar
+café
+jalapeño
+~~END~~
+
+
+-- Case 4.1: Computed columns
+USE test_db_collation_vu_prepare_db121;
+GO
+
+SELECT OBJECT_NAME(object_id), name, collation_name from sys.columns WHERE name IN ('a', 'b') AND OBJECT_NAME(object_id) = 'test_db_collation_vu_prepare_db121_computed_columns' ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db121_computed_columns#!#a#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_computed_columns#!#b#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+SELECT * FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY a;
+GO
+~~START~~
+nvarchar#!#nvarchar
+Año Nuevo#!#oveuN oñA
+café#!#éfac
+chaptéR#!#Rétpahc
+película#!#alucílep
+~~END~~
+
+
+SELECT * FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY b;
+GO
+~~START~~
+nvarchar#!#nvarchar
+película#!#alucílep
+café#!#éfac
+Año Nuevo#!#oveuN oñA
+chaptéR#!#Rétpahc
+~~END~~
+
+
+-- Case 4.2: Temp Tables
+CREATE TABLE #test_db_collation_vu_prepare_db121_temp_t1(a nvarchar(11), b nvarchar(11), c AS sys.reverse(b) NOT NULL)
+GO
+
+INSERT INTO #test_db_collation_vu_prepare_db121_temp_t1 VALUES
+('café', 'jalapeño'),
+('résumé', 'naïve'),
+('Piñata', 'Año Nuevo'),
+('TELÉFONO', 'película'),
+('árbol', 'canapé'),
+('chaptéR', 'TEññiȘ');
+GO
+~~ROW COUNT: 6~~
+
+
+SELECT * FROM #test_db_collation_vu_prepare_db121_temp_t1 WHERE c = 'evian'; -- reverse of naive
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+résumé#!#naïve#!#evïan
+~~END~~
+
+
+SELECT * FROM #test_db_collation_vu_prepare_db121_temp_t1 ORDER BY c;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+TELÉFONO#!#película#!#alucílep
+árbol#!#canapé#!#épanac
+résumé#!#naïve#!#evïan
+café#!#jalapeño#!#oñepalaj
+Piñata#!#Año Nuevo#!#oveuN oñA
+chaptéR#!#TEññiȘ#!#ȘiññET
+~~END~~
+
+
+CREATE TABLE #test_db_collation_vu_prepare_db121_temp_t2(a nvarchar(11), b nvarchar(11), c AS sys.reverse(b) NOT NULL)
+GO
+
+INSERT INTO #test_db_collation_vu_prepare_db121_temp_t2 VALUES
+('café', 'jalapeño'),
+('résumé', 'naïve'),
+('Piñata', 'Año Nuevo'),
+('TELÉFONO', 'película'),
+('árbol', 'canapé'),
+('chaptéR', 'TEññiȘ');
+GO
+~~ROW COUNT: 6~~
+
+
+SELECT t1.a, t2.a FROM #test_db_collation_vu_prepare_db121_temp_t1 t1 INNER JOIN #test_db_collation_vu_prepare_db121_temp_t2 t2 on t1.a = t2.a ORDER BY t1.a;
+GO
+~~START~~
+nvarchar#!#nvarchar
+árbol#!#árbol
+café#!#café
+chaptéR#!#chaptéR
+Piñata#!#Piñata
+résumé#!#résumé
+TELÉFONO#!#TELÉFONO
+~~END~~
+
+
+-- Drop the temp tables
+DROP TABLE #test_db_collation_vu_prepare_db121_temp_t1;
+GO
+
+DROP TABLE #test_db_collation_vu_prepare_db121_temp_t2;
+GO
+
+-- Case 4.3: Table Returning Functions
+SELECT * FROM test_db_collation_vu_prepare_db121_f1();
+GO
+~~START~~
+nvarchar
+Año Nuevo
+café
+canapé
+chaptéR
+jalapeño
+naïve
+película
+résumé
+TELÉFONO
+TEññiȘ
+~~END~~
+
+
+SELECT * FROM test_db_collation_vu_prepare_db121_f2();
+GO
+~~START~~
+varchar#!#nvarchar
+TEññi?#!#TEññiȘ
+TELÉFONO#!#TELÉFONO
+résumé#!#résumé
+Piñata#!#Piñata
+película#!#película
+naïve#!#naïve
+jalapeño#!#jalapeño
+chaptéR#!#chaptéR
+canapé#!#canapé
+café#!#café
+árbol#!#árbol
+Año Nuevo#!#Año Nuevo
+~~END~~
+
+
+-- Case 4.4: SELECT INTO
+SELECT * INTO test_db_collation_vu_prepare_db121_si1 FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
+GO
+
+SELECT * FROM test_db_collation_vu_prepare_db121_si1 ORDER BY nv;
+GO
+~~START~~
+char#!#nchar#!#varchar#!#nvarchar#!#text#!#ntext#!#sql_variant#!#varchar
+Año Nuevo  #!#Año Nuevo  #!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo#!#Año Nuevo
+árbol      #!#árbol      #!#árbol#!#árbol#!#árbol#!#árbol#!#árbol#!#árbol
+café       #!#café       #!#café#!#café#!#café#!#café#!#café#!#café
+canapé     #!#canapé     #!#canapé#!#canapé#!#canapé#!#canapé#!#canapé#!#canapé
+chaptéR    #!#chaptéR    #!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR#!#chaptéR
+jalapeño   #!#jalapeño   #!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño#!#jalapeño
+naïve      #!#naïve      #!#naïve#!#naïve#!#naïve#!#naïve#!#naïve#!#naïve
+película   #!#película   #!#película#!#película#!#película#!#película#!#película#!#película
+Piñata     #!#Piñata     #!#Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata
+résumé     #!#résumé     #!#résumé#!#résumé#!#résumé#!#résumé#!#résumé#!#résumé
+TELÉFONO   #!#TELÉFONO   #!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO
+TEññi?     #!#TEññiȘ     #!#TEññi?#!#TEññiȘ#!#TEññi?#!#TEññiȘ#!#TEññi?#!#TEññi?
+~~END~~
+
+
+SELECT OBJECT_NAME(object_id), name, collation_name FROM SYS.COLUMNS WHERE OBJECT_NAME(object_id) = 'test_db_collation_vu_prepare_db121_si1' OR OBJECT_NAME(object_id) = 'test_db_collation_vu_prepare_db121_t1'
+ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db121_si1#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_si1#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_si1#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_si1#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_si1#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_si1#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_si1#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_si1#!#v#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#nc#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#nt#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#nv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#sn#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#sqlv#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#t#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_t1#!#v#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+-- Create a new table with employees hired after 2015
+SELECT * INTO test_db_collation_vu_prepare_db121_si2 FROM test_db_collation_vu_prepare_db121_t1 t1 WHERE t1.nv > 'naive' ORDER BY nv;
+GO
+
+SELECT * FROM test_db_collation_vu_prepare_db121_si2 ORDER BY nv;
+GO
+~~START~~
+char#!#nchar#!#varchar#!#nvarchar#!#text#!#ntext#!#sql_variant#!#varchar
+película   #!#película   #!#película#!#película#!#película#!#película#!#película#!#película
+Piñata     #!#Piñata     #!#Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata#!#Piñata
+résumé     #!#résumé     #!#résumé#!#résumé#!#résumé#!#résumé#!#résumé#!#résumé
+TELÉFONO   #!#TELÉFONO   #!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO#!#TELÉFONO
+TEññi?     #!#TEññiȘ     #!#TEññi?#!#TEññiȘ#!#TEññi?#!#TEññiȘ#!#TEññi?#!#TEññi?
+~~END~~
+
+
+-- Case 4.5: Verify metadata of primary key, foreign key, unique column and default column
+SELECT OBJECT_NAME(object_id), name, collation_name FROM SYS.COLUMNS WHERE OBJECT_NAME(object_id) = 'test_db_collation_vu_prepare_db121_columns'
+ORDER BY (OBJECT_NAME(object_id) + name + COALESCE(collation_name, ''));
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+test_db_collation_vu_prepare_db121_columns#!#a#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#b#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#c#!#bbf_unicode_cp1_ci_ai
+test_db_collation_vu_prepare_db121_columns#!#d#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+-- Case 4.6: Verify whether proper index is being picked up using plan
+select set_config('enable_seqscan','off','false');
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+-- psql
+ANALYZE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_columns;
+GO
+
+ANALYZE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_computed_columns;
+GO
+
+-- tsql
+-- hash index
+SELECT a FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
+GO
+~~START~~
+text
+Query Text: SELECT a FROM test_db_collation_vu_prepare_db121_columns ORDER BY a
+Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=8)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
+~~END~~
+
+
+-- clustered index
+SELECT b FROM test_db_collation_vu_prepare_db121_columns ORDER BY b;
+GO
+~~START~~
+text
+Query Text: SELECT b FROM test_db_collation_vu_prepare_db121_columns ORDER BY b
+Index Only Scan using clustered_idxtest_db_collation_37f23e48f4ded8db470285703bb5c81d on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=2)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
+~~END~~
+
+
+-- nonclustered index
+SELECT c FROM test_db_collation_vu_prepare_db121_columns ORDER BY c;
+GO
+~~START~~
+text
+Query Text: SELECT c FROM test_db_collation_vu_prepare_db121_columns ORDER BY c
+Index Only Scan using nonclustered_idxtest_db_collaticabf982079a2aad31147844db2b6fe49 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=8)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
+
+-- unique index
+SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
+GO
+~~START~~
+text
+Query Text: SELECT a, b FROM test_db_collation_vu_prepare_db121_columns ORDER BY a
+Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=10)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
+~~END~~
+
+
+-- index with included column
+SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
+GO
+~~START~~
+text
+Query Text: SELECT a, d FROM test_db_collation_vu_prepare_db121_columns ORDER BY a
+Index Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=22)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 41.235 ms
+~~END~~
+
+
+SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d;
+GO
+~~START~~
+text
+Query Text: SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d
+Sort  (cost=12.41..12.44 rows=9 width=14)
+  Sort Key: d NULLS FIRST
+  ->  Index Only Scan using included_column_idxtest_db_coll2136fe1a7c49a9cd866a1ed7813d3dfd on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=14)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.625 ms
+~~END~~
+
+
+-- index on computed column
+SELECT b FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY b;
+GO
+~~START~~
+text
+Query Text: SELECT b FROM test_db_collation_vu_prepare_db121_computed_columns ORDER BY b
+Index Only Scan using computed_column_idxtest_db_coll8143f54fa9d8b0c6f3d683b2a9f2612d on test_db_collation_vu_prepare_db121_computed_columns  (cost=0.13..12.19 rows=4 width=9)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
+~~END~~
+
+
+-- composite index
+SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
+GO
+~~START~~
+text
+Query Text: SELECT a, b, c FROM test_db_collation_vu_prepare_db121_columns ORDER BY a
+Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3 on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=18)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
+~~END~~
+
+
+-- filtered index
+SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d;
+GO
+~~START~~
+text
+Query Text: SELECT d FROM test_db_collation_vu_prepare_db121_columns ORDER BY d
+Sort  (cost=12.41..12.44 rows=9 width=14)
+  Sort Key: d NULLS FIRST
+  ->  Index Only Scan using included_column_idxtest_db_coll2136fe1a7c49a9cd866a1ed7813d3dfd on test_db_collation_vu_prepare_db121_columns  (cost=0.14..12.27 rows=9 width=14)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+select set_config('enable_seqscan','on','false');
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- Case 6.1: Validate whether correct collation is being picked up or not by SIMPLE SELECT
+USE test_db_collation_vu_prepare_db121;
+GO
+
+SELECT nv FROM test_db_collation_vu_prepare_db121_t1 where nv IN ('cafe', 'JALAPeno', 'ñáIVE', 'pínata') ORDER BY nv;
+GO
+~~START~~
+nvarchar
+café
+jalapeño
+naïve
+Piñata
+~~END~~
+
+
+SELECT nv FROM test_db_collation_vu_prepare_db121_t1 GROUP BY nv ORDER BY nv;
+GO
+~~START~~
+nvarchar
+Año Nuevo
+árbol
+café
+canapé
+chaptéR
+jalapeño
+naïve
+película
+Piñata
+résumé
+TELÉFONO
+TEññiȘ
+~~END~~
+
+
+CREATE VIEW test_db_collation_vu_prepare_db121_v1 AS SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
+GO
+
+SELECT * FROM test_db_collation_vu_prepare_db121_v1;
+GO
+~~START~~
+nvarchar
+Año Nuevo
+árbol
+café
+canapé
+chaptéR
+jalapeño
+naïve
+película
+Piñata
+résumé
+TELÉFONO
+TEññiȘ
+~~END~~
+
+
+SELECT * FROM test_db_collation_vu_prepare_db121_v1 WHERE nv > 'naive' ORDER BY nv;
+GO
+~~START~~
+nvarchar
+película
+Piñata
+résumé
+TELÉFONO
+TEññiȘ
+~~END~~
+
+
+SELECT * FROM test_db_collation_vu_prepare_db121_v1 WHERE nv LIKE '%aiv%';
+GO
+~~START~~
+nvarchar
+naïve
+~~END~~
+
+
+SELECT * FROM test_db_collation_vu_prepare_db121_v1 GROUP BY nv ORDER BY nv;
+GO
+~~START~~
+nvarchar
+Año Nuevo
+árbol
+café
+canapé
+chaptéR
+jalapeño
+naïve
+película
+Piñata
+résumé
+TELÉFONO
+TEññiȘ
+~~END~~
+
+
+
+
+CREATE PROCEDURE test_db_collation_vu_prepare_db121_p1 @param NVARCHAR(50)
+AS
+BEGIN
+    DECLARE @localVar NVARCHAR(11)
+    SELECT @localVar = nv 
+    FROM test_db_collation_vu_prepare_db121_t1
+    WHERE nv = @param;
+    SELECT @localVar;
+END;
+GO
+
+-- Executing stored procedure
+EXEC test_db_collation_vu_prepare_db121_p1 @param = 'cafe'
+GO
+~~START~~
+nvarchar
+café
+~~END~~
+
+
+EXEC test_db_collation_vu_prepare_db121_p1 @param = 'JALAPeno'
+GO
+~~START~~
+nvarchar
+jalapeño
+~~END~~
+
+
+EXEC test_db_collation_vu_prepare_db121_p1 @param = 'ñáIVE'
+GO
+~~START~~
+nvarchar
+naïve
+~~END~~
+
+
+EXEC test_db_collation_vu_prepare_db121_p1 @param = 'pínata'
+GO
+~~START~~
+nvarchar
+Piñata
+~~END~~
+
+
+-- should return 10 rows instead of 12
+SELECT t1.nv FROM test_db_collation_vu_prepare_db121_t1 t1 INNER JOIN test_db_collation_vu_prepare_db121_t2 t2 on t1.nv = t2.nv ORDER BY t1.nv;
+GO
+~~START~~
+nvarchar
+Año Nuevo
+café
+canapé
+chaptéR
+jalapeño
+naïve
+película
+résumé
+TELÉFONO
+TEññiȘ
+~~END~~
+
+
+
+
+
+
+
+
+
+
+-- COMMENTING IT FOR NOW AS PREP EXEC IS NOT GIVING CORRECT OUTOUT
+-- Case 6.2: Validate whether correct collation is being picked up or not by PREPARED STATEMENTS
+-- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
+-- DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
+-- DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
+-- DECLARE @prefix4 NVARCHAR(50) = 'pínata';
+-- DECLARE @query NVARCHAR(MAX) = N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4';
+-- EXEC sp_executesql @query,
+--                    N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
+--                    @prefix1, @prefix2, @prefix3, @prefix4;
+-- GO
+-- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
+-- EXEC sp_executesql N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1;', N'@prefix1 NVARCHAR(50)', @prefix1;
+-- GO
+-- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
+-- DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
+-- DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
+-- DECLARE @prefix4 NVARCHAR(50) = 'pínata';
+-- DECLARE @query NVARCHAR(MAX) = N'
+-- DECLARE @nv NVARCHAR(50);
+-- DECLARE CurResult CURSOR FOR
+--     SELECT nv FROM test_db_collation_vu_prepare_db121_t1
+--     WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4;
+-- OPEN CurResult;
+-- FETCH NEXT FROM CurResult INTO @nv;
+-- WHILE @@FETCH_STATUS = 0
+-- BEGIN
+--     PRINT @nv;
+--     FETCH NEXT FROM CurResult INTO @nv;
+-- END
+-- CLOSE CurResult;
+-- DEALLOCATE CurResult;';
+-- EXEC sp_executesql @query,
+--                    N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
+--                    @prefix1, @prefix2, @prefix3, @prefix4;
+-- GO
+-- case 9: Cross-database queries (will behave like JOIN)
+USE test_db_collation_vu_prepare_db121;
+GO
+
+SELECT t1.nv, t2.nv FROM test_db_collation_vu_prepare_db121_t1 t1 JOIN test_db_collation_vu_prepare_db11.dbo.test_db_collation_vu_prepare_db11_t1 t2 on t1.nv = t2.nv ORDER BY t1.nv;
+GO
+~~START~~
+nvarchar#!#nvarchar
+Año Nuevo#!#Año Nuevo
+café#!#café
+canapé#!#canapé
+chaptéR#!#chaptéR
+jalapeño#!#jalapeño
+naïve#!#naïve
+película#!#película
+résumé#!#résumé
+~~END~~
+
+
+INSERT INTO test_db_collation_vu_prepare_db11.dbo.test_db_collation_vu_prepare_db11_t1 VALUES
+('Řandom','Řandom','Řandom','Řandom','Řandom','Řandom','Řandom','Řandom');
+GO
+~~ROW COUNT: 1~~
+
+
+USE test_db_collation_vu_prepare_db11;
+GO
+
+-- should return NO ROW
+SELECT nv FROM test_db_collation_vu_prepare_db11_t1 WHERE nv = 'Random';
+GO
+~~START~~
+nvarchar
+~~END~~
+
+
+-- should return a single row
+SELECT nv FROM test_db_collation_vu_prepare_db11_t1 WHERE nv = 'Řandom';
+GO
+~~START~~
+nvarchar
+Řandom
+~~END~~
+
+
+SELECT t1.nv, t2.nv FROM test_db_collation_vu_prepare_db11_t1 t1 JOIN test_db_collation_vu_prepare_db121.dbo.test_db_collation_vu_prepare_db121_t1 t2 on t1.nv = t2.nv ORDER BY t1.nv;
+GO
+~~START~~
+nvarchar#!#nvarchar
+Año Nuevo#!#Año Nuevo
+arbol#!#árbol
+café#!#café
+canapé#!#canapé
+chaptéR#!#chaptéR
+jalapeño#!#jalapeño
+naïve#!#naïve
+película#!#película
+pinata#!#Piñata
+résumé#!#résumé
+tELeFONO#!#TELÉFONO
+tEnniȘ#!#TEññiȘ
+~~END~~
+

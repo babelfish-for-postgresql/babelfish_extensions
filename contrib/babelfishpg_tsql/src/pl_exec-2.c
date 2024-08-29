@@ -4328,7 +4328,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 
 	/* set the function oid of operator in tsql comparator context */
 	cxt.function_oid = cmpfunction_oid;
-	cxt.colloid = tsql_get_server_collation_oid_internal(false);
+	cxt.colloid = tsql_get_database_or_server_collation_oid_internal(false);
 	cxt.contains_duplicate = false;
 
 	/* 

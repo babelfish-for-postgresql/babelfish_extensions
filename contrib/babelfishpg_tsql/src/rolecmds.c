@@ -2112,7 +2112,7 @@ get_fully_qualified_domain_name(char *netbios_domain)
 						   Anum_bbf_domain_mapping_netbios_domain_name,
 						   BTEqualStrategyNumber,
 						   InvalidOid,
-						   tsql_get_server_collation_oid_internal(false),
+						   tsql_get_database_or_server_collation_oid_internal(false),
 						   F_TEXTEQ,
 						   CStringGetTextDatum(netbios_domain));
 
@@ -2375,7 +2375,7 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	ScanKeyEntryInitialize(&scanKey, 0,
 						   Anum_bbf_domain_mapping_netbios_domain_name,
 						   BTEqualStrategyNumber, InvalidOid,
-						   tsql_get_server_collation_oid_internal(false),
+						   tsql_get_database_or_server_collation_oid_internal(false),
 						   F_TEXTEQ, PG_GETARG_DATUM(0));
 
 	scan = systable_beginscan(bbf_domain_mapping_rel,
