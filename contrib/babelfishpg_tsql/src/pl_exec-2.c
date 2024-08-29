@@ -3872,7 +3872,6 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 	char *new_owner_is_user;
 	Oid 		save_userid;
 	int 		save_sec_context;
-	const char *prev_db_owner = get_owner_of_db(stmt->db_name);
 	
 	/* Verify target database exists. */
 	if (!DbidIsValid(get_db_id(stmt->db_name)))
@@ -3937,7 +3936,7 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 		/* Revoke dbo role from the previous owner */
-		revoke_dbo_from_login(prev_db_owner, stmt->db_name);
+		revoke_dbo_from_login(get_owner_of_db(stmt->db_name), stmt->db_name);
 
 		/* Grant dbo role to the new owner */
 		grant_dbo_to_login(stmt->new_owner_name, stmt->db_name);
