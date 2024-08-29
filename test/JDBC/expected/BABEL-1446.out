@@ -94,13 +94,6 @@ text
 jdbc_user
 ~~END~~
 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
-~~START~~
-text
-multi-db
-~~END~~
-
 
 CREATE DATABASE db1;
 GO
@@ -117,6 +110,10 @@ int
 
 CREATE DATABASE db2;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database 'db2' already exists. Choose a different database name.)~~
+
 
 SELECT COUNT(*) FROM pg_auth_members
 WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'db2_guest')
@@ -151,13 +148,5 @@ GO
 ~~START~~
 int
 0
-~~END~~
-
-
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
-GO
-~~START~~
-text
-single-db
 ~~END~~
 
