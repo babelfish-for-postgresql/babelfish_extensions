@@ -6123,6 +6123,8 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 
+			if(tle->resname != NULL && !tle->resjunk)
+				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
