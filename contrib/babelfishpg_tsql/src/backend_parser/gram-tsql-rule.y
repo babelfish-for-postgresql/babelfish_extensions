@@ -3127,12 +3127,25 @@ tsql_alter_server_role:
 		{
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
-
-			if (0 != strcmp($4, "sysadmin"))
-				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                               errmsg("only sysadmin role is supported in ALTER SERVER ROLE statement"),
-                               parser_errposition(@4)));
 			
+			if (strcmp($4, "serveradmin") == 0
+				|| strcmp($4, "setupadmin") == 0
+				|| strcmp($4, "processadmin") == 0
+				|| strcmp($4, "dbcreator") == 0
+				|| strcmp($4, "diskadmin") == 0
+				|| strcmp($4, "bulkadmin") == 0) 
+			{
+					ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("Server role '%s' is currently not supported in Babelfish", $4),
+												parser_errposition(@4)));
+			}
+			else if (strcmp($4, "sysadmin") != 0 && strcmp($4, "securityadmin") != 0)
+			{
+				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Only fixed server role is supported in ALTER SERVER ROLE statement"),
+									parser_errposition(@4)));
+			}
+
 			ap->priv_name = $4;
 			n->is_grant = true;
 			n->granted_roles = list_make1(ap);
@@ -3145,11 +3158,24 @@ tsql_alter_server_role:
 		{
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
-
-			if (0 != strcmp($4, "sysadmin"))
+			
+			if (strcmp($4, "serveradmin") == 0
+				|| strcmp($4, "setupadmin") == 0
+				|| strcmp($4, "processadmin") == 0
+				|| strcmp($4, "dbcreator") == 0
+				|| strcmp($4, "diskadmin") == 0
+				|| strcmp($4, "bulkadmin") == 0) 
+			{
+					ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("Server role '%s' is currently not supported in Babelfish", $4),
+												parser_errposition(@4)));
+			}
+			else if (strcmp($4, "sysadmin") != 0 && strcmp($4, "securityadmin") != 0)
+			{
 				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                               errmsg("only sysadmin role is supported in ALTER SERVER ROLE statement"),
-                               parser_errposition(@4)));
+						errmsg("Only fixed server role is supported in ALTER SERVER ROLE statement"),
+									parser_errposition(@4)));
+			}
 
 			ap->priv_name = $4;
 			n->is_grant = false;

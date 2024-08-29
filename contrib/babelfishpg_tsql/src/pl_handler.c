@@ -2864,7 +2864,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					if (islogin)
 					{
-						if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+						/*
+						 * Check if the current login has privileges to create
+						 * login.
+						 */
+						if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)) &&
+																	!has_privs_of_role(GetSessionUserId(), get_securityadmin_oid()))
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									 errmsg("Current login %s does not have permission to create new login",
@@ -3066,8 +3071,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						char	   *temp_login_name = NULL;
 						Oid 		save_userid;
 						int 		save_sec_context;
+						Oid 		securityadm_oid;
 
 						datdba = get_role_oid("sysadmin", false);
+						securityadm_oid = get_securityadmin_oid();
 
 						/*
 						 * Check if the current login has privileges to alter
@@ -3079,7 +3086,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "password") == 0)
 							{
-								if (get_role_oid(stmt->role->rolename, true) != GetSessionUserId() && !is_member_of_role(GetSessionUserId(), datdba))
+								if (get_role_oid(stmt->role->rolename, true) != GetSessionUserId() && (!is_member_of_role(GetSessionUserId(), datdba)
+																					&& !is_member_of_role(GetSessionUserId(), securityadm_oid)))
 									ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
@@ -3114,7 +3122,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							stmt->role->rolename = temp_login_name;
 						}
 
-						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
+						/*
+						 * Check if the current login has privileges to alter
+						 * login.
+						 */
+						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password &&
+														!has_privs_of_role(GetSessionUserId(), securityadm_oid))
 							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 								errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
@@ -3258,6 +3271,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					char	   *db_name;
 					Oid 		save_userid;
 					int 		save_sec_context;
+					Oid     	securityadmin_oid;
+
+					securityadmin_oid = get_securityadmin_oid();
 
 					/* Check if roles are users that need role name mapping */
 					if (stmt->roles != NIL)
@@ -3428,7 +3444,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							other = true;
 
-						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))){
+						/*
+						 * Check if the current login has privileges to drop
+						 * login.
+						 */
+						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))
+						                                           && !has_privs_of_role(GetSessionUserId(), securityadmin_oid)){
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
@@ -3449,8 +3470,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						int			role_oid = get_role_oid(role_name, true);
 
 						if (!OidIsValid(role_oid) ||
-							!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) ||
-							role_oid == get_bbf_role_admin_oid())
+							(!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && 
+							!is_member_of_role(GetSessionUserId(), securityadmin_oid)) ||
+							role_oid == get_bbf_role_admin_oid() || role_oid == securityadmin_oid)
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
 											errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 
@@ -3644,13 +3666,30 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					StringInfoData query;
 					RoleSpec   *spec;
+					RoleSpec   *rolspec;
+
 					check_alter_server_stmt(grant_role);
 					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
+					rolspec = (RoleSpec *) linitial(grant_role->granted_roles);
 					initStringInfo(&query);
-					if (grant_role->is_grant)
-						appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
+					
+					/* If sysadmin, provide attribute for role and database priv */
+					if (strlen(rolspec->rolename) == 8 && strncmp(rolspec->rolename, "sysadmin", 8) == 0)
+					{
+						if (grant_role->is_grant)
+							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
+						else
+							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
+					}
+
+					/* Otherwise, provide attribute for role priv */
 					else
-						appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
+					{
+						if (grant_role->is_grant)
+							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole; ");
+						else
+							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole; ");
+					}
 					
 					/*
 					 * Set to bbf_role_admin to grant the role

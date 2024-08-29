@@ -274,14 +274,14 @@ ALTER SERVER ROLE db_owner ADD MEMBER dummy;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+~~ERROR (Message: Only fixed server role is supported in ALTER SERVER ROLE statement)~~
 
 
 ALTER SERVER ROLE db_owner DROP MEMBER dummy;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+~~ERROR (Message: Only fixed server role is supported in ALTER SERVER ROLE statement)~~
 
 
 CREATE USER babel_login_vu_prepare_err_user;

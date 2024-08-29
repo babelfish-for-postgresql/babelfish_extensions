@@ -63,6 +63,7 @@ GO
 varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#bit
 jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1#!#0
 public#!#R#!#SERVER_ROLE#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0
+securityadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
 sys_server_principals_vu_login_without_sa#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1#!#0
 sysadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
 ~~END~~

@@ -277,7 +277,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-3
+4
 ~~END~~
 
 
@@ -288,7 +288,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-4
+5
 ~~END~~
 
 
@@ -300,7 +300,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-5
+6
 ~~END~~
 
 
@@ -388,7 +388,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-4
+5
 ~~END~~
 
 
@@ -418,7 +418,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-3
+4
 ~~END~~
 
 
@@ -489,14 +489,14 @@ ALTER SERVER ROLE db_owner ADD MEMBER dummy;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+~~ERROR (Message: Only fixed server role is supported in ALTER SERVER ROLE statement)~~
 
 
 ALTER SERVER ROLE db_owner DROP MEMBER dummy;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+~~ERROR (Message: Only fixed server role is supported in ALTER SERVER ROLE statement)~~
 
 
 CREATE LOGIN err_user WITH PASSWORD = '123';
