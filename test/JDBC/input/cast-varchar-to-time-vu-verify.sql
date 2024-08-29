@@ -10,7 +10,13 @@ go
 select * from babel_5179_v2
 go
 
-select babel_5179_f2()
+select * from babel_5179_v11
+go
+
+select * from babel_5179_v22
+go
+
+SELECT * FROM babel_5179_f2();
 go
 
 exec babel_5179_p2
