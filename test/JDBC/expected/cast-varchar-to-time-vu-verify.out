@@ -86,6 +86,28 @@ time
 ~~END~~
 
 
+insert into babel_5179_t1 values ('13:42:31.321');
+insert into babel_5179_t1 values ('13:42:31.32');
+insert into babel_5179_t1 values ('13:42:31.3');
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+insert into babel_5179_t2 values ('13:42:31.321');
+insert into babel_5179_t2 values ('13:42:31.32');
+insert into babel_5179_t2 values ('13:42:31.3');
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 select cast(cast('12:45:37.123' as varchar) as time);
 go
 ~~START~~
@@ -241,3 +263,4 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Specified scale 10 is invalid. 'time' datatype must have scale between 0 and 7)~~
+
