@@ -14,10 +14,64 @@ GO
 DROP TABLE dbo.babel_cross_db_vu_prepare_db1_t3
 GO
 
+DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
+GO
+
+DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
+GO
+
+DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3;
+GO
+
+DROP TABLE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1;
+GO
+
+DROP PROCEDURE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
+GO
+
+DROP SCHEMA babel_cross_db_vu_prepare_s1;
+GO
+
+DROP USER babel_cross_db_vu_prepare_u1;
+GO
+
+USE babel_cross_db_vu_prepare_db2
+GO
+
+DROP TABLE dbo.babel_cross_db_vu_prepare_t2;
+GO
+
+DROP FUNCTION dbo.babel_cross_db_vu_prepare_f2;
+GO
+
+DROP VIEW babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2;
+GO
+
+DROP FUNCTION babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2;
+GO
+
+DROP TABLE babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+GO
+
+DROP PROCEDURE babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_p2;
+GO
+
+DROP SCHEMA babel_cross_db_vu_prepare_s2;
+GO
+
+DROP USER babel_cross_db_vu_prepare_u2;
+GO
+
 USE master
 GO
 
+DROP LOGIN babel_cross_db_vu_prepare_l1;
+GO
+
 DROP DATABASE babel_cross_db_vu_prepare_db1
+GO
+
+DROP DATABASE babel_cross_db_vu_prepare_db2
 GO
 
 DROP PROCEDURE babel_cross_db_vu_prepare_myschema.babel_cross_db_vu_prepare_proc1

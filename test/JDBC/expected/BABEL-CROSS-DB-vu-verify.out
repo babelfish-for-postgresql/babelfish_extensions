@@ -409,3 +409,115 @@ GO
 
 DROP TABLE babel_cross_db_vu_prepare_tab1;
 GO
+
+-- reset the login password
+ALTER LOGIN babel_cross_db_vu_prepare_l1 with password = '12345678';
+GO
+
+-- tsql user=babel_cross_db_vu_prepare_l1 password=12345678
+USE babel_cross_db_vu_prepare_db1;
+GO
+
+-- bare SELECT table/view from db2, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
+SELECT * FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 ORDER BY id;
+GO
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+
+SELECT * FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2;
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#1#!#abc
+~~END~~
+
+
+-- bare SELECT function from db2, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
+SELECT babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(1);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- bare SELECT table from db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT * FROM babel_cross_db_vu_prepare_db2.dbo.babel_cross_db_vu_prepare_t2 ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
+
+
+-- bare SELECT function from db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT babel_cross_db_vu_prepare_db2.dbo.babel_cross_db_vu_prepare_f2(1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_cross_db_vu_prepare_f2)~~
+
+
+-- SELECT from a view in db1 which references objects in db2, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
+GO
+~~START~~
+int#!#int#!#varchar#!#varchar
+1#!#1#!#def#!#abc
+~~END~~
+
+
+-- SELECT from a view in db1 which references tables in db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
+
+
+-- SELECT from a view in db1 which references functions in db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_cross_db_vu_prepare_f2)~~
+
+
+-- Execute procedure from db2
+EXEC babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_p2;
+GO
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+~~START~~
+int#!#int#!#varchar
+1#!#1#!#abc
+~~END~~
+
+
+-- Execute procedure in db1 which accesses cross database objects
+EXEC babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
+GO
+~~START~~
+int#!#varchar
+1#!#def
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+~~START~~
+int#!#int#!#varchar#!#varchar
+1#!#1#!#def#!#abc
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
+

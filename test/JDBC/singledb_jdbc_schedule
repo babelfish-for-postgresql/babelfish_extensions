@@ -6,6 +6,9 @@ ignore#!#test_db_collation-vu-prepare
 ignore#!#test_db_collation-vu-verify
 ignore#!#test_db_collation-vu-cleanup
 ignore#!#BABEL-CROSS-DB
+ignore#!#BABEL-CROSS-DB-vu-prepare
+ignore#!#BABEL-CROSS-DB-vu-verify
+ignore#!#BABEL-CROSS-DB-vu-cleanup
 ignore#!#BABEL-SYS-DATABASES
 
 

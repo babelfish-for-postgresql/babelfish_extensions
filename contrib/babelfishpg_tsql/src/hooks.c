@@ -32,6 +32,7 @@
 #include "commands/trigger.h"
 #include "commands/view.h"
 #include "common/logging.h"
+#include "executor/execExpr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -191,6 +192,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static void pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr);
+static AclResult pltsql_ExecInitFunc_AclCheck(Oid funcid);
 
 /*****************************************
  * 			Replication Hooks
@@ -275,6 +277,7 @@ static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_cons
 static pltsql_strpos_non_determinstic_hook_type prev_pltsql_strpos_non_determinstic_hook = NULL;
 static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determinstic_hook = NULL;
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
+static ExecInitFunc_AclCheck_hook_type prev_ExecInitFunc_AclCheck_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -481,6 +484,9 @@ InstallExtendedHooks(void)
 
 	handle_param_collation_hook = set_param_collation;
 	handle_default_collation_hook = default_collation_for_builtin_type;
+
+	prev_ExecInitFunc_AclCheck_hook  = ExecInitFunc_AclCheck_hook;
+	ExecInitFunc_AclCheck_hook = pltsql_ExecInitFunc_AclCheck;
 }
 
 void
@@ -548,6 +554,7 @@ UninstallExtendedHooks(void)
 	pltsql_strpos_non_determinstic_hook = prev_pltsql_strpos_non_determinstic_hook;
 	pltsql_replace_non_determinstic_hook = prev_pltsql_replace_non_determinstic_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;
+	ExecInitFunc_AclCheck_hook = prev_ExecInitFunc_AclCheck_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -829,6 +836,36 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	return newOid;
 }
 
+static AclResult
+pltsql_ExecInitFunc_AclCheck(Oid funcid)
+{
+	Oid userid = GetUserId();
+
+	/* In TSQL dialect the permissions might need to be checked against session user. */
+	if (sql_dialect == SQL_DIALECT_TSQL)
+	{
+		Oid schema_id = get_func_namespace(funcid);
+
+		if (OidIsValid(schema_id))
+		{
+			char *nspname = get_namespace_name(schema_id);
+
+			/*
+			 * Check if function's schema is from a different logical database and
+			 * it is not a shared schema. If yes, then set userid to session user
+			 * to allow cross database access.
+			 */
+			if (nspname != NULL && !is_shared_schema(nspname) &&
+				!is_schema_from_db(schema_id, get_cur_db_id()))
+				userid = GetSessionUserId();
+			if (nspname)
+				pfree(nspname);
+		}
+	}
+
+	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
+}
+
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
@@ -852,6 +889,39 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
 		if (pltsql_explain_wal)
 			queryDesc->instrument_options |= INSTRUMENT_WAL;
+	}
+
+	/* In TSQL dialect the RTE permissions might need to be checked against session user. */
+	if (sql_dialect == SQL_DIALECT_TSQL && queryDesc->plannedstmt != NULL)
+	{
+		ListCell   *lc;
+
+		foreach(lc, queryDesc->plannedstmt->permInfos)
+		{
+			RTEPermissionInfo	*perminfo = lfirst_node(RTEPermissionInfo, lc);
+			Oid             	relOid = perminfo->relid;
+
+			if (OidIsValid(relOid))
+			{
+				Oid schema_id = get_rel_namespace(relOid);
+
+				if (OidIsValid(schema_id))
+				{
+					char *nspname = get_namespace_name(schema_id);
+
+					/*
+					 * Check if function's schema is from a different logical database and
+					 * it is not a shared schema. If yes, then update checkAsUser to session
+					 * user to allow cross database access.
+					 */
+					if (nspname != NULL && !is_shared_schema(nspname) &&
+						!is_schema_from_db(schema_id, get_cur_db_id()))
+						perminfo->checkAsUser = GetSessionUserId();
+					if (nspname)
+						pfree(nspname);
+				}
+			}
+		}
 	}
 
 	if (prev_ExecutorStart)

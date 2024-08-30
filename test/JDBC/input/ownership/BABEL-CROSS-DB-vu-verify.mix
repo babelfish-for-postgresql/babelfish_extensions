@@ -246,3 +246,50 @@ GO
 
 DROP TABLE babel_cross_db_vu_prepare_tab1;
 GO
+
+-- reset the login password
+ALTER LOGIN babel_cross_db_vu_prepare_l1 with password = '12345678';
+GO
+
+-- tsql user=babel_cross_db_vu_prepare_l1 password=12345678
+USE babel_cross_db_vu_prepare_db1;
+GO
+
+-- bare SELECT table/view from db2, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
+SELECT * FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 ORDER BY id;
+GO
+
+SELECT * FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2;
+GO
+
+-- bare SELECT function from db2, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
+SELECT babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(1);
+GO
+
+-- bare SELECT table from db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT * FROM babel_cross_db_vu_prepare_db2.dbo.babel_cross_db_vu_prepare_t2 ORDER BY id;
+GO
+
+-- bare SELECT function from db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT babel_cross_db_vu_prepare_db2.dbo.babel_cross_db_vu_prepare_f2(1);
+GO
+
+-- SELECT from a view in db1 which references objects in db2, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
+GO
+
+-- SELECT from a view in db1 which references tables in db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
+GO
+
+-- SELECT from a view in db1 which references functions in db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3;
+GO
+
+-- Execute procedure from db2
+EXEC babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_p2;
+GO
+
+-- Execute procedure in db1 which accesses cross database objects
+EXEC babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
+GO
