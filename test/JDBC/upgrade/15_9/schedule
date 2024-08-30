@@ -537,4 +537,5 @@ replicate
 space
 replace
 binary-datatype-operators
+SELECT_INTO_TEST
 
