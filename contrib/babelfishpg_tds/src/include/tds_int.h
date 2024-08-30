@@ -367,4 +367,7 @@ extern int	tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
 extern char *TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, pg_enc dest_encoding, int *encodedByteLen);
 extern coll_info_t TdsLookupCollationTableCallback(Oid oid);
 
+/* Functions in tdsbulkload.c */
+extern void TdsResetBcpOffset(void);
+
 #endif							/* TDS_INT_H */
