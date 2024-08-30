@@ -26,7 +26,7 @@ with all_options as (
 bbf_orig_names as (
 	select name, case when opt like 'bbf_original_rel_name=%%' then opt else NULL end as orig_name from all_options
 	)
-select c.relname, string_agg(cast(b.orig_name as varchar(max)), ',') from pg_class c left join bbf_orig_names b on c.relname = b.name
+select c.relname, string_agg(b.orig_name, ',') from pg_class c left join bbf_orig_names b on c.relname = b.name
 where c.relname like 't3267%' group by c.relname order by c.relname;
 go
 

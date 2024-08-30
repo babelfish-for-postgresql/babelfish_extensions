@@ -1114,17 +1114,25 @@ GO
 -- input datatype text
 SELECT STRING_AGG(col_text, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type text is invalid for argument 1 of string_agg function.)~~
+~~START~~
+varchar
+abc-?defghi-??
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
 
 
 -- input datatype ntext
 SELECT STRING_AGG(col_ntext, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type ntext is invalid for argument 1 of string_agg function.)~~
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
 
 
 
