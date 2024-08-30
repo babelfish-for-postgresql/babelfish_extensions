@@ -22,12 +22,6 @@ go
 exec babel_5179_p2
 go
 
-select col2 from babel_5179_t1 order by col2;
-go
-
-select col2 from babel_5179_t2 order by col2;
-go
-
 insert into babel_5179_t1 values ('13:42:31.321');
 insert into babel_5179_t1 values ('13:42:31.32');
 insert into babel_5179_t1 values ('13:42:31.3');
@@ -36,6 +30,12 @@ go
 insert into babel_5179_t2 values ('13:42:31.321');
 insert into babel_5179_t2 values ('13:42:31.32');
 insert into babel_5179_t2 values ('13:42:31.3');
+go
+
+select col2 from babel_5179_t1 order by col2;
+go
+
+select col2 from babel_5179_t2 order by col2;
 go
 
 select cast(cast('12:45:37.123' as varchar) as time);
