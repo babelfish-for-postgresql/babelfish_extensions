@@ -36,19 +36,8 @@ LANGUAGE plpgsql;
 
 -- (sys.VARCHAR AS pg_catalog.TIME)
 DROP CAST (sys.VARCHAR AS pg_catalog.TIME);
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.varchar2time(sys.VARCHAR) RENAME TO varchar2time_deprecated_4_4_0;
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+    
+ALTER FUNCTION sys.varchar2time(sys.VARCHAR) RENAME TO varchar2time_deprecated_4_4_0;
 
 CREATE OR REPLACE FUNCTION sys.varchar2time(sys.VARCHAR, INT4)
 RETURNS pg_catalog.TIME
