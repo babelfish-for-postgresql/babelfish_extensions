@@ -1186,7 +1186,7 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 						errmsg("Failed to find common utility plugin.")));
 
 		/* 
-		 * if first argument if of type CHAR/VARCHAR/STRING_LITERAL and second argument is of type NCHAR/NVARCHAR then throw error.
+		 * if first argument is of type CHAR/VARCHAR/STRING_LITERAL and second argument is of type NCHAR/NVARCHAR then throw error.
 		 * (STRING_LITERAL can be identified when typeid is UNKNOWNOID and argument value is not NULL)
 		 */
 		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[0])
