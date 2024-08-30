@@ -888,7 +888,9 @@ Datum
 varchar2time(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
-	int32		typmod = PG_GETARG_INT32(1);
+	int32		typmod = -1;
+	if (PG_NARGS() > 1)
+		typmod = PG_GETARG_INT32(1);
 	char	   *str;
 	TimeADT		time;
 
