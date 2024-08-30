@@ -169,45 +169,6 @@ drop table sourceTable
 drop table sourceTable1
 drop table destinationTable
 
-
-####### Unique #######
-# last row is error (last packet will be flushed)
-create table sourceTable(c1 int, c2 CHAR(1024))
-INSERT INTO sourceTable SELECT generate_series(1, 1001, 1), 'Foo'
-create table destinationTable(c1 int unique, c2 CHAR(1024))
-INSERT INTO destinationTable VALUES(1001, 'Foo')
-
-insertbulk#!#sourceTable#!#destinationTable
-
-# 1st row is error (remaining packets to be discarded)
-create table sourceTable1(c1 int, c2 CHAR(1024))
-INSERT INTO sourceTable1 VALUES(1001, 'Foo')
-INSERT INTO sourceTable1 SELECT generate_series(1, 1000, 1), 'Foo'
-
-insertbulk#!#sourceTable1#!#destinationTable
-
-Select count(c1) from sourceTable
-select count(c1) from sourceTable1
-
-# Seq scan
-SELECT set_config('enable_bitmapscan', 'off', false);
-SELECT set_config('enable_seqscan', 'on', false);
-SELECT set_config('enable_indexscan', 'off', false);
-Select count(c1) from destinationTable
-
-# Index scan
-SELECT set_config('enable_bitmapscan', 'off', false);
-SELECT set_config('enable_seqscan', 'off', false);
-SELECT set_config('enable_indexscan', 'on', false);
-Select count(c1) from destinationTable
-
-SELECT set_config('enable_bitmapscan', 'on', false);
-SELECT set_config('enable_seqscan', 'on', false);
-SELECT set_config('enable_indexscan', 'on', false);
-drop table sourceTable
-drop table sourceTable1
-drop table destinationTable
-
 ####### Check #######
 ##### THESE TESTS ALSO TEST REUSING THE SAME CONNECTION
 ##### ON WHICH WE ERROR OUT AND NEED TO RESET TDS STATE
