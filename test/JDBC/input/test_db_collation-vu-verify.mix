@@ -609,6 +609,11 @@ DECLARE @prefix NVARCHAR(50) = 'cafe';
 EXEC sp_executesql @query, N'@prefix NVARCHAR(50)', @prefix;
 GO
 
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+GO
+
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv IN (@prefix1, @prefix2, @prefix3, @prefix4)#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+GO
 
 -- case 9: Cross-database queries (will behave like JOIN)
 USE test_db_collation_vu_prepare_db121;

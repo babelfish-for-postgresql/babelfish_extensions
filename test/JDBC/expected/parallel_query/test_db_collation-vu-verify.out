@@ -1655,7 +1655,7 @@ Gather  (cost=0.14..12.27 rows=9 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.271 ms
+Babelfish T-SQL Batch Parsing Time: 0.205 ms
 ~~END~~
 
 
@@ -1691,7 +1691,7 @@ Gather  (cost=0.14..12.27 rows=9 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.143 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 
@@ -1709,7 +1709,7 @@ Gather  (cost=0.14..12.27 rows=9 width=10)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.162 ms
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 
@@ -1727,7 +1727,7 @@ Gather  (cost=0.14..12.27 rows=9 width=22)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 41.141 ms
+Babelfish T-SQL Batch Parsing Time: 40.928 ms
 ~~END~~
 
 
@@ -1746,7 +1746,7 @@ Gather  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.059 ms
+Babelfish T-SQL Batch Parsing Time: 8.990 ms
 ~~END~~
 
 
@@ -1764,7 +1764,7 @@ Gather  (cost=0.13..12.19 rows=4 width=9)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.144 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 
@@ -1782,7 +1782,7 @@ Gather  (cost=0.14..12.27 rows=9 width=18)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.286 ms
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
 ~~END~~
 
 
@@ -1802,7 +1802,7 @@ Gather  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.149 ms
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 
@@ -2019,6 +2019,27 @@ café
 ~~END~~
 
 
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = ? OR nv = ? OR nv = ? OR nv = ?#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+~~START~~
+nvarchar
+café
+jalapeño
+naïve
+Piñata
+~~END~~
+
+GO
+
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv IN (?, ?, ?, ?)#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+~~START~~
+nvarchar
+café
+jalapeño
+naïve
+Piñata
+~~END~~
+
+GO
 
 -- case 9: Cross-database queries (will behave like JOIN)
 USE test_db_collation_vu_prepare_db121;

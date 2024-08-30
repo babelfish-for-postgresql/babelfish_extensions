@@ -1613,7 +1613,7 @@ Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.243 ms
+Babelfish T-SQL Batch Parsing Time: 0.370 ms
 ~~END~~
 
 
@@ -1628,7 +1628,7 @@ Index Only Scan using clustered_idxtest_db_collation_37f23e48f4ded8db470285703bb
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.149 ms
+Babelfish T-SQL Batch Parsing Time: 0.224 ms
 ~~END~~
 
 
@@ -1643,7 +1643,7 @@ Index Only Scan using nonclustered_idxtest_db_collaticabf982079a2aad31147844db2b
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.143 ms
+Babelfish T-SQL Batch Parsing Time: 0.222 ms
 ~~END~~
 
 
@@ -1658,7 +1658,7 @@ Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.233 ms
+Babelfish T-SQL Batch Parsing Time: 0.267 ms
 ~~END~~
 
 
@@ -1673,7 +1673,7 @@ Index Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 41.672 ms
+Babelfish T-SQL Batch Parsing Time: 42.063 ms
 ~~END~~
 
 
@@ -1689,7 +1689,7 @@ Sort  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.583 ms
+Babelfish T-SQL Batch Parsing Time: 8.665 ms
 ~~END~~
 
 
@@ -1704,7 +1704,7 @@ Index Only Scan using computed_column_idxtest_db_coll8143f54fa9d8b0c6f3d683b2a9f
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.170 ms
+Babelfish T-SQL Batch Parsing Time: 0.152 ms
 ~~END~~
 
 
@@ -1719,7 +1719,7 @@ Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.222 ms
+Babelfish T-SQL Batch Parsing Time: 0.185 ms
 ~~END~~
 
 
@@ -1736,7 +1736,7 @@ Sort  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.179 ms
+Babelfish T-SQL Batch Parsing Time: 0.146 ms
 ~~END~~
 
 
@@ -1953,6 +1953,27 @@ café
 ~~END~~
 
 
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = ? OR nv = ? OR nv = ? OR nv = ?#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+~~START~~
+nvarchar
+café
+jalapeño
+naïve
+Piñata
+~~END~~
+
+GO
+
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv IN (?, ?, ?, ?)#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+~~START~~
+nvarchar
+café
+jalapeño
+naïve
+Piñata
+~~END~~
+
+GO
 
 -- case 9: Cross-database queries (will behave like JOIN)
 USE test_db_collation_vu_prepare_db121;
