@@ -1269,12 +1269,6 @@ public:
 		 */
 		if (!(in_create_or_alter_function || in_create_or_alter_procedure || in_create_or_alter_trigger))
 			rewrite_string_agg_query(ctx);
-
-		if (ctx->STRING_AGG())
-		{
-			size_t startPosition = ctx->STRING_AGG()->getSymbol()->getStartIndex();
-			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
-		}
 	}
 
 	/*
@@ -8345,6 +8339,12 @@ rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx)
 		rewritten_query_fragment.emplace(std::make_pair(ctx->LR_BRACKET()[1]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->LR_BRACKET()[1]), "")));
 		rewritten_query_fragment.emplace(std::make_pair(ctx->order_by_clause()->start->getStartIndex(), std::make_pair(::getFullText(ctx->order_by_clause()), "")));
 		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()[1]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()[1]), "")));
+	}
+	
+	if (ctx->STRING_AGG())
+	{
+		size_t startPosition = ctx->STRING_AGG()->getSymbol()->getStartIndex();
+		rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
 	}
 }
 
