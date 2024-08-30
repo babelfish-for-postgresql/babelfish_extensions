@@ -336,7 +336,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity)
-SET IDENTITY_INSERT sourceTable ON
+ SET IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -1)
 insert into sourceTable (a ,b) values (2, -4)
 bcp#!#out#!#bcp_source#!#sourceTable
@@ -350,7 +350,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity)
-SET IDENTITY_INSERT sourceTable ON
+ SET IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -1)
 insert into sourceTable (a ,b) values (2, 4)
 bcp#!#out#!#bcp_source#!#sourceTable
@@ -364,7 +364,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity)
-SET IDENTITY_INSERT sourceTable ON
+ SET IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, 2)
 insert into sourceTable (a ,b) values (2, 4)
 bcp#!#out#!#bcp_source#!#sourceTable
@@ -378,7 +378,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity)
-SET IDENTITY_INSERT sourceTable ON
+ SET IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -2)
 insert into sourceTable (a ,b) values (2, 4)
 bcp#!#out#!#bcp_source#!#sourceTable
@@ -392,7 +392,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity(-1, -1))
-SET IDENTITY_INSERT sourceTable ON
+ SET IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, 2)
 insert into sourceTable (a ,b) values (2, 4)
 bcp#!#out#!#bcp_source#!#sourceTable
@@ -406,7 +406,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity(-1, -1))
-SET IDENTITY_INSERT sourceTable ON
+ SET IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -2)
 insert into sourceTable (a ,b) values (2, 4)
 bcp#!#out#!#bcp_source#!#sourceTable
@@ -420,7 +420,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity(-1, -1))
-SET IDENTITY_INSERT sourceTable ON
+ SET IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -1)
 insert into sourceTable (a ,b) values (2, -4)
 bcp#!#out#!#bcp_source#!#sourceTable
@@ -434,7 +434,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity(-1, -1))
-SET IDENTITY_INSERT sourceTable ON
+ SET IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -1)
 insert into sourceTable (a ,b) values (2, 4)
 bcp#!#out#!#bcp_source#!#sourceTable

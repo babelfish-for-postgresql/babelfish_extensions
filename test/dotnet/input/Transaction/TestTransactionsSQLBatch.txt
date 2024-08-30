@@ -5,7 +5,7 @@ begin transaction;
 select @@trancount;
 begin transaction;
 select @@trancount;
-#set transaction isolation level read committed;
+set transaction isolation level read committed;
 #show transaction_isolation;
 #show default_transaction_isolation;
 insert into TxnTable values(1);
@@ -31,7 +31,7 @@ select c1 from TxnTable;
 begin tran;
 select @@trancount;
 begin tran;
-#set transaction isolation level read uncommitted;
+set transaction isolation level read uncommitted;
 #show transaction_isolation;
 #show default_transaction_isolation;
 insert into TxnTable values(3);
@@ -40,7 +40,7 @@ rollback tran;
 select @@trancount;
 select c1 from TxnTable;
 
-#set transaction isolation level repeatable read;
+set transaction isolation level repeatable read;
 #show transaction_isolation;
 #show default_transaction_isolation;
 
@@ -95,7 +95,7 @@ select c1 from TxnTable;
 truncate table TxnTable;
 
 # save tran name -> rollback tran name
-#set transaction isolation level snapshot;
+set transaction isolation level snapshot;
 #show transaction_isolation;
 #show default_transaction_isolation;
 begin transaction txn1;
@@ -137,7 +137,7 @@ rollback tran;
 select c1 from TxnTable;
 
 # begin transaction name -> save transaction name -> rollback tran name, Rollback whole transaction
-#set transaction isolation level serializable;
+set transaction isolation level serializable;
 #show transaction_isolation;
 #show default_transaction_isolation;
 begin transaction txn1;

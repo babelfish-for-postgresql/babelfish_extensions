@@ -381,7 +381,7 @@ hello#!#jello
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int identity)
 #Q#Create table destinationTable(a int, b int identity)
-#Q#SET IDENTITY_INSERT sourceTable ON
+#Q# set IDENTITY_INSERT sourceTable ON
 #Q#insert into sourceTable (a, b) values (1, -1)
 #Q#insert into sourceTable (a ,b) values (2, -4)
 #Q#Select * from sourceTable
@@ -402,7 +402,7 @@ hello#!#jello
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int identity)
 #Q#Create table destinationTable(a int, b int identity)
-#Q#SET IDENTITY_INSERT sourceTable ON
+#Q# set IDENTITY_INSERT sourceTable ON
 #Q#insert into sourceTable (a, b) values (1, -1)
 #Q#insert into sourceTable (a ,b) values (2, 4)
 #Q#Select * from sourceTable
@@ -423,7 +423,7 @@ hello#!#jello
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int identity(-1, -1))
 #Q#Create table destinationTable(a int, b int identity)
-#Q#SET IDENTITY_INSERT sourceTable ON
+#Q# set IDENTITY_INSERT sourceTable ON
 #Q#insert into sourceTable (a, b) values (1, 2)
 #Q#insert into sourceTable (a ,b) values (2, 4)
 #Q#Select * from sourceTable
@@ -444,7 +444,7 @@ hello#!#jello
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int identity(-1, -1))
 #Q#Create table destinationTable(a int, b int identity)
-#Q#SET IDENTITY_INSERT sourceTable ON
+#Q# set IDENTITY_INSERT sourceTable ON
 #Q#insert into sourceTable (a, b) values (1, -2)
 #Q#insert into sourceTable (a ,b) values (2, 4)
 #Q#Select * from sourceTable
@@ -465,7 +465,7 @@ hello#!#jello
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int identity(-1, -1))
 #Q#Create table destinationTable(a int, b int identity(-1, -1))
-#Q#SET IDENTITY_INSERT sourceTable ON
+#Q# set IDENTITY_INSERT sourceTable ON
 #Q#insert into sourceTable (a, b) values (1, 2)
 #Q#insert into sourceTable (a ,b) values (2, 4)
 #Q#Select * from sourceTable
@@ -486,7 +486,7 @@ hello#!#jello
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int identity(-1, -1))
 #Q#Create table destinationTable(a int, b int identity(-1, -1))
-#Q#SET IDENTITY_INSERT sourceTable ON
+#Q# set IDENTITY_INSERT sourceTable ON
 #Q#insert into sourceTable (a, b) values (1, -2)
 #Q#insert into sourceTable (a ,b) values (2, 4)
 #Q#Select * from sourceTable
@@ -507,7 +507,7 @@ hello#!#jello
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int identity)
 #Q#Create table destinationTable(a int, b int identity(-1, -1))
-#Q#SET IDENTITY_INSERT sourceTable ON
+#Q# set IDENTITY_INSERT sourceTable ON
 #Q#insert into sourceTable (a, b) values (1, -1)
 #Q#insert into sourceTable (a ,b) values (2, -4)
 #Q#Select * from sourceTable
@@ -528,7 +528,7 @@ hello#!#jello
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int identity)
 #Q#Create table destinationTable(a int, b int identity(-1, -1))
-#Q#SET IDENTITY_INSERT sourceTable ON
+#Q# set IDENTITY_INSERT sourceTable ON
 #Q#insert into sourceTable (a, b) values (1, -1)
 #Q#insert into sourceTable (a ,b) values (2, 4)
 #Q#Select * from sourceTable

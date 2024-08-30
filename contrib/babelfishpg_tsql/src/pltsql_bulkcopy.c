@@ -704,7 +704,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					{
 						myslot->tts_values[col_index_to_insert] = Values[col_index_to_fetch];
 
-						/* In case of identity column, store the updated identity sequence value */
+						/* In case of identity column, store the updated identity sequence value. */
 						if (cstate->seq_index == i)
 						{
 							if (cstate->identity_col_incr_value > 0)
@@ -930,7 +930,7 @@ BeginBulkCopy(Relation rel,
 		}
 	}
 
-	/* Store the increment value of Identity column */
+	/* Store the increment value of Identity column. */
 	cstate->identity_col_incr_value = 1;
 	if (cstate->seqid != InvalidOid)
 	{
@@ -947,8 +947,9 @@ BeginBulkCopy(Relation rel,
 				break;
 			}
 		}
+		pfree(seq_options);
 	}
-	/* Initialize the current identity value variable based on the increment value */
+	/* Initialize the current identity value variable based on the increment value. */
 	if (cstate->identity_col_incr_value > 0)
 		cstate->cur_identity_value = INT64_MIN;
 	else
@@ -1014,7 +1015,7 @@ EndBulkCopy(BulkCopyState cstate, bool aborted)
 	{
 		/* 
 		 * for identity column reseed the identity sequence value, 
-		 * if cur_identity_value is more suitable as compared to previous seed value
+		 * if cur_identity_value is more suitable as compared to previous seed value.
 		 */
 		if (cstate->seqid != InvalidOid && !aborted)
 		{
@@ -1035,10 +1036,14 @@ EndBulkCopy(BulkCopyState cstate, bool aborted)
 			}
 
 			PG_TRY();
+			{
 				init_identity_value = DirectFunctionCall1(pg_sequence_last_value,
 															ObjectIdGetDatum(cstate->seqid));
+			}
 			PG_CATCH();
+			{
 				FlushErrorState();
+			}
 			PG_END_TRY();
 
 			if ((cstate->identity_col_incr_value > 0 && cstate->cur_identity_value > init_identity_value) || 

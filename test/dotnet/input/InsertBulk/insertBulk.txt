@@ -298,7 +298,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity)
-SET IDENTITY_INSERT sourceTable ON
+ set IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -1)
 insert into sourceTable (a ,b) values (2, -4)
 insertbulk#!#sourceTable#!#destinationTable
@@ -311,7 +311,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity)
-SET IDENTITY_INSERT sourceTable ON
+ set IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -1)
 insert into sourceTable (a ,b) values (2, 4)
 insertbulk#!#sourceTable#!#destinationTable
@@ -324,7 +324,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity)
-SET IDENTITY_INSERT sourceTable ON
+ set IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, 2)
 insert into sourceTable (a ,b) values (2, 4)
 insertbulk#!#sourceTable#!#destinationTable
@@ -337,7 +337,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity)
-SET IDENTITY_INSERT sourceTable ON
+ set IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -2)
 insert into sourceTable (a ,b) values (2, 4)
 insertbulk#!#sourceTable#!#destinationTable
@@ -350,7 +350,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity(-1, -1))
-SET IDENTITY_INSERT sourceTable ON
+ set IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, 2)
 insert into sourceTable (a ,b) values (2, 4)
 insertbulk#!#sourceTable#!#destinationTable
@@ -363,7 +363,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity(-1, -1))
-SET IDENTITY_INSERT sourceTable ON
+ set IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -2)
 insert into sourceTable (a ,b) values (2, 4)
 insertbulk#!#sourceTable#!#destinationTable
@@ -376,7 +376,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity(-1, -1))
-SET IDENTITY_INSERT sourceTable ON
+ set IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -1)
 insert into sourceTable (a ,b) values (2, -4)
 insertbulk#!#sourceTable#!#destinationTable
@@ -389,7 +389,7 @@ drop table destinationTable
 
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity(-1, -1))
-SET IDENTITY_INSERT sourceTable ON
+ set IDENTITY_INSERT sourceTable ON
 insert into sourceTable (a, b) values (1, -1)
 insert into sourceTable (a ,b) values (2, 4)
 insertbulk#!#sourceTable#!#destinationTable
