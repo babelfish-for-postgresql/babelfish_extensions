@@ -1,327 +1,115 @@
 -- expression as column
 SELECT STRING_AGG(a,'-') FROM string_agg_t
 GO
-~~START~~
-text
-c-b-g-a-e-d-h
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-c-a-d-h
-b-g-e
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-h-d-c-a
-e-g-b
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-h-d-c-a
-e-g-b
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-a-c-d-h
-b-g-e
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-a-c-h-d
-g-b-e
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-a-c-d-h
-b-g-e
-~~END~~
-
 
 -- expression as expression of multiple columns
 SELECT STRING_AGG(a+b,'-') FROM string_agg_t
 GO
-~~START~~
-text
-cx-by-gu-az-ev-dw-ht
-~~END~~
-
 
 SELECT STRING_AGG(a+b,'-') FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-cx-az-dw-ht
-by-gu-ev
-~~END~~
-
 
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-ht-dw-cx-az
-ev-gu-by
-~~END~~
-
 
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-ht-dw-cx-az
-ev-gu-by
-~~END~~
-
 
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-az-cx-dw-ht
-by-gu-ev
-~~END~~
-
 
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-az-cx-ht-dw
-gu-by-ev
-~~END~~
-
 
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-az-cx-dw-ht
-by-gu-ev
-~~END~~
-
 
 -- expression as function
 SELECT STRING_AGG(concat(a,b),'-') FROM string_agg_t
 GO
-~~START~~
-text
-cx-by-gu-az-ev-dw-ht-s
-~~END~~
-
 
 SELECT STRING_AGG(concat(a,b),'-') FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-cx-az-dw-ht
-by-gu-ev-s
-~~END~~
-
 
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-ht-dw-cx-az
-s-ev-gu-by
-~~END~~
-
 
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-ht-dw-cx-az
-s-ev-gu-by
-~~END~~
-
 
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-az-cx-dw-ht
-by-gu-ev-s
-~~END~~
-
 
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-az-cx-ht-dw
-s-gu-by-ev
-~~END~~
-
 
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-az-cx-dw-ht
-s-by-gu-ev
-~~END~~
-
 
 -- Delimeter as a function
 SELECT STRING_AGG(a, char(10)) FROM string_agg_t
 GO
-~~START~~
-text
-c<newline>b<newline>g<newline>a<newline>e<newline>d<newline>h
-~~END~~
-
 
 SELECT STRING_AGG(a, char(10)) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-c<newline>a<newline>d<newline>h
-b<newline>g<newline>e
-~~END~~
-
 
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY sbid) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-h<newline>d<newline>c<newline>a
-e<newline>g<newline>b
-~~END~~
-
 
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-h<newline>d<newline>c<newline>a
-e<newline>g<newline>b
-~~END~~
-
 
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-a<newline>c<newline>d<newline>h
-b<newline>g<newline>e
-~~END~~
-
 
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-a<newline>c<newline>h<newline>d
-g<newline>b<newline>e
-~~END~~
-
 
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-a<newline>c<newline>d<newline>h
-b<newline>g<newline>e
-~~END~~
-
 
 -- order by clause on string column
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY a ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-a-c-d-h
-b-e-g
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY a DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-h-d-c-a
-g-e-b
-~~END~~
-
 
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY a+b ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-az-cx-dw-ht
-by-ev-gu
-~~END~~
-
 
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY a+b DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-ht-dw-cx-az
-gu-ev-by
-~~END~~
-
 
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY concat(a,b) ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-az-cx-dw-ht
-by-ev-gu-s
-~~END~~
-
 
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY concat(a,b) DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-ht-dw-cx-az
-s-gu-ev-by
-~~END~~
-
 
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY a ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-a<newline>c<newline>d<newline>h
-b<newline>e<newline>g
-~~END~~
-
 
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY a DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-h<newline>d<newline>c<newline>a
-g<newline>e<newline>b
-~~END~~
-
 
 -- Batch statements
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY sbid) FROM string_agg_t GROUP BY g ORDER BY g
@@ -330,367 +118,121 @@ SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-h<newline>d<newline>c<newline>a
-e<newline>g<newline>b
-~~END~~
-
-~~START~~
-text
-h<newline>d<newline>c<newline>a
-e<newline>g<newline>b
-~~END~~
-
-~~START~~
-text
-a<newline>c<newline>d<newline>h
-b<newline>g<newline>e
-~~END~~
-
-~~START~~
-text
-a<newline>c<newline>h<newline>d
-g<newline>b<newline>e
-~~END~~
-
-~~START~~
-text
-a<newline>c<newline>d<newline>h
-b<newline>g<newline>e
-~~END~~
-
 
 -- expression as column with multibyte characters
 SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t
 GO
-~~START~~
-text
-?-莫-?-?-莫
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-?-?
-莫-?-莫
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-?-?
-莫-?-莫
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-?-?
-莫-?-莫
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-?-?
-莫-?-莫
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-?-?
-?-莫-莫
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-?-?
-莫-?-莫
-~~END~~
-
 
 -- casting result to NVARCHAR to verify the output
 SELECT CAST(STRING_AGG(a,'-') AS sys.NVARCHAR(100)) FROM string_agg_multibyte_t
 GO
-~~START~~
-nvarchar
-😎-莫-😇-尔-莫
-~~END~~
-
 
 SELECT CAST(STRING_AGG(a,'-') AS sys.NVARCHAR(100)) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-nvarchar
-😎-尔
-莫-😇-莫
-~~END~~
-
 
 SELECT CAST(STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) AS sys.NVARCHAR(100)) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-nvarchar
-😎-尔
-莫-😇-莫
-~~END~~
-
 
 SELECT CAST(STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) AS sys.NVARCHAR(100)) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-nvarchar
-😎-尔
-莫-😇-莫
-~~END~~
-
 
 SELECT CAST(STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) AS sys.NVARCHAR(100)) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-nvarchar
-尔-😎
-莫-😇-莫
-~~END~~
-
 
 SELECT CAST(STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) AS sys.NVARCHAR(100)) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-nvarchar
-尔-😎
-😇-莫-莫
-~~END~~
-
 
 SELECT CAST(STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) AS sys.NVARCHAR(100)) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
-~~START~~
-nvarchar
-尔-😎
-莫-😇-莫
-~~END~~
-
 
 -- expression as column with chinese characters
 SELECT STRING_AGG(a,'-') FROM string_agg_chinese_prc_ci_as
 GO
-~~START~~
-text
-莫-尔-拉-比-斯
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-莫-比
-尔-拉-斯
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-比-莫
-斯-拉-尔
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-比-莫
-斯-拉-尔
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-莫-比
-尔-拉-斯
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-莫-比
-拉-尔-斯
-~~END~~
-
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
-~~START~~
-text
-莫-比
-尔-拉-斯
-~~END~~
-
 
 -- expression from a column of a subquery
 SELECT STRING_AGG(sbq.b,'-') WITHIN GROUP (ORDER BY g1) FROM (SELECT g1, g2, STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id) as 'b' FROM string_agg_t2 GROUP BY g1, g2) as sbq GROUP BY g2 ORDER BY g2
 GO
-~~START~~
-text
-b-g-e-d-h
-a-c-d-h
-~~END~~
-
 
 SELECT STRING_AGG(sbq.b,'-') WITHIN GROUP (ORDER BY g1 ASC) FROM (SELECT g1, g2, STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id ASC) as 'b' FROM string_agg_t2 GROUP BY g1, g2) as sbq GROUP BY g2 ORDER BY g2
 GO
-~~START~~
-text
-b-g-e-d-h
-a-c-d-h
-~~END~~
-
 
 SELECT STRING_AGG(sbq.b,'-') WITHIN GROUP (ORDER BY g1 DESC) FROM (SELECT g1, g2, STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id DESC) as 'b' FROM string_agg_t2 GROUP BY g1, g2) as sbq GROUP BY g2 ORDER BY g2
 GO
-~~START~~
-text
-h-d-e-g-b
-h-d-c-a
-~~END~~
-
 
 -- Dependent objects
 SELECT * FROM string_agg_dep_v1
 GO
-~~START~~
-text
-c-b-g-a-e-d-h
-~~END~~
-
 
 EXEC string_agg_dep_p1
 GO
-~~START~~
-text
-c-b-g-a-e-d-h
-~~END~~
-
 
 SELECT dbo.string_agg_dep_f1()
 GO
-~~START~~
-nvarchar
-c-b-g-a-e-d-h
-~~END~~
-
 
 SELECT * FROM string_agg_dep_v2
 GO
-~~START~~
-text
-b-g-e
-c-a-d-h
-~~END~~
-
 
 EXEC string_agg_dep_p2
 GO
-~~START~~
-text
-b-g-e
-c-a-d-h
-~~END~~
-
 
 SELECT * FROM dbo.string_agg_dep_f2()
 GO
-~~START~~
-text
-b-g-e
-c-a-d-h
-~~END~~
-
 
 SELECT * FROM string_agg_dep_v3
 GO
-~~START~~
-text
-h-d-c-a
-e-g-b
-~~END~~
-
 
 EXEC string_agg_dep_p3
 GO
-~~START~~
-text
-h-d-c-a
-e-g-b
-~~END~~
-
 
 SELECT * FROM dbo.string_agg_dep_f3()
 GO
-~~START~~
-text
-h-d-c-a
-e-g-b
-~~END~~
-
 
 -- dependent object trigger
 INSERT INTO string_agg_school_details (classID, rollID, studentName)
 VALUES (2, 3, 'StudentF');
 GO
-~~START~~
-int#!#text
-1#!#StudentA, StudentB, StudentC
-2#!#StudentD, StudentE, StudentF
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 UPDATE string_agg_school_details
 SET studentName = 'StudentG'
 WHERE classID = 2 AND rollID = 3;
 GO
-~~START~~
-int#!#text
-1#!#StudentA, StudentB, StudentC
-2#!#StudentD, StudentE, StudentG
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 DELETE FROM string_agg_school_details
 WHERE classID = 1 AND rollID = 2;
 GO
-~~START~~
-int#!#text
-1#!#StudentA, StudentC
-2#!#StudentD, StudentE, StudentG
-~~END~~
-
-~~ROW COUNT: 1~~
-

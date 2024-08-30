@@ -2,7 +2,7 @@
 SELECT STRING_AGG(a,'-') FROM string_agg_t
 GO
 ~~START~~
-text
+varchar
 c-b-g-a-e-d-h
 ~~END~~
 
@@ -10,7 +10,7 @@ c-b-g-a-e-d-h
 SELECT STRING_AGG(a,'-') FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 c-a-d-h
 b-g-e
 ~~END~~
@@ -19,7 +19,7 @@ b-g-e
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 h-d-c-a
 e-g-b
 ~~END~~
@@ -28,7 +28,7 @@ e-g-b
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 h-d-c-a
 e-g-b
 ~~END~~
@@ -37,7 +37,7 @@ e-g-b
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 a-c-d-h
 b-g-e
 ~~END~~
@@ -46,7 +46,7 @@ b-g-e
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 a-c-h-d
 g-b-e
 ~~END~~
@@ -55,7 +55,7 @@ g-b-e
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 a-c-d-h
 b-g-e
 ~~END~~
@@ -65,7 +65,7 @@ b-g-e
 SELECT STRING_AGG(a+b,'-') FROM string_agg_t
 GO
 ~~START~~
-text
+varchar
 cx-by-gu-az-ev-dw-ht
 ~~END~~
 
@@ -73,7 +73,7 @@ cx-by-gu-az-ev-dw-ht
 SELECT STRING_AGG(a+b,'-') FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 cx-az-dw-ht
 by-gu-ev
 ~~END~~
@@ -82,7 +82,7 @@ by-gu-ev
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 ht-dw-cx-az
 ev-gu-by
 ~~END~~
@@ -91,7 +91,7 @@ ev-gu-by
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 ht-dw-cx-az
 ev-gu-by
 ~~END~~
@@ -100,7 +100,7 @@ ev-gu-by
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 az-cx-dw-ht
 by-gu-ev
 ~~END~~
@@ -109,7 +109,7 @@ by-gu-ev
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 az-cx-ht-dw
 gu-by-ev
 ~~END~~
@@ -118,7 +118,7 @@ gu-by-ev
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 az-cx-dw-ht
 by-gu-ev
 ~~END~~
@@ -128,7 +128,7 @@ by-gu-ev
 SELECT STRING_AGG(concat(a,b),'-') FROM string_agg_t
 GO
 ~~START~~
-text
+varchar
 cx-by-gu-az-ev-dw-ht-s
 ~~END~~
 
@@ -136,7 +136,7 @@ cx-by-gu-az-ev-dw-ht-s
 SELECT STRING_AGG(concat(a,b),'-') FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 cx-az-dw-ht
 by-gu-ev-s
 ~~END~~
@@ -145,7 +145,7 @@ by-gu-ev-s
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 ht-dw-cx-az
 s-ev-gu-by
 ~~END~~
@@ -154,7 +154,7 @@ s-ev-gu-by
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 ht-dw-cx-az
 s-ev-gu-by
 ~~END~~
@@ -163,7 +163,7 @@ s-ev-gu-by
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 az-cx-dw-ht
 by-gu-ev-s
 ~~END~~
@@ -172,7 +172,7 @@ by-gu-ev-s
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 az-cx-ht-dw
 s-gu-by-ev
 ~~END~~
@@ -181,7 +181,7 @@ s-gu-by-ev
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 az-cx-dw-ht
 s-by-gu-ev
 ~~END~~
@@ -191,7 +191,7 @@ s-by-gu-ev
 SELECT STRING_AGG(a, char(10)) FROM string_agg_t
 GO
 ~~START~~
-text
+varchar
 c<newline>b<newline>g<newline>a<newline>e<newline>d<newline>h
 ~~END~~
 
@@ -199,7 +199,7 @@ c<newline>b<newline>g<newline>a<newline>e<newline>d<newline>h
 SELECT STRING_AGG(a, char(10)) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 c<newline>a<newline>d<newline>h
 b<newline>g<newline>e
 ~~END~~
@@ -208,7 +208,7 @@ b<newline>g<newline>e
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY sbid) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 h<newline>d<newline>c<newline>a
 e<newline>g<newline>b
 ~~END~~
@@ -217,7 +217,7 @@ e<newline>g<newline>b
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 h<newline>d<newline>c<newline>a
 e<newline>g<newline>b
 ~~END~~
@@ -226,7 +226,7 @@ e<newline>g<newline>b
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 a<newline>c<newline>d<newline>h
 b<newline>g<newline>e
 ~~END~~
@@ -235,7 +235,7 @@ b<newline>g<newline>e
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 a<newline>c<newline>h<newline>d
 g<newline>b<newline>e
 ~~END~~
@@ -244,7 +244,7 @@ g<newline>b<newline>e
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 a<newline>c<newline>d<newline>h
 b<newline>g<newline>e
 ~~END~~
@@ -254,7 +254,7 @@ b<newline>g<newline>e
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY a ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 a-c-d-h
 b-e-g
 ~~END~~
@@ -263,7 +263,7 @@ b-e-g
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY a DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 h-d-c-a
 g-e-b
 ~~END~~
@@ -272,7 +272,7 @@ g-e-b
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY a+b ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 az-cx-dw-ht
 by-ev-gu
 ~~END~~
@@ -281,7 +281,7 @@ by-ev-gu
 SELECT STRING_AGG(a+b,'-') WITHIN GROUP (ORDER BY a+b DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 ht-dw-cx-az
 gu-ev-by
 ~~END~~
@@ -290,7 +290,7 @@ gu-ev-by
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY concat(a,b) ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 az-cx-dw-ht
 by-ev-gu-s
 ~~END~~
@@ -299,7 +299,7 @@ by-ev-gu-s
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY concat(a,b) DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 ht-dw-cx-az
 s-gu-ev-by
 ~~END~~
@@ -308,7 +308,7 @@ s-gu-ev-by
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY a ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 a<newline>c<newline>d<newline>h
 b<newline>e<newline>g
 ~~END~~
@@ -317,7 +317,7 @@ b<newline>e<newline>g
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY a DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 h<newline>d<newline>c<newline>a
 g<newline>e<newline>b
 ~~END~~
@@ -331,31 +331,31 @@ SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 h<newline>d<newline>c<newline>a
 e<newline>g<newline>b
 ~~END~~
 
 ~~START~~
-text
+varchar
 h<newline>d<newline>c<newline>a
 e<newline>g<newline>b
 ~~END~~
 
 ~~START~~
-text
+varchar
 a<newline>c<newline>d<newline>h
 b<newline>g<newline>e
 ~~END~~
 
 ~~START~~
-text
+varchar
 a<newline>c<newline>h<newline>d
 g<newline>b<newline>e
 ~~END~~
 
 ~~START~~
-text
+varchar
 a<newline>c<newline>d<newline>h
 b<newline>g<newline>e
 ~~END~~
@@ -365,62 +365,62 @@ b<newline>g<newline>e
 SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t
 GO
 ~~START~~
-text
-?-莫-?-尔-莫
+nvarchar
+😎-莫-😇-尔-莫
 ~~END~~
 
 
 SELECT STRING_AGG(a,'-') FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
-?-尔
-莫-?-莫
+nvarchar
+😎-尔
+莫-😇-莫
 ~~END~~
 
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
-?-尔
-莫-?-莫
+nvarchar
+😎-尔
+莫-😇-莫
 ~~END~~
 
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
-?-尔
-莫-?-莫
+nvarchar
+😎-尔
+莫-😇-莫
 ~~END~~
 
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
-尔-?
-莫-?-莫
+nvarchar
+尔-😎
+莫-😇-莫
 ~~END~~
 
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
-尔-?
-?-莫-莫
+nvarchar
+尔-😎
+😇-莫-莫
 ~~END~~
 
 
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_multibyte_t GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
-尔-?
-莫-?-莫
+nvarchar
+尔-😎
+莫-😇-莫
 ~~END~~
 
 
@@ -491,7 +491,7 @@ nvarchar
 SELECT STRING_AGG(a,'-') FROM string_agg_chinese_prc_ci_as
 GO
 ~~START~~
-text
+varchar
 莫-尔-拉-比-斯
 ~~END~~
 
@@ -499,7 +499,7 @@ text
 SELECT STRING_AGG(a,'-') FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 莫-比
 尔-拉-斯
 ~~END~~
@@ -508,7 +508,7 @@ text
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 比-莫
 斯-拉-尔
 ~~END~~
@@ -517,7 +517,7 @@ text
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid ASC) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 比-莫
 斯-拉-尔
 ~~END~~
@@ -526,7 +526,7 @@ text
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY sbid DESC) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 莫-比
 尔-拉-斯
 ~~END~~
@@ -535,7 +535,7 @@ text
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid ASC) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 莫-比
 拉-尔-斯
 ~~END~~
@@ -544,7 +544,7 @@ text
 SELECT STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id, sbid DESC) FROM string_agg_chinese_prc_ci_as GROUP BY g ORDER BY g
 GO
 ~~START~~
-text
+varchar
 莫-比
 尔-拉-斯
 ~~END~~
@@ -554,7 +554,7 @@ text
 SELECT STRING_AGG(sbq.b,'-') WITHIN GROUP (ORDER BY g1) FROM (SELECT g1, g2, STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id) as 'b' FROM string_agg_t2 GROUP BY g1, g2) as sbq GROUP BY g2 ORDER BY g2
 GO
 ~~START~~
-text
+varchar
 b-g-e-d-h
 a-c-d-h
 ~~END~~
@@ -563,7 +563,7 @@ a-c-d-h
 SELECT STRING_AGG(sbq.b,'-') WITHIN GROUP (ORDER BY g1 ASC) FROM (SELECT g1, g2, STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id ASC) as 'b' FROM string_agg_t2 GROUP BY g1, g2) as sbq GROUP BY g2 ORDER BY g2
 GO
 ~~START~~
-text
+varchar
 b-g-e-d-h
 a-c-d-h
 ~~END~~
@@ -572,7 +572,7 @@ a-c-d-h
 SELECT STRING_AGG(sbq.b,'-') WITHIN GROUP (ORDER BY g1 DESC) FROM (SELECT g1, g2, STRING_AGG(a,'-') WITHIN GROUP (ORDER BY id DESC) as 'b' FROM string_agg_t2 GROUP BY g1, g2) as sbq GROUP BY g2 ORDER BY g2
 GO
 ~~START~~
-text
+varchar
 h-d-e-g-b
 h-d-c-a
 ~~END~~
@@ -590,7 +590,7 @@ c-b-g-a-e-d-h
 EXEC string_agg_dep_p1
 GO
 ~~START~~
-text
+varchar
 c-b-g-a-e-d-h
 ~~END~~
 
@@ -615,7 +615,7 @@ c-a-d-h
 EXEC string_agg_dep_p2
 GO
 ~~START~~
-text
+varchar
 b-g-e
 c-a-d-h
 ~~END~~
@@ -642,7 +642,7 @@ e-g-b
 EXEC string_agg_dep_p3
 GO
 ~~START~~
-text
+varchar
 h-d-c-a
 e-g-b
 ~~END~~
@@ -662,7 +662,7 @@ INSERT INTO string_agg_school_details (classID, rollID, studentName)
 VALUES (2, 3, 'StudentF');
 GO
 ~~START~~
-int#!#text
+int#!#varchar
 1#!#StudentA, StudentB, StudentC
 2#!#StudentD, StudentE, StudentF
 ~~END~~
@@ -675,7 +675,7 @@ SET studentName = 'StudentG'
 WHERE classID = 2 AND rollID = 3;
 GO
 ~~START~~
-int#!#text
+int#!#varchar
 1#!#StudentA, StudentB, StudentC
 2#!#StudentD, StudentE, StudentG
 ~~END~~
@@ -687,7 +687,7 @@ DELETE FROM string_agg_school_details
 WHERE classID = 1 AND rollID = 2;
 GO
 ~~START~~
-int#!#text
+int#!#varchar
 1#!#StudentA, StudentC
 2#!#StudentD, StudentE, StudentG
 ~~END~~

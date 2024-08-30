@@ -1205,34 +1205,49 @@ nvarchar
 ~~END~~
 
 
--- Tests for STRING_AGG function with WITHIN GROUP 
--- This is not supported, so an error is thrown
+-- Tests for STRING_AGG function with WITHIN GROUP
 SELECT STRING_AGG(col_char, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string_agg function requires 2 arguments)~~
+~~START~~
+varchar
+abc                 -?defghi             -??                  
+比??拉              -莫斯                
+<NULL>
+Rohit               -Bhagat              
+~~END~~
 
 
 SELECT STRING_AGG(col_nchar, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string_agg function requires 2 arguments)~~
+~~START~~
+nvarchar
+abc                 -🙂defghi             -🙂🙂                  
+比尔·拉                -莫斯                  
+<NULL>
+Rohit               -Bhagat              
+~~END~~
 
 
 SELECT STRING_AGG(col_varchar, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string_agg function requires 2 arguments)~~
+~~START~~
+varchar
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
 
 
 SELECT STRING_AGG(col_nvarchar, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string_agg function requires 2 arguments)~~
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
 
 
 
