@@ -3562,6 +3562,7 @@ execute_bulk_load_insert(int ncol, int nrow,
 				pfree(cstmt->relation);
 			}
 			pfree(cstmt);
+			cstmt = NULL;
 		}
 
 		/* Reset Insert-Bulk Options. */
@@ -3595,27 +3596,11 @@ execute_bulk_load_insert(int ncol, int nrow,
 		 * In an error condition, the caller calls the function again to do
 		 * the cleanup.
 		 */
-		MemoryContext oldcontext;
-
 		/* Cleanup cstate. */
 		EndBulkCopy(cstmt->cstate, true);
 
 		if (ActiveSnapshotSet() && GetActiveSnapshot() == snap)
 			PopActiveSnapshot();
-		oldcontext = CurrentMemoryContext;
-
-		/*
-		 * If a transaction block is already in progress then abort it, else
-		 * rollback entire transaction.
-		 */
-		if (!IsTransactionBlockActive())
-		{
-			AbortCurrentTransaction();
-			StartTransactionCommand();
-		}
-		else
-			pltsql_rollback_txn();
-		MemoryContextSwitchTo(oldcontext);
 
 		/* Reset Insert-Bulk Options. */
 		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
