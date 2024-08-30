@@ -1082,6 +1082,8 @@ ProcessBCPRequest(TDSRequest request)
 		}
 		PG_END_TRY();
 	}
+	/* Reset the offset at the end of the request. */
+	TdsResetBcpOffset();
 
 	/* If we Started an internal savepoint then release it. */
 	if (internal_sp_started && before_subtxn_id == GetCurrentSubTransactionId())
@@ -1123,7 +1125,6 @@ ProcessBCPRequest(TDSRequest request)
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
 	}
-	bcpOffset = 0;
 }
 
 static int
