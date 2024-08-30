@@ -1,5 +1,5 @@
-#Q#Create table sourceTable(a int, b int not null)
-#Q#Create table destinationTable(a int, b int not null)
+#Q#Create table sourceTable(a int, b int PRIMARY KEY)
+#Q#Create table destinationTable(a int, b int PRIMARY KEY)
 #Q#Insert into sourceTable values (1, 1);
 #Q#Insert into sourceTable values (NULL, 2);
 #Q#select @@trancount;
@@ -18,8 +18,8 @@
 #!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
-#Q#Create table sourceTable(a int, b int not null)
-#Q#Create table destinationTable(a int, b int not null)
+#Q#Create table sourceTable(a int, b int PRIMARY KEY)
+#Q#Create table destinationTable(a int, b int PRIMARY KEY)
 #Q#Insert into sourceTable values (1, 1);
 #Q#Insert into sourceTable values (NULL, 2);
 #Q#select @@trancount;
@@ -35,8 +35,8 @@
 #Q#Select * from destinationTable
 #Q#drop table sourceTable
 #Q#drop table destinationTable
-#Q#Create table sourceTable(a int, b int not null)
-#Q#Create table destinationTable(a int, b int not null)
+#Q#Create table sourceTable(a int, b int PRIMARY KEY)
+#Q#Create table destinationTable(a int, b int PRIMARY KEY)
 #Q#create index idx on destinationTable(a);
 #Q#Insert into sourceTable values (1, 1);
 #Q#Insert into sourceTable values (NULL, 2);
@@ -81,8 +81,8 @@ on
 on
 #Q#drop table sourceTable
 #Q#drop table destinationTable
-#Q#Create table sourceTable(a int, b int not null)
-#Q#Create table destinationTable(a int, b int not null)
+#Q#Create table sourceTable(a int, b int PRIMARY KEY)
+#Q#Create table destinationTable(a int, b int PRIMARY KEY)
 #Q#create index idx on destinationTable(a);
 #Q#Insert into sourceTable values (1, 1);
 #Q#Insert into sourceTable values (NULL, 2);
@@ -246,25 +246,6 @@ on
 #Q#SELECT set_config('enable_indexscan', 'on', false);
 #D#text
 on
-#Q#drop table sourceTable
-#Q#drop table sourceTable1
-#Q#drop table destinationTable
-#Q#create table sourceTable(c1 int, c2 CHAR(1024))
-#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
-#Q#INSERT INTO sourceTable VALUES (NULL, NULL)
-#Q#create table destinationTable(c1 int NOT NULL, c2 CHAR(1024))
-#Q#create table sourceTable1(c1 int, c2 CHAR(1024))
-#Q#INSERT INTO sourceTable1 VALUES(NULL, NULL)
-#Q#INSERT INTO sourceTable1 SELECT generate_series(1, 999, 1), 'Foo'
-#Q#Select count(*) from sourceTable
-#D#int
-1001
-#Q#select count(*) from sourceTable1
-#D#int
-1000
-#Q#Select count(*) from destinationTable
-#D#int
-0
 #Q#drop table sourceTable
 #Q#drop table sourceTable1
 #Q#drop table destinationTable

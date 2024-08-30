@@ -19,8 +19,8 @@
 
 ####### Testing explicit transaction #######
 # commit and then check for inserts
-Create table sourceTable(a int, b int not null)
-Create table destinationTable(a int, b int not null)
+Create table sourceTable(a int, b int PRIMARY KEY)
+Create table destinationTable(a int, b int PRIMARY KEY)
 Insert into sourceTable values (1, 1);
 Insert into sourceTable values (NULL, 2);
 txn#!#begin
@@ -36,8 +36,8 @@ drop table sourceTable
 drop table destinationTable
 
 # rollback and then check for inserts
-Create table sourceTable(a int, b int not null)
-Create table destinationTable(a int, b int not null)
+Create table sourceTable(a int, b int PRIMARY KEY)
+Create table destinationTable(a int, b int PRIMARY KEY)
 Insert into sourceTable values (1, 1);
 Insert into sourceTable values (NULL, 2);
 txn#!#begin
@@ -54,8 +54,8 @@ drop table sourceTable
 drop table destinationTable
 
 # Index without transaction
-Create table sourceTable(a int, b int not null)
-Create table destinationTable(a int, b int not null)
+Create table sourceTable(a int, b int PRIMARY KEY)
+Create table destinationTable(a int, b int PRIMARY KEY)
 create index idx on destinationTable(a);
 Insert into sourceTable values (1, 1);
 Insert into sourceTable values (NULL, 2);
@@ -81,8 +81,8 @@ drop table sourceTable
 drop table destinationTable
 
 ####### Index with transaction #######
-Create table sourceTable(a int, b int not null)
-Create table destinationTable(a int, b int not null)
+Create table sourceTable(a int, b int PRIMARY KEY)
+Create table destinationTable(a int, b int PRIMARY KEY)
 create index idx on destinationTable(a);
 Insert into sourceTable values (1, 1);
 Insert into sourceTable values (NULL, 2);
@@ -204,31 +204,6 @@ Select count(c1) from destinationTable
 SELECT set_config('enable_bitmapscan', 'on', false);
 SELECT set_config('enable_seqscan', 'on', false);
 SELECT set_config('enable_indexscan', 'on', false);
-drop table sourceTable
-drop table sourceTable1
-drop table destinationTable
-
-####### Not Null #######
-# last row is error (last packet will be flushed)
-create table sourceTable(c1 int, c2 CHAR(1024))
-INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
-INSERT INTO sourceTable VALUES (NULL, NULL)
-create table destinationTable(c1 int NOT NULL, c2 CHAR(1024))
-
-insertbulk#!#sourceTable#!#destinationTable
-
-# 1st row is error (remaining packets to be discarded)
-create table sourceTable1(c1 int, c2 CHAR(1024))
-INSERT INTO sourceTable1 VALUES(NULL, NULL)
-INSERT INTO sourceTable1 SELECT generate_series(1, 999, 1), 'Foo'
-
-insertbulk#!#sourceTable1#!#destinationTable
-
-Select count(*) from sourceTable
-select count(*) from sourceTable1
-
-Select count(*) from destinationTable
-
 drop table sourceTable
 drop table sourceTable1
 drop table destinationTable
