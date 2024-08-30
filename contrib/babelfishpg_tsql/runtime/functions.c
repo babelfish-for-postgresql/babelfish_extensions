@@ -2847,7 +2847,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(lowercase_db_name, login);
-	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(lowercase_db_name), NAMEDATALEN);
 
 	/*
 	 * Special cases: Database Owner should always have access If this DB has
