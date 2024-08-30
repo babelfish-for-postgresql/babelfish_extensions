@@ -6,6 +6,10 @@ inputs:
     description: 'Test input directory'
     required: no
     default: input
+  migration_mode:
+    description: 'Database migration mode'
+    required: no
+    default: "multi-db"
 
 runs:
   using: "composite"
@@ -16,5 +20,11 @@ runs:
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           export inputFilesPath=${{inputs.input_dir}}
           cd test/JDBC/
-          mvn test
+          if [[ '${{ inputs.migration_mode }}' == 'single-db' ]];then
+            export isSingleDbMode=true
+            mvn test
+            unset isSingleDbMode
+          else
+            mvn test
+          fi
       shell: bash

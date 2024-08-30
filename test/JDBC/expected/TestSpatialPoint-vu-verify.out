@@ -85,7 +85,7 @@ float
 
 
 DECLARE @point geometry;
-SET @point = geometry::POINT(22.34900, -47.65100, 4326);
+SET @point = geometry::Point(22.34900, -47.65100, 4326);
 SELECT STX(@point);
 SELECT STY(@point);
 SELECT @point.STX;
@@ -172,7 +172,7 @@ POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740#!#0.0
 DECLARE @point1 geometry, @point2 geometry, @point3 geometry;
 SET @point1 = geometry::STPointFromText(null, 4326);
 SET @point2 = geometry::STGeomFromText(null, 4326);
-SET @point3 = geometry::POINT(22.34900, -47.65100, 4326);
+SET @point3 = geometry::Point(22.34900, -47.65100, 4326);
 SELECT @point1.STX;
 SELECT @point1.STY;
 SELECT @point1.STAsText();
@@ -219,7 +219,7 @@ float
 
 -- Negative test for Geospatial functions
 DECLARE @point1 geometry, @point2 varchar(50), @point3 int;
-SET @point1 = geometry::POINT(22.34900, -47.65100, 4326);;
+SET @point1 = geometry::Point(22.34900, -47.65100, 4326);;
 SET @point2 = 'Test_String';
 SELECT @point1.STDistance(@point2);
 Go
@@ -1874,7 +1874,7 @@ POINT(-122.349 47.651)
 
 
 DECLARE @point geography;
-SET @point = geography::POINT(22.34900, -47.65100, 4326);
+SET @point = geography::Point(22.34900, -47.65100, 4326);
 SELECT STAsText(@point);
 SELECT @point.STAsText();
 Go
@@ -1918,7 +1918,7 @@ float
 
 
 DECLARE @point geography;
-SET @point = geography::POINT(22.34900, -47.65100, 4326);
+SET @point = geography::Point(22.34900, -47.65100, 4326);
 SELECT Long(@point);
 SELECT Lat(@point);
 SELECT @point.Long;
@@ -2263,7 +2263,7 @@ POINT(-22.349 47.651)
 DECLARE @point1 geography, @point2 geography, @point3 geography;
 SET @point1 = geography::STPointFromText(null, 4326);
 SET @point2 = geography::STGeomFromText(null, 4326);
-SET @point3 = geography::POINT(22.34900, -47.65100, 4326);
+SET @point3 = geography::Point(22.34900, -47.65100, 4326);
 SELECT @point1.Long;
 SELECT @point1.Lat;
 SELECT @point1.STAsText();
@@ -2310,7 +2310,7 @@ float
 
 -- Negative test for Geospatial functions
 DECLARE @point1 geography, @point2 varchar(50), @point3 int;
-SET @point1 = geography::POINT(22.34900, -47.65100, 4326);
+SET @point1 = geography::Point(22.34900, -47.65100, 4326);
 SET @point2 = 'Test_String';
 SELECT @point2.STDistance(@point1);
 Go
@@ -3394,13 +3394,6 @@ GO
 ~~START~~
 text
 jdbc_user
-~~END~~
-
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
-~~START~~
-text
-multi-db
 ~~END~~
 
 

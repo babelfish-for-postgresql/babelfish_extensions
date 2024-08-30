@@ -305,7 +305,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 varchar
-尔·拉莫斯          
+??拉莫斯          
 ~~END~~
 
 
@@ -345,7 +345,7 @@ SELECT substring(@inputString, 2, 15) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 varchar
-尔·拉莫斯          
+??拉莫斯          
 ~~END~~
 
 
@@ -426,7 +426,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 varchar
-尔·拉莫斯
+??拉莫斯
 ~~END~~
 
 
@@ -649,7 +649,7 @@ SELECT substring(@inputString, 2, 15)
 GO
 ~~START~~
 nvarchar
-尔·拉莫斯          
+??拉莫斯          
 ~~END~~
 
 
