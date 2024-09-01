@@ -11,7 +11,6 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
-<<<<<<< HEAD
 CREATE OR REPLACE VIEW sys.configurations
 AS
 SELECT  configuration_id, 
@@ -78,7 +77,6 @@ SELECT  c.value_in_use AS value,
         END AS status
 FROM sys.configurations c LEFT JOIN sys.babelfish_configurations b ON c.configuration_id = b.configuration_id;
 GRANT SELECT ON sys.sysconfigures TO PUBLIC;
-=======
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
                                                                  IN p_style NUMERIC DEFAULT 0)
@@ -1719,7 +1717,6 @@ and
     tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
->>>>>>> BABEL_4_X_DEV
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
