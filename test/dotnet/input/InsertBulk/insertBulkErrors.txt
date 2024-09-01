@@ -556,3 +556,76 @@ drop table sourceTable1
 drop table destinationTable
 
  SET implicit_transactions OFF
+
+ # identity
+create table sourceTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT destinationTable ON
+INSERT INTO destinationTable (c1, c2) VALUES(1001, 'Foo')
+ set IDENTITY_INSERT destinationTable OFF
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+create table sourceTable1(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable1 ON
+INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable1 OFF
+keepidentityinsertbulk#!#sourceTable1#!#destinationTable
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+select count(c1) from destinationTable
+select Ident_CURRENT('sourceTable')
+select Ident_CURRENT('sourceTable1')
+select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+create table sourceTable(c1 int identity, c2 CHAR(1024), check (c1 < 1000))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity, c2 CHAR(1024), check (c1 < 500))
+ set IDENTITY_INSERT destinationTable ON
+INSERT INTO destinationTable (c1, c2) VALUES(1001, 'Foo')
+ set IDENTITY_INSERT destinationTable OFF
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+create table sourceTable1(c1 int identity, c2 CHAR(1024), check (c1 < 1000))
+ set IDENTITY_INSERT sourceTable1 ON
+INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable1 OFF
+keepidentityinsertbulk#!#sourceTable1#!#destinationTable
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+select count(c1) from destinationTable
+select Ident_CURRENT('sourceTable')
+select Ident_CURRENT('sourceTable1')
+select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+create table sourceTable(c1 int identity, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) VALUES (1, 'Foo'), (2, 'Foo')
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT destinationTable ON
+INSERT INTO destinationTable (c1, c2) VALUES(2, 'Foo')
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+keepidentityinsertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable

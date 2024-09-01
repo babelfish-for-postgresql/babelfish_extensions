@@ -100,6 +100,38 @@ namespace BabelfishDotnetFramework
 			return true;
 		}
 
+		public bool insertBulkCopyWithKeepIdentity(DbConnection bblCnn, DbCommand bblCmd, String sourceTable, String destinationTable, Logger logger, ref int stCount)
+		{
+			bblCmd.CommandText = "Select * from " + sourceTable;
+			DbDataReader reader = null;
+			DataTable dataTable = new DataTable();
+			try
+			{
+				reader = bblCmd.ExecuteReader();
+				dataTable.Load(reader);
+				reader.Close();
+
+				/* Set KeepIdentity default for this API */
+				SqlBulkCopy bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn, SqlBulkCopyOptions.KeepIdentity, null);
+				bulkCopy.DestinationTableName = destinationTable;
+				bulkCopy.WriteToServer(dataTable);
+			}
+			catch (Exception e)
+			{
+				PrintToLogsOrConsole("#################################################################", logger, "information");
+				PrintToLogsOrConsole(
+					$"############# ERROR IN EXECUTING WITH BABEL  ####################\n{e}\n",
+					logger, "information");
+				stCount--;
+				return false;
+			}
+			finally
+			{
+				reader.Close();
+			}
+			return true;
+		}
+
 		public void ResultSetWriter(DbConnection cnn, string fileName)
 		{
 			// USED TO WRITE THE CONNECTION AUTHENTICATIONS IN ONE FILE

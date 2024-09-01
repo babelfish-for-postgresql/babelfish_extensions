@@ -226,6 +226,15 @@ namespace BabelfishDotnetFramework
 							string destinationTable = result[2];
 							testFlag &= testUtils.insertBulkCopyWithTransaction(bblCnn, bblCmd, sourceTable, destinationTable, bblTransaction, logger, ref stCount);
 						}
+						else if (strLine.ToLowerInvariant().StartsWith("keepidentityinsertbulk"))
+						{
+							var result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
+							testUtils.PrintToLogsOrConsole(
+								$"########################## INSERT BULK:- {strLine} ##########################", logger, "information");
+							string sourceTable = result[1];
+							string destinationTable = result[2];
+							testFlag &= testUtils.insertBulkCopyWithKeepIdentity(bblCnn, bblCmd, sourceTable, destinationTable, logger, ref stCount);
+						}
 						/* Case for sp_customtype RPC. */
 						else if (strLine.ToLowerInvariant().StartsWith("storedp"))
 						{
