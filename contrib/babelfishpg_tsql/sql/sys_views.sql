@@ -2465,10 +2465,10 @@ UNION ALL
 SELECT 
 CAST(103 as INT) AS configuration_id,
 CAST('user connections' AS SYS.NVARCHAR(35)) AS name,
-CAST(s.setting AS sys.sql_variant) AS value,
-CAST(s.min_val AS sys.sql_variant) AS minimum,
-CAST(s.max_val AS sys.sql_variant) AS maximum,
-CAST(s.setting AS sys.sql_variant) AS value_in_use,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value,
+CAST(CAST(s.min_val AS INT) AS sys.sql_variant) AS minimum,
+CAST(CAST(s.max_val AS INT) AS sys.sql_variant) AS maximum,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value_in_use,
 CAST(s.short_desc AS sys.nvarchar(255)) AS description,
 CAST(0 AS sys.BIT) AS is_dynamic,
 CAST(1 AS sys.BIT) AS is_advanced
@@ -2477,10 +2477,10 @@ UNION ALL
 SELECT 
 CAST(505 as INT) AS configuration_id,
 CAST('network packet size (B)' AS SYS.NVARCHAR(35)) AS name,
-CAST(s.setting AS sys.sql_variant) AS value,
-CAST(s.min_val AS sys.sql_variant) AS minimum,
-CAST(s.max_val AS sys.sql_variant) AS maximum,
-CAST(s.setting AS sys.sql_variant) AS value_in_use,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value,
+CAST(CAST(s.min_val AS INT) AS sys.sql_variant) AS minimum,
+CAST(CAST(s.max_val AS INT) AS sys.sql_variant) AS maximum,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value_in_use,
 CAST(s.short_desc AS sys.nvarchar(255)) AS description,
 CAST(1 AS sys.BIT) AS is_dynamic,
 CAST(1 AS sys.BIT) AS is_advanced
