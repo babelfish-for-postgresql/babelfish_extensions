@@ -181,6 +181,6 @@ jobs:
       - name: Disable pgaudit extension
         if: always()
         run: |
-          psql -h localhost -U postgres -d postgres -c "ALTER SYSTEM RESET pgaudit.log;"
-          psql -h localhost -U postgres -d postgres -c "DROP EXTENSION pgaudit;"
+          sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM RESET pgaudit.log;"
+          sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -c "DROP EXTENSION pgaudit;"
           sudo service postgresql restart
