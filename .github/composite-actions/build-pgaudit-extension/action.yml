@@ -14,7 +14,7 @@ runs:
         cd ..
         rm -rf pgaudit
         sudo apt-get install -y git make gcc
-        git clone https://github.com/pgaudit/pgaudit.git
+        git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
         cd pgaudit
         make
         sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
