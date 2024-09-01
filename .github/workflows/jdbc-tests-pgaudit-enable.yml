@@ -48,18 +48,10 @@ jobs:
         if: always() &&  steps.build-vector-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
         
-      - name: Build pgaudit
-        run: |
-          git clone https://github.com/pgaudit/pgaudit.git
-          cd pgaudit
-          make
-          sudo make install
-
-      - name: Enable pgaudit extension
-        run: |
-          psql -h localhost -U postgres -d postgres -c "CREATE EXTENSION pgaudit;"
-          psql -h localhost -U postgres -d postgres -c "ALTER SYSTEM SET pgaudit.log = 'all';"
-          sudo service postgresql restart
+      - name: Build pgaudit Extension
+        uses: ./.github/composite-actions/build-pgaudit-extension
+        with:
+          install_dir: 'psql'
 
       - name: Install Extensions
         id: install-extensions
