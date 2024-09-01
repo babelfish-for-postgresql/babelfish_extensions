@@ -1819,7 +1819,7 @@ DECLARE
     HH_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '$');
     DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
 BEGIN
-    v_datatype := trim(regexp_replace(p_datatype, 'DATETIME', 'TIME', 'gi'));
+    v_datatype := trim(regexp_replace(p_datatype COLLATE "C", 'DATETIME', 'TIME', 'gi'));
     v_timestring := pg_catalog.upper(trim(p_timestring));
     v_style := floor(p_style)::SMALLINT;
 
@@ -9874,7 +9874,7 @@ BEGIN
 	ELSE
 		RAISE invalid_parameter_value;
 	END IF;
-	v_res_length := substring(p_datatype, MASK_REGEXP)::SMALLINT;
+	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
 	IF v_res_length IS NULL THEN
 		RETURN v_result;
 	ELSE
@@ -9945,7 +9945,7 @@ BEGIN
 		RAISE invalid_parameter_value;
 	END IF;
 
-	v_res_length := substring(p_datatype, MASK_REGEXP)::SMALLINT;
+	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
 	IF v_res_length IS NULL THEN
 		RETURN v_result;
 	ELSE

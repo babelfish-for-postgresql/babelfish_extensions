@@ -9,6 +9,8 @@ namespace BabelfishDotnetFramework
 		/* Declaring variables required for a Test Run. */
 		static readonly Dictionary<string, string> Dictionary = LoadConfig();
 		public static readonly string BblConnectionString = Dictionary["bblConnectionString"];
+
+		public static readonly string BCPConnectionString = Dictionary["BCPConnectionString"];
 		public static readonly string QueryFolder = Dictionary["queryFolder"];
 		public static readonly string TestName = Dictionary["testName"];
 		public static readonly bool RunInParallel = bool.Parse(Dictionary["runInParallel"]);
@@ -46,6 +48,9 @@ namespace BabelfishDotnetFramework
 			/* Creating Server Connection String and Query. */
 			dictionary["bblConnectionString"] = BuildConnectionString(dictionary["babel_URL"], dictionary["babel_port"],
 				dictionary["babel_databaseName"],
+				dictionary["babel_user"], dictionary["babel_password"]) + "pooling=false;";
+			dictionary["BCPConnectionString"] = BuildConnectionString(dictionary["babel_URL"], dictionary["babel_port"],
+				dictionary["babel_databaseName"],
 				dictionary["babel_user"], dictionary["babel_password"]);
 			return dictionary;
 		}
@@ -56,10 +61,10 @@ namespace BabelfishDotnetFramework
 			{
 				case "oledb":
 					return @"Provider = " + ConfigSetup.Provider + ";Data Source = " + url + "," + port + "; Initial Catalog = " + db
-						   + "; User ID = " + uid + "; Password = " + pwd + ";Pooling=false;";
+						   + "; User ID = " + uid + "; Password = " + pwd + ";";
 				case "sql":
 					return @"Data Source = " + url + "," + port + "; Initial Catalog = " + db
-						   + "; User ID = " + uid + "; Password = " + pwd + ";Pooling=false;";
+						   + "; User ID = " + uid + "; Password = " + pwd + ";";
 				default:
 					throw new Exception("Driver Not Supported");
 			}

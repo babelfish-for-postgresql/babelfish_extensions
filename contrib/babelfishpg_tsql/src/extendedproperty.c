@@ -788,7 +788,7 @@ fn_listextendedproperty(PG_FUNCTION_ARGS)
 	sql_variant_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 									  CStringGetDatum("sql_variant"),
 									  ObjectIdGetDatum(nspoid));
-	colloid = tsql_get_server_collation_oid_internal(false);
+	colloid = tsql_get_database_or_server_collation_oid_internal(false);
 
 	/* need to build tuplestore in query context */
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;

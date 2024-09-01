@@ -21,6 +21,7 @@ The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for da
 - [Reading the console output and diff](#reading-the-console-output-and-diff)
 - [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled)
 - [Running Tests with Non Default Server Collation](#running-tests-with-non-default-server-collation)
+- [Running Tests with Non Default Database Collation](#running-tests-with-non-default-database-collation)
 
 ## Running the test framework
 
@@ -496,3 +497,42 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     unset serverCollationName
     ```
     This ensures that correct expected output is picked for current server collation name.
+
+## Running Tests with Non Default Database Collation
+
+After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
+1. Create a PostgreSQL database and initialize Babelfish extensions using the [online instructions](../../contrib/README.md). Update the collation of master database using the following query from psql endpoint
+
+   ```bash
+   update sys.babelfish_sysdatabases set default_collation = 'bbf_unicode_cp1_ci_ai' where name = 'master';
+   ```
+2. Before running JDBC tests, set the `isdbCollationMode` environment variable to true:
+
+   ```bash
+    export isdbCollationMode=true
+    # Verify if isdbCollationMode is set to true
+    echo $isdbCollationMode
+   ```
+3. Now Run the tests:
+    ```bash
+    mvn test
+    ```
+4. How to add expected output for some test
+    1. By default expected output of a test should be added into `expected` folder.
+    2. If JDBC is running in normal mode with isdbCollationMode=true and expected output of some test is different then add this new expected output in `expected/db_collation` folder.
+    3. If JDBC is running in parallel query mode with default database collation and expected output of some test is different then the expected output should be added in `expected/parallel_query` folder.(As mentioned in [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled))
+    4. If JDBC is running in parallel query mode with isdbCollationMode=true and expected output of some test is different then add this new expected output in `expected/parallel_query/db_collation` folder.
+
+5. Cleanup all the objects, users, roles and databases created while running the tests:
+    ```bash
+    ./cleanup.sh
+    ```
+6. Please note that whenever you had changed the database collation update the `isdbCollationMode` environment variable with appropriate value and unset when database collation name is set to default database collation.
+    ```bash
+    unset isdbCollationMode
+    ```
+    This ensures that correct expected output is picked for current database collation name.
+    And make sure to revert back the collation of the master database to its previous value using the following query from psql endpoint
+    ```bash
+   update sys.babelfish_sysdatabases set default_collation = 'bbf_unicode_cp1_ci_as' where name = 'master';
+   ```
