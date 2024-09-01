@@ -20,7 +20,8 @@ runs:
         echo "came into pgaudit repo successfully"
         make
         make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
-        sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
+        echo "pgaudit complied successfully"
+        make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
         echo "pgaudit installed successfully"
         cd ..
         echo "shared_preload_libraries = 'babelfishpg_tds,pgaudit'" | sudo tee -a ~/${{ inputs.install_dir }}/data/postgresql.conf
