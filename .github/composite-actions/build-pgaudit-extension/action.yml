@@ -17,8 +17,9 @@ runs:
         git clone https://github.com/pgaudit/pgaudit.git
         cd pgaudit
         make
-        sudo make install
-        sudo ~/${{ inputs.install_dir }}/bin/psql -h localhost -U postgres -d postgres -c "CREATE EXTENSION pgaudit;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -h localhost -U postgres -d postgres -c "ALTER SYSTEM SET pgaudit.log = 'all';"
+        sudo make install USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
+        echo "shared_preload_libraries = 'babelfishpg_tds,pgaudit'" | sudo tee -a ~/${{ inputs.install_dir }}/data/postgresql.conf
+        sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE EXTENSION pgaudit;"
+        sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
         sudo ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data restart
       shell: bash
