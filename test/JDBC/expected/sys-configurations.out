@@ -28,7 +28,8 @@ WHERE
         SQL_VARIANT_PROPERTY(is_advanced, 'BaseType') != 'bit';
 GO
 ~~START~~
-int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#nvarchar#!#bit#!#bit
+int
+0
 ~~END~~
 
 
