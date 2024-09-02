@@ -2451,13 +2451,13 @@ create or replace view sys.dm_exec_connections
 
 CREATE OR REPLACE VIEW sys.configurations
 AS
-SELECT  configuration_id, 
-        name,
+SELECT  CAST(configuration_id as INT) AS configuration_id, 
+        CAST(name AS SYS.NVARCHAR(35)) AS name,
         CAST(CAST(value AS INT) AS sys.sql_variant) AS value,
         CAST(CAST(minimum AS INT) AS sys.sql_variant) AS minimum,
         CAST(CAST(maximum AS INT) AS sys.sql_variant) AS maximum,
         CAST(CAST(value_in_use AS INT) AS sys.sql_variant) AS value_in_use,
-        description, 
+        CAST(description AS sys.nvarchar(255)) AS description,
         is_dynamic, 
         is_advanced 
 FROM sys.babelfish_configurations
