@@ -3507,6 +3507,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	bool		new_record_nulls_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
 	bool		new_record_repl_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
 	NameData   *objname_data;
+	NameData   *newname_data;
 	NameData   *schemaname_data;
 	bool		is_null;
 	char	   *funcsign;
@@ -3562,8 +3563,9 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	initStringInfo(&new_funcsign);
 	appendStringInfoString(&new_funcsign, stmt->newname);
 	appendStringInfoString(&new_funcsign, strrchr(funcsign, '('));
+	namestrcpy(&newname_data, stmt->newname);
 
-	new_record_func_ext[Anum_bbf_function_ext_funcname - 1] = CStringGetDatum(stmt->newname);
+	new_record_func_ext[Anum_bbf_function_ext_funcname - 1] = NameGetDatum(&newname_data);
 	new_record_func_ext[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(new_funcsign.data);
 	new_record_repl_func_ext[Anum_bbf_function_ext_funcname - 1] = true;
 	new_record_repl_func_ext[Anum_bbf_function_ext_funcsignature - 1] = true;
@@ -4442,6 +4444,7 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	ScanKeyData		key;
 	HeapTuple		tuple, db_found;
 	TableScanDesc	tblscan;
+	NameData    	new_owner_namedata;
 		
 	Datum		values[SYSDATABASES_NUM_COLS];
 	bool		nulls[SYSDATABASES_NUM_COLS];
@@ -4484,9 +4487,10 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, false, sizeof(nulls));
 	MemSet(replaces, false, sizeof(replaces));
+	namestrcpy(&new_owner_namedata, new_owner_name);
 		
 	/* Set up the new owner. */
-	values[Anum_sysdatabases_owner - 1]   = CStringGetDatum(new_owner_name);
+	values[Anum_sysdatabases_owner - 1]   = NameGetDatum(&new_owner_namedata);
 	replaces[Anum_sysdatabases_owner - 1] = true;	
 								  
 	tuple = heap_modify_tuple(db_found,
@@ -4603,11 +4607,13 @@ update_babelfish_namespace_ext_rename_db(int16 db_id, char *new_db_name)
 	{
 		bool		isNull;
 		char		*schema_name = TextDatumGetCString(heap_getattr(old_tuple, Anum_namespace_ext_orig_name, namespace_rel_descr, &isNull));
+		NameData 	physical_schema_name_namedata;
 
+		namestrcpy(&physical_schema_name_namedata, get_physical_schema_name(new_db_name, schema_name));
 		list_of_schemas_to_rename = lappend(list_of_schemas_to_rename, pstrdup(schema_name));
 
 		/* Update the Physical Db Name. */
-		values[Anum_namespace_ext_namespace - 1] = CStringGetDatum(get_physical_schema_name(new_db_name, schema_name));
+		values[Anum_namespace_ext_namespace - 1] = NameGetDatum(&physical_schema_name_namedata);
 		replaces[Anum_namespace_ext_namespace - 1] = true;	
 
 		new_tuple = heap_modify_tuple(old_tuple,
@@ -4675,12 +4681,14 @@ update_babelfish_authid_user_ext_rename_db(
 		bool isNull;
 		char *role_name = TextDatumGetCString(heap_getattr(old_tuple,
 							Anum_bbf_authid_user_ext_orig_username, bbf_authid_user_ext_dsc, &isNull));
+		NameData rolename_namedata;
 		
+		namestrcpy(&rolename_namedata, get_physical_user_name((char *)new_db_name, role_name, true));
 		list_of_roles_to_rename = lappend(list_of_roles_to_rename, pstrdup(role_name));
 
 		/* update rolname */
 		values[USER_EXT_ROLNAME] 
-						= CStringGetDatum(get_physical_user_name((char *)new_db_name, role_name, true));
+						= NameGetDatum(&rolename_namedata);
 		replaces[USER_EXT_ROLNAME] = true;
 
 		/* update database name */
