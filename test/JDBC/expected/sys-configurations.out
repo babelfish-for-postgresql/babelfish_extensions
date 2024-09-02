@@ -15,7 +15,7 @@ int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#nvarcha
 
 
 -- Verify the sql variant of the all the rows in sys.configurations
-SELECT * FROM sys.configurations 
+SELECT count(*) FROM sys.configurations 
 WHERE 
         SQL_VARIANT_PROPERTY(configuration_id, 'BaseType') != 'int' OR
         SQL_VARIANT_PROPERTY(name, 'BaseType') != 'nvarchar' OR
