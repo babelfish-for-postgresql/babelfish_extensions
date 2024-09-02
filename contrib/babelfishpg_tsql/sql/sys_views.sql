@@ -2451,13 +2451,13 @@ create or replace view sys.dm_exec_connections
 
 CREATE OR REPLACE VIEW sys.configurations
 AS
-SELECT  CAST(configuration_id as INT) AS configuration_id, 
-        CAST(name AS SYS.NVARCHAR(35)) AS name,
-        CAST(CAST(value AS INT) AS sys.sql_variant) AS value,
-        CAST(CAST(minimum AS INT) AS sys.sql_variant) AS minimum,
-        CAST(CAST(maximum AS INT) AS sys.sql_variant) AS maximum,
-        CAST(CAST(value_in_use AS INT) AS sys.sql_variant) AS value_in_use,
-        CAST(description AS sys.nvarchar(255)) AS description,
+SELECT  configuration_id, 
+        name,
+        value,
+        minimum,
+        maximum,
+        value_in_use,
+        description,
         is_dynamic, 
         is_advanced 
 FROM sys.babelfish_configurations
@@ -2470,8 +2470,8 @@ CAST(CAST(s.min_val AS INT) AS sys.sql_variant) AS minimum,
 CAST(CAST(s.max_val AS INT) AS sys.sql_variant) AS maximum,
 CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value_in_use,
 CAST(s.short_desc AS sys.nvarchar(255)) AS description,
-CAST(0 AS sys.BIT) AS is_dynamic,
-CAST(1 AS sys.BIT) AS is_advanced
+CAST(CAST(0 AS sys.BIT) AS sys.BIT) AS is_dynamic,
+CAST(CAST(1 AS sys.BIT) AS sys.BIT) AS is_advanced
 FROM pg_catalog.pg_settings s where name = 'max_connections'
 UNION ALL
 SELECT 
@@ -2482,8 +2482,8 @@ CAST(CAST(s.min_val AS INT) AS sys.sql_variant) AS minimum,
 CAST(CAST(s.max_val AS INT) AS sys.sql_variant) AS maximum,
 CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value_in_use,
 CAST(s.short_desc AS sys.nvarchar(255)) AS description,
-CAST(1 AS sys.BIT) AS is_dynamic,
-CAST(1 AS sys.BIT) AS is_advanced
+CAST(CAST(1 AS sys.BIT) AS sys.BIT) AS is_dynamic,
+CAST(CAST(1 AS sys.BIT) AS sys.BIT) AS is_advanced
 FROM pg_catalog.pg_settings s where name = 'babelfishpg_tds.tds_default_packet_size'
 ORDER BY configuration_id;
 GRANT SELECT ON sys.configurations TO PUBLIC;
