@@ -1488,7 +1488,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 
 	if (login_name_str)
 	{
-		namestrcpy(&login_name_str_namedata, physical_name);
+		namestrcpy(&login_name_str_namedata, login_name_str);
 
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = NameGetDatum(&login_name_str_namedata);
 		new_record_repl_user_ext[USER_EXT_LOGIN_NAME] = true;
