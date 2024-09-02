@@ -2452,11 +2452,11 @@ create or replace view sys.dm_exec_connections
 CREATE OR REPLACE VIEW sys.configurations
 AS
 SELECT  configuration_id, 
-        name, 
-        value, 
-        minimum, 
-        maximum, 
-        value_in_use, 
+        name,
+        CAST(CAST(value AS INT) AS sys.sql_variant) AS value,
+        CAST(CAST(minimum AS INT) AS sys.sql_variant) AS minimum,
+        CAST(CAST(maximum AS INT) AS sys.sql_variant) AS maximum,
+        CAST(CAST(value_in_use AS INT) AS sys.sql_variant) AS value_in_use,
         description, 
         is_dynamic, 
         is_advanced 
