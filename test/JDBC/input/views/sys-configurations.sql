@@ -15,6 +15,19 @@ WHERE
         SQL_VARIANT_PROPERTY(is_advanced, 'BaseType') != 'bit';
 GO
 
+SELECT 
+        SQL_VARIANT_PROPERTY(configuration_id, 'BaseType'),
+        SQL_VARIANT_PROPERTY(name, 'BaseType'),
+        SQL_VARIANT_PROPERTY(value, 'BaseType'),
+        SQL_VARIANT_PROPERTY(minimum, 'BaseType'),
+        SQL_VARIANT_PROPERTY(maximum, 'BaseType'),
+        SQL_VARIANT_PROPERTY(value_in_use, 'BaseType'),
+        SQL_VARIANT_PROPERTY(description, 'BaseType'),
+        SQL_VARIANT_PROPERTY(is_dynamic, 'BaseType'),
+        SQL_VARIANT_PROPERTY(is_advanced, 'BaseType')
+from sys.configurations
+where configuration_id = '103';
+
 SELECT * FROM sys.syscurconfigs;
 GO
 
