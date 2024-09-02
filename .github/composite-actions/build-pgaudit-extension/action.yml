@@ -28,7 +28,7 @@ runs:
         ls
         cd psql
         ls
-        sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pgaudit'/g" /data/postgresql.conf
+        sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pgaudit'/g" ~/psql/data/postgresql.conf
         echo "everything set"
         cd ~
         sudo ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data restart
