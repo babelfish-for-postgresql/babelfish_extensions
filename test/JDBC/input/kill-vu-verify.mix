@@ -225,3 +225,171 @@ SELECT @@TRANCOUNT
 go
 SELECT * FROM tab_kill_test
 go
+
+-- BABEL-5219 Multiple Session Kill
+-- tsql
+CREATE LOGIN test_kill WITH PASSWORD = '12345678'
+GO
+
+-- CREATE 11 Databases
+create database test_kill_db1
+GO
+use test_kill_db1
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db2
+GO
+use test_kill_db2
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db3
+GO
+use test_kill_db3
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db4
+GO
+use test_kill_db4
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db5
+GO
+use test_kill_db5
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db6
+GO
+use test_kill_db6
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db7
+GO
+use test_kill_db7
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db8
+GO
+use test_kill_db8
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db9
+GO
+use test_kill_db9
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+
+create database test_kill_db10
+GO
+use test_kill_db10
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db11
+GO
+use test_kill_db11
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+-- CREATE 11 sessions
+-- tsql user=test_kill password=12345678 database=test_kill_db1
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db2
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db3
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db4
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db5
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db6
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db7
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db8
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db9
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db10
+SELECT 1
+GO
+
+-- tsql user=test_kill password=12345678 database=test_kill_db11
+SELECT 1
+GO
+
+-- tsql
+SELECT count(*) from sys.dm_exec_sessions where login_name = 'test_kill' 
+GO
+
+-- Kill Sessions
+USE [MASTER]
+DECLARE @UserName NVARCHAR(255) = 'test_kill'
+DECLARE @SPID INT
+-- Creates temp table to store SPIDs
+IF OBJECT_ID('tempdb..#UserSessions') IS NOT NULL
+BEGIN
+-- dropa tabela se existir
+DROP TABLE #UserSessions
+END
+CREATE TABLE #UserSessions (SPID INT)
+-- Inserting SPIDs from User Sessions into the Temporary Table
+INSERT INTO #UserSessions (SPID)
+SELECT session_id
+FROM sys.dm_exec_sessions
+WHERE login_name = @UserName
+-- Loop to kill user sessions
+DECLARE @RowCount INT = (SELECT COUNT(*) FROM #UserSessions)
+DECLARE @Counter INT = 1
+DECLARE @CmdKill NVARCHAR(100)
+WHILE @Counter <= @RowCount
+BEGIN
+SELECT TOP 1 @SPID = SPID FROM #UserSessions
+SET @CmdKill = 'KILL ' + CAST(@SPID AS NVARCHAR(10))
+execute(@CmdKill)
+DELETE FROM #UserSessions WHERE SPID = @SPID
+SET @Counter = @Counter + 1
+END
+-- Temporary Table Cleaning
+DROP TABLE #UserSessions
+GO
+
+SELECT count(*) from sys.dm_exec_sessions where login_name = 'test_kill' 
+GO
