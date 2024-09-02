@@ -11,10 +11,10 @@ runs:
   steps:
     - name: Build pgaudit Extension
       run: |
-        cd ..
+        cd ~
         rm -rf pgaudit
         sudo apt-get install -y git make gcc
-        git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
+        git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
         echo "repo cloned successfully"
         ls
         cd pgaudit
@@ -25,6 +25,8 @@ runs:
         make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
         echo "pgaudit installed successfully"
         cd ..
+        ls
+        cd psql
         echo "shared_preload_libraries = 'babelfishpg_tds,pgaudit'" | sudo tee -a ~/${{ inputs.install_dir }}/data/postgresql.conf
         sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE EXTENSION pgaudit;"
         sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
