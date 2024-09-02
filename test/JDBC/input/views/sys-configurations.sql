@@ -2,7 +2,7 @@ SELECT * FROM sys.configurations;
 GO
 
 -- Verify the sql variant of the all the rows in sys.configurations
-SELECT count(*) FROM sys.configurations 
+SELECT * FROM sys.configurations 
 WHERE 
         SQL_VARIANT_PROPERTY(configuration_id, 'BaseType') != 'int' OR
         SQL_VARIANT_PROPERTY(name, 'BaseType') != 'nvarchar' OR
