@@ -229,6 +229,8 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
+4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
@@ -243,6 +245,8 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
+4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
@@ -257,6 +261,8 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
+4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
@@ -272,6 +278,8 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
+4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
@@ -287,6 +295,8 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
+4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
@@ -301,6 +311,8 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
+4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
@@ -335,7 +347,7 @@ select (select count(*) from DbO.SySConFIGuReS) as x, (select count(*) from [DbO
 go
 ~~START~~
 int#!#int
-7#!#7
+9#!#9
 ~~END~~
 
 
@@ -343,7 +355,7 @@ select count(*) from DbO.SySConFIGuReS x inner join [DbO].SySCuRConFIgS y on x.v
 go
 ~~START~~
 int
-15
+17
 ~~END~~
 
 
