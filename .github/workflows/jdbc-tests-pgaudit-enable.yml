@@ -33,6 +33,11 @@ jobs:
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
+      - name: Build pgaudit Extension
+        uses: ./.github/composite-actions/build-pgaudit-extension
+        with:
+          install_dir: 'psql'
+
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
         if: always() && steps.build-extensions.outcome == 'success'
@@ -48,11 +53,6 @@ jobs:
         if: always() &&  steps.build-vector-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
         
-      - name: Build pgaudit Extension
-        uses: ./.github/composite-actions/build-pgaudit-extension
-        with:
-          install_dir: 'psql'
-
       - name: Install Extensions
         id: install-extensions
         if: always() && steps.build-postgis-extension.outcome == 'success'

@@ -16,12 +16,15 @@ runs:
         sudo apt-get install -y git make gcc
         git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
         echo "repo cloned successfully"
+        ls
         cd pgaudit
         echo "came into pgaudit repo successfully"
+        pwd
+        ls
+        make clean
         make
-        make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
         echo "pgaudit complied successfully"
-        make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
+        make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
         echo "pgaudit installed successfully"
         cd ..
         echo "shared_preload_libraries = 'babelfishpg_tds,pgaudit'" | sudo tee -a ~/${{ inputs.install_dir }}/data/postgresql.conf
