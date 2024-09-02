@@ -21,8 +21,6 @@ runs:
         echo "came into pgaudit repo successfully"
         pwd
         ls
-        make clean
-        make
         echo "pgaudit complied successfully"
         make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
         echo "pgaudit installed successfully"
