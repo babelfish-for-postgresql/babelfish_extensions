@@ -518,7 +518,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	/* Write catalog entry */
 	new_record = palloc0(sizeof(Datum) * SYSDATABASES_NUM_COLS);
 	new_record_nulls = palloc0(sizeof(bool) * SYSDATABASES_NUM_COLS);
-	namestrcpy(&owner_namedata, owner;)
+	namestrcpy(&owner_namedata, owner);
 
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = Int32GetDatum(0);

@@ -199,7 +199,7 @@ update_extended_property(int16 db_id,
 	MemSet(nulls, false, sizeof(nulls));
 	MemSet(replaces, false, sizeof(replaces));
 
-	namestrcp(&new_value_namedata, new_value);
+	namestrcpy(&new_value_namedata, new_value);
 
 	values[attnum - 1] = NameGetDatum(&new_value_namedata);
 	replaces[attnum - 1] = true;
@@ -653,14 +653,14 @@ sp_execextended_property(PG_FUNCTION_ARGS, ExtendedPropertyProc proc)
 
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
-		namestrpy(&schema_name_namedata, schema_name);
-		namestrpy(&major_name_namedata, major_name);
-		namestrpy(&minor_name_namedata, minor_name);
+		namestrcpy(&schema_name_namedata, schema_name);
+		namestrcpy(&major_name_namedata, major_name);
+		namestrcpy(&minor_name_namedata, minor_name);
 
 		values[0] = Int16GetDatum(db_id);
-		values[1] = NameGetDatum(&schema_name);
-		values[2] = NameGetDatum(&major_name);
-		values[3] = NameGetDatum(&minor_name);
+		values[1] = NameGetDatum(&schema_name_namedata);
+		values[2] = NameGetDatum(&major_name_namedata);
+		values[3] = NameGetDatum(&minor_name_namedata);
 		values[4] = CStringGetTextDatum(type);
 		values[5] = CStringGetTextDatum(name);
 		values[6] = CStringGetTextDatum(orig_name);

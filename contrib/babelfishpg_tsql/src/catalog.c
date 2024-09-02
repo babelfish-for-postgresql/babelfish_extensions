@@ -3507,7 +3507,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	bool		new_record_nulls_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
 	bool		new_record_repl_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
 	NameData   *objname_data;
-	NameData   *newname_data;
+	NameData    newname_data;
 	NameData   *schemaname_data;
 	bool		is_null;
 	char	   *funcsign;

@@ -1124,7 +1124,7 @@ add_to_bbf_authid_user_ext(const char *user_name,
 	MemSet(new_record_nulls_user_ext, false, sizeof(new_record_nulls_user_ext));
 	namestrcpy(&user_name_namedata, user_name);
 
-	new_record_user_ext[USER_EXT_ROLNAME] = NameGetDatum(&user_name);
+	new_record_user_ext[USER_EXT_ROLNAME] = NameGetDatum(&user_name_namedata);
 	if (login_name)
 	{
 		namestrcpy(&login_name_namedata, login_name);
