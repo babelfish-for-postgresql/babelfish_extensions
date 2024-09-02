@@ -177,9 +177,3 @@ jobs:
           name: coverage-babelfish-extensions-jdbc
           path: contrib/jdbc-lcov.info
           retention-days: 1
-
-      - name: Disable pgaudit extension
-        if: always()
-        run: |
-          sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM RESET pgaudit.log;"
-          sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "DROP EXTENSION pgaudit;"
