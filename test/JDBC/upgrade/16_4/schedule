@@ -556,10 +556,11 @@ BABEL-3820
 stuff
 PARTITION
 BABEL-5071
-string_agg
+string_agg_within-16_4
 reverse
 sys_sequences
 replicate
+string_agg-before-15_9-or-16_5
 space
 binary-datatype-operators
 
