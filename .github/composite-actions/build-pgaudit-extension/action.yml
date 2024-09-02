@@ -29,6 +29,8 @@ runs:
         cd psql
         ls
         echo "shared_preload_libraries = 'babelfishpg_tds,pgaudit'" | sudo tee -a /data/postgresql.conf
+        echo "everything set"
+        cd ~
         sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE EXTENSION pgaudit;"
         sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
         sudo ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data restart
