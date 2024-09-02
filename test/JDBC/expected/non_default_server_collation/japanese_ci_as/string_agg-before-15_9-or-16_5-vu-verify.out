@@ -1,0 +1,1349 @@
+-- tsql
+-- input type char
+SELECT STRING_AGG(col_char, NULL) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc                 ?defghi             ??                  
+比??拉              莫斯                
+<NULL>
+Rohit               Bhagat              
+~~END~~
+
+
+SELECT STRING_AGG(col_char, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc                 -?defghi             -??                  
+比??拉              -莫斯                
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+DECLARE @sep CHAR(1) = '-'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc                 -?defghi             -??                  
+比??拉              -莫斯                
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = '-'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc                 -?defghi             -??                  
+比??拉              -莫斯                
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+DECLARE @sep NCHAR(1) = '-'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep NVARCHAR(10) = '-'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep CHAR(5) = N'🫥'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc                 ?    ?defghi             ?    ??                  
+比??拉              ?    莫斯                
+<NULL>
+Rohit               ?    Bhagat              
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = N'🫥'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc                 ??defghi             ???                  
+比??拉              ?莫斯                
+<NULL>
+Rohit               ?Bhagat              
+~~END~~
+
+
+DECLARE @sep NCHAR(5) = N'🫥'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep NVARCHAR(10) = N'🫥'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep CHAR(5) = N'尸'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc                 尸   ?defghi             尸   ??                  
+比??拉              尸   莫斯                
+<NULL>
+Rohit               尸   Bhagat              
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = N'尸'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc                 尸?defghi             尸??                  
+比??拉              尸莫斯                
+<NULL>
+Rohit               尸Bhagat              
+~~END~~
+
+
+DECLARE @sep NCHAR(5) = N'尸'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep NVARCHAR(10) = N'尸'
+SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
+
+
+-- input type varchar
+SELECT STRING_AGG(col_varchar, NULL) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc?defghi??
+比??拉莫斯
+<NULL>
+RohitBhagat
+~~END~~
+
+
+SELECT STRING_AGG(col_varchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+DECLARE @sep CHAR(1) = '-'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = '-'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+DECLARE @sep NCHAR(1) = '-'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep NVARCHAR(10) = '-'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep CHAR(5) = N'🫥'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc?    ?defghi?    ??
+比??拉?    莫斯
+<NULL>
+Rohit?    Bhagat
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = N'🫥'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc??defghi???
+比??拉?莫斯
+<NULL>
+Rohit?Bhagat
+~~END~~
+
+
+DECLARE @sep NCHAR(5) = N'🫥'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep NVARCHAR(10) = N'🫥'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep CHAR(5) = N'尸'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc尸   ?defghi尸   ??
+比??拉尸   莫斯
+<NULL>
+Rohit尸   Bhagat
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = N'尸'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc尸?defghi尸??
+比??拉尸莫斯
+<NULL>
+Rohit尸Bhagat
+~~END~~
+
+
+DECLARE @sep NCHAR(5) = N'尸'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "nchar" is invalid for argument 2 of string_agg function.)~~
+
+
+DECLARE @sep NVARCHAR(10) = N'尸'
+SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type nvarchar is invalid for argument 2 of string_agg function.)~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT STRING_AGG(col1_cias, '-') FROM babel_5156_string_agg_t2 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+比尔·拉-莫-斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT STRING_AGG(col1_csas, '-') FROM babel_5156_string_agg_t2 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+比尔·拉-莫-斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT STRING_AGG(col1_ciai, '-') FROM babel_5156_string_agg_t2 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+比尔·拉-莫-斯
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT STRING_AGG(col2_cias, '-') FROM babel_5156_string_agg_t2 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+الله- مع -المتقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT STRING_AGG(col2_csas, '-') FROM babel_5156_string_agg_t2 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+الله- مع -المتقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT STRING_AGG(col2_ciai, '-') FROM babel_5156_string_agg_t2 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+الله- مع -المتقين
+~~END~~
+
+
+-- input type nchar
+SELECT STRING_AGG(col_nchar, NULL) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 🙂defghi             🙂🙂                  
+比尔·拉                莫斯                  
+<NULL>
+Rohit               Bhagat              
+~~END~~
+
+
+SELECT STRING_AGG(col_nchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 -🙂defghi             -🙂🙂                  
+比尔·拉                -莫斯                  
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+DECLARE @sep CHAR(1) = '-'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 -🙂defghi             -🙂🙂                  
+比尔·拉                -莫斯                  
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = '-'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 -🙂defghi             -🙂🙂                  
+比尔·拉                -莫斯                  
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+DECLARE @sep NCHAR(1) = '-'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 -🙂defghi             -🙂🙂                  
+比尔·拉                -莫斯                  
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+DECLARE @sep NVARCHAR(10) = '-'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 -🙂defghi             -🙂🙂                  
+比尔·拉                -莫斯                  
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+DECLARE @sep CHAR(5) = N'🫥'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 ?    🙂defghi             ?    🙂🙂                  
+比尔·拉                ?    莫斯                  
+<NULL>
+Rohit               ?    Bhagat              
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = N'🫥'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 🫥🙂defghi             🫥🙂🙂                  
+比尔·拉                🫥莫斯                  
+<NULL>
+Rohit               🫥Bhagat              
+~~END~~
+
+
+DECLARE @sep NCHAR(5) = N'🫥'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 ?    🙂defghi             ?    🙂🙂                  
+比尔·拉                ?    莫斯                  
+<NULL>
+Rohit               ?    Bhagat              
+~~END~~
+
+
+DECLARE @sep NVARCHAR(10) = N'🫥'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 🫥🙂defghi             🫥🙂🙂                  
+比尔·拉                🫥莫斯                  
+<NULL>
+Rohit               🫥Bhagat              
+~~END~~
+
+
+DECLARE @sep CHAR(5) = N'尸'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 尸   🙂defghi             尸   🙂🙂                  
+比尔·拉                尸   莫斯                  
+<NULL>
+Rohit               尸   Bhagat              
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = N'尸'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 尸🙂defghi             尸🙂🙂                  
+比尔·拉                尸莫斯                  
+<NULL>
+Rohit               尸Bhagat              
+~~END~~
+
+
+DECLARE @sep NCHAR(5) = N'尸'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 尸   🙂defghi             尸   🙂🙂                  
+比尔·拉                尸   莫斯                  
+<NULL>
+Rohit               尸   Bhagat              
+~~END~~
+
+
+DECLARE @sep NVARCHAR(10) = N'尸'
+SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc                 尸🙂defghi             尸🙂🙂                  
+比尔·拉                尸莫斯                  
+<NULL>
+Rohit               尸Bhagat              
+~~END~~
+
+
+-- input type nvarchar
+SELECT STRING_AGG(col_nvarchar, NULL) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc🙂defghi🙂🙂
+比尔·拉莫斯
+<NULL>
+RohitBhagat
+~~END~~
+
+
+SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+DECLARE @sep CHAR(1) = '-'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = '-'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+DECLARE @sep NCHAR(1) = '-'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+DECLARE @sep NVARCHAR(10) = '-'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+DECLARE @sep CHAR(5) = N'🫥'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc?    🙂defghi?    🙂🙂
+比尔·拉?    莫斯
+<NULL>
+Rohit?    Bhagat
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = N'🫥'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc🫥🙂defghi🫥🙂🙂
+比尔·拉🫥莫斯
+<NULL>
+Rohit🫥Bhagat
+~~END~~
+
+
+DECLARE @sep NCHAR(5) = N'🫥'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc?    🙂defghi?    🙂🙂
+比尔·拉?    莫斯
+<NULL>
+Rohit?    Bhagat
+~~END~~
+
+
+DECLARE @sep NVARCHAR(10) = N'🫥'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc🫥🙂defghi🫥🙂🙂
+比尔·拉🫥莫斯
+<NULL>
+Rohit🫥Bhagat
+~~END~~
+
+
+DECLARE @sep CHAR(5) = N'尸'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc尸   🙂defghi尸   🙂🙂
+比尔·拉尸   莫斯
+<NULL>
+Rohit尸   Bhagat
+~~END~~
+
+
+DECLARE @sep VARCHAR(10) = N'尸'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc尸🙂defghi尸🙂🙂
+比尔·拉尸莫斯
+<NULL>
+Rohit尸Bhagat
+~~END~~
+
+
+DECLARE @sep NCHAR(5) = N'尸'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc尸   🙂defghi尸   🙂🙂
+比尔·拉尸   莫斯
+<NULL>
+Rohit尸   Bhagat
+~~END~~
+
+
+DECLARE @sep NVARCHAR(10) = N'尸'
+SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc尸🙂defghi尸🙂🙂
+比尔·拉尸莫斯
+<NULL>
+Rohit尸Bhagat
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_5156_string_agg_dep_view1
+GO
+~~START~~
+text
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+EXEC babel_5156_string_agg_dep_proc1
+GO
+~~START~~
+varchar
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT babel_5156_string_agg_dep_func1()
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+~~END~~
+
+
+SELECT babel_5156_string_agg_itvf_func1()
+GO
+~~START~~
+text
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT * FROM babel_5156_string_agg_dep_view2
+GO
+~~START~~
+text
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+EXEC babel_5156_string_agg_dep_proc2
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT babel_5156_string_agg_dep_func2()
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+~~END~~
+
+
+SELECT babel_5156_string_agg_itvf_func2()
+GO
+~~START~~
+text
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+-- computed columns (Not allowed, should throw error)
+CREATE TABLE babel_5156_string_agg_compcol(col_varchar varchar(100), comp_col as string_agg(col_varchar, ','))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: aggregate functions are not allowed in column generation expressions)~~
+
+
+-- check constraints (Not allowed, should throw error)
+CREATE TABLE babel_5156_string_agg_constraint(col_varchar varchar(100), constraint chkCombinedLen check(len(string_agg(col_varchar, ',')) < 10))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: aggregate functions are not allowed in check constraints)~~
+
+
+-- input type UDT
+SELECT STRING_AGG(col_varUDT, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT STRING_AGG(col_imageUDT, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of string_agg function.)~~
+
+
+-- other different datatypes
+SELECT STRING_AGG(col_int, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12-13-14
+15-16
+<NULL>
+17-18
+~~END~~
+
+
+DECLARE @sep int = 0
+SELECT STRING_AGG(col_int, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type integer is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_bigint, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12-13-14
+15-16
+<NULL>
+17-18
+~~END~~
+
+
+DECLARE @sep bigint = 0
+SELECT STRING_AGG(col_bigint, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type bigint is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_smallint, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12-13-14
+15-16
+<NULL>
+17-18
+~~END~~
+
+
+DECLARE @sep smallint = 0
+SELECT STRING_AGG(col_smallint, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smallint is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_tinyint, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12-13-14
+15-16
+<NULL>
+17-18
+~~END~~
+
+
+DECLARE @sep tinyint = 0
+SELECT STRING_AGG(col_tinyint, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type tinyint is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_numeric, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12-13-14
+15-16
+<NULL>
+17-18
+~~END~~
+
+
+DECLARE @sep numeric = 0.0
+SELECT STRING_AGG(col_numeric, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type numeric is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_float, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12.1-13.1-14.1
+15.1-16.1
+<NULL>
+17.1-18.1
+~~END~~
+
+
+DECLARE @sep float = 0.0
+SELECT STRING_AGG(col_float, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type double precision is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_real, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12.1-13.1-14.1
+15.1-16.1
+<NULL>
+17.1-18.1
+~~END~~
+
+
+DECLARE @sep real = 0.0
+SELECT STRING_AGG(col_real, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type real is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_bit, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+1-0-1
+0-1
+<NULL>
+0-0
+~~END~~
+
+
+DECLARE @sep bit = 0
+SELECT STRING_AGG(col_bit, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "bit" is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_decimal, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12-13-14
+15-16
+<NULL>
+17-18
+~~END~~
+
+
+DECLARE @sep decimal = 0
+SELECT STRING_AGG(col_decimal, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "decimal" is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_money, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12.0000-13.0000-14.0000
+15.0000-16.0000
+<NULL>
+17.0000-18.0000
+~~END~~
+
+
+DECLARE @sep money = 0
+SELECT STRING_AGG(col_money, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type money is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_smallmoney, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+12.0000-13.0000-14.0000
+15.0000-16.0000
+<NULL>
+17.0000-18.0000
+~~END~~
+
+
+DECLARE @sep smallmoney = 0
+SELECT STRING_AGG(col_smallmoney, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smallmoney is invalid for argument 2 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_datetime, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+2000-12-12 12:43:10-2000-12-13 12:43:10-2000-12-14 12:43:10
+2000-12-15 12:43:10-2000-12-16 12:43:10
+<NULL>
+2000-12-17 12:43:10-2000-12-18 12:43:10
+~~END~~
+
+
+SELECT STRING_AGG(col_datetime2, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+2000-12-12 12:43:10-2000-12-13 12:43:10-2000-12-14 12:43:10
+2000-12-15 12:43:10-2000-12-16 12:43:10
+<NULL>
+2000-12-17 12:43:10-2000-12-18 12:43:10
+~~END~~
+
+
+
+SELECT STRING_AGG(col_binary, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "binary" is invalid for argument 1 of string_agg function.)~~
+
+
+DECLARE @sep binary(1) = 0x2D
+SELECT STRING_AGG(col_binary, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type "binary" is invalid for argument 1 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_varbinary, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of string_agg function.)~~
+
+
+DECLARE @sep varbinary(10) = 0x2D
+SELECT STRING_AGG(col_varbinary, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_date, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type date is invalid for argument 1 of string_agg function.)~~
+
+
+SELECT STRING_AGG(col_time, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of string_agg function.)~~
+
+
+SELECT STRING_AGG(col_datetimeoffset, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of string_agg function.)~~
+
+
+SELECT STRING_AGG(col_smalldatetime, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_image, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type image is invalid for argument 1 of string_agg function.)~~
+
+
+DECLARE @sep image = CAST('-' as image)
+SELECT STRING_AGG(col_image, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The text, ntext, and image data types are invalid for local variables.)~~
+
+
+-- input datatype text
+SELECT STRING_AGG(col_text, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+varchar
+abc-?defghi-??
+比??拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+-- input datatype ntext
+SELECT STRING_AGG(col_ntext, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~START~~
+nvarchar
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+
+SELECT STRING_AGG(col_sql_variant, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of string_agg function.)~~
+
+
+DECLARE @sep sql_variant = CAST('-' as sql_variant)
+SELECT STRING_AGG(col_sql_variant, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of string_agg function.)~~
+
+
+
+SELECT STRING_AGG(col_xml, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of string_agg function.)~~
+
+
+DECLARE @sep xml = CAST('-' as xml)
+SELECT STRING_AGG(col_xml, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type xml is invalid for argument 1 of string_agg function.)~~
+
+
+
+-- Testing implicit cast from bit to varchar
+DECLARE @a bit = 1;
+EXEC babel_5156_cast_bit_to_varchar_proc @a
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @a bit = 1;
+SELECT babel_5156_cast_bit_to_varchar_func(@a)
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @a bit = 1;
+EXEC babel_5156_cast_bit_to_nvarchar_proc @a
+GO
+~~START~~
+nvarchar
+1
+~~END~~
+
+
+DECLARE @a bit = 1;
+SELECT babel_5156_cast_bit_to_nvarchar_func(@a)
+GO
+~~START~~
+nvarchar
+1
+~~END~~
+
+
+-- Tests for STRING_AGG function with WITHIN GROUP 
+-- This is not supported, so an error is thrown
+SELECT STRING_AGG(col_char, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string_agg function requires 2 arguments)~~
+
+
+SELECT STRING_AGG(col_nchar, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string_agg function requires 2 arguments)~~
+
+
+SELECT STRING_AGG(col_varchar, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string_agg function requires 2 arguments)~~
+
+
+SELECT STRING_AGG(col_nvarchar, '-') WITHIN GROUP (order by id) FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string_agg function requires 2 arguments)~~
+
+
+
+-- psql
+-- all of the following queries should use PG_CATALOG.string_agg function
+SELECT STRING_AGG(col_text, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~START~~
+text
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT STRING_AGG(col_ntext, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~START~~
+text
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT STRING_AGG(col_char, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~START~~
+text
+abc                 -?defghi             -??                  
+比??拉              -莫斯                
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+SELECT STRING_AGG(col_nchar, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~START~~
+text
+abc                 -🙂defghi             -🙂🙂                  
+比尔·拉                -莫斯                  
+<NULL>
+Rohit               -Bhagat              
+~~END~~
+
+
+SELECT STRING_AGG(col_varchar, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~START~~
+text
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT STRING_AGG(col_varchar, cast('-' as sys.varchar)) FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~START~~
+text
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT STRING_AGG(col_nvarchar, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~START~~
+text
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT STRING_AGG(col_nvarchar, cast('-' as sys.varchar)) FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~START~~
+text
+abc-🙂defghi-🙂🙂
+比尔·拉-莫斯
+<NULL>
+Rohit-Bhagat
+~~END~~
+
+
+SELECT STRING_AGG(col_binary, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function string_agg(sys."binary", unknown) does not exist
+  Hint: No function matches the given name and argument types. You might need to add explicit type casts.
+  Position: 8
+    Server SQLState: 42883)~~
+
+
+SELECT STRING_AGG(col_varbinary, '-') FROM master_dbo.babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function string_agg(sys.varbinary, unknown) does not exist
+  Hint: No function matches the given name and argument types. You might need to add explicit type casts.
+  Position: 8
+    Server SQLState: 42883)~~
+
+
+

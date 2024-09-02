@@ -11,6 +11,27 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION bbf_string_agg_finalfn_varchar(INTERNAL)
+RETURNS sys.VARCHAR
+AS 'string_agg_finalfn' LANGUAGE INTERNAL;
+
+CREATE OR REPLACE FUNCTION bbf_string_agg_finalfn_nvarchar(INTERNAL)
+RETURNS sys.NVARCHAR
+AS 'string_agg_finalfn' LANGUAGE INTERNAL;
+
+CREATE OR REPLACE AGGREGATE sys.string_agg(sys.VARCHAR, sys.VARCHAR) (
+    SFUNC = string_agg_transfn,
+    FINALFUNC = bbf_string_agg_finalfn_varchar,
+    STYPE = INTERNAL,
+    PARALLEL = SAFE
+);
+
+CREATE OR REPLACE AGGREGATE sys.string_agg(sys.NVARCHAR, sys.VARCHAR) (
+    SFUNC = string_agg_transfn,
+    FINALFUNC = bbf_string_agg_finalfn_nvarchar,
+    STYPE = INTERNAL,
+    PARALLEL = SAFE
+);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

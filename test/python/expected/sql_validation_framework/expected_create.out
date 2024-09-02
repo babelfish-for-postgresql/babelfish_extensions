@@ -1,4 +1,6 @@
 Could not find tests for function assemblyproperty
+Could not find tests for function bbf_string_agg_finalfn_nvarchar
+Could not find tests for function bbf_string_agg_finalfn_varchar
 Could not find tests for function pltsql_call_handler
 Could not find tests for function pltsql_inline_handler
 Could not find tests for function pltsql_validator
@@ -90,6 +92,8 @@ Could not find tests for view sys.sp_statistics_view
 Could not find tests for view sys.sp_stored_procedures_view
 Could not find tests for view sys.sp_table_privileges_view
 Could not find upgrade tests for function assemblyproperty
+Could not find upgrade tests for function bbf_string_agg_finalfn_nvarchar
+Could not find upgrade tests for function bbf_string_agg_finalfn_varchar
 Could not find upgrade tests for function connectionproperty
 Could not find upgrade tests for function databasepropertyex
 Could not find upgrade tests for function pltsql_call_handler
