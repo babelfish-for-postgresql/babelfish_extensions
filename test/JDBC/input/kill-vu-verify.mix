@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- tsql
 create table tab_kill_spid(spid int)
 go
@@ -359,6 +360,9 @@ GO
 SELECT count(*) from sys.dm_exec_sessions where login_name = 'test_kill' 
 GO
 
+SELECT COUNT(*) from pg_stat_activity where usename = 'test_kill'
+GO
+
 -- Kill Sessions
 USE [MASTER]
 DECLARE @UserName NVARCHAR(255) = 'test_kill'
@@ -392,4 +396,7 @@ DROP TABLE #UserSessions
 GO
 
 SELECT count(*) from sys.dm_exec_sessions where login_name = 'test_kill' 
+GO
+
+SELECT COUNT(*) from pg_stat_activity where usename = 'test_kill'
 GO

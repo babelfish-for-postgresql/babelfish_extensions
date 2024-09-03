@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- tsql
 DROP LOGIN victim_user_tds
 go
