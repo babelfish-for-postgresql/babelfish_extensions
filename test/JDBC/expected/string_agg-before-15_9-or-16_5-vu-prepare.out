@@ -1,0 +1,504 @@
+CREATE TYPE dbo.babel_5156_string_agg_imageUDT FROM image;
+GO
+
+CREATE TYPE dbo.babel_5156_string_agg_varUDT FROM varchar(50);
+GO
+
+-- Test with different datatypes supported & non-supported for arguments
+-- Supported: char, varchar, nchar, nvarchar, int, bigint, smallint, tinyint, numeric, float, real, bit, decimal, smallmoney, money, datetime, datetime2
+-- Unsupported: binary, varbinary, date, time, datetimeoffset, smalldatetime, image, text, ntext, sql_variant, xml
+CREATE TABLE babel_5156_string_agg_t1(
+    id int,
+    col_char char(20),
+    col_varchar varchar(50),
+    col_nchar nchar(20),
+    col_nvarchar nvarchar(50),
+    col_int int,
+    col_bigint bigint,
+    col_smallint smallint,
+    col_tinyint tinyint,
+    col_numeric numeric,
+    col_float float,
+    col_real real,
+    col_bit bit,
+    col_decimal decimal,
+    col_smallmoney smallmoney,
+    col_money money,
+    col_datetime datetime,
+    col_datetime2 datetime2,
+    col_binary binary(20),
+    col_varbinary varbinary(20),
+    col_date date,
+    col_time time,
+    col_datetimeoffset datetimeoffset,
+    col_smalldatetime smalldatetime,
+    col_image image,
+    col_text text,
+    col_ntext ntext,
+    col_sql_variant sql_variant,
+    col_xml xml,
+    col_varUDT dbo.babel_5156_string_agg_varUDT,
+    col_imageUDT dbo.babel_5156_string_agg_imageUDT,
+    group_id int 
+)
+GO
+
+
+INSERT INTO babel_5156_string_agg_t1 VALUES(
+    1,
+    N'abc',
+    N'abc',
+    N'abc',
+    N'abc',
+    CAST(12 AS INT),
+    CAST(12 AS BIGINT),
+    CAST(12 AS SMALLINT),
+    CAST(12 AS TINYINT),
+    CAST(12.1 AS NUMERIC),
+    CAST(12.1 AS FLOAT),
+    CAST(12.1 AS REAL),
+    CAST(1 AS BIT),
+    CAST(12 AS DECIMAL),
+    CAST(12 AS SMALLMONEY),
+    CAST(12 AS MONEY),
+    CAST(N'2000-12-12 12:43:10' AS DATETIME),
+    CAST(N'2000-12-12 12:43:10' AS DATETIME2),
+    0x6162,
+    0x6162,
+    CAST(N'2000-12-12' AS DATE),
+    CAST(N'12:43:10' AS TIME),
+    CAST(N'2000-12-12 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
+    CAST(N'2000-12-12 12:43:10' AS SMALLDATETIME),
+    CAST(N'abc' AS IMAGE),
+    N'abc',
+    N'abc',
+    CAST(N'abc' AS SQL_VARIANT),
+    CAST ('<body><apple/></body>' AS xml),
+    CAST(N'abc' AS dbo.babel_5156_string_agg_varUDT),
+    CAST(N'abc' AS dbo.babel_5156_string_agg_imageUDT),
+    1
+),
+(
+    2,
+    N'🙂defghi',
+    N'🙂defghi',
+    N'🙂defghi',
+    N'🙂defghi',
+    CAST(13 AS INT),
+    CAST(13 AS BIGINT),
+    CAST(13 AS SMALLINT),
+    CAST(13 AS TINYINT),
+    CAST(13.1 AS NUMERIC),
+    CAST(13.1 AS FLOAT),
+    CAST(13.1 AS REAL),
+    CAST(0 AS BIT),
+    CAST(13 AS DECIMAL),
+    CAST(13 AS SMALLMONEY),
+    CAST(13 AS MONEY),
+    CAST(N'2000-12-13 12:43:10' AS DATETIME),
+    CAST(N'2000-12-13 12:43:10' AS DATETIME2),
+    0x6364,
+    0x6364,
+    CAST(N'2000-12-13' AS DATE),
+    CAST(N'12:43:10' AS TIME),
+    CAST(N'2000-12-13 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
+    CAST(N'2000-12-13 12:43:10' AS SMALLDATETIME),
+    CAST(N'🙂defghi' AS IMAGE),
+    N'🙂defghi',
+    N'🙂defghi',
+    CAST(N'🙂defghi' AS SQL_VARIANT),
+    CAST ('<body><banana/></body>' AS xml),
+    CAST(N'🙂defghi' AS dbo.babel_5156_string_agg_varUDT),
+    CAST(N'🙂defghi' AS dbo.babel_5156_string_agg_imageUDT),
+    1
+),
+(
+    3,
+    N'🙂🙂',
+    N'🙂🙂',
+    N'🙂🙂',
+    N'🙂🙂',
+    CAST(14 AS INT),
+    CAST(14 AS BIGINT),
+    CAST(14 AS SMALLINT),
+    CAST(14 AS TINYINT),
+    CAST(14.1 AS NUMERIC),
+    CAST(14.1 AS FLOAT),
+    CAST(14.1 AS REAL),
+    CAST(1 AS BIT),
+    CAST(14 AS DECIMAL),
+    CAST(14 AS SMALLMONEY),
+    CAST(14 AS MONEY),
+    CAST(N'2000-12-14 12:43:10' AS DATETIME),
+    CAST(N'2000-12-14 12:43:10' AS DATETIME2),
+    0x6566,
+    0x6566,
+    CAST(N'2000-12-14' AS DATE),
+    CAST(N'12:43:10' AS TIME),
+    CAST(N'2000-12-14 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
+    CAST(N'2000-12-14 12:43:10' AS SMALLDATETIME),
+    CAST(N'🙂🙂' AS IMAGE),
+    N'🙂🙂',
+    N'🙂🙂',
+    CAST(N'🙂🙂' AS SQL_VARIANT),
+    CAST ('<body><chikoo/></body>' AS xml),
+    CAST(N'🙂🙂' AS dbo.babel_5156_string_agg_varUDT),
+    CAST(N'🙂🙂' AS dbo.babel_5156_string_agg_imageUDT),
+    1
+),
+(
+    4,
+    N'比尔·拉',
+    N'比尔·拉',
+    N'比尔·拉',
+    N'比尔·拉',
+    CAST(15 AS INT),
+    CAST(15 AS BIGINT),
+    CAST(15 AS SMALLINT),
+    CAST(15 AS TINYINT),
+    CAST(15.1 AS NUMERIC),
+    CAST(15.1 AS FLOAT),
+    CAST(15.1 AS REAL),
+    CAST(0 AS BIT),
+    CAST(15 AS DECIMAL),
+    CAST(15 AS SMALLMONEY),
+    CAST(15 AS MONEY),
+    CAST(N'2000-12-15 12:43:10' AS DATETIME),
+    CAST(N'2000-12-15 12:43:10' AS DATETIME2),
+    0x6768,
+    0x6768,
+    CAST(N'2000-12-15' AS DATE),
+    CAST(N'12:43:10' AS TIME),
+    CAST(N'2000-12-15 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
+    CAST(N'2000-12-15 12:43:10' AS SMALLDATETIME),
+    CAST(N'比尔·拉' AS IMAGE),
+    N'比尔·拉',
+    N'比尔·拉',
+    CAST(N'比尔·拉' AS SQL_VARIANT),
+    CAST ('<body><dragonfruit/></body>' AS xml),
+    CAST(N'比尔·拉' AS dbo.babel_5156_string_agg_varUDT),
+    CAST(N'比尔·拉' AS dbo.babel_5156_string_agg_imageUDT),
+    2
+),
+(
+    5,
+    N'莫斯',
+    N'莫斯',
+    N'莫斯',
+    N'莫斯',
+    CAST(16 AS INT),
+    CAST(16 AS BIGINT),
+    CAST(16 AS SMALLINT),
+    CAST(16 AS TINYINT),
+    CAST(16.1 AS NUMERIC),
+    CAST(16.1 AS FLOAT),
+    CAST(16.1 AS REAL),
+    CAST(1 AS BIT),
+    CAST(16 AS DECIMAL),
+    CAST(16 AS SMALLMONEY),
+    CAST(16 AS MONEY),
+    CAST(N'2000-12-16 12:43:10' AS DATETIME),
+    CAST(N'2000-12-16 12:43:10' AS DATETIME2),
+    0x6970,
+    0x6970,
+    CAST(N'2000-12-16' AS DATE),
+    CAST(N'12:43:10' AS TIME),
+    CAST(N'2000-12-16 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
+    CAST(N'2000-12-16 12:43:10' AS SMALLDATETIME),
+    CAST(N'莫斯' AS IMAGE),
+    N'莫斯',
+    N'莫斯',
+    CAST(N'莫斯' AS SQL_VARIANT),
+    CAST ('<body><mango/></body>' AS xml),
+    CAST(N'莫斯' AS dbo.babel_5156_string_agg_varUDT),
+    CAST(N'莫斯' AS dbo.babel_5156_string_agg_imageUDT),
+    2
+),
+(
+    6,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    CAST(NULL AS dbo.babel_5156_string_agg_varUDT),
+    CAST(NULL AS dbo.babel_5156_string_agg_imageUDT),
+    3
+),
+(
+    7,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    CAST(NULL AS dbo.babel_5156_string_agg_varUDT),
+    CAST(NULL AS dbo.babel_5156_string_agg_imageUDT),
+    3
+),
+(
+    8,
+    'Rohit',
+    'Rohit',
+    'Rohit',
+    'Rohit',
+    CAST(17 AS INT),
+    CAST(17 AS BIGINT),
+    CAST(17 AS SMALLINT),
+    CAST(17 AS TINYINT),
+    CAST(17.1 AS NUMERIC),
+    CAST(17.1 AS FLOAT),
+    CAST(17.1 AS REAL),
+    CAST(0 AS BIT),
+    CAST(17 AS DECIMAL),
+    CAST(17 AS SMALLMONEY),
+    CAST(17 AS MONEY),
+    CAST(N'2000-12-17 12:43:10' AS DATETIME),
+    CAST(N'2000-12-17 12:43:10' AS DATETIME2),
+    0x7172,
+    0x7172,
+    CAST(N'2000-12-17' AS DATE),
+    CAST(N'12:43:10' AS TIME),
+    CAST(N'2000-12-17 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
+    CAST(N'2000-12-17 12:43:10' AS SMALLDATETIME),
+    CAST(N'Rohit' AS IMAGE),
+    N'Rohit',
+    N'Rohit',
+    CAST(N'Rohit' AS SQL_VARIANT),
+    CAST ('<body><papaya/></body>' AS xml),
+    CAST('Rohit' AS dbo.babel_5156_string_agg_varUDT),
+    CAST('Rohit' AS dbo.babel_5156_string_agg_imageUDT),
+    4
+),
+(
+    9,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    CAST(NULL AS dbo.babel_5156_string_agg_varUDT),
+    CAST(NULL AS dbo.babel_5156_string_agg_imageUDT),
+    4
+),
+(
+    10,
+    'Bhagat',
+    'Bhagat',
+    'Bhagat',
+    'Bhagat',
+    CAST(18 AS INT),
+    CAST(18 AS BIGINT),
+    CAST(18 AS SMALLINT),
+    CAST(18 AS TINYINT),
+    CAST(18.1 AS NUMERIC),
+    CAST(18.1 AS FLOAT),
+    CAST(18.1 AS REAL),
+    CAST(0 AS BIT),
+    CAST(18 AS DECIMAL),
+    CAST(18 AS SMALLMONEY),
+    CAST(18 AS MONEY),
+    CAST(N'2000-12-18 12:43:10' AS DATETIME),
+    CAST(N'2000-12-18 12:43:10' AS DATETIME2),
+    0x7273,
+    0x7273,
+    CAST(N'2000-12-18' AS DATE),
+    CAST(N'12:43:10' AS TIME),
+    CAST(N'2000-12-18 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
+    CAST(N'2000-12-18 12:43:10' AS SMALLDATETIME),
+    CAST(N'Bhagat' AS IMAGE),
+    N'Bhagat',
+    N'Bhagat',
+    CAST(N'Bhagat' AS SQL_VARIANT),
+    CAST ('<body><orange/></body>' AS xml),
+    CAST('Bhagat' AS dbo.babel_5156_string_agg_varUDT),
+    CAST('Bhagat' AS dbo.babel_5156_string_agg_imageUDT),
+    4
+)
+GO
+~~ROW COUNT: 10~~
+
+
+CREATE TABLE babel_5156_string_agg_t2(
+    id int,
+    col1_cias varchar(50) collate chinese_prc_ci_as,
+    col1_ciai varchar(50) collate chinese_prc_ci_ai,
+    col1_csas varchar(50) collate chinese_prc_cs_as,
+    col2_cias varchar(50) collate arabic_ci_as,
+    col2_ciai varchar(50) collate arabic_ci_ai,
+    col2_csas varchar(50) collate arabic_cs_as,
+    group_id int
+)
+GO
+
+INSERT INTO babel_5156_string_agg_t2 VALUES
+(
+    1,
+    N'比尔·拉',
+    N'比尔·拉',
+    N'比尔·拉',
+    N'الله',
+    N'الله',
+    N'الله',
+    1
+),
+(
+    2,
+    N'莫',
+    N'莫',
+    N'莫',
+    N' مع ',
+    N' مع ',
+    N' مع ',
+    1
+),
+(
+    3,
+    N'斯',
+    N'斯',
+    N'斯',
+    N'المتقين',
+    N'المتقين',
+    N'المتقين',
+    1
+)
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW babel_5156_string_agg_dep_view1 AS
+    SELECT STRING_AGG(col_varchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+
+CREATE PROCEDURE babel_5156_string_agg_dep_proc1 AS
+    SELECT STRING_AGG(col_varchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+
+CREATE FUNCTION babel_5156_string_agg_dep_func1()
+RETURNS NVARCHAR(50)
+AS
+BEGIN
+RETURN (SELECT TOP 1 STRING_AGG(col_varchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id)
+END
+GO
+
+CREATE FUNCTION babel_5156_string_agg_itvf_func1()
+RETURNS TABLE
+AS
+RETURN (SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id)
+GO
+
+CREATE VIEW babel_5156_string_agg_dep_view2 AS
+    SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+
+CREATE PROCEDURE babel_5156_string_agg_dep_proc2 AS
+    SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+GO
+
+CREATE FUNCTION babel_5156_string_agg_dep_func2()
+RETURNS NVARCHAR(50)
+AS
+BEGIN
+RETURN (SELECT TOP 1 STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id)
+END
+GO
+
+CREATE FUNCTION babel_5156_string_agg_itvf_func2()
+RETURNS TABLE
+AS
+RETURN (SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id)
+GO
+
+CREATE PROCEDURE babel_5156_cast_bit_to_varchar_proc @a VARCHAR(100) AS
+    SELECT @a;
+GO
+
+CREATE FUNCTION babel_5156_cast_bit_to_varchar_func(@a VARCHAR(100))
+RETURNS VARCHAR(100)
+AS
+BEGIN
+RETURN @a;
+END
+GO
+
+CREATE PROCEDURE babel_5156_cast_bit_to_nvarchar_proc @a NVARCHAR(100) AS
+    SELECT @a;
+GO
+
+CREATE FUNCTION babel_5156_cast_bit_to_nvarchar_func(@a NVARCHAR(100))
+RETURNS NVARCHAR(100)
+AS
+BEGIN
+RETURN @a;
+END
+GO

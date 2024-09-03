@@ -1652,12 +1652,36 @@ and
   );
 GRANT SELECT ON sys.types TO PUBLIC;
 
+<<<<<<< HEAD
 CREATE OR REPLACE VIEW sys.dm_os_sys_info 
 AS SELECT 
   CAST(ROUND(EXTRACT(EPOCH FROM NOW()) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
   CAST(ROUND(EXTRACT(EPOCH FROM pg_postmaster_start_time()) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
   CAST(pg_postmaster_start_time() AS sys.DATETIME) AS sqlserver_start_time;
 GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;
+=======
+CREATE OR REPLACE FUNCTION bbf_string_agg_finalfn_varchar(INTERNAL)
+RETURNS sys.VARCHAR
+AS 'string_agg_finalfn' LANGUAGE INTERNAL;
+
+CREATE OR REPLACE FUNCTION bbf_string_agg_finalfn_nvarchar(INTERNAL)
+RETURNS sys.NVARCHAR
+AS 'string_agg_finalfn' LANGUAGE INTERNAL;
+
+CREATE OR REPLACE AGGREGATE sys.string_agg(sys.VARCHAR, sys.VARCHAR) (
+    SFUNC = string_agg_transfn,
+    FINALFUNC = bbf_string_agg_finalfn_varchar,
+    STYPE = INTERNAL,
+    PARALLEL = SAFE
+);
+
+CREATE OR REPLACE AGGREGATE sys.string_agg(sys.NVARCHAR, sys.VARCHAR) (
+    SFUNC = string_agg_transfn,
+    FINALFUNC = bbf_string_agg_finalfn_nvarchar,
+    STYPE = INTERNAL,
+    PARALLEL = SAFE
+);
+>>>>>>> BABEL_4_X_DEV
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
