@@ -1,4 +1,7 @@
-SELECT COUNT(*) FROM sys.dm_os_sys_info
+SELECT COUNT(*) FROM sys.dm_os_sys_info 
+    WHERE ms_ticks IS NOT NULL 
+    AND sqlserver_start_time_ms_ticks IS NOT NULL
+    AND sqlserver_start_time IS NOT NULL
 GO
 
 SELECT * FROM sys_dm_os_sys_info_test_view
