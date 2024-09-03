@@ -1652,6 +1652,13 @@ and
   );
 GRANT SELECT ON sys.types TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.dm_os_sys_info 
+AS SELECT 
+  CAST(ROUND(EXTRACT(EPOCH FROM NOW()) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
+  CAST(ROUND(EXTRACT(EPOCH FROM pg_postmaster_start_time()) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
+  CAST(pg_postmaster_start_time() AS sys.DATETIME) AS sqlserver_start_time;
+GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 

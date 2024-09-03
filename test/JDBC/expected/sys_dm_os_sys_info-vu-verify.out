@@ -1,0 +1,32 @@
+SELECT COUNT(*) FROM sys.dm_os_sys_info
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM sys_dm_os_sys_info_test_view
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC sys_dm_os_sys_info_test_proc
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT dbo.sys_dm_os_sys_info_test_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
