@@ -524,3 +524,14 @@ Select count(*) from sourceTable
 select count(*) from destinationTable
 drop table sourceTable
 drop table destinationTable
+
+#additional testing on primary KEY
+Create table sourceTable (a varchar(200));
+Create table destinationTable(a varchar(200) PRIMARY KEY);
+INSERT INTO sourceTable values ('Dipesh'), ('Dipesh'), ('Dhameliya');
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select count(*) from sourceTable
+select count(*) from destinationTable
+drop table sourceTable
+drop table destinationTable
