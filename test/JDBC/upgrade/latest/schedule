@@ -564,3 +564,4 @@ replicate
 space
 SELECT_INTO_TEST
 binary-datatype-operators
+sys_dm_os_sys_info
