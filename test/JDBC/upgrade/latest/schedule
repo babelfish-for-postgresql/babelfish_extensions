@@ -557,5 +557,6 @@ sys_partition_functions
 sys_partition_schemes
 space
 binary-datatype-operators
+cast-varchar-to-time
 SELECT_INTO_TEST
 
