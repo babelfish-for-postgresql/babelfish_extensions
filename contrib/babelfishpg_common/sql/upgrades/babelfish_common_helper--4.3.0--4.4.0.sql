@@ -58,7 +58,18 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.VARCHAR AS pg_catalog.TIME)
 WITH FUNCTION sys.varchar2time(sys.VARCHAR, INT4) AS IMPLICIT;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'varchar2time_deprecated_4_4_0');
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'varchar2time_deprecated_4_4_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
