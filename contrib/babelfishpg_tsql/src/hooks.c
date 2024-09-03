@@ -4854,9 +4854,9 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		if (nulls[attnum - 1])
 		{
 			const char *owner = GetUserNameFromId(get_sa_role_oid(), false);
-			Name owner_namedata = (Name) palloc0(NAMEDATALEN);
+			Name owner_namedata = (Name) palloc(NAMEDATALEN);
 
-			memcpy(NameStr(*owner_namedata), owner, strlen(owner));
+			namestrcpy(owner_namedata, owner);
 			values[attnum - 1] = NameGetDatum(owner_namedata);
 			nulls[attnum - 1] = false;
 		}
