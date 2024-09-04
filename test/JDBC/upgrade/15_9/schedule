@@ -534,6 +534,7 @@ substring
 reverse
 stuff
 replicate
+string_agg
 space
 replace
 binary-datatype-operators
