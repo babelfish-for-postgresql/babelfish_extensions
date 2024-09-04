@@ -28,19 +28,21 @@ GO
 SELECT name FROM BABEL5119_1.sys.databases
 UNION
 SELECT name FROM master.sys.databases
+ORDER BY name
 GO
 ~~START~~
 varchar
+babel5119_1
+master
 msdb
 tempdb
-master
-babel5119_1
 ~~END~~
 
 
 SELECT name FROM BABEL5119_1.sys.views
 UNION
 SELECT name FROM master.sys.views
+ORDER BY name
 GO
 ~~START~~
 varchar
@@ -50,17 +52,18 @@ varchar
 SELECT name FROM BABEL5119_1.sys.procedures
 UNION
 SELECT name FROM master.sys.procedures
+ORDER BY name
 GO
 ~~START~~
 varchar
-sp_dropserver
-sp_testlinkedserver
 sp_addlinkedserver
 sp_addlinkedsrvlogin
+sp_droplinkedsrvlogin
+sp_dropserver
+sp_enum_oledb_providers
+sp_testlinkedserver
 xp_instance_regread
 xp_qv
-sp_enum_oledb_providers
-sp_droplinkedsrvlogin
 ~~END~~
 
 
@@ -68,40 +71,43 @@ sp_droplinkedsrvlogin
 SELECT * FROM BABEL5119_1.information_schema_tsql.tables
 UNION
 SELECT * FROM master.information_schema_tsql.tables
+ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-babel5119_1#!#dbo#!#v1#!#VIEW
 babel5119_1#!#dbo#!#t1#!#BASE TABLE
+babel5119_1#!#dbo#!#v1#!#VIEW
 ~~END~~
 
 
 SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_1.information_schema_tsql.columns
 UNION
 SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns
+ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-sysdatabases#!#cmptlevel
+sysdatabases#!#sid
 sysdatabases#!#version
 sysdatabases#!#category
 sysdatabases#!#status2
-t1#!#a
+sysdatabases#!#dbid
+sysdatabases#!#cmptlevel
 sysdatabases#!#mode
 sysdatabases#!#filename
 sysdatabases#!#name
 sysdatabases#!#status
 sysdatabases#!#reserved
-v1#!#?column?
 sysdatabases#!#crdate
-sysdatabases#!#dbid
-sysdatabases#!#sid
+t1#!#a
+v1#!#?column?
 ~~END~~
 
 
 SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_1.information_schema_tsql.views
 UNION
 SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views
+ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
