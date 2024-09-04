@@ -1448,7 +1448,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	/* update user name */
 	if (new_user_name)
 	{
-		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name, false);
+		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name);
 		namestrcpy(&physical_name_namedata, physical_name);
 
 		new_record_user_ext[USER_EXT_ROLNAME] = NameGetDatum(&physical_name_namedata);
