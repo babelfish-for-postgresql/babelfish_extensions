@@ -2961,6 +2961,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	bool		new_record_nulls_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
 	bool		new_record_repl_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
 	NameData   *objname_data;
+	NameData    newname_data;
 	NameData   *schemaname_data;
 	bool		is_null;
 	char	   *funcsign;
@@ -3016,8 +3017,9 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	initStringInfo(&new_funcsign);
 	appendStringInfoString(&new_funcsign, stmt->newname);
 	appendStringInfoString(&new_funcsign, strrchr(funcsign, '('));
+	namestrcpy(&newname_data, stmt->newname);
 
-	new_record_func_ext[Anum_bbf_function_ext_funcname - 1] = CStringGetDatum(stmt->newname);
+	new_record_func_ext[Anum_bbf_function_ext_funcname - 1] = NameGetDatum(&newname_data);
 	new_record_func_ext[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(new_funcsign.data);
 	new_record_repl_func_ext[Anum_bbf_function_ext_funcname - 1] = true;
 	new_record_repl_func_ext[Anum_bbf_function_ext_funcsignature - 1] = true;
@@ -3896,6 +3898,7 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	ScanKeyData		key;
 	HeapTuple		tuple, db_found;
 	TableScanDesc	tblscan;
+	NameData    	new_owner_namedata;
 		
 	Datum		values[SYSDATABASES_NUM_COLS];
 	bool		nulls[SYSDATABASES_NUM_COLS];
@@ -3938,9 +3941,10 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, false, sizeof(nulls));
 	MemSet(replaces, false, sizeof(replaces));
+	namestrcpy(&new_owner_namedata, new_owner_name);
 		
 	/* Set up the new owner. */
-	values[Anum_sysdatabases_owner - 1]   = CStringGetDatum(new_owner_name);
+	values[Anum_sysdatabases_owner - 1]   = NameGetDatum(&new_owner_namedata);
 	replaces[Anum_sysdatabases_owner - 1] = true;	
 								  
 	tuple = heap_modify_tuple(db_found,

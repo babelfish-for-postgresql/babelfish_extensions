@@ -2411,9 +2411,8 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 				temp = &(row->columnValues[currentColumn]);
 				tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
 				GetPgOid(argtypes[i], tempFuncInfo);
-				if (row->isNull[currentColumn] == 'n')
-					nulls[i] = row->isNull[currentColumn];
-				else
+
+				if (row->isNull[currentColumn] != 'n')
 					switch (colMetaData[currentColumn].columnTdsType)
 					{
 						case TDS_TYPE_CHAR:
@@ -2481,6 +2480,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 				if (colMetaData[currentColumn].columnTdsType != TDS_TYPE_NVARCHAR || row->isNull[currentColumn] == 'n')
 				{
 					currentQuery = psprintf("%s,$%d", currentQuery, i + 1);
+					nulls[i] = row->isNull[currentColumn];
 					i++;
 				}
 				currentColumn++;
