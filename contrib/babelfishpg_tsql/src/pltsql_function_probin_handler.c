@@ -418,6 +418,9 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 		if (!arg_typmod)
 		{
 			(*typmod_array_p)[i] = -1;
+
+			if (sql_dialect == SQL_DIALECT_TSQL)
+				pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, stmt->is_procedure);
 		}
 		else
 		{
@@ -434,6 +437,9 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 				else
 				{
 					(*typmod_array_p)[i] = ptr->val.ival.ival;
+
+					if (sql_dialect == SQL_DIALECT_TSQL)
+						pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, stmt->is_procedure);
 				}
 				typmod_head = lnext(arg_typmod, typmod_head);
 			}
@@ -518,16 +524,7 @@ adjustTypmod(Oid oid, int typmod)
 		|| strcmp(typname, "nvarchar") == 0
 		|| strcmp(typname, "nchar") == 0
 		|| strcmp(typname, "bpchar") == 0)
-	{
-		if (typmod == -1)
+		return VARHDRSZ;
 
-			/*
-			 * Default length without specification of these types is 1 in
-			 * tsql
-			 */
-			return VARHDRSZ + 1 - typmod;
-		else
-			return VARHDRSZ;
-	}
 	return 0;
 }

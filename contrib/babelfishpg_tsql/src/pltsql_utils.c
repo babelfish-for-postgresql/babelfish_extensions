@@ -417,7 +417,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
  * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
  */
 void
-pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
+pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure)
 {
 	Assert(sql_dialect == SQL_DIALECT_TSQL);
 
@@ -473,10 +473,13 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 						 * atttypmod is the declared length of the type plus
 						 * VARHDRSZ.
 						 */
-						*typmod = 30 + VARHDRSZ;
+						*typmod = 30;
 					else
 						/* Default length is 1 in the general case */
-						*typmod = 1 + VARHDRSZ;
+						*typmod = 1;
+
+					if (!is_procedure)
+						*typmod += VARHDRSZ;
 				}
 				else if (strcmp(typname, "smalldatetime") == 0)
 					*typmod = 0;
