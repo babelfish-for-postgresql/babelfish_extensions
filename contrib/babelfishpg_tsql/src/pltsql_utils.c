@@ -855,6 +855,13 @@ pltsql_rollback_txn(void)
 	StartTransactionCommand();
 }
 
+void
+pltsql_abort_any_transaction(void)
+{
+	NestedTranCount = 0;
+	AbortOutOfAnyTransaction();
+}
+
 bool
 pltsql_get_errdata(int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state)
 {

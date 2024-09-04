@@ -519,9 +519,9 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     ```
 4. How to add expected output for some test
     1. By default expected output of a test should be added into `expected` folder.
-    2. If JDBC is running in normal mode with database collation=<database_collation_name> and expected output of some test is different then add this new expected output in `expected/db_collation` folder.
+    2. If JDBC is running in normal mode with isdbCollationMode=true and expected output of some test is different then add this new expected output in `expected/db_collation` folder.
     3. If JDBC is running in parallel query mode with default database collation and expected output of some test is different then the expected output should be added in `expected/parallel_query` folder.(As mentioned in [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled))
-    4. If JDBC is running in parallel query mode with database collation=<database_collation_name> and expected output of some test is different then add this new expected output in `expected/parallel_query/db_collation` folder.
+    4. If JDBC is running in parallel query mode with isdbCollationMode=true and expected output of some test is different then add this new expected output in `expected/parallel_query/db_collation` folder.
 
 5. Cleanup all the objects, users, roles and databases created while running the tests:
     ```bash

@@ -380,4 +380,7 @@ extern coll_info_t TdsLookupCollationTableCallback(Oid oid);
 extern Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale);
 extern Datum TdsDateTimeTypeToDatum(uint64 time, int32 date, int datatype, int scale);
 
+/* Functions in tdsbulkload.c */
+extern void TdsResetBcpOffset(void);
+
 #endif							/* TDS_INT_H */
