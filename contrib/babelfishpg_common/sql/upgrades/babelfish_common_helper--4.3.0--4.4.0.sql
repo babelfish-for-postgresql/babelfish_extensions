@@ -30,6 +30,9 @@ EXCEPTION
     when dependent_objects_still_exist then --if 'drop view' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function doen't exsist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
 end
 $$
 LANGUAGE plpgsql;
@@ -58,18 +61,7 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.VARCHAR AS pg_catalog.TIME)
 WITH FUNCTION sys.varchar2time(sys.VARCHAR, INT4) AS IMPLICIT;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'varchar2time_deprecated_4_4_0');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'varchar2time_deprecated_4_4_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
