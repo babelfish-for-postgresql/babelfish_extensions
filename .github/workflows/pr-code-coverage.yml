@@ -37,31 +37,31 @@ jobs:
       run: |
         sudo apt-get install lcov
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4.1.7
       id: download-jdbc-coverage
       with:
         name:  coverage-babelfish-extensions-jdbc
         path: contrib/
     
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4.1.7
       id: download-dotnet-coverage
       with:
         name: coverage-babelfish-extensions-dotnet
         path: contrib/
     
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4.1.7
       id: download-odbc-coverage
       with:
         name: coverage-babelfish-extensions-odbc
         path: contrib/
     
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4.1.7
       id: download-python-coverage
       with:
         name: coverage-babelfish-extensions-python
         path: contrib/
         
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4.1.7
       id: download-isolation-coverage
       with:
         name: coverage-babelfish-extensions-isolation
