@@ -1,0 +1,132 @@
+-- tsql
+CREATE DATABASE BABEL5119_1
+GO
+
+USE BABEL5119_1
+GO
+CREATE TABLE t1(a int)
+INSERT INTO t1 VALUES(1)
+GO
+CREATE VIEW v1 AS SELECT 1
+GO
+CREATE PROCEDURE p1 AS SELECT 1
+GO
+
+CREATE LOGIN login_babel5119_1 WITH PASSWORD = '12345678'
+CREATE LOGIN login_babel5119_2 WITH PASSWORD = '12345678'
+ALTER authorization on database::BABEL5119_1 TO login_babel5119_1
+GO
+-- terminate-tsql-conn
+
+-- tsql user=login_babel5119_1 password=12345678
+-- Checking crossdb for sys views
+USE BABEL5119_1
+GO
+
+SELECT name FROM BABEL5119_1.sys.databases
+UNION
+SELECT name FROM master.sys.databases
+GO
+
+SELECT name FROM BABEL5119_1.sys.views
+UNION
+SELECT name FROM master.sys.views
+GO
+
+SELECT name FROM BABEL5119_1.sys.procedures
+UNION
+SELECT name FROM master.sys.procedures
+GO
+
+-- Checking crossdb for information_schema_tsql
+SELECT * FROM BABEL5119_1.information_schema_tsql.tables
+UNION
+SELECT * FROM master.information_schema_tsql.tables
+GO
+
+SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_1.information_schema_tsql.columns
+UNION
+SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns
+GO
+
+SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_1.information_schema_tsql.views
+UNION
+SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views
+GO
+
+-- General crossdb queries
+USE master
+GO
+CREATE TABLE t2(a int)
+INSERT INTO t2 VALUES(1)
+GO
+CREATE VIEW v2 AS SELECT 1
+GO
+CREATE PROCEDURE p2 AS SELECT 1
+GO
+
+USE BABEL5119_1
+GO
+
+SELECT tb_1.*, tb_2.* FROM BABEL5119_1.dbo.t1 tb_1, master.guest.t2 tb_2 
+GO
+
+SELECT vw_1.*, vw_2.* FROM BABEL5119_1.dbo.v1 vw_1, master.guest.v2 vw_2 
+GO
+
+-- Using crossdb query data
+CREATE TABLE #tmp_db_ars(replica_id uniqueidentifier, group_id uniqueidentifier, replica_server_name sysname)
+INSERT INTO #tmp_db_ars select replica_id, group_id, replica_server_name  from  master.sys.availability_replicas   
+GO
+
+CREATE TABLE #tmp_db_ars2(v VARCHAR(MAX))
+INSERT INTO #tmp_db_ars2 SELECT name FROM BABEL5119_1.sys.databases UNION SELECT name FROM master.sys.databases
+GO
+
+CREATE TABLE #tmp_db_ars3(v VARCHAR(MAX))
+INSERT INTO #tmp_db_ars3 SELECT TABLE_NAME FROM BABEL5119_1.information_schema_tsql.tables UNION SELECT TABLE_NAME FROM master.information_schema_tsql.tables
+GO
+
+SELECT CAST(has_dbaccess(dtb.name) AS bit) AS [IsAccessible] FROM master.sys.databases AS dtb WHERE (dtb.name='BABEL5119_1')
+GO
+
+-- terminate-tsql-conn user=login_babel5119_1 password=12345678
+
+-- Checking the permissions after alter
+-- tsql user=login_babel5119_2 password=12345678
+USE BABEL5119_1
+GO
+-- terminate-tsql-conn user=login_babel5119_2 password=12345678
+
+-- tsql
+ALTER authorization on database::BABEL5119_1 TO login_babel5119_2
+GO
+-- terminate-tsql-conn
+
+-- tsql user=login_babel5119_1 password=12345678
+USE BABEL5119_1
+GO
+-- terminate-tsql-conn user=login_babel5119_1 password=12345678
+
+-- tsql user=login_babel5119_2 password=12345678
+USE BABEL5119_1
+GO
+INSERT INTO t1 VALUES(1)
+GO
+-- terminate-tsql-conn user=login_babel5119_2 password=12345678
+
+-- tsql
+USE master
+GO
+DROP TABLE guest.t2
+GO
+DROP VIEW guest.v2
+GO
+DROP PROCEDURE guest.p2
+GO
+DROP LOGIN login_babel5119_1
+GO
+DROP LOGIN login_babel5119_2
+GO
+DROP DATABASE BABEL5119_1
+GO
