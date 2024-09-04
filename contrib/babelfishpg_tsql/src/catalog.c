@@ -634,6 +634,7 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 	}
 	datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_orig_name, &isnull);
 	logical_name = pstrdup(TextDatumGetCString(datum));
+	ReleaseSysCache(tuple);
 
 	return logical_name;
 }
@@ -660,8 +661,8 @@ get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missin
 	}
 	datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_dbid, &isnull);
 	dbid = DatumGetInt16(datum);
-
 	ReleaseSysCache(tuple);
+
 	return dbid;
 }
 
