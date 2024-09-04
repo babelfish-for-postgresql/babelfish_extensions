@@ -910,7 +910,7 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					char *nspname = get_namespace_name(schema_id);
 
 					/*
-					 * Check if function's schema is from a different logical database and
+					 * Check if relation's schema is from a different logical database and
 					 * it is not a shared schema. If yes, then update checkAsUser to session
 					 * user to allow cross database access.
 					 */

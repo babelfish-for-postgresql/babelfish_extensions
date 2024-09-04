@@ -114,6 +114,21 @@ extern int	namespace_ext_num_cols;
 extern const char *get_logical_schema_name(const char *physical_schema_name, bool missingOk);
 extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk);
 
+/* MUST comply with babelfish_namespace_ext table */
+typedef struct FormData_bbf_namespace_ext
+{
+	int16		dbid;
+	int32		status;
+	int32		status2;
+	NameData	owner;
+	NameData	default_collation;
+	text		name;
+	TimestampTz crdate;
+	text		properties;
+} FormData_bbf_namespace_ext;
+
+typedef FormData_bbf_namespace_ext *Form_bbf_namespace_ext;
+
 /*****************************************
  *			LOGIN EXT
  *****************************************/
