@@ -30,6 +30,7 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 	bool	   *new_record_nulls;
 	HeapTuple	tuple;
 	int16		db_id = get_cur_db_id();
+	NameData    schemaname_namedata;
 
 	/*
 	 * orig_name will be provided only when queryString is not valid. e.g
@@ -50,8 +51,9 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 
 	new_record = palloc0(sizeof(Datum) * namespace_ext_num_cols);
 	new_record_nulls = palloc0(sizeof(bool) * namespace_ext_num_cols);
+	namestrcpy(&schemaname_namedata, stmt->schemaname);
 
-	new_record[0] = CStringGetDatum(stmt->schemaname);
+	new_record[0] = NameGetDatum(&schemaname_namedata);
 	new_record[1] = Int16GetDatum(db_id);
 	new_record[2] = CStringGetTextDatum(orig_name);
 	new_record[3] = CStringGetTextDatum("{}");	/* place holder */

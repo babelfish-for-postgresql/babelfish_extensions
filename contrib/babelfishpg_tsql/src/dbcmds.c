@@ -421,6 +421,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char *db_owner_role;
 	const char *guest_scm;
 	NameData	default_collation;
+	NameData	owner_namedata;
 	const char *guest;
 	const char *prev_current_user;
 	int			stmt_number = 0;
@@ -502,11 +503,12 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	/* Write catalog entry */
 	new_record = palloc0(sizeof(Datum) * SYSDATABASES_NUM_COLS);
 	new_record_nulls = palloc0(sizeof(bool) * SYSDATABASES_NUM_COLS);
+	namestrcpy(&owner_namedata, owner);
 
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = Int32GetDatum(0);
 	new_record[2] = Int32GetDatum(0);
-	new_record[3] = CStringGetDatum(owner);
+	new_record[3] = NameGetDatum(&owner_namedata);
 	new_record[4] = NameGetDatum(&default_collation);
 	new_record[5] = CStringGetTextDatum(dbname);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));

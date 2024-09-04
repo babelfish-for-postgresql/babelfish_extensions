@@ -89,6 +89,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	char	   *default_database = NULL;
 	char	   *orig_loginname = NULL;
 	bool		from_windows = false;
+	NameData    rolname_namedata;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -134,8 +135,9 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	/* Build a tuple to insert */
 	MemSet(new_record_login_ext, 0, sizeof(new_record_login_ext));
 	MemSet(new_record_nulls_login_ext, false, sizeof(new_record_nulls_login_ext));
+	namestrcpy(&rolname_namedata, stmt->role);
 
-	new_record_login_ext[LOGIN_EXT_ROLNAME] = CStringGetDatum(stmt->role);
+	new_record_login_ext[LOGIN_EXT_ROLNAME] = NameGetDatum(&rolname_namedata);
 	new_record_login_ext[LOGIN_EXT_IS_DISABLED] = Int32GetDatum(0);
 
 	if (strcmp(stmt->role, "sysadmin") == 0)
@@ -1091,6 +1093,8 @@ add_to_bbf_authid_user_ext(const char *user_name,
 	TupleDesc	bbf_authid_user_ext_dsc;
 	HeapTuple	tuple_user_ext;
 	Datum		new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	NameData 	user_name_namedata;
+	NameData 	login_name_namedata;
 	bool		new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 
 	if (!user_name || !orig_user_name)
@@ -1106,12 +1110,19 @@ add_to_bbf_authid_user_ext(const char *user_name,
 	/* Build a tuple to insert */
 	MemSet(new_record_user_ext, 0, sizeof(new_record_user_ext));
 	MemSet(new_record_nulls_user_ext, false, sizeof(new_record_nulls_user_ext));
+	namestrcpy(&user_name_namedata, user_name);
 
-	new_record_user_ext[USER_EXT_ROLNAME] = CStringGetDatum(pstrdup(user_name));
+	new_record_user_ext[USER_EXT_ROLNAME] = NameGetDatum(&user_name_namedata);
 	if (login_name)
-		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum(pstrdup(login_name));
+	{
+		namestrcpy(&login_name_namedata, login_name);
+		new_record_user_ext[USER_EXT_LOGIN_NAME] = NameGetDatum(&login_name_namedata);
+	}
 	else
-		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum("");
+	{
+		namestrcpy(&login_name_namedata, "");
+		new_record_user_ext[USER_EXT_LOGIN_NAME] = NameGetDatum(&login_name_namedata);
+	}
 	if (is_role)
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("R");
 	else if (from_windows)
@@ -1363,6 +1374,8 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	SysScanDesc scan;
 	ListCell   *option;
 	NameData   *user_name;
+	NameData   login_name_str_namedata;
+	NameData   physical_name_namedata;
 	RoleSpec   *login = NULL;
 	char	   *default_schema = NULL;
 	char	   *new_user_name = NULL;
@@ -1436,7 +1449,9 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	if (new_user_name)
 	{
 		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name);
-		new_record_user_ext[USER_EXT_ROLNAME] = CStringGetDatum(physical_name);
+		namestrcpy(&physical_name_namedata, physical_name);
+
+		new_record_user_ext[USER_EXT_ROLNAME] = NameGetDatum(&physical_name_namedata);
 		new_record_repl_user_ext[USER_EXT_ROLNAME] = true;
 		new_record_user_ext[USER_EXT_ORIG_USERNAME] = CStringGetTextDatum(new_user_name);
 		new_record_repl_user_ext[USER_EXT_ORIG_USERNAME] = true;
@@ -1461,7 +1476,9 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 
 	if (login_name_str)
 	{
-		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum(pstrdup(login_name_str));
+		namestrcpy(&login_name_str_namedata, login_name_str);
+
+		new_record_user_ext[USER_EXT_LOGIN_NAME] = NameGetDatum(&login_name_str_namedata);
 		new_record_repl_user_ext[USER_EXT_LOGIN_NAME] = true;
 	}
 

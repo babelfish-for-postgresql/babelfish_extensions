@@ -1638,7 +1638,8 @@ tsql_coerce_string_literal_hook(Oid targetTypeId,
 			}
 		}
 		else if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (baseTypeId) ||
-				 (*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (baseTypeId))
+				 (*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (baseTypeId) ||
+				 (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (baseTypeId))
 		{
 			/*
 			 * binary datatype should be passed in client encoding
