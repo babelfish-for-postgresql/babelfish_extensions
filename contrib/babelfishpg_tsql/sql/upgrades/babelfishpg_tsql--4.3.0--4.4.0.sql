@@ -1680,8 +1680,15 @@ AS
 $BODY$
 DECLARE
     string_arg_datatype text;
+    string_basetype oid;
 BEGIN
     string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof($2)::oid);
+    IF string_arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        string_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof($2)::oid);
+        string_arg_datatype := sys.translate_pg_type_to_tsql(string_basetype);
+    END IF;
+
     IF (string_arg_datatype != 'xml') THEN
         RAISE EXCEPTION 'Cannot call methods on %.', string_arg_datatype;
     END IF;
