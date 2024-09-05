@@ -844,6 +844,10 @@ GO
 ~~ROW COUNT: 1~~
 
 
+-- allow the kill to complete; this might take a while under heavy workload
+exec pg_sleep 5
+go
+
 SELECT count(*) from sys.dm_exec_sessions where login_name = 'test_kill' 
 GO
 ~~START~~
