@@ -286,8 +286,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitKill_statement(TSqlParser:
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx)
 {
-	if (ctx->ALTER())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION, "ALTER FUNCTION", getLineAndPos(ctx->ALTER()));
+	if (ctx->ALTER() && ctx->func_body_returns_table())
+    	handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION, "ALTER FUNCTION on multi-statement table valued functions", getLineAndPos(ctx->ALTER()));
 
 	std::vector<TSqlParser::Function_optionContext *> options;
 	if (ctx->func_body_returns_select())
