@@ -1331,7 +1331,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 	return result;
 }
 
-const char *
+char *
 get_dbo_schema_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
@@ -1364,7 +1364,7 @@ get_dbo_schema_name(const char *dbname)
 	}
 }
 
-const char *
+char *
 get_dbo_role_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
@@ -1397,7 +1397,7 @@ get_dbo_role_name(const char *dbname)
 	}
 }
 
-const char *
+char *
 get_db_owner_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
@@ -1430,7 +1430,7 @@ get_db_owner_name(const char *dbname)
 	}
 }
 
-const char *
+char *
 get_guest_role_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
@@ -1463,7 +1463,7 @@ get_guest_role_name(const char *dbname)
 	}
 }
 
-const char *
+char *
 get_guest_schema_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
