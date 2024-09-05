@@ -16,6 +16,3 @@ GO
 DROP TABLE alter_proc_users
 DROP TABLE alter_proc_orders
 GO
-
-drop function alter_proc_f1
-go
