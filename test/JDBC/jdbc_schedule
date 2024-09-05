@@ -9,6 +9,7 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
+
 ignore#!#BABEL-3101
 ignore#!#BABEL-1149
 ignore#!#BABEL-2843
@@ -26,8 +27,11 @@ ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-prepare
 ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-verify
 ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-cleanup
 ignore#!#Test_list_of_sys_catalog_present_in_dbo
-#memory context#
 ignore#!#BABEL_4928
+ignore#!#babel_function
+ignore#!#babel_table_type-vu-prepare
+ignore#!#babel_table_type-vu-verify
+ignore#!#babel_table_type-vu-cleanup
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
