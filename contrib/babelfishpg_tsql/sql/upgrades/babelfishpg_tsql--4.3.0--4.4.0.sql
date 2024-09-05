@@ -11,6 +11,41 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
+-- Assigning dbo role to the db_owner login
+DO $$
+DECLARE
+    owner_name name;
+    db_name text;
+    server_mode VARCHAR COLLATE "C";
+    owner_cursor CURSOR FOR SELECT DISTINCT owner, name FROM sys.babelfish_sysdatabases;
+BEGIN
+    OPEN owner_cursor;
+    FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
+
+    SELECT current_setting('babelfishpg_tsql.migration_mode') INTO server_mode;
+
+    WHILE FOUND
+    LOOP
+        IF db_name = 'master' OR db_name = 'tempdb' OR db_name = 'msdb'
+        THEN
+            FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
+            CONTINUE;
+        END IF;
+
+        IF server_mode = 'single-db'
+        THEN
+            EXECUTE FORMAT('GRANT dbo TO %I', owner_name);
+        ELSE
+            EXECUTE FORMAT('GRANT %I_dbo TO %I', db_name, owner_name);
+        END IF;
+
+        FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
+    END LOOP;
+
+    CLOSE owner_cursor;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
                                                                  IN p_style NUMERIC DEFAULT 0)
@@ -1673,41 +1708,6 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(sys.NVARCHAR, sys.VARCHAR) (
     STYPE = INTERNAL,
     PARALLEL = SAFE
 );
-
--- Assign dbo role to the db_owner login
-DO $$
-DECLARE
-    owner_name name;
-    db_name text;
-    server_mode VARCHAR COLLATE "C";
-    owner_cursor CURSOR FOR SELECT DISTINCT owner, name FROM sys.babelfish_sysdatabases;
-BEGIN
-    OPEN owner_cursor;
-    FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
-
-    SELECT current_setting('babelfishpg_tsql.migration_mode') INTO server_mode;
-
-    WHILE FOUND
-    LOOP
-        IF db_name = 'master' OR db_name = 'tempdb' OR db_name = 'msdb'
-        THEN
-            FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
-            CONTINUE;
-        END IF;
-
-        IF server_mode = 'single-db'
-        THEN
-            EXECUTE FORMAT('GRANT dbo TO %I', owner_name);
-        ELSE
-            EXECUTE FORMAT('GRANT %I_dbo TO %I', db_name, owner_name);
-        END IF;
-
-        FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
-    END LOOP;
-
-    CLOSE owner_cursor;
-END;
-$$ LANGUAGE plpgsql;
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
