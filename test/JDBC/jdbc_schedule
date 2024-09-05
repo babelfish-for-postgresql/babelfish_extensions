@@ -74,6 +74,9 @@ ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
 ignore#!#sys-systypes-before-16-2-vu-prepare
 ignore#!#sys-systypes-before-16-2-vu-verify
+ignore#!#table-variable-vu-prepare
+ignore#!#table-variable-vu-verify
+ignore#!#table-variable-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
