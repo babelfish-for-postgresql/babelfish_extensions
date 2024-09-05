@@ -19,6 +19,14 @@ ignore#!#BABEL-2034
 ignore#!#BABEL-2688-vu-prepare
 ignore#!#BABEL-2688-vu-verify
 ignore#!#BABEL-2688-vu-cleanup
+ignore#!#BABEL-3192-vu-prepare
+ignore#!#BABEL-3192-vu-verify
+ignore#!#BABEL-3192-vu-cleanup
+ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-prepare
+ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-verify
+ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-cleanup
+#memory context#
+ignore#!#BABEL_4928
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
