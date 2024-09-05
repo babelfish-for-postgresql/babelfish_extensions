@@ -534,7 +534,10 @@ substring
 reverse
 stuff
 replicate
+string_agg
 space
 replace
 binary-datatype-operators
+SELECT_INTO_TEST
+cast-varchar-to-time
 
