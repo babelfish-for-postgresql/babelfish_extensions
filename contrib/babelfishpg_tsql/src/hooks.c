@@ -44,6 +44,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse_param.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
@@ -208,6 +209,12 @@ static bool is_partitioned_table_reloptions_allowed(Datum reloptions);
  * 			Planner Hook
  *****************************************/
 static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+
+/*****************************************
+ * 			parser Hook
+ *****************************************/
+static Oid set_param_collation(Param *param);
+static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -472,6 +479,8 @@ InstallExtendedHooks(void)
 	prev_pltsql_is_partitioned_table_reloptions_allowed_hook = pltsql_is_partitioned_table_reloptions_allowed_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed; 
 
+	handle_param_collation_hook = set_param_collation;
+	handle_default_collation_hook = default_collation_for_builtin_type;
 }
 
 void
@@ -542,6 +551,8 @@ UninstallExtendedHooks(void)
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
+	handle_param_collation_hook = NULL;
+	handle_default_collation_hook = NULL;
 }
 
 /*****************************************
@@ -3558,18 +3569,18 @@ alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int 
 		ScanKeyEntryInitialize(&key[1], 0,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber, InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 		ScanKeyEntryInitialize(&key[2], 0,
 					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber, InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ, CStringGetTextDatum(object_name));
 		ScanKeyEntryInitialize(&key[3], 0,
 					Anum_bbf_schema_perms_object_type,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_type));
 
@@ -4843,8 +4854,10 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		if (nulls[attnum - 1])
 		{
 			const char *owner = GetUserNameFromId(get_sa_role_oid(), false);
+			Name owner_namedata = (Name) palloc(NAMEDATALEN);
 
-			values[attnum - 1] = CStringGetDatum(owner);
+			namestrcpy(owner_namedata, owner);
+			values[attnum - 1] = NameGetDatum(owner_namedata);
 			nulls[attnum - 1] = false;
 		}
 	}
@@ -5277,4 +5290,86 @@ is_partitioned_table_reloptions_allowed(Datum reloptions)
 		}
 	}
 	return true;
+}
+
+static bool
+is_babelfish_builtin_type(Oid typid)
+{
+	bool res = false;
+	HeapTuple	tp;
+	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		res = (typtup->typnamespace == sys_schema_oid);
+		ReleaseSysCache(tp);
+	}
+	return res;
+}
+
+/*
+ * set_param_collation - sets the collation of the given parameter
+ * 					   based on the sql dialect.
+ *
+ * 	@param param - parameter to set the collation for
+ * 	@return - collation of the parameter
+ */
+static Oid
+set_param_collation(Param *param)
+{
+	/*
+	 * If sql_dialect is PG then we need to set DEFAULT_COLLATION_OID for any param
+	 * to handle special cases such as checking foreign key when tupe is being inserted
+	 * in the table through TDS endpoint.
+	 */
+	if (sql_dialect == SQL_DIALECT_PG && is_babelfish_builtin_type(param->paramtype))
+	{
+		return DEFAULT_COLLATION_OID;
+	}
+	else
+	{
+		return get_typcollation(param->paramtype);
+	}
+}
+
+/*
+ * default_collation_for_builtin_type - returns the default collation for the given
+ * 									   builtin type.
+ *
+ * 	@param typ - given type (as type struct)
+ * 	@return - default collation for the given builtin type based on dialect
+ */
+static Oid
+default_collation_for_builtin_type(Type typ, bool handle_pg_type)
+{
+	Form_pg_type	typtup;
+	Oid				oid = InvalidOid;
+
+	typtup = (Form_pg_type) GETSTRUCT(typ);
+	if (OidIsValid(typtup->typcollation) &&
+		sql_dialect == SQL_DIALECT_TSQL &&
+		(typtup->typnamespace == sys_schema_oid))
+	{
+		/*
+		 * Always set CLUSTER_COLLATION_OID() for babelfish collatable types so that
+		 * we can set collation according to database or server level later.
+		 */
+		oid = CLUSTER_COLLATION_OID();
+	}
+	else
+	{
+		oid = typtup->typcollation;
+	}
+
+	/*
+	 * Special handling for PG datatypes such as TEXT because Babelfish does not define sys.TEXT.
+	 * This is required as Babelfish currently does not handle collation of String Const node correctly.
+	 * TODO: Fix the handling of the collation for String Const node.
+	 */
+	if (handle_pg_type && oid == DEFAULT_COLLATION_OID)
+	{
+		oid = CLUSTER_COLLATION_OID();
+	}
+
+	return oid;
 }

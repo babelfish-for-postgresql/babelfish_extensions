@@ -556,10 +556,13 @@ BABEL-3820
 stuff
 PARTITION
 BABEL-5071
-string_agg
+string_agg_within
 reverse
+string_agg
 sys_sequences
 replicate
 space
+SELECT_INTO_TEST
 binary-datatype-operators
+cast-varchar-to-time
 

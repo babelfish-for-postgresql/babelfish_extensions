@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);
@@ -1013,13 +1014,78 @@ GO
 -- test multi-db mode
 SELECT set_config('role', 'jdbc_user', false);
 GO
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
 
 CREATE DATABASE db1;
 GO
 
 CREATE DATABASE db2;
+GO
+
+USE db1;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(1, 2, 0), 1),
+    (geometry::Point(3, 4, 0), 2),
+    (geometry::Point(5, 6, 0), 3);
+GO
+
+USE db2;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(7, 8, 0), 4),
+    (geometry::Point(9, 10, 0), 5),
+    (geometry::Point(11, 12, 0), 6);
+GO
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db1].[dbo].[SpatialData] ' +
+    N'UNION ALL ' +
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db2].[dbo].[SpatialData] ORDER BY SpatialPoint.STX';
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+
+USE master
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+
+-- Tests for db level collation
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+CREATE DATABASE db2 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
 
 USE db1;
