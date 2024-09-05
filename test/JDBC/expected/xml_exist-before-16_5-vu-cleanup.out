@@ -1,3 +1,12 @@
+DROP TABLE babel_5222_xml_exist_udt
+GO
+
+DROP TYPE dbo.babel_5222_xml_exist_varcharUDT
+GO
+
+DROP TYPE dbo.babel_5222_xml_exist_imageUDT
+GO
+
 DROP VIEW babel_5222_xml_exist_dep_view
 GO
 ~~ERROR (Code: 3701)~~

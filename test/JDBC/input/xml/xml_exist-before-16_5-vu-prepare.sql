@@ -21,6 +21,19 @@ INSERT INTO babel_5222_xml_exist_text
 VALUES ('<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>')
 GO
 
+CREATE TYPE dbo.babel_5222_xml_exist_varcharUDT FROM VARCHAR(100);
+GO
+
+CREATE TYPE dbo.babel_5222_xml_exist_imageUDT FROM IMAGE;
+GO
+
+CREATE TABLE babel_5222_xml_exist_udt (VarUDTColumn dbo.babel_5222_xml_exist_varcharUDT, ImageUDTColumn dbo.babel_5222_xml_exist_imageUDT,)
+GO
+
+INSERT INTO babel_5222_xml_exist_udt
+VALUES ('<Root><Child1>Value1</Child1></Root>', CAST('<Root><Child1>Value1</Child1></Root>' AS IMAGE))
+GO
+
 CREATE VIEW babel_5222_xml_exist_dep_view AS
     SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
 GO

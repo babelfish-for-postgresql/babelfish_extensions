@@ -151,6 +151,26 @@ bit
 ~~ERROR (Message: Cannot call methods on text.)~~
 
 
+-- UDT on type VARCHAR
+SELECT VarUDTColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_udt
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on varchar.)~~
+
+
+-- UDT on type IMAGE
+SELECT ImageUDTColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_udt
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on image.)~~
+
+
 -- NULL values
 DECLARE @xml XML = NULL
 SELECT @xml.exist('/artists/artist/@name')
