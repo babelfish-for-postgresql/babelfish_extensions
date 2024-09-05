@@ -67,3 +67,12 @@ go
 
 alter procedure alter_proc_p5 @dateParam date as select @dateParam
 go
+
+-- Test Case: attempt to alter function, expect error for being unsupported
+alter function alter_proc_f1()
+returns int
+as
+BEGIN
+    return 5
+END
+go
