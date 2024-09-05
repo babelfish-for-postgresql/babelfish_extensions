@@ -244,3 +244,23 @@ go
 
 ~~ERROR (Message: SELECT statement returning result to a client cannot be used in a function)~~
 
+
+-- Test Case 11: Alter function with default values
+select alter_func_f6(1, default, 100)
+go
+~~START~~
+int
+224
+~~END~~
+
+
+alter function alter_func_f6 (@p1 int = 345, @p2 int=123, @p3 int) returns int as begin return @p1 + @p2 + @p3 end
+go
+
+select alter_func_f6(default, default, 100)
+go
+~~START~~
+int
+568
+~~END~~
+

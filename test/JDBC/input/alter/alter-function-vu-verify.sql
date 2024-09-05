@@ -148,3 +148,13 @@ begin
     return @param1
 end
 go
+
+-- Test Case 11: Alter function with default values
+select alter_func_f6(1, default, 100)
+go
+
+alter function alter_func_f6 (@p1 int = 345, @p2 int=123, @p3 int) returns int as begin return @p1 + @p2 + @p3 end
+go
+
+select alter_func_f6(default, default, 100)
+go
