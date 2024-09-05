@@ -519,7 +519,6 @@ BABEL-730
 babel-4475
 babel-3254
 babel-4517
-alter-procedure
 babel_table_type
 1_GRANT_SCHEMA
 BABEL-4707
@@ -556,5 +555,6 @@ sys_sequences
 sys_partition_functions
 sys_partition_schemes
 space
+alter-procedure-15_8-or-16_4
 binary-datatype-operators
 cast-varchar-to-time
