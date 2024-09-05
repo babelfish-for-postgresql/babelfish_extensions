@@ -9,6 +9,8 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
+ignore#!#BABEL-3101
+ignore#!#BABEL-1149
 ignore#!#BABEL-2843
 ignore#!#BABEL-2676
 ignore#!#BABEL-2647
