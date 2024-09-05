@@ -335,6 +335,7 @@ extern void TdsSetGucStatVariable(const char *guc, bool boolVal, const char *str
 extern void TdsSetAtAtStatVariable(TdsAtAtVarType at_at_var, int intVal, uint64 bigintVal);
 extern void TdsSetDatabaseStatVariable(int16 db_id);
 extern bool tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_backend);
+extern int tdsstat_fetch_stat_numbackends(void);
 extern void invalidate_stat_table(void);
 extern char *get_tds_host_name(void);
 extern uint32_t get_tds_client_pid(void);

@@ -583,6 +583,21 @@ tdsstat_fetch_stat_local_tdsentry(int beid)
 }
 
 /* ----------
+ * tdsstat_fetch_stat_numbackends() -
+ *
+ *	Support function for the SQL-callable pgstat* functions. Returns
+ *	the number of sessions known in the localTdsStatusTable, i.e.
+ *	the maximum 1-based index to pass to tdsstat_fetch_stat_local_tdsentry().
+ * ----------
+ */
+int
+tdsstat_fetch_stat_numbackends(void)
+{
+	tdsstat_read_current_status();
+	return localNumBackends;
+}
+
+/* ----------
  * tdsstat_read_current_status() -
  *
  *	Copy the current contents of the TdsStatus array to local memory,
@@ -723,10 +738,12 @@ tdsstat_read_current_status(void)
 
 		/* Only valid entries get included into the local array */
 		if (localentry->tdsStatus.st_procpid > 0)
+		{
 			BackendIdGetTransactionIds(i, &localentry->backend_xid, &localentry->backend_xmin);
 
-		localentry++;
-		localNumBackends++;
+			localentry++;
+			localNumBackends++;
+		}
 	}
 
 	localTdsStatusTable = localtable;
