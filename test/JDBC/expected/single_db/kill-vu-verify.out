@@ -454,74 +454,194 @@ go
 
 create database test_kill_db2
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db2
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db2" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 create database test_kill_db3
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db3
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db3" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 create database test_kill_db4
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db4
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db4" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 create database test_kill_db5
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db5
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db5" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 create database test_kill_db6
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db6
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db6" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 create database test_kill_db7
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db7
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db7" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 create database test_kill_db8
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db8
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db8" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 create database test_kill_db9
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db9
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db9" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 
 create database test_kill_db10
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db10
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db10" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 create database test_kill_db11
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
 use test_kill_db11
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db11" does not exist)~~
+
 CREATE USER user_kill FOR LOGIN test_kill;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
 
 -- tsql user=test_kill password=12345678 database=test_kill_db1
 -- CREATE 11 sessions
@@ -534,6 +654,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db2
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db2" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -543,6 +667,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db3
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db3" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -552,6 +680,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db4
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db4" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -561,6 +693,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db5
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db5" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -570,6 +706,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db6
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db6" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -579,6 +719,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db7
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db7" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -588,6 +732,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db8
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db8" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -597,6 +745,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db9
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db9" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -606,6 +758,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db10
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db10" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -615,6 +771,10 @@ int
 
 
 -- tsql user=test_kill password=12345678 database=test_kill_db11
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db11" does not exist )~~
+
 SELECT 1
 GO
 ~~START~~
@@ -628,7 +788,7 @@ SELECT count(*) from sys.dm_exec_sessions where login_name = 'test_kill'
 GO
 ~~START~~
 int
-11
+1
 ~~END~~
 
 
@@ -636,7 +796,7 @@ SELECT COUNT(*) from pg_stat_activity where usename = 'test_kill'
 GO
 ~~START~~
 int
-11
+1
 ~~END~~
 
 
@@ -671,66 +831,6 @@ END
 -- Temporary Table Cleaning
 DROP TABLE #UserSessions
 GO
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 11~~
-
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 1~~
-
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 1~~
-
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 1~~
-
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 1~~
-
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 1~~
-
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 1~~
-
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 1~~
-
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 1~~
-
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-~~ROW COUNT: 1~~
-
 ~~WARNING (Code: 0)~~
 
 ~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
