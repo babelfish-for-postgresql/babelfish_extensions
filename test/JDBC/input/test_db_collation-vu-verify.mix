@@ -579,49 +579,41 @@ GO
 SELECT t1.nv FROM test_db_collation_vu_prepare_db121_t1 t1 INNER JOIN test_db_collation_vu_prepare_db121_t2 t2 on t1.nv = t2.nv ORDER BY t1.nv;
 GO
 
--- COMMENTING IT FOR NOW AS PREP EXEC IS NOT GIVING CORRECT OUTOUT
 -- Case 6.2: Validate whether correct collation is being picked up or not by PREPARED STATEMENTS
--- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
--- DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
--- DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
--- DECLARE @prefix4 NVARCHAR(50) = 'pínata';
 
--- DECLARE @query NVARCHAR(MAX) = N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4';
+-- Simple prep-exec
+DECLARE @prefix1 NVARCHAR(50) = 'cafe';
+DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
+DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
+DECLARE @prefix4 NVARCHAR(50) = 'pínata';
 
--- EXEC sp_executesql @query,
---                    N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
---                    @prefix1, @prefix2, @prefix3, @prefix4;
--- GO
--- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
--- EXEC sp_executesql N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1;', N'@prefix1 NVARCHAR(50)', @prefix1;
--- GO
+DECLARE @query NVARCHAR(MAX) = N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4';
 
--- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
--- DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
--- DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
--- DECLARE @prefix4 NVARCHAR(50) = 'pínata';
+EXEC sp_executesql @query,
+                   N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
+                   @prefix1, @prefix2, @prefix3, @prefix4;
+GO
 
--- DECLARE @query NVARCHAR(MAX) = N'
--- DECLARE @nv NVARCHAR(50);
--- DECLARE CurResult CURSOR FOR
---     SELECT nv FROM test_db_collation_vu_prepare_db121_t1
---     WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4;
+--- prep-exec using CURSOR
+DECLARE @query NVARCHAR(MAX) = N'
+DECLARE @nv NVARCHAR(50);
+DECLARE CurResult CURSOR FOR
+SELECT nv FROM test_db_collation_vu_prepare_db121_t1
+WHERE nv = @prefix;
+OPEN CurResult;
+FETCH NEXT FROM CurResult;
+CLOSE CurResult;
+DEALLOCATE CurResult;';
 
--- OPEN CurResult;
--- FETCH NEXT FROM CurResult INTO @nv;
--- WHILE @@FETCH_STATUS = 0
--- BEGIN
---     PRINT @nv;
---     FETCH NEXT FROM CurResult INTO @nv;
--- END
--- CLOSE CurResult;
--- DEALLOCATE CurResult;';
+DECLARE @prefix NVARCHAR(50) = 'cafe';
+EXEC sp_executesql @query, N'@prefix NVARCHAR(50)', @prefix;
+GO
 
--- EXEC sp_executesql @query,
---                    N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
---                    @prefix1, @prefix2, @prefix3, @prefix4;
--- GO
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+GO
 
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv IN (@prefix1, @prefix2, @prefix3, @prefix4)#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+GO
 
 -- case 9: Cross-database queries (will behave like JOIN)
 USE test_db_collation_vu_prepare_db121;

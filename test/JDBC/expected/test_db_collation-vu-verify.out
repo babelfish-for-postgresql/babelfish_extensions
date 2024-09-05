@@ -1652,7 +1652,7 @@ Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.237 ms
+Babelfish T-SQL Batch Parsing Time: 0.271 ms
 ~~END~~
 
 
@@ -1667,7 +1667,7 @@ Index Only Scan using clustered_idxtest_db_collation_37f23e48f4ded8db470285703bb
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.193 ms
+Babelfish T-SQL Batch Parsing Time: 0.146 ms
 ~~END~~
 
 
@@ -1682,7 +1682,7 @@ Index Only Scan using nonclustered_idxtest_db_collaticabf982079a2aad31147844db2b
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.182 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 
@@ -1697,7 +1697,7 @@ Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.202 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 
@@ -1712,7 +1712,7 @@ Index Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc6e1c3
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 41.049 ms
+Babelfish T-SQL Batch Parsing Time: 41.544 ms
 ~~END~~
 
 
@@ -1728,7 +1728,7 @@ Sort  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.601 ms
+Babelfish T-SQL Batch Parsing Time: 8.595 ms
 ~~END~~
 
 
@@ -1743,7 +1743,7 @@ Index Only Scan using computed_column_idxtest_db_coll8143f54fa9d8b0c6f3d683b2a9f
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.189 ms
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
 ~~END~~
 
 
@@ -1758,7 +1758,7 @@ Index Only Scan using composite_idxtest_db_collation_cd26051c2ba0b21abcc428177cc
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.223 ms
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
 ~~END~~
 
 
@@ -1775,7 +1775,7 @@ Sort  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.183 ms
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 
@@ -1952,47 +1952,68 @@ TEññiȘ
 
 
 
-
-
-
-
-
--- COMMENTING IT FOR NOW AS PREP EXEC IS NOT GIVING CORRECT OUTOUT
 -- Case 6.2: Validate whether correct collation is being picked up or not by PREPARED STATEMENTS
--- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
--- DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
--- DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
--- DECLARE @prefix4 NVARCHAR(50) = 'pínata';
--- DECLARE @query NVARCHAR(MAX) = N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4';
--- EXEC sp_executesql @query,
---                    N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
---                    @prefix1, @prefix2, @prefix3, @prefix4;
--- GO
--- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
--- EXEC sp_executesql N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1;', N'@prefix1 NVARCHAR(50)', @prefix1;
--- GO
--- DECLARE @prefix1 NVARCHAR(50) = 'cafe';
--- DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
--- DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
--- DECLARE @prefix4 NVARCHAR(50) = 'pínata';
--- DECLARE @query NVARCHAR(MAX) = N'
--- DECLARE @nv NVARCHAR(50);
--- DECLARE CurResult CURSOR FOR
---     SELECT nv FROM test_db_collation_vu_prepare_db121_t1
---     WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4;
--- OPEN CurResult;
--- FETCH NEXT FROM CurResult INTO @nv;
--- WHILE @@FETCH_STATUS = 0
--- BEGIN
---     PRINT @nv;
---     FETCH NEXT FROM CurResult INTO @nv;
--- END
--- CLOSE CurResult;
--- DEALLOCATE CurResult;';
--- EXEC sp_executesql @query,
---                    N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
---                    @prefix1, @prefix2, @prefix3, @prefix4;
--- GO
+-- Simple prep-exec
+DECLARE @prefix1 NVARCHAR(50) = 'cafe';
+DECLARE @prefix2 NVARCHAR(50) = 'JALAPeno';
+DECLARE @prefix3 NVARCHAR(50) = 'ñáIVE';
+DECLARE @prefix4 NVARCHAR(50) = 'pínata';
+DECLARE @query NVARCHAR(MAX) = N'SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = @prefix1 OR nv = @prefix2 OR nv = @prefix3 OR nv = @prefix4';
+EXEC sp_executesql @query,
+                   N'@prefix1 NVARCHAR(50), @prefix2 NVARCHAR(50), @prefix3 NVARCHAR(50), @prefix4 NVARCHAR(50)',
+                   @prefix1, @prefix2, @prefix3, @prefix4;
+GO
+~~START~~
+nvarchar
+café
+jalapeño
+naïve
+Piñata
+~~END~~
+
+
+
+--- prep-exec using CURSOR
+DECLARE @query NVARCHAR(MAX) = N'
+DECLARE @nv NVARCHAR(50);
+DECLARE CurResult CURSOR FOR
+SELECT nv FROM test_db_collation_vu_prepare_db121_t1
+WHERE nv = @prefix;
+OPEN CurResult;
+FETCH NEXT FROM CurResult;
+CLOSE CurResult;
+DEALLOCATE CurResult;';
+DECLARE @prefix NVARCHAR(50) = 'cafe';
+EXEC sp_executesql @query, N'@prefix NVARCHAR(50)', @prefix;
+GO
+~~START~~
+nvarchar
+café
+~~END~~
+
+
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv = ? OR nv = ? OR nv = ? OR nv = ?#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+~~START~~
+nvarchar
+café
+jalapeño
+naïve
+Piñata
+~~END~~
+
+GO
+
+prepst#!#SELECT nv FROM test_db_collation_vu_prepare_db121_t1 WHERE nv IN (?, ?, ?, ?)#!#NVARCHAR|-|prefix1|-|cafe#!#NVARCHAR|-|prefix2|-|JALAPeno#!#NVARCHAR|-|prefix3|-|ñáIVE#!#NVARCHAR|-|prefix4|-|pínata
+~~START~~
+nvarchar
+café
+jalapeño
+naïve
+Piñata
+~~END~~
+
+GO
+
 -- case 9: Cross-database queries (will behave like JOIN)
 USE test_db_collation_vu_prepare_db121;
 GO
