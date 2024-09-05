@@ -1674,6 +1674,27 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(sys.NVARCHAR, sys.VARCHAR) (
     PARALLEL = SAFE
 );
 
+CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(TEXT, ANYELEMENT)
+RETURNS sys.BIT
+AS
+$BODY$
+DECLARE
+    string_arg_datatype text;
+BEGIN
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof($2)::oid);
+    IF (string_arg_datatype != 'xml') THEN
+        RAISE EXCEPTION 'Cannot call methods on %.', string_arg_datatype;
+    END IF;
+
+    IF xmlexists($1 passing by value $2) THEN
+        RETURN 1;
+    ELSE
+        RETURN 0;
+    END IF;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 

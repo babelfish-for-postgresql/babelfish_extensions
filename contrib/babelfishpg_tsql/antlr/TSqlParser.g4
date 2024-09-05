@@ -3490,7 +3490,7 @@ clr_udt_func_call
     ;
 
 method_call
-    : xml_methods
+    : xml_method_call
     | hierarchyid_methods
     | spatial_methods
     | method=id (LR_BRACKET expression_list? RR_BRACKET)?
@@ -3808,6 +3808,7 @@ function_call
     | aggregate_windowed_function                      
     | analytic_windowed_function                       
     | spatial_proc_name_server_database_schema LR_BRACKET function_arg_list? RR_BRACKET 
+    | table_column_name DOT xml_method_call
     | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
     | built_in_functions                               
     | freetext_function                                
@@ -3938,51 +3939,18 @@ spatial_coloncolon_methods
     : data_type colon_colon function_call
     ;
 
-// this is no longer used:
-xml_data_type_methods
-    : xml_value_method
-    | xml_query_method
-    | xml_exist_method
-    | xml_modify_method
+xml_method_call
+    : xml_method LR_BRACKET expression_list RR_BRACKET
     ;
 
-xml_methods
-    : xml_value_call
-    | xml_query_call
-    | xml_exist_call
-    | xml_modify_call
-    ;
-
-xml_value_method
-    : (loc_id=LOCAL_ID | value_id=id | eventdata=EVENTDATA LR_BRACKET RR_BRACKET | query=xml_query_method | subquery)  DOT call=xml_value_call
-    ;
-
-xml_value_call
-    :  VALUE LR_BRACKET xquery=char_string COMMA sqltype=char_string RR_BRACKET
-    ;
-
-xml_query_method
-    : (loc_id=LOCAL_ID | value_id=id | table=full_object_name | subquery) DOT call=xml_query_call
-    ;
-
-xml_query_call
-    : QUERY LR_BRACKET xquery=char_string RR_BRACKET
-    ;
-
-xml_exist_method
-    : (loc_id=LOCAL_ID | value_id=id | subquery) DOT call=xml_exist_call
-    ;
-
-xml_exist_call
-    : EXIST LR_BRACKET xquery=char_string RR_BRACKET
+xml_method
+    : VALUE
+    | QUERY
+    | EXIST
     ;
 
 xml_modify_method
-    : (loc_id=LOCAL_ID | value_id=id | subquery) DOT call=xml_modify_call
-    ;
-
-xml_modify_call
-    : MODIFY LR_BRACKET xml_dml=char_string RR_BRACKET
+    : (loc_id=LOCAL_ID | value_id=id | subquery) DOT MODIFY LR_BRACKET xml_dml=char_string RR_BRACKET
     ;
 
 xml_nodes_method
@@ -5242,6 +5210,10 @@ collation
 full_column_name
     : ((schema=id? DOT)? table=id? DOT)? column=id DOT geospatial_col
     | (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? column_name=id
+    ;
+
+table_column_name
+    : (table=id? DOT)? column=id
     ;
 
 column_name_list_with_order

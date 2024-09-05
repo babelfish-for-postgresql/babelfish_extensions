@@ -187,9 +187,12 @@ template <class T> static void rewrite_geospatial_query_helper(T ctx, TSqlParser
 template <class T> static void rewrite_geospatial_col_ref_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
 template <class T> static void rewrite_geospatial_func_ref_no_arg_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
 template <class T> static void rewrite_geospatial_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
+template <class T> static void rewrite_xml_func_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t xml_start_index);
 template <class T> static void rewrite_function_call_geospatial_func_ref_args(T ctx);
 template <class T> static void rewrite_function_call_geospatial_func_ref_no_arg(T ctx);
+template <class T> static void rewrite_function_call_xml_func(T ctx);
 static void handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
+static void handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx);
 static void handleFullColumnNameCtx(TSqlParser::Full_column_nameContext *ctx);
 template <class T> static void handleLocalIdQuotingFuncRefNoArg(T ctx, size_t geospatial_start_index, int &offset1, std::string &expr, std::vector<size_t> keysToRemove);
@@ -974,6 +977,7 @@ public:
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
 		handleGeospatialFunctionsInFunctionCall(ctx);
+		handleXMLFunctionsInFunctionCall(ctx);
 
 		if (ctx->func_proc_name_server_database_schema())
 		{
@@ -1030,6 +1034,15 @@ public:
 	void exitTRIM(TSqlParser::TRIMContext *ctx) override
 	{
 		rewrite_function_trim_to_sys_trim(ctx);
+	}
+
+	void exitXml_method(TSqlParser::Xml_methodContext *ctx) override
+	{
+		if (ctx->EXIST())
+		{
+			size_t startPosition = ctx->start->getStartIndex();
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "bbf_xml")));
+		}
 	}
 
 	/* We are adding handling for CLR_UDT Types in:
@@ -8362,6 +8375,84 @@ rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx)
 	rewritten_query_fragment.emplace(std::make_pair(ctx->TRIM()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TRIM()), "sys.trim")));
 }
 
+/*
+ * In this helper function we Rewrite the Query for XML Handling
+ * For Func_Ref Functions with args (such as EXIST(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ */
+template<class T>
+void
+rewrite_xml_func_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t xml_start_index)
+{
+	std::vector<size_t> keysToRemove;
+	std::string ctx_str = ::getFullText(ctx);
+	ctx_str = ctx_str.substr(0, method->stop->getStopIndex() - ctx->start->getStartIndex() + 1);
+	int func_call_len = (int)xml_start_index - ctx->start->getStartIndex();
+	int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+	std::string expr = "";
+	int index = 0;
+	int offset1 = 0;
+	int offset2 = 0;
+	std::vector<std::pair<int, int>> arg_offset_list;
+	int local_id_end_offset = 0;
+	
+	/* writting the previously rewritten XML context */
+	for (auto &entry : rewritten_query_fragment)
+	{
+		if(entry.first >= ctx->start->getStartIndex() && entry.first <= method->stop->getStopIndex())
+		{
+			expr += ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+			index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+			keysToRemove.push_back(entry.first);
+			if(entry.first <= xml_start_index) offset1 += (int)entry.second.second.size() - entry.second.first.size();
+			else if(entry.first > xml_start_index && entry.first <= method->stop->getStopIndex())
+			{
+				offset2 += (int)entry.second.second.size() - entry.second.first.size();
+				/* storing these values in a list so that we could correctly calculate the offset for local_id argument rewrites */
+				arg_offset_list.push_back(std::make_pair((int)entry.first, (int)entry.second.second.size() - entry.second.first.size()));
+			}
+		}
+	}
+	for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
+	keysToRemove.clear();
+	expr += ctx_str.substr(index);
+	
+	/* quoting local_id here so as to remove possibility of multiple rewrites in a single context */
+	for (auto &entry : local_id_positions)
+	{
+		if(entry.first >= ctx->start->getStartIndex() && entry.first <= xml_start_index)
+		{
+			/* Here we are quoting local_id which are before the function name */
+			int local_index = (int)entry.first - ctx->start->getStartIndex() + offset1;
+			if(expr.substr(local_index, entry.second.size()) ==  entry.second)
+			{
+				keysToRemove.push_back(entry.first);
+				expr = expr.substr(0, local_index) + "\"" + entry.second + "\"" + expr.substr(local_index + entry.second.size());
+				offset1 += 2;
+			}
+		}
+		else if(entry.first >= method->xml_method_call()->expression_list()->start->getStartIndex() && entry.first <= method->xml_method_call()->expression_list()->stop->getStopIndex())
+		{
+			/* Here we are quoting local_id which are within the argument list of the function */
+			int local_index = (int)entry.first - ctx->start->getStartIndex() + offset1 + local_id_end_offset;
+			for (size_t i = 0; i < arg_offset_list.size(); i++)
+			{
+				if((size_t)arg_offset_list[i].first < entry.first) local_index += arg_offset_list[i].second;
+			}
+			if(expr.substr(local_index, entry.second.size()) ==  entry.second)
+			{
+				keysToRemove.push_back(entry.first);
+				expr = expr.substr(0, local_index) + "\"" + entry.second + "\"" + expr.substr(local_index + entry.second.size());
+				offset2 += 2;
+				local_id_end_offset += 2;
+			}
+		}
+	}
+	for (const auto &key : keysToRemove) local_id_positions.erase(key);
+	keysToRemove.clear();
+	std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, func_call_len + offset1 + 1) + ")";
+	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Spatial Query Helper
 ////////////////////////////////////////////////////////////////////////////////
@@ -8644,6 +8735,55 @@ rewrite_function_call_geospatial_func_ref_args(T ctx)
 // End of Spatial Query Helper for Function Calls 
 ////////////////////////////////////////////////////////////////////////////////
 
+/*
+ * In this helper function we rewrite the Query for XML Handling
+ * This implementation is different for Function_Call Rule
+ * For Func_Ref Functions with args (such as EXIST(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ */
+template<class T>
+void
+rewrite_function_call_xml_func(T ctx)
+{
+	std::vector<size_t> keysToRemove;
+	std::string func_ctx = ::getFullText(ctx);
+	int col_len = (int)ctx->table_column_name()->stop->getStopIndex() - ctx->table_column_name()->start->getStartIndex();
+	int method_len = (int)ctx->xml_method_call()->stop->getStopIndex() - ctx->xml_method_call()->start->getStartIndex();
+	std::string expr = "";
+	int index = 0;
+	int offset1 = 0;
+	int offset2 = 0;
+	std::vector<std::pair<int, int>> arg_offset_list;
+	
+	/* writting the previously rewritten XML context */
+	for (auto &entry : rewritten_query_fragment)
+	{
+		if (entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+		{
+			expr += func_ctx.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+			index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+			keysToRemove.push_back(entry.first);
+			if (entry.first <= ctx->table_column_name()->stop->getStopIndex())
+				offset1 += (int)entry.second.second.size() - entry.second.first.size();
+			else
+			{
+				offset2 += (int)entry.second.second.size() - entry.second.first.size();
+				/* storing these values in a list so that we could correctly calculate the offset for local_id argument rewrites */
+				arg_offset_list.push_back(std::make_pair((int)entry.first, (int)entry.second.second.size() - entry.second.first.size()));
+			}
+		}
+	}
+
+	for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
+	keysToRemove.clear();
+	expr += func_ctx.substr(index);
+
+	/*
+	 * Rewriting the query as: table.col.Func_name(arg_list) -> Func_name(arg_list, table.col)
+	 */
+	std::string rewritten_func = expr.substr((int)ctx->xml_method_call()->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
+	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
+}
+
 template <class T>
 static void 
 handleLocalIdQuotingFuncRefNoArg(T ctx, size_t geospatial_start_index, int &offset1, std::string &expr, std::vector<size_t> keysToRemove)
@@ -8683,6 +8823,38 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	}
 }
 
+template<class T>
+void
+validateXMLFunctionArgs(T ctx)
+{
+	/* Only String Literal is allowed as agument for XML Functions */
+	if (ctx->xml_method_call() && ctx->xml_method_call()->expression_list())
+	{
+		std::vector<TSqlParser::ExpressionContext *> expression_list = ctx->xml_method_call()->expression_list()->expression();
+		for (size_t i = 0; i < expression_list.size(); ++i)
+		{
+			TSqlParser::ExpressionContext *expr = expression_list[i];
+			if (!(dynamic_cast<TSqlParser::Constant_exprContext*>(expr) && static_cast<TSqlParser::Constant_exprContext*>(expr)->constant()->char_string()))
+				throw PGErrorWrapperException(ERROR, 
+						ERRCODE_INVALID_PARAMETER_VALUE, 
+						format_errmsg("The argument %d of the XML data type method \"%s\" must be a string literal.", 
+										(i+1), ::getFullText(ctx->xml_method_call()->xml_method()).c_str()), 
+						getLineAndPos(expr));
+		}
+	}
+}
+
+static void
+handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
+{
+	/* Handles rewrite of xml function calls */
+	if (ctx->xml_method_call())
+	{
+		validateXMLFunctionArgs(ctx);
+		rewrite_function_call_xml_func(ctx);
+	}
+}
+
 static void 
 handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx)
 {
@@ -8706,6 +8878,23 @@ handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx)
 				}
 				else ind = method_calls[i-1]->stop->getStopIndex();
 				rewrite_geospatial_query_helper(ctx, method, ind);
+			}
+
+			/* rewriting the query in case of xml function calls */
+			if(method->xml_method_call())
+			{
+				size_t ind = -1;
+				if (i == 0)
+				{
+					if(ctx->local_id()) ind = ctx->local_id()->stop->getStopIndex();
+					else if(ctx->subquery()) ind = ctx->subquery()->stop->getStopIndex();
+					else if(ctx->function_call()) ind = ctx->function_call()->stop->getStopIndex();
+					else if(ctx->RR_BRACKET()) ind = ctx->RR_BRACKET()->getSymbol()->getStopIndex();
+				}
+				else ind = method_calls[i-1]->stop->getStopIndex();
+
+				validateXMLFunctionArgs(method);
+				rewrite_xml_func_query_helper(ctx, method, ind);
 			}
 		}
 	}

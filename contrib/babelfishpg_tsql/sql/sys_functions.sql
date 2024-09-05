@@ -74,6 +74,28 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+-- XML function EXIST(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(TEXT, ANYELEMENT)
+RETURNS sys.BIT
+AS
+$BODY$
+DECLARE
+    string_arg_datatype text;
+BEGIN
+    string_arg_datatype := sys.translate_pg_type_to_tsql(pg_typeof($2)::oid);
+    IF (string_arg_datatype != 'xml') THEN
+        RAISE EXCEPTION 'Cannot call methods on %.', string_arg_datatype;
+    END IF;
+
+    IF xmlexists($1 passing by value $2) THEN
+        RETURN 1;
+    ELSE
+        RETURN 0;
+    END IF;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
     state INTERNAL,

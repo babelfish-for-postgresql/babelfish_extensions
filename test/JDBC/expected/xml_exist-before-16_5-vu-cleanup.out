@@ -1,0 +1,52 @@
+DROP VIEW babel_5222_xml_exist_dep_view
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_5222_xml_exist_dep_view" does not exist)~~
+
+
+DROP PROCEDURE babel_5222_xml_exist_dep_proc
+GO
+
+DROP FUNCTION babel_5222_xml_exist_dep_func
+GO
+
+DROP FUNCTION babel_5222_xml_exist_itvf_func
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a function named "babel_5222_xml_exist_itvf_func")~~
+
+
+DROP TABLE babel_5222_xml_exist_compcol
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel_5222_xml_exist_compcol" does not exist)~~
+
+
+DROP TABLE babel_5222_xml_exist_constraint
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel_5222_xml_exist_constraint" does not exist)~~
+
+
+DROP TABLE babel_5222_xml_exist_school_details
+GO
+
+DROP TRIGGER  babel_5222_xml_exist_tr_parital_student_entry
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: trigger "babel_5222_xml_exist_tr_parital_student_entry" does not exist)~~
+
+
+DROP TABLE babel_5222_xml_exist_t1
+GO
+
+DROP TABLE babel_5222_xml_exist_t2
+GO
+
+DROP TABLE babel_5222_xml_exist_text
+GO

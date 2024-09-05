@@ -1,0 +1,439 @@
+-- Check if an XML element exists
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+DECLARE @result1 VARCHAR(50) = CASE WHEN @xml.exist('/Root/Child1') = 1 THEN 'The Child1 element exists' ELSE 'The Child1 element does not exist' END;
+GO
+
+-- Check if an XML attribute exists
+DECLARE @xml XML = '<Root Attr1="Value1"><Child1>Value2</Child1></Root>';
+DECLARE @result2 VARCHAR(50) = CASE WHEN @xml.exist('/Root/@Attr1') = 1 THEN 'The Attr1 attribute exists' ELSE 'The Attr1 attribute does not exist' END;
+GO
+
+-- Check if an XML element or attribute exists, with a specific value
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+DECLARE @result3 VARCHAR(70) = CASE WHEN @xml.exist('/Root/Child2[text()="Value2"]') = 1 THEN 'The Child2 element with value "Value2" exists' ELSE 'The Child2 element with value "Value2" does not exist' END;
+GO
+
+-- Check if an XML element or attribute exists, with a specific value and path
+DECLARE @xml XML = '<Root><ParentNode><Child1>Value1</Child1></ParentNode><ParentNode><Child1>Value2</Child1></ParentNode></Root>';
+DECLARE @result4 VARCHAR(100) = CASE WHEN @xml.exist('/Root/ParentNode/Child1[text()="Value2"]') = 1 THEN 'The Child1 element with value "Value2" under ParentNode exists' ELSE 'The Child1 element with value "Value2" under ParentNode does not exist' END;
+GO
+
+-- Check if an XML element or attribute exists based on a condition
+DECLARE @xml XML = '<Root><Child1 Attr1="Value1">Value2</Child1><Child2 Attr1="Value3">Value4</Child2></Root>';
+DECLARE @result6 VARCHAR(80) = CASE WHEN @xml.exist('/Root/Child1[@Attr1="Value1"]') = 1 THEN 'The Child1 element with Attr1="Value1" exists' ELSE 'The Child1 element with Attr1="Value1" does not exist' END;
+GO
+
+-- Check if multiple XML elements or attributes exist
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2><Child3>Value3</Child3></Root>';
+DECLARE @result7 VARCHAR(50) = CASE WHEN @xml.exist('/Root/Child1') = 1 AND @xml.exist('/Root/Child2') = 1 AND @xml.exist('/Root/Child3') = 1 THEN 'All Child elements exist' ELSE 'One or more Child elements are missing' END;
+GO
+
+-- Check if an XML element exists using a variable in the XPath expression
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+DECLARE @element VARCHAR(20) = 'Child1';
+DECLARE @result9 VARCHAR(50) = CASE WHEN @xml.exist(CONCAT('/Root/', @element)) = 1 THEN 'The ' + @element + ' element exists' ELSE 'The ' + @element + ' element does not exist' END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+
+
+-- Check if an XML element exists within a nested XML structure
+DECLARE @xml XML = '<Root><Parent1><Child1>Value1</Child1></Parent1><Parent2><Child2>Value2</Child2></Parent2></Root>';
+DECLARE @result10 VARCHAR(70) = CASE WHEN @xml.exist('/Root/Parent1/Child1') = 1 THEN 'The Child1 element exists under Parent1' ELSE 'The Child1 element does not exist under Parent1' END;
+GO
+
+-- Acceptable argument types
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Unacceptable argument types
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist(cast('/artists/artist/@name' as VARCHAR(100)))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist(cast('/artists/artist/@name' as text))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist(@xml)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+
+
+DECLARE @xml VARCHAR(100) = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on varchar.)~~
+
+
+DECLARE @xml NVARCHAR(100) = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on nvarchar.)~~
+
+
+DECLARE @xml INT = 1
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+DECLARE @xml BIGINT = 1
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on bigint.)~~
+
+
+DECLARE @xml FLOAT = 1
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on float.)~~
+
+
+DECLARE @xml DECIMAL = 1
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on decimal.)~~
+
+
+DECLARE @xml NUMERIC = 1
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on numeric.)~~
+
+
+DECLARE @xml BIT = 1
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on bit.)~~
+
+
+SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_text
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on text.)~~
+
+
+-- NULL values
+DECLARE @xml XML = NULL
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist(NULL)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+
+
+DECLARE @xml XML = NULL
+SELECT @xml.exist(NULL)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+
+
+-- column as input argument
+SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT babel_5222_xml_exist_t1.XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT dbo.babel_5222_xml_exist_t1.XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+
+
+SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child1') = 1 THEN 'The Child1 element exists' ELSE 'The Child1 element does not exist' END AS Result
+FROM babel_5222_xml_exist_t2;
+GO
+~~START~~
+int#!#text
+1#!#The Child1 element exists
+2#!#The Child1 element does not exist
+3#!#The Child1 element exists
+~~END~~
+
+
+SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child2') = 1 THEN 'The Child2 element exists' ELSE 'The Child2 element does not exist' END AS Result
+FROM babel_5222_xml_exist_t2;
+GO
+~~START~~
+int#!#text
+1#!#The Child2 element does not exist
+2#!#The Child2 element exists
+3#!#The Child2 element exists
+~~END~~
+
+
+-- Dependent objects
+SELECT * FROM babel_5222_xml_exist_dep_view
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+EXEC babel_5222_xml_exist_dep_proc
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT babel_5222_xml_exist_dep_func()
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT * FROM babel_5222_xml_exist_itvf_func()
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+INSERT INTO babel_5222_xml_exist_compcol VALUES ('<artist name="Rohit Bhagat" />')
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_5222_xml_exist_compcol VALUES ('<artist />')
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol
+GO
+~~START~~
+xml#!#bit
+<artist name="Rohit Bhagat" />#!#1
+<artist />#!#0
+~~END~~
+
+
+INSERT INTO babel_5222_xml_exist_constraint VALUES ('<artist name="Rohit Bhagat" />')
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_5222_xml_exist_constraint VALUES ('<artist />')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "babel_5222_xml_exist_constraint" violates check constraint "chknameexist")~~
+
+
+SELECT student FROM babel_5222_xml_exist_school_details
+GO
+~~START~~
+xml
+<student classid="1" rollid="1" studentname="StudentA" />
+<student classid="1" rollid="2" studentname="StudentB" />
+<student classid="1" rollid="3" studentname="StudentC" />
+<student classid="2" rollid="1" studentname="StudentD" />
+<student classid="2" rollid="2" studentname="StudentE" />
+~~END~~
+
+
+INSERT INTO babel_5222_xml_exist_school_details VALUES (6, '<student classid="2" rollid="3" studentname="StudentF" />')
+GO
+~~START~~
+int#!#xml
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_5222_xml_exist_school_details VALUES (7, '<student rollid="4" studentname="StudentG" />')
+GO
+~~START~~
+int#!#xml
+7#!#<student rollid="4" studentname="StudentG" />
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_5222_xml_exist_school_details VALUES (8, '<student classid="2" studentname="StudentH" />')
+GO
+~~START~~
+int#!#xml
+7#!#<student rollid="4" studentname="StudentG" />
+8#!#<student classid="2" studentname="StudentH" />
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_5222_xml_exist_school_details VALUES (9, '<student classid="2" rollid="4" />')
+GO
+~~START~~
+int#!#xml
+7#!#<student rollid="4" studentname="StudentG" />
+8#!#<student classid="2" studentname="StudentH" />
+9#!#<student classid="2" rollid="4" />
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_5222_xml_exist_school_details VALUES (10, '<student classid="2" />')
+GO
+~~START~~
+int#!#xml
+7#!#<student rollid="4" studentname="StudentG" />
+8#!#<student classid="2" studentname="StudentH" />
+9#!#<student classid="2" rollid="4" />
+10#!#<student classid="2" />
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE babel_5222_xml_exist_school_details
+SET student=CAST('<student classid="1" rollid="4" studentname="StudentG" />' as XML)
+WHERE id=7
+GO
+~~START~~
+int#!#xml
+8#!#<student classid="2" studentname="StudentH" />
+9#!#<student classid="2" rollid="4" />
+10#!#<student classid="2" />
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+DELETE FROM babel_5222_xml_exist_school_details WHERE id=10
+GO
+~~START~~
+int#!#xml
+8#!#<student classid="2" studentname="StudentH" />
+9#!#<student classid="2" rollid="4" />
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- Currently, we only support XPATH 1.0 as input for XML exist function. 
+-- Hence following queries will throw error
+DECLARE @x XML;
+SET @x='';
+SELECT @x.exist('true()')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+DECLARE @x XML;  
+DECLARE @f BIT;  
+SET @x = '<root Somedate = "2002-01-01Z"/>';  
+SET @f = @x.exist('/root[(@Somedate cast as xs:date?) eq xs:date("2002-01-01Z")]');  
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+
+DECLARE @x XML;  
+DECLARE @f BIT;  
+SET @x = '<Somedate>2002-01-01Z</Somedate>';  
+SET @f = @x.exist('/Somedate[(text()[1] cast as xs:date ?) = xs:date("2002-01-01Z") ]')  
+SELECT @f;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+
+-- Unsupported XML functions VALUE(), QUERY(), MODIFY()
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.value('(/artists/artist/@name)[1]','varchar(20)')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.query('/artists/artist')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+
+
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'xml modify method' is not currently supported in Babelfish)~~
+

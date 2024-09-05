@@ -459,4 +459,5 @@ string_agg-before-15_9-or-16_5
 space
 binary-datatype-operators
 cast-varchar-to-time
+xml_exist-before-16_5
 

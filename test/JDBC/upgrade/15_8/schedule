@@ -539,4 +539,5 @@ space
 replace
 binary-datatype-operators
 cast-varchar-to-time
+xml_exist-before-16_5
 
