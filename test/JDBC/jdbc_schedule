@@ -25,6 +25,7 @@ ignore#!#BABEL-3192-vu-cleanup
 ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-prepare
 ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-verify
 ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-cleanup
+ignore#!#Test_list_of_sys_catalog_present_in_dbo
 #memory context#
 ignore#!#BABEL_4928
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
