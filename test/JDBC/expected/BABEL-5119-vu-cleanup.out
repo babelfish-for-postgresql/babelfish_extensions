@@ -1,0 +1,15 @@
+-- tsql
+USE master
+GO
+DROP TABLE guest.t2
+GO
+DROP VIEW guest.v2
+GO
+DROP PROCEDURE guest.p2
+GO
+DROP LOGIN login_babel5119_1
+GO
+DROP LOGIN login_babel5119_2
+GO
+DROP DATABASE BABEL5119_1
+GO
