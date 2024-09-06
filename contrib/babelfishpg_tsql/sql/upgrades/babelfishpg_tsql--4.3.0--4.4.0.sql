@@ -14,30 +14,25 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 -- Assigning dbo role to the db_owner login
 DO $$
 DECLARE
-    owner_name name;
-    db_name text;
-    server_mode VARCHAR COLLATE "C";
+    owner_name NAME;
+    db_name TEXT;
+    role_name NAME;
     owner_cursor CURSOR FOR SELECT DISTINCT owner, name FROM sys.babelfish_sysdatabases;
 BEGIN
     OPEN owner_cursor;
     FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
 
-    SELECT current_setting('babelfishpg_tsql.migration_mode') INTO server_mode;
-
     WHILE FOUND
     LOOP
+        SELECT rolname FROM sys.babelfish_authid_user_ext WHERE database_name = db_name INTO role_name;
+
         IF db_name = 'master' OR db_name = 'tempdb' OR db_name = 'msdb'
         THEN
             FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
             CONTINUE;
         END IF;
 
-        IF server_mode = 'single-db'
-        THEN
-            EXECUTE FORMAT('GRANT dbo TO %I', owner_name);
-        ELSE
-            EXECUTE FORMAT('GRANT %I_dbo TO %I', db_name, owner_name);
-        END IF;
+        EXECUTE FORMAT('GRANT %I TO %I', role_name, owner_name);
 
         FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
     END LOOP;
