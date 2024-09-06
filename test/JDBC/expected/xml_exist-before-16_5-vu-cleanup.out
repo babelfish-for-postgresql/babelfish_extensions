@@ -41,15 +41,11 @@ GO
 ~~ERROR (Message: table "babel_5222_xml_exist_constraint" does not exist)~~
 
 
-DROP TABLE babel_5222_xml_exist_school_details
-GO
-
 DROP TRIGGER  babel_5222_xml_exist_tr_parital_student_entry
 GO
-~~ERROR (Code: 3701)~~
 
-~~ERROR (Message: trigger "babel_5222_xml_exist_tr_parital_student_entry" does not exist)~~
-
+DROP TABLE babel_5222_xml_exist_school_details
+GO
 
 DROP TABLE babel_5222_xml_exist_t1
 GO

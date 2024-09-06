@@ -25,10 +25,10 @@ GO
 DROP TABLE babel_5222_xml_exist_constraint
 GO
 
-DROP TABLE babel_5222_xml_exist_school_details
+DROP TRIGGER  babel_5222_xml_exist_tr_parital_student_entry
 GO
 
-DROP TRIGGER  babel_5222_xml_exist_tr_parital_student_entry
+DROP TABLE babel_5222_xml_exist_school_details
 GO
 
 DROP TABLE babel_5222_xml_exist_t1
