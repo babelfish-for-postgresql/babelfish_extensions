@@ -192,3 +192,29 @@ drop type binary_t;
 drop type image_t;
 drop database sp_cols;
 go
+
+--Collation using BBF_Unicode_CP1_CI_AI
+Create database sp_cols collate BBF_Unicode_CP1_CI_AI
+go
+
+Use sp_cols
+go
+
+EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+go
+
+create table nums(a int, b smallint, c tinyint, d bigint, e bit, f float, g real, h numeric(5,3), i money, j smallmoney)
+go
+
+EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+go
+
+drop table nums
+go
+
+use master
+go
+
+drop database sp_cols
+go
+

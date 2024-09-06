@@ -75,3 +75,6 @@ drop table testing_1;
 GO
 drop table testing_4;
 GO
+
+drop type varchar3;
+GO

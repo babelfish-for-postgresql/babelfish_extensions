@@ -386,7 +386,7 @@ sys-sysobjects
 sys-system_objects
 sys-system_sql_modules
 sys-system_sql_modules-dep
-sys-systypes
+sys-systypes-before-16-2
 sys_sysusers_dep
 sys-tables
 sys-tables-dep
@@ -512,7 +512,7 @@ sys_availability_replicas
 BABEL-730
 babel-4475
 babel-4517
-alter-procedure
+alter-procedure-before-15_8-or-16_4
 babel_table_type
 1_GRANT_SCHEMA
 BABEL-4707
@@ -538,6 +538,7 @@ translate-before-15_8-or-16_4
 substring-before-15_8-or-16_4
 BABEL-4815
 reverse-before-15_8-or-16_4
+string_agg-before-15_9-or-16_5
 stuff-before-15_8-or-16_4
 BABEL-3401
 babel_4328_datetime
@@ -547,4 +548,6 @@ BABEL-3820
 replicate-before-15_8-or-16_4
 space
 binary-datatype-operators
+cast-varchar-to-time
+
 

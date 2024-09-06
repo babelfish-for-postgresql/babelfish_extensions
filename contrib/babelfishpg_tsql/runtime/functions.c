@@ -1747,7 +1747,7 @@ Datum
 tsql_stat_get_activity(PG_FUNCTION_ARGS)
 {
 	Oid			sysadmin_oid = get_role_oid("sysadmin", false);
-	int			num_backends = pgstat_fetch_stat_numbackends();
+	int			num_backends = 0;
 	int			curr_backend;
 	char	   *view_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int			pid = -1;
@@ -1832,6 +1832,9 @@ tsql_stat_get_activity(PG_FUNCTION_ARGS)
 	rsinfo->setDesc = tupdesc;
 
 	MemoryContextSwitchTo(oldcontext);
+
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_tds_numbackends)
+		num_backends = (*pltsql_protocol_plugin_ptr)->get_tds_numbackends();
 
 	/* 1-based index */
 	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
@@ -2022,7 +2025,7 @@ search_partition(PG_FUNCTION_ARGS)
 	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_partition_function_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_func_name));
 	
 	/* Scan using index. */
@@ -2092,7 +2095,7 @@ search_partition(PG_FUNCTION_ARGS)
 								ObjectIdGetDatum(get_namespace_oid("sys", false)));
 
 	cxt.function_oid = cmpfunction_oid;
-	cxt.colloid = tsql_get_server_collation_oid_internal(false);
+	cxt.colloid = tsql_get_database_or_server_collation_oid_internal(false);
 	
 	/* Perform binary search on sorted range values. */
 	result = tsql_bsearch_arg(&arg, range_values, nelems, sizeof(Datum), tsql_compare_values, &cxt);
@@ -2890,7 +2893,7 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	int			i;
 	Oid			sys_varcharoid = get_sys_varcharoid();
-	Oid			colloid = tsql_get_server_collation_oid_internal(false);
+	Oid			colloid = tsql_get_database_or_server_collation_oid_internal(false);
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))

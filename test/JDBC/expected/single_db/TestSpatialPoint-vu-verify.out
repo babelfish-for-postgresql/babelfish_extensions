@@ -1,0 +1,3662 @@
+DECLARE @point geometry;
+SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT STAsText(@point);
+SELECT @point.STAsText();
+Go
+~~START~~
+text
+POINT(-122.349 47.651)
+~~END~~
+
+~~START~~
+text
+POINT(-122.349 47.651)
+~~END~~
+
+
+DECLARE @point geometry;
+SET @point = geometry::POINT(22.34900, -47.65100, 4326);
+SELECT STAsText(@point);
+SELECT @point.STAsText();
+SELECT @point . STAsText ( );
+Go
+~~START~~
+text
+POINT(22.349 -47.651)
+~~END~~
+
+~~START~~
+text
+POINT(22.349 -47.651)
+~~END~~
+
+~~START~~
+text
+POINT(22.349 -47.651)
+~~END~~
+
+
+DECLARE @point geometry; 
+SET @point = geometry::Point(1.0, 2.0, 4326); 
+SELECT @point.STX AS XCoordinate;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
+DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
+SELECT @point1.STDistance(@point2) AS Distance;
+GO
+~~START~~
+float
+2.8284271247461903
+~~END~~
+
+
+DECLARE @point geometry;
+SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT STX(@point);
+SELECT STY(@point);
+SELECT @point.STX;
+SELECT @point.STY;
+Go
+~~START~~
+float
+-122.349
+~~END~~
+
+~~START~~
+float
+47.651
+~~END~~
+
+~~START~~
+float
+-122.349
+~~END~~
+
+~~START~~
+float
+47.651
+~~END~~
+
+
+DECLARE @point geometry;
+SET @point = geometry::Point(22.34900, -47.65100, 4326);
+SELECT STX(@point);
+SELECT STY(@point);
+SELECT @point.STX;
+SELECT @point . STX;
+SELECT @point.STY;
+Go
+~~START~~
+float
+22.349
+~~END~~
+
+~~START~~
+float
+-47.651
+~~END~~
+
+~~START~~
+float
+22.349
+~~END~~
+
+~~START~~
+float
+22.349
+~~END~~
+
+~~START~~
+float
+-47.651
+~~END~~
+
+
+DECLARE @point1 geometry, @point2 geometry;
+SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
+SELECT STDistance(@point1, @point2);
+SELECT @point1.STDistance(@point2);
+SELECT @point1 . STDistance ( @point2 );
+Go
+~~START~~
+float
+0.0014142135623697993
+~~END~~
+
+~~START~~
+float
+0.0014142135623697993
+~~END~~
+
+~~START~~
+float
+0.0014142135623697993
+~~END~~
+
+
+DECLARE @point geometry;
+SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+Insert INTO SPATIALPOINTGEOM_dt(location) VALUES(geometry::point(@point.STX, @point.STY,4326))
+go
+~~ROW COUNT: 1~~
+
+
+DECLARE @STX geometry;
+SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+select geometry::Point(@STX.STX, @STX.STY, 4326).STX, geometry::Point(@STX.STX, @STX.STY, 4326).STY;
+go
+~~START~~
+float#!#float
+-122.349#!#47.651
+~~END~~
+
+
+DECLARE @STX geometry;
+SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+select geometry::Point(@STX.STX, @STX.STY, 4326).STAsText(), geometry::Point(@STX.STX, @STX.STY, 4326).STAsBinary(), geometry::Point(@STX.STX, @STX.STY, 4326).STDistance(geometry::Point(@STX.STX, @STX.STY, 4326));
+go
+~~START~~
+text#!#varbinary#!#float
+POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740#!#0.0
+~~END~~
+
+
+-- Null test for Geospatial functions
+DECLARE @point1 geometry, @point2 geometry, @point3 geometry;
+SET @point1 = geometry::STPointFromText(null, 4326);
+SET @point2 = geometry::STGeomFromText(null, 4326);
+SET @point3 = geometry::Point(22.34900, -47.65100, 4326);
+SELECT @point1.STX;
+SELECT @point1.STY;
+SELECT @point1.STAsText();
+SELECT @point1.STAsBinary();
+SELECT @point1.STDistance(@point2);
+SELECT @point3.STDistance(@point2);
+SELECT @point1.STDistance(@point3);
+Go
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+text
+<NULL>
+~~END~~
+
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+-- Negative test for Geospatial functions
+DECLARE @point1 geometry, @point2 varchar(50), @point3 int;
+SET @point1 = geometry::Point(22.34900, -47.65100, 4326);;
+SET @point2 = 'Test_String';
+SELECT @point1.STDistance(@point2);
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT location.Lat from SPATIALPOINTGEOM_dt ORDER BY location.STX;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column notation .lat applied to type geometry, which is not a composite type)~~
+
+
+SELECT * FROM GeomView ORDER BY Coordinates;
+GO
+~~START~~
+float#!#float
+<NULL>#!#<NULL>
+-91.0#!#-35.0
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+1.0#!#2.0
+1.0#!#2.0
+1.0#!#2.0
+120.345#!#45.1234
+-720.345#!#45.1234
+-120.345#!#45.1234
+220.345#!#45.1234
+290.345#!#45.1234
+-122.349#!#47.651
+~~END~~
+
+
+select * from geominTable ORDER BY a.STX;
+GO
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+00000000010C0000000000C05E400000000000004140
+00000000010C0000000000408F400000000000409F40
+~~END~~
+
+
+SELECT * FROM ValFromGeom ORDER BY binary;
+GO
+~~START~~
+text#!#varbinary
+<NULL>#!#<NULL>
+POINT(1 2)#!#0101000000000000000000F03F0000000000000040
+POINT(1 2)#!#0101000000000000000000F03F0000000000000040
+POINT(1 2)#!#0101000000000000000000F03F0000000000000040
+POINT(-91 -35)#!#01010000000000000000C056C000000000008041C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740
+POINT(120.345 45.1234)#!#0101000000AE47E17A14165E40C7293A92CB8F4640
+POINT(-120.345 45.1234)#!#0101000000AE47E17A14165EC0C7293A92CB8F4640
+POINT(220.345 45.1234)#!#0101000000D7A3703D0A8B6B40C7293A92CB8F4640
+POINT(290.345 45.1234)#!#0101000000EC51B81E85257240C7293A92CB8F4640
+POINT(-720.345 45.1234)#!#0101000000F6285C8FC28286C0C7293A92CB8F4640
+~~END~~
+
+
+EXEC dbo.p_getcoordinates;
+GO
+~~ROW COUNT: 17~~
+
+~~START~~
+float#!#float
+<NULL>#!#<NULL>
+-720.345#!#45.1234
+-122.349#!#47.651
+-120.345#!#45.1234
+-91.0#!#-35.0
+1.0#!#2.0
+1.0#!#2.0
+1.0#!#2.0
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+120.345#!#45.1234
+220.345#!#45.1234
+290.345#!#45.1234
+~~END~~
+
+
+geominTest 'POINT(1 2)'
+GO
+~~START~~
+float#!#float
+1.0#!#2.0
+~~END~~
+
+
+geominTest 'POINT(1 200)'
+GO
+~~START~~
+float#!#float
+1.0#!#200.0
+~~END~~
+
+
+geominTest 'POINT(1000 20)'
+GO
+~~START~~
+float#!#float
+1000.0#!#20.0
+~~END~~
+
+
+SELECT * FROM TextFromGeom ORDER BY XCoord;
+GO
+~~START~~
+float#!#text
+<NULL>#!#<NULL>
+-720.345#!#POINT(-720.345 45.1234)
+-122.349#!#POINT(-122.349 47.651)
+-120.345#!#POINT(-120.345 45.1234)
+-91.0#!#POINT(-91 -35)
+1.0#!#POINT(1 2)
+1.0#!#POINT(1 2)
+1.0#!#POINT(1 2)
+47.651#!#POINT(47.651 -22.349)
+47.651#!#POINT(47.651 -22.349)
+47.651#!#POINT(47.651 -22.349)
+47.651#!#POINT(47.651 -22.349)
+47.651#!#POINT(47.651 -22.349)
+47.651#!#POINT(47.651 -22.349)
+120.345#!#POINT(120.345 45.1234)
+220.345#!#POINT(220.345 45.1234)
+290.345#!#POINT(290.345 45.1234)
+~~END~~
+
+
+SELECT * FROM BinaryFromGeom ORDER BY BinaryRepresentation;
+GO
+~~START~~
+varbinary
+<NULL>
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+01010000000000000000C056C000000000008041C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+01010000007593180456965EC017D9CEF753D34740
+0101000000AE47E17A14165E40C7293A92CB8F4640
+0101000000AE47E17A14165EC0C7293A92CB8F4640
+0101000000D7A3703D0A8B6B40C7293A92CB8F4640
+0101000000EC51B81E85257240C7293A92CB8F4640
+0101000000F6285C8FC28286C0C7293A92CB8F4640
+~~END~~
+
+
+SELECT * FROM CoordsFromGeom ORDER BY Coordinates;
+GO
+~~START~~
+float#!#float
+<NULL>#!#<NULL>
+-91.0#!#-35.0
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+1.0#!#2.0
+1.0#!#2.0
+1.0#!#2.0
+120.345#!#45.1234
+-720.345#!#45.1234
+-120.345#!#45.1234
+220.345#!#45.1234
+290.345#!#45.1234
+-122.349#!#47.651
+~~END~~
+
+
+SELECT * FROM equal_geom ORDER BY point.STX;
+GO
+~~START~~
+geometry
+E6100000010CF6285C8FC28286C0C7293A92CB8F4640
+E6100000010C7593180456965EC017D9CEF753D34740
+E6100000010CAE47E17A14165EC0C7293A92CB8F4640
+E6100000010C0000000000C056C000000000008041C0
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+00000000010C17D9CEF753D34740D34D6210585936C0
+00000000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+00000000010C17D9CEF753D34740D34D6210585936C0
+00000000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010CAE47E17A14165E40C7293A92CB8F4640
+E6100000010CD7A3703D0A8B6B40C7293A92CB8F4640
+E6100000010CEC51B81E85257240C7293A92CB8F4640
+~~END~~
+
+
+SELECT * FROM point_distances_geom ORDER BY distance;
+GO
+~~START~~
+geometry#!#geometry#!#float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ST_Distance: Operation on mixed SRID geometries (Point, 4326) != (Point, 0))~~
+
+
+SELECT location.STX from SPATIALPOINTGEOM_dt ORDER BY location.STX;
+GO
+~~START~~
+float
+<NULL>
+-720.345
+-122.349
+-120.345
+-91.0
+1.0
+1.0
+1.0
+47.651
+47.651
+47.651
+47.651
+47.651
+47.651
+120.345
+220.345
+290.345
+~~END~~
+
+
+SELECT SPATIALPOINTGEOM_dt.location.STY from SPATIALPOINTGEOM_dt ORDER BY location.STX;
+GO
+~~START~~
+float
+<NULL>
+45.1234
+47.651
+45.1234
+-35.0
+2.0
+2.0
+2.0
+-22.349
+-22.349
+-22.349
+-22.349
+-22.349
+-22.349
+45.1234
+45.1234
+45.1234
+~~END~~
+
+
+SELECT location.STAsText() from SPATIALPOINTGEOM_dt ORDER BY location.STX;
+GO
+~~START~~
+text
+<NULL>
+POINT(-720.345 45.1234)
+POINT(-122.349 47.651)
+POINT(-120.345 45.1234)
+POINT(-91 -35)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(120.345 45.1234)
+POINT(220.345 45.1234)
+POINT(290.345 45.1234)
+~~END~~
+
+
+SELECT location.STAsBinary() from SPATIALPOINTGEOM_dt ORDER BY location.STX;
+GO
+~~START~~
+varbinary
+<NULL>
+0101000000F6285C8FC28286C0C7293A92CB8F4640
+01010000007593180456965EC017D9CEF753D34740
+0101000000AE47E17A14165EC0C7293A92CB8F4640
+01010000000000000000C056C000000000008041C0
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+0101000000AE47E17A14165E40C7293A92CB8F4640
+0101000000D7A3703D0A8B6B40C7293A92CB8F4640
+0101000000EC51B81E85257240C7293A92CB8F4640
+~~END~~
+
+
+SELECT location.STDistance(geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOM_dt ORDER BY location.STX;
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ST_Distance: Operation on mixed SRID geometries (Point, 4326) != (Point, 0))~~
+
+
+SELECT [SPATIALPOINTGEOM_dt].[location].[STX] from [SPATIALPOINTGEOM_dt] ORDER BY location.STX;
+GO
+~~START~~
+float
+<NULL>
+-720.345
+-122.349
+-120.345
+-91.0
+1.0
+1.0
+1.0
+47.651
+47.651
+47.651
+47.651
+47.651
+47.651
+120.345
+220.345
+290.345
+~~END~~
+
+
+SELECT [location].[STY] from [SPATIALPOINTGEOM_dt] ORDER BY location.STX;
+GO
+~~START~~
+float
+<NULL>
+45.1234
+47.651
+45.1234
+-35.0
+2.0
+2.0
+2.0
+-22.349
+-22.349
+-22.349
+-22.349
+-22.349
+-22.349
+45.1234
+45.1234
+45.1234
+~~END~~
+
+
+SELECT location FROM SPATIALPOINTGEOM_dt ORDER BY location.STX; 
+GO
+~~START~~
+geometry
+<NULL>
+E6100000010CF6285C8FC28286C0C7293A92CB8F4640
+E6100000010C7593180456965EC017D9CEF753D34740
+E6100000010CAE47E17A14165EC0C7293A92CB8F4640
+E6100000010C0000000000C056C000000000008041C0
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+E6100000010C000000000000F03F0000000000000040
+00000000010C17D9CEF753D34740D34D6210585936C0
+00000000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+E6100000010CAE47E17A14165E40C7293A92CB8F4640
+E6100000010CD7A3703D0A8B6B40C7293A92CB8F4640
+E6100000010CEC51B81E85257240C7293A92CB8F4640
+~~END~~
+
+
+SELECT PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+SELECT * FROM YourTable WHERE PointColumn.STX > 3.0 ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#geometry
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT * FROM YourTable WHERE PointColumn.STX > @point.STX ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float
+1#!#3.0
+2#!#5.0
+~~END~~
+
+
+SELECT ID, dbo.GetXCoordinate(PointColumn) AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float
+1#!#3.0
+2#!#5.0
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT dbo.GetXCoordinate(@point);
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT * FROM TableA JOIN TableB ON TableA.PointA.STX = TableB.PointB.STX ORDER BY TableA.PointA.STX;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT * FROM TableA JOIN TableB ON TableA.PointA.STX > @point.STX ORDER BY TableA.PointA.STX;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+~~END~~
+
+
+SELECT * FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT * FROM YourTable ORDER BY @point.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate,
+CASE WHEN PointColumn.STX > 3.0 THEN 'High X' 
+ELSE 'Low X' 
+END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#text
+1#!#3.0#!#Low X
+2#!#5.0#!#High X
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, PointColumn.STX AS XCoordinate,
+CASE WHEN @point.STX > 3.0 THEN 'High X' 
+ELSE 'Low X' 
+END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#text
+1#!#3.0#!#Low X
+2#!#5.0#!#Low X
+~~END~~
+
+
+WITH PointData AS ( SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX ) 
+SELECT * FROM PointData WHERE XCoordinate > 3.0 ORDER BY XCoordinate;
+GO
+~~START~~
+int#!#float
+2#!#5.0
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+WITH PointData AS ( SELECT ID, @point.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX )
+SELECT * FROM PointData WHERE XCoordinate > 3.0 ORDER BY XCoordinate;
+GO
+~~START~~
+int#!#float
+~~END~~
+
+
+SELECT PointColumn.STX AS XCoordinate, COUNT(*) AS PointCount 
+FROM GeomTab GROUP BY PointColumn.STX ORDER BY PointColumn.STX;
+GO
+~~START~~
+float#!#int
+3.0#!#2
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT @point.STX AS XCoordinate, COUNT(*) AS PointCount 
+FROM YourTable GROUP BY PointColumn.STX ORDER BY PointColumn.STX;
+GO
+~~START~~
+float#!#int
+1.0#!#1
+1.0#!#1
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate, 
+PointColumn.STX - LAG(PointColumn.STX) OVER (ORDER BY ID) AS XCoordinateDifference 
+FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#float
+1#!#3.0#!#<NULL>
+2#!#5.0#!#2.0
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, @point.STX AS XCoordinate, 
+@point.STX - LAG(@point.STX) OVER (ORDER BY ID) AS XCoordinateDifference 
+FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#float
+1#!#1.0#!#<NULL>
+2#!#1.0#!#0.0
+~~END~~
+
+
+DECLARE @XCoordinate FLOAT = 3.0;
+DECLARE @DynamicQuery NVARCHAR(MAX);
+SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@XCoordinate AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX';
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+DECLARE @DynamicQuery NVARCHAR(MAX);
+SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@point.STX AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX';
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+EXEC GetDistanceByXCoordinate @xCoordinate = 6.0;
+GO
+~~START~~
+float#!#float
+0.0#!#5.0
+0.0#!#6.082762530298219
+~~END~~
+
+
+EXEC GetPointsByXCoordinate @XCoordinate = 4.0;
+GO
+~~START~~
+int#!#geometry
+~~END~~
+
+
+EXEC GetPointsByXCoordinate1 @XCoordinate = 4.0;
+GO
+~~START~~
+int#!#float
+~~END~~
+
+
+DECLARE @XCoordinate FLOAT = 3.0; 
+DECLARE @DynamicQuery NVARCHAR(MAX); 
+SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@XCoordinate AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX'; 
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate, CASE WHEN PointColumn.STX < 0 
+THEN 'Negative X' WHEN PointColumn.STX = 0 THEN 'Zero X' 
+ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#text
+1#!#3.0#!#Positive X
+2#!#5.0#!#Positive X
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, @point.STX AS XCoordinate, CASE WHEN @point.STX < 0 
+THEN 'Negative X' WHEN @point.STX = 0 THEN 'Zero X' 
+ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#text
+1#!#1.0#!#Positive X
+2#!#1.0#!#Positive X
+~~END~~
+
+
+SELECT * FROM ( SELECT ID,
+CASE WHEN PointColumn.STX BETWEEN 0 AND 5 THEN '0-5'
+WHEN PointColumn.STX BETWEEN 5.1 AND 10 THEN '5.1-10'
+ELSE '10.1+'
+END AS XCoordRange
+FROM YourTable ORDER BY PointColumn.STX
+) AS Source
+PIVOT ( COUNT(ID) FOR XCoordRange IN ([0-5], [5.1-10], [10.1+])) AS PivotTable;
+GO
+~~START~~
+int#!#int#!#int
+2#!#0#!#0
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate,
+JSON_QUERY('{"XCoordinate":' + CAST(PointColumn.STX AS NVARCHAR(MAX)) + '}') AS XCoordinateJson 
+FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#nvarchar
+1#!#3.0#!#{"XCoordinate": 3}
+2#!#5.0#!#{"XCoordinate": 5}
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(3.0, 2.0, 4326);
+SELECT ID, @point.STX AS XCoordinate,
+JSON_QUERY('{"XCoordinate":' + CAST(@point.STX AS NVARCHAR(MAX)) + '}') AS XCoordinateJson 
+FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#nvarchar
+1#!#3.0#!#{"XCoordinate": 3}
+2#!#3.0#!#{"XCoordinate": 3}
+~~END~~
+
+
+SELECT [PointColumn].[STX] AS XCoordinate FROM [YourTable] ORDER BY PointColumn.STX;
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(3.0, 2.0, 4326);
+SELECT @point.[STX] AS XCoordinate
+GO
+~~START~~
+float
+3.0
+~~END~~
+
+
+SELECT PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+SELECT YourTable.PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+SELECT dbo.YourTable.PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The multi-part identifier "dbo.YourTable.PointColumn.STX" could not be bound.)~~
+
+
+SELECT YourTable1.STX.STX AS XCoordinate FROM YourTable1 ORDER BY STX.STX;
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+DECLARE @result geometry;
+SET @result = dbo.GetGeometry();
+DECLARE @xCoordinate float;
+SET @xCoordinate = @result.STX;
+SELECT @result AS ResultGeometry, @xCoordinate AS XCoordinate ORDER BY XCoordinate;
+GO
+~~START~~
+geometry#!#float
+E6100000010C000000000000F03F0000000000000040#!#1.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
+UPDATE YourTable SET PointColumn = @referencePoint
+WHERE PointColumn.STX >= @referencePoint.STX;
+GO
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+
+SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+~~START~~
+int#!#float
+1#!#1.4142135623730951
+~~END~~
+
+
+DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, PointColumn1.STDistance(@point1) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+~~START~~
+int#!#float
+1#!#2.8284271247461903
+~~END~~
+
+
+DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, @point1.STDistance(PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+~~START~~
+int#!#float
+1#!#4.242640687119285
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @maxDistance float = 5.0;
+SELECT * FROM YourTable WHERE PointColumn.STDistance(@referencePoint) <= @maxDistance ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM YourTable WHERE @referencePoint.STDistance(PointColumn) <= @referencePoint.STX ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM YourTable WHERE PointColumn.STDistance(@referencePoint) <= @referencePoint.STX ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+SELECT ID, dbo.CalculateDistance(PointColumn1, PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+~~START~~
+int#!#float
+1#!#1.4142135623730951
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, dbo.CalculateDistance(@referencePoint, PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+~~START~~
+int#!#float
+1#!#6.4031242374328485
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, dbo.CalculateDistance(PointColumn1, @referencePoint) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+~~START~~
+int#!#float
+1#!#5.0
+~~END~~
+
+
+SELECT * FROM TableA JOIN TableB ON PointA.STDistance(TableB.PointB) <= 5.0 ORDER BY TableB.PointB.STX;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM TableA JOIN TableB ON @referencePoint.STDistance(TableB.PointB) <= 5.0 ORDER BY TableB.PointB.STX;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM TableA JOIN TableB ON PointA.STDistance(@referencePoint) <= 5.0 ORDER BY TableB.PointB.STX;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM TableA JOIN TableB ON TableB.PointB.STDistance(@referencePoint) <= 5.0 ORDER BY TableB.PointB.STX;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
+~~END~~
+
+
+SELECT * FROM YourTable2 ORDER BY PointColumn1.STDistance(PointColumn2);
+GO
+~~START~~
+int#!#geometry#!#geometry
+1#!#E6100000010C00000000000008400000000000001040#!#E6100000010C00000000000010400000000000001440
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM YourTable ORDER BY PointColumn.STDistance(@referencePoint);
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM YourTable ORDER BY @referencePoint.STDistance(PointColumn);
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @thresholdDistance float = 3.0;
+SELECT ID, PointColumn1.STDistance(PointColumn2) AS DistanceBetweenPoints,
+CASE WHEN PointColumn1.STDistance(PointColumn2) <= @thresholdDistance THEN 'Close' ELSE 'Far'
+END AS Proximity
+FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+~~START~~
+int#!#float#!#text
+1#!#1.4142135623730951#!#Close
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn1.STDistance(@referencePoint) AS DistanceBetweenPoints,
+CASE WHEN @referencePoint.STDistance(PointColumn2) <= @referencePoint.STX THEN 'Close' ELSE 'Far'
+END AS Proximity
+FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+~~START~~
+int#!#float#!#text
+1#!#5.0#!#Far
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+WITH DistanceCTE AS ( SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable ORDER BY PointColumn.STX)
+SELECT * FROM DistanceCTE WHERE Distance <= 3.0 ORDER BY Distance;
+GO
+~~START~~
+int#!#float
+1#!#0.0
+2#!#0.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+WITH DistanceCTE AS ( SELECT ID, @referencePoint.STDistance(PointColumn) AS Distance FROM YourTable ORDER BY PointColumn.STX)
+SELECT * FROM DistanceCTE WHERE Distance <= 3.0 ORDER BY Distance;
+GO
+~~START~~
+int#!#float
+1#!#0.0
+2#!#0.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @distanceInterval float = 5.0;
+SELECT ROUND(PointColumn.STDistance(@referencePoint) / @distanceInterval, 0) * @distanceInterval AS DistanceGroup,
+COUNT(*) AS PointCount
+FROM YourTable
+GROUP BY ROUND(PointColumn.STDistance(@referencePoint) / @distanceInterval, 0) * @distanceInterval
+ORDER BY DistanceGroup;
+GO
+~~START~~
+float#!#int
+0.0#!#2
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(1.0, 0.0, 4326);
+SELECT ROUND(PointColumn.STDistance(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX AS DistanceGroup,
+COUNT(*) AS PointCount
+FROM YourTable
+GROUP BY ROUND(PointColumn.STDistance(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX
+ORDER BY DistanceGroup;
+GO
+~~START~~
+float#!#int
+1.0#!#2
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance,
+PointColumn1.STDistance(@referencePoint) - LAG(PointColumn1.STDistance(PointColumn2)) OVER (ORDER BY ID) AS DistanceDifference 
+FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+~~START~~
+int#!#float#!#float
+1#!#1.4142135623730951#!#<NULL>
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance,
+@referencePoint.STDistance(PointColumn) - LAG(@referencePoint.STX) OVER (ORDER BY ID) AS DistanceDifference
+FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#float
+1#!#0.0#!#<NULL>
+2#!#0.0#!#0.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @maxDistance float = 3.0;
+EXEC GetPointsWithinDistance @referencePoint, @maxDistance;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @maxDistance float = 3.0;
+DECLARE @DynamicQuery NVARCHAR(MAX);
+SET @DynamicQuery = N'
+SELECT * FROM YourTable
+WHERE PointColumn.STDistance(geometry::STGeomFromText(' + QUOTENAME(@referencePoint.STAsText(), '''') + ', 4326)) <= ' + CAST(@maxDistance AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX';
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @DynamicQuery NVARCHAR(MAX);
+SET @DynamicQuery = N'
+SELECT * FROM YourTable
+WHERE PointColumn.STDistance(geometry::STGeomFromText(' + QUOTENAME(@referencePoint.STAsText(), '''') + ', 4326)) <= ' + CAST(@referencePoint.STX AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX';
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @thresholdDistance float = 3.0;
+SELECT ID, PointColumn.STDistance(@referencePoint) AS DistanceToReferencePoint,
+CASE WHEN PointColumn.STDistance(@referencePoint) <= @thresholdDistance THEN 'Close'
+ELSE 'Far'
+END AS Proximity
+FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#text
+1#!#0.0#!#Close
+2#!#0.0#!#Close
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, @referencePoint.STDistance(PointColumn) AS DistanceToReferencePoint,
+CASE WHEN @referencePoint.STDistance(PointColumn) <= @referencePoint.STY THEN 'Close'
+ELSE 'Far'
+END AS Proximity
+FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#text
+1#!#0.0#!#Close
+2#!#0.0#!#Close
+~~END~~
+
+
+DECLARE @distanceRanges TABLE (MinDistance float, MaxDistance float);
+INSERT INTO @distanceRanges VALUES (0, 5), (5, 10), (10, 15);
+SELECT * FROM ( SELECT ID,
+CASE WHEN PointColumn1.STDistance(PointColumn2) BETWEEN 0 AND 5 THEN '0-5'
+WHEN PointColumn1.STDistance(PointColumn2) BETWEEN 5.1 AND 10 THEN '5.1-10'
+WHEN PointColumn1.STDistance(PointColumn2) BETWEEN 10.1 AND 15 THEN '10.1-15'
+ELSE '15.1+'
+END AS DistanceRange
+FROM YourTable2 ORDER BY PointColumn1.STX
+) AS Source
+PIVOT ( COUNT(ID) FOR DistanceRange IN ([0-5], [5.1-10], [10.1-15], [15.1+])) AS PivotTable;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#int#!#int#!#int
+1#!#0#!#0#!#0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance,
+JSON_QUERY('{"Distance":' + CAST(PointColumn.STDistance(@referencePoint) AS NVARCHAR(MAX)) + '}') AS DistanceJson
+FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#nvarchar
+1#!#0.0#!#{"Distance": 0}
+2#!#0.0#!#{"Distance": 0}
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, @referencePoint.STDistance(PointColumn) AS Distance,
+JSON_QUERY('{"Distance":' + CAST(@referencePoint.STDistance(PointColumn) AS NVARCHAR(MAX)) + '}') AS DistanceJson
+FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#float#!#nvarchar
+1#!#0.0#!#{"Distance": 0}
+2#!#0.0#!#{"Distance": 0}
+~~END~~
+
+
+SELECT [PointColumn1].STDistance([PointColumn2]) AS distance FROM [YourTable2] ORDER BY PointColumn1.STX;
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @thresholdDistance float = 10.0;
+DECLARE @sql NVARCHAR(MAX);
+DECLARE @params NVARCHAR(MAX);
+SET @sql = N'
+SELECT ID, PointColumn.STDistance(@referencePoint) AS DistanceToReferencePoint,
+CASE WHEN PointColumn.STDistance(@referencePoint) <= @thresholdDistance THEN ''Close''
+ELSE ''Far''
+END AS Proximity
+FROM YourTable
+WHERE PointColumn.STDistance(@referencePoint) <= @thresholdDistance ORDER BY PointColumn.STX;';
+SET @params = N'@referencePoint geometry, @thresholdDistance float';
+EXEC sp_executesql @sql, @params, @referencePoint, @thresholdDistance;
+GO
+~~START~~
+int#!#float#!#text
+1#!#0.0#!#Close
+2#!#0.0#!#Close
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable ORDER BY PointColumn.STX;
+SELECT YourTable.PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+float
+0.0
+0.0
+~~END~~
+
+~~START~~
+float
+0.0
+0.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT dbo.YourTable.PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
+UPDATE YourTable SET PointColumn = @referencePoint
+WHERE PointColumn.STDistance(@referencePoint) <= 2.0;
+GO
+~~ROW COUNT: 2~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
+UPDATE YourTable SET PointColumn = @referencePoint
+WHERE @referencePoint.STDistance(PointColumn) <= 2.0;
+GO
+~~ROW COUNT: 2~~
+
+
+-- Create Type Test Case currently Babelfish supports it but TSQL doesn't for spatial Types, Although it doesn't break anything
+-- TODO: Make it similar to T-SQL
+SELECT * FROM TypeTable ORDER BY ID;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040
+~~END~~
+
+
+SELECT * FROM GeomToVarbinary ORDER BY p;
+GO
+~~START~~
+varbinary
+~~END~~
+
+SELECT * FROM GeomTochar ORDER BY p;
+GO
+~~START~~
+char
+~~END~~
+
+SELECT * FROM GeomToVarchar ORDER BY p;
+GO
+~~START~~
+varchar
+~~END~~
+
+SELECT * FROM TypeToGeom ORDER BY p.STX;
+GO
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+00000000010C000000000000F03F0000000000000040
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+
+-- Testing Explicit CASTs to and from Geometry data type
+-- Supported CASTs to and from Geometry data type
+Select CAST(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS binary) as geometry)
+GO
+~~START~~
+geometry
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS varbinary(MAX)) as geometry)
+GO
+~~START~~
+geometry
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS varbinary(MAX))
+GO
+~~START~~
+varbinary
+E6100000010C000000000000F03F0000000000000040
+~~END~~
+
+Select CAST(CAST ('POINT(1 2)' AS char) as geometry)
+GO
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+Select CAST(CAST ('POINT(200 2)' AS char) as geometry).STY
+GO
+~~START~~
+float
+2.0
+~~END~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS char)
+GO
+~~START~~
+char
+POINT(1 2)                    
+~~END~~
+
+Select CAST(CAST ('POINT(1 2)' AS nchar) as geometry)
+GO
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS nchar)
+GO
+~~START~~
+nchar
+POINT(1 2)                    
+~~END~~
+
+Select CAST(CAST ('POINT(1 2)' AS varchar) as geometry)
+GO
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+Select CAST(CAST ('POINT(200 2)' AS varchar) as geometry).STY
+GO
+~~START~~
+float
+2.0
+~~END~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS varchar)
+GO
+~~START~~
+varchar
+POINT(1 2)
+~~END~~
+
+Select CAST(CAST ('POINT(1 2)' AS nvarchar) as geometry)
+GO
+~~START~~
+geometry
+00000000010C000000000000F03F0000000000000040
+~~END~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS nvarchar)
+GO
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS varbinary)
+GO
+~~START~~
+varbinary
+00000000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS bytea)
+GO
+~~START~~
+varbinary
+00000000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS varbinary)
+GO
+~~START~~
+varbinary
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS bytea)
+GO
+~~START~~
+varbinary
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS varbinary) AS geometry)
+GO
+~~START~~
+geometry
+00000000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS bytea) AS geometry)
+GO
+~~START~~
+geometry
+00000000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS varbinary) AS geometry)
+GO
+~~START~~
+geometry
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS bytea) AS geometry)
+GO
+~~START~~
+geometry
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0))
+GO
+~~START~~
+varbinary
+00000000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0))
+GO
+~~START~~
+varbinary
+00000000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 999999))
+GO
+~~START~~
+varbinary
+3F420F00010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 999999))
+GO
+~~START~~
+varbinary
+3F420F00010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+GO
+~~START~~
+varbinary
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+GO
+~~START~~
+varbinary
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(geometry, Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0)))
+GO
+~~START~~
+geometry
+00000000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(geometry, Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0)))
+GO
+~~START~~
+geometry
+00000000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(geometry, Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
+GO
+~~START~~
+geometry
+3F420F00010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(geometry, Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
+GO
+~~START~~
+geometry
+3F420F00010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(geometry, Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326)))
+GO
+~~START~~
+geometry
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select Convert(geometry, Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326)))
+GO
+~~START~~
+geometry
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+
+-- UnSupported CASTs to and from Geometry data type
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to datetime)~~
+
+Select CAST(CAST (0001-01-01 AS datetime) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to geometry)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS decimal)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to "decimal")~~
+
+Select CAST(CAST (20.0 AS decimal) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "decimal" to geometry)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS bigInt)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to bigint)~~
+
+Select CAST(CAST (20 AS bigInt) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type bigint to geometry)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS bigInt)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to bigint)~~
+
+Select CAST(CAST (20 AS bigInt) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type bigint to geometry)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS money)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to money)~~
+
+Select CAST(CAST ($1 AS money) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type money to geometry)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS bit)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to "bit")~~
+
+Select CAST(CAST (1 AS bit) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "bit" to geometry)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS uniqueidentifier)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to uniqueidentifier)~~
+
+Select CAST(CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type uniqueidentifier to geometry)~~
+
+Select CAST(CAST ('POINT(1 2)' AS text) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit Conversion from data type Text to sys.Geometry is not allowed.)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS text)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit Conversion from data type sys.Geometry to Text is not allowed.)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS sql_variant)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to sql_variant)~~
+
+Select CAST(CAST ('POINT(1 2)' AS sql_variant) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type sql_variant to geometry)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS xml)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to xml)~~
+
+Select CAST(CAST ('<head>point(1 2)</head>' AS xml) as geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to geometry)~~
+
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geometry to geography)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS geometry)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to geometry)~~
+
+
+-- UnSupported CASTs which are currently supported for geometry
+-- This is because Image type is created as -> CREATE DOMAIN sys.IMAGE AS sys.BBF_VARBINARY; so it is always converted to it's baseType i.e. varbinary
+Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS image)
+GO
+~~START~~
+image
+E6100000010C000000000000F03F0000000000000040
+~~END~~
+
+Select CAST(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS image) as geometry)
+GO
+~~START~~
+geometry
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+
+DECLARE @point geography;
+SET @point = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT STAsText(@point);
+SELECT @point.STAsText();
+Go
+~~START~~
+text
+POINT(-122.349 47.651)
+~~END~~
+
+~~START~~
+text
+POINT(-122.349 47.651)
+~~END~~
+
+
+DECLARE @point geography;
+SET @point = geography::Point(22.34900, -47.65100, 4326);
+SELECT STAsText(@point);
+SELECT @point.STAsText();
+Go
+~~START~~
+text
+POINT(-47.651 22.349)
+~~END~~
+
+~~START~~
+text
+POINT(-47.651 22.349)
+~~END~~
+
+
+DECLARE @point geography;
+SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT Long(@point);
+SELECT Lat(@point);
+SELECT @point.Long;
+SELECT @point.Lat;
+Go
+~~START~~
+float
+-122.349
+~~END~~
+
+~~START~~
+float
+47.651
+~~END~~
+
+~~START~~
+float
+-122.349
+~~END~~
+
+~~START~~
+float
+47.651
+~~END~~
+
+
+DECLARE @point geography;
+SET @point = geography::Point(22.34900, -47.65100, 4326);
+SELECT Long(@point);
+SELECT Lat(@point);
+SELECT @point.Long;
+SELECT @point.Lat;
+Go
+~~START~~
+float
+-47.651
+~~END~~
+
+~~START~~
+float
+22.349
+~~END~~
+
+~~START~~
+float
+-47.651
+~~END~~
+
+~~START~~
+float
+22.349
+~~END~~
+
+
+DECLARE @point1 geography, @point2 geography;
+SET @point1 = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SET @point2 = geography::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
+SELECT STDistance(@point1, @point2);
+SELECT @point1.STDistance(@point2);
+Go
+~~START~~
+float
+134.1864008701007
+~~END~~
+
+~~START~~
+float
+134.1864008701007
+~~END~~
+
+
+DECLARE @point geography;
+SET @point = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
+Insert INTO SPATIALPOINTGEOG_dt(location) VALUES(geography::point(@point.Long, @point.Lat, 4326))
+go
+~~ROW COUNT: 1~~
+
+
+DECLARE @Lat geography;
+SET @Lat = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
+select geography::Point(@Lat.Long, @Lat.Lat, 4326).Long, geography::Point(@Lat.Long, @Lat.Lat, 4326).Lat;
+go
+~~START~~
+float#!#float
+47.651#!#-22.349
+~~END~~
+
+
+DECLARE @Lat geography;
+SET @Lat = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
+select geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsText(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsBinary(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STDistance(geography::Point(@Lat.Long, @Lat.Lat, 4326));
+go
+~~START~~
+text#!#varbinary#!#float
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0#!#0.0
+~~END~~
+
+
+SELECT
+    SpatialData.ID,
+    SPATIALPOINTGEOG_dt.location.Lat,
+    SpatialLocation.STDistance(SPATIALPOINTGEOG_dt.location)
+FROM
+    SpatialData
+JOIN
+    SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.Long - SpatialData.SpatialLocation.Lat <= 10
+ORDER BY location.Lat;
+GO
+~~START~~
+int#!#float#!#float
+5#!#-35.0#!#1.1582135585800339E7
+4#!#-35.0#!#1.1275558032743597E7
+3#!#-35.0#!#1.0967855323985375E7
+2#!#-35.0#!#1.0659357816235645E7
+1#!#-35.0#!#1.0350382895219915E7
+1#!#2.0#!#156876.14940188668
+2#!#2.0#!#351485.0664919168
+3#!#2.0#!#647017.0083805197
+4#!#2.0#!#953316.5401136167
+5#!#2.0#!#1261960.137843746
+1#!#2.0#!#156876.14940188668
+2#!#2.0#!#351485.0664919168
+3#!#2.0#!#647017.0083805197
+4#!#2.0#!#953316.5401136167
+5#!#2.0#!#1261960.137843746
+1#!#2.0#!#156876.14940188668
+2#!#2.0#!#351485.0664919168
+3#!#2.0#!#647017.0083805197
+4#!#2.0#!#953316.5401136167
+5#!#2.0#!#1261960.137843746
+5#!#45.1234#!#4125099.9583297474
+5#!#45.1234#!#1.2233245154739596E7
+1#!#45.1234#!#4893526.222820098
+2#!#45.1234#!#4686271.949379789
+3#!#45.1234#!#4488469.349550796
+4#!#45.1234#!#4301072.924307819
+1#!#45.1234#!#1.2397257114332782E7
+2#!#45.1234#!#1.2366773711742679E7
+3#!#45.1234#!#1.2329523305392107E7
+4#!#45.1234#!#1.2285124896096285E7
+4#!#47.651#!#5345543.26741007
+3#!#47.651#!#5446042.320579326
+2#!#47.651#!#5557193.284430087
+1#!#47.651#!#5678803.288585193
+5#!#47.651#!#5255813.671417903
+~~END~~
+
+
+WITH RegionLocations AS (
+    SELECT
+        SpatialData.ID,
+        SPATIALPOINTGEOG_dt.location.Lat
+    FROM
+        SpatialData
+    JOIN
+        SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.Long - SpatialData.SpatialLocation.Lat <= 10
+    ORDER BY location.Lat
+)
+SELECT
+    Lat,
+    COUNT(ID) AS LocationCount
+FROM
+    RegionLocations
+GROUP BY
+    Lat
+Order BY Lat;
+GO
+~~START~~
+float#!#int
+-35.0#!#5
+2.0#!#15
+45.1234#!#10
+47.651#!#5
+~~END~~
+
+
+-- Test with CTE
+with mycte (a)
+as (select SPATIALPOINTGEOG_dt.location from SPATIALPOINTGEOG_dt Order BY location.Lat)
+select a.STAsText()
+				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.Lat >= y.location.Long ORDER BY x.a.Lat;
+go
+~~START~~
+text
+POINT(-91 -35)
+POINT(-91 -35)
+POINT(-91 -35)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+~~END~~
+
+
+-- Test with tvf
+select f.STAsText()
+                from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.Lat >= t.location.Long ORDER BY f.location.Lat;
+go
+~~START~~
+text
+POINT(-91 -35)
+POINT(-91 -35)
+POINT(-91 -35)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(-720.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(220.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(120.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(290.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+~~END~~
+
+
+-- Null test for Geospatial functions
+DECLARE @point1 geography, @point2 geography, @point3 geography;
+SET @point1 = geography::STPointFromText(null, 4326);
+SET @point2 = geography::STGeomFromText(null, 4326);
+SET @point3 = geography::Point(22.34900, -47.65100, 4326);
+SELECT @point1.Long;
+SELECT @point1.Lat;
+SELECT @point1.STAsText();
+SELECT @point1.STAsBinary();
+SELECT @point1.STDistance(@point2);
+SELECT @point3.STDistance(@point2);
+SELECT @point1.STDistance(@point3);
+Go
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+text
+<NULL>
+~~END~~
+
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+-- Negative test for Geospatial functions
+DECLARE @point1 geography, @point2 varchar(50), @point3 int;
+SET @point1 = geography::Point(22.34900, -47.65100, 4326);
+SET @point2 = 'Test_String';
+SELECT @point2.STDistance(@point1);
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT location.STY from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column notation .sty applied to type geography, which is not a composite type)~~
+
+
+SELECT * FROM GeogView ORDER BY Coordinates;
+GO
+~~START~~
+float#!#float
+<NULL>#!#<NULL>
+-91.0#!#-35.0
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+1.0#!#2.0
+1.0#!#2.0
+1.0#!#2.0
+-720.345#!#45.1234
+220.345#!#45.1234
+120.345#!#45.1234
+290.345#!#45.1234
+-120.345#!#45.1234
+-22.349#!#47.651
+~~END~~
+
+
+select * from geoginTable ORDER BY a.Lat;
+GO
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+E6100000010C00000000000041400000000000C05E40
+~~END~~
+
+
+SELECT * FROM SubqueryView ORDER BY Latitude;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT * FROM BrackExprView ORDER BY Latitude;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT * FROM FuncExprView ORDER BY Latitude;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+EXEC dbo.proc_getdata;
+GO
+~~ROW COUNT: 15~~
+
+~~START~~
+text
+<NULL>
+POINT(-120.345 45.1234)
+POINT(-22.349 47.651)
+POINT(-720.345 45.1234)
+POINT(-91 -35)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(120.345 45.1234)
+POINT(220.345 45.1234)
+POINT(290.345 45.1234)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+~~END~~
+
+
+geoginTest 'POINT(1 2)'
+GO
+~~START~~
+float#!#float
+2.0#!#1.0
+~~END~~
+
+
+geoginTest 'POINT(1 200)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+
+geoginTest 'POINT(1000 20)'
+GO
+~~START~~
+float#!#float
+20.0#!#1000.0
+~~END~~
+
+
+SELECT * FROM TextFromGeog ORDER BY Latitude;
+GO
+~~START~~
+float#!#text
+<NULL>#!#<NULL>
+-35.0#!#POINT(-91 -35)
+-22.349#!#POINT(47.651 -22.349)
+-22.349#!#POINT(47.651 -22.349)
+-22.349#!#POINT(47.651 -22.349)
+-22.349#!#POINT(47.651 -22.349)
+2.0#!#POINT(1 2)
+2.0#!#POINT(1 2)
+2.0#!#POINT(1 2)
+45.1234#!#POINT(-720.345 45.1234)
+45.1234#!#POINT(220.345 45.1234)
+45.1234#!#POINT(120.345 45.1234)
+45.1234#!#POINT(290.345 45.1234)
+45.1234#!#POINT(-120.345 45.1234)
+47.651#!#POINT(-22.349 47.651)
+~~END~~
+
+
+SELECT * FROM BinaryFromGeog ORDER BY BinaryRepresentation;
+GO
+~~START~~
+varbinary
+<NULL>
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+01010000000000000000C056C000000000008041C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+0101000000AE47E17A14165E40C7293A92CB8F4640
+0101000000AE47E17A14165EC0C7293A92CB8F4640
+0101000000D34D6210585936C017D9CEF753D34740
+0101000000D7A3703D0A8B6B40C7293A92CB8F4640
+0101000000EC51B81E85257240C7293A92CB8F4640
+0101000000F6285C8FC28286C0C7293A92CB8F4640
+~~END~~
+
+
+SELECT * FROM CoordsFromGeog ORDER BY Coordinates;
+GO
+~~START~~
+float#!#float
+<NULL>#!#<NULL>
+-91.0#!#-35.0
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+47.651#!#-22.349
+1.0#!#2.0
+1.0#!#2.0
+1.0#!#2.0
+-720.345#!#45.1234
+220.345#!#45.1234
+120.345#!#45.1234
+290.345#!#45.1234
+-120.345#!#45.1234
+-22.349#!#47.651
+~~END~~
+
+
+SELECT * FROM TransformFromGeog ORDER BY Modified_points.Lat;
+GO
+~~START~~
+geography
+<NULL>
+E6100000010C00000000008041C00000000000C056C0
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40
+E6100000010CC7293A92CB8F4640AE47E17A14165E40
+E6100000010CC7293A92CB8F4640EC51B81E85257240
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+
+SELECT * FROM equal_geog ORDER BY point.Lat;
+GO
+~~START~~
+geography
+E6100000010C00000000008041C00000000000C056C0
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0
+E6100000010CC7293A92CB8F4640AE47E17A14165E40
+E6100000010CC7293A92CB8F4640EC51B81E85257240
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+
+SELECT * FROM point_distances_geog ORDER BY distance;
+GO
+~~START~~
+geography#!#geography#!#float
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#1515632.1798131603
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#1515632.1798131603
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#1709739.0276217596
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#1709739.0276217596
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#3592838.8876683405
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#3592838.8876683405
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#3920578.507833659
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#3920578.507833659
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010C0000000000000040000000000000F03F#!#4779332.0713848965
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#4779332.0713848965
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#4779332.0713848965
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#4779332.0713848965
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010C0000000000000040000000000000F03F#!#4779332.0713848965
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010C0000000000000040000000000000F03F#!#4779332.0713848965
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#5275210.224676009
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#5275210.224676009
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#5323899.603530072
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#5323899.603530072
+E6100000010C0000000000000040000000000000F03F#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#5535965.307328846
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010C0000000000000040000000000000F03F#!#5535965.307328846
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010C0000000000000040000000000000F03F#!#5535965.307328846
+E6100000010C0000000000000040000000000000F03F#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#5535965.307328846
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010C0000000000000040000000000000F03F#!#5535965.307328846
+E6100000010C0000000000000040000000000000F03F#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#5535965.307328846
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C0000000000000040000000000000F03F#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#5736178.674863189
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#6999340.547337399
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#6999340.547337399
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#7296385.073932383
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#7296385.073932383
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#8051119.714699165
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#8051119.714699165
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010C0000000000000040000000000000F03F#!#8342273.333283156
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010C0000000000000040000000000000F03F#!#8342273.333283156
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#8342273.333283156
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010C0000000000000040000000000000F03F#!#8342273.333283156
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#8342273.333283156
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#8342273.333283156
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#8365025.192973621
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#8365025.192973621
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#8399445.800902525
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#8399445.800902525
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#8433579.658729993
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#8433579.658729993
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#8914647.340418968
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#8914647.340418968
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#8914647.340418968
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#8914647.340418968
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#8914647.340418968
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#8914647.340418968
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#8914647.340418968
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#8914647.340418968
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#9101557.622683465
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#9101557.622683465
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#9130627.103753412
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010C00000000008041C00000000000C056C0#!#9130627.103753412
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#9236188.702179566
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#9236188.702179566
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010C00000000008041C00000000000C056C0#!#9353517.804345446
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#9353517.804345446
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#9958336.790535022
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#9958336.790535022
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#1.0136727218514219E7
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010C00000000008041C00000000000C056C0#!#1.0136727218514219E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010C0000000000000040000000000000F03F#!#1.0322338729092397E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010C0000000000000040000000000000F03F#!#1.0322338729092397E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010C0000000000000040000000000000F03F#!#1.0322338729092397E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010C00000000008041C00000000000C056C0#!#1.0322338729092397E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010C00000000008041C00000000000C056C0#!#1.0322338729092397E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010C00000000008041C00000000000C056C0#!#1.0322338729092397E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#1.04243622548279E7
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.04243622548279E7
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.04243622548279E7
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.04243622548279E7
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.04243622548279E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#1.04243622548279E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#1.04243622548279E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#1.04243622548279E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#1.0473216715435915E7
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.0473216715435915E7
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.0473216715435915E7
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.0473216715435915E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#1.0473216715435915E7
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.0473216715435915E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#1.0473216715435915E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#1.0473216715435915E7
+E6100000010C17D9CEF753D34740D34D6210585936C0#!#E6100000010C00000000008041C00000000000C056C0#!#1.141796254725529E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#1.141796254725529E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#1.2097386308820644E7
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010C0000000000000040000000000000F03F#!#1.2097386308820644E7
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010C0000000000000040000000000000F03F#!#1.2097386308820644E7
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010C0000000000000040000000000000F03F#!#1.2097386308820644E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#1.2097386308820644E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#1.2097386308820644E7
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010C0000000000000040000000000000F03F#!#1.2241054978043247E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#1.2241054978043247E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#1.2241054978043247E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#1.2241054978043247E7
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010C0000000000000040000000000000F03F#!#1.2241054978043247E7
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010C0000000000000040000000000000F03F#!#1.2241054978043247E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C00000000008041C00000000000C056C0#!#1.2309662107506363E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C00000000008041C00000000000C056C0#!#1.2309662107506363E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C00000000008041C00000000000C056C0#!#1.2309662107506363E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010C00000000008041C00000000000C056C0#!#1.2309662107506363E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.2309662107506363E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.2309662107506363E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.2309662107506363E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.2309662107506363E7
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#E6100000010C00000000008041C00000000000C056C0#!#1.2705407998016119E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010CC7293A92CB8F4640F6285C8FC28286C0#!#1.2705407998016119E7
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010C0000000000000040000000000000F03F#!#1.3506349292005979E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#1.3506349292005979E7
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010C0000000000000040000000000000F03F#!#1.3506349292005979E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#1.3506349292005979E7
+E6100000010C0000000000000040000000000000F03F#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#1.3506349292005979E7
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010C0000000000000040000000000000F03F#!#1.3506349292005979E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#1.3859669468986768E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#1.3859669468986768E7
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.3859669468986768E7
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.3859669468986768E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#1.3859669468986768E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640EC51B81E85257240#!#1.3859669468986768E7
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.3859669468986768E7
+E6100000010CC7293A92CB8F4640EC51B81E85257240#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.3859669468986768E7
+E6100000010C00000000008041C00000000000C056C0#!#E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#1.71421036688537E7
+E6100000010CC7293A92CB8F4640AE47E17A14165E40#!#E6100000010C00000000008041C00000000000C056C0#!#1.71421036688537E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#1.725437580637186E7
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.725437580637186E7
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.725437580637186E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#1.725437580637186E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#1.725437580637186E7
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.725437580637186E7
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.725437580637186E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640AE47E17A14165EC0#!#1.725437580637186E7
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.7392768910559323E7
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.7392768910559323E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#1.7392768910559323E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#1.7392768910559323E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#1.7392768910559323E7
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.7392768910559323E7
+E6100000010CD34D6210585936C017D9CEF753D34740#!#E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#1.7392768910559323E7
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40#!#E6100000010CD34D6210585936C017D9CEF753D34740#!#1.7392768910559323E7
+~~END~~
+
+
+SELECT location.Lat from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+GO
+~~START~~
+float
+<NULL>
+-35.0
+-22.349
+-22.349
+-22.349
+-22.349
+2.0
+2.0
+2.0
+45.1234
+45.1234
+45.1234
+45.1234
+45.1234
+47.651
+~~END~~
+
+
+SELECT SPATIALPOINTGEOG_dt.location.Long from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+GO
+~~START~~
+float
+<NULL>
+-91.0
+47.651
+47.651
+47.651
+47.651
+1.0
+1.0
+1.0
+-720.345
+220.345
+120.345
+290.345
+-120.345
+-22.349
+~~END~~
+
+
+SELECT location.STAsText() from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+GO
+~~START~~
+text
+<NULL>
+POINT(-91 -35)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(-720.345 45.1234)
+POINT(220.345 45.1234)
+POINT(120.345 45.1234)
+POINT(290.345 45.1234)
+POINT(-120.345 45.1234)
+POINT(-22.349 47.651)
+~~END~~
+
+
+SELECT location.STAsBinary() from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+GO
+~~START~~
+varbinary
+<NULL>
+01010000000000000000C056C000000000008041C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+010100000017D9CEF753D34740D34D6210585936C0
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+0101000000F6285C8FC28286C0C7293A92CB8F4640
+0101000000D7A3703D0A8B6B40C7293A92CB8F4640
+0101000000AE47E17A14165E40C7293A92CB8F4640
+0101000000EC51B81E85257240C7293A92CB8F4640
+0101000000AE47E17A14165EC0C7293A92CB8F4640
+0101000000D34D6210585936C017D9CEF753D34740
+~~END~~
+
+
+SELECT location.STDistance(location) from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+GO
+~~START~~
+float
+<NULL>
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+0.0
+~~END~~
+
+
+SELECT [SPATIALPOINTGEOG_dt].[location].[Long] from [SPATIALPOINTGEOG_dt] ORDER BY location.Lat;
+GO
+~~START~~
+float
+<NULL>
+-91.0
+47.651
+47.651
+47.651
+47.651
+1.0
+1.0
+1.0
+-720.345
+220.345
+120.345
+290.345
+-120.345
+-22.349
+~~END~~
+
+
+SELECT [location].[Lat] from [SPATIALPOINTGEOG_dt] ORDER BY location.Lat;
+GO
+~~START~~
+float
+<NULL>
+-35.0
+-22.349
+-22.349
+-22.349
+-22.349
+2.0
+2.0
+2.0
+45.1234
+45.1234
+45.1234
+45.1234
+45.1234
+47.651
+~~END~~
+
+
+SELECT location FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+GO
+~~START~~
+geography
+<NULL>
+E6100000010C00000000008041C00000000000C056C0
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010CD34D6210585936C017D9CEF753D34740
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010CC7293A92CB8F4640F6285C8FC28286C0
+E6100000010CC7293A92CB8F4640D7A3703D0A8B6B40
+E6100000010CC7293A92CB8F4640AE47E17A14165E40
+E6100000010CC7293A92CB8F4640EC51B81E85257240
+E6100000010CC7293A92CB8F4640AE47E17A14165EC0
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+
+SELECT * FROM GeogToVarbinary ORDER BY p;
+GO
+~~START~~
+varbinary
+~~END~~
+
+SELECT * FROM GeogTochar ORDER BY p;
+GO
+~~START~~
+char
+~~END~~
+
+SELECT * FROM GeogToVarchar ORDER BY p;
+GO
+~~START~~
+varchar
+~~END~~
+
+SELECT * FROM TypeToGeog ORDER BY p.Lat;
+GO
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+E6100000010C0000000000000040000000000000F03F
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+
+-- Testing Explicit CASTs to and from Geography data type
+-- Supported CASTs to and from Geography data type
+Select CAST(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS binary) as geography)
+GO
+~~START~~
+geography
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS varbinary(MAX)) as geography)
+GO
+~~START~~
+geography
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS varbinary(MAX))
+GO
+~~START~~
+varbinary
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+Select CAST(CAST ('POINT(1 2)' AS char) as geography)
+GO
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+Select CAST(CAST ('POINT(200 2)' AS char) as geography).Long
+GO
+~~START~~
+float
+200.0
+~~END~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS char)
+GO
+~~START~~
+char
+POINT(1 2)                    
+~~END~~
+
+Select CAST(CAST ('POINT(1 2)' AS nchar) as geography)
+GO
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS nchar)
+GO
+~~START~~
+nchar
+POINT(1 2)                    
+~~END~~
+
+Select CAST(CAST ('POINT(1 2)' AS varchar) as geography)
+GO
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+Select CAST(CAST ('POINT(200 2)' AS varchar) as geography).Long
+GO
+~~START~~
+float
+200.0
+~~END~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS varchar)
+GO
+~~START~~
+varchar
+POINT(1 2)
+~~END~~
+
+Select CAST(CAST ('POINT(1 2)' AS nvarchar) as geography)
+GO
+~~START~~
+geography
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS nvarchar)
+GO
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 0))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Inavalid SRID)~~
+
+Select Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 0))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Inavalid SRID)~~
+
+Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Inavalid SRID)~~
+
+Select Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Inavalid SRID)~~
+
+Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+GO
+~~START~~
+varbinary
+E6100000010CD34D6210585936C017D9CEF753D34740
+~~END~~
+
+Select Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+GO
+~~START~~
+varbinary
+E6100000010CD34D6210585936C017D9CEF753D34740
+~~END~~
+
+Select Convert(geography, Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 0)))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Inavalid SRID)~~
+
+Select Convert(geography, Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 0)))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Inavalid SRID)~~
+
+Select Convert(geography, Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Inavalid SRID)~~
+
+Select Convert(geography, Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Inavalid SRID)~~
+
+Select Convert(geography, Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326)))
+GO
+~~START~~
+geography
+E6100000010CD34D6210585936C017D9CEF753D34740
+~~END~~
+
+Select Convert(geography, Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326)))
+GO
+~~START~~
+geography
+E6100000010CD34D6210585936C017D9CEF753D34740
+~~END~~
+
+
+-- UnSupported CASTs to and from Geography data type
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to datetime)~~
+
+Select CAST(CAST (0001-01-01 AS datetime) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to geography)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS decimal)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to "decimal")~~
+
+Select CAST(CAST (20.0 AS decimal) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "decimal" to geography)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS bigInt)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to bigint)~~
+
+Select CAST(CAST (20 AS bigInt) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type bigint to geography)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS bigInt)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to bigint)~~
+
+Select CAST(CAST (20 AS bigInt) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type bigint to geography)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS money)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to money)~~
+
+Select CAST(CAST ($1 AS money) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type money to geography)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS bit)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to "bit")~~
+
+Select CAST(CAST (1 AS bit) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "bit" to geography)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS uniqueidentifier)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to uniqueidentifier)~~
+
+Select CAST(CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type uniqueidentifier to geography)~~
+
+Select CAST(CAST ('POINT(1 2)' AS text) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit Conversion from data type Text to sys.Geography is not allowed.)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS text)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit Conversion from data type sys.Geography to Text is not allowed.)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS sql_variant)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to sql_variant)~~
+
+Select CAST(CAST ('POINT(1 2)' AS sql_variant) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type sql_variant to geography)~~
+
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS xml)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type geography to xml)~~
+
+Select CAST(CAST ('<head>point(1 2)</head>' AS xml) as geography)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to geography)~~
+
+
+-- UnSupported CASTs which are currently supported for geography
+-- This is because Image type is created as -> CREATE DOMAIN sys.IMAGE AS sys.BBF_VARBINARY; so it is always converted to it's baseType i.e. varbinary
+Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS image)
+GO
+~~START~~
+image
+E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+Select CAST(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS image) as geography)
+GO
+~~START~~
+geography
+E6100000010C17D9CEF753D34740D34D6210585936C0
+~~END~~
+
+
+SELECT
+    GeomColumn.STX AS XCoordinate,
+    GeomColumn.STY AS YCoordinate,
+    PrimaryKey,
+    GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint
+FROM
+    SPATIALPOINT_dt ORDER BY GeomColumn.STX;
+GO
+~~START~~
+float#!#float#!#int#!#float
+<NULL>#!#<NULL>#!#2#!#5405374.929245813
+<NULL>#!#<NULL>#!#5#!#5405374.929245813
+1.0#!#2.0#!#3#!#953316.5401136167
+1.0#!#2.0#!#6#!#953316.5401136167
+47.651#!#-22.349#!#1#!#<NULL>
+47.651#!#-22.349#!#4#!#<NULL>
+~~END~~
+
+
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'GeomColumn.STX AS XCoordinate, ' +
+    N'GeomColumn.STY AS YCoordinate, ' +
+    N'PrimaryKey, ' +
+    N'GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint ' +
+    N'FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX';
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+~~START~~
+float#!#float#!#int#!#float
+<NULL>#!#<NULL>#!#2#!#5405374.929245813
+<NULL>#!#<NULL>#!#5#!#5405374.929245813
+1.0#!#2.0#!#3#!#953316.5401136167
+1.0#!#2.0#!#6#!#953316.5401136167
+47.651#!#-22.349#!#1#!#<NULL>
+47.651#!#-22.349#!#4#!#<NULL>
+~~END~~
+
+
+SELECT * FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX;
+GO
+~~START~~
+int#!#geometry#!#geography
+2#!#<NULL>#!#E6100000010CD34D6210585936C017D9CEF753D34740
+5#!#<NULL>#!#E6100000010CD34D6210585936C017D9CEF753D34740
+3#!#E6100000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F
+6#!#E6100000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F
+1#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#<NULL>
+4#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#<NULL>
+~~END~~
+
+
+SELECT * FROM geomTabWithoutSrid ORDER BY PrimaryKey;
+GO
+~~START~~
+int#!#geometry#!#varbinary
+1#!#00000000010C17D9CEF753D34740D34D6210585936C0#!#00000000010C17D9CEF753D34740D34D6210585936C0
+2#!#E6100000010C17D9CEF753534840D34D6210585936C0#!#E6100000010C17D9CEF753534840D34D6210585936C0
+3#!#00000000010C000000000000F03F0000000000000040#!#00000000010C000000000000F03F0000000000000040
+4#!#E6100000010C00000000000000400000000000000040#!#E6100000010C00000000000000400000000000000040
+~~END~~
+
+SELECT CAST(GeomColumn as bytea), CAST(GeomColumn as varbinary) FROM geomTabWithoutSrid ORDER BY GeomColumn.STX;
+GO
+~~START~~
+varbinary#!#varbinary
+00000000010C000000000000F03F0000000000000040#!#00000000010C000000000000F03F0000000000000040
+E6100000010C00000000000000400000000000000040#!#E6100000010C00000000000000400000000000000040
+00000000010C17D9CEF753D34740D34D6210585936C0#!#00000000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753534840D34D6210585936C0#!#E6100000010C17D9CEF753534840D34D6210585936C0
+~~END~~
+
+SELECT PrimaryKey, CAST(ByteaColumn as geometry), CAST(ByteaColumn as varbinary) FROM geomTabWithoutSrid ORDER BY PrimaryKey;
+GO
+~~START~~
+int#!#geometry#!#varbinary
+1#!#00000000010C17D9CEF753D34740D34D6210585936C0#!#00000000010C17D9CEF753D34740D34D6210585936C0
+2#!#E6100000010C17D9CEF753534840D34D6210585936C0#!#E6100000010C17D9CEF753534840D34D6210585936C0
+3#!#00000000010C000000000000F03F0000000000000040#!#00000000010C000000000000F03F0000000000000040
+4#!#E6100000010C00000000000000400000000000000040#!#E6100000010C00000000000000400000000000000040
+~~END~~
+
+SELECT Convert(geometry, Convert(bytea, GeomColumn)), Convert(geometry, Convert(varbinary, GeomColumn)) FROM geomTabWithoutSrid ORDER BY GeomColumn.STX;
+GO
+~~START~~
+geometry#!#geometry
+00000000010C000000000000F03F0000000000000040#!#00000000010C000000000000F03F0000000000000040
+E6100000010C00000000000000400000000000000040#!#E6100000010C00000000000000400000000000000040
+00000000010C17D9CEF753D34740D34D6210585936C0#!#00000000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753534840D34D6210585936C0#!#E6100000010C17D9CEF753534840D34D6210585936C0
+~~END~~
+
+SELECT Convert(bytea, GeomColumn), Convert(varbinary, GeomColumn) FROM geomTabWithoutSrid ORDER BY GeomColumn.STX;
+GO
+~~START~~
+varbinary#!#varbinary
+00000000010C000000000000F03F0000000000000040#!#00000000010C000000000000F03F0000000000000040
+E6100000010C00000000000000400000000000000040#!#E6100000010C00000000000000400000000000000040
+00000000010C17D9CEF753D34740D34D6210585936C0#!#00000000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753534840D34D6210585936C0#!#E6100000010C17D9CEF753534840D34D6210585936C0
+~~END~~
+
+SELECT Convert(varbinary, Convert(geometry, ByteaColumn)), Convert(geometry, Convert(varbinary, ByteaColumn)) FROM geomTabWithoutSrid ORDER BY PrimaryKey;
+GO
+~~START~~
+varbinary#!#geometry
+00000000010C17D9CEF753D34740D34D6210585936C0#!#00000000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753534840D34D6210585936C0#!#E6100000010C17D9CEF753534840D34D6210585936C0
+00000000010C000000000000F03F0000000000000040#!#00000000010C000000000000F03F0000000000000040
+E6100000010C00000000000000400000000000000040#!#E6100000010C00000000000000400000000000000040
+~~END~~
+
+SELECT Convert(geometry, ByteaColumn), Convert(varbinary, ByteaColumn) FROM geomTabWithoutSrid ORDER BY PrimaryKey;
+GO
+~~START~~
+geometry#!#varbinary
+00000000010C17D9CEF753D34740D34D6210585936C0#!#00000000010C17D9CEF753D34740D34D6210585936C0
+E6100000010C17D9CEF753534840D34D6210585936C0#!#E6100000010C17D9CEF753534840D34D6210585936C0
+00000000010C000000000000F03F0000000000000040#!#00000000010C000000000000F03F0000000000000040
+E6100000010C00000000000000400000000000000040#!#E6100000010C00000000000000400000000000000040
+~~END~~
+
+
+-- Here we are testing ambiguity scenario for func_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
+SELECT geom_schema.STDistance(geom_schema) from geometry_test ORDER BY geom_schema.STX
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+-- Here we are testing ambiguity scenario for col_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
+SELECT STX.STX from STX ORDER BY STX.STX
+GO
+~~START~~
+float
+47.651
+~~END~~
+
+
+INSERT INTO babelfish_migration_mode_table SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~ROW COUNT: 1~~
+
+
+-- test multi-db mode
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+CREATE DATABASE db1;
+GO
+
+CREATE DATABASE db2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "db1" already exists)~~
+
+
+USE db1;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(1, 2, 0), 1),
+    (geometry::Point(3, 4, 0), 2),
+    (geometry::Point(5, 6, 0), 3);
+GO
+~~ROW COUNT: 3~~
+
+
+USE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "spatialdata" already exists)~~
+
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(7, 8, 0), 4),
+    (geometry::Point(9, 10, 0), 5),
+    (geometry::Point(11, 12, 0), 6);
+GO
+~~ROW COUNT: 3~~
+
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db1].[dbo].[SpatialData] ' +
+    N'UNION ALL ' +
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db2].[dbo].[SpatialData] ORDER BY SpatialPoint.STX';
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+USE master
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+-- Tests for db level collation
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+CREATE DATABASE db2 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "db1" already exists)~~
+
+
+USE db1;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(1, 2, 0), 1),
+    (geometry::Point(3, 4, 0), 2),
+    (geometry::Point(5, 6, 0), 3);
+GO
+~~ROW COUNT: 3~~
+
+
+USE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "spatialdata" already exists)~~
+
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(7, 8, 0), 4),
+    (geometry::Point(9, 10, 0), 5),
+    (geometry::Point(11, 12, 0), 6);
+GO
+~~ROW COUNT: 3~~
+
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db1].[dbo].[SpatialData] ' +
+    N'UNION ALL ' +
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db2].[dbo].[SpatialData] ORDER BY SpatialPoint.STX';
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+USE master
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db2" does not exist)~~
+
+
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+-- Reset migration mode to default
+DECLARE @mig_mode VARCHAR(10)
+SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_table WHERE id_num = 1)
+SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geometry' ORDER BY name
+go
+~~START~~
+varchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
+geometry#!#geometry#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#0
+~~END~~
+
+
+SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geography' ORDER BY name
+go
+~~START~~
+varchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
+geography#!#geography#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#0
+~~END~~
+
+
+exec sp_sproc_columns_100 @procedure_name= 'geometry_proc_1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+master#!#dbo#!#geometry_proc_1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+master#!#dbo#!#geometry_proc_1;1#!#@a#!#1#!#-151#!#geometry#!#0#!#-1#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#1#!#YES#!#23
+master#!#dbo#!#geometry_proc_1;1#!#@b#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
+~~END~~
+
+
+exec sp_sproc_columns_100 @procedure_name= 'geography_proc_1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+master#!#dbo#!#geography_proc_1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+master#!#dbo#!#geography_proc_1;1#!#@a#!#1#!#-151#!#geography#!#0#!#-1#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#1#!#YES#!#23
+master#!#dbo#!#geography_proc_1;1#!#@b#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
+~~END~~
+
+
+select * from information_schema.columns where table_name = 'geo_view_test' ORDER BY column_name
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#geo_view_test#!#a#!#1#!#<NULL>#!#YES#!#geometry#!#-1#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#geo_view_test#!#b#!#2#!#<NULL>#!#YES#!#geography#!#-1#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+select name , column_id , max_length , precision , scale , collation_name ,is_nullable , is_ansi_padded , is_rowguidcol , is_identity ,is_computed , is_filestream , is_replicated , is_non_sql_subscribed , is_merge_published , is_dts_replicated , is_xml_document , xml_collection_id , default_object_id , rule_object_id , is_sparse , is_column_set , generated_always_type , generated_always_type_desc , encryption_type , encryption_type_desc , encryption_algorithm_name , column_encryption_key_id , column_encryption_key_database_name , is_hidden , is_masked , graph_type , graph_type_desc from sys.columns where object_id = object_id('geo_view_test') ORDER BY name;
+GO
+~~START~~
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#bit#!#bit#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#varchar#!#int#!#varchar#!#bit#!#bit#!#int#!#nvarchar
+a#!#1#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#NOT_APPLICABLE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>#!#<NULL>
+b#!#2#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#NOT_APPLICABLE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT name, principal_id, max_length, precision, scale, collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, assembly_id, assembly_class, is_binary_ordered, is_fixed_length, prog_id, assembly_qualified_name, is_table_type FROM sys.assembly_types
+WHERE user_type_id = TYPE_ID('dbo.GeospatialUDT')
+ORDER BY name DESC
+GO
+~~START~~
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
+geospatialudt#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#0#!#1#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+

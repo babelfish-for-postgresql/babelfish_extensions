@@ -17,6 +17,7 @@
 
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "utils/guc.h"
 #include "lib/stringinfo.h"
 #include "pgstat.h"
@@ -35,7 +36,7 @@ static void FetchMoreBcpData(StringInfo *message, int dataLenToRead, bool freeMe
 static void FetchMoreBcpPlpData(StringInfo *message, int dataLenToRead);
 static int	ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request);
 static void FreePlpToken(ParameterToken token);
-uint64_t	offset = 0;
+uint64_t	volatile bcpOffset = 0;
 
 #define COLUMNMETADATA_HEADER_LEN			sizeof(uint32_t) + sizeof(uint16) + 1
 #define FIXED_LEN_TYPE_COLUMNMETADATA_LEN	1
@@ -79,7 +80,7 @@ do \
 #define CheckMessageHasEnoughBytesToReadColMetadata(message, dataLen) \
 do \
 { \
-	if ((*message)->len - offset < dataLen) \
+	if ((*message)->len - bcpOffset < dataLen) \
 		FetchMoreBcpData(message, dataLen, false); \
 } while(0)
 
@@ -90,7 +91,7 @@ do \
 #define CheckMessageHasEnoughBytesToReadRows(message, dataLen) \
 do \
 { \
-	if ((*message)->len - offset < dataLen) \
+	if ((*message)->len - bcpOffset < dataLen) \
 		FetchMoreBcpData(message, dataLen, true); \
 } while(0)
 
@@ -98,9 +99,15 @@ do \
 #define CheckPlpMessageHasEnoughBytesToRead(message, dataLen) \
 do \
 { \
-	if ((*message)->len - offset < dataLen) \
+	if ((*message)->len - bcpOffset < dataLen) \
 		FetchMoreBcpPlpData(message, dataLen); \
 } while(0)
+
+void
+TdsResetBcpOffset()
+{
+	bcpOffset = 0;
+}
 
 static void
 FetchMoreBcpData(StringInfo *message, int dataLenToRead, bool freeMessageData)
@@ -133,12 +140,12 @@ FetchMoreBcpData(StringInfo *message, int dataLenToRead, bool freeMessageData)
 	if (freeMessageData)
 	{
 		temp = makeStringInfo();
-		appendBinaryStringInfo(temp, (*message)->data + offset, (*message)->len - offset);
+		appendBinaryStringInfo(temp, (*message)->data + bcpOffset, (*message)->len - bcpOffset);
 
 		if ((*message)->data)
 			pfree((*message)->data);
 		pfree((*message));
-		offset = 0;
+		bcpOffset = 0;
 	}
 	else
 		temp = *message;
@@ -146,7 +153,7 @@ FetchMoreBcpData(StringInfo *message, int dataLenToRead, bool freeMessageData)
 	/*
 	 * Keep fetching for additional packets until we have enough data to read.
 	 */
-	while (dataLenToRead + offset > temp->len)
+	while (dataLenToRead + bcpOffset > temp->len)
 	{
 		/*
 		 * We should hold the interrupts until we read the next request frame.
@@ -173,7 +180,7 @@ FetchMoreBcpData(StringInfo *message, int dataLenToRead, bool freeMessageData)
 
 /*
  * Incase of PLP data we should not discard the previous packet since we
- * first store the offset of the PLP Chunks first and then read the data later.
+ * first store the bcpOffset of the PLP Chunks first and then read the data later.
  */
 static void
 FetchMoreBcpPlpData(StringInfo *message, int dataLenToRead)
@@ -198,7 +205,7 @@ FetchMoreBcpPlpData(StringInfo *message, int dataLenToRead)
 	/*
 	 * Keep fetching for additional packets until we have enough data to read.
 	 */
-	while (dataLenToRead + offset > (*message)->len)
+	while (dataLenToRead + bcpOffset > (*message)->len)
 	{
 		/*
 		 * We should hold the interrupts until we read the next request frame.
@@ -240,33 +247,34 @@ GetBulkLoadRequest(StringInfo message)
 	request->rowData = NIL;
 	request->reqType = TDS_REQUEST_BULK_LOAD;
 
-	if (unlikely((uint8_t) message->data[offset] != TDS_TOKEN_COLMETADATA))
+	TdsResetBcpOffset();
+	if (unlikely((uint8_t) message->data[bcpOffset] != TDS_TOKEN_COLMETADATA))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
 						"unexpected token encountered processing the request.")));
 
-	offset++;
+	bcpOffset++;
 
-	memcpy(&colCount, &message->data[offset], sizeof(uint16));
+	memcpy(&colCount, &message->data[bcpOffset], sizeof(uint16));
 	colmetadata = palloc0(colCount * sizeof(BulkLoadColMetaData));
 	request->colCount = colCount;
 	request->colMetaData = colmetadata;
-	offset += sizeof(uint16);
+	bcpOffset += sizeof(uint16);
 
 	for (int currentColumn = 0; currentColumn < colCount; currentColumn++)
 	{
 		CheckMessageHasEnoughBytesToReadColMetadata(&message, COLUMNMETADATA_HEADER_LEN);
 		/* UserType */
-		memcpy(&colmetadata[currentColumn].userType, &message->data[offset], sizeof(uint32_t));
-		offset += sizeof(uint32_t);
+		memcpy(&colmetadata[currentColumn].userType, &message->data[bcpOffset], sizeof(uint32_t));
+		bcpOffset += sizeof(uint32_t);
 
 		/* Flags */
-		memcpy(&colmetadata[currentColumn].flags, &message->data[offset], sizeof(uint16));
-		offset += sizeof(uint16);
+		memcpy(&colmetadata[currentColumn].flags, &message->data[bcpOffset], sizeof(uint16));
+		bcpOffset += sizeof(uint16);
 
 		/* TYPE_INFO */
-		colmetadata[currentColumn].columnTdsType = message->data[offset++];
+		colmetadata[currentColumn].columnTdsType = message->data[bcpOffset++];
 
 		/* Datatype specific Column Metadata. */
 		switch (colmetadata[currentColumn].columnTdsType)
@@ -278,14 +286,14 @@ GetBulkLoadRequest(StringInfo message)
 			case TDS_TYPE_DATETIMEN:
 			case TDS_TYPE_UNIQUEIDENTIFIER:
 				CheckMessageHasEnoughBytesToReadColMetadata(&message, FIXED_LEN_TYPE_COLUMNMETADATA_LEN);
-				colmetadata[currentColumn].maxLen = message->data[offset++];
+				colmetadata[currentColumn].maxLen = message->data[bcpOffset++];
 				break;
 			case TDS_TYPE_DECIMALN:
 			case TDS_TYPE_NUMERICN:
 				CheckMessageHasEnoughBytesToReadColMetadata(&message, NUMERIC_COLUMNMETADATA_LEN);
-				colmetadata[currentColumn].maxLen = message->data[offset++];
-				colmetadata[currentColumn].precision = message->data[offset++];
-				colmetadata[currentColumn].scale = message->data[offset++];
+				colmetadata[currentColumn].maxLen = message->data[bcpOffset++];
+				colmetadata[currentColumn].precision = message->data[bcpOffset++];
+				colmetadata[currentColumn].scale = message->data[bcpOffset++];
 				break;
 			case TDS_TYPE_CHAR:
 			case TDS_TYPE_VARCHAR:
@@ -293,12 +301,12 @@ GetBulkLoadRequest(StringInfo message)
 			case TDS_TYPE_NVARCHAR:
 				{
 					CheckMessageHasEnoughBytesToReadColMetadata(&message, STRING_COLUMNMETADATA_LEN);
-					memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint16));
-					offset += sizeof(uint16);
+					memcpy(&colmetadata[currentColumn].maxLen, &message->data[bcpOffset], sizeof(uint16));
+					bcpOffset += sizeof(uint16);
 
-					memcpy(&collation, &message->data[offset], sizeof(uint32_t));
-					offset += sizeof(uint32_t);
-					colmetadata[currentColumn].sortId = message->data[offset++];
+					memcpy(&collation, &message->data[bcpOffset], sizeof(uint32_t));
+					bcpOffset += sizeof(uint32_t);
+					colmetadata[currentColumn].sortId = message->data[bcpOffset++];
 					colmetadata[currentColumn].encoding = TdsGetEncoding(collation);
 				}
 				break;
@@ -309,53 +317,53 @@ GetBulkLoadRequest(StringInfo message)
 					uint16_t	tableLen = 0;
 
 					CheckMessageHasEnoughBytesToReadColMetadata(&message, sizeof(uint32_t));
-					memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint32_t));
-					offset += sizeof(uint32_t);
+					memcpy(&colmetadata[currentColumn].maxLen, &message->data[bcpOffset], sizeof(uint32_t));
+					bcpOffset += sizeof(uint32_t);
 
 					/* Read collation(LICD) and sort-id for TEXT and NTEXT. */
 					if (colmetadata[currentColumn].columnTdsType == TDS_TYPE_TEXT ||
 						colmetadata[currentColumn].columnTdsType == TDS_TYPE_NTEXT)
 					{
 						CheckMessageHasEnoughBytesToReadColMetadata(&message, sizeof(uint32_t) + 1);
-						memcpy(&collation, &message->data[offset], sizeof(uint32_t));
-						offset += sizeof(uint32_t);
-						colmetadata[currentColumn].sortId = message->data[offset++];
+						memcpy(&collation, &message->data[bcpOffset], sizeof(uint32_t));
+						bcpOffset += sizeof(uint32_t);
+						colmetadata[currentColumn].sortId = message->data[bcpOffset++];
 						colmetadata[currentColumn].encoding = TdsGetEncoding(collation);
 					}
 
 					CheckMessageHasEnoughBytesToReadColMetadata(&message, sizeof(uint16_t));
-					memcpy(&tableLen, &message->data[offset], sizeof(uint16_t));
-					offset += sizeof(uint16_t);
+					memcpy(&tableLen, &message->data[bcpOffset], sizeof(uint16_t));
+					bcpOffset += sizeof(uint16_t);
 
 					/* Skip table name for now. */
 					CheckMessageHasEnoughBytesToReadColMetadata(&message, tableLen * 2);
-					offset += tableLen * 2;
+					bcpOffset += tableLen * 2;
 				}
 				break;
 			case TDS_TYPE_XML:
 				{
 					CheckMessageHasEnoughBytesToReadColMetadata(&message, 1);
-					colmetadata[currentColumn].maxLen = message->data[offset++];
+					colmetadata[currentColumn].maxLen = message->data[bcpOffset++];
 				}
 				break;
 			case TDS_TYPE_DATETIME2:
 				{
 					CheckMessageHasEnoughBytesToReadColMetadata(&message, FIXED_LEN_TYPE_COLUMNMETADATA_LEN);
-					colmetadata[currentColumn].scale = message->data[offset++];
+					colmetadata[currentColumn].scale = message->data[bcpOffset++];
 					colmetadata[currentColumn].maxLen = 8;
 				}
 				break;
 			case TDS_TYPE_TIME:
 				{
 					CheckMessageHasEnoughBytesToReadColMetadata(&message, FIXED_LEN_TYPE_COLUMNMETADATA_LEN);
-					colmetadata[currentColumn].scale = message->data[offset++];
+					colmetadata[currentColumn].scale = message->data[bcpOffset++];
 					colmetadata[currentColumn].maxLen = 5;
 				}
 				break;
 			case TDS_TYPE_DATETIMEOFFSET:
 				{
 					CheckMessageHasEnoughBytesToReadColMetadata(&message, FIXED_LEN_TYPE_COLUMNMETADATA_LEN);
-					colmetadata[currentColumn].scale = message->data[offset++];
+					colmetadata[currentColumn].scale = message->data[bcpOffset++];
 					colmetadata[currentColumn].maxLen = 10;
 				}
 				break;
@@ -365,8 +373,8 @@ GetBulkLoadRequest(StringInfo message)
 					uint16		plp;
 
 					CheckMessageHasEnoughBytesToReadColMetadata(&message, BINARY_COLUMNMETADATA_LEN);
-					memcpy(&plp, &message->data[offset], sizeof(uint16));
-					offset += sizeof(uint16);
+					memcpy(&plp, &message->data[bcpOffset], sizeof(uint16));
+					bcpOffset += sizeof(uint16);
 					colmetadata[currentColumn].maxLen = plp;
 				}
 				break;
@@ -375,8 +383,8 @@ GetBulkLoadRequest(StringInfo message)
 				break;
 			case TDS_TYPE_SQLVARIANT:
 				CheckMessageHasEnoughBytesToReadColMetadata(&message, SQL_VARIANT_COLUMNMETADATA_LEN);
-				memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint32_t));
-				offset += sizeof(uint32_t);
+				memcpy(&colmetadata[currentColumn].maxLen, &message->data[bcpOffset], sizeof(uint32_t));
+				bcpOffset += sizeof(uint32_t);
 				break;
 
 				/*
@@ -471,15 +479,15 @@ GetBulkLoadRequest(StringInfo message)
 
 		/* Column Name */
 		CheckMessageHasEnoughBytesToReadColMetadata(&message, sizeof(uint8_t));
-		memcpy(&colmetadata[currentColumn].colNameLen, &message->data[offset++], sizeof(uint8_t));
+		memcpy(&colmetadata[currentColumn].colNameLen, &message->data[bcpOffset++], sizeof(uint8_t));
 
 		CheckMessageHasEnoughBytesToReadColMetadata(&message, colmetadata[currentColumn].colNameLen * 2);
 		colmetadata[currentColumn].colName = (char *) palloc0(colmetadata[currentColumn].colNameLen * sizeof(char) * 2 + 1);
-		memcpy(colmetadata[currentColumn].colName, &message->data[offset],
+		memcpy(colmetadata[currentColumn].colName, &message->data[bcpOffset],
 			   colmetadata[currentColumn].colNameLen * 2);
 		colmetadata[currentColumn].colName[colmetadata[currentColumn].colNameLen * 2] = '\0';
 
-		offset += colmetadata[currentColumn].colNameLen * 2;
+		bcpOffset += colmetadata[currentColumn].colNameLen * 2;
 	}
 	request->firstMessage = makeStringInfo();
 	appendBinaryStringInfo(request->firstMessage, message->data, message->len);
@@ -506,7 +514,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 	CheckMessageHasEnoughBytesToReadRows(&message, 1);
 
 	/* Loop over each row. */
-	while ((uint8_t) message->data[offset] == TDS_TOKEN_ROW
+	while ((uint8_t) message->data[bcpOffset] == TDS_TOKEN_ROW
 		   && request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024
 		   && request->rowCount < pltsql_plugin_handler_ptr->get_insert_bulk_rows_per_batch())
 	{
@@ -518,7 +526,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 		rowData->columnValues = palloc0(request->colCount * sizeof(Datum));
 		rowData->isNull = palloc0(request->colCount * sizeof(bool));
 
-		offset++;
+		bcpOffset++;
 		request->currentBatchSize++;
 
 		while (i != request->colCount)	/* Loop over each column. */
@@ -544,7 +552,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						else
 						{
 							CheckMessageHasEnoughBytesToReadRows(&message, 1);
-							len = message->data[offset++];
+							len = message->data[bcpOffset++];
 							request->currentBatchSize++;
 
 							if (len == 0)	/* null */
@@ -559,7 +567,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						CheckMessageHasEnoughBytesToReadRows(&message, len);
 
 						/* Build temp Stringinfo. */
-						temp->data = &message->data[offset];
+						temp->data = &message->data[bcpOffset];
 						temp->len = len;
 						temp->maxlen = colmetadata[i].maxLen;
 						temp->cursor = 0;
@@ -606,7 +614,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 								break;
 						}
 
-						offset += len;
+						bcpOffset += len;
 						request->currentBatchSize += len;
 					}
 					break;
@@ -623,7 +631,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 
 						CheckMessageHasEnoughBytesToReadRows(&message, 1);
 
-						len = message->data[offset++];
+						len = message->data[bcpOffset++];
 						request->currentBatchSize++;
 						if (len == 0)	/* null */
 						{
@@ -637,7 +645,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						CheckMessageHasEnoughBytesToReadRows(&message, len);
 
 						/* Build temp Stringinfo. */
-						temp->data = &message->data[offset];
+						temp->data = &message->data[bcpOffset];
 						temp->len = len;
 						temp->maxlen = colmetadata[i].maxLen;
 						temp->cursor = 0;
@@ -648,7 +656,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						 */
 						rowData->columnValues[i] = TdsTypeNumericToDatum(temp, colmetadata[i].scale);
 
-						offset += len;
+						bcpOffset += len;
 						request->currentBatchSize += len;
 					}
 					break;
@@ -663,8 +671,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						if (colmetadata[i].maxLen != 0xffff)
 						{
 							CheckMessageHasEnoughBytesToReadRows(&message, sizeof(short));
-							memcpy(&len, &message->data[offset], sizeof(short));
-							offset += sizeof(short);
+							memcpy(&len, &message->data[bcpOffset], sizeof(short));
+							bcpOffset += sizeof(short);
 							request->currentBatchSize += sizeof(short);
 							if (len != 0xffff)
 							{
@@ -673,12 +681,12 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 								CheckMessageHasEnoughBytesToReadRows(&message, len);
 
 								/* Build temp Stringinfo. */
-								temp->data = &message->data[offset];
+								temp->data = &message->data[bcpOffset];
 								temp->len = len;
 								temp->maxlen = colmetadata[i].maxLen;
 								temp->cursor = 0;
 
-								offset += len;
+								bcpOffset += len;
 								request->currentBatchSize += len;
 							}
 							else	/* null */
@@ -750,7 +758,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						 * Ignore the Data Text Ptr since its currently of no
 						 * use.
 						 */
-						dataTextPtrLen = message->data[offset++];
+						dataTextPtrLen = message->data[bcpOffset++];
 						request->currentBatchSize++;
 						if (dataTextPtrLen == 0)	/* null */
 						{
@@ -761,14 +769,14 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 
 						CheckMessageHasEnoughBytesToReadRows(&message, dataTextPtrLen + 8 + sizeof(uint32_t));
 
-						offset += dataTextPtrLen;
+						bcpOffset += dataTextPtrLen;
 						request->currentBatchSize += dataTextPtrLen;
-						offset += 8;	/* TODO: Ignored the Data Text
+						bcpOffset += 8;	/* TODO: Ignored the Data Text
 										 * TimeStamp for now. */
 						request->currentBatchSize += 8;
 
-						memcpy(&len, &message->data[offset], sizeof(uint32_t));
-						offset += sizeof(uint32_t);
+						memcpy(&len, &message->data[bcpOffset], sizeof(uint32_t));
+						bcpOffset += sizeof(uint32_t);
 						request->currentBatchSize += sizeof(uint32_t);
 						if (len == 0)	/* null */
 						{
@@ -782,7 +790,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						CheckMessageHasEnoughBytesToReadRows(&message, len);
 
 						/* Build temp Stringinfo. */
-						temp->data = &message->data[offset];
+						temp->data = &message->data[bcpOffset];
 						temp->len = len;
 						temp->maxlen = colmetadata[i].maxLen;
 						temp->cursor = 0;
@@ -804,7 +812,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 								break;
 						}
 
-						offset += len;
+						bcpOffset += len;
 						request->currentBatchSize += len;
 					}
 					break;
@@ -843,8 +851,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					{
 						CheckMessageHasEnoughBytesToReadRows(&message, sizeof(uint32_t));
 
-						memcpy(&len, &message->data[offset], sizeof(uint32_t));
-						offset += sizeof(uint32_t);
+						memcpy(&len, &message->data[bcpOffset], sizeof(uint32_t));
+						bcpOffset += sizeof(uint32_t);
 						request->currentBatchSize += sizeof(uint32_t);
 
 						if (len == 0)	/* null */
@@ -859,7 +867,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						CheckMessageHasEnoughBytesToReadRows(&message, len);
 
 						/* Build temp Stringinfo. */
-						temp->data = &message->data[offset];
+						temp->data = &message->data[bcpOffset];
 						temp->len = len;
 						temp->maxlen = colmetadata[i].maxLen;
 						temp->cursor = 0;
@@ -870,7 +878,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						 */
 						rowData->columnValues[i] = TdsTypeSqlVariantToDatum(temp);
 
-						offset += len;
+						bcpOffset += len;
 						request->currentBatchSize += len;
 					}
 					break;
@@ -888,15 +896,73 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 	CheckMessageHasEnoughBytesToReadRows(&message, 1);
 	if (request->rowCount < pltsql_plugin_handler_ptr->get_insert_bulk_rows_per_batch()
 		&& request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024
-		&& (uint8_t) message->data[offset] != TDS_TOKEN_DONE)
+		&& (uint8_t) message->data[bcpOffset] != TDS_TOKEN_DONE)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
 						"Row %d, unexpected token encountered processing the request. %d",
-						request->rowCount, (uint8_t) message->data[offset])));
+						request->rowCount, (uint8_t) message->data[bcpOffset])));
 
 	pfree(temp);
 	return message;
+}
+
+static void
+CleanupBCPDuringError(bool internal_sp_started,
+					 volatile int before_subtxn_id,
+					 volatile int before_lxid,
+					 ResourceOwner oldowner,
+					 MemoryContext oldcontext)
+{
+	int			ret = 0;
+
+	/* Reset BCP bcpOffset. */
+	TdsResetBcpOffset();
+
+	HOLD_INTERRUPTS();
+
+	/*
+	 * Discard remaining TDS_BULK_LOAD packets only if End of
+	 * Message has not been reached for the current request.
+	 * Otherwise we have no TDS_BULK_LOAD packets left for the
+	 * current request that need to be discarded.
+	 */
+	if (!TdsGetRecvPacketEomStatus())
+	{
+		HOLD_CANCEL_INTERRUPTS();
+		ret = TdsDiscardAllPendingBcpRequest();
+		RESUME_CANCEL_INTERRUPTS();
+	}
+
+	if (ret < 0)
+		TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
+
+	if (internal_sp_started && before_lxid == MyProc->lxid && before_subtxn_id == GetCurrentSubTransactionId())
+	{
+		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
+			elog(LOG, "TSQL TXN PG semantics : Rollback internal savepoint");
+		RollbackAndReleaseCurrentSubTransaction();
+		CurrentResourceOwner = oldowner;
+	}
+	else if (!IsTransactionBlockActive())
+	{
+		AbortCurrentTransaction();
+		StartTransactionCommand();
+	}
+	else
+	{
+		/*
+		 * In the case of an error and transaction is active but the earlier savepoint
+		 * did not match, then we shall rollback the current transaction and let the
+		 * the actual error be relayed to the customer.
+		 */
+		elog(LOG, "The current transaction is rolled back since it "
+				"was in inconsistent state during Bulk Copy");
+		pltsql_plugin_handler_ptr->pltsql_rollback_txn_callback();
+	}
+
+	MemoryContextSwitchTo(oldcontext);
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -910,12 +976,33 @@ ProcessBCPRequest(TDSRequest request)
 	uint64		retValue = 0;
 	TDSRequestBulkLoad req = (TDSRequestBulkLoad) request;
 	StringInfo	message = req->firstMessage;
+	volatile bool internal_sp_started = false;
+	volatile int before_subtxn_id = 0;
+	volatile int before_lxid = MyProc->lxid;
+	ResourceOwner oldowner = CurrentResourceOwner;
+	MemoryContext oldcontext = CurrentMemoryContext;
+	bool endOfMessage = false;
 
 	set_ps_display("active");
 	TdsErrorContext->err_text = "Processing Bulk Load Request";
 	pgstat_report_activity(STATE_RUNNING, "Processing Bulk Load Request");
 
-	while (1)
+	/*
+	 * If a transaction is active then start a Savepoint to rollback
+	 * later in case of error.
+	 */
+	if (IsTransactionBlockActive())
+	{
+		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
+			elog(LOG, "TSQL TXN Start internal savepoint");
+		BeginInternalSubTransaction(NULL);
+		internal_sp_started = true;
+		before_subtxn_id = GetCurrentSubTransactionId();
+	}
+	else
+		internal_sp_started = false;
+
+	while (!endOfMessage)
 	{
 		int			nargs = 0;
 		Datum	   *values = NULL;
@@ -929,24 +1016,8 @@ ProcessBCPRequest(TDSRequest request)
 		}
 		PG_CATCH();
 		{
-			int			ret = 0;
-
-			HOLD_CANCEL_INTERRUPTS();
-
-			/*
-			 * Discard remaining TDS_BULK_LOAD packets only if End of Message
-			 * has not been reached for the current request. Otherwise we have
-			 * no TDS_BULK_LOAD packets left for the current request that need
-			 * to be discarded.
-			 */
-			if (!TdsGetRecvPacketEomStatus())
-				ret = TdsDiscardAllPendingBcpRequest();
-
-			RESUME_CANCEL_INTERRUPTS();
-
-			if (ret < 0)
-				TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
-
+			CleanupBCPDuringError(internal_sp_started, before_subtxn_id,
+					 before_lxid, oldowner, oldcontext);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -955,79 +1026,79 @@ ProcessBCPRequest(TDSRequest request)
 		 * If the row-count is 0 then there are no rows left to be inserted.
 		 * We should begin with cleanup.
 		 */
-		if (req->rowCount == 0)
+		if (req->rowCount > 0)
 		{
-			/* Using Same callback function to do the clean-up. */
-			pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL);
-			break;
-		}
+			nargs = req->colCount * req->rowCount;
+			values = palloc0(nargs * sizeof(Datum));
+			nulls = palloc0(nargs * sizeof(bool));
 
-		nargs = req->colCount * req->rowCount;
-		values = palloc0(nargs * sizeof(Datum));
-		nulls = palloc0(nargs * sizeof(bool));
-
-		/* Flaten and create a 1-D array of Value & Datums */
-		foreach(lc, req->rowData)
-		{
-			BulkLoadRowData *row = (BulkLoadRowData *) lfirst(lc);
-
-			for (int currentColumn = 0; currentColumn < req->colCount; currentColumn++)
+			/* Flaten and create a 1-D array of Value & Datums */
+			foreach(lc, req->rowData)
 			{
-				if (row->isNull[currentColumn]) /* null */
-					nulls[count] = row->isNull[currentColumn];
-				else
-					values[count] = row->columnValues[currentColumn];
-				count++;
+				BulkLoadRowData *row = (BulkLoadRowData *) lfirst(lc);
+
+				for (int currentColumn = 0; currentColumn < req->colCount; currentColumn++)
+				{
+					if (row->isNull[currentColumn]) /* null */
+						nulls[count] = row->isNull[currentColumn];
+					else
+						values[count] = row->columnValues[currentColumn];
+					count++;
+				}
 			}
 		}
 
-		if (req->rowData)		/* If any row exists then do an insert. */
+		PG_TRY();
 		{
-			PG_TRY();
-			{
-				retValue += pltsql_plugin_handler_ptr->bulk_load_callback(req->colCount,
-																		  req->rowCount, values, nulls);
-			}
-			PG_CATCH();
-			{
-				int			ret = 0;
+			retValue += pltsql_plugin_handler_ptr->bulk_load_callback(req->rowCount ? req->colCount : 0,
+																		req->rowCount, values, nulls);
 
-				HOLD_CANCEL_INTERRUPTS();
-				HOLD_INTERRUPTS();
-
-				/*
-				 * Discard remaining TDS_BULK_LOAD packets only if End of
-				 * Message has not been reached for the current request.
-				 * Otherwise we have no TDS_BULK_LOAD packets left for the
-				 * current request that need to be discarded.
-				 */
-				if (!TdsGetRecvPacketEomStatus())
-					ret = TdsDiscardAllPendingBcpRequest();
-
-				RESUME_CANCEL_INTERRUPTS();
-
-				if (ret < 0)
-					TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
-
-				if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
-					ereport(LOG,
-							(errmsg("Bulk Load Request. Number of Rows: %d and Number of columns: %d.",
-									req->rowCount, req->colCount),
-							 errhidestmt(true)));
-
-				RESUME_INTERRUPTS();
-				PG_RE_THROW();
-			}
-			PG_END_TRY();
 			/* Free the List of Rows. */
-			list_free_deep(req->rowData);
-			req->rowData = NIL;
+			if (req->rowData)
+			{
+				list_free_deep(req->rowData);
+				req->rowData = NIL;
+			}
+			/* If there we no rows then we have reached the end of the loop. */
+			else
+				endOfMessage = true;
+
 			if (values)
 				pfree(values);
 			if (nulls)
 				pfree(nulls);
 		}
+		PG_CATCH();
+		{
+			if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
+				ereport(LOG,
+					(errmsg("Bulk Load Request. Number of Rows: %d and Number of columns: %d.",
+						 req->rowCount, req->colCount),
+						 errhidestmt(true)));
+
+			CleanupBCPDuringError(internal_sp_started, before_subtxn_id,
+					 before_lxid, oldowner, oldcontext);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 	}
+	/* Reset the offset at the end of the request. */
+	TdsResetBcpOffset();
+
+	/* If we Started an internal savepoint then release it. */
+	if (internal_sp_started && before_subtxn_id == GetCurrentSubTransactionId())
+	{
+		elog(DEBUG5, "TSQL TXN Release internal savepoint");
+		ReleaseCurrentSubTransaction();
+		CurrentResourceOwner = oldowner;
+		MemoryContextSwitchTo(oldcontext);
+	}
+	/* Unlikely case where Transaction is active but the savepoints do not match. */
+	else if (unlikely(internal_sp_started && before_subtxn_id != GetCurrentSubTransactionId()))
+		ereport(FATAL,
+				 (errcode(ERRCODE_PROTOCOL_VIOLATION),
+				  errmsg("The current Transaction was found to be in inconsisten state "
+						 "during Bulk Copy")));
 
 	/*
 	 * Send Done Token if rows processed is a positive number. Command type -
@@ -1054,7 +1125,6 @@ ProcessBCPRequest(TDSRequest request)
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
 	}
-	offset = 0;
 }
 
 static int
@@ -1066,8 +1136,8 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 	unsigned long lenCheck = 0;
 
 	CheckPlpMessageHasEnoughBytesToRead(message, sizeof(plpTok));
-	memcpy(&plpTok, &(*message)->data[offset], sizeof(plpTok));
-	offset += sizeof(plpTok);
+	memcpy(&plpTok, &(*message)->data[bcpOffset], sizeof(plpTok));
+	bcpOffset += sizeof(plpTok);
 	request->currentBatchSize += sizeof(plpTok);
 	temp->plp = NULL;
 
@@ -1083,11 +1153,11 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 		uint32_t	tempLen;
 
 		CheckPlpMessageHasEnoughBytesToRead(message, sizeof(tempLen));
-		if (offset + sizeof(tempLen) > (*message)->len)
+		if (bcpOffset + sizeof(tempLen) > (*message)->len)
 			return STATUS_ERROR;
 
-		memcpy(&tempLen, &(*message)->data[offset], sizeof(tempLen));
-		offset += sizeof(tempLen);
+		memcpy(&tempLen, &(*message)->data[bcpOffset], sizeof(tempLen));
+		bcpOffset += sizeof(tempLen);
 		request->currentBatchSize += sizeof(tempLen);
 
 		/* PLP Terminator */
@@ -1096,7 +1166,7 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 
 		plpTemp = palloc0(sizeof(PlpData));
 		plpTemp->next = NULL;
-		plpTemp->offset = offset;
+		plpTemp->offset = bcpOffset;
 		plpTemp->len = tempLen;
 		if (plpPrev == NULL)
 		{
@@ -1110,10 +1180,10 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 		}
 
 		CheckPlpMessageHasEnoughBytesToRead(message, plpTemp->len);
-		if (offset + plpTemp->len > (*message)->len)
+		if (bcpOffset + plpTemp->len > (*message)->len)
 			return STATUS_ERROR;
 
-		offset += plpTemp->len;
+		bcpOffset += plpTemp->len;
 		request->currentBatchSize += plpTemp->len;
 		lenCheck += plpTemp->len;
 	}

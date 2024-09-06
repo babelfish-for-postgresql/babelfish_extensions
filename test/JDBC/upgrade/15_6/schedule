@@ -385,7 +385,7 @@ sys-sysobjects
 sys-system_objects
 sys-system_sql_modules
 sys-system_sql_modules-dep
-sys-systypes
+sys-systypes-before-16-2
 sys_sysusers_dep
 sys-tables
 sys-tables-dep
@@ -538,6 +538,8 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
+string_agg-before-15_9-or-16_5
 space
 binary-datatype-operators
+cast-varchar-to-time
 

@@ -347,6 +347,7 @@ substring-before-15_8-or-16_4
 reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
+string_agg-before-14_5
 space
 binary-datatype-operators
-
+replace-before-15_8-or-16_4

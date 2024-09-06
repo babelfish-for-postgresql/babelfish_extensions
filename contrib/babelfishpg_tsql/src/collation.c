@@ -27,6 +27,7 @@
 
 #include "pltsql.h"
 #include "src/collation.h"
+#include "catalog.h"
 
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
@@ -45,7 +46,17 @@
 #define MAX_BYTES_PER_CHAR 4
 #define MAX_INPUT_LENGTH_TO_REMOVE_ACCENTS 250 * 1024 * 1024
 
-Oid			server_collation_oid = InvalidOid;
+/*
+ * Check if Uchar is lead surrogate pair, If Uchar is in
+ * the range D800 - DBFF then it is a lead surrogate pair
+ */
+#define UCHAR_IS_SURROGATE(c) ((c & 0xF800) == 0xD800)
+
+/* Find length of given Uchar */
+#define UCHAR_LENGTH(c) (UCHAR_IS_SURROGATE(c) ? 2 : 1)
+
+Oid			database_or_server_collation_oid = InvalidOid;
+
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
 static Oid remove_accents_internal_oid;
@@ -116,7 +127,7 @@ collation_list(PG_FUNCTION_ARGS)
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_OID(tsql_get_server_collation_oid_internal(false));
+	PG_RETURN_OID(tsql_get_database_or_server_collation_oid_internal(false));
 }
 
 
@@ -200,9 +211,9 @@ transform_funcexpr(Node *node)
 
 				/* text */
 
-				tsql_get_server_collation_oid_internal(true);
+				tsql_get_database_or_server_collation_oid_internal(true);
 
-				if (!OidIsValid(server_collation_oid))
+				if (!OidIsValid(database_or_server_collation_oid))
 					return node;
 
 				/*
@@ -322,9 +333,9 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
 
-	tsql_get_server_collation_oid_internal(true);
+	tsql_get_database_or_server_collation_oid_internal(true);
 
-	if (!OidIsValid(server_collation_oid))
+	if (!OidIsValid(database_or_server_collation_oid))
 		return node;
 
 
@@ -867,9 +878,9 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 {
 	int			collidx_of_cs_as;
 
-	tsql_get_server_collation_oid_internal(true);
+	tsql_get_database_or_server_collation_oid_internal(true);
 
-	if (!OidIsValid(server_collation_oid))
+	if (!OidIsValid(database_or_server_collation_oid))
 		return node;
 
 	/*
@@ -898,8 +909,13 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	return transform_likenode_for_AI(node, op);	
 }
 
-static bool
-supported_AI_collation_for_like(int32_t code_page)
+/*
+ * Currently we support Latin based collations for LIKE for AI
+ * and database level collation 
+ * The following code pages corresponds to the expected collations
+ */
+bool
+supported_collation_for_db_and_like(int32_t code_page)
 {
 	if (code_page == 1250 || code_page == 1252 || code_page == 1257)
 		return true;
@@ -955,7 +971,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
 		{
-			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
+			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
 				return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
@@ -967,7 +983,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
-			if (supported_AI_collation_for_like(coll_info_of_inputcollid.code_page))
+			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
 				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
@@ -1158,17 +1174,21 @@ init_and_check_collation_callbacks(void)
 	}
 }
 
+/*
+ * Wrapper of get_database_or_server_collation_oid_internal function in common extension
+ * which returns database collation Oid if valid else return server collation Oid
+ */
 Oid
-tsql_get_server_collation_oid_internal(bool missingOk)
+tsql_get_database_or_server_collation_oid_internal(bool missingOk)
 {
-	if (OidIsValid(server_collation_oid))
-		return server_collation_oid;
+	if (OidIsValid(database_or_server_collation_oid))
+		return database_or_server_collation_oid;
 
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	server_collation_oid = (*collation_callbacks_ptr->get_server_collation_oid_internal) (missingOk);
-	return server_collation_oid;
+	database_or_server_collation_oid = (*collation_callbacks_ptr->get_database_or_server_collation_oid_internal) (missingOk);
+	return database_or_server_collation_oid;
 }
 
 Datum
@@ -1217,12 +1237,12 @@ tsql_collationproperty_helper(const char *collationaname, const char *property)
 }
 
 bool
-tsql_is_server_collation_CI_AS(void)
+tsql_is_database_or_server_collation_CI(void)
 {
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	return (*collation_callbacks_ptr->is_server_collation_CI_AS) ();
+	return (*collation_callbacks_ptr->is_database_or_server_collation_CI) ();
 }
 
 bool
@@ -1296,6 +1316,15 @@ tsql_translate_bbf_collation_to_tsql_collation(const char *collname)
 	init_and_check_collation_callbacks();
 
 	return (*collation_callbacks_ptr->translate_bbf_collation_to_tsql_collation) (collname);
+}
+
+const char *
+tsql_translate_tsql_collation_to_bbf_collation(const char *collname)
+{
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	return (*collation_callbacks_ptr->translate_tsql_collation_to_bbf_collation) (collname);
 }
 
 bool
@@ -1475,12 +1504,13 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 		int32_t src_len_utf8 = VARSIZE_ANY_EXHDR(src_text);
 		int32_t substr_len_utf8 = VARSIZE_ANY_EXHDR(substr_text);
 		int32_t src_ulen, substr_ulen;
-		int32_t u8_pos = -1;
+		int32_t u8_pos = -1, pos_prev_loop = -1;
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
 		UChar *src_uchar, *substr_uchar;
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(collid);
 		bool is_CS_AI = false;
+		bool is_substr_starts_with_surrogate;
 
 		if (OidIsValid(coll_info_of_inputcollid.oid) &&
 		    coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
@@ -1490,6 +1520,8 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 
 		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len_utf8);
 		substr_ulen = icu_to_uchar(&substr_uchar, VARDATA_ANY(substr_text), substr_len_utf8);
+
+		is_substr_starts_with_surrogate = UCHAR_IS_SURROGATE(substr_uchar[0]);
 
 		usearch = usearch_openFromCollator(substr_uchar,
 										substr_ulen,
@@ -1507,7 +1539,7 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 					 errmsg("failed to perform ICU search: %s",
 							u_errorName(status))));
 
-		for (int u16_pos = usearch_first(usearch, &status);
+		for (int32_t u16_pos = usearch_first(usearch, &status);
 		     u16_pos != USEARCH_DONE;
 		     u16_pos = usearch_next(usearch, &status))
 		{
@@ -1516,6 +1548,27 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("failed to perform ICU search: %s",
 							u_errorName(status))));
+
+			/* ICU bug, When pattern start with a surrogate pair ICU usearch_next stops moving forward entering an infinite loop */
+			if (u16_pos == pos_prev_loop)
+			{
+				int32_t next_char_idx = u16_pos + UCHAR_LENGTH(src_uchar[u16_pos]);
+
+				if (is_substr_starts_with_surrogate && next_char_idx < src_ulen)
+				{
+					usearch_setOffset(usearch, next_char_idx, &status);
+
+					if (U_FAILURE(status))
+						ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+						        errmsg("failed to set offset in ICU search: %s", u_errorName(status))));
+
+					continue;
+				}
+				else
+					break;
+			}
+
+			pos_prev_loop = u16_pos;
 
 			/* for CS_AI collations usearch can give false positives so we double check the results here */
 			if (!(is_CS_AI && icu_compare_utf8_coll(mylocale->info.icu.ucol, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), substr_uchar, substr_ulen, false) != 0))
@@ -1564,7 +1617,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		int32_t src_len = VARSIZE_ANY_EXHDR(src_text);
 		int32_t from_str_len = VARSIZE_ANY_EXHDR(from_text);
 		int32_t to_str_len = VARSIZE_ANY_EXHDR(to_text);
-		int32_t previous_pos;
+		int32_t previous_pos, pos_prev_loop = -1;
 		int32_t src_ulen, from_ulen;		/* in utf-16 units */
 		UErrorCode	status = U_ZERO_ERROR;
 		UStringSearch *usearch;
@@ -1573,6 +1626,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		StringInfoData resbuf;
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(collid);
 		bool is_CS_AI = false;
+		bool is_substr_starts_with_surrogate;
 
 		if (OidIsValid(coll_info_of_inputcollid.oid) &&
 		    coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
@@ -1582,6 +1636,8 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 
 		src_ulen = icu_to_uchar(&src_uchar, VARDATA_ANY(src_text), src_len);
 		from_ulen = icu_to_uchar(&from_uchar, VARDATA_ANY(from_text), from_str_len);
+
+		is_substr_starts_with_surrogate = UCHAR_IS_SURROGATE(from_uchar[0]);
 
 		usearch = usearch_openFromCollator(from_uchar, /* needle */
 										from_ulen,
@@ -1596,7 +1652,7 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 		initStringInfo(&resbuf);
 		previous_pos = 0;
 
-		for (int pos = usearch_first(usearch, &status);
+		for (int32_t pos = usearch_first(usearch, &status);
 		     pos != USEARCH_DONE;
 		     pos = usearch_next(usearch, &status))
 		{
@@ -1608,6 +1664,27 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("failed to perform ICU search: %s",
 							u_errorName(status))));
+
+			/* ICU bug, When pattern start with a surrogate pair ICU usearch_next stops moving forward entering an infinite loop */
+			if (pos == pos_prev_loop)
+			{
+				int32_t next_char_idx = pos + UCHAR_LENGTH(src_uchar[pos]);
+
+				if (is_substr_starts_with_surrogate && next_char_idx < src_ulen)
+				{
+					usearch_setOffset(usearch, next_char_idx, &status);
+
+					if (U_FAILURE(status))
+						ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+						        errmsg("failed to set offset in ICU search: %s", u_errorName(status))));
+
+					continue;
+				}
+				else
+					break;
+			}
+
+			pos_prev_loop = pos;
 
 			/* for CS_AI collations usearch can give false positives so we double check the results here */
 			if (is_CS_AI && icu_compare_utf8_coll(mylocale->info.icu.ucol, &src_uchar[usearch_getMatchedStart(usearch)], usearch_getMatchedLength(usearch), from_uchar, from_ulen, false) != 0)
@@ -1689,6 +1766,60 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 #endif
 	}
 	return false;
+}
+
+/* Find the collation corresponding to a specific database */
+char*
+get_collation_name_for_db(const char* dbname)
+{
+	HeapTuple	tuple;
+	Form_sysdatabases sysdb;
+	char *collation_name;
+
+	tuple = SearchSysCache1(SYSDATABASENAME, PointerGetDatum(cstring_to_text(dbname)));
+
+	if (!HeapTupleIsValid(tuple))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("Could not find database: \"%s\"", dbname)));
+
+	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	collation_name = pstrdup(NameStr(sysdb->default_collation));
+
+	ReleaseSysCache(tuple);
+	return collation_name;
+}
+
+/* 
+ * We need to communicate to common extension
+ * that user has invoked USE DB command
+ * Hence, we need to update the cache related to -
+ * 1. database collation oid
+ * 2. database collation index
+ * 
+ * Also, We are processesing USE DB command
+ * Communicate the same to common extension
+ * so that collation related information gets updated
+ */
+void
+set_db_collation_internal(const char *db_name)
+{
+	Oid database_collation_oid;
+
+	/* Get collation oid corresponding to collation name */
+	database_collation_oid = get_collation_oid(list_make1(makeString((char*)get_collation_name_for_db(db_name))), false);
+
+	if (!OidIsValid(database_collation_oid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_DATABASE),
+			 errmsg("Could not find database with collation oid \"%u\"", database_collation_oid)));
+
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	(*collation_callbacks_ptr->set_db_collation) (database_collation_oid);
+
+	database_or_server_collation_oid = InvalidOid;
 }
 
 /*
