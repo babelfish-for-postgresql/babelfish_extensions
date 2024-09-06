@@ -2372,7 +2372,8 @@ get_windows_domain_name(char* input){
  * Check whether the domain name is supported or not
  */
 bool
-windows_domain_is_not_supported(char* domain_name){
+windows_domain_is_not_supported(char* domain_name)
+{
 	if(strcasecmp(domain_name, "nt service") == 0) {
 		return true;
 	}
