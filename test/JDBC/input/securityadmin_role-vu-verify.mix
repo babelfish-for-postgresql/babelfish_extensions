@@ -12,10 +12,10 @@ go
 -- securityadmin's login privileges
 -- tsql user=securityadmin_login1 password=123
 -- alter server role securityadmin should be allowed
-select bbf_is_member_of_role_nosuper(suser_id(), 'securityadmin')
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('securityadmin'))
 go
 
-select bbf_is_member_of_role_nosuper(suser_id(), 'sysadmin')
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('sysadmin'))
 go
 
 Alter server role securityadmin add member no_securityadmin_login1
@@ -526,10 +526,10 @@ go
 select * from securityadmin_show_role_mem
 go
 
-select bbf_is_member_of_role_nosuper(suser_id(), 'securityadmin')
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('securityadmin'))
 go
 
-select bbf_is_member_of_role_nosuper(suser_id(), 'sysadmin')
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('sysadmin'))
 go
 
 select current_user, db_name()

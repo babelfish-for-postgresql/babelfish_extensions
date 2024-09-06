@@ -145,7 +145,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
 	else if (strcmp(stmt->role, "bbf_role_admin") == 0)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("Z");
-	else if (strcmp(stmt->role, "securityadmin") == 0)
+	else if (strcmp(stmt->role, BABELFISH_SECURITYADMIN) == 0)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
 	else if (from_windows)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("U");
@@ -624,7 +624,7 @@ Oid
 get_securityadmin_oid(void)
 {
 	if (!OidIsValid(securityadmin_oid))
-		securityadmin_oid = get_role_oid("securityadmin", false);
+		securityadmin_oid = get_role_oid(BABELFISH_SECURITYADMIN, false);
 	return securityadmin_oid;
 }
 
@@ -1598,11 +1598,11 @@ is_alter_server_stmt(GrantRoleStmt *stmt)
 		RoleSpec   *spec = (RoleSpec *) linitial(stmt->granted_roles);
 		int     	rolename_len = strlen(spec->rolename);
 
-		if (rolename_len == 8 && strncmp(spec->rolename, "sysadmin", 8) == 0)
+		if (rolename_len == 8 && strncmp(spec->rolename, BABELFISH_SYSADMIN, 8) == 0)
 			is_sysadmin = true;
 
 		/* only supported server roles */
-		if (is_sysadmin || (rolename_len == 13 && strncmp(spec->rolename, "securityadmin", 13) == 0))
+		if (is_sysadmin || (rolename_len == 13 && strncmp(spec->rolename, BABELFISH_SECURITYADMIN, 13) == 0))
 			return true;
 	}
 	/* if granted role is sysadmin and has one and only one grantee  */
@@ -1623,11 +1623,9 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	CatCList   *memlist;
 	Oid			sysadmin;
 	char	   *db_name;
-	Oid       	securityadmin_oid;
 
 	spec = (RoleSpec *) linitial(stmt->grantee_roles);
 	sysadmin = get_role_oid("sysadmin", false);
-	securityadmin_oid = get_securityadmin_oid();
 
 	granted = (AccessPriv *) linitial(stmt->granted_roles);
 	granted_name = granted->priv_name;
@@ -1653,8 +1651,8 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	 * check if it has sysadmin privileges or
 	 * if server role is securityadmin and it has privileges of securityadmin
 	 */
-	if (!has_privs_of_role(GetSessionUserId(), sysadmin) && ((strcmp(granted_name, "securityadmin") != 0)
-										|| !has_privs_of_role(GetSessionUserId(), securityadmin_oid)))
+	if (!has_privs_of_role(GetSessionUserId(), sysadmin) && ((strcmp(granted_name, BABELFISH_SECURITYADMIN) != 0)
+										|| !has_privs_of_role(GetSessionUserId(), get_securityadmin_oid())))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Current login %s does not have permission to alter server role",
@@ -2461,17 +2459,13 @@ Datum
 bbf_is_member_of_role_nosuper(PG_FUNCTION_ARGS)
 {
 	Oid	member, role;
-	char	*rolename;
-	char	*dc_role;
 	bool	result;
 
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		PG_RETURN_NULL();
 
 	member = PG_GETARG_OID(0);
-	rolename = text_to_cstring(PG_GETARG_TEXT_P(1));
-	dc_role = downcase_identifier(rolename, strlen(rolename), false, false);
-	role = get_role_oid(dc_role, false);
+	role = PG_GETARG_OID(1);
 
 	result = is_member_of_role_nosuper(member, role);
 

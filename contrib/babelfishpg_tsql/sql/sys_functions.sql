@@ -4418,7 +4418,7 @@ $$
 $$
 LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bbf_is_member_of_role_nosuper(OID, sys.SYSNAME)
+CREATE OR REPLACE FUNCTION sys.bbf_is_member_of_role_nosuper(OID, OID)
 RETURNS BOOLEAN AS 'babelfishpg_tsql', 'bbf_is_member_of_role_nosuper'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
 

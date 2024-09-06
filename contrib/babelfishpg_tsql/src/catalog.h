@@ -311,6 +311,8 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define Anum_bbf_schema_perms_grantor 8
 
 #define PUBLIC_ROLE_NAME "public"
+#define BABELFISH_SECURITYADMIN "securityadmin"
+#define BABELFISH_SYSADMIN "sysadmin"
 #define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
 #define ALL_PERMISSIONS_ON_RELATION 47 /* last 6 bits as 101111 represents ALL privileges on a relation. */
 #define ALL_PERMISSIONS_ON_FUNCTION 128 /* last 8 bits as 10000000 represents ALL privileges on a procedure/function. */

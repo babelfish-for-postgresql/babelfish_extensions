@@ -3128,23 +3128,7 @@ tsql_alter_server_role:
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
 			
-			if (strcmp($4, "serveradmin") == 0
-				|| strcmp($4, "setupadmin") == 0
-				|| strcmp($4, "processadmin") == 0
-				|| strcmp($4, "dbcreator") == 0
-				|| strcmp($4, "diskadmin") == 0
-				|| strcmp($4, "bulkadmin") == 0) 
-			{
-					ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Server role '%s' is currently not supported in Babelfish", $4),
-												parser_errposition(@4)));
-			}
-			else if (strcmp($4, "sysadmin") != 0 && strcmp($4, "securityadmin") != 0)
-			{
-				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Only fixed server role is supported in ALTER SERVER ROLE statement"),
-									parser_errposition(@4)));
-			}
+			is_server_role_supported ($4, @4, yyscanner);
 
 			ap->priv_name = $4;
 			n->is_grant = true;
@@ -3159,23 +3143,7 @@ tsql_alter_server_role:
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
 			
-			if (strcmp($4, "serveradmin") == 0
-				|| strcmp($4, "setupadmin") == 0
-				|| strcmp($4, "processadmin") == 0
-				|| strcmp($4, "dbcreator") == 0
-				|| strcmp($4, "diskadmin") == 0
-				|| strcmp($4, "bulkadmin") == 0) 
-			{
-					ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Server role '%s' is currently not supported in Babelfish", $4),
-												parser_errposition(@4)));
-			}
-			else if (strcmp($4, "sysadmin") != 0 && strcmp($4, "securityadmin") != 0)
-			{
-				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Only fixed server role is supported in ALTER SERVER ROLE statement"),
-									parser_errposition(@4)));
-			}
+			is_server_role_supported ($4, @4, yyscanner);
 
 			ap->priv_name = $4;
 			n->is_grant = false;

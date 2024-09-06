@@ -18,7 +18,7 @@ securityadmin#!#securityadmin_login1
 -- Case 1 - positives 
 -- securityadmin's login privileges
 -- alter server role securityadmin should be allowed
-select bbf_is_member_of_role_nosuper(suser_id(), 'securityadmin')
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('securityadmin'))
 go
 ~~START~~
 bit
@@ -26,7 +26,7 @@ bit
 ~~END~~
 
 
-select bbf_is_member_of_role_nosuper(suser_id(), 'sysadmin')
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('sysadmin'))
 go
 ~~START~~
 bit
@@ -848,35 +848,35 @@ Alter server role serveradmin add member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'serveradmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'serveradmin' is currently not supported in Babelfish)~~
 
 
 Alter server role setupadmin add member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'setupadmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'setupadmin' is currently not supported in Babelfish)~~
 
 
 Alter server role processadmin add member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'processadmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'processadmin' is currently not supported in Babelfish)~~
 
 
 Alter server role diskadmin add member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'diskadmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'diskadmin' is currently not supported in Babelfish)~~
 
 
 Alter server role bulkadmin add member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'bulkadmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'bulkadmin' is currently not supported in Babelfish)~~
 
 
 Alter server role false_role drop member no_securityadmin_login1
@@ -890,35 +890,35 @@ Alter server role serveradmin drop member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'serveradmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'serveradmin' is currently not supported in Babelfish)~~
 
 
 Alter server role setupadmin drop member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'setupadmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'setupadmin' is currently not supported in Babelfish)~~
 
 
 Alter server role processadmin drop member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'processadmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'processadmin' is currently not supported in Babelfish)~~
 
 
 Alter server role diskadmin drop member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'diskadmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'diskadmin' is currently not supported in Babelfish)~~
 
 
 Alter server role bulkadmin drop member no_securityadmin_login1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Server role 'bulkadmin' is currently not supported in Babelfish)~~
+~~ERROR (Message: Fixed server role 'bulkadmin' is currently not supported in Babelfish)~~
 
 
 -- terminate-tsql-conn user=securityadmin_login1 password=123
@@ -954,7 +954,7 @@ sysadmin#!#securityadmin_restrict_new_login
 ~~END~~
 
 
-select bbf_is_member_of_role_nosuper(suser_id(), 'securityadmin')
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('securityadmin'))
 go
 ~~START~~
 bit
@@ -962,7 +962,7 @@ bit
 ~~END~~
 
 
-select bbf_is_member_of_role_nosuper(suser_id(), 'sysadmin')
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('sysadmin'))
 go
 ~~START~~
 bit

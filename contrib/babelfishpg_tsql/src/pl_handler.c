@@ -2868,8 +2868,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * Check if the current login has privileges to create
 						 * login.
 						 */
-						if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)) &&
-																	!has_privs_of_role(GetSessionUserId(), get_securityadmin_oid()))
+						if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+								!has_privs_of_role(GetSessionUserId(), get_securityadmin_oid()))
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									 errmsg("Current login %s does not have permission to create new login",
@@ -3073,7 +3073,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						int 		save_sec_context;
 						Oid 		securityadm_oid;
 
-						datdba = get_role_oid("sysadmin", false);
+						datdba = get_sysadmin_oid();
 						securityadm_oid = get_securityadmin_oid();
 
 						/*
@@ -3448,7 +3448,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * Check if the current login has privileges to drop
 						 * login.
 						 */
-						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))
+						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_sysadmin_oid())
 						                                           && !has_privs_of_role(GetSessionUserId(), securityadmin_oid)){
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -3674,7 +3674,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					initStringInfo(&query);
 					
 					/* If sysadmin, provide attribute for role and database priv */
-					if (strlen(rolspec->rolename) == 8 && strncmp(rolspec->rolename, "sysadmin", 8) == 0)
+					if (strlen(rolspec->rolename) == 8 && strncmp(rolspec->rolename, BABELFISH_SYSADMIN, 8) == 0)
 					{
 						if (grant_role->is_grant)
 							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
