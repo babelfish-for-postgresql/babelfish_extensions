@@ -556,40 +556,34 @@ bcp -E#!#sourceTable1#!#destinationTable
 #Q#drop table sourceTable
 #Q#drop table sourceTable1
 #Q#drop table destinationTable
-#Q#create table sourceTable(c1 int identity, c2 CHAR(1024), check (c1 < 1000))
+#Q#create table sourceTable(c1 int identity, c2 CHAR(1024))
 #Q# set IDENTITY_INSERT sourceTable ON
 #Q#INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
-#E#new row for relation "sourcetable" violates check constraint "sourcetable_c1_check"
 #Q# set IDENTITY_INSERT sourceTable OFF
 #Q#create table destinationTable(c1 int identity, c2 CHAR(1024), check (c1 < 500))
-#Q# set IDENTITY_INSERT destinationTable ON
-#Q#INSERT INTO destinationTable (c1, c2) VALUES(1001, 'Foo')
-#E#new row for relation "destinationtable" violates check constraint "destinationtable_c1_check"
-#Q# set IDENTITY_INSERT destinationTable OFF
+bcp#!#sourceTable1#!#destinationTable
 bcp -E#!#sourceTable#!#destinationTable
-#Q#create table sourceTable1(c1 int identity, c2 CHAR(1024), check (c1 < 1000))
+#Q#create table sourceTable1(c1 int identity, c2 CHAR(1024))
 #Q# set IDENTITY_INSERT sourceTable1 ON
 #Q#INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
-#E#new row for relation "sourcetable1" violates check constraint "sourcetable1_c1_check"
 #Q#INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
-#E#new row for relation "sourcetable1" violates check constraint "sourcetable1_c1_check"
 #Q# set IDENTITY_INSERT sourceTable1 OFF
 bcp -E#!#sourceTable1#!#destinationTable
 #Q#Select count(c1) from sourceTable
 #D#int
-0
+1001
 #Q#select count(c1) from sourceTable1
 #D#int
-0
+1001
 #Q#select count(c1) from destinationTable
 #D#int
 0
 #Q#select Ident_CURRENT('sourceTable')
 #D#decimal
-1
+1001
 #Q#select Ident_CURRENT('sourceTable1')
 #D#decimal
-1
+1001
 #Q#select Ident_CURRENT('destinationTable')
 #D#decimal
 1

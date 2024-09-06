@@ -1021,24 +1021,17 @@ EndBulkCopy(BulkCopyState cstate, bool aborted)
 		{
 			/* calculate the previous seed value */
 			int64	init_identity_value = 1;
-			ListCell	*seq_lc;
-			List	*seq_options = sequence_options(cstate->seqid);
+			bool	found_last_identity_value = false;
 
-			foreach(seq_lc, seq_options)
-			{
-				DefElem    *defel = (DefElem *) lfirst(seq_lc);
-
-				if (strcmp(defel->defname, "start") == 0)
-				{
-					init_identity_value = defGetInt64(defel);
-					break;
-				}
-			}
-
+			/* 
+			 * Fetch the last identity sequence value stored in the pg_sequences catalog. 
+			 * If not set, use the seed value instead.
+			 */
 			PG_TRY();
 			{
 				init_identity_value = DirectFunctionCall1(pg_sequence_last_value,
 															ObjectIdGetDatum(cstate->seqid));
+				found_last_identity_value = true;
 			}
 			PG_CATCH();
 			{
@@ -1046,13 +1039,29 @@ EndBulkCopy(BulkCopyState cstate, bool aborted)
 			}
 			PG_END_TRY();
 
+			if (!found_last_identity_value)
+			{
+				ListCell	*seq_lc;
+				List	*seq_options = sequence_options(cstate->seqid);
+
+				foreach(seq_lc, seq_options)
+				{
+					DefElem    *defel = (DefElem *) lfirst(seq_lc);
+
+					if (strcmp(defel->defname, "start") == 0)
+					{
+						init_identity_value = defGetInt64(defel);
+						break;
+					}
+				}
+				pfree(seq_options);
+			}
+
 			if ((cstate->identity_col_incr_value > 0 && cstate->cur_identity_value > init_identity_value) || 
 				(cstate->identity_col_incr_value < 0 && cstate->cur_identity_value < init_identity_value))
 				DirectFunctionCall2(setval_oid,
 								ObjectIdGetDatum(cstate->seqid),
 								Int64GetDatum(cstate->cur_identity_value));
-
-			pfree(seq_options);
 		}
 
 		/* Flush any remaining bufferes out to the table. */

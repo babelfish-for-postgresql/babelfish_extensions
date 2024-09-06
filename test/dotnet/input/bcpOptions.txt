@@ -230,6 +230,7 @@ Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
 
+# check if the identity value for newly inserted column is correctly assigned
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity)
 insert into sourceTable values (1), (2), (3)
@@ -243,6 +244,7 @@ Select Ident_CURRENT('destinationTable')
 drop table sourceTable
 drop table destinationTable
 
+# tests are same as in bcp.txt but with keep identity flag ON
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity)
  set IDENTITY_INSERT sourceTable ON
@@ -355,6 +357,7 @@ Select Ident_CURRENT('destinationTable')
 drop table sourceTable
 drop table destinationTable
 
+# test identity with primary key, will raise error on duplicate entries
 create table sourceTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
  set IDENTITY_INSERT sourceTable ON
 INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
@@ -380,16 +383,15 @@ drop table sourceTable
 drop table sourceTable1
 drop table destinationTable
 
-create table sourceTable(c1 int identity, c2 CHAR(1024), check (c1 < 1000))
+# test identity with check constraint, will raise error on entries violating the constraint
+create table sourceTable(c1 int identity, c2 CHAR(1024))
  set IDENTITY_INSERT sourceTable ON
 INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
  set IDENTITY_INSERT sourceTable OFF
 create table destinationTable(c1 int identity, c2 CHAR(1024), check (c1 < 500))
- set IDENTITY_INSERT destinationTable ON
-INSERT INTO destinationTable (c1, c2) VALUES(1001, 'Foo')
- set IDENTITY_INSERT destinationTable OFF
+bcp#!#sourceTable1#!#destinationTable
 bcp -E#!#sourceTable#!#destinationTable
-create table sourceTable1(c1 int identity, c2 CHAR(1024), check (c1 < 1000))
+create table sourceTable1(c1 int identity, c2 CHAR(1024))
  set IDENTITY_INSERT sourceTable1 ON
 INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
 INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
@@ -405,6 +407,7 @@ drop table sourceTable
 drop table sourceTable1
 drop table destinationTable
 
+# retry the bcp command in a loop
 create table sourceTable(c1 int identity, c2 CHAR(1024))
  set IDENTITY_INSERT sourceTable ON
 INSERT INTO sourceTable (c1, c2) VALUES (1, 'Foo'), (2, 'Foo')

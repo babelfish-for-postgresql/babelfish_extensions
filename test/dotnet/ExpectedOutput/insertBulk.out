@@ -379,6 +379,48 @@ hello#!#jello
 2#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#Create table sourceTable(a int identity, b int)
+#Q#Create table destinationTable(a int identity(1, 2), b int)
+#Q#insert into sourceTable values (1)
+#Q#insert into sourceTable values (2)
+#Q# set IDENTITY_INSERT destinationTable ON
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+3#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+2
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+3
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int identity, b int)
+#Q#Create table destinationTable(a int identity(1, 2), b int)
+#Q#insert into sourceTable values (1)
+#Q#insert into sourceTable values (2)
+#Q# set IDENTITY_INSERT destinationTable ON
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+2
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int identity)
 #Q#Create table destinationTable(a int, b int identity)
 #Q# set IDENTITY_INSERT sourceTable ON

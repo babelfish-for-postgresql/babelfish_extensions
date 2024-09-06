@@ -334,6 +334,7 @@ Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
 
+# identity test when both tables have positive increment value and we insert less than seed value
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity)
  SET IDENTITY_INSERT sourceTable ON
@@ -348,6 +349,7 @@ Select Ident_CURRENT('destinationTable')
 drop table sourceTable
 drop table destinationTable
 
+# identity test when both tables have positive increment value and we insert more than seed value
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity)
  SET IDENTITY_INSERT sourceTable ON
@@ -362,6 +364,7 @@ Select Ident_CURRENT('destinationTable')
 drop table sourceTable
 drop table destinationTable
 
+# identity test when source table has negative increment value and we insert more than seed value
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity)
  SET IDENTITY_INSERT sourceTable ON
@@ -376,6 +379,7 @@ Select Ident_CURRENT('destinationTable')
 drop table sourceTable
 drop table destinationTable
 
+# identity test when source table has negative increment value and we insert less than seed value
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity)
  SET IDENTITY_INSERT sourceTable ON
@@ -390,6 +394,7 @@ Select Ident_CURRENT('destinationTable')
 drop table sourceTable
 drop table destinationTable
 
+# identity test when both tables have negative increment value and we insert more than seed value
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity(-1, -1))
  SET IDENTITY_INSERT sourceTable ON
@@ -404,6 +409,7 @@ Select Ident_CURRENT('destinationTable')
 drop table sourceTable
 drop table destinationTable
 
+# identity test when both tables have negative increment value and we insert less than seed value
 Create table sourceTable(a int, b int identity(-1, -1))
 Create table destinationTable(a int, b int identity(-1, -1))
  SET IDENTITY_INSERT sourceTable ON
@@ -418,6 +424,7 @@ Select Ident_CURRENT('destinationTable')
 drop table sourceTable
 drop table destinationTable
 
+# identity test when destination table has negative increment value and we insert less than seed value
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity(-1, -1))
  SET IDENTITY_INSERT sourceTable ON
@@ -432,6 +439,7 @@ Select Ident_CURRENT('destinationTable')
 drop table sourceTable
 drop table destinationTable
 
+# identity test when destination table has negative increment value and we insert more than seed value
 Create table sourceTable(a int, b int identity)
 Create table destinationTable(a int, b int identity(-1, -1))
  SET IDENTITY_INSERT sourceTable ON
