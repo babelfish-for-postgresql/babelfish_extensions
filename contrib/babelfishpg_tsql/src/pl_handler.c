@@ -139,7 +139,7 @@ static void call_prev_ProcessUtility(PlannedStmt *pstmt,
 						 DestReceiver *dest,
 						 QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
-static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc);
+static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc);
 static void pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl);
 static void bbf_func_ext_update_proc_definition(Oid oid);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
@@ -2406,13 +2406,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
-				       /*
-					* For ALTER PROC, we will:
-					* 1. Save important pg_proc metadata from the current proc (oid, proacl)
-					* 2. drop the current proc
-					* 3. create the new proc
-					* 4. update the pg_proc entry for the new proc with metadata from the old proc
-					* 5. update the babelfish_function_ext entry for the existing proc with new metadata based on the new proc
+				    /*
+					* For ALTER PROC/FUNC, we will:
+					* 1. Save important pg_proc metadata from the current proc/func (oid, proacl)
+					* 2. drop the current proc/func
+					* 3. create the new proc/func
+					* 4. update the pg_proc entry for the new proc with metadata from the old proc/func
+					* 5. update the babelfish_function_ext entry for the existing proc/func with new metadata based on the new proc/func
 					*/
 					AlterFunctionStmt *stmt = (AlterFunctionStmt *) parsetree;
 					bool 				isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
@@ -2422,9 +2422,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool				isSameProc;
 					ObjectAddress 		address;
 					CreateFunctionStmt	*cfs;
-					ListCell 			*option, *location_cell = NULL;
+					ListCell 			*option, *location_cell = NULL, *return_cell = NULL;
 					int 				origname_location = -1;
 					bool 				with_recompile = false;
+					ListCell            *parameter;
+
+					cfs = makeNode(CreateFunctionStmt);
 
 					if (!IS_TDS_CLIENT())
 					{
@@ -2469,37 +2472,83 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								*/
 								with_recompile = true;
 							}
+							else if (strcmp(defel->defname, "return") == 0)
+							{
+								cfs->returnType = (TypeName *) defel->arg;
+								return_cell = option;
+								pfree(defel);
+								stmt->objtype = OBJECT_FUNCTION;
+							}
 						}
 
 						/* delete location cell if it exists as it is for internal use only */
 						if (location_cell)
 							stmt->actions = list_delete_cell(stmt->actions, location_cell);
 
+						if (return_cell) 
+						{
+							if(location_cell)
+								return_cell -= 1;
+							stmt->actions = list_delete_cell(stmt->actions, return_cell);
+							cfs->is_procedure = false;
+						} else 
+						{
+							cfs->returnType = NULL;
+							cfs->is_procedure = true;
+						}
+
 						/* make a CreateFunctionStmt to pass into CreateFunction() */
-						cfs = makeNode(CreateFunctionStmt);
-						cfs->is_procedure = true;
 						cfs->replace = true;
 						cfs->funcname = stmt->func->objname;
 						cfs->parameters = stmt->func->objfuncargs;
-						cfs->returnType = NULL;
 						cfs->options = stmt->actions;
 
-						pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc);
-						if (!isSameProc) /* i.e. different signature */
+						foreach(parameter, cfs->parameters)
+						{
+							FunctionParameter* fp = (FunctionParameter*) lfirst(parameter);
+							if(fp->mode == FUNC_PARAM_TABLE)
+							{
+								fp->argType->setof = false;
+							}
+						}
+
+						pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc, cfs->is_procedure);
+						if(get_bbf_function_tuple_from_proctuple(SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid))) == NULL)
+						{
+							/* Detect PSQL functions and throw error */
+							ereport(ERROR,
+								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+									errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
+						}
+						if(!cfs->is_procedure)
+						{
+							/*
+							 * Postgres does not allow us to create functions with different return types
+							 * so we need to delete and recreate them 
+							 */
 							RemoveFunctionById(oldoid);
-						address = CreateFunction(pstate, cfs); /* if this is the same proc, will just update the existing one */
-						pg_proc_update_oid_acl(address, oldoid, proacl);
+							isSameProc = false;
+							CommandCounterIncrement();
+						}
+						else if (!isSameProc) /* i.e. different signature */
+						{
+							RemoveFunctionById(oldoid);
+						}
+
+						/* if this is the same procedure, it will update the existing one */
+						address = CreateFunction(pstate, cfs);
 						/* Update function/procedure related metadata in babelfish catalog */
 						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
-						/* Increase counter after bbf_func_ext modified in  pltsql_store_func_default_positions*/
+						/* Increase counter after bbf_func_ext modified in pltsql_store_func_default_positions*/
 						CommandCounterIncrement();
-						bbf_func_ext_update_proc_definition(oldoid);
+						bbf_func_ext_update_proc_definition(address.objectId);
+						pg_proc_update_oid_acl(address, oldoid, proacl);
 						if (!isSameProc) {
 						       /*
 							* When the signatures differ we need to manually update the 'function_args' column in 
 							* the 'bbf_schema_permissions' catalog
 							*/
-							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, OBJECT_PROCEDURE, oldoid);
+							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, stmt->objtype, oldoid);
 						}
 						/* Clean up table entries for the create function statement */
 						deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
@@ -4245,12 +4294,13 @@ call_prev_ProcessUtility(PlannedStmt *pstmt,
  * the found proc is the exact same proc as requested (i.e. the parameters match).
  */
 static void 
-pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc)
+pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc)
 {
 	int					spi_rc;
 	char				*funcname, *query;
 	bool				isnull;
 	Oid					schemaOid, funcOid;
+	Datum				aclDatum;
 
 	MemoryContext oldMemoryContext = CurrentMemoryContext;
 
@@ -4277,7 +4327,11 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 	*oid = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
 
 	MemoryContextSwitchTo(oldMemoryContext);
-	*acl = aclcopy(DatumGetAclP(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 2, &isnull)));
+	aclDatum = SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 2, &isnull);
+	if(DatumGetPointer(aclDatum) == NULL)
+		*acl = NULL;
+	else
+		*acl = aclcopy(DatumGetAclP(aclDatum));
 
 	if ((spi_rc = SPI_finish()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed in pltsql_proc_get_oid_proname_proacl with return code %d", spi_rc);
@@ -4333,7 +4387,10 @@ pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
 	memset(replaces, 0, sizeof(replaces));
 	values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(oid);
 	replaces[Anum_pg_proc_oid - 1] = true;
-	values[Anum_pg_proc_proacl - 1] = PointerGetDatum(acl);
+	if(acl)
+		values[Anum_pg_proc_proacl - 1] = PointerGetDatum(acl);
+	else
+		nulls[Anum_pg_proc_proacl - 1] = true;
 	replaces[Anum_pg_proc_proacl - 1] = true;
 
 	newtup = heap_modify_tuple(proctup, RelationGetDescr(rel), values, nulls, replaces);
@@ -4341,6 +4398,7 @@ pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
 
 	/* Clean up */
 	ReleaseSysCache(proctup);
+	heap_freetuple(newtup);
 
 	table_close(rel, RowExclusiveLock);
 }

@@ -339,6 +339,7 @@ extern void TdsSetAtAtStatVariable(TdsAtAtVarType at_at_var, int intVal, uint64 
 extern void TdsSetDatabaseStatVariable(int16 db_id);
 extern bool get_tds_database_backend_count(int16 db_id, bool ignore_current_connection);
 extern bool tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_backend);
+extern int tdsstat_fetch_stat_numbackends(void);
 extern void invalidate_stat_table(void);
 extern char *get_tds_host_name(void);
 extern uint32_t get_tds_client_pid(void);
