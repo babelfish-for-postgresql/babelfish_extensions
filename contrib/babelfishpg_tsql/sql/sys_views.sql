@@ -2173,9 +2173,9 @@ SELECT
          END AS SYS.TINYINT) AS key_ordinal,
     CAST(0 AS SYS.TINYINT) AS partition_ordinal,
     CAST(CASE
-          WHEN i.indoption[a.index_column_id-1] & 1 = 1 THEN 1
-          ELSE 0 
-    END AS SYS.BIT) AS is_descending_key,
+            WHEN i.indoption[a.index_column_id-1] & 1 = 1 THEN 1
+            ELSE 0 
+        END AS SYS.BIT) AS is_descending_key,
     CAST((a.index_column_id > i.indnkeyatts) AS SYS.BIT) AS is_included_column
 FROM
     pg_index i

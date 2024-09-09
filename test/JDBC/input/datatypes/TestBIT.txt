@@ -8,9 +8,8 @@ prepst#!#exec#!#BIT|-|a|-|<NULL>
 SELECT * FROM BIT_dt;
 INSERT INTO BIT_dt(a) values(1)
 INSERT INTO BIT_dt(a) values(0)
-#next two lines are not allowed
-#INSERT INTO BIT_dt(a) values(false)
-#INSERT INTO BIT_dt(a) values(true)
+INSERT INTO BIT_dt(a) values(false)
+INSERT INTO BIT_dt(a) values(true)
 INSERT INTO BIT_dt(a) values(NULL)
 SELECT * FROM BIT_dt;
 DROP TABLE BIT_dt;
