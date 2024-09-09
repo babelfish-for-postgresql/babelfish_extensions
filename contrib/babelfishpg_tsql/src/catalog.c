@@ -5001,6 +5001,46 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		CommitTransactionCommand();
 }
 
+bool
+user_exists_for_db(const char *db_name, const char *user_name)
+{
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple_user_ext;
+	ScanKeyData key[3];
+	TableScanDesc scan;
+	NameData   *rolname;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	rolname = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(rolname->data, NAMEDATALEN, "%s", user_name);
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(rolname));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+	ScanKeyInit(&key[2],
+				Anum_bbf_authid_user_ext_user_can_connect,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(1));
+	
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+
+	if (HeapTupleIsValid(tuple_user_ext))
+	{
+		table_endscan(scan);
+		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		return true;
+	}
+
+	return false;
+}
+
 /*
  * partition_function_id_exists
  *		Returns true if provided function id is in use, false otherwise.

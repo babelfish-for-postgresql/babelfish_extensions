@@ -161,6 +161,7 @@ extern void update_sysdatabases_db_name(const char *old_db_name, const char *new
 extern List *update_babelfish_namespace_ext_nsp_name(int16 db_id, char *new_db_name);
 extern List *update_babelfish_authid_user_ext_db_name(const char *old_db_name, const char *new_db_name);
 extern void rename_tsql_db(char *old_db_name, char *new_db_name);
+extern bool user_exists_for_db(const char *db_name, const char *user_name);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext

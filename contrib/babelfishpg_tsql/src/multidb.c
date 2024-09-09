@@ -1316,7 +1316,10 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
 				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
 			{
-				return new_user_name;
+				if(user_exists_for_db(db_name, new_user_name))
+				{
+					return new_user_name;
+				}
 			}
 		}
 	}
@@ -1325,10 +1328,15 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 
 	snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, new_user_name);
 
-	/* Truncate final result to 64 bytes */
-	truncate_tsql_identifier(result);
+	if(user_exists_for_db(db_name, result))
+	{
+		/* Truncate final result to 64 bytes */
+		truncate_tsql_identifier(result);
 
-	return result;
+		return result;
+	}
+
+	return NULL;
 }
 
 char *
