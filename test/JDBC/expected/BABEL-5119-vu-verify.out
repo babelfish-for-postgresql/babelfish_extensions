@@ -75,16 +75,16 @@ babel5119_1#!#dbo#!#babel5119_v3#!#VIEW
 
 
 SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
-ORDER BY COLUMN_NAME
+ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v1#!#?column?
-babel5119_v2#!#?column?
-babel5119_v3#!#?column?
 BABEL5119_t1#!#a
 BABEL5119_t2#!#a
 BABEL5119_t3#!#a
+babel5119_v1#!#?column?
+babel5119_v2#!#?column?
+babel5119_v3#!#?column?
 ~~END~~
 
 
