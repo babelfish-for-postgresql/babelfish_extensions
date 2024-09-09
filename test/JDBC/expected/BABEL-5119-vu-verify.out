@@ -1,115 +1,106 @@
 -- tsql user=login_babel5119_1 password=12345678
+USE master
+GO
+CREATE TABLE BABEL5119_t4(a int)
+GO
+CREATE TABLE BABEL5119_t5(a int)
+GO
+CREATE TABLE BABEL5119_t6(a int)
+GO
+INSERT INTO BABEL5119_t4 VALUES(1)
+GO
+~~ROW COUNT: 1~~
+
+CREATE VIEW BABEL5119_v4 AS SELECT 1
+GO
+CREATE VIEW BABEL5119_v5 AS SELECT 1
+GO
+CREATE VIEW BABEL5119_v6 AS SELECT 1
+GO
+CREATE PROCEDURE BABEL5119_p4 AS SELECT 1
+GO
+CREATE PROCEDURE BABEL5119_p5 AS SELECT 1
+GO
+CREATE PROCEDURE BABEL5119_p6 AS SELECT 1
+GO
+
 -- Checking crossdb for sys views
 USE BABEL5119_1
 GO
 
-SELECT name FROM BABEL5119_1.sys.databases
-UNION
-SELECT name FROM master.sys.databases
+SELECT name FROM master.sys.databases WHERE name LIKE 'BABEL5119%'
 ORDER BY name
 GO
 ~~START~~
 varchar
 babel5119_1
-master
-msdb
-tempdb
 ~~END~~
 
 
-SELECT name FROM BABEL5119_1.sys.views
-UNION
-SELECT name FROM master.sys.views
+SELECT name FROM master.sys.views WHERE name LIKE 'BABEL5119%'
 ORDER BY name
 GO
 ~~START~~
 varchar
+babel5119_v4
+babel5119_v5
+babel5119_v6
 ~~END~~
 
 
-SELECT name FROM BABEL5119_1.sys.procedures
-UNION
-SELECT name FROM master.sys.procedures
+SELECT name FROM master.sys.procedures WHERE name LIKE 'BABEL5119%'
 ORDER BY name
 GO
 ~~START~~
 varchar
-sp_addlinkedserver
-sp_addlinkedsrvlogin
-sp_droplinkedsrvlogin
-sp_dropserver
-sp_enum_oledb_providers
-sp_testlinkedserver
-xp_instance_regread
-xp_qv
+babel5119_p4
+babel5119_p5
+babel5119_p6
 ~~END~~
 
 
 -- Checking crossdb for information_schema_tsql
-SELECT * FROM BABEL5119_1.information_schema_tsql.tables
-UNION
-SELECT * FROM master.information_schema_tsql.tables
+SELECT * FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-babel5119_1#!#dbo#!#t1#!#BASE TABLE
-babel5119_1#!#dbo#!#v1#!#VIEW
+babel5119_1#!#dbo#!#BABEL5119_t1#!#BASE TABLE
+babel5119_1#!#dbo#!#BABEL5119_t2#!#BASE TABLE
+babel5119_1#!#dbo#!#BABEL5119_t3#!#BASE TABLE
+babel5119_1#!#dbo#!#babel5119_v1#!#VIEW
+babel5119_1#!#dbo#!#babel5119_v2#!#VIEW
+babel5119_1#!#dbo#!#babel5119_v3#!#VIEW
 ~~END~~
 
 
-SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_1.information_schema_tsql.columns
-UNION
-SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns
+SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY COLUMN_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-v1#!#?column?
-t1#!#a
-sysdatabases#!#category
-sysdatabases#!#cmptlevel
-sysdatabases#!#crdate
-sysdatabases#!#dbid
-sysdatabases#!#filename
-sysdatabases#!#mode
-sysdatabases#!#name
-sysdatabases#!#reserved
-sysdatabases#!#sid
-sysdatabases#!#status
-sysdatabases#!#status2
-sysdatabases#!#version
+babel5119_v1#!#?column?
+babel5119_v2#!#?column?
+babel5119_v3#!#?column?
+BABEL5119_t1#!#a
+BABEL5119_t2#!#a
+BABEL5119_t3#!#a
 ~~END~~
 
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_1.information_schema_tsql.views
-UNION
-SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views
+SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-v1#!#CREATE VIEW v1 AS SELECT 1
+babel5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1
+babel5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1
+babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1
 ~~END~~
 
 
 -- General crossdb queries
-USE master
-GO
-CREATE TABLE t2(a int)
-INSERT INTO t2 VALUES(1)
-GO
-~~ROW COUNT: 1~~
-
-CREATE VIEW v2 AS SELECT 1
-GO
-CREATE PROCEDURE p2 AS SELECT 1
-GO
-
-USE BABEL5119_1
-GO
-
-SELECT tb_1.*, tb_2.* FROM BABEL5119_1.dbo.t1 tb_1, master.guest.t2 tb_2 
+SELECT tb_1.*, tb_2.* FROM BABEL5119_1.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
 ~~START~~
 int#!#int
@@ -117,7 +108,7 @@ int#!#int
 ~~END~~
 
 
-SELECT vw_1.*, vw_2.* FROM BABEL5119_1.dbo.v1 vw_1, master.guest.v2 vw_2 
+SELECT vw_1.*, vw_2.* FROM BABEL5119_1.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
 ~~START~~
 int#!#int
@@ -126,26 +117,28 @@ int#!#int
 
 
 -- Using crossdb query data
-CREATE TABLE #tmp_db_ars(replica_id uniqueidentifier, group_id uniqueidentifier, replica_server_name sysname)
-INSERT INTO #tmp_db_ars select replica_id, group_id, replica_server_name  from  master.sys.availability_replicas   
+CREATE TABLE #babel5119_tmp_table_1(name VARCHAR(MAX), object_id int, schema_id int)
+INSERT INTO #babel5119_tmp_table_1 select name, object_id, schema_id from master.sys.tables WHERE name LIKE 'BABEL5119%'
 GO
+~~ROW COUNT: 3~~
 
-CREATE TABLE #tmp_db_ars2(v VARCHAR(MAX))
-INSERT INTO #tmp_db_ars2 SELECT name FROM BABEL5119_1.sys.databases UNION SELECT name FROM master.sys.databases
+
+CREATE TABLE #babel5119_tmp_table_2(name VARCHAR(MAX))
+INSERT INTO #babel5119_tmp_table_2 SELECT name FROM master.sys.databases WHERE name LIKE 'BABEL5119%'
 GO
-~~ROW COUNT: 4~~
+~~ROW COUNT: 1~~
 
 
-CREATE TABLE #tmp_db_ars3(v VARCHAR(MAX))
-INSERT INTO #tmp_db_ars3 SELECT TABLE_NAME FROM BABEL5119_1.information_schema_tsql.tables UNION SELECT TABLE_NAME FROM master.information_schema_tsql.tables
+CREATE TABLE #babel5119_tmp_table_3(name VARCHAR(MAX))
+INSERT INTO #babel5119_tmp_table_3 SELECT TABLE_NAME FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 6~~
 
 
-SELECT CAST(has_dbaccess(dtb.name) AS bit) AS [IsAccessible] FROM master.sys.databases AS dtb WHERE (dtb.name='BABEL5119_1')
+SELECT has_dbaccess(master.sys.databases.name) FROM master.sys.databases WHERE master.sys.databases.name='BABEL5119_1'
 GO
 ~~START~~
-bit
+int
 1
 ~~END~~
 
@@ -179,7 +172,7 @@ GO
 -- tsql user=login_babel5119_2 password=12345678
 USE BABEL5119_1
 GO
-INSERT INTO t1 VALUES(1)
+INSERT INTO BABEL5119_t1 VALUES(1)
 GO
 ~~ROW COUNT: 1~~
 
