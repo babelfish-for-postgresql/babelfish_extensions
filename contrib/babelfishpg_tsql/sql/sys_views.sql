@@ -427,8 +427,8 @@ select CAST(c.oid as int) as object_id
   , case when a.attnotnull then CAST(0 as sys.bit) else CAST(1 as sys.bit) end as is_nullable
   , CAST(0 as sys.bit) as is_ansi_padded
   , CAST(0 as sys.bit) as is_rowguidcol
-  , CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit) as is_identity
-  , CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit) as is_computed
+  , CAST(a.attidentity <> ''::"char" AS sys.bit) as is_identity
+  , CAST(a.attgenerated <> ''::"char" AS sys.bit) as is_computed
   , CAST(0 as sys.bit) as is_filestream
   , CAST(0 as sys.bit) as is_replicated
   , CAST(0 as sys.bit) as is_non_sql_subscribed
@@ -540,10 +540,10 @@ BEGIN
 			CAST(a.attcollation AS int),
 			CAST(a.attnum AS smallint),
 			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
-			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(t.typname in ('bpchar', 'nchar', 'binary') AS sys.bit),
 			CAST(0 AS sys.bit),
-			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
-			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(a.attidentity <> ''::"char" AS sys.bit),
+			CAST(a.attgenerated <> ''::"char" AS sys.bit),
 			CAST(0 AS sys.bit),
 			CAST(0 AS sys.bit),
 			CAST(0 AS sys.bit),
@@ -618,10 +618,10 @@ BEGIN
 			CAST(a.attcollation AS int),
 			CAST(a.attnum AS smallint),
 			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
-			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(t.typname in ('bpchar', 'nchar', 'binary') AS sys.bit),
 			CAST(0 AS sys.bit),
-			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
-			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(a.attidentity <> ''::"char" AS sys.bit),
+			CAST(a.attgenerated <> ''::"char" AS sys.bit),
 			CAST(0 AS sys.bit),
 			CAST(0 AS sys.bit),
 			CAST(0 AS sys.bit),
@@ -844,10 +844,10 @@ select
   , cast(I.relname as sys.sysname) as name
   , cast(case when X.indisclustered then 1 else 2 end as sys.tinyint) as type
   , cast(case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as sys.nvarchar(60)) as type_desc
-  , cast(case when X.indisunique then 1 else 0 end as sys.bit) as is_unique
+  , cast(X.indisunique as sys.bit) as is_unique
   , cast(case when ps.scheme_id is null then 1 else ps.scheme_id end as int) as data_space_id
   , cast(0 as sys.bit) as ignore_dup_key
-  , cast(case when X.indisprimary then 1 else 0 end as sys.bit) as is_primary_key
+  , cast(X.indisprimary as sys.bit) as is_primary_key
   , cast(case when const.oid is null then 0 else 1 end as sys.bit) as is_unique_constraint
   , cast(0 as sys.tinyint) as fill_factor
   , cast(case when X.indpred is null then 0 else 1 end as sys.bit) as is_padded
@@ -1164,7 +1164,7 @@ select cast(t.typname as sys.sysname) as name
     END as is_assembly_type
   , CAST(0 as int) as default_object_id
   , CAST(0 as int) as rule_object_id
-  , case when tt.typrelid is not null then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_table_type
+  , CAST(tt.typrelid is not null AS sys.bit) as is_table_type
 from pg_type t
 join sys.schemas sch on t.typnamespace = sch.schema_id
 left join type_code_list ti on t.typname = ti.pg_type_name
@@ -1216,9 +1216,9 @@ SELECT name
   , CAST(0 as smallint) as reserved
   , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
   , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
-  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
-            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
-          else 0 end) as sys.bit) as variable
+  , CAST((coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+            in ('nvarchar', 'varchar', 'sysname', 'varbinary'))  
+          as sys.bit) as variable
   , CAST(is_nullable as sys.bit) as allownulls
   , CAST(system_type_id as int) as type
   , CAST(null as sys.varchar(255)) as printfmt
@@ -1419,8 +1419,7 @@ select
   , 'FOREIGN_KEY_CONSTRAINT'
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit ) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_constraint c
@@ -1442,8 +1441,7 @@ select
   , 'PRIMARY_KEY_CONSTRAINT' as type_desc
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_constraint c
@@ -1619,8 +1617,7 @@ select
   , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_catalog.pg_attrdef d
@@ -1645,8 +1642,7 @@ select
   , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
   , null::sys.datetime as create_date
   , null::sys.datetime as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_catalog.pg_constraint as c
@@ -1668,8 +1664,7 @@ select
   , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit ) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class p
@@ -1691,8 +1686,7 @@ select
   , 'TABLE_TYPE'::varchar(60) as type_desc
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (tt.schema_id::regnamespace::text = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((tt.schema_id::regnamespace::text = 'sys' or nis.name is not null) as sys.bit ) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from sys.table_types tt
@@ -1721,10 +1715,10 @@ SELECT
   , CAST('VIEW'as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
-  , CAST(case when (c.relnamespace::regnamespace::text = 'sys') then 1
-	when c.relname in (select name from sys.shipped_objects_not_in_sys nis
-		where nis.name = c.relname and nis.schemaid = c.relnamespace and nis.type = 'V') then 1
-	else 0 end as sys.bit) AS is_ms_shipped
+  , CAST(((c.relnamespace::regnamespace::text = 'sys') or 
+    c.relname in (select name from sys.shipped_objects_not_in_sys nis
+  	where nis.name = c.relname and nis.schemaid = c.relnamespace and nis.type = 'V')) 
+    as sys.bit) AS is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(0 as sys.BIT) AS is_replicated
@@ -1764,13 +1758,7 @@ SELECT
   CAST(f.create_date as sys.datetime) AS create_date,
   CAST(f.create_date as sys.datetime) AS modify_date,
   CAST(0 as sys.bit) AS is_ms_shipped,
-  CAST(
-      CASE WHEN tr.tgenabled = 'D'
-      THEN 1
-      ELSE 0
-      END
-      AS sys.bit
-  )	AS is_disabled,
+  CAST(tr.tgenabled = 'D' AS sys.bit)	AS is_disabled,
   CAST(0 as sys.bit) AS is_not_for_replication,
   CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
 FROM pg_proc p
@@ -2002,13 +1990,8 @@ SELECT
   , CAST(0 as sys.bit)  AS is_schema_bound
   , CAST(0 as sys.bit)  AS uses_database_collation
   , CAST(0 as sys.bit)  AS is_recompiled
-  , CAST(
-      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN
-        CASE WHEN p.proisstrict THEN 1
-        ELSE 0 
-        END
-      ELSE 0
-      END
+  , CAST(ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') 
+        AND p.proisstrict 
     AS sys.bit) as null_on_null_input
   , null::integer as execute_as_principal_id
   , CAST(0 as sys.bit) as uses_native_compilation
@@ -2189,14 +2172,8 @@ SELECT
             ELSE 0
          END AS SYS.TINYINT) AS key_ordinal,
     CAST(0 AS SYS.TINYINT) AS partition_ordinal,
-    CAST(CASE
-            WHEN i.indoption[a.index_column_id-1] & 1 = 1 THEN 1
-            ELSE 0 
-         END AS SYS.BIT) AS is_descending_key,
-    CAST(CASE
-            WHEN a.index_column_id > i.indnkeyatts THEN 1
-            ELSE 0
-         END AS SYS.BIT) AS is_included_column
+    CAST(i.indoption[a.index_column_id-1] & 1 = 1 AS SYS.BIT) AS is_descending_key,
+    CAST(a.index_column_id > i.indnkeyatts AS SYS.BIT) AS is_included_column
 FROM
     pg_index i
     INNER JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
@@ -2390,7 +2367,7 @@ create or replace view sys.dm_exec_sessions
     , null::bigint as "reads"
     , null::bigint as "writes"
     , null::bigint as logical_reads
-    , case when a.client_port > 0 then 1::sys.bit else 0::sys.bit end as is_user_process
+    , CAST(a.client_port > 0 as sys.bit) as is_user_process
     , d.textsize as text_size
     , d.language::sys.nvarchar(128) as language
     , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
@@ -3220,13 +3197,9 @@ SELECT
         ELSE sys.tsql_type_scale_helper(st.name, typmod,false)
       END
     AS sys.tinyint) AS scale
-  , CAST(
-      CASE
-        WHEN is_out_scalar = 1 THEN 1 -- Output of a scalar function
-        WHEN ss.proargmodes[(ss.x).n] in ('o', 'b', 't') THEN 1
-        ELSE 0
-      END 
-    AS sys.bit) AS is_output
+  , CAST(is_out_scalar = 1 OR -- Output of a scalar function
+        ss.proargmodes[(ss.x).n] in ('o', 'b', 't')  
+        AS sys.bit) AS is_output
   , CAST(0 AS sys.bit) AS is_cursor_ref
   , CAST(0 AS sys.bit) AS has_default_value
   , CAST(0 AS sys.bit) AS is_xml_document
