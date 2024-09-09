@@ -2172,8 +2172,11 @@ SELECT
             ELSE 0
          END AS SYS.TINYINT) AS key_ordinal,
     CAST(0 AS SYS.TINYINT) AS partition_ordinal,
-    CAST(i.indoption[a.index_column_id-1] & 1 = 1 AS SYS.BIT) AS is_descending_key,
-    CAST(a.index_column_id > i.indnkeyatts AS SYS.BIT) AS is_included_column
+    CAST(CASE
+          WHEN i.indoption[a.index_column_id-1] & 1 = 1 THEN 1
+          ELSE 0 
+    END AS SYS.BIT) AS is_descending_key,
+    CAST((a.index_column_id > i.indnkeyatts) AS SYS.BIT) AS is_included_column
 FROM
     pg_index i
     INNER JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
@@ -3197,9 +3200,13 @@ SELECT
         ELSE sys.tsql_type_scale_helper(st.name, typmod,false)
       END
     AS sys.tinyint) AS scale
-  , CAST(is_out_scalar = 1 OR -- Output of a scalar function
-        ss.proargmodes[(ss.x).n] in ('o', 'b', 't')  
-        AS sys.bit) AS is_output
+  , CAST(
+      CASE
+        WHEN is_out_scalar = 1 THEN 1 -- Output of a scalar function
+        WHEN ss.proargmodes[(ss.x).n] in ('o', 'b', 't') THEN 1
+        ELSE 0
+      END 
+    AS sys.bit) AS is_output
   , CAST(0 AS sys.bit) AS is_cursor_ref
   , CAST(0 AS sys.bit) AS has_default_value
   , CAST(0 AS sys.bit) AS is_xml_document
