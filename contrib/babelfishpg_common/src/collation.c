@@ -1243,9 +1243,7 @@ get_database_or_server_collation_oid_internal(bool missingOk)
 Oid
 BABELFISH_CLUSTER_COLLATION_OID()
 {
-	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
-
-	if (sql_dialect == SQL_DIALECT_TSQL || !strncmp(babelfish_dump_restore, "on", 2))
+	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
 		Oid db_coll = get_database_or_server_collation_oid_internal(false);	/* set and cache
 													 * database or server_collation_oid */
