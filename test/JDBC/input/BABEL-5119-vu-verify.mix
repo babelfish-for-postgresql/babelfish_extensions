@@ -1,3 +1,10 @@
+-- tsql
+CREATE LOGIN login_babel5119_1 WITH PASSWORD = '12345678'
+CREATE LOGIN login_babel5119_2 WITH PASSWORD = '12345678'
+ALTER authorization on database::BABEL5119_1 TO login_babel5119_1
+GO
+-- terminate-tsql-conn
+
 -- tsql user=login_babel5119_1 password=12345678
 USE master
 GO
