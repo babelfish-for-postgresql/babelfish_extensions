@@ -2974,3 +2974,117 @@ GO
 ~~ERROR (Message: 'EXTERNAL NAME' is not currently supported in Babelfish)~~
 
 
+-- create login from windows
+-- Add 'dummydomain' domain entry
+exec sys.babelfish_add_domain_mapping_entry 'dummydomain', 'dummydomain.babel';
+GO
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
+
+
+CREATE LOGIN [\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The login name '\MSSQLSERVER' is invalid. The domain can not be empty.)~~
+
+
+CREATE LOGIN [NT Servicesomething\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Servicesomething\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [NT ServiceNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT ServiceNT Service\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [NT ServiceNT SerViCe\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT ServiceNT SerViCe\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [somethingNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'somethingNT Service\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [NT Service\NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The login name 'NT Service\NT Service\MSSQLSERVER' has invalid length. Login name length should be between 1 and 20 for windows login.)~~
+
+
+CREATE LOGIN [NT S\ervice\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT S\ervice\MSSQLSERVER' is not a valid name because it contains invalid characters.)~~
+
+
+CREATE LOGIN [NT Service\\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Service\\MSSQLSERVER' is not a valid name because it contains invalid characters.)~~
+
+
+CREATE LOGIN ["NT Service"\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: '"NT Service"\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [[NT Service]\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '\' at line 1 and character position 26)~~
+
+
+CREATE LOGIN [["NT Service"]\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '\' at line 1 and character position 28)~~
+
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
+
+
+CREATE LOGIN [NT SerViCe\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT SerViCe' domain is not yet supported in Babelfish.)~~
+
+
+CREATE LOGIN [dummydomain\NT Service] FROM WINDOWS
+GO
+
+-- Dropping 'nt service@DUMMYDOMAIN.BABEL'
+DROP LOGIN [dummydomain\NT Service]
+GO
+
+-- Remove entry for 'dummydomain'
+exec babelfish_remove_domain_mapping_entry 'dummydomain'
+GO
+

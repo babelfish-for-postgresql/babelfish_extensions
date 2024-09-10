@@ -2615,6 +2615,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (from_windows && orig_loginname)
 							{
+								char* domain_name = NULL;
+
 								/*
 								 * The login name must contain '\' if it is
 								 * windows login or else throw error.
@@ -2653,6 +2655,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (windows_login_contains_invalid_chars(orig_loginname))
 									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
+
+								/* 
+								 * Check whether the domain name is supported 
+								 * or not
+								 */
+								domain_name = get_windows_domain_name(orig_loginname);
+								if(windows_domain_is_not_supported(domain_name))
+									ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												errmsg("'%s' domain is not yet supported in Babelfish.", domain_name)));
 
 								/*
 								 * Check whether the domain name contains invalid characters or not.
