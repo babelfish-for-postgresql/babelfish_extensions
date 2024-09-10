@@ -5031,10 +5031,11 @@ user_exists_for_db(const char *db_name, const char *user_name)
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		table_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 		return true;
 	}
 
