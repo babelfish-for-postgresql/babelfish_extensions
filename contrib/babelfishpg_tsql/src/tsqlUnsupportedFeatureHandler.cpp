@@ -205,9 +205,10 @@ protected:
 		antlrcpp::Any visitId(TSqlParser::IdContext *ctx) override;
 
 		// methods call (XML, hierachy, spatial)
-		antlrcpp::Any visitXml_method(TSqlParser::Xml_methodContext *ctx) override;
+		antlrcpp::Any visitXml_func_arg(TSqlParser::Xml_func_argContext *ctx) override;
 		antlrcpp::Any visitXml_nodes_method(TSqlParser::Xml_nodes_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_NODES, "XML NODES", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitXml_modify_method(TSqlParser::Xml_modify_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_modify_call(TSqlParser::Xml_modify_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitHierarchyid_methods(TSqlParser::Hierarchyid_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_HIERARCHYID_METHOD, "HIERARCHYID methods", getLineAndPos(ctx)); return visitChildren(ctx); }
 		#ifndef ENABLE_SPATIAL_TYPES
 		antlrcpp::Any visitSpatial_methods(TSqlParser::Spatial_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SPATIAL_METHOD, "spatial methods", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -1293,9 +1294,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 
 		if (sctx->STATISTICS())
 			handle(INSTR_UNSUPPORTED_TSQL_OPTION_STATISTICS, sctx->STATISTICS(), &st_escape_hatch_session_settings);
-
-		if (sctx->xml_modify_method())
-			handle(INSTR_UNSUPPORTED_TSQL_OPTION_XML_METHOD, "xml modify method", getLineAndPos(sctx));
 	}
 
 	return visitChildren(ctx);
@@ -1528,12 +1526,14 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitId(TSqlParser::IdContext *
 	return visitChildren(ctx);
 }
 
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitXml_method(TSqlParser::Xml_methodContext *ctx)
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitXml_func_arg(TSqlParser::Xml_func_argContext *ctx)
 {
 	if (ctx->VALUE())
 		handle(INSTR_UNSUPPORTED_TSQL_XML_VALUE, "XML VALUE", getLineAndPos(ctx));
 	else if (ctx->QUERY())
 		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx));
+	else if (ctx->MODIFY())
+		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML MODIFY", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 

@@ -3490,7 +3490,7 @@ clr_udt_func_call
     ;
 
 method_call
-    : xml_method_call
+    : xml_methods
     | hierarchyid_methods
     | spatial_methods
     | method=id (LR_BRACKET expression_list? RR_BRACKET)?
@@ -3808,7 +3808,7 @@ function_call
     | aggregate_windowed_function                      
     | analytic_windowed_function                       
     | spatial_proc_name_server_database_schema LR_BRACKET function_arg_list? RR_BRACKET 
-    | table_column_name DOT xml_method_call
+    | xml_proc_name_table_column LR_BRACKET expression_list? RR_BRACKET
     | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
     | built_in_functions                               
     | freetext_function                                
@@ -3939,18 +3939,23 @@ spatial_coloncolon_methods
     : data_type colon_colon function_call
     ;
 
-xml_method_call
-    : xml_method LR_BRACKET expression_list RR_BRACKET
+xml_methods
+    : xml_func_arg LR_BRACKET expression_list? RR_BRACKET
     ;
 
-xml_method
-    : VALUE
+xml_func_arg
+    : EXIST
+    | VALUE
     | QUERY
-    | EXIST
+    | MODIFY
     ;
 
 xml_modify_method
-    : (loc_id=LOCAL_ID | value_id=id | subquery) DOT MODIFY LR_BRACKET xml_dml=char_string RR_BRACKET
+    : (loc_id=LOCAL_ID | value_id=id | subquery) DOT call=xml_modify_call
+    ;
+
+xml_modify_call
+    : MODIFY LR_BRACKET xml_dml=char_string RR_BRACKET
     ;
 
 xml_nodes_method
@@ -5188,6 +5193,10 @@ spatial_proc_name_server_database_schema
     : ((schema=id? DOT)? table=id? DOT)? column=id DOT ( geospatial_func_no_arg | geospatial_func_arg )
     ;
 
+xml_proc_name_table_column
+    : (table=id? DOT)? column=id DOT xml_func_arg
+    ;
+
 func_proc_name_server_database_schema
     : (server=id? DOT)? database=id? DOT schema=id? DOT procedure=id
     | (schema=id? DOT)? procedure=id
@@ -5210,10 +5219,6 @@ collation
 full_column_name
     : ((schema=id? DOT)? table=id? DOT)? column=id DOT geospatial_col
     | (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? column_name=id
-    ;
-
-table_column_name
-    : (table=id? DOT)? column=id
     ;
 
 column_name_list_with_order

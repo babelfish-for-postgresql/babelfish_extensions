@@ -1,42 +1,50 @@
 -- Check if an XML element exists
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
 DECLARE @result1 VARCHAR(50) = CASE WHEN @xml.exist('/Root/Child1') = 1 THEN 'The Child1 element exists' ELSE 'The Child1 element does not exist' END;
+SELECT @result1
 GO
 
 -- Check if an XML attribute exists
 DECLARE @xml XML = '<Root Attr1="Value1"><Child1>Value2</Child1></Root>';
 DECLARE @result2 VARCHAR(50) = CASE WHEN @xml.exist('/Root/@Attr1') = 1 THEN 'The Attr1 attribute exists' ELSE 'The Attr1 attribute does not exist' END;
+SELECT @result2
 GO
 
 -- Check if an XML element or attribute exists, with a specific value
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
 DECLARE @result3 VARCHAR(70) = CASE WHEN @xml.exist('/Root/Child2[text()="Value2"]') = 1 THEN 'The Child2 element with value "Value2" exists' ELSE 'The Child2 element with value "Value2" does not exist' END;
+SELECT @result3
 GO
 
 -- Check if an XML element or attribute exists, with a specific value and path
 DECLARE @xml XML = '<Root><ParentNode><Child1>Value1</Child1></ParentNode><ParentNode><Child1>Value2</Child1></ParentNode></Root>';
 DECLARE @result4 VARCHAR(100) = CASE WHEN @xml.exist('/Root/ParentNode/Child1[text()="Value2"]') = 1 THEN 'The Child1 element with value "Value2" under ParentNode exists' ELSE 'The Child1 element with value "Value2" under ParentNode does not exist' END;
+SELECT @result4
 GO
 
 -- Check if an XML element or attribute exists based on a condition
 DECLARE @xml XML = '<Root><Child1 Attr1="Value1">Value2</Child1><Child2 Attr1="Value3">Value4</Child2></Root>';
 DECLARE @result6 VARCHAR(80) = CASE WHEN @xml.exist('/Root/Child1[@Attr1="Value1"]') = 1 THEN 'The Child1 element with Attr1="Value1" exists' ELSE 'The Child1 element with Attr1="Value1" does not exist' END;
+SELECT @result6
 GO
 
 -- Check if multiple XML elements or attributes exist
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2><Child3>Value3</Child3></Root>';
 DECLARE @result7 VARCHAR(50) = CASE WHEN @xml.exist('/Root/Child1') = 1 AND @xml.exist('/Root/Child2') = 1 AND @xml.exist('/Root/Child3') = 1 THEN 'All Child elements exist' ELSE 'One or more Child elements are missing' END;
+SELECT @result7
 GO
 
 -- Check if an XML element exists using a variable in the XPath expression
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
 DECLARE @element VARCHAR(20) = 'Child1';
-DECLARE @result9 VARCHAR(50) = CASE WHEN @xml.exist(CONCAT('/Root/', @element)) = 1 THEN 'The ' + @element + ' element exists' ELSE 'The ' + @element + ' element does not exist' END;
+DECLARE @result8 VARCHAR(50) = CASE WHEN @xml.exist(CONCAT('/Root/', @element)) = 1 THEN 'The ' + @element + ' element exists' ELSE 'The ' + @element + ' element does not exist' END;
+SELECT @result8
 GO
 
 -- Check if an XML element exists within a nested XML structure
 DECLARE @xml XML = '<Root><Parent1><Child1>Value1</Child1></Parent1><Parent2><Child2>Value2</Child2></Parent2></Root>';
-DECLARE @result10 VARCHAR(70) = CASE WHEN @xml.exist('/Root/Parent1/Child1') = 1 THEN 'The Child1 element exists under Parent1' ELSE 'The Child1 element does not exist under Parent1' END;
+DECLARE @result9 VARCHAR(70) = CASE WHEN @xml.exist('/Root/Parent1/Child1') = 1 THEN 'The Child1 element exists under Parent1' ELSE 'The Child1 element does not exist under Parent1' END;
+SELECT @result9
 GO
 
 -- Acceptable argument types
