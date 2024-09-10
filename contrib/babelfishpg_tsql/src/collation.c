@@ -963,7 +963,7 @@ transform_likenode(Node *node)
 			else
 			{
 				/* If a collation is not specified, use the default one */
-				op->inputcollid = tsql_get_database_or_server_collation_oid_internal(false);
+				op->inputcollid = DEFAULT_COLLATION_OID;
 			}
 		}
 
