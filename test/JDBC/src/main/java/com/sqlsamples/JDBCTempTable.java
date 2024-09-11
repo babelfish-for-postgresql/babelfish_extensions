@@ -28,11 +28,13 @@ public class JDBCTempTable {
         long startTime = System.nanoTime();
 
         try {
-            // TODO: re-enable the temp table OID tests when the full fix is ready
-            // check_oids_equal(bw);
-            // test_oid_buffer(bw, logger);
-            // concurrency_test(bw);
-            // psql_test(bw, logger);
+            if (check_temp_oid_buffer_enabled(bw, logger)) {
+                check_oids_equal(bw);
+                test_oid_buffer(bw, logger);
+                psql_test(bw, logger);
+                test_lock_contention(bw, logger);
+            }
+            concurrency_test(bw);
             test_trigger_on_temp_table(bw, logger);
         } catch (Exception e) {
             try {
@@ -44,6 +46,21 @@ public class JDBCTempTable {
 
         long endTime = System.nanoTime();
         curr_exec_time = endTime - startTime;
+    }
+
+    private static boolean check_temp_oid_buffer_enabled(BufferedWriter bw, Logger logger) throws Exception {
+        String temp_oid_buffer_size = "babelfishpg_tsql.temp_oid_buffer_size";
+        Connection c = DriverManager.getConnection(connectionString);
+        JDBCCrossDialect cx = new JDBCCrossDialect(c);
+        Connection psql = cx.getPsqlConnection("-- psql", bw, logger);
+        Statement check_guc = psql.createStatement();
+        ResultSet rs = check_guc.executeQuery("SHOW " + temp_oid_buffer_size);
+        if (!rs.next()) {
+            bw.write("Table is missing.");
+            bw.newLine();
+        }
+        int buffer_size = Integer.parseInt(rs.getString(temp_oid_buffer_size));
+        return buffer_size != 0;
     }
 
     /*
@@ -320,8 +337,14 @@ public class JDBCTempTable {
         queryString = "CREATE TABLE #t1(a int)";
         s.execute(queryString);
         queryString = "CREATE TRIGGER bar ON #t1 FOR INSERT AS BEGIN SELECT 1 END";
-        s.execute(queryString);
-
+        try {
+            s.execute(queryString);
+        } catch (Exception e) {
+            if (!e.getMessage().equals("Cannot create trigger on a temporary object.")) {
+                bw.write(e.getMessage());
+                bw.newLine();
+            }
+        }
         Connection c2 = connections.get(1);
         s = c2.createStatement();
         queryString = "DROP TRIGGER bar";
@@ -331,6 +354,65 @@ public class JDBCTempTable {
             if (!e.getMessage().equals("trigger \"bar\" does not exist")) {
                 bw.write(e.getMessage());
                 bw.newLine();
+            }
+        }
+    }
+
+    private static void test_lock_contention(BufferedWriter bw, Logger logger) throws Exception {
+        String connectionString = initializeConnectionString();
+
+        /* Sanity check of pg_locks catalog */
+        Connection c = DriverManager.getConnection(connectionString);
+        Statement s = c.createStatement();
+        ResultSet rs;
+        s.execute("BEGIN TRAN");
+        s.execute("CREATE TABLE #t1 (a INT)");
+        rs = s.executeQuery("SELECT relation FROM pg_locks JOIN sys.babelfish_get_enr_list() ON (relation = reloid) where relname = '#t1'");
+        if (rs.next()) {
+            bw.write("Unexpected lock acquisition on a TSQL temp table.\n");
+        }
+        s.execute("ALTER TABLE #t1 ADD b AS a + 1");
+        rs = s.executeQuery("SELECT relation FROM pg_locks JOIN sys.babelfish_get_enr_list() ON (relation = reloid) where relname = '#t1'");
+        if (rs.next()) {
+            bw.write("Unexpected lock acquisition on a TSQL temp table.\n");
+        }
+        s.execute("ALTER TABLE #t1 DROP COLUMN b");
+        rs = s.executeQuery("SELECT relation FROM pg_locks JOIN sys.babelfish_get_enr_list() ON (relation = reloid) where relname = '#t1'");
+        if (rs.next()) {
+            bw.write("Unexpected lock acquisition on a TSQL temp table.\n");
+        }
+        s.execute("DROP TABLE #t1");
+        rs = s.executeQuery("SELECT relation FROM pg_locks JOIN sys.babelfish_get_enr_list() ON (relation = reloid) where relname = '#t1'");
+        if (rs.next()) {
+            bw.write("Unexpected lock acquisition on a TSQL temp table.\n");
+        }
+        c.close();
+
+        int num_connections = 2;
+        
+        ArrayList<Connection> cxns = new ArrayList<>();
+
+        ArrayList<Thread> threads = new ArrayList<>();
+
+        /* Create connections */
+        for (int i = 0; i < num_connections; i++) {
+            Connection connection = DriverManager.getConnection(connectionString);
+            cxns.add(connection);
+            Thread t = new Thread(new LockContentionWorker(connection, bw));
+            threads.add(t);
+            t.start();
+        }
+
+        /* 
+         * Unfortunately, setQueryTimeout (used in the worker thread) does not always work correctly.
+         * So we need to manaully try to detect a hanging thread.
+         */
+        Thread.sleep(1000);
+        for (Thread t : threads)
+        {
+            if (t.isAlive()) {
+                bw.write("Lock contention detected.\n");
+                return;
             }
         }
     }
@@ -373,6 +455,33 @@ class Worker implements Runnable {
                     s.execute("DROP TABLE " + tablename);
                     table_count++;
                 }
+            } catch (Exception e) {
+                bw.write(e.getMessage());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+class LockContentionWorker implements Runnable {
+
+    private Connection c;
+    private BufferedWriter bw;
+
+    LockContentionWorker(Connection c, BufferedWriter bw) {
+        this.c = c;
+        this.bw = bw;
+    }
+
+    public void run() {
+        try {
+            try {
+                Statement s = c.createStatement();
+                s.setQueryTimeout(1);
+                s.execute("BEGIN TRAN;");
+                s.execute("CREATE TABLE #temp_table1 (a int primary key not null identity, b as a + 1, c text);");
             } catch (Exception e) {
                 bw.write(e.getMessage());
                 bw.newLine();

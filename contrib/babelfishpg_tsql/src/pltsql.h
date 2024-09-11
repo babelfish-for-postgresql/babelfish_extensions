@@ -1693,6 +1693,7 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_tds_database_backend_count) (int16 db_id, bool ignore_current_connection);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
+	int		(*get_tds_numbackends) (void);
 	char	       *(*get_host_name) (void);
 	uint32_t        (*get_client_pid) (void);
 	Datum		(*get_datum_from_byte_ptr) (StringInfo buf, int datatype, int scale);
