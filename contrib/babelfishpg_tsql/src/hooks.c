@@ -2868,6 +2868,16 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 
 	if (access == OAT_POST_CREATE && classId == ProcedureRelationId)
 		revoke_func_permission_from_public(objectId);
+
+	if (access == OAT_FUNCTION_EXECUTE && classId == ProcedureRelationId)
+	{
+		if (GetUserId() == get_bbf_role_admin_oid())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("Encountered bbf_role_admin.")));
+		}
+	}
 }
 
 static void

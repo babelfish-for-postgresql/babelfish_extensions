@@ -1,0 +1,12 @@
+2024-09-11 08:31:48.133 UTC [10013] LOG:  starting PostgreSQL 16.4 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 7.3.1 20180712 (Red Hat 7.3.1-17), 64-bit
+2024-09-11 08:31:48.133 UTC [10013] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-09-11 08:31:48.137 UTC [10013] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2024-09-11 08:31:48.143 UTC [10017] LOG:  database system was shut down at 2024-09-11 08:31:47 UTC
+2024-09-11 08:31:48.147 UTC [10013] LOG:  database system is ready to accept connections
+2024-09-11 08:31:48.264 UTC [10013] LOG:  received fast shutdown request
+2024-09-11 08:31:48.267 UTC [10013] LOG:  aborting any active transactions
+2024-09-11 08:31:48.268 UTC [10013] LOG:  background worker "logical replication launcher" (PID 10020) exited with exit code 1
+2024-09-11 08:31:48.268 UTC [10015] LOG:  shutting down
+2024-09-11 08:31:48.270 UTC [10015] LOG:  checkpoint starting: shutdown immediate
+2024-09-11 08:31:48.284 UTC [10015] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.002 s, total=0.016 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/1528538, redo lsn=0/1528538
+2024-09-11 08:31:48.286 UTC [10013] LOG:  database system is shut down
