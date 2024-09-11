@@ -1,0 +1,22 @@
+-- tsql
+USE test_pg_db;
+GO
+
+SELECT * FROM test_db_collation_vu_prepare_db121_columns;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+café#!#1#!#café#!#Default Value
+Año Nuevo#!#2#!#Año Nuevo#!#Default Value
+película#!#3#!#película#!#Default Value
+jalapeño#!#1#!#jalapeño#!#Default Value
+TELÉFONO#!#2#!#TELÉFONO#!#Default Value
+árbol#!#3#!#árbol#!#Default Value
+canapé#!#1#!#canapé#!#Default Value
+TEññiȘ#!#2#!#TEññiȘ#!#Default Value
+naïve#!#3#!#naïve#!#Default Value
+~~END~~
+
+
+USE MASTER;
+GO

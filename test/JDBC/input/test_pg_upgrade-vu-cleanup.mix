@@ -1,0 +1,15 @@
+-- tsql
+USE test_pg_db;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_columns;
+GO
+
+DROP TABLE test_db_collation_vu_prepare_db121_columns_foreign;
+GO
+
+USE MASTER;
+GO
+
+DROP DATABASE test_pg_db;
+GO

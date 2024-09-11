@@ -1,0 +1,24 @@
+-- tsql
+CREATE DATABASE test_pg_db;
+GO
+
+USE test_pg_db;
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db121_columns_foreign (id NVARCHAR(50) PRIMARY KEY);
+GO
+
+INSERT INTO test_db_collation_vu_prepare_db121_columns_foreign VALUES('1'), ('2'), ('3'), ('4'), ('5'), ('6'), ('7'), ('8'), ('9');
+GO
+
+CREATE TABLE test_db_collation_vu_prepare_db121_columns(a nvarchar(MAX) PRIMARY KEY, b nvarchar(MAX) REFERENCES test_db_collation_vu_prepare_db121_columns_foreign(id), c nvarchar(MAX) UNIQUE, d nvarchar(MAX) DEFAULT 'Default Value');
+GO
+
+INSERT INTO test_db_collation_vu_prepare_db121_columns (a, b, c) VALUES
+('café','1','café'),('Año Nuevo','2','Año Nuevo'),('película','3','película'),
+('jalapeño','1','jalapeño'),('TELÉFONO','2','TELÉFONO'),('árbol','3','árbol'),
+('canapé','1','canapé'),('TEññiȘ','2','TEññiȘ'),('naïve','3','naïve');
+GO
+
+USE MASTER;
+GO

@@ -1,0 +1,9 @@
+-- tsql
+USE test_pg_db;
+GO
+
+SELECT * FROM test_db_collation_vu_prepare_db121_columns;
+GO
+
+USE MASTER;
+GO
