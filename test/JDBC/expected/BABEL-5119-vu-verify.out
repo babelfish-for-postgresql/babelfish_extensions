@@ -1,0 +1,186 @@
+-- tsql
+CREATE LOGIN login_babel5119_1 WITH PASSWORD = '12345678'
+CREATE LOGIN login_babel5119_2 WITH PASSWORD = '12345678'
+ALTER authorization on database::BABEL5119_1 TO login_babel5119_1
+GO
+-- terminate-tsql-conn
+
+-- tsql user=login_babel5119_1 password=12345678
+USE master
+GO
+CREATE TABLE BABEL5119_t4(a int)
+GO
+CREATE TABLE BABEL5119_t5(a int)
+GO
+CREATE TABLE BABEL5119_t6(a int)
+GO
+INSERT INTO BABEL5119_t4 VALUES(1)
+GO
+~~ROW COUNT: 1~~
+
+CREATE VIEW BABEL5119_v4 AS SELECT 1
+GO
+CREATE VIEW BABEL5119_v5 AS SELECT 1
+GO
+CREATE VIEW BABEL5119_v6 AS SELECT 1
+GO
+CREATE PROCEDURE BABEL5119_p4 AS SELECT 1
+GO
+CREATE PROCEDURE BABEL5119_p5 AS SELECT 1
+GO
+CREATE PROCEDURE BABEL5119_p6 AS SELECT 1
+GO
+
+-- Checking crossdb for sys views
+USE BABEL5119_1
+GO
+
+SELECT name FROM master.sys.databases WHERE name LIKE 'BABEL5119%'
+ORDER BY name
+GO
+~~START~~
+varchar
+babel5119_1
+~~END~~
+
+
+SELECT name FROM master.sys.views WHERE name LIKE 'BABEL5119%'
+ORDER BY name
+GO
+~~START~~
+varchar
+babel5119_v4
+babel5119_v5
+babel5119_v6
+~~END~~
+
+
+SELECT name FROM master.sys.procedures WHERE name LIKE 'BABEL5119%'
+ORDER BY name
+GO
+~~START~~
+varchar
+babel5119_p4
+babel5119_p5
+babel5119_p6
+~~END~~
+
+
+-- Checking crossdb for information_schema_tsql
+SELECT * FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+ORDER BY TABLE_NAME
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+babel5119_1#!#dbo#!#BABEL5119_t1#!#BASE TABLE
+babel5119_1#!#dbo#!#BABEL5119_t2#!#BASE TABLE
+babel5119_1#!#dbo#!#BABEL5119_t3#!#BASE TABLE
+babel5119_1#!#dbo#!#babel5119_v1#!#VIEW
+babel5119_1#!#dbo#!#babel5119_v2#!#VIEW
+babel5119_1#!#dbo#!#babel5119_v3#!#VIEW
+~~END~~
+
+
+SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+ORDER BY TABLE_NAME
+GO
+~~START~~
+nvarchar#!#nvarchar
+BABEL5119_t1#!#a
+BABEL5119_t2#!#a
+BABEL5119_t3#!#a
+babel5119_v1#!#?column?
+babel5119_v2#!#?column?
+babel5119_v3#!#?column?
+~~END~~
+
+
+SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+ORDER BY TABLE_NAME
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1
+babel5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1
+babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1
+~~END~~
+
+
+-- General crossdb queries
+SELECT tb_1.*, tb_2.* FROM BABEL5119_1.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+SELECT vw_1.*, vw_2.* FROM BABEL5119_1.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+-- Using crossdb query data
+CREATE TABLE #babel5119_tmp_table_1(name VARCHAR(MAX), object_id int, schema_id int)
+INSERT INTO #babel5119_tmp_table_1 select name, object_id, schema_id from master.sys.tables WHERE name LIKE 'BABEL5119%'
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE #babel5119_tmp_table_2(name VARCHAR(MAX))
+INSERT INTO #babel5119_tmp_table_2 SELECT name FROM master.sys.databases WHERE name LIKE 'BABEL5119%'
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE #babel5119_tmp_table_3(name VARCHAR(MAX))
+INSERT INTO #babel5119_tmp_table_3 SELECT TABLE_NAME FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+GO
+~~ROW COUNT: 6~~
+
+
+SELECT has_dbaccess(master.sys.databases.name) FROM master.sys.databases WHERE master.sys.databases.name='BABEL5119_1'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- terminate-tsql-conn user=login_babel5119_1 password=12345678
+
+-- tsql user=login_babel5119_2 password=12345678
+-- Checking the permissions after alter
+USE BABEL5119_1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "login_babel5119_2" is not able to access the database "babel5119_1" under the current security context)~~
+
+-- terminate-tsql-conn user=login_babel5119_2 password=12345678
+
+-- tsql
+ALTER authorization on database::BABEL5119_1 TO login_babel5119_2
+GO
+-- terminate-tsql-conn
+
+-- tsql user=login_babel5119_1 password=12345678
+USE BABEL5119_1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "login_babel5119_1" is not able to access the database "babel5119_1" under the current security context)~~
+
+-- terminate-tsql-conn user=login_babel5119_1 password=12345678
+
+-- tsql user=login_babel5119_2 password=12345678
+USE BABEL5119_1
+GO
+INSERT INTO BABEL5119_t1 VALUES(1)
+GO
+~~ROW COUNT: 1~~
+
+-- terminate-tsql-conn user=login_babel5119_2 password=12345678

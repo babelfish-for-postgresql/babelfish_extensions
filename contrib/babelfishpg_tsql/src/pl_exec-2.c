@@ -21,6 +21,7 @@
 #include "dbcmds.h"
 #include "pl_explain.h"
 #include "session.h"
+#include "rolecmds.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
@@ -3869,9 +3870,14 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						errmsg("The proposed new database owner is already a user or aliased in the database.")));				
 	}
-					
-	/* All validations done, perform the actual update */
-	update_db_owner(stmt->new_owner_name, stmt->db_name);	
+
+	/* Revoke dbo role from the previous owner */
+	grant_dbo_to_login(get_owner_of_db(stmt->db_name), stmt->db_name, false);
+
+	/* Grant dbo role to the new owner */
+	grant_dbo_to_login(stmt->new_owner_name, stmt->db_name, true);
+	update_db_owner(stmt->new_owner_name, stmt->db_name);
+
 	return PLTSQL_RC_OK;
 }
 
