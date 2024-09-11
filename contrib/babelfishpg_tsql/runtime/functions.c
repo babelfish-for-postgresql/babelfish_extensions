@@ -950,8 +950,7 @@ Datum sysdatetime(PG_FUNCTION_ARGS)
 
 Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetimeoffset,
-							TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
+	PG_RETURN_DATUM((*common_utility_plugin_ptr->timestamptz_datetimeoffset) (GetCurrentStatementStartTimestamp()));
 }
 
 void *

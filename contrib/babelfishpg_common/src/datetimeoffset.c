@@ -27,6 +27,7 @@ static void CheckDatetimeoffsetRange(const tsql_datetimeoffset *df);
 static int	datetimeoffset_cmp_internal(tsql_datetimeoffset *df1, tsql_datetimeoffset *df2);
 static void datetimeoffset_timestamp_internal(const tsql_datetimeoffset *df, Timestamp *time);
 static void EncodeDatetimeoffsetTimezone(char *str, int tz, int style);
+Datum timestamptz_datetimeoffset(TimestampTz timestamp);
 
 PG_FUNCTION_INFO_V1(datetimeoffset_in);
 PG_FUNCTION_INFO_V1(datetimeoffset_out);
@@ -51,7 +52,6 @@ PG_FUNCTION_INFO_V1(datetimeoffset_mi);
 PG_FUNCTION_INFO_V1(datetimeoffset_hash);
 PG_FUNCTION_INFO_V1(datetimeoffset_hash_extended);
 
-PG_FUNCTION_INFO_V1(timestamptz_datetimeoffset);
 PG_FUNCTION_INFO_V1(timestamp_datetimeoffset);
 PG_FUNCTION_INFO_V1(datetimeoffset_timestamp);
 PG_FUNCTION_INFO_V1(date_datetimeoffset);
@@ -644,9 +644,8 @@ timestamp_datetimeoffset(PG_FUNCTION_ARGS)
  * Convert timestamp with time zone to datetimeoffset
  */
 Datum
-timestamptz_datetimeoffset(PG_FUNCTION_ARGS)
+timestamptz_datetimeoffset(TimestampTz timestamp)
 {
-	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	time;
 	tsql_datetimeoffset *result;
 
