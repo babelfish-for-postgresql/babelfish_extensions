@@ -560,4 +560,4 @@ space
 binary-datatype-operators
 cast-varchar-to-time
 SELECT_INTO_TEST
-
+test_pg_upgrade
