@@ -383,4 +383,6 @@ ignore#!#string_agg-before-14_5-vu-cleanup
 ignore#!#string_agg_within-16_4-vu-prepare
 ignore#!#string_agg_within-16_4-vu-verify
 ignore#!#string_agg_within-16_4-vu-cleanup
+ignore#!#BABEL-3166-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-3166-before-16_5-or-15_9-vu-verify
 

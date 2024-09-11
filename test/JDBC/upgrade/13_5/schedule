@@ -301,5 +301,6 @@ replicate-before-15_8-or-16_4
 string_agg-before-14_5
 space
 binary-datatype-operators
+BABEL-5059
 replace-before-15_8-or-16_4
 

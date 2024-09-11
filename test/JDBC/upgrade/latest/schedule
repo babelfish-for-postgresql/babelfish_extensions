@@ -565,5 +565,6 @@ replicate
 space
 SELECT_INTO_TEST
 binary-datatype-operators
+BABEL-5059
 cast-varchar-to-time
 
