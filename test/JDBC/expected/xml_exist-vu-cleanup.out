@@ -13,6 +13,9 @@ GO
 DROP PROCEDURE babel_5222_xml_exist_dep_proc
 GO
 
+DROP FUNCTION dbo.babel_5222_xml_exist_func1
+GO
+
 DROP FUNCTION babel_5222_xml_exist_dep_func
 GO
 

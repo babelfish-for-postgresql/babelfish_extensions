@@ -35,7 +35,7 @@ VALUES ('<Root><Child1>Value1</Child1></Root>', CAST('<Root><Child1>Value1</Chil
 GO
 
 CREATE VIEW babel_5222_xml_exist_dep_view AS
-    SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+    SELECT XmlColumn.exist('/artists/artist/@name') as nameExists FROM babel_5222_xml_exist_t1
 GO
 
 CREATE PROCEDURE babel_5222_xml_exist_dep_proc AS
@@ -53,7 +53,15 @@ GO
 CREATE FUNCTION babel_5222_xml_exist_itvf_func()
 RETURNS TABLE
 AS
-RETURN (SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1)
+RETURN (SELECT XmlColumn.exist('/artists/artist/@name') as nameExists FROM babel_5222_xml_exist_t1)
+GO
+
+CREATE FUNCTION dbo.babel_5222_xml_exist_func1()
+RETURNS XML
+AS
+BEGIN
+RETURN CAST('<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>' as XML)
+END
 GO
 
 -- computed columns

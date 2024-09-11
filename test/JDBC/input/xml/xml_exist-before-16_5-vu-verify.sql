@@ -139,6 +139,81 @@ SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child2') = 1 THEN 'The Child2 elemen
 FROM babel_5222_xml_exist_t2;
 GO
 
+-- Exist function called on SUBQUERY
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT (SELECT @xml).exist('/artists/artist/@name')
+GO
+
+-- Exist function called on LOCAL_ID
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name')
+GO
+
+-- Exist function called on LR_BR expr RR_BR
+SELECT (CAST('<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>' as XML)).exist('/artists/artist/@name')
+GO
+
+-- Exist function called on function_call
+SELECT babel_5222_xml_exist_func1().exist('/artists/artist/@name')
+GO
+
+SELECT dbo.babel_5222_xml_exist_func1().exist('/artists/artist/@name')
+GO
+
+-- Exist function called on spatial function -- this will throw error, only to test nested rewrites
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name').STArea()
+GO
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT @xml.exist('/artists/artist/@name').STDistance(@point)
+GO
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name').STX
+GO
+
+DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
+DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
+SELECT @point1.STDistance(@point2).exist('/artists/artist/@name');
+GO
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT @point.STArea().exist('/artists/artist/@name');
+go
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT @point.STX.exist('/artists/artist/@name');
+go
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name').exist('/artists/artist/@name').exist('/artists/artist/@name').exist('/artists/artist/@name')
+GO
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT @xml.exist('/artists/artist/@name').STDistance(@point).exist('/artists/artist/@name').STArea()
+GO
+
+-- different number of arguments than required (Error will be thrown in this scenario)
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist()
+GO
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name', 1)
+GO
+
+-- EVENTDATA().exist -- eventdata() is currently not supported
+SELECT EVENTDATA().exist('/EVENT_INSTANCE/EventType')
+GO
+
+-- Exist function called on XML Query
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.query('/artists/artist').exist('/artist/@name')
+GO
+
 -- Dependent objects
 SELECT * FROM babel_5222_xml_exist_dep_view
 GO

@@ -8705,6 +8705,10 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 static void
 validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::Expression_listContext *expr_list)
 {
+	/* XML EXIST function requires only 1 argument */
+	if (xml_func->EXIST() && (expr_list == NULL || expr_list->expression().size() != 1))
+		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The exist function requires 1 argument(s).", getLineAndPos(xml_func));
+
 	/* Only String Literal is allowed as agument for XML Functions */
 	if (expr_list)
 	{
@@ -8720,12 +8724,6 @@ validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::E
 						getLineAndPos(expr));
 		}
 	}
-	else
-	{
-		/* XML EXIST function requires 1 argument */
-		if (xml_func->EXIST())
-			throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The exist function requires 1 argument(s).", getLineAndPos(xml_func));
-	}
 }
 
 static void
@@ -8734,12 +8732,13 @@ handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	/* Handles rewrite of xml function calls */
 	if (ctx->xml_proc_name_table_column())
 	{
+		/* validate the xml method arguments before rewriting */
+		validateXMLFunctionArgs(ctx->xml_proc_name_table_column()->xml_func_arg(), ctx->expression_list());
+
 		size_t col_stop_index = ctx->xml_proc_name_table_column()->column->stop->getStopIndex();
 		size_t func_start_index = ctx->xml_proc_name_table_column()->xml_func_arg()->start->getStartIndex();
 		size_t arg_list_start_index = ctx->expression_list()->start->getStartIndex();
 		size_t arg_list_stop_index = ctx->expression_list()->stop->getStopIndex();
-		
-		validateXMLFunctionArgs(ctx->xml_proc_name_table_column()->xml_func_arg(), ctx->expression_list());
 		rewrite_function_call_dot_func_ref_args(ctx, col_stop_index, func_start_index, arg_list_start_index, arg_list_stop_index);
 	}
 }
@@ -8773,9 +8772,11 @@ handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx)
 			/* rewriting the query in case of xml function calls */
 			if (method->xml_methods())
 			{
+				/* validate the xml method arguments before rewriting */
+				validateXMLFunctionArgs(method->xml_methods()->xml_func_arg(), method->xml_methods()->expression_list());
+
 				size_t expr_list_start_index = method->xml_methods()->expression_list()->start->getStartIndex();
 				size_t expr_list_stop_index = method->xml_methods()->expression_list()->stop->getStopIndex();
-				validateXMLFunctionArgs(method->xml_methods()->xml_func_arg(), method->xml_methods()->expression_list());
 				rewrite_dot_func_ref_args_query_helper(ctx, method, ind, expr_list_start_index, expr_list_stop_index);
 			}
 		}
