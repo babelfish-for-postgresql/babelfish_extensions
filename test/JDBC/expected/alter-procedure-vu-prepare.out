@@ -25,14 +25,6 @@ go
 create procedure alter_proc_p4 as select 1
 go
 
-
-create function alter_proc_f1() 
-returns int
-AS BEGIN
-    return 1
-END
-go
-
 create procedure alter_proc_p5 as select 10
 go
 

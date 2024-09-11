@@ -527,6 +527,7 @@ babel-3254
 babel-4517
 babel_table_type
 alter-procedure
+alter-function
 1_GRANT_SCHEMA
 BABEL-4707
 BABEL_4817
@@ -564,3 +565,5 @@ replicate
 space
 SELECT_INTO_TEST
 binary-datatype-operators
+cast-varchar-to-time
+

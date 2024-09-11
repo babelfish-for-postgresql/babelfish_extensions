@@ -6075,12 +6075,12 @@ go
 
 -- psql
 -- should have 2 entries for master and babel_4344_d1 databases
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where object_name = 'babel_4344_t1';
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where object_name = 'babel_4344_t1' ORDER BY grantee;
 go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
-dbo#!#babel_4344_t1#!#2#!#master_guest
 dbo#!#babel_4344_t1#!#2#!#babel_4344_d1_guest
+dbo#!#babel_4344_t1#!#2#!#master_guest
 ~~END~~
 
 
