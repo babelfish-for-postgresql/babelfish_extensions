@@ -92,6 +92,9 @@ GO
 CREATE TABLE dbo.babel_cross_db_vu_prepare_t2 (id INT IDENTITY PRIMARY KEY, name VARCHAR(20));
 GO
 
+CREATE TABLE dbo.babel_cross_db_vu_prepare_t3 (id INT IDENTITY PRIMARY KEY, name VARCHAR(20));
+GO
+
 CREATE FUNCTION dbo.babel_cross_db_vu_prepare_f2 (@a int)
     RETURNS INT AS
     BEGIN
@@ -165,6 +168,17 @@ CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3 AS
     SELECT babel_cross_db_vu_prepare_db2.dbo.babel_cross_db_vu_prepare_f2(id) AS id, name
     FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1
     ORDER BY id;
+GO
+
+-- View containing cross-db tables on which login babel_cross_db_vu_prepare_l1 does not have permission on either of joined tables
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4 AS
+    SELECT x.id,
+        x.name AS t1_name,
+        y.name AS t2_name
+    FROM babel_cross_db_vu_prepare_db2.dbo.babel_cross_db_vu_prepare_t2 x INNER JOIN
+    babel_cross_db_vu_prepare_db2.dbo.babel_cross_db_vu_prepare_t3 y
+    ON x.id = y.id
+    ORDER BY x.id;
 GO
 
 

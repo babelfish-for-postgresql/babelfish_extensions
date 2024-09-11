@@ -874,6 +874,8 @@ pltsql_ExecInitFunc_AclCheck(Oid funcid)
 				pfree(nspname);
 		}
 	}
+	else if (prev_ExecInitFunc_AclCheck_hook)
+		return prev_ExecInitFunc_AclCheck_hook(funcid);
 
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }

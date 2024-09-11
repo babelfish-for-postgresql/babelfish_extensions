@@ -286,6 +286,10 @@ GO
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3;
 GO
 
+-- View containing cross-db tables on which login babel_cross_db_vu_prepare_l1 does not have permission on either of joined tables, should throw error
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4;
+GO
+
 -- Execute procedure from db2
 EXEC babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_p2;
 GO

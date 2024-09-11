@@ -23,6 +23,9 @@ GO
 DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3;
 GO
 
+DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4;
+GO
+
 DROP TABLE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1;
 GO
 
@@ -39,6 +42,9 @@ USE babel_cross_db_vu_prepare_db2
 GO
 
 DROP TABLE dbo.babel_cross_db_vu_prepare_t2;
+GO
+
+DROP TABLE dbo.babel_cross_db_vu_prepare_t3;
 GO
 
 DROP FUNCTION dbo.babel_cross_db_vu_prepare_f2;
