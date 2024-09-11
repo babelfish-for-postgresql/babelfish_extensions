@@ -797,8 +797,8 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	 * ex: CAST(CAST('a' AS BINARY(10)) AS VARCHAR) should work
 	 * and not fail because of null byte
 	 */
-	while(len>0 && data[len-1] == '\0')
-		len -= 1;
+	//while(len>0 && data[len-1] == '\0')
+	//	len -= 1;
 	
 	/*
 	 * Cast the entire input binary data if maxlen is 

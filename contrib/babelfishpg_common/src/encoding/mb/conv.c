@@ -225,17 +225,23 @@ TsqlUtfToLocal(const unsigned char *utf, int len,
 		unsigned char b2 = 0;
 		unsigned char b3 = 0;
 		unsigned char b4 = 0;
+		const unsigned char *cur;
 
-		/* "break" cases all represent errors */
+		/* Handle NULL character */
 		if (*utf == '\0')
-			break;
+		{
+			utf++;
+			*iso++ = 0x00;
+			encodedByteLen += 1;
+			l = 1;
+			continue;
+		}
 
 		l = pg_utf_mblen(utf);
 		if (len < l)
 			break;
 
-		if (!pg_utf8_islegal(utf, l))
-			break;
+		cur = utf;
 
 		if (l == 1)
 		{
@@ -271,6 +277,12 @@ TsqlUtfToLocal(const unsigned char *utf, int len,
 		}
 		iutf = (b1 << 24 | b2 << 16 | b3 << 8 | b4);
 
+		if (!pg_utf8_islegal(cur, l))
+		{
+			iso = store_coded_char(iso, iutf, &encodedByteLen);
+			continue;
+		}
+
 		/* First, try with combined map if possible */
 		if (cmap && len > l)
 		{
@@ -286,7 +298,11 @@ TsqlUtfToLocal(const unsigned char *utf, int len,
 				break;
 
 			if (!pg_utf8_islegal(utf, l))
-				break;
+			{
+				/* Put the input bytes as it is if is not recognized by the encoding. */
+				iso = store_coded_char(iso, iutf, &encodedByteLen);
+				continue;
+			}
 
 			/* We assume ASCII character cannot be in combined map */
 			if (l > 1)
@@ -401,9 +417,15 @@ TsqlLocalToUtf(const unsigned char *iso, int len,
 		unsigned char b3 = 0;
 		unsigned char b4 = 0;
 
-		/* "break" cases all represent errors */
+		/* Handle NULL character */
 		if (*iso == '\0')
-			break;
+		{
+			iso++;
+			*utf++ = 0x00;
+			encodedByteLen += 1;
+			l = 1;
+			continue;
+		}
 
 		if (!IS_HIGHBIT_SET(*iso))
 		{
@@ -416,7 +438,13 @@ TsqlLocalToUtf(const unsigned char *iso, int len,
 
 		l = pg_encoding_verifymbchar(encoding, (const char *) iso, len);
 		if (l < 0)
-			break;
+		{
+			/* Put the input byte as it is if is not recognized by the encoding. */
+			utf = store_coded_char(utf, *iso, &encodedByteLen);
+			iso++;
+			l = 1;
+			continue;
+		}
 
 		/* collect coded char of length l */
 		if (l == 1)
@@ -484,12 +512,10 @@ TsqlLocalToUtf(const unsigned char *iso, int len,
 		}
 
 		/*
-		 * If there doesnt exisiting any conversion scheme for any character
-		 * in string raise an error stating failed to translate this character
+		 * If there does not exist any conversion scheme for any character
+		 * in string, put the bytes as it is instead of failing the conversion.
 		 */
-		iso -= l;
-		report_untranslatable_char(encoding, PG_UTF8,
-								   (const char *) iso, len);
+		utf = store_coded_char(utf, iiso, &encodedByteLen);
 	}
 
 	/* if we broke out of loop early, must be invalid input */

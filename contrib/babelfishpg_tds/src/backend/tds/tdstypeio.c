@@ -2777,8 +2777,9 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	char	   *destBuf,
 			   *buf = OutputFunctionCall(finfo, value);
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	text	   *tunpacked = pg_detoast_datum_packed((text *) DatumGetPointer(value));
 
-	len = strlen(buf);
+	len = VARSIZE_ANY_EXHDR(tunpacked);
 
 	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 	maxLen = col->metaEntry.type2.maxSize;
