@@ -420,7 +420,7 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 			(*typmod_array_p)[i] = -1;
 
 			if (sql_dialect == SQL_DIALECT_TSQL)
-				pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, stmt->is_procedure);
+				pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, true);
 		}
 		else
 		{
@@ -439,7 +439,7 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 					(*typmod_array_p)[i] = ptr->val.ival.ival;
 
 					if (sql_dialect == SQL_DIALECT_TSQL)
-						pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, stmt->is_procedure);
+						pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, true);
 				}
 				typmod_head = lnext(arg_typmod, typmod_head);
 			}
@@ -469,13 +469,20 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 			else
 			{
 				(*typmod_array_p)[i] = ptr->val.ival.ival;
+
+				if (sql_dialect == SQL_DIALECT_TSQL)
+					pltsql_check_or_set_default_typmod(ret, &(*typmod_array_p)[i], false, true);
 			}
 			typmod_head = lnext(ret->typmods, typmod_head);
 		}
 	}
 	else
 	{
-		(*typmod_array_p)[i++] = -1;
+		(*typmod_array_p)[i] = -1;
+
+        if (sql_dialect == SQL_DIALECT_TSQL)
+            pltsql_check_or_set_default_typmod(ret, &(*typmod_array_p)[i], false, true);
+		i++;
 	}
 }
 

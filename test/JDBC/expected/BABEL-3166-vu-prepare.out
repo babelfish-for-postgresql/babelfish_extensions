@@ -8,7 +8,7 @@ SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_func';
 go
 ~~START~~
 varchar#!#text
-babel_3166_func#!#{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6", "8"], "original_probin": ""}
+babel_3166_func#!#{"version_num": "1", "typmod_array": ["1179652", "1", "-1", "8", "6", "8"], "original_probin": ""}
 ~~END~~
 
 
@@ -30,7 +30,7 @@ SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_proc';
 go
 ~~START~~
 varchar#!#text
-babel_3166_proc#!#{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6"], "original_probin": ""}
+babel_3166_proc#!#{"version_num": "1", "typmod_array": ["1179652", "1", "-1", "8", "6"], "original_probin": ""}
 ~~END~~
 
 
