@@ -5004,11 +5004,12 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 bool
 user_exists_for_db(const char *db_name, const char *user_name)
 {
-	Relation	bbf_authid_user_ext_rel;
-	HeapTuple	tuple_user_ext;
-	ScanKeyData key[3];
+	Relation	  bbf_authid_user_ext_rel;
+	HeapTuple	  tuple_user_ext;
+	ScanKeyData   key[3];
 	TableScanDesc scan;
-	NameData   *rolname;
+	NameData      *rolname;
+	bool          user_exists = false;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
@@ -5031,15 +5032,14 @@ user_exists_for_db(const char *db_name, const char *user_name)
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 
-	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
-
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		return true;
+		user_exists = true;
 	}
 
-	return false;
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	return user_exists;
 }
 
 /*
