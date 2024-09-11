@@ -586,7 +586,7 @@ grant_guests_to_login(const char *login)
 }
 
 void
-grant_dbo_to_login(const char* login, const char* db_name)
+grant_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 {
 	StringInfoData query;
 	List	   *parsetree_list;
@@ -605,8 +605,16 @@ grant_dbo_to_login(const char* login, const char* db_name)
 	acc->cols = NIL;
 	dbo = lappend(dbo, acc);
 
-	/* Build dummy GRANT statement to grant membership to login  */
-	appendStringInfo(&query, "GRANT dummy TO dummy; ");
+	if (is_grant)
+	{
+		/* Build dummy GRANT statement to grant membership to login  */
+		appendStringInfo(&query, "GRANT dummy TO dummy; ");
+	}
+	else
+	{
+		/* Build dummy REVOKE statement to revoke membership from login */
+		appendStringInfo(&query, "REVOKE dummy FROM dummy; ");
+	}
 
 	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
@@ -623,72 +631,14 @@ grant_dbo_to_login(const char* login, const char* db_name)
 	tmp->location = -1;
 	tmp->rolename = pstrdup(login);
 
-	update_GrantRoleStmt(stmt, dbo, list_make1(tmp));
-
-	/* Run the built query */
-	/* need to make a wrapper PlannedStmt */
-	wrapper = makeNode(PlannedStmt);
-	wrapper->commandType = CMD_UTILITY;
-	wrapper->canSetTag = false;
-	wrapper->utilityStmt = stmt;
-	wrapper->stmt_location = 0;
-	wrapper->stmt_len = 18;
-
-	/* do this step */
-	ProcessUtility(wrapper,
-				   "(CREATE DATABASE )",
-				   false,
-				   PROCESS_UTILITY_SUBCOMMAND,
-				   NULL,
-				   NULL,
-				   None_Receiver,
-				   NULL);
-
-	/* make sure later steps can see the object created here */
-	CommandCounterIncrement();
-
-	pfree(query.data);
-}
-
-void
-revoke_dbo_from_login(const char* login, const char* db_name)
-{
-	StringInfoData query;
-	List	   *parsetree_list;
-	List	   *dbo = NIL;
-	Node	   *stmt;
-	RoleSpec   *tmp;
-	PlannedStmt *wrapper;
-	AccessPriv *acc;
-
-	const char *dbo_role_name = get_dbo_role_name(db_name);
-
-	initStringInfo(&query);
-
-	acc = makeNode(AccessPriv);
-	acc->priv_name = pstrdup(dbo_role_name);
-	acc->cols = NIL;
-	dbo = lappend(dbo, acc);
-
-	/* Build dummy REVOKE statement to revoke membership from login */
-	appendStringInfo(&query, "REVOKE dummy FROM dummy; ");
-
-	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
-
-	if (list_length(parsetree_list) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(parsetree_list))));
-
-	/* Update the dummy statement with real values */
-	stmt = parsetree_nth_stmt(parsetree_list, 0);
-	tmp = makeNode(RoleSpec);
-	tmp->roletype = ROLESPEC_CSTRING;
-	tmp->location = -1;
-	tmp->rolename = pstrdup(login);
-
-	update_RevokeRoleStmt(stmt, dbo, list_make1(tmp));
+	if (is_grant)
+	{
+		update_GrantRoleStmt(stmt, dbo, list_make1(tmp));
+	}
+	else
+	{
+		update_RevokeRoleStmt(stmt, dbo, list_make1(tmp));
+	}
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */

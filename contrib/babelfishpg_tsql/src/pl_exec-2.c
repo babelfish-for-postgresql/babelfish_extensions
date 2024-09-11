@@ -3921,10 +3921,10 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 		/* Revoke dbo role from the previous owner */
-		revoke_dbo_from_login(get_owner_of_db(stmt->db_name), stmt->db_name);
+		grant_dbo_to_login(get_owner_of_db(stmt->db_name), stmt->db_name, false);
 
 		/* Grant dbo role to the new owner */
-		grant_dbo_to_login(stmt->new_owner_name, stmt->db_name);
+		grant_dbo_to_login(stmt->new_owner_name, stmt->db_name, true);
 		update_db_owner(stmt->new_owner_name, stmt->db_name);	
 	}
 	PG_FINALLY();
