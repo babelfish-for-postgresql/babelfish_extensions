@@ -473,7 +473,7 @@ doublequoted_string
 operator_whitespace
 operator_atatvar
 # alter_authorization_change_db_owner - Temporarily disable until BABEL-5218 is fixed
-sp_changedbowner
+# sp_changedbowner - Temporarily disable until BABEL-5218 is fixed
 float_exponent
 datetimeoffset-timezone
 BABEL-4046

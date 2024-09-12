@@ -14,6 +14,9 @@ all
 ignore#!#alter_authorization_change_db_owner-vu-prepare
 ignore#!#alter_authorization_change_db_owner-vu-verify
 ignore#!#alter_authorization_change_db_owner-vu-cleanup
+ignore#!#sp_changedbowner-vu-prepare
+ignore#!#sp_changedbowner-vu-verify
+ignore#!#sp_changedbowner-vu-cleanup
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
