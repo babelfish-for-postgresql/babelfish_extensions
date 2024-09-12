@@ -272,7 +272,7 @@ rewrite_object_refs(Node *stmt)
 				pfree(granted->priv_name);
 				granted->priv_name = physical_role_name;
 
-				physical_principal_name = get_physical_user_name(db_name, principal_name, false, false);
+				physical_principal_name = get_physical_user_name(db_name, principal_name, false, true);
 				pfree(grantee->rolename);
 				grantee->rolename = physical_principal_name;
 
@@ -1328,11 +1328,16 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error, bool
 
 	snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, new_user_name);
 
-	if(missing_ok || user_exists_for_db(db_name, result))
+	/* Truncate final result to 64 bytes */
+	truncate_tsql_identifier(result);
+
+	/* 
+	 * If the user or role is not found in the sys.babelfish_authid_user_ext 
+	 * catalog, then an error is thrown. The 'missing_ok' flag indicated if 
+	 * it is ok for the user or role to be absent from the catalog.
+	 */
+	if(!missing_ok && !user_exists_for_db(db_name, result))
 	{
-		/* Truncate final result to 64 bytes */
-		truncate_tsql_identifier(result);
-	} else {
 		ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("User or role \"%s\" does not exist", new_user_name)));
