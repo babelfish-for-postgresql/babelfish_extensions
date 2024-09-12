@@ -63,6 +63,9 @@ WITH FUNCTION sys.varchar2time(sys.VARCHAR, INT4) AS IMPLICIT;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'varchar2time_deprecated_4_4_0');
 
+CREATE CAST (bool AS sys.BIT)
+WITHOUT FUNCTION AS IMPLICIT;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
