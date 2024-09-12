@@ -196,7 +196,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static void pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr);
-static AclResult pltsql_ExecInitFunc_AclCheck(Oid funcid);
+static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
 
 /*****************************************
  * 			Replication Hooks
@@ -498,7 +498,7 @@ InstallExtendedHooks(void)
 	handle_default_collation_hook = default_collation_for_builtin_type;
 
 	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
-	ExecFuncProc_AclCheck_hook = pltsql_ExecInitFunc_AclCheck;
+	ExecFuncProc_AclCheck_hook = pltsql_ExecFuncProc_AclCheck;
 }
 
 void
@@ -849,7 +849,7 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 }
 
 static AclResult
-pltsql_ExecInitFunc_AclCheck(Oid funcid)
+pltsql_ExecFuncProc_AclCheck(Oid funcid)
 {
 	Oid userid = GetUserId();
 
