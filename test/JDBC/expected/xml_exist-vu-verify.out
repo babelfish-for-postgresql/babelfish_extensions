@@ -355,7 +355,7 @@ SELECT @xml.exist('/artists/artist/@name').STX
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: column notation .stx applied to type "bit", which is not a composite type.)~~
+~~ERROR (Message: column notation .stx applied to type "bit", which is not a composite type)~~
 
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
@@ -395,7 +395,7 @@ DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT @xml.exist('/artists/artist/@name').STDistance(@point).exist('/artists/artist/@name').STArea()
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
 ~~ERROR (Message: The function stdistance is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
