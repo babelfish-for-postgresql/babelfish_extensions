@@ -189,7 +189,6 @@ template <class T> static void rewrite_geospatial_func_ref_no_arg_query_helper(T
 template <class T> static void rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t start_index, size_t arg_list_start_index, size_t arg_list_stop_index);
 template <class T> static void rewrite_function_call_dot_func_ref_args(T ctx, size_t col_stop_index, size_t func_start_index, size_t arg_list_start_index, size_t arg_list_stop_index);
 template <class T> static void rewrite_function_call_geospatial_func_ref_no_arg(T ctx);
-template <class T> static void rewrite_function_call_xml_func(T ctx);
 static void handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx);
