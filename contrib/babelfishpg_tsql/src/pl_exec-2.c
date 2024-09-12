@@ -3775,7 +3775,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		Oid	role_oid;
 		bool	is_public = 0 == strcmp(grantee_name, PUBLIC_ROLE_NAME);
 		if (!is_public)
-			rolname	= get_physical_user_name(dbname, grantee_name, false);
+			rolname	= get_physical_user_name(dbname, grantee_name, false, true);
 		else
 			rolname = pstrdup(PUBLIC_ROLE_NAME);
 		role_oid = get_role_oid(rolname, true);

@@ -4683,7 +4683,7 @@ update_babelfish_authid_user_ext_rename_db(
 							Anum_bbf_authid_user_ext_orig_username, bbf_authid_user_ext_dsc, &isNull));
 		NameData rolename_namedata;
 		
-		namestrcpy(&rolename_namedata, get_physical_user_name((char *)new_db_name, role_name, true));
+		namestrcpy(&rolename_namedata, get_physical_user_name((char *)new_db_name, role_name, true, true));
 		list_of_roles_to_rename = lappend(list_of_roles_to_rename, pstrdup(role_name));
 
 		/* update rolname */
@@ -4962,8 +4962,8 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0)))
 				continue;
 
-			old_role_name = get_physical_user_name(old_db_name, role, true);
-			new_role_name = get_physical_user_name(new_db_name, role, true);
+			old_role_name = get_physical_user_name(old_db_name, role, true, false);
+			new_role_name = get_physical_user_name(new_db_name, role, true, true);
 			exec_rename_db_util(old_role_name, new_role_name, false);
 		}
 
@@ -5006,7 +5006,7 @@ user_exists_for_db(const char *db_name, const char *user_name)
 {
 	Relation	  bbf_authid_user_ext_rel;
 	HeapTuple	  tuple_user_ext;
-	ScanKeyData   key[3];
+	ScanKeyData   key[2];
 	TableScanDesc scan;
 	NameData      *rolname;
 	bool          user_exists = false;
@@ -5023,12 +5023,8 @@ user_exists_for_db(const char *db_name, const char *user_name)
 				Anum_bbf_authid_user_ext_database_name,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(db_name));
-	ScanKeyInit(&key[2],
-				Anum_bbf_authid_user_ext_user_can_connect,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
 	
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 

@@ -3293,7 +3293,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									bool		is_psql_db_principal = false;
 									Oid			dbowner;
 
-									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
+									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
 									db_owner_name = get_db_owner_name(db_name);
 									dbowner = get_role_oid(db_owner_name, false);
 									role_oid = get_role_oid(user_name, true);

@@ -2136,7 +2136,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 							errmsg("'%s' is not a valid name because it contains invalid characters.", rolname)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the user, group or role already exists */
@@ -2279,7 +2279,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists */
@@ -2429,7 +2429,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot make a role a member of itself.")));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false);
+		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false, true);
 		member_oid = get_role_oid(physical_member_name, true);
 
 		/*
@@ -2442,7 +2442,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("User or role '%s' does not exist in this database.", membername)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists and given role name is an role */
@@ -2594,7 +2594,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/* Throw an error id the given role name doesn't exist or isn't a role */
@@ -2604,7 +2604,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false);
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/*

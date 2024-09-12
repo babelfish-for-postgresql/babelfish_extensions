@@ -253,7 +253,7 @@ rewrite_object_refs(Node *stmt)
 				 * Try to get physical granted role name, see if it's an
 				 * existing db role
 				 */
-				physical_role_name = get_physical_user_name(db_name, role_name, false);
+				physical_role_name = get_physical_user_name(db_name, role_name, false, true);
 				if (get_role_oid(physical_role_name, true) == InvalidOid)
 					break;
 
@@ -272,7 +272,7 @@ rewrite_object_refs(Node *stmt)
 				pfree(granted->priv_name);
 				granted->priv_name = physical_role_name;
 
-				physical_principal_name = get_physical_user_name(db_name, principal_name, false);
+				physical_principal_name = get_physical_user_name(db_name, principal_name, false, false);
 				pfree(grantee->rolename);
 				grantee->rolename = physical_principal_name;
 
@@ -342,7 +342,7 @@ rewrite_object_refs(Node *stmt)
 						char	   *user_name;
 						char	   *db_name = get_cur_db_name();
 
-						user_name = get_physical_user_name(db_name, create_role->role, false);
+						user_name = get_physical_user_name(db_name, create_role->role, false, true);
 						pfree(create_role->role);
 						create_role->role = user_name;
 
@@ -398,7 +398,7 @@ rewrite_object_refs(Node *stmt)
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									 errmsg("Cannot alter the user %s", user_name)));
 
-						physical_user_name = get_physical_user_name(db_name, user_name, false);
+						physical_user_name = get_physical_user_name(db_name, user_name, false, false);
 						pfree(alter_role->role->rolename);
 						alter_role->role->rolename = physical_user_name;
 					}
@@ -1039,7 +1039,7 @@ rewrite_role_name(RoleSpec *role)
 {
 	char	   *cur_db = get_cur_db_name();
 
-	role->rolename = get_physical_user_name(cur_db, role->rolename, false);
+	role->rolename = get_physical_user_name(cur_db, role->rolename, false, false);
 }
 
 bool
@@ -1275,7 +1275,7 @@ get_physical_schema_name(char *db_name, const char *schema_name)
  * Map the logical user name to its physical name in the database.
  */
 char *
-get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
+get_physical_user_name(char *db_name, char *user_name, bool suppress_error, bool missing_ok)
 {
 	char	   *new_user_name;
 	char	   *result;
@@ -1316,7 +1316,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
 				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
 			{
-				if(user_exists_for_db(db_name, new_user_name))
+				if(missing_ok || user_exists_for_db(db_name, new_user_name))
 				{
 					return new_user_name;
 				}
@@ -1328,15 +1328,17 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 
 	snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, new_user_name);
 
-	if(user_exists_for_db(db_name, result))
+	if(missing_ok || user_exists_for_db(db_name, result))
 	{
 		/* Truncate final result to 64 bytes */
 		truncate_tsql_identifier(result);
-
-		return result;
+	} else {
+		ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("User or role \"%s\" does not exist", new_user_name)));
 	}
 
-	return NULL;
+	return result;
 }
 
 char *

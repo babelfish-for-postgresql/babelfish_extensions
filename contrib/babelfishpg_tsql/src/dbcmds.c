@@ -1092,7 +1092,7 @@ create_schema_if_not_exists(const uint16 dbid,
 	 * some reason guest role does not exist, then that is a bigger problem.
 	 * We skip creating the guest schema entirely instead of crashing though.
 	 */
-	phys_role = get_physical_user_name((char *) dbname, (char *) owner_role, false);
+	phys_role = get_physical_user_name((char *) dbname, (char *) owner_role, false, true);
 	if (!OidIsValid(get_role_oid(phys_role, true)))
 	{
 		ereport(LOG,

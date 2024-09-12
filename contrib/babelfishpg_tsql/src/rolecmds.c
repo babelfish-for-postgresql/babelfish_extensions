@@ -761,7 +761,7 @@ user_id(PG_FUNCTION_ARGS)
 	if (!db_name)
 		PG_RETURN_NULL();
 
-        user_name = get_physical_user_name(db_name, user_input, false);
+        user_name = get_physical_user_name(db_name, user_input, false, true);
 
         if (!user_name)
             PG_RETURN_NULL();
@@ -1460,7 +1460,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	/* update user name */
 	if (new_user_name)
 	{
-		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name, false);
+		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name, false, true);
 		namestrcpy(&physical_name_namedata, physical_name);
 
 		new_record_user_ext[USER_EXT_ROLNAME] = NameGetDatum(&physical_name_namedata);
@@ -1810,7 +1810,7 @@ role_id(PG_FUNCTION_ARGS)
 	if (!get_cur_db_name())
 		PG_RETURN_NULL();
 
-	role_name = get_physical_user_name(get_cur_db_name(), user_input, false);
+	role_name = get_physical_user_name(get_cur_db_name(), user_input, false, true);
 
 	result = get_role_oid(role_name, true);
 
@@ -1851,7 +1851,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	while (idx > 0 && isspace((unsigned char) role[idx - 1]))
 		role[--idx] = '\0';
 	dc_role = downcase_identifier(role, strlen(role), false, false);
-	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role, false);
+	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role, false, true);
 	role_oid = get_role_oid(physical_role_name, true);
 
 	/* If principal name is NULL, take current user instead */
@@ -1866,7 +1866,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 		while (idx > 0 && isspace((unsigned char) principal[idx - 1]))
 			principal[--idx] = '\0';
 		dc_principal = downcase_identifier(principal, strlen(principal), false, false);
-		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal, false);
+		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal, false, true);
 		principal_oid = get_role_oid(physical_principal_name, true);
 	}
 
