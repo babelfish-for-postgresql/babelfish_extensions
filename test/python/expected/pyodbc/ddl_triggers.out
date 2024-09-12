@@ -2,7 +2,6 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[babel_1654_vu_prepare_employeedata](
 	[id] [int] IDENTITY(1,1) NOT NULL,
-	[id] [int] IDENTITY(1,1) NOT NULL,
 	[emp_first_name] [varchar](50) NULL,
 	[emp_last_name] [varchar](50) NULL,
 	[emp_salary] [int] NULL,
@@ -23,7 +22,6 @@ GO
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[babel_1654_vu_prepare_t](
-	[id] [int] IDENTITY(1,1) NOT NULL,
 	[id] [int] IDENTITY(1,1) NOT NULL,
 	[a] [varchar](50) NULL,
 	[b] [varchar](50) NULL,
