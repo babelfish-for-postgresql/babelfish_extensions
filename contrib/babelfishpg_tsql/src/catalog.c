@@ -193,6 +193,17 @@ static struct cachedesc my_cacheinfo[] = {
 			0
 		},
 		16
+	},
+	{-1,						/* AUTHIDUSEREXTROLENAME */
+		-1,
+		1,
+		{
+			Anum_bbf_authid_user_ext_rolname,
+			0,
+			0,
+			0
+		},
+		16
 	}
 };
 
@@ -219,6 +230,12 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME, sys_schema_oid);
 	bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME, sys_schema_oid);
 
+	/* user ext */
+	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
+												sys_schema_oid);
+	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
+													sys_schema_oid);
+
 	/* syscache info */
 	my_cacheinfo[0].reloid = sysdatabases_oid;
 	my_cacheinfo[0].indoid = sysdatabaese_idx_oid_oid;
@@ -228,17 +245,14 @@ init_catalog(PG_FUNCTION_ARGS)
 	my_cacheinfo[2].indoid = bbf_function_ext_idx_oid;
 	my_cacheinfo[3].reloid = namespace_ext_oid;
 	my_cacheinfo[3].indoid = namespace_ext_idx_oid_oid;
+	my_cacheinfo[4].reloid = bbf_authid_user_ext_oid;
+	my_cacheinfo[4].indoid = bbf_authid_user_ext_idx_oid;
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
 												 sys_schema_oid);
 	bbf_authid_login_ext_idx_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_IDX_NAME,
 													 sys_schema_oid);
-	/* user ext */
-	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
-												sys_schema_oid);
-	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
-													sys_schema_oid);
 
 	/* bbf_view_def */
 	bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME, sys_schema_oid);
@@ -298,7 +312,7 @@ initTsqlSyscache()
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited)
 	{
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 4);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 5);
 		tsql_syscache_inited = true;
 	}
 }
@@ -3100,6 +3114,57 @@ guest_role_exists_for_db(const char *dbname)
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return role_exists;
+}
+
+/*
+ * get_login_for_user
+ * Get mapped login for given user_id.
+ * Usually login can be retrived from login_name column of bbf_authid_login_ext
+ * catalog although sometimes the column can be empty such as when user_id belongs
+ * to dbo or guest user. In case the user_id is of dbo role then we get owner of
+ * the respective database which can be deduced from physical_schema_name. For all
+ * other cases, return InvalidOid since mapped login does not exist for the rest.
+ */
+Oid
+get_login_for_user(Oid user_id, const char *physical_schema_name)
+{
+	HeapTuple	tuple;
+	Oid loginId = InvalidOid;
+	char *physical_user_name = GetUserNameFromId(user_id, true);
+
+	if (!physical_user_name || !physical_schema_name)
+		return InvalidOid;
+
+	/* Search if the role exists */
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(physical_user_name));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Datum datum;
+		bool isnull;
+
+		datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple, Anum_bbf_authid_user_ext_login_name, &isnull);
+		Assert(!isnull);
+		loginId = get_role_oid((DatumGetName(datum)->data), true);
+
+		if (!OidIsValid(loginId))
+		{
+			char *orig_username = TextDatumGetCString(SysCacheGetAttr(AUTHIDUSEREXTROLENAME,
+								tuple, Anum_bbf_authid_user_ext_orig_username, &isnull));
+
+			Assert(!isnull);
+			if (strlen(orig_username) == 3 && pg_strcasecmp(orig_username, "dbo") == 0)
+			{
+				int16 dbid = get_dbid_from_physical_schema_name(physical_schema_name, true);
+
+				if (DbidIsValid(dbid))
+					loginId = get_role_oid(get_owner_of_db(get_db_name(dbid)), true);
+			}
+		}
+		ReleaseSysCache(tuple);
+	}
+
+	return loginId;
 }
 
 static void

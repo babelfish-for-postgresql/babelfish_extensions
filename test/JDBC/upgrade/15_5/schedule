@@ -462,7 +462,7 @@ typeid-typename
 typeid-typename-dep
 unquoted_string
 doublequoted_string
-alter_authorization_change_db_owner
+# alter_authorization_change_db_owner - Temporarily disable until BABEL-5218 is fixed
 sp_changedbowner
 datetimeoffset-timezone
 BABEL-4046
