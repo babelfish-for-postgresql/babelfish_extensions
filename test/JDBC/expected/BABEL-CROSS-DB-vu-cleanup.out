@@ -1,10 +1,4 @@
 -- tsql
-USE master
-GO
-
-DROP VIEW dbo.babel_cross_db_vu_prepare_v1;
-GO
-
 USE babel_cross_db_vu_prepare_db1
 GO
 
@@ -18,6 +12,9 @@ DROP PROCEDURE babel_cross_db_vu_prepare_db1_p1
 GO
 
 DROP TABLE dbo.babel_cross_db_vu_prepare_db1_t3
+GO
+
+DROP VIEW dbo.babel_cross_db_vu_prepare_v1;
 GO
 
 DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1_nested;

@@ -908,7 +908,8 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	/* In TSQL dialect the RTE permissions might need to be checked against session user. */
 	if (sql_dialect == SQL_DIALECT_TSQL && queryDesc->plannedstmt != NULL)
 	{
-		ListCell   *lc;
+		ListCell	*lc;
+		Oid     	currentUserId = GetUserId();
 
 		foreach(lc, queryDesc->plannedstmt->permInfos)
 		{
@@ -928,9 +929,12 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					 * it is not a shared schema. If yes, then update checkAsUser to session
 					 * user to allow cross database access.
 					 */
-					if (nspname != NULL && !is_shared_schema(nspname) &&
-						!is_schema_from_db(schema_id, get_cur_db_id()))
-						perminfo->checkAsUser = GetSessionUserId();
+					if (nspname != NULL && !is_shared_schema(nspname))
+					{
+						if (!is_schema_from_db(schema_id, get_cur_db_id()) ||
+							perminfo->checkAsUser != currentUserId)
+							perminfo->checkAsUser = GetSessionUserId();
+					}
 					if (nspname)
 						pfree(nspname);
 				}

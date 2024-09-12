@@ -327,5 +327,5 @@ EXEC babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_v
 GO
 
 -- tsql
-SELECT * FROM dbo.babel_cross_db_vu_prepare_v1 ORDER BY name;
+SELECT * FROM babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_v1 ORDER BY id;
 GO

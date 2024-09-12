@@ -638,11 +638,15 @@ int#!#int#!#varchar#!#varchar
 
 
 -- tsql
-SELECT * FROM dbo.babel_cross_db_vu_prepare_v1 ORDER BY name;
+SELECT * FROM babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_v1 ORDER BY id;
 GO
 ~~START~~
-int#!#varchar
-1#!#abc
-1#!#def
+int
+1
+2
+3
+4
+5
+6
 ~~END~~
 

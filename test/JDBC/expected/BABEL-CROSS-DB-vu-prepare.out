@@ -226,12 +226,15 @@ AS
 GO
 
 -- tsql
-USE master;
+USE babel_cross_db_vu_prepare_db1;
 GO
 
 -- View containing union between two cross-db tables from different datababses.
 CREATE VIEW dbo.babel_cross_db_vu_prepare_v1 AS
-    SELECT id, name FROM babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1
+    SELECT id FROM master.dbo.babel_cross_db_vu_prepare_master_t1
     UNION
-    SELECT id, name FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+    SELECT id FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+GO
+
+USE master;
 GO
