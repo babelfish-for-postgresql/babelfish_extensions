@@ -180,13 +180,54 @@ GO
 -- Procedure which accesses cross database objects
 CREATE PROCEDURE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1
 AS
-    SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1; -- SELECT from table in same database
+    SELECT * FROM babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1; -- SELECT from table in same database
     SELECT * FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2; -- SELECT from table in different database
-    SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1; -- SELECT from a view which accesses objects from different database
+    SELECT * FROM babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1; -- SELECT from a view which accesses objects from different database
 
     -- SELECT from a view which accesses objects from different database without permission
+    SELECT * FROM babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
+GO
+
+-- Nested variants of all the objects above
+CREATE FUNCTION babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1 (@a int)
+    RETURNS INT AS
+    BEGIN
+        RETURN babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(@a);
+    END;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1_nested AS
+    SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2_nested AS
     SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
 GO
 
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3_nested AS
+    SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4_nested AS
+    SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v5_nested AS
+    SELECT babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1(1) AS id;
+GO
+
+CREATE PROCEDURE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested
+AS
+    EXEC babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
+GO
+
+-- tsql
 USE master;
+GO
+
+-- View containing union between two cross-db tables from different datababses.
+CREATE VIEW dbo.babel_cross_db_vu_prepare_v1 AS
+    SELECT id, name FROM babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1
+    UNION
+    SELECT id, name FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
 GO

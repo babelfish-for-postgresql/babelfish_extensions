@@ -283,7 +283,7 @@ static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_cons
 static pltsql_strpos_non_determinstic_hook_type prev_pltsql_strpos_non_determinstic_hook = NULL;
 static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determinstic_hook = NULL;
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
-static ExecInitFunc_AclCheck_hook_type prev_ExecInitFunc_AclCheck_hook = NULL;
+static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -497,8 +497,8 @@ InstallExtendedHooks(void)
 	handle_param_collation_hook = set_param_collation;
 	handle_default_collation_hook = default_collation_for_builtin_type;
 
-	prev_ExecInitFunc_AclCheck_hook  = ExecInitFunc_AclCheck_hook;
-	ExecInitFunc_AclCheck_hook = pltsql_ExecInitFunc_AclCheck;
+	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
+	ExecFuncProc_AclCheck_hook = pltsql_ExecInitFunc_AclCheck;
 }
 
 void
@@ -566,7 +566,7 @@ UninstallExtendedHooks(void)
 	pltsql_strpos_non_determinstic_hook = prev_pltsql_strpos_non_determinstic_hook;
 	pltsql_replace_non_determinstic_hook = prev_pltsql_replace_non_determinstic_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;
-	ExecInitFunc_AclCheck_hook = prev_ExecInitFunc_AclCheck_hook;
+	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -874,8 +874,8 @@ pltsql_ExecInitFunc_AclCheck(Oid funcid)
 				pfree(nspname);
 		}
 	}
-	else if (prev_ExecInitFunc_AclCheck_hook)
-		return prev_ExecInitFunc_AclCheck_hook(funcid);
+	else if (prev_ExecFuncProc_AclCheck_hook)
+		return prev_ExecFuncProc_AclCheck_hook(funcid);
 
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }

@@ -278,16 +278,31 @@ GO
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
 GO
 
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1_nested;
+GO
+
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v5_nested;
+GO
+
 -- SELECT from a view in db1 which references tables in db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
+GO
+
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2_nested;
 GO
 
 -- SELECT from a view in db1 which references functions in db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3;
 GO
 
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3_nested;
+GO
+
 -- View containing cross-db tables on which login babel_cross_db_vu_prepare_l1 does not have permission on either of joined tables, should throw error
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4;
+GO
+
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4_nested;
 GO
 
 -- Execute procedure from db2
@@ -296,4 +311,21 @@ GO
 
 -- Execute procedure in db1 which accesses cross database objects
 EXEC babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
+GO
+
+EXEC babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested;
+GO
+
+USE master
+GO
+
+-- call above procedures from a master
+EXEC babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
+GO
+
+EXEC babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested;
+GO
+
+-- tsql
+SELECT * FROM dbo.babel_cross_db_vu_prepare_v1 ORDER BY name;
 GO

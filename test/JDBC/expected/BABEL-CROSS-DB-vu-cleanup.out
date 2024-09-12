@@ -1,4 +1,10 @@
 -- tsql
+USE master
+GO
+
+DROP VIEW dbo.babel_cross_db_vu_prepare_v1;
+GO
+
 USE babel_cross_db_vu_prepare_db1
 GO
 
@@ -14,6 +20,21 @@ GO
 DROP TABLE dbo.babel_cross_db_vu_prepare_db1_t3
 GO
 
+DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1_nested;
+GO
+
+DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2_nested;
+GO
+
+DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3_nested;
+GO
+
+DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4_nested;
+GO
+
+DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v5_nested;
+GO
+
 DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
 GO
 
@@ -27,6 +48,12 @@ DROP VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4;
 GO
 
 DROP TABLE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1;
+GO
+
+DROP FUNCTION babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1;
+GO
+
+DROP PROCEDURE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested;
 GO
 
 DROP PROCEDURE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;

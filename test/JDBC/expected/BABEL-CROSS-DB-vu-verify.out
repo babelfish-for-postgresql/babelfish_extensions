@@ -469,8 +469,31 @@ int#!#int#!#varchar#!#varchar
 ~~END~~
 
 
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1_nested;
+GO
+~~START~~
+int#!#int#!#varchar#!#varchar
+1#!#1#!#def#!#abc
+~~END~~
+
+
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v5_nested;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 -- SELECT from a view in db1 which references tables in db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
+
+
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2_nested;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -485,8 +508,22 @@ GO
 ~~ERROR (Message: permission denied for function babel_cross_db_vu_prepare_f2)~~
 
 
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3_nested;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_cross_db_vu_prepare_f2)~~
+
+
 -- View containing cross-db tables on which login babel_cross_db_vu_prepare_l1 does not have permission on either of joined tables, should throw error
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
+
+
+SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4_nested;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -528,4 +565,84 @@ int#!#int#!#varchar#!#varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
+
+
+EXEC babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested;
+GO
+~~START~~
+int#!#varchar
+1#!#def
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+~~START~~
+int#!#int#!#varchar#!#varchar
+1#!#1#!#def#!#abc
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
+
+
+USE master
+GO
+
+-- call above procedures from a master
+EXEC babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
+GO
+~~START~~
+int#!#varchar
+1#!#def
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+~~START~~
+int#!#int#!#varchar#!#varchar
+1#!#1#!#def#!#abc
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
+
+
+EXEC babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested;
+GO
+~~START~~
+int#!#varchar
+1#!#def
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#abc
+~~END~~
+
+~~START~~
+int#!#int#!#varchar#!#varchar
+1#!#1#!#def#!#abc
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
+
+
+-- tsql
+SELECT * FROM dbo.babel_cross_db_vu_prepare_v1 ORDER BY name;
+GO
+~~START~~
+int#!#varchar
+1#!#abc
+1#!#def
+~~END~~
 
