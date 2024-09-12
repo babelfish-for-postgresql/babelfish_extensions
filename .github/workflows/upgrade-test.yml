@@ -124,7 +124,7 @@ jobs:
  
       - name: Upload Logs
         if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: upgrade-logs-${{ matrix.upgrade-path.title }}
           path: |
