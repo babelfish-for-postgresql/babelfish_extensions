@@ -851,14 +851,10 @@ get_authid_login_ext_idx_oid(void)
 bool
 is_user(Oid role_oid)
 {
-	Relation	relation;
 	bool		is_user = true;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
-	char	   *type_str = "";
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
 	if (!HeapTupleIsValid(authtuple))
@@ -866,43 +862,23 @@ is_user(Oid role_oid)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("role with OID %u does not exist", role_oid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-
-	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
-
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
-
-	scan = systable_beginscan(relation,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
 
 	if (!HeapTupleIsValid(tuple))
 		is_user = false;
 	else
 	{
-		Datum		datum;
-		bool		isnull;
-		TupleDesc	dsc;
+		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
+		char *type_str = bpchar_to_cstring(&type);
 
-		dsc = RelationGetDescr(relation);
-		datum = heap_getattr(tuple, USER_EXT_TYPE + 1, dsc, &isnull);
-		if (!isnull)
-			type_str = pstrdup(TextDatumGetCString(datum));
+		/*
+		 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
+		 * is "S" or "U" etc, we should drop the user
+		 */
+		if (strcmp(type_str, "R") == 0)
+			is_user = false;
+		ReleaseSysCache(tuple);
 	}
-
-	/*
-	 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
-	 * is "S" or "U" etc, we should drop the user
-	 */
-	if (strcmp(type_str, "R") == 0)
-		is_user = false;
-
-	systable_endscan(scan);
-	table_close(relation, AccessShareLock);
 
 	ReleaseSysCache(authtuple);
 
@@ -912,15 +888,10 @@ is_user(Oid role_oid)
 bool
 is_role(Oid role_oid)
 {
-	Relation	relation;
 	bool		is_role = true;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
-	BpChar		type;
-	char	   *type_str = "";
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
 	if (!HeapTupleIsValid(authtuple))
@@ -928,33 +899,19 @@ is_role(Oid role_oid)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("role with OID %u does not exist", role_oid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-
-	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
-
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
-
-	scan = systable_beginscan(relation,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
 
 	if (!HeapTupleIsValid(tuple))
 		is_role = false;
 	else
 	{
-		type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		type_str = bpchar_to_cstring(&type);
+		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
+		char *type_str = bpchar_to_cstring(&type);
 
 		if (strcmp(type_str, "R") != 0)
 			is_role = false;
+		ReleaseSysCache(tuple);
 	}
-
-	systable_endscan(scan);
-	table_close(relation, AccessShareLock);
 
 	ReleaseSysCache(authtuple);
 
@@ -3086,32 +3043,15 @@ guest_role_exists_for_db(const char *dbname)
 {
 	const char *guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
-	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 
-	/* Fetch the relation */
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
-
-	/* Search if the role exists */
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(guest_role));
-
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(guest_role));
 
 	if (HeapTupleIsValid(tuple))
+	{
 		role_exists = true;
-
-	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		ReleaseSysCache(tuple);
+	}
 
 	return role_exists;
 }
