@@ -226,7 +226,7 @@ END AS isEqual
 FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn1.STX;
 go
 ~~START~~
-int#!#bit#!#text
+int#!#bit#!#varchar
 1#!#1#!#yes
 ~~END~~
 
@@ -269,7 +269,7 @@ END AS Proximity
 FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
-int#!#bit#!#text
+int#!#bit#!#varchar
 1#!#0#!#Far
 3#!#<NULL>#!#Far
 2#!#0#!#Far
@@ -284,7 +284,7 @@ END AS Proximity
 FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
-int#!#bit#!#text
+int#!#bit#!#varchar
 1#!#0#!#Close
 3#!#<NULL>#!#Far
 2#!#0#!#Close
@@ -369,7 +369,7 @@ SET @params = N'@referencePoint geometry, @isEqual float';
 EXEC sp_executesql @sql, @params, @referencePoint, @isEqual;
 go
 ~~START~~
-int#!#bit#!#text
+int#!#bit#!#varchar
 ~~END~~
 
 
@@ -632,7 +632,7 @@ END AS Proximity
 FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn1.STX;
 GO
 ~~START~~
-int#!#bit#!#text
+int#!#bit#!#varchar
 1#!#1#!#Contains
 ~~END~~
 
@@ -644,7 +644,7 @@ END AS Proximity
 FROM TestSpatialFunction_YourTableTemp2 ORDER BY PointColumn1.STX;
 GO
 ~~START~~
-int#!#bit#!#text
+int#!#bit#!#varchar
 1#!#0#!#Contains
 ~~END~~
 
@@ -676,7 +676,7 @@ END AS Proximity
 FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
-int#!#bit#!#text
+int#!#bit#!#varchar
 1#!#0#!#do_not_contain
 3#!#<NULL>#!#do_not_contain
 2#!#0#!#do_not_contain
@@ -691,7 +691,7 @@ END AS Proximity
 FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STX;
 go
 ~~START~~
-int#!#bit#!#text
+int#!#bit#!#varchar
 1#!#0#!#contain
 3#!#<NULL>#!#do_not_contain
 2#!#0#!#contain
@@ -776,7 +776,7 @@ SET @params = N'@referencePoint geometry, @contains float';
 EXEC sp_executesql @sql, @params, @referencePoint, @contains;
 go
 ~~START~~
-int#!#bit#!#text
+int#!#bit#!#varchar
 ~~END~~
 
 
@@ -1392,7 +1392,7 @@ CASE WHEN PointColumn.STSrid = 0 THEN 'Zero SRID'
 ELSE 'Positive SRID' END AS SRID FROM TestSpatialFunction_YourTableTemp ORDER BY PointColumn.STSrid;
 GO
 ~~START~~
-int#!#int#!#text
+int#!#int#!#varchar
 3#!#0#!#Zero SRID
 1#!#4326#!#Positive SRID
 2#!#4326#!#Positive SRID

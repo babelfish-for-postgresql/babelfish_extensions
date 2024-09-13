@@ -156,7 +156,7 @@ int
 SELECT (CASE WHEN OBJECT_NAME(OBJECT_ID('   babel_object_id_t1')) = 'babel_object_id_t1' THEN 'true' ELSE 'false' END) result;
 GO
 ~~START~~
-text
+varchar
 false
 ~~END~~
 
@@ -397,7 +397,7 @@ babel_object_id_v1
 SELECT (CASE WHEN OBJECT_ID('babel_object_id_trg') = NULL THEN 'false' ELSE 'true' END) result;
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -537,7 +537,7 @@ babel_object_id_v1
 SELECT (CASE WHEN OBJECT_ID('master..babel_object_id_trg') = NULL THEN 'false' ELSE 'true' END) result;
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 

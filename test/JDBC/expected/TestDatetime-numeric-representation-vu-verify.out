@@ -1608,28 +1608,28 @@ GO
 EXEC Datetime_proc2 '1900-01-04 00:00:00', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc2 '1900-01-01 00:00:00', 0
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc2 '1900-01-04 00:00:00', 2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc2 '1899-12-29 00:00:00', -2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1639,28 +1639,28 @@ GO
 EXEC Datetime_proc3 '1900-01-04 02:24:00', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc3 '1900-01-01 00:00:00', 0
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc3 '1900-01-03 12:00:00', 2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc3 '1899-12-29 12:00:00', -2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1670,21 +1670,21 @@ GO
 EXEC Datetime_proc4 '1900-01-02 09:36:00', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc4 '1900-01-04 02:24:00', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc4 '1899-12-28 21:36:00', -3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1757,21 +1757,21 @@ GO
 EXEC Datetime_proc6 '1900-01-02 00:00:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc6 '1900-01-04 00:00:00.000', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc6 '1899-12-30 00:00:00.000', -2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1781,21 +1781,21 @@ GO
 EXEC Datetime_proc7 '1900-01-02 00:00:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc7 '1900-01-04 00:00:00.000', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc7 '1899-12-30 00:00:00.000', -2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1805,14 +1805,14 @@ GO
 EXEC Datetime_proc8 '1900-01-02 00:00:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc8 '1989-09-18 00:00:00.000', 32767
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1828,14 +1828,14 @@ GO
 EXEC Datetime_proc9 '1900-01-02 00:00:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc9 '1900-09-13 00:00:00.000', 255
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1851,21 +1851,21 @@ GO
 EXEC Datetime_proc10 '1900-01-02 09:36:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc10 '1900-01-04 02:24:00.000', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc10 '1899-12-29 12:00:00.000', -2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1875,21 +1875,21 @@ GO
 EXEC Datetime_proc11 '1900-01-02 09:36:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc11 '1900-01-04 02:24:00.000', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC Datetime_proc11 '1899-12-29 12:00:00.000', -2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1897,14 +1897,14 @@ pass
 EXEC Datetime_proc11 '1900-01-02 09:36:00.000', NULL
 GO
 ~~START~~
-text
+varchar
 fail
 ~~END~~
 
 EXEC Datetime_proc11 '1900-01-04 02:24:00.000', NULL
 GO
 ~~START~~
-text
+varchar
 fail
 ~~END~~
 
@@ -1914,21 +1914,21 @@ GO
 EXEC SMALLDatetime_proc2 '1900-01-04 00:00:00', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC SMALLDatetime_proc2 '1900-01-01 00:00:00', 0
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC SMALLDatetime_proc2 '1900-01-04 00:00:00', 2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1944,21 +1944,21 @@ GO
 EXEC SMALLDatetime_proc3 '1900-01-04 02:24:00', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC SMALLDatetime_proc3 '1900-01-01 00:00:00', 0
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC SMALLDatetime_proc3 '1900-01-03 12:00:00', 2.5
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -1969,14 +1969,14 @@ GO
 EXEC SMALLDatetime_proc4 '1900-01-02 09:36:00', 1.4
 GO
 ~~START~~
-text
+varchar
 fail
 ~~END~~
 
 EXEC SMALLDatetime_proc4 '1900-01-04 02:24:00', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -2049,14 +2049,14 @@ GO
 EXEC SMALLDatetime_proc6 '1900-01-02 00:00:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC SMALLDatetime_proc6 '1900-01-04 00:00:00.000', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -2072,14 +2072,14 @@ GO
 EXEC SMALLDatetime_proc7 '1900-01-02 00:00:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC SMALLDatetime_proc7 '1900-01-04 00:00:00.000', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -2095,14 +2095,14 @@ GO
 EXEC SMALLDatetime_proc8 '1900-01-02 00:00:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC SMALLDatetime_proc8 '1989-09-18 00:00:00.000', 32767
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -2118,14 +2118,14 @@ GO
 EXEC SMALLDatetime_proc9 '1900-01-02 00:00:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
 EXEC SMALLDatetime_proc9 '1900-09-13 00:00:00.000', 255
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -2142,14 +2142,14 @@ GO
 EXEC SMALLDatetime_proc10 '1900-01-02 09:36:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 fail
 ~~END~~
 
 EXEC SMALLDatetime_proc10 '1900-01-04 02:24:00.000', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -2167,14 +2167,14 @@ GO
 EXEC SMALLDatetime_proc11 '1900-01-02 09:36:00.000', 1.4
 GO
 ~~START~~
-text
+varchar
 fail
 ~~END~~
 
 EXEC SMALLDatetime_proc11 '1900-01-04 02:24:00.000', 3.1
 GO
 ~~START~~
-text
+varchar
 pass
 ~~END~~
 
@@ -2188,14 +2188,14 @@ GO
 EXEC SMALLDatetime_proc11 '1900-01-02 09:36:00.000', NULL
 GO
 ~~START~~
-text
+varchar
 fail
 ~~END~~
 
 EXEC SMALLDatetime_proc11 '1900-01-04 02:24:00.000', NULL
 GO
 ~~START~~
-text
+varchar
 fail
 ~~END~~
 

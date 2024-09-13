@@ -738,7 +738,7 @@ ELSE 'Low X'
 END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
-int#!#float#!#text
+int#!#float#!#varchar
 1#!#3.0#!#Low X
 2#!#5.0#!#High X
 ~~END~~
@@ -751,7 +751,7 @@ ELSE 'Low X'
 END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
-int#!#float#!#text
+int#!#float#!#varchar
 1#!#3.0#!#Low X
 2#!#5.0#!#Low X
 ~~END~~
@@ -880,7 +880,7 @@ THEN 'Negative X' WHEN PointColumn.STX = 0 THEN 'Zero X'
 ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
-int#!#float#!#text
+int#!#float#!#varchar
 1#!#3.0#!#Positive X
 2#!#5.0#!#Positive X
 ~~END~~
@@ -892,7 +892,7 @@ THEN 'Negative X' WHEN @point.STX = 0 THEN 'Zero X'
 ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
-int#!#float#!#text
+int#!#float#!#varchar
 1#!#1.0#!#Positive X
 2#!#1.0#!#Positive X
 ~~END~~
@@ -1164,7 +1164,7 @@ END AS Proximity
 FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 ~~START~~
-int#!#float#!#text
+int#!#float#!#varchar
 1#!#1.4142135623730951#!#Close
 ~~END~~
 
@@ -1176,7 +1176,7 @@ END AS Proximity
 FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 ~~START~~
-int#!#float#!#text
+int#!#float#!#varchar
 1#!#5.0#!#Far
 ~~END~~
 
@@ -1302,7 +1302,7 @@ END AS Proximity
 FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
-int#!#float#!#text
+int#!#float#!#varchar
 1#!#0.0#!#Close
 2#!#0.0#!#Close
 ~~END~~
@@ -1316,7 +1316,7 @@ END AS Proximity
 FROM YourTable ORDER BY PointColumn.STX;
 GO
 ~~START~~
-int#!#float#!#text
+int#!#float#!#varchar
 1#!#0.0#!#Close
 2#!#0.0#!#Close
 ~~END~~
@@ -1389,7 +1389,7 @@ SET @params = N'@referencePoint geometry, @thresholdDistance float';
 EXEC sp_executesql @sql, @params, @referencePoint, @thresholdDistance;
 GO
 ~~START~~
-int#!#float#!#text
+int#!#float#!#varchar
 1#!#0.0#!#Close
 2#!#0.0#!#Close
 ~~END~~
