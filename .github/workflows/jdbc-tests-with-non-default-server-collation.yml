@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload Log
         if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: postgres-log
           path: ~/postgres/data/logfile
@@ -76,7 +76,7 @@ jobs:
       
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: test/JDBC/Info/run-summary.log
