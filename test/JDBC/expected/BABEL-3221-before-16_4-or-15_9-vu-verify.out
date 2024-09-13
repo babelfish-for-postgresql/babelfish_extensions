@@ -9,7 +9,7 @@ int#!#uniqueidentifier#!#money
 SELECT * FROM babel_3221_view_2;
 go
 ~~START~~
-varchar
+text
 Y
 ~~END~~
 
