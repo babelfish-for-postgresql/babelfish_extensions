@@ -123,6 +123,12 @@ go
 create role r1;
 go
 
+create schema s1;
+go
+
+create table s1.before_t1(a int);
+go
+
 create table before_t1(a int);
 go
 
@@ -139,6 +145,9 @@ alter role db_datawriter add member r1;
 go
 
 create table after_t1(a int);
+go
+
+create table s1.after_t1(a int);
 go
 
 -- tsql user=l1 password=123
@@ -179,6 +188,30 @@ go
 
 
 insert into after_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from s1.after_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from s1.before_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+insert into s1.after_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+insert into s1.after_t1 values(1); -- allowed
 go
 ~~ROW COUNT: 1~~
 
@@ -302,6 +335,34 @@ go
 
 
 insert into after_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+select * from s1.after_t1;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+select * from s1.before_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+insert into s1.after_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+insert into s1.after_t1 values(1); -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -556,6 +617,15 @@ void
 
 -- tsql
 -- drop objects
+drop table s1.before_t1;
+go
+
+drop table s1.after_t1;
+go
+
+drop schema s1;
+go
+
 drop table before_t1;
 go
 

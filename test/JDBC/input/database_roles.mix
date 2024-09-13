@@ -59,6 +59,12 @@ go
 create role r1;
 go
 
+create schema s1;
+go
+
+create table s1.before_t1(a int);
+go
+
 create table before_t1(a int);
 go
 
@@ -75,6 +81,9 @@ alter role db_datawriter add member r1;
 go
 
 create table after_t1(a int);
+go
+
+create table s1.after_t1(a int);
 go
 
 -- tsql user=l1 password=123
@@ -95,6 +104,18 @@ insert into after_t1 values(1); -- allowed
 go
 
 insert into after_t1 values(1); -- allowed
+go
+
+select * from s1.after_t1; -- allowed
+go
+
+select * from s1.before_t1; -- allowed
+go
+
+insert into s1.after_t1 values(1); -- allowed
+go
+
+insert into s1.after_t1 values(1); -- allowed
 go
 
 -- tsql
@@ -154,6 +175,18 @@ insert into after_t1 values(1); -- not allowed
 go
 
 insert into after_t1 values(1); -- not allowed
+go
+
+select * from s1.after_t1;  -- not allowed
+go
+
+select * from s1.before_t1; -- not allowed
+go
+
+insert into s1.after_t1 values(1); -- not allowed
+go
+
+insert into s1.after_t1 values(1); -- not allowed
 go
 
 -- tsql
@@ -280,6 +313,15 @@ go
 
 -- tsql
 -- drop objects
+drop table s1.before_t1;
+go
+
+drop table s1.after_t1;
+go
+
+drop schema s1;
+go
+
 drop table before_t1;
 go
 

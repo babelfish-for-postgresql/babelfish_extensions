@@ -2422,8 +2422,6 @@ exec_database_roles_subcmds(const char *schema)
 	//Oid			current_user_id = GetUserId();
 	List		*stmt_list;
 	int			expected_stmts = 2;
-	//int			i = 0;
-	//Node		*stmt;
 	ListCell   *parsetree_item;
 
 	db_datareader = get_db_datareader_name(dbname);

@@ -4059,7 +4059,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								/* Special database roles should throw an error. */
-								if (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0)
+								if (rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0))
 									ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 										errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 								add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true, NULL);
@@ -4071,7 +4071,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								/* Special database roles should throw an error. */
-								if (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0)
+								if (rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0))
 									ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 										errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 								/*
@@ -4099,7 +4099,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 									/* Special database roles should throw an error. */
-									if (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0)
+									if (rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0))
 										ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 									add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
@@ -4115,7 +4115,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 									/* Special database roles should throw an error. */
-									if (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0)
+									if (rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0))
 										ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 									/*
