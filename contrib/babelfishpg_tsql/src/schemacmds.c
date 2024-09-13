@@ -35,7 +35,7 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 
 	/*
 	 * orig_name will be provided only when queryString is not valid. e.g
-	 * CREATE LOGICAL DATABASE
+	 * CREATE LOGICLA DATABASE
 	 */
 	if (!orig_name)
 	{
