@@ -631,14 +631,7 @@ grant_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	tmp->location = -1;
 	tmp->rolename = pstrdup(login);
 
-	if (is_grant)
-	{
-		update_GrantRoleStmt(stmt, dbo, list_make1(tmp));
-	}
-	else
-	{
-		update_RevokeRoleStmt(stmt, dbo, list_make1(tmp));
-	}
+	update_GrantRoleStmt(stmt, dbo, list_make1(tmp));
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
@@ -647,11 +640,11 @@ grant_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	wrapper->canSetTag = false;
 	wrapper->utilityStmt = stmt;
 	wrapper->stmt_location = 0;
-	wrapper->stmt_len = 18;
+	wrapper->stmt_len = 23;
 
 	/* do this step */
 	ProcessUtility(wrapper,
-				   "(CREATE DATABASE )",
+				   "(ALTER DATABASE OWNER )",
 				   false,
 				   PROCESS_UTILITY_SUBCOMMAND,
 				   NULL,

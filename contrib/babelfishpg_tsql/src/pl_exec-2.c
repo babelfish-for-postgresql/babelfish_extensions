@@ -3916,10 +3916,10 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 	PG_TRY();
 	{
 		/*
-		* Set current user to bbf_role_admin for grant roles.
+		* Set current user to bbf_role_admin to grant roles.
 		*/
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-
+		
 		/* Revoke dbo role from the previous owner */
 		grant_dbo_to_login(get_owner_of_db(stmt->db_name), stmt->db_name, false);
 
