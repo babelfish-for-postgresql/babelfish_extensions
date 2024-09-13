@@ -47,6 +47,158 @@ DECLARE @result9 VARCHAR(70) = CASE WHEN @xml.exist('/Root/Parent1/Child1') = 1 
 SELECT @result9
 GO
 
+-- Test with a valid XML document
+DECLARE @xml XML = '<root><child>Hello</child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with nested XML elements
+DECLARE @xml XML = '<root><parent><child1>Test1</child1><child2>Test2</child2></parent></root>';
+SELECT @xml.exist('(//child1)[1]'), @xml.exist('(//child2)[1]');
+GO
+
+-- Test with an empty XML document
+DECLARE @xml XML = '<root></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with an XML document containing special characters
+DECLARE @xml XML = '<root><child>Hello & World</child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with an XML document containing CDATA sections
+DECLARE @xml XML = '<root><child><![CDATA[<data>Hello World</data>]]></child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with a large XML document
+DECLARE @xml XML = '<root>' + REPLICATE('<item>Data</item>', 10000) + '</root>';
+SELECT @xml.exist('(/root/item)[1]');
+GO
+
+-- Test with NULL input
+DECLARE @xml XML = NULL;
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with different data types for the second argument
+DECLARE @xml XML = '<root><child>123</child></root>';
+SELECT @xml.exist('(//child)[1]'), @xml.exist('(//child)[1]'), @xml.exist('(//child)[1]');
+GO
+
+-- Test with mixed content XML
+DECLARE @xml XML = '<root>This is <bold>mixed</bold> content</root>';
+SELECT @xml.exist('(/root)[1]');
+GO
+
+-- Test with XML comments
+DECLARE @xml XML = '<root><!--This is a comment--><child>Hello</child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with XML entities
+DECLARE @xml XML = '<root><child>Hello &amp; World</child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with XML attributes
+DECLARE @xml XML = '<root><child name="test">Hello</child></root>';
+SELECT @xml.exist('(//child/@name)[1]');
+GO
+
+-- Test with XML fragments
+DECLARE @xml XML = '<child1>Test1</child1><child2>Test2</child2>';
+SELECT @xml.exist('(//child1)[1]'), @xml.exist('(//child2)[1]');
+GO
+
+-- Test with Unicode characters
+DECLARE @xml XML = '<root><child>Hello 世界</child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with different XML encodings
+DECLARE @xml XML = N'<?xml version="1.0" encoding="UTF-8"?><root><child>Héllò</child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with XML elements containing line breaks
+DECLARE @xml XML = '<root><child>Hello
+World</child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with XML elements containing leading/trailing whitespace
+DECLARE @xml XML = '<root><child>  Hello  </child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with XML elements containing XML namespaces within CDATA sections
+DECLARE @xml XML = '<root><child><![CDATA[<ns:data xmlns:ns="http://example.com">Hello</ns:data>]]></child></root>';
+SELECT @xml.exist('(//child)[1]');
+GO
+
+-- Test with XML documents containing internal entities
+DECLARE @xml XML = '<?xml version="1.0"?>
+<!DOCTYPE root [
+<!ENTITY internal "Hello World">
+]>
+<root>&internal;</root>';
+SELECT @xml.exist('(/root)[1]');
+GO
+
+-- Test with XML documents containing entity references in attributes
+DECLARE @xml XML = '<?xml version="1.0"?>
+<!DOCTYPE root [
+<!ENTITY attr "value">
+]>
+<root attr="&attr;"></root>';
+SELECT @xml.exist('(/root/@attr)[1]');
+GO
+
+-- Test with XML documents containing namespaces in CDATA sections and attributes
+DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
+WITH XMLNAMESPACES('http://example.com' as ns)
+SELECT @xml.exist('(//ns:data)[1]'), @xml.exist('(//child)[1]'), @xml.exist('(//child/@ns:attr)[1]');
+GO
+
+DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
+SELECT @xml.exist('(//ns:data)[1]')
+GO
+
+DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
+SELECT @xml.exist('(//child)[1]')
+GO
+
+DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
+SELECT @xml.exist('(//child/@ns:attr)[1]');
+GO
+
+-- Test with XML documents containing invalid characters
+DECLARE @xml XML = '<root>Hello&#0;World</root>';
+SELECT @xml.exist('(/root)[1]');
+GO
+
+-- Test with XML documents containing XML Digital Signatures
+DECLARE @xml XML = '<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <child>Hello World</child>
+  <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+    <!-- Digital Signature details -->
+  </Signature>
+</root>';
+SELECT @xml.exist('(/root/child)[1]');
+GO
+
+-- Test with xpath functions
+DECLARE @x XML = '<root></root>';
+SELECT @x.exist('true()')
+GO
+
+DECLARE @x XML = '<root></root>';
+SELECT @x.exist('false()')
+GO
+
 -- Acceptable argument types
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.exist('/artists/artist/@name')
@@ -270,11 +422,6 @@ GO
 
 -- Currently, we only support XPATH 1.0 as input for XML exist function. 
 -- Hence following queries will throw error
-DECLARE @x XML;
-SET @x='';
-SELECT @x.exist('true()')
-GO
-
 DECLARE @x XML;  
 DECLARE @f BIT;  
 SET @x = '<root Somedate = "2002-01-01Z"/>';  
@@ -287,6 +434,10 @@ DECLARE @f BIT;
 SET @x = '<Somedate>2002-01-01Z</Somedate>';  
 SET @f = @x.exist('/Somedate[(text()[1] cast as xs:date ?) = xs:date("2002-01-01Z") ]')  
 SELECT @f;
+GO
+
+DECLARE @xml XML = '<root><child>Hello</child></root>';
+SELECT @xml.exist('(//*:child)[1]');
 GO
 
 -- Unsupported XML functions VALUE(), QUERY(), MODIFY()
