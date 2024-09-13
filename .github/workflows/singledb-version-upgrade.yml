@@ -46,14 +46,14 @@ jobs:
       
       - name: Upload New Postgres log
         if: always() && steps.upgrade-and-verify.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
          name: postgres-log-new
          path: ~/${{env.NEW_INSTALL_DIR}}/data/logfile
 
       - name: Upload upgrade Log
         if: always() && steps.upgrade-and-verify.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: upgrade-logs
           path: ~/upgrade/*.log
@@ -82,7 +82,7 @@ jobs:
 
       - name: Upload Run Summary
         if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Test Run Artificats
           path: |
