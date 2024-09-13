@@ -1487,7 +1487,9 @@ is_tsql_char_type_with_len(Oid type)
 	return utilptr->is_tsql_bpchar_datatype(type) ||
 			utilptr->is_tsql_nchar_datatype(type) ||
 			utilptr->is_tsql_varchar_datatype(type) ||
-			utilptr->is_tsql_nvarchar_datatype(type);
+			utilptr->is_tsql_nvarchar_datatype(type) ||
+			utilptr->is_tsql_text_datatype(type) ||
+			utilptr->is_tsql_ntext_datatype(type);
 }
 
 static bool
@@ -1776,7 +1778,8 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 			strncmp(context, "INTERSECT", strlen("INTERSECT")) == 0 ||
 			strncmp(context, "EXCEPT", strlen("EXCEPT")) == 0 ||
 			strncmp(context, "VALUES", strlen("VALUES")) == 0 ||
-			strncmp(context, "UNION/INTERSECT/EXCEPT", strlen("UNION/INTERSECT/EXCEPT")) == 0)
+			strncmp(context, "UNION/INTERSECT/EXCEPT", strlen("UNION/INTERSECT/EXCEPT")) == 0 ||
+			strncmp(context, "CASE", strlen("CASE")) == 0)
 		return select_common_type_setop(pstate, exprs, which_expr);
 
 	return InvalidOid;
