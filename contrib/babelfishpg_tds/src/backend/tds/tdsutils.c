@@ -36,6 +36,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
+
 static int	FindMatchingParam(List *params, const char *name);
 static Node *TransformParamRef(ParseState *pstate, ParamRef *pref);
 Node	   *TdsFindParam(ParseState *pstate, ColumnRef *cref);
@@ -939,15 +940,18 @@ is_babelfish_role(const char *role)
 	Oid			bbf_master_guest_oid;
 	Oid			bbf_tempdb_guest_oid;
 	Oid			bbf_msdb_guest_oid;
+	Oid			bbf_role_admin_oid;
 
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
+	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, false);
 
-	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid))
+	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid) || !OidIsValid(bbf_role_admin_oid))
 		return false;
 
 	if (is_member_of_role(sysadmin_oid, role_oid) ||
-		pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) /* check if it is bbf_role_admin */
+		pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0 ||
+		is_member_of_role(bbf_role_admin_oid, role_oid)) /* check if it is bbf_role_admin */
 		return true;
 
 	bbf_master_guest_oid = get_role_oid("master_guest", true);

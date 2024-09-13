@@ -1,0 +1,296 @@
+-- tsql
+-- Error cases
+create role db_datareader; -- Error, this role already exists
+go
+
+create role db_datawriter; -- Error, this role already exists
+go
+
+-- grants not allowed on these special roles
+grant select on schema::dbo to db_datareader; -- Error, no grant on special roles
+go
+
+grant execute on schema::dbo to db_datawriter; -- Error, no grant on special roles
+go
+
+revoke select on schema::dbo from db_datareader; -- Error, no grant on special roles
+go
+
+revoke execute on schema::dbo from db_datawriter; -- Error, no grant on special roles
+go
+
+grant select on object::t1 to db_datareader; -- Error, no grant on special roles
+go
+
+grant insert on object::t1 to db_datawriter; -- Error, no grant on special roles
+go
+
+grant execute on object::t1 to db_datareader; -- Error, no grant on special roles
+go
+
+revoke select on object::t1 to db_datareader; -- Error, no grant on special roles
+go
+
+revoke insert on object::t1 to db_datawriter; -- Error, no grant on special roles
+go
+
+revoke execute on object::t1 to db_datareader; -- Error, no grant on special roles
+go
+
+drop role db_datareader; -- Error, should not be dropped
+go
+
+drop role db_datawriter; -- Error, should not be dropped
+go
+
+-- create login, user and add members
+create login l1 with password = '123';
+go
+
+create user db_datareader for login l1; -- Error, this role already exists
+go
+
+create user db_datawriter for login l1; -- Error, this role already exists
+go
+
+create user u1 for login l1;
+go
+
+create role r1;
+go
+
+create table before_t1(a int);
+go
+
+alter role db_datareader add member u1;
+go
+
+alter role db_datawriter add member u1;
+go
+
+alter role db_datareader add member r1; 
+go
+
+alter role db_datawriter add member r1; 
+go
+
+create table after_t1(a int);
+go
+
+-- tsql user=l1 password=123
+-- Basic membership check
+SELECT IS_MEMBER('db_datareader')
+GO
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+
+select * from after_t1; -- allowed
+go
+
+select * from before_t1; -- allowed
+go
+
+insert into after_t1 values(1); -- allowed
+go
+
+insert into after_t1 values(1); -- allowed
+go
+
+-- tsql
+-- Basic membership check
+SELECT IS_ROLEMEMBER('db_datareader', 'u1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'u1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datareader', 'r1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'r1')
+GO
+
+alter role db_datareader drop member u1;
+go
+
+alter role db_datawriter drop member u1;
+go
+
+alter role db_datareader drop member r1;
+go
+
+alter role db_datawriter drop member r1;
+go
+
+-- Basic membership check
+SELECT IS_ROLEMEMBER('db_datareader', 'u1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'u1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datareader', 'r1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'r1')
+GO
+
+-- tsql user=l1 password=123
+-- Basic membership check
+SELECT IS_MEMBER('db_datareader')
+GO
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+
+select * from after_t1;  -- not allowed
+go
+
+select * from before_t1; -- not allowed
+go
+
+insert into after_t1 values(1); -- not allowed
+go
+
+insert into after_t1 values(1); -- not allowed
+go
+
+-- tsql
+exec sp_addrolemember 'db_datareader', 'u1';
+go
+
+exec sp_addrolemember 'db_datawriter', 'u1';
+go
+
+exec sp_addrolemember 'db_datareader', 'r1';
+go
+
+exec sp_addrolemember 'db_datawriter', 'r1';
+go
+
+-- tsql user=l1 password=123
+-- Basic membership check
+SELECT IS_MEMBER('db_datareader')
+GO
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+
+select * from after_t1; -- allowed
+go
+
+select * from before_t1; -- allowed
+go
+
+insert into after_t1 values(1); -- allowed
+go
+
+insert into after_t1 values(1); -- allowed
+go
+
+-- tsql
+-- Basic membership check
+SELECT IS_ROLEMEMBER('db_datareader', 'u1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'u1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datareader', 'r1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'r1')
+GO
+
+exec sp_droprolemember 'db_datareader', 'u1';
+go
+
+exec sp_droprolemember 'db_datawriter', 'u1';
+go
+
+exec sp_droprolemember 'db_datareader', 'r1';
+go
+
+exec sp_droprolemember 'db_datawriter', 'r1';
+go
+
+-- Basic membership check
+SELECT IS_ROLEMEMBER('db_datareader', 'u1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'u1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datareader', 'r1')
+GO
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'r1')
+GO
+
+-- tsql user=l1 password=123
+-- Basic membership check
+SELECT IS_MEMBER('db_datareader')
+GO
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+
+select * from after_t1; -- not allowed
+go
+
+select * from before_t1; -- not allowed
+go
+
+insert into after_t1 values(1); -- not allowed
+go
+
+insert into after_t1 values(1); -- not allowed
+go
+
+-- tsql
+create database db1;
+go
+
+select rolname, login_name, orig_username, database_name, default_schema_name from babelfish_authid_user_ext where database_name = 'db1';
+go
+
+drop database db1;
+go
+
+select rolname, login_name, orig_username, database_name, default_schema_name from babelfish_authid_user_ext where database_name = 'db1';
+go
+
+-- psql user=l1 password=123
+drop role master_db_datareader;
+go
+
+drop role master_db_datawriter;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+-- drop objects
+drop table before_t1;
+go
+
+drop table after_t1;
+go
+
+drop user u1;
+go
+
+drop role r1;
+go
+
+drop login l1;
+go

@@ -2126,6 +2126,8 @@ extern bool check_fulltext_exist(const char *schema_name, const char *table_name
 extern char *replace_special_chars_fts_impl(char *input_str);
 extern bool is_unique_index(Oid relid, const char *index_name);
 extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege);
+extern int get_owner_of_schema(const char *schema);
+extern void exec_database_roles_subcmds(const char *physical_schema);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);

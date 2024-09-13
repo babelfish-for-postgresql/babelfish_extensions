@@ -2,6 +2,7 @@
 #include "varatt.h"
 
 #include "catalog/namespace.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_trigger.h"
@@ -2378,4 +2379,90 @@ privilege_to_string(AclMode privilege)
 			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
 	}
 	return NULL;
+}
+
+/* 
+ * Returns the oid of schema owner.
+ */
+int
+get_owner_of_schema(const char *schema)
+{
+	HeapTuple	tup;
+	Form_pg_namespace nspform;
+	int result;
+	NameData   *schema_name;
+	schema_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(schema_name->data, NAMEDATALEN, "%s", schema);
+
+	tup = SearchSysCache1(NAMESPACENAME, NameGetDatum(schema_name));
+
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", schema)));
+
+	nspform = (Form_pg_namespace) GETSTRUCT(tup);
+	result = ((int) nspform->nspowner);
+	ReleaseSysCache(tup);
+
+	return result;
+}
+
+/*
+ * exec_database_roles_subcmds:
+ * Alter default privileges on all the objects in a schema to the db_datareader/db_datareader while creating a schema.
+ */
+void
+exec_database_roles_subcmds(const char *schema)
+{
+	StringInfoData	query;
+	const char	*db_datareader;
+	const char	*db_datawriter;
+	const char	*dbname = get_cur_db_name();
+	//Oid			current_user_id = GetUserId();
+	List		*stmt_list;
+	int			expected_stmts = 2;
+	//int			i = 0;
+	//Node		*stmt;
+	ListCell   *parsetree_item;
+
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA %s GRANT SELECT ON TABLES TO %s; ", schema, db_datareader);
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA %s GRANT INSERT, UPDATE, DELETE ON TABLES TO %s; ", schema, db_datawriter);
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+
+	/* Run all subcommands */
+	foreach(parsetree_item, stmt_list)
+	{
+		Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+		PlannedStmt *wrapper;
+
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
+
+		/* do this step */
+		ProcessUtility(wrapper,
+					"(ALTER DEFAULT PRIVILEGES )",
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+	}
+	CommandCounterIncrement();
 }

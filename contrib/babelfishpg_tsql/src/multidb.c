@@ -1395,6 +1395,48 @@ get_db_owner_name(const char *dbname)
 }
 
 const char *
+get_db_datareader_name(const char *dbname)
+{
+	if (0 == strcmp(dbname, "master"))
+		return "master_db_datareader";
+	if (0 == strcmp(dbname, "tempdb"))
+		return "tempdb_db_datareader";
+	if (0 == strcmp(dbname, "msdb"))
+		return "msdb_db_datareader";
+	if (SINGLE_DB == get_migration_mode())
+		return "db_datareader";
+	else
+	{
+		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_datareader", dbname);
+		truncate_identifier(name, strlen(name), false);
+		return name;
+	}
+}
+
+const char *
+get_db_datawriter_name(const char *dbname)
+{
+	if (0 == strcmp(dbname, "master"))
+		return "master_db_datawriter";
+	if (0 == strcmp(dbname, "tempdb"))
+		return "tempdb_db_datawriter";
+	if (0 == strcmp(dbname, "msdb"))
+		return "msdb_db_datawriter";
+	if (SINGLE_DB == get_migration_mode())
+		return "db_datawriter";
+	else
+	{
+		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_datawriter", dbname);
+		truncate_identifier(name, strlen(name), false);
+		return name;
+	}
+}
+
+const char *
 get_guest_role_name(const char *dbname)
 {
 	if (0 == strcmp(dbname, "master"))
