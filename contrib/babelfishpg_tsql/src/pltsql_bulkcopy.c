@@ -681,6 +681,15 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					 */
 					if (cstate->seq_index == i)
 					{
+						/* 
+						 * For an identity column if there is identity_insert ON for the table and
+					 	 * we do not receive any data for this column, then we throw an error.
+						 */
+						if (tsql_identity_insert.valid)
+							ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								errmsg("Explicit value must be specified for identity column in table '%s' when IDENTITY_INSERT is set to ON", cstate->cur_relname)));
+
 						myslot->tts_values[i] = Int64GetDatum(nextval_internal(cstate->seqid, true));
 					}
 					else

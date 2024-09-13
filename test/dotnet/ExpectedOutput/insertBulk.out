@@ -379,6 +379,37 @@ hello#!#jello
 2#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#create table sourceTable(c1 int identity, c2 CHAR(1024))
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
+#Q# set IDENTITY_INSERT sourceTable OFF
+#Q#create table destinationTable(c1 int identity, c2 CHAR(1024), check (c1 < 500))
+#Q#create table sourceTable1(c1 int identity, c2 CHAR(1024))
+#Q# set IDENTITY_INSERT sourceTable1 ON
+#Q#INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
+#Q#INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
+#Q# set IDENTITY_INSERT sourceTable1 OFF
+#Q#Select count(c1) from sourceTable
+#D#int
+1001
+#Q#select count(c1) from sourceTable1
+#D#int
+1001
+#Q#select count(c1) from destinationTable
+#D#int
+2002
+#Q#select Ident_CURRENT('sourceTable')
+#D#decimal
+1001
+#Q#select Ident_CURRENT('sourceTable1')
+#D#decimal
+1001
+#Q#select Ident_CURRENT('destinationTable')
+#D#decimal
+1001
+#Q#drop table sourceTable
+#Q#drop table sourceTable1
+#Q#drop table destinationTable
 #Q#Create table sourceTable(a int identity, b int)
 #Q#Create table destinationTable(a int identity(1, 2), b int)
 #Q#insert into sourceTable values (1)
@@ -389,15 +420,12 @@ hello#!#jello
 1#!#1
 2#!#2
 #Q#Select * from destinationTable
-#D#int#!#int
-1#!#1
-3#!#2
 #Q#Select Ident_CURRENT('sourceTable')
 #D#decimal
 2
 #Q#Select Ident_CURRENT('destinationTable')
 #D#decimal
-3
+1
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int identity, b int)

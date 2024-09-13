@@ -612,28 +612,6 @@ drop table sourceTable
 drop table sourceTable1
 drop table destinationTable
 
-create table sourceTable(c1 int identity, c2 CHAR(1024))
- set IDENTITY_INSERT sourceTable ON
-INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
- set IDENTITY_INSERT sourceTable OFF
-create table destinationTable(c1 int identity, c2 CHAR(1024), check (c1 < 500))
-traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
-create table sourceTable1(c1 int identity, c2 CHAR(1024))
- set IDENTITY_INSERT sourceTable1 ON
-INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
-INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
- set IDENTITY_INSERT sourceTable1 OFF
-traninsertbulk#!#sourceTable1#!#destinationTable#!#keepIdentity
-Select count(c1) from sourceTable
-select count(c1) from sourceTable1
-select count(c1) from destinationTable
-select Ident_CURRENT('sourceTable')
-select Ident_CURRENT('sourceTable1')
-select Ident_CURRENT('destinationTable')
-drop table sourceTable
-drop table sourceTable1
-drop table destinationTable
-
 # Reset-connection with error (retry the insert bulk in a loop)
 create table sourceTable(c1 int identity, c2 CHAR(1024))
  set IDENTITY_INSERT sourceTable ON
