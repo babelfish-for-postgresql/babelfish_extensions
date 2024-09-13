@@ -155,16 +155,16 @@ ResetTDSConnection(void)
 	TdsResetCache();
 	TdsResponseReset();
 	TdsResetBcpOffset();
-	/* Retore previous isolation level when not called by sys.sp_reset_connection */
+	/* Retore previous isolation level when not called by sys.sp_reset_connection. */
 	if (!resetTdsConnectionFlag)
 	{
 		SetConfigOption("default_transaction_isolation", isolationOld,
 						PGC_BACKEND, PGC_S_CLIENT);
 	}
-
+	TdsSetDbContext();
 	tvp_lookup_list = NIL;
 
-	/* send an environement change token is its not called via sys.sp_reset_connection procedure */
+	/* Send an environement change token is its not called via sys.sp_reset_connection procedure. */
 	if (!resetTdsConnectionFlag)
 	{
 		TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
@@ -359,6 +359,23 @@ GetTDSRequest(bool *resetProtocol)
 	}
 	PG_CATCH();
 	{
+		if (resetCon)
+		{
+			/* Before terminating the connection, send the response to the client */
+			EmitErrorReport();
+			FlushErrorState();
+
+			TdsSendError(596, 1, ERROR,
+					"Cannot continue the execution because the session is in the kill state.", 1);
+
+			TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR, 0, 0);
+			TdsFlush();
+
+			ereport(FATAL,
+					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+					errmsg("Reset Connection Failed")));
+
+		}
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
