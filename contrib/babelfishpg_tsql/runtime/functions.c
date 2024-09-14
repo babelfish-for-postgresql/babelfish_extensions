@@ -1747,7 +1747,7 @@ Datum
 tsql_stat_get_activity(PG_FUNCTION_ARGS)
 {
 	Oid			sysadmin_oid = get_role_oid("sysadmin", false);
-	int			num_backends = pgstat_fetch_stat_numbackends();
+	int			num_backends = 0;
 	int			curr_backend;
 	char	   *view_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int			pid = -1;
@@ -1832,6 +1832,9 @@ tsql_stat_get_activity(PG_FUNCTION_ARGS)
 	rsinfo->setDesc = tupdesc;
 
 	MemoryContextSwitchTo(oldcontext);
+
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_tds_numbackends)
+		num_backends = (*pltsql_protocol_plugin_ptr)->get_tds_numbackends();
 
 	/* 1-based index */
 	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)

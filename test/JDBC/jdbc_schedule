@@ -400,6 +400,11 @@ ignore#!#alter-procedure-before-15_8-or-16_4-vu-prepare
 ignore#!#alter-procedure-before-15_8-or-16_4-vu-verify
 ignore#!#alter-procedure-before-15_8-or-16_4-vu-cleanup
 
+
+# These tests are meant for upgrade scenario prior to 15_9 or 16_5 release
+ignore#!#alter-procedure-15_8-or-16_4-vu-prepare
+ignore#!#alter-procedure-15_8-or-16_4-vu-verify
+ignore#!#alter-procedure-15_8-or-16_4-vu-cleanup
 ignore#!#string_agg-before-15_9-or-16_5-vu-prepare
 ignore#!#string_agg-before-15_9-or-16_5-vu-verify
 ignore#!#string_agg-before-15_9-or-16_5-vu-cleanup
@@ -409,3 +414,4 @@ ignore#!#string_agg-before-14_5-vu-cleanup
 ignore#!#string_agg_within-16_4-vu-prepare
 ignore#!#string_agg_within-16_4-vu-verify
 ignore#!#string_agg_within-16_4-vu-cleanup
+
