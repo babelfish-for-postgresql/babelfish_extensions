@@ -35,7 +35,7 @@ babel_object_id_v1
 SELECT * FROM babel_object_id_trg_view
 GO
 ~~START~~
-varchar
+text
 true
 ~~END~~
 
