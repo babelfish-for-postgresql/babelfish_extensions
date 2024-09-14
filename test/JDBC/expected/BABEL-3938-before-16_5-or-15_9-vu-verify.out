@@ -1,0 +1,87 @@
+SELECT * FROM babel_3938_vu_prepare_view1
+GO
+~~START~~
+varchar
+2023-02-03
+~~END~~
+
+
+SELECT * FROM babel_3938_vu_prepare_view2
+GO
+~~START~~
+varchar
+19:08:35.5
+~~END~~
+
+
+EXEC babel_3938_vu_prepare_proc1
+GO
+~~START~~
+varchar
+2023-02-03
+~~END~~
+
+
+EXEC babel_3938_vu_prepare_proc2
+GO
+~~START~~
+varchar
+19:08:35.5
+~~END~~
+
+
+SELECT * FROM babel_3938_vu_prepare_func1()
+GO
+~~START~~
+varchar
+2023-02-03
+~~END~~
+
+
+SELECT * FROM babel_3938_vu_prepare_func2()
+GO
+~~START~~
+varchar
+19:08:35.5
+~~END~~
+
+
+SELECT * FROM babel_3938_vu_prepare_view3
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_3938_vu_prepare_view4
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_3938_vu_prepare_view5
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_3938_vu_prepare_view6
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+SELECT * FROM babel_3938_vu_prepare_view7
+GO
+~~START~~
+text
+true
+~~END~~
+

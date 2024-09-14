@@ -71,7 +71,7 @@ fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 objectproperty
-objectpropertyex
+objectpropertyex-before-16_5-or-15_9-vu-cleanup
 sys-column-property
 sys-configurations
 sys-datefirst
@@ -382,10 +382,10 @@ app_name
 str
 ISC-sequences
 jira-BABEL-3504-upgrade
-case_insensitive_collation
+case_insensitive_collation-before-16_5-or-15_9
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-BABEL_OBJECT_ID
+BABEL_OBJECT_ID-before-16_5-or-15_9
 BABEL_SCHEMATA
 isc-schemata-dep
 AVG-Aggregate-common
@@ -401,12 +401,12 @@ Test-sp_rename
 Test-sp_rename-dep
 BABEL-3657
 BABEL-733
-BABEL-3938
+BABEL-3938-before-16_5-or-15_9
 BABEL-NEXT-VALUE-FOR
 BABEL-4098
 TestVariableDataLength
 binary-index
-BABEL-4078
+BABEL-4078-before-16_5-or-15_9
 BABEL-3215
 orderby
 BABEL-4046

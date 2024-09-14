@@ -112,12 +112,12 @@ BABEL-3828
 BABEL-383
 BABEL-3844
 BABEL-3914
-BABEL-3938
+BABEL-3938-before-16_5-or-15_9
 BABEL-3952
 BABEL-3953-datetrunc
 BABEL-404
 BABEL-405
-BABEL-4078
+BABEL-4078-before-16_5-or-15_9
 BABEL-4098
 BABEL-4214
 BABEL-4516
@@ -162,7 +162,7 @@ BABEL-LOGIN
 BABEL-LOGIN-USER-EXT
 BABEL-NEXT-VALUE-FOR
 BABEL_OBJECT_DEFINITION
-BABEL_OBJECT_ID
+BABEL_OBJECT_ID-before-16_5-or-15_9
 BABEL_OBJECT_NAME
 BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID
@@ -198,7 +198,7 @@ babel_varbinary_int4_div
 bbf_view_def
 binary-index
 bitwise_not-operator
-case_insensitive_collation
+case_insensitive_collation-before-16_5-or-15_9
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
 col_length
@@ -253,7 +253,7 @@ msdb-dbo-syspolicy_system_health_state
 nested_trigger_inside_proc
 nested_trigger_with_dml
 newid
-objectpropertyex
+objectpropertyex-before-16_5-or-15_9-vu-cleanup
 openjson
 openquery_upgrd_before_15_4
 orderby
@@ -484,7 +484,7 @@ sp_changedbowner
 float_exponent
 datetimeoffset-timezone
 BABEL-4046
-host_id
+host_id-before-16_5-or-15_9
 drop_index
 linked_srv_4229
 BABEL-4175
@@ -531,7 +531,7 @@ alter-procedure-15_8-or-16_4
 BABEL-4707
 BABEL_4817
 upper_lower
-BABEL-4641
+BABEL-4641-before-16_5-or-15_9
 trim
 ltrim
 rtrim
@@ -543,7 +543,7 @@ babel_test_int4_numeric_oper
 babel_test_int8_numeric_oper
 babel_test_int2_numeric_oper
 login_token-dep
-test_like_for_AI
+test_like_for_AI-before-16_5-or-15_9
 BABEL-4869
 babel_4328_datetime
 babel_4328_datetime2
