@@ -2,7 +2,7 @@ name: JDBC Tests With PG AUDIT Enable
 on: [push, pull_request]
 
 jobs:
-  run-babelfish-jdbc-tests:
+  run-babelfish-jdbc-tests-with-pg-audit:
     env:
       INSTALL_DIR: psql
     runs-on: ubuntu-20.04
