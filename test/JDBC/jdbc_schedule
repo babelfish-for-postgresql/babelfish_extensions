@@ -9,35 +9,10 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
-ignore#!#babel_table_type
-ignore#!#BABEL-3101
-ignore#!#BABEL-1149
-ignore#!#BABEL-2843
-ignore#!#BABEL-2676
-ignore#!#BABEL-2647
-ignore#!#BABEL-2551
-ignore#!#BABEL-2034
-ignore#!#BABEL-2688-vu-prepare
-ignore#!#BABEL-2688-vu-verify
-ignore#!#BABEL-2688-vu-cleanup
-ignore#!#BABEL-3192-vu-prepare
-ignore#!#BABEL-3192-vu-verify
-ignore#!#BABEL-3192-vu-cleanup
+ignore#!#GRANT_SCHEMA
 ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-prepare
 ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-verify
 ignore#!#BABEL-EXTENDEDPROPERTY-v2-vu-cleanup
-ignore#!#Test_list_of_sys_catalog_present_in_dbo
-ignore#!#BABEL_4928
-ignore#!#babel_function
-ignore#!#babel_table_type-vu-prepare
-ignore#!#babel_table_type-vu-verify
-ignore#!#babel_table_type-vu-cleanup
-ignore#!#cast-varchar-to-time-vu-prepare
-ignore#!#cast-varchar-to-time-vu-verify
-ignore#!#cast-varchar-to-time-vu-cleanup
-ignore#!#create_function_default_stable-vu-prepare
-ignore#!#create_function_default_stable-vu-verify
-ignore#!#create_function_default_stable-vu-cleanup
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
