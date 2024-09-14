@@ -72,7 +72,7 @@ fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 objectproperty
-objectpropertyex-before-16_5-or-15_9-vu-cleanup
+objectpropertyex-before-16_5-or-15_9
 sys-column-property
 sys-configurations
 sys-datefirst
