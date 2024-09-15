@@ -65,7 +65,7 @@ END
 GO
 
 -- computed columns
-CREATE TABLE babel_5222_xml_exist_compcol(col_xml XML, comp_col as col_xml.exist('/artist/@name'))
+CREATE TABLE babel_5222_xml_exist_compcol(id INT, col_xml XML, comp_col as col_xml.exist('/artist/@name'))
 GO
 
 -- check constraints
@@ -97,6 +97,7 @@ BEGIN
     SELECT id, student AS invalid_entries FROM babel_5222_xml_exist_school_details
     WHERE student.exist('/student/@classid') = 0
             OR student.exist('/student/@rollid') = 0
-            OR student.exist('/student/@studentname') = 0;
+            OR student.exist('/student/@studentname') = 0
+    ORDER BY id;
 END;
 GO

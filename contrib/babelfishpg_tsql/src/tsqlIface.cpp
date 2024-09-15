@@ -8393,7 +8393,7 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
 	
-	/* writting the previously rewritten XML context */
+	/* writting the previously rewritten XML and/or Geospatial context */
 	for (auto &entry : rewritten_query_fragment)
 	{
 		if(entry.first >= ctx->start->getStartIndex() && entry.first <= method->stop->getStopIndex())

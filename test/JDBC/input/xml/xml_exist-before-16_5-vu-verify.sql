@@ -199,6 +199,34 @@ DECLARE @x XML = '<root></root>';
 SELECT @x.exist('false()')
 GO
 
+-- Tests with random spaces in between
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml  .  exist  ('/artists/artist/@name'  )
+GO
+
+SELECT XmlColumn   . exist    ('/artists/artist/@name'  ) FROM babel_5222_xml_exist_t1
+GO
+
+SELECT babel_5222_xml_exist_t1 .   XmlColumn   . exist    ('/artists/artist/@name'  ) FROM babel_5222_xml_exist_t1
+GO
+
+-- Tests with different case
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.EXIST('/artists/artist/@name')
+GO
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.Exist('/artists/artist/@name')
+GO
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.ExIsT('/artists/artist/@name')
+GO
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.eXiSt('/artists/artist/@name')
+GO
+
 -- Acceptable argument types
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.exist('/artists/artist/@name')
@@ -288,7 +316,7 @@ FROM babel_5222_xml_exist_t2;
 GO
 
 SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child2') = 1 THEN 'The Child2 element exists' ELSE 'The Child2 element does not exist' END AS Result
-FROM babel_5222_xml_exist_t2;
+FROM babel_5222_xml_exist_t2 ORDER BY Id;
 GO
 
 -- Exist function called on SUBQUERY
@@ -379,13 +407,13 @@ GO
 SELECT * FROM babel_5222_xml_exist_itvf_func()
 GO
 
-INSERT INTO babel_5222_xml_exist_compcol VALUES ('<artist name="Rohit Bhagat" />')
+INSERT INTO babel_5222_xml_exist_compcol VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 
-INSERT INTO babel_5222_xml_exist_compcol VALUES ('<artist />')
+INSERT INTO babel_5222_xml_exist_compcol VALUES (2, '<artist />')
 GO
 
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol
+SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol ORDER BY id
 GO
 
 INSERT INTO babel_5222_xml_exist_constraint VALUES ('<artist name="Rohit Bhagat" />')
@@ -394,7 +422,7 @@ GO
 INSERT INTO babel_5222_xml_exist_constraint VALUES ('<artist />')
 GO
 
-SELECT student FROM babel_5222_xml_exist_school_details
+SELECT student FROM babel_5222_xml_exist_school_details ORDER BY id
 GO
 
 INSERT INTO babel_5222_xml_exist_school_details VALUES (6, '<student classid="2" rollid="3" studentname="StudentF" />')

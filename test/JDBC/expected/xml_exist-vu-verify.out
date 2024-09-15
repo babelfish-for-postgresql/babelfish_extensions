@@ -372,6 +372,69 @@ bit
 ~~END~~
 
 
+-- Tests with random spaces in between
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml  .  exist  ('/artists/artist/@name'  )
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT XmlColumn   . exist    ('/artists/artist/@name'  ) FROM babel_5222_xml_exist_t1
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT babel_5222_xml_exist_t1 .   XmlColumn   . exist    ('/artists/artist/@name'  ) FROM babel_5222_xml_exist_t1
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Tests with different case
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.EXIST('/artists/artist/@name')
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.Exist('/artists/artist/@name')
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.ExIsT('/artists/artist/@name')
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.eXiSt('/artists/artist/@name')
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
 -- Acceptable argument types
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.exist('/artists/artist/@name')
@@ -562,7 +625,7 @@ int#!#text
 
 
 SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child2') = 1 THEN 'The Child2 element exists' ELSE 'The Child2 element does not exist' END AS Result
-FROM babel_5222_xml_exist_t2;
+FROM babel_5222_xml_exist_t2 ORDER BY Id;
 GO
 ~~START~~
 int#!#text
@@ -753,17 +816,17 @@ bit
 ~~END~~
 
 
-INSERT INTO babel_5222_xml_exist_compcol VALUES ('<artist name="Rohit Bhagat" />')
+INSERT INTO babel_5222_xml_exist_compcol VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_5222_xml_exist_compcol VALUES ('<artist />')
+INSERT INTO babel_5222_xml_exist_compcol VALUES (2, '<artist />')
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol
+SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol ORDER BY id
 GO
 ~~START~~
 xml#!#bit
@@ -784,7 +847,7 @@ GO
 ~~ERROR (Message: new row for relation "babel_5222_xml_exist_constraint" violates check constraint "chknameexist")~~
 
 
-SELECT student FROM babel_5222_xml_exist_school_details
+SELECT student FROM babel_5222_xml_exist_school_details ORDER BY id
 GO
 ~~START~~
 xml
