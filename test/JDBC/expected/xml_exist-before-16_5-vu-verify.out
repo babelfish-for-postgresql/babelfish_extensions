@@ -813,17 +813,20 @@ GO
 
 ~~ERROR (Message: function babel_5222_xml_exist_itvf_func() does not exist)~~
 
+
 INSERT INTO babel_5222_xml_exist_compcol VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "babel_5222_xml_exist_compcol" does not exist)~~
 
+
 INSERT INTO babel_5222_xml_exist_compcol VALUES (2, '<artist />')
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "babel_5222_xml_exist_compcol" does not exist)~~
+
 
 SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol ORDER BY id
 GO
