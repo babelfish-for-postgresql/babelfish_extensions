@@ -101,7 +101,7 @@ go
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 
--- fix me (need to update later)
+-- TODO: Should NOT return any row once the dependencies on sp_columns_100 has been fixed (added '\' as ESCAPE character as temporary fix for now)
 EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 GO
 
@@ -237,7 +237,7 @@ go
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 
--- fix me (need to update later)
+-- TODO: Should NOT return any row once the dependencies on sp_columns_100 has been fixed (added '\' as ESCAPE character as temporary fix for now)
 EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 GO
 
