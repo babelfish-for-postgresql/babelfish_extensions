@@ -372,7 +372,7 @@ check_database_collation_name(const char *database_collation_name)
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Invalid collation \"%s\"", database_collation_name)));
+				errmsg("\"%s\" is not currently supported for database collation ", database_collation_name)));
 	}
 
 	/* Block any non-LATIN and CS collation */

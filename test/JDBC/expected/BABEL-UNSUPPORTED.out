@@ -2482,7 +2482,7 @@ CREATE DATABASE t448 COLLATE NOT_VALID_COLLATION;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid collation "not_valid_collation")~~
+~~ERROR (Message: "not_valid_collation" is not currently supported for database collation )~~
 
 
 

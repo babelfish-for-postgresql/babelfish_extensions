@@ -67,7 +67,7 @@ CREATE DATABASE test_db_collation_vu_prepare_db151 COLLATE my_collation;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid collation "my_collation")~~
+~~ERROR (Message: "my_collation" is not currently supported for database collation )~~
 
 
 -- Case 1.6: CREATE DATABASE WITH COLLATE NULL
@@ -83,7 +83,7 @@ CREATE DATABASE test_db_collation_vu_prepare_db161 COLLATE [NULL];
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid collation "null")~~
+~~ERROR (Message: "null" is not currently supported for database collation )~~
 
 
 CREATE DATABASE test_db_collation_vu_prepare_db161 COLLATE 'NULL';
