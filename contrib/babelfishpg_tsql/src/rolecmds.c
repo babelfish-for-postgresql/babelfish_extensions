@@ -2355,6 +2355,31 @@ windows_login_contains_invalid_chars(char *input)
 	return false;
 }
 
+/*
+ * Extract the domain name from the orig_loginname
+ */
+char*
+get_windows_domain_name(char* input){
+	char *pos_slash = strchr(input, '\\');
+	int domain_len = pos_slash - input;
+	char *domain_name = palloc(domain_len+1);
+	strncpy(domain_name, input, domain_len);
+	domain_name[domain_len] = '\0';
+	return domain_name;
+}
+
+/*
+ * Check whether the domain name is supported or not
+ */
+bool
+windows_domain_is_not_supported(char* domain_name)
+{
+	if(strcasecmp(domain_name, "nt service") == 0) {
+		return true;
+	}
+	return false;
+}
+
 /**
  * Domain name checks, doesnot allow characters like "<>&*|quotes spaces"
  * */

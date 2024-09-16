@@ -133,7 +133,7 @@ jobs:
  
       - name: Upload Logs
         if: always() && (steps.setup-base-version.outcome == 'failure' || steps.dump-restore-and-test.outcome == 'failure')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dump-restore-logs-${{ matrix.upgrade-path.dump_method }}-${{ matrix.upgrade-path.title }}-${{ matrix.upgrade-path.dump_format }}-${{ matrix.upgrade-path.type }}
           path: |
