@@ -2189,7 +2189,7 @@ int
 SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -2214,7 +2214,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -2240,7 +2240,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -4793,7 +4793,7 @@ int
 SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -4818,7 +4818,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -4844,7 +4844,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -5814,4 +5814,3 @@ GO
 int
 0
 ~~END~~
-

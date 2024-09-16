@@ -97,7 +97,7 @@ nvarchar
 SELECT * FROM babel_4078_vu_prepare_view3
 GO
 ~~START~~
-BABEL_OBJECT_ID-before-16_5-or-15_9-vu-verify.out
+text
 true
 ~~END~~
 
