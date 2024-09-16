@@ -230,33 +230,33 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 
 /*
  * validate_attribute_centric_col_names_xml
- *	Check if the tupdesc has attribute-centric columns and if present check if
- *	all of them are present in the starting of attribute list before any non-
- *	attribute-centric column , also check if the element_name to be not NULL
- *	for tupdesc having attribute-centric columns.
+ *	Check if the tupdesc has attribute-centric columns and if present 
+ *	check the following - 
+ *	1. all of them are present in the starting of attribute list before any non-attribute-centric column , 
+ *	2. the element_name to be not NULL for tupdesc having attribute-centric columns.
  */
 static bool
 validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tupdesc)
 {
-	bool seenNonAttCentric = false;
-	bool seenAttCentric = false;
+	bool seen_non_att_centric = false;
+	bool seen_att_centric = false;
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		if (NameStr(att->attname)[0] == '@')
 		{
-			seenAttCentric = true;
-			if(seenNonAttCentric)
+			seen_att_centric = true;
+			if(seen_non_att_centric)
 				ereport(ERROR,
 					(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
 					 errmsg("Attribute-centric column '%s' must not come after a non-attribute-centric sibling in XML hierarchy in FOR XML PATH.",
 					  NameStr(att->attname))));
 		}
 		else
-			seenNonAttCentric = true;
+			seen_non_att_centric = true;
 	}
 
-	if(seenAttCentric && element_name[0] == '\0')
+	if(seen_att_centric && element_name[0] == '\0')
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
@@ -264,7 +264,7 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
 				 		"with attribute-centric FOR XML serialization.")));
 	}
 
-	return seenAttCentric;
+	return seen_att_centric;
 }
 
 /*
@@ -280,7 +280,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	HeapTupleData tmptup;
 	HeapTuple	tuple;
 	bool		allnull = true;
-	bool		hasAttCentric = false;
+	bool		has_att_centric = false;
 	bool		first = true;
 
 	td = DatumGetHeapTupleHeader(record);
@@ -295,7 +295,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	tmptup.t_data = td;
 	tuple = &tmptup;
 
-	hasAttCentric = validate_attribute_centric_col_names_xml(element_name, tupdesc);
+	has_att_centric = validate_attribute_centric_col_names_xml(element_name, tupdesc);
 
 	/*
 	 * each tuple is either contained in a "row" tag, or standalone if the
@@ -304,7 +304,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	if (element_name[0] != '\0')
 	{
 		/* if "''" is the input path, ignore it per TSQL behavior */
-		if (hasAttCentric)
+		if (has_att_centric)
 			appendStringInfo(state, "<%s ", element_name);
 		else
 			appendStringInfo(state, "<%s>", element_name);
@@ -340,7 +340,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 			}
 			else
 			{
-				if (hasAttCentric && first)
+				if (has_att_centric && first)
 				{
 					appendStringInfoChar(state, '>');
 					first = false;
@@ -374,7 +374,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	}
 	else if (element_name[0] != '\0')
 	{
-		if (hasAttCentric && first)
+		if (has_att_centric && first)
 			appendStringInfoString(state, "/>");
 		else
 			appendStringInfo(state, "</%s>", element_name);
