@@ -439,7 +439,7 @@ SELECT replace(@inputString, 0x6364, 0x737475)
 GO
 ~~START~~
 varchar
-abstuefg
+abstuefg   
 ~~END~~
 
 
@@ -448,7 +448,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-abstuefg
+abstu       efg   
 ~~END~~
 
 
@@ -457,7 +457,7 @@ SELECT replace(a, b, c) FROM babel_4836_replace_t4
 GO
 ~~START~~
 varchar
-atuvde
+atuv                 de                                             
 ~~END~~
 
 
