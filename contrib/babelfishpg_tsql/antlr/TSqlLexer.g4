@@ -339,7 +339,7 @@ EXECUTE:                                         E X E C U T E;
 EXECUTABLE:                                      E X E C U T A B L E;
 EXECUTABLE_FILE:                                 E X E C U T A B L E  UNDERLINE  F I L E;
 EXECUTION_COUNT:                                 E X E C U T I O N  UNDERLINE  C O U N T;
-EXIST:                                           E X I S T;
+EXIST:                                           'exist';
 EXISTS:                                          E X I S T S;
 EXIT:                                            E X I T;
 EXPAND:                                          E X P A N D;
