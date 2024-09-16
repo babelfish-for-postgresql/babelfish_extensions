@@ -71,7 +71,7 @@ select case when x.rv = y.rv then 'equal' else 'not-equal' end
 				from testrowversion_v1 x inner join testrowversion_t1 y on x.id = y.id;
 go
 ~~START~~
-text
+varchar
 equal
 equal
 ~~END~~

@@ -127,7 +127,6 @@ select 1 where CAST('shaEpüD' AS char) collate Latin1_General_CI_AI like '%Æ%�
 GO
 ~~START~~
 int
-1
 ~~END~~
 
 
@@ -5475,7 +5474,7 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.432 ms
+Babelfish T-SQL Batch Parsing Time: 0.377 ms
 ~~END~~
 
 
@@ -5490,7 +5489,7 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.200 ms
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
 ~~END~~
 
 
@@ -5505,7 +5504,7 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.143 ms
+Babelfish T-SQL Batch Parsing Time: 0.105 ms
 ~~END~~
 
 
@@ -5520,7 +5519,7 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.135 ms
+Babelfish T-SQL Batch Parsing Time: 0.103 ms
 ~~END~~
 
 
@@ -5535,7 +5534,7 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.135 ms
+Babelfish T-SQL Batch Parsing Time: 0.105 ms
 ~~END~~
 
 
@@ -5551,7 +5550,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.177 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 
@@ -5566,7 +5565,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.155 ms
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
 ~~END~~
 
 
@@ -5581,7 +5580,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.136 ms
+Babelfish T-SQL Batch Parsing Time: 0.102 ms
 ~~END~~
 
 
@@ -5596,7 +5595,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.134 ms
+Babelfish T-SQL Batch Parsing Time: 0.100 ms
 ~~END~~
 
 
@@ -5611,7 +5610,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.134 ms
+Babelfish T-SQL Batch Parsing Time: 0.100 ms
 ~~END~~
 
 
