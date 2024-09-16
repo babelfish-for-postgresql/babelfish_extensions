@@ -1333,7 +1333,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 
 	/* 
 	 * If the user or role is not found in the sys.babelfish_authid_user_ext 
-	 * catalog, then an error is thrown. The 'suppress_role_error' flag indicated if 
+	 * catalog, then an error is thrown. The 'suppress_role_error' flag indicates if 
 	 * it is ok for the user or role to be absent from the catalog.
 	 */
 	if(!suppress_role_error && !user_exists_for_db(db_name, result))
