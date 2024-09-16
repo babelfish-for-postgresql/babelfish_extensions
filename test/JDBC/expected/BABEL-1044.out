@@ -52,7 +52,7 @@ int
 select (case when object_id('schema_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij') is not null then 'exists' else 'error' end) result;
 GO
 ~~START~~
-text
+varchar
 exists
 ~~END~~
 
@@ -60,7 +60,7 @@ exists
 select (case when object_id('schema_longer_than_63_0abcdefgi2f5cbde477221faa47c8d08e1d6bbb27.table_longer_than_63_0abcdefgijc2ed7b983a352405e4e26c711bd071bf') is not null then 'exists' else 'error' end) result;
 GO
 ~~START~~
-text
+varchar
 exists
 ~~END~~
 
@@ -68,7 +68,7 @@ exists
 select (case when object_id('schema_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij') = object_id('schema_longer_than_63_0abcdefgi2f5cbde477221faa47c8d08e1d6bbb27.table_longer_than_63_0abcdefgijc2ed7b983a352405e4e26c711bd071bf') then 'correct' else 'error' end) result;
 GO
 ~~START~~
-text
+varchar
 correct
 ~~END~~
 
@@ -92,7 +92,7 @@ GO
 select (case when object_id('table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij') is not null then 'exists' else 'error' end) result;
 GO
 ~~START~~
-text
+varchar
 exists
 ~~END~~
 
@@ -100,7 +100,7 @@ exists
 select (case when object_id('table_longer_than_63_0abcdefgijc2ed7b983a352405e4e26c711bd071bf') is not null then 'exists' else 'error' end) result;
 GO
 ~~START~~
-text
+varchar
 exists
 ~~END~~
 
@@ -108,7 +108,7 @@ exists
 select (case when object_id('table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij') = object_id('table_longer_than_63_0abcdefgijc2ed7b983a352405e4e26c711bd071bf') then 'correct' else 'error' end) result;
 GO
 ~~START~~
-text
+varchar
 correct
 ~~END~~
 

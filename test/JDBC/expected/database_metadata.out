@@ -47,14 +47,14 @@ master#!#dbo#!#dbmeta_view1#!#VIEW#!#<NULL>
 
 dbmeta#!#getColumns#!#master|dbo|dbmeta_tab1
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#tinyint#!#text#!#text#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#tinyint#!#varchar#!#varchar#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 master#!#dbo#!#dbmeta_tab1#!#col1#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#NO#!#NO#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#dbmeta_tab1#!#col2#!#-9#!#nvarchar#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#2147483647#!#2#!#NO#!#<NULL>#!#<NULL>#!#<NULL>#!#39#!#NO#!#NO#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 dbmeta#!#getColumns#!#master|dbo|dbmeta_tab1|col1
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#tinyint#!#text#!#text#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#tinyint#!#varchar#!#varchar#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 master#!#dbo#!#dbmeta_tab1#!#col1#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#NO#!#NO#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -201,14 +201,14 @@ master#!#dbo#!#dbmeta_proc1;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 
 dbmeta#!#getSchemas#!#master
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 dbo#!#<NULL>
 guest#!#<NULL>
 ~~END~~
 
 dbmeta#!#getSchemas#!#master|dbo
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 dbo#!#<NULL>
 ~~END~~
 

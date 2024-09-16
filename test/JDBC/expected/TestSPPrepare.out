@@ -686,7 +686,7 @@ SELECT (case when @handle IS NOT NULL then 'true' else 'false' end) as 'Prepared
 EXEC SP_EXECUTE @handle
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -702,7 +702,7 @@ SELECT (case when @handle IS NOT NULL then 'true' else 'false' end) as 'Prepared
 EXEC SP_EXECUTE @handle
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -718,7 +718,7 @@ SELECT (case when @handle IS NOT NULL then 'true' else 'false' end) as 'Prepared
 EXEC SP_EXECUTE @handle
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -734,7 +734,7 @@ SELECT (case when @handle IS NOT NULL then 'true' else 'false' end) as 'Prepared
 EXEC SP_EXECUTE @handle
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 

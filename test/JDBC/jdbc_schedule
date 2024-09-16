@@ -46,6 +46,33 @@ ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
 ignore#!#sys-systypes-before-16-2-vu-prepare
 ignore#!#sys-systypes-before-16-2-vu-verify
+ignore#!#BABEL-4078-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-4078-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-4078-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-3938-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-3938-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-3938-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-3221-before-16_4-or-15_9-vu-prepare
+ignore#!#BABEL-3221-before-16_4-or-15_9-vu-verify
+ignore#!#BABEL-3221-before-16_4-or-15_9-vu-cleanup
+ignore#!#BABEL-4641-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-4641-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-4641-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL_OBJECT_ID-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL_OBJECT_ID-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL_OBJECT_ID-before-16_5-or-15_9-vu-cleanup
+ignore#!#case_insensitive_collation-before-16_5-or-15_9-vu-prepare
+ignore#!#case_insensitive_collation-before-16_5-or-15_9-vu-verify
+ignore#!#case_insensitive_collation-before-16_5-or-15_9-vu-cleanup
+ignore#!#host_id-before-16_5-or-15_9-vu-prepare
+ignore#!#host_id-before-16_5-or-15_9-vu-verify
+ignore#!#host_id-before-16_5-or-15_9-vu-cleanup
+ignore#!#objectpropertyex-before-16_5-or-15_9-vu-prepare
+ignore#!#objectpropertyex-before-16_5-or-15_9-vu-verify
+ignore#!#objectpropertyex-before-16_5-or-15_9-vu-cleanup
+ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-prepare
+ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-verify
+ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
