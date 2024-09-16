@@ -3093,12 +3093,11 @@ get_login_for_user(Oid user_id, const char *physical_schema_name)
 								tuple, Anum_bbf_authid_user_ext_orig_username, &isnull));
 
 			Assert(!isnull);
+			/* Get owner of the db if the user is dbo */
 			if (strlen(orig_username) == 3 && pg_strcasecmp(orig_username, "dbo") == 0)
 			{
-				int16 dbid = get_dbid_from_physical_schema_name(physical_schema_name, true);
-
-				if (DbidIsValid(dbid))
-					loginId = get_role_oid(get_owner_of_db(get_db_name(dbid)), true);
+				int16 dbid = get_dbid_from_physical_schema_name(physical_schema_name, false);
+				loginId = get_role_oid(get_owner_of_db(get_db_name(dbid)), false);
 			}
 		}
 		ReleaseSysCache(tuple);

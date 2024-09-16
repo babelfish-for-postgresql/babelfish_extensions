@@ -415,11 +415,11 @@ ALTER LOGIN babel_cross_db_vu_prepare_l1 with password = '12345678';
 GO
 
 -- tsql user=babel_cross_db_vu_prepare_l1 password=12345678
-USE babel_cross_db_vu_prepare_db1;
+USE master;
 GO
 
--- bare SELECT table/view from db2, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
-SELECT * FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 ORDER BY id;
+-- bare SELECT table/view from db1, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
+SELECT * FROM babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 ORDER BY id;
 GO
 ~~START~~
 int#!#varchar
@@ -427,7 +427,7 @@ int#!#varchar
 ~~END~~
 
 
-SELECT * FROM babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2;
+SELECT * FROM babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2;
 GO
 ~~START~~
 int#!#int#!#varchar
@@ -435,8 +435,8 @@ int#!#int#!#varchar
 ~~END~~
 
 
--- bare SELECT function from db2, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
-SELECT babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(1);
+-- bare SELECT function from db1, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
+SELECT babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(1);
 GO
 ~~START~~
 int
@@ -444,23 +444,23 @@ int
 ~~END~~
 
 
--- bare SELECT table from db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
-SELECT * FROM babel_cross_db_vu_prepare_db2.dbo.babel_cross_db_vu_prepare_t2 ORDER BY id;
+-- bare SELECT table from db1, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT * FROM babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_t2 ORDER BY id;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
 
 
--- bare SELECT function from db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
-SELECT babel_cross_db_vu_prepare_db2.dbo.babel_cross_db_vu_prepare_f2(1);
+-- bare SELECT function from db1, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+SELECT babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_f2(1);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for function babel_cross_db_vu_prepare_f2)~~
 
 
--- SELECT from a view in db1 which references objects in db2, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
+-- SELECT from a view in db1 which references objects in db1, which login babel_cross_db_vu_prepare_l1 has privilege, should be successful
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
 GO
 ~~START~~
@@ -485,7 +485,7 @@ int
 ~~END~~
 
 
--- SELECT from a view in db1 which references tables in db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+-- SELECT from a view in db1 which references tables in db1, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
 GO
 ~~ERROR (Code: 33557097)~~
@@ -500,7 +500,7 @@ GO
 ~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
 
 
--- SELECT from a view in db1 which references functions in db2, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
+-- SELECT from a view in db1 which references functions in db1, which login babel_cross_db_vu_prepare_l1 does not have privilege, should throw error
 SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3;
 GO
 ~~ERROR (Code: 33557097)~~
@@ -530,8 +530,8 @@ GO
 ~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
 
 
--- Execute procedure from db2
-EXEC babel_cross_db_vu_prepare_db2.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_p2;
+-- Execute procedure from db1
+EXEC babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_p2;
 GO
 ~~START~~
 int#!#varchar
@@ -589,11 +589,11 @@ int#!#int#!#varchar#!#varchar
 ~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
 
 
-USE master
+-- call procedure babel_cross_db_vu_prepare_p1 from a db1
+USE babel_cross_db_vu_prepare_db1
 GO
 
--- call above procedures from a master
-EXEC babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
+EXEC master.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
 GO
 ~~START~~
 int#!#varchar
@@ -615,7 +615,11 @@ int#!#int#!#varchar#!#varchar
 ~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
 
 
-EXEC babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested;
+-- call procedure babel_cross_db_vu_prepare_p1_nested from a db1
+USE babel_cross_db_vu_prepare_db1
+GO
+
+EXEC master.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested;
 GO
 ~~START~~
 int#!#varchar
@@ -638,6 +642,9 @@ int#!#int#!#varchar#!#varchar
 
 
 -- tsql
+USE master
+GO
+
 SELECT * FROM babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_v1 ORDER BY id;
 GO
 ~~START~~
@@ -650,3 +657,48 @@ int
 6
 ~~END~~
 
+
+USE babel_cross_db_vu_prepare_db1
+GO
+
+GRANT CONNECT TO guest;
+GO
+
+-- tsql user=babel_cross_db_vu_prepare_l2 password=12345678
+-- cross-db tests for guest user
+USE babel_cross_db_vu_prepare_db1
+GO
+
+-- expect error since guest user does not have permission on babel_cross_db_vu_prepare_v1
+SELECT * FROM dbo.babel_cross_db_vu_prepare_v1 ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_cross_db_vu_prepare_v1)~~
+
+
+-- tsql
+-- now grant the SELECT privilege to guest
+GRANT SELECT ON dbo.babel_cross_db_vu_prepare_v1 TO guest;
+GO
+
+-- tsql user=babel_cross_db_vu_prepare_l2 password=12345678
+USE babel_cross_db_vu_prepare_db1
+GO
+
+SELECT * FROM dbo.babel_cross_db_vu_prepare_v1 ORDER BY id;
+GO
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+~~END~~
+
+
+-- tsql
+USE master
+GO
