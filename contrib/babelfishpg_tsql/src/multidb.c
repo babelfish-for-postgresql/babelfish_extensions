@@ -1275,7 +1275,7 @@ get_physical_schema_name(char *db_name, const char *schema_name)
  * Map the logical user name to its physical name in the database.
  */
 char *
-get_physical_user_name(char *db_name, char *user_name, bool suppress_error, bool missing_ok)
+get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, bool suppress_role_error)
 {
 	char	   *new_user_name;
 	char	   *result;
@@ -1288,7 +1288,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error, bool
 	if (len == 0)
 		return NULL;
 
-	if (!DbidIsValid(get_db_id(db_name)) && !suppress_error)
+	if (!DbidIsValid(get_db_id(db_name)) && !suppress_db_error)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist.", db_name)));
@@ -1316,7 +1316,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error, bool
 			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
 				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
 			{
-				if(missing_ok || user_exists_for_db(db_name, new_user_name))
+				if(suppress_role_error || user_exists_for_db(db_name, new_user_name))
 				{
 					return new_user_name;
 				}
@@ -1333,10 +1333,10 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error, bool
 
 	/* 
 	 * If the user or role is not found in the sys.babelfish_authid_user_ext 
-	 * catalog, then an error is thrown. The 'missing_ok' flag indicated if 
+	 * catalog, then an error is thrown. The 'suppress_role_error' flag indicated if 
 	 * it is ok for the user or role to be absent from the catalog.
 	 */
-	if(!missing_ok && !user_exists_for_db(db_name, result))
+	if(!suppress_role_error && !user_exists_for_db(db_name, result))
 	{
 		ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

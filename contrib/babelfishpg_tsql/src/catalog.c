@@ -4962,7 +4962,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0)))
 				continue;
 
-			old_role_name = get_physical_user_name(old_db_name, role, true, false);
+			old_role_name = get_physical_user_name(old_db_name, role, true, true);
 			new_role_name = get_physical_user_name(new_db_name, role, true, true);
 			exec_rename_db_util(old_role_name, new_role_name, false);
 		}
