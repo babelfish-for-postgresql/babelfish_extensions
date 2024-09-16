@@ -788,17 +788,6 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 		typmod = PG_GETARG_INT32(1);
 		maxlen = typmod - VARHDRSZ;
 	}
-
-	/*
-	 * Allow trailing null bytes 
-	 * Its safe since multi byte UTF-8 does not contain 0x00 
-	 * This is needed since we implicity add trailing zeroes to 
-	 * binary type if input is less than binary(n)
-	 * ex: CAST(CAST('a' AS BINARY(10)) AS VARCHAR) should work
-	 * and not fail because of null byte
-	 */
-	//while(len>0 && data[len-1] == '\0')
-	//	len -= 1;
 	
 	/*
 	 * Cast the entire input binary data if maxlen is 
