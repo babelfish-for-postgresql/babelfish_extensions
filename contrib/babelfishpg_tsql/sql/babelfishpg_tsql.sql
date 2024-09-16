@@ -500,7 +500,7 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-		where pg_catalog.lower(table_name) like pg_catalog.lower(sys.babelfish_truncate_identifier(@table_name)) COLLATE database_default
+		where pg_catalog.lower(table_name) like pg_catalog.lower(sys.babelfish_truncate_identifier(@table_name)) COLLATE database_default ESCAPE '\'
 			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_owner),'')) = '' or table_owner like sys.babelfish_truncate_identifier(@table_owner) collate database_default)
 			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_qualifier),'')) = '' or table_qualifier like sys.babelfish_truncate_identifier(@table_qualifier) collate database_default)
 			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@column_name),'')) = '' or column_name like sys.babelfish_truncate_identifier(@column_name) collate database_default)

@@ -168,6 +168,9 @@ varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallin
 create table nums(a int, b smallint, c tinyint, d bigint, e bit, f float, g real, h numeric(5,3), i money, j smallmoney)
 go
 
+create table test_escape_chars_sp_columns_100(a int);
+go
+
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
@@ -175,7 +178,59 @@ varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallin
 ~~END~~
 
 
+-- fix me (need to update later)
+EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test\_escape\_chars\_sp\_columns\_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test_escape_chars_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test\_escape\_chars\_sp\_columns\_100', 'dbo', NULL, NULL
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test_escape_chars_sp_columns_100', 'dbo', NULL, NULL
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
 drop table nums
+go
+
+drop table test_escape_chars_sp_columns_100;
 go
 
 Use master
@@ -380,6 +435,9 @@ varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallin
 create table nums(a int, b smallint, c tinyint, d bigint, e bit, f float, g real, h numeric(5,3), i money, j smallmoney)
 go
 
+create table test_escape_chars_sp_columns_100(a int);
+go
+
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
@@ -387,7 +445,59 @@ varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallin
 ~~END~~
 
 
+-- fix me (need to update later)
+EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test\_escape\_chars\_sp\_columns\_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test_escape_chars_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test\_escape\_chars\_sp\_columns\_100', 'dbo', NULL, NULL
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test_escape_chars_sp_columns_100', 'dbo', NULL, NULL
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
 drop table nums
+go
+
+drop table test_escape_chars_sp_columns_100;
 go
 
 use master
