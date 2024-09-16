@@ -98,6 +98,9 @@ GO
 DROP LOGIN babel_cross_db_vu_prepare_l1;
 GO
 
+DROP LOGIN babel_cross_db_vu_prepare_l2;
+GO
+
 DROP DATABASE babel_cross_db_vu_prepare_db1
 GO
 

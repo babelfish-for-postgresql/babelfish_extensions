@@ -414,6 +414,9 @@ GO
 ALTER LOGIN babel_cross_db_vu_prepare_l1 with password = '12345678';
 GO
 
+ALTER LOGIN babel_cross_db_vu_prepare_l2 with password = '12345678';
+GO
+
 -- tsql user=babel_cross_db_vu_prepare_l1 password=12345678
 USE master;
 GO
