@@ -18,6 +18,8 @@ create procedure dbo.p0 as select 20
 go
 
 -- tsql user=l1 password=123
+select is_member('db_owner')
+go
 create table s1.t1 (a int)
 go
 create function s1.f1() returns int as begin return 11 end
@@ -26,6 +28,8 @@ create procedure s1.p1 as select 21
 go
 
 -- tsql user=l2 password=123
+select is_member('db_owner')
+go
 create table s2.t2 (a int)
 go
 create function s2.f2() returns int as begin return 12 end
@@ -38,6 +42,8 @@ alter role db_owner add member u1
 go
 
 -- tsql user=l1 password=123
+select is_member('db_owner')
+go
 select * from dbo.t0
 go
 select dbo.f0()
@@ -68,6 +74,8 @@ create procedure s3.p3 as select 23
 go
 
 -- tsql user=l2 password=123
+select is_member('db_owner')
+go
 select * from dbo.t0
 go
 select dbo.f0()
@@ -174,6 +182,8 @@ alter role db_owner drop member u1
 go
 
 -- tsql user=l1 password=123
+select is_member('db_owner')
+go
 select * from dbo.t0
 go
 select dbo.f0()
@@ -281,6 +291,27 @@ go
 drop schema s2
 go
 drop schema s3
+go
+
+-- Check if db_owner can drop the database
+-- tsql
+create database db_owner_test_db
+go
+use db_owner_test_db
+go
+create user db_owner_test_db_u1 for login l1
+go
+alter role db_owner add member db_owner_test_db_u1
+go
+use master
+go
+
+-- tsql user=l1 password=123
+select sys.user_name()
+go
+select is_member('db_owner')
+go
+drop database db_owner_test_db
 go
 
 -- psql
