@@ -24,11 +24,11 @@
 #include "dbcmds.h"
 #include "pl_explain.h"
 #include "pltsql.h"
+#include "rolecmds.h"
 #include "session.h"
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
 #include "src/include/lib/qunique.h"
-#include "rolecmds.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
@@ -3921,10 +3921,10 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 		
 		/* Revoke dbo role from the previous owner */
-		grant_dbo_to_login(get_owner_of_db(stmt->db_name), stmt->db_name, false);
+		grant_revoke_dbo_to_login(get_owner_of_db(stmt->db_name), stmt->db_name, false);
 
 		/* Grant dbo role to the new owner */
-		grant_dbo_to_login(stmt->new_owner_name, stmt->db_name, true);
+		grant_revoke_dbo_to_login(stmt->new_owner_name, stmt->db_name, true);
 		update_db_owner(stmt->new_owner_name, stmt->db_name);	
 	}
 	PG_FINALLY();

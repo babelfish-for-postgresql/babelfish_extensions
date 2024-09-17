@@ -585,8 +585,12 @@ grant_guests_to_login(const char *login)
 	pfree(query.data);
 }
 
+/* 
+ * Grant/revoke dbo role from the login.
+ * The 'is_grant' flag determines if the action is grant/revoke.
+ */
 void
-grant_dbo_to_login(const char* login, const char* db_name, bool is_grant)
+grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 {
 	StringInfoData query;
 	List	   *parsetree_list;
