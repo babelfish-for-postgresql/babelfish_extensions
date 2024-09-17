@@ -20,12 +20,8 @@
 #include "catalog.h"
 #include "dbcmds.h"
 #include "pl_explain.h"
-#include "pltsql.h"
 #include "rolecmds.h"
 #include "session.h"
-#include "parser/scansup.h"
-#include "parser/parse_oper.h"
-#include "src/include/lib/qunique.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
