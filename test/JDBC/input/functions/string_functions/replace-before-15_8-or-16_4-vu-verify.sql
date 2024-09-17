@@ -198,6 +198,9 @@ DECLARE @inputString BINARY(10) = 0x61626364656667, @pattern BINARY(10) = 0x6364
 SELECT replace(@inputString, @pattern, @replacement)
 GO
 
+UPDATE babel_4836_replace_t4 SET a = 0x6162636465, b = 0x6263, c = 0x747576;
+GO
+
 -- with table column of type binary
 SELECT replace(a, b, c) FROM babel_4836_replace_t4
 GO
