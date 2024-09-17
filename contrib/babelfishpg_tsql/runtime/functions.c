@@ -195,6 +195,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_real);
 PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
+PG_FUNCTION_INFO_V1(bbf_xmlexist_helper);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -5032,4 +5033,22 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_finish() failed");
 
 	return tupstore;
+}
+
+/*
+ * bbf_xmlexist_helper()
+ * Returns a bit that represents one of the following conditions:
+ * 	1, representing True, if the XPATH expression returns a nonempty result. That is, it returns at least one XML node.
+ * 	0, representing False, if it returns an empty result.
+ * 	NULL if the xml data type instance against which the query was executed contains NULL.
+ */
+Datum
+bbf_xmlexist_helper(PG_FUNCTION_ARGS)
+{
+	if (!pltsql_quoted_identifier)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.")));
+
+	return DirectFunctionCall2(xmlexists, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1));
 }

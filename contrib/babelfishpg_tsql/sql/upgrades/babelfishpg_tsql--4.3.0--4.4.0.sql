@@ -1674,6 +1674,11 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(sys.NVARCHAR, sys.VARCHAR) (
     PARALLEL = SAFE
 );
 
+CREATE OR REPLACE FUNCTION sys.bbf_xmlexist_helper(TEXT, XML)
+RETURNS sys.BIT
+AS 'babelfishpg_tsql', 'bbf_xmlexist_helper'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(TEXT, ANYELEMENT)
 RETURNS sys.BIT
 AS
@@ -1693,11 +1698,7 @@ BEGIN
         RAISE EXCEPTION 'Cannot call methods on %.', string_arg_datatype;
     END IF;
 
-    IF xmlexists($1 passing by value $2) THEN
-        RETURN 1;
-    ELSE
-        RETURN 0;
-    END IF;
+    RETURN sys.bbf_xmlexist_helper($1, $2);
 END
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

@@ -1,3 +1,6 @@
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+
 -- Check if an XML element exists
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
 DECLARE @result1 VARCHAR(50) = CASE WHEN @xml.exist('/Root/Child1') = 1 THEN 'The Child1 element exists' ELSE 'The Child1 element does not exist' END;
@@ -446,6 +449,29 @@ WHERE id=7
 GO
 
 DELETE FROM babel_5222_xml_exist_school_details WHERE id=10
+GO
+
+-- Tests when Quoted Identifier is OFF
+SET QUOTED_IDENTIFIER OFF
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name')
+GO
+
+SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+GO
+
+SELECT babel_5222_xml_exist_t1.XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
 GO
 
 -- Currently, we only support XPATH 1.0 as input for XML exist function. 

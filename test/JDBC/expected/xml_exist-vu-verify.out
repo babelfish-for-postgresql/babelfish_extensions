@@ -1,3 +1,11 @@
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
 -- Check if an XML element exists
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
 DECLARE @result1 VARCHAR(50) = CASE WHEN @xml.exist('/Root/Child1') = 1 THEN 'The Child1 element exists' ELSE 'The Child1 element does not exist' END;
@@ -933,6 +941,55 @@ int#!#xml
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+
+-- Tests when Quoted Identifier is OFF
+SET QUOTED_IDENTIFIER OFF
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
+SELECT @xml.exist('/artists/artist/@name')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+
+
+SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+
+
+SELECT babel_5222_xml_exist_t1.XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
 
 
 -- Currently, we only support XPATH 1.0 as input for XML exist function. 
