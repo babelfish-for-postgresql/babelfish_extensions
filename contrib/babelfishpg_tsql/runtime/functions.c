@@ -58,6 +58,8 @@
 #include "../src/catalog.h"
 #include "../src/timezone.h"
 #include "../src/collation.h"
+#include "../src/dbcmds.h"
+#include "../src/hooks.h"
 #include "../src/rolecmds.h"
 #include "utils/fmgroids.h"
 #include "utils/acl.h"
@@ -66,7 +68,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
-#include "../src/dbcmds.h"
+#include "parser/parse_oper.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -2646,6 +2648,10 @@ has_dbaccess(PG_FUNCTION_ARGS)
 
 		datdba = get_role_oid("sysadmin", false);
 		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
+			/* 
+			 * The login will have access to the database if it is a member
+			 * of sysadmin or it is the owner of the database.
+			 */
 			user = get_dbo_role_name(lowercase_db_name);
 		else
 		{
