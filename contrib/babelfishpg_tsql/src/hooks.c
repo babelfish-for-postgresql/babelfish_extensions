@@ -174,7 +174,7 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
-					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
+					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc, ObjectAddress *address);
 
 /*****************************************
  * 			Executor Hooks

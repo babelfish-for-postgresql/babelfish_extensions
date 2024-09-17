@@ -35,7 +35,7 @@ extern Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
 							 Oid valtype, int32 valtypmod,
 							 Oid reqtype, int32 reqtypmod);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
-                    QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
+                    QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc, ObjectAddress *address);
 
 extern char *update_delete_target_alias;
 extern bool sp_describe_first_result_set_inprogress;
