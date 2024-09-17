@@ -75,7 +75,7 @@ go
 exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s_tables2'
 go
 
--- NOTE: Incorrect output with [] wildcards, see BABEL-2452
+-- NOTE: Incorrect output with [] wildcards, see BABEL-2452 -- Fixed in BABEL-4128
 exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[op]tables2'
 go
 
@@ -83,6 +83,18 @@ exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[^o]tables2'
 go
 
 exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[o-p]tables2'
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sotables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables5', @table_type = "'VIEW'"
 go
 
 -- unnamed invocation

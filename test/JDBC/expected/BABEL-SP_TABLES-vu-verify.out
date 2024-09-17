@@ -190,11 +190,13 @@ babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sptables2#!#
 ~~END~~
 
 
--- NOTE: Incorrect output with [] wildcards, see BABEL-2452
+-- NOTE: Incorrect output with [] wildcards, see BABEL-2452 -- Fixed in BABEL-4128
 exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[op]tables2'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sotables2#!#TABLE#!#<NULL>
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sptables2#!#TABLE#!#<NULL>
 ~~END~~
 
 
@@ -202,6 +204,7 @@ exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[^o]tables2'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sptables2#!#TABLE#!#<NULL>
 ~~END~~
 
 
@@ -209,6 +212,40 @@ exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[o-p]tables2'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sotables2#!#TABLE#!#<NULL>
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sptables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sptables#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sptables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sotables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sotables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables5', @table_type = "'VIEW'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_sptables5#!#VIEW#!#<NULL>
 ~~END~~
 
 
