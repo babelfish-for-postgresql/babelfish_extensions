@@ -59,7 +59,6 @@
 #include "../src/timezone.h"
 #include "../src/collation.h"
 #include "../src/dbcmds.h"
-#include "../src/hooks.h"
 #include "../src/rolecmds.h"
 #include "utils/fmgroids.h"
 #include "utils/acl.h"
@@ -68,7 +67,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
-#include "parser/parse_oper.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
