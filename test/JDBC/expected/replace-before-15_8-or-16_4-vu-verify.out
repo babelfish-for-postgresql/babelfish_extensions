@@ -457,7 +457,7 @@ SELECT replace(a, b, c) FROM babel_4836_replace_t4
 GO
 ~~START~~
 varchar
-atuvde
+atuv                 de                                             
 ~~END~~
 
 
