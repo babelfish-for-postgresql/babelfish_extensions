@@ -146,8 +146,8 @@ extern Oid	get_authid_login_ext_idx_oid(void);
 extern Oid	bbf_authid_user_ext_oid;
 extern Oid	bbf_authid_user_ext_idx_oid;
 
-extern bool is_user(Oid role_oid);
-extern bool is_role(Oid role_oid);
+extern bool is_user(Oid role_oid, bool current_db_only);
+extern bool is_role(Oid role_oid, bool current_db_only);
 extern Oid	get_authid_user_ext_oid(void);
 extern Oid	get_authid_user_ext_idx_oid(void);
 extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
@@ -311,6 +311,7 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define Anum_bbf_schema_perms_grantor 8
 
 #define PUBLIC_ROLE_NAME "public"
+#define DB_ACCESSADMIN "db_accessadmin"
 #define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
 #define ALL_PERMISSIONS_ON_RELATION 47 /* last 6 bits as 101111 represents ALL privileges on a relation. */
 #define ALL_PERMISSIONS_ON_FUNCTION 128 /* last 8 bits as 10000000 represents ALL privileges on a procedure/function. */

@@ -50,9 +50,11 @@ static Oid get_sys_babelfish_db_seq_oid(void);
 static List *gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
 								  const char *db_owner,
+								  const char *db_accessadmin,
 								  const char *guest,
 								  const char *guest_schema);
 static List *gen_dropdb_subcmds(const char *schema,
+								const char *db_accessadmin,
 								const char *db_owner,
 								const char *dbo,
 								List *db_users,
@@ -80,7 +82,7 @@ get_sys_babelfish_db_seq_oid()
  * Generate subcmds for CREATE DATABASE. Note 'guest' can be NULL.
  */
 static List *
-gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest, const char *guest_schema)
+gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *db_accessadmin_role, const char *guest, const char *guest_schema)
 {
 	StringInfoData query;
 	List	   *res;
@@ -98,6 +100,10 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	appendStringInfo(&query, "CREATE ROLE dummy CREATEROLE INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
+
+	/* create db_accessadmin for database */
+	appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+	appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
 
 	if (guest)
 	{
@@ -118,9 +124,9 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
+		expected_stmt_num = list_length(logins) > 0 ? 11 : 10;
 	else
-		expected_stmt_num = 6;
+		expected_stmt_num = 8;
 
 	if (list_length(res) != expected_stmt_num)
 		ereport(ERROR,
@@ -137,6 +143,12 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_CreateRoleStmt(stmt, db_accessadmin_role, db_owner, NULL);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin_role, NULL);
 
 	if (guest)
 	{
@@ -178,6 +190,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
  */
 static List *
 gen_dropdb_subcmds(const char *schema,
+				   const char *db_accessadmin,
 				   const char *db_owner,
 				   const char *dbo,
 				   List *db_users,
@@ -187,7 +200,7 @@ gen_dropdb_subcmds(const char *schema,
 	List	   *stmt_list;
 	ListCell   *elem;
 	Node	   *stmt;
-	int			expected_stmts = 6;
+	int			expected_stmts = 8;
 	int			i = 0;
 
 	initStringInfo(&query);
@@ -198,13 +211,17 @@ gen_dropdb_subcmds(const char *schema,
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0 &&
+			strcmp(user_name, db_accessadmin) != 0)
 		{
 			appendStringInfo(&query, "DROP OWNED BY dummy CASCADE; ");
 			appendStringInfo(&query, "DROP ROLE dummy; ");
 			expected_stmts += 2;
 		}
 	}
+	/* Drop db_accessadmin*/
+	appendStringInfo(&query, "REVOKE CREATE ON DATABASE dummy FROM dummy; ");
+	appendStringInfo(&query, "DROP ROLE dummy; ");
 	/* Then drop db_owner and dbo in that order */
 	appendStringInfo(&query, "DROP OWNED BY dummy, dummy CASCADE; ");
 	appendStringInfo(&query, "REVOKE CREATE, CONNECT, TEMPORARY ON DATABASE dummy FROM dummy; ");
@@ -229,7 +246,8 @@ gen_dropdb_subcmds(const char *schema,
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0 &&
+			strcmp(user_name, db_accessadmin) != 0)
 		{
 			stmt = parsetree_nth_stmt(stmt_list, i++);
 			update_DropOwnedStmt(stmt, list_make1(user_name));
@@ -238,6 +256,11 @@ gen_dropdb_subcmds(const char *schema,
 			update_DropRoleStmt(stmt, user_name);
 		}
 	}
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropRoleStmt(stmt, db_accessadmin);
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropOwnedStmt(stmt, list_make2(pstrdup(db_owner), pstrdup(dbo)));
@@ -406,6 +429,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	const char *dbo_scm;
 	const char *dbo_role;
 	const char *db_owner_role;
+	const char *db_accessadmin_role;
 	const char *guest_scm;
 	NameData	default_collation;
 	NameData	owner_namedata;
@@ -483,6 +507,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	dbo_scm = get_dbo_schema_name(dbname);
 	dbo_role = get_dbo_role_name(dbname);
 	db_owner_role = get_db_owner_name(dbname);
+	db_accessadmin_role = get_db_accessadmin_role_name(dbname);
 	guest = get_guest_role_name(dbname);
 	guest_scm = get_guest_schema_name(dbname);
 
@@ -505,6 +530,11 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("role \"%s\" already exists", db_owner_role)));
+
+	if (OidIsValid(get_role_oid(db_accessadmin_role, true)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("role \"%s\" already exists", db_accessadmin_role)));
 
 	/* For simplicity, do not allow bbf db name clides with pg dbnames */
 	/* TODO: add another check in orignal createdb */
@@ -539,7 +569,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	/* Advance cmd counter to make the database visible */
 	CommandCounterIncrement();
 
-	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest, guest_scm);
+	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, db_accessadmin_role, guest, guest_scm);
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	old_createrole_self_grant = pstrdup(GetConfigOption("createrole_self_grant", false, true));
@@ -600,10 +630,12 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 			CommandCounterIncrement();
 		}
 		set_cur_db(old_dbid, old_dbname);
-		if (dbo_role)
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false, true, false);
-		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, true, true, false);
+
+		/* add datbase fixed roles and users to babelfish catalogs */
+		add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false, true, false);
+		add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, true, true, false);
+		add_to_bbf_authid_user_ext(db_accessadmin_role, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
+
 		if (guest)
 		{
 			/*
@@ -634,6 +666,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	Form_sysdatabases bbf_db;
 	int16		dbid;
 	const char *schema_name;
+	const char *db_accessadmin;
 	const char *db_owner_role;
 	const char *dbo_role;
 	const char *guest_schema_name;
@@ -642,8 +675,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	ListCell   *parsetree_item;
 	const char *prev_current_user;
 	int 		save_sec_context;
-	bool 		is_set_userid = false;
-	Oid 		save_userid;
+	Oid 		save_userid = InvalidOid;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
@@ -724,11 +756,13 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		schema_name = get_dbo_schema_name(dbname);
 		dbo_role = get_dbo_role_name(dbname);
 		db_owner_role = get_db_owner_name(dbname);
+		db_accessadmin = get_db_accessadmin_role_name(dbname);
 		/* Get a list of all the database's users */
 		db_users_list = get_authid_user_ext_db_users(dbname);
 		guest_schema_name = get_guest_schema_name(dbname);
 
 		parsetree_list = gen_dropdb_subcmds(schema_name,
+											db_accessadmin,
 											db_owner_role,
 											dbo_role,
 											db_users_list,
@@ -739,19 +773,15 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		{
 			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 			PlannedStmt *wrapper;
-			is_set_userid = false;
 
-			if(stmt->type != T_GrantStmt)
-			{
-				GetUserIdAndSecContext(&save_userid, &save_sec_context);
-				if (stmt->type == T_DropOwnedStmt || stmt->type == T_DropRoleStmt) /* need bbf_role_admin to perform DropOwnedObjects */
-					SetUserIdAndSecContext(get_bbf_role_admin_oid(),
-										   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-				else
-					SetUserIdAndSecContext(get_role_oid(dbo_role, true),
-										   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-				is_set_userid = true;
-			}
+			GetUserIdAndSecContext(&save_userid, &save_sec_context);
+			if (stmt->type == T_DropOwnedStmt || stmt->type == T_DropRoleStmt || stmt->type == T_GrantStmt) /* need bbf_role_admin to perform DropOwnedObjects */
+				SetUserIdAndSecContext(get_bbf_role_admin_oid(),
+										save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+			else
+				SetUserIdAndSecContext(get_role_oid(dbo_role, true),
+										save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
 			/* need to make a wrapper PlannedStmt */
 			wrapper = makeNode(PlannedStmt);
 			wrapper->commandType = CMD_UTILITY;
@@ -770,8 +800,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 						   None_Receiver,
 						   NULL);
 			
-			if(is_set_userid)
-				SetUserIdAndSecContext(save_userid, save_sec_context);
+			SetUserIdAndSecContext(save_userid, save_sec_context);
 			
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
@@ -796,7 +825,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	}
 	PG_CATCH();
 	{
-		if(is_set_userid)
+		if(OidIsValid(save_userid))
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 
 		/* Clean up. Restore previous state. */

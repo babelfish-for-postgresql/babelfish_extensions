@@ -11,6 +11,36 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
+
+/*
+ * CREATE fixed database role db_accessadmin in all the existing babelfish databases
+ * We will switch to bbf_admin_role to execute these statements since bbf_admin_role
+ * should have admin membership in the new roles and it should be the grantor of the
+ * permissions on physical database otherwise pltsql drop database command will fail
+ * To check if there is a single db mode pltsql database, we will check existence of
+ * dbo schema in sys.babelfish_namespace_ext
+ */
+DO $$
+DECLARE
+    single_db_mode_user_db_exists BOOLEAN;
+    db_name TEXT;
+    db_accessadmin TEXT := 'db_accessadmin';
+    db_owner TEXT := 'db_owner';
+BEGIN
+    SET LOCAL ROLE bbf_role_admin;
+    single_db_mode_user_db_exists := (SELECT COUNT(*) FROM sys.babelfish_namespace_ext WHERE nspname = 'dbo');
+    FOR db_name IN SELECT name FROM sys.babelfish_sysdatabases
+    LOOP
+        IF (single_db_mode_user_db_exists AND db_name NOT IN ('master', 'tempdb', 'msdb')) THEN
+            EXECUTE format('CREATE ROLE %s ROLE %s;', db_accessadmin, db_owner);
+            EXECUTE format('GRANT CREATE ON DATABASE %s TO %s; ', CURRENT_DATABASE(), db_accessadmin);
+        ELSE
+            EXECUTE format('CREATE ROLE %s_%s ROLE %s_%s;', db_name, db_accessadmin, db_name, db_owner);
+            EXECUTE format('GRANT CREATE ON DATABASE %s TO %s_%s; ', CURRENT_DATABASE(), db_name, 'db_accessadmin');
+        END IF;
+    END LOOP;
+END $$;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
                                                                  IN p_style NUMERIC DEFAULT 0)

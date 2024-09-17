@@ -48,6 +48,8 @@ GO
 
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_accessadmin'
 GO
+~~ROW COUNT: 1~~
+
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_securityadmin'
 GO
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_ddladmin   '
@@ -67,6 +69,7 @@ SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
 GO
 ~~START~~
 varchar#!#nvarchar
+db_accessadmin#!#DB Access Administrators
 ~~END~~
 
 

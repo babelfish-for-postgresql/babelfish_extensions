@@ -858,30 +858,23 @@ get_authid_login_ext_idx_oid(void)
  *****************************************/
 
 bool
-is_user(Oid role_oid)
+is_user(Oid role_oid, bool current_db_only)
 {
 	Relation	relation;
-	bool		is_user = true;
 	ScanKeyData scanKey;
 	SysScanDesc scan;
 	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
-	char	   *type_str = "";
+	char		*rolname;
+	bool		is_user = false;
 
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
+	rolname = GetUserNameFromId(role_oid, false);
 
 	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
 
 	ScanKeyInit(&scanKey,
 				Anum_bbf_authid_user_ext_rolname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
+				CStringGetDatum(rolname));
 
 	scan = systable_beginscan(relation,
 							  get_authid_user_ext_idx_oid(),
@@ -889,61 +882,59 @@ is_user(Oid role_oid)
 
 	tuple = systable_getnext(scan);
 
-	if (!HeapTupleIsValid(tuple))
-		is_user = false;
-	else
+	if (HeapTupleIsValid(tuple))
 	{
 		Datum		datum;
 		bool		isnull;
-		TupleDesc	dsc;
+		char 		*current_db_name = get_cur_db_name();
 
-		dsc = RelationGetDescr(relation);
-		datum = heap_getattr(tuple, USER_EXT_TYPE + 1, dsc, &isnull);
-		if (!isnull)
-			type_str = pstrdup(TextDatumGetCString(datum));
+		datum = heap_getattr(tuple, USER_EXT_TYPE + 1,
+		                     RelationGetDescr(relation), &isnull);
+
+		/*
+		* Only sysadmin can not be dropped. For the rest of the cases i.e., type
+		* is "S" or "U" etc, we should drop the user
+		*/
+		if (!isnull && strcmp(TextDatumGetCString(datum), "R") != 0)
+		{
+			if (current_db_only)
+			{
+				datum = heap_getattr(tuple, USER_EXT_DATABASE_NAME + 1,
+									 RelationGetDescr(relation), &isnull);
+				if (strcmp(TextDatumGetCString(datum), current_db_name) == 0)
+					is_user = true;
+			}
+			else
+				is_user = true;
+		}
+		pfree(current_db_name);
 	}
 
-	/*
-	 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
-	 * is "S" or "U" etc, we should drop the user
-	 */
-	if (strcmp(type_str, "R") == 0)
-		is_user = false;
-
+	pfree(rolname);
 	systable_endscan(scan);
 	table_close(relation, AccessShareLock);
-
-	ReleaseSysCache(authtuple);
 
 	return is_user;
 }
 
 bool
-is_role(Oid role_oid)
+is_role(Oid role_oid, bool current_db_only)
 {
 	Relation	relation;
-	bool		is_role = true;
 	ScanKeyData scanKey;
 	SysScanDesc scan;
 	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
-	BpChar		type;
-	char	   *type_str = "";
+	char		*rolname;
+	bool		is_role = false;
 
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
+	rolname = GetUserNameFromId(role_oid, false);
 
 	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
 
 	ScanKeyInit(&scanKey,
 				Anum_bbf_authid_user_ext_rolname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
+				CStringGetDatum(rolname));
 
 	scan = systable_beginscan(relation,
 							  get_authid_user_ext_idx_oid(),
@@ -951,21 +942,33 @@ is_role(Oid role_oid)
 
 	tuple = systable_getnext(scan);
 
-	if (!HeapTupleIsValid(tuple))
-		is_role = false;
-	else
+	if (HeapTupleIsValid(tuple))
 	{
-		type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		type_str = bpchar_to_cstring(&type);
+		Datum		datum;
+		bool 		isnull;
+		char 		*current_db_name = get_cur_db_name();
 
-		if (strcmp(type_str, "R") != 0)
-			is_role = false;
+		datum = heap_getattr(tuple, USER_EXT_TYPE + 1,
+		                     RelationGetDescr(relation), &isnull);
+
+		if (!isnull && strcmp(TextDatumGetCString(datum), "R") == 0)
+		{
+			if (current_db_only)
+			{
+				datum = heap_getattr(tuple, USER_EXT_DATABASE_NAME + 1,
+									 RelationGetDescr(relation), &isnull);
+				if (strcmp(TextDatumGetCString(datum), current_db_name) == 0)
+					is_role = true;
+			}
+			else
+				is_role = true;
+		}
+		pfree(current_db_name);
 	}
 
+	pfree(rolname);
 	systable_endscan(scan);
 	table_close(relation, AccessShareLock);
-
-	ReleaseSysCache(authtuple);
 
 	return is_role;
 }
@@ -4959,7 +4962,8 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 
 			if (SINGLE_DB == get_migration_mode() &&
 				((strlen(role) == 3 && strncmp(role, "dbo", 3) == 0) ||
-				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0)))
+				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0) ||
+				(strlen(role) == 14 && strncmp(role, DB_ACCESSADMIN, 14) == 0)))
 				continue;
 
 			old_role_name = get_physical_user_name(old_db_name, role, true);

@@ -290,7 +290,7 @@ drop_bbf_roles(ObjectAccessType access,
 {
 	if (is_login(roleid))
 		drop_bbf_authid_login_ext(access, classId, roleid, subId, arg);
-	else if (is_user(roleid) || is_role(roleid))
+	else if (is_user(roleid, false) || is_role(roleid, false))
 		drop_bbf_authid_user_ext(access, classId, roleid, subId, arg);
 }
 
@@ -1258,6 +1258,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		const char *db_name;
 		const char *dbo_role;
 		const char *db_owner_role;
+		const char *db_accessadmin_role;
 		const char *guest;
 		RoleSpec   *rolspec;
 
@@ -1269,6 +1270,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		db_name = TextDatumGetCString(db_name_datum);
 		dbo_role = get_dbo_role_name(db_name);
 		db_owner_role = get_db_owner_name(db_name);
+		db_accessadmin_role = get_db_accessadmin_role_name(db_name);
 		guest = get_guest_role_name(db_name);
 
 		/* Add users to catalog ext */
@@ -1283,6 +1285,8 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		}
 		if (db_owner_role)
 			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true, false);
+		if (db_accessadmin_role)
+			add_to_bbf_authid_user_ext(db_accessadmin_role, DB_ACCESSADMIN, db_name, NULL, NULL, true, true, false);
 		if (guest)
 		{
 			/*
@@ -1704,7 +1708,7 @@ is_alter_role_stmt(GrantRoleStmt *stmt)
 		Oid			granted = get_role_oid(spec->rolename, true);
 
 		/* Check if the granted role is an existing database role */
-		if (granted == InvalidOid || !is_role(granted))
+		if (granted == InvalidOid || !is_role(granted, false))
 			return false;
 	}
 
@@ -1727,7 +1731,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	grantee = get_role_oid(grantee_name, false);
 
 	/* Disallow ALTER ROLE if the grantee is not a db principal */
-	if (!is_user(grantee) && !is_role(grantee))
+	if (!is_user(grantee, false) && !is_role(grantee, false))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s is not a database user or a user-defined database role",
@@ -1889,7 +1893,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	 * principal. Note that if given principal is current user, we'll always
 	 * have permissions.
 	 */
-	if (!is_role(role_oid) ||
+	if (!is_role(role_oid, false) ||
 		((principal_oid != cur_user_oid) &&
 		 (!has_privs_of_role(cur_user_oid, role_oid) ||
 		  !has_privs_of_role(cur_user_oid, principal_oid))))

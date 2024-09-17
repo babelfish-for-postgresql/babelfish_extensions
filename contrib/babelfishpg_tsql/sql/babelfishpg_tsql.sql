@@ -2147,7 +2147,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND (Ext1.type != 'R' OR Ext1.type != 'A')
-		AND Ext1.orig_username != 'db_owner'
+		AND Ext1.orig_username NOT IN ('db_owner', 'db_accessadmin')
 		ORDER BY UserName, RoleName;
 	END
 	-- If the security account is the db fixed role - db_owner
@@ -2179,7 +2179,7 @@ BEGIN
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext2.database_name = DB_NAME()
 		AND Ext1.type = 'R'
-		AND Ext2.orig_username != 'db_owner'
+		AND Ext2.orig_username NOT IN ('db_owner', 'db_accessadmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY Role_name, Users_in_role;
 	END
@@ -2217,7 +2217,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND (Ext1.type != 'R' OR Ext1.type != 'A')
-		AND Ext1.orig_username != 'db_owner'
+		AND Ext1.orig_username NOT IN ('db_owner', 'db_accessadmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY UserName, RoleName;
 	END
@@ -2377,13 +2377,16 @@ CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NUL
 $$
 BEGIN
 	-- Returns a list of the fixed database roles. 
-	-- Only fixed role present in babelfish is db_owner.
 	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_owner'
 	BEGIN
 		SELECT CAST('db_owner' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Owners' AS sys.nvarchar(70)) AS Description;
 	END
+	ELSE IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_accessadmin'
+	BEGIN
+		SELECT CAST('db_accessadmin' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Access Administrators' AS sys.nvarchar(70)) AS Description;
+	END
 	ELSE IF LOWER(RTRIM(@rolename)) IN (
-			'db_accessadmin','db_securityadmin','db_ddladmin', 'db_backupoperator', 
+			'db_securityadmin','db_ddladmin', 'db_backupoperator', 
 			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
 	BEGIN
 		-- Return an empty result set instead of raising an error

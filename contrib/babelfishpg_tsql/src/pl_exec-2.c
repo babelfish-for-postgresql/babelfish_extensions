@@ -3781,7 +3781,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		role_oid = get_role_oid(rolname, true);
 
 		/* Special database roles should throw an error. */
-		if (strcmp(grantee_name, "db_owner") == 0)
+		if (strcmp(grantee_name, "db_owner") == 0 || strcmp(grantee_name, DB_ACCESSADMIN) == 0)
 			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 
