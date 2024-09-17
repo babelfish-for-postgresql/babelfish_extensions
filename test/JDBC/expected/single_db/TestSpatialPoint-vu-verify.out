@@ -3659,3 +3659,4 @@ GO
 varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
 geospatialudt#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#0#!#1#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 ~~END~~
+
