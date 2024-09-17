@@ -967,6 +967,8 @@ GO
 
 SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
@@ -974,6 +976,8 @@ GO
 
 SELECT babel_5222_xml_exist_t1.XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
