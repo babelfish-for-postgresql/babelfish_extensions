@@ -183,6 +183,7 @@ forjson-datatypes
 format
 format-dep
 forxml
+forxml-path
 fulltextserviceproperty
 get_tds_id
 HAS_DBACCESS
