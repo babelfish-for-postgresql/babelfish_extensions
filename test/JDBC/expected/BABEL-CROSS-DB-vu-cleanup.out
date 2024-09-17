@@ -1,3 +1,7 @@
+-- psql
+DROP FUNCTION master_dbo.babel_cross_db_vu_prepare_pg_func;
+GO
+
 -- tsql
 USE master
 GO

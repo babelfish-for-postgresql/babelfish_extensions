@@ -234,3 +234,18 @@ GO
 
 USE master;
 GO
+
+-- psql
+-- CREATE a plpgsql function in master_dbo which accesses cross-db table from db1 database
+CREATE FUNCTION master_dbo.babel_cross_db_vu_prepare_pg_func() RETURNS INT AS $$
+DECLARE
+    res INT;
+BEGIN
+    SELECT COUNT(*) INTO res FROM my_babel_cross_db_vu_prepare_db1_babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+    RETURN res;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+GRANT EXECUTE ON FUNCTION master_dbo.babel_cross_db_vu_prepare_pg_func to master_babel_cross_db_vu_prepare_u1;
+GO

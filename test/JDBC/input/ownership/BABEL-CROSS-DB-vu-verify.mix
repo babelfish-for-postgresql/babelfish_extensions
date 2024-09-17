@@ -333,6 +333,13 @@ GO
 EXEC master.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested;
 GO
 
+-- SELECT from a plpgsql which accesses cross-db table should be successful
+USE master
+GO
+
+SELECT dbo.babel_cross_db_vu_prepare_pg_func();
+GO
+
 -- tsql
 USE my_babel_cross_db_vu_prepare_db1
 GO

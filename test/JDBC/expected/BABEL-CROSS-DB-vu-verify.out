@@ -644,6 +644,18 @@ int#!#int#!#varchar#!#varchar
 ~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_t2)~~
 
 
+-- SELECT from a plpgsql which accesses cross-db table should be successful
+USE master
+GO
+
+SELECT dbo.babel_cross_db_vu_prepare_pg_func();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 -- tsql
 USE my_babel_cross_db_vu_prepare_db1
 GO
