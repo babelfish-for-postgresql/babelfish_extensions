@@ -11,9 +11,9 @@
 #include "tree/ParseTreeWalker.h" // antlr4-cpp-runtime
 #include "tree/ParseTreeProperty.h" // antlr4-cpp-runtime
 
-#include "../antlr/antlr4cpp_generated_src/TSqlLexer/TSqlLexer.h"
-#include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParser.h"
-#include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParserBaseListener.h"
+#include "antlr/antlr4cpp_generated_src/TSqlLexer/TSqlLexer.h"
+#include "antlr/antlr4cpp_generated_src/TSqlParser/TSqlParser.h"
+#include "antlr/antlr4cpp_generated_src/TSqlParser/TSqlParserBaseListener.h"
 #include "tsqlIface.hpp"
 
 #define LOOP_JOIN_HINT 0
@@ -3444,7 +3444,7 @@ antlr_parser_cpp(const char *sourceText)
 	}
 	INSTR_TIME_SET_CURRENT(parseEnd);
 	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
-	elog(WARNING, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
+	elog(DEBUG1, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
 
 	/* And store time spent in ANTLR parsing so that we can emit it for EXPLAIN info if required */
 	antlr_parse_time = parseEnd;
