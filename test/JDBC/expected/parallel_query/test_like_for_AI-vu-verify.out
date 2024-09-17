@@ -2189,7 +2189,7 @@ int
 SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#varchar
+nvarchar#!#text
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -2214,7 +2214,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#varchar
+nvarchar#!#text
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -2240,7 +2240,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#varchar
+nvarchar#!#text
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -4793,7 +4793,7 @@ int
 SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#varchar
+nvarchar#!#text
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -4818,7 +4818,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#varchar
+nvarchar#!#text
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -4844,7 +4844,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#varchar
+nvarchar#!#text
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -5469,13 +5469,16 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jones'
-Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text COLLATE "default")
+Gather  (cost=0.13..12.23 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+        Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text COLLATE "default")
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.367 ms
+Babelfish T-SQL Batch Parsing Time: 0.418 ms
 ~~END~~
 
 
@@ -5484,13 +5487,16 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'Jon%'
-Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
+Gather  (cost=0.13..12.28 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
+        Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.181 ms
+Babelfish T-SQL Batch Parsing Time: 0.195 ms
 ~~END~~
 
 
@@ -5499,13 +5505,16 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jone_'
-Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
+Gather  (cost=0.13..12.28 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
+        Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.119 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 
@@ -5514,13 +5523,16 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE '_one_'
-Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text COLLATE "default")
+Gather  (cost=0.13..12.23 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+        Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text COLLATE "default")
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.168 ms
 ~~END~~
 
 
@@ -5529,13 +5541,16 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE '%on%s'
-Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text COLLATE "default")
+Gather  (cost=0.13..12.23 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+        Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text COLLATE "default")
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.102 ms
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 
@@ -5545,13 +5560,16 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'jones'
-Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jones'::text)
+Gather  (cost=0.13..12.23 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+        Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jones'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.141 ms
+Babelfish T-SQL Batch Parsing Time: 0.179 ms
 ~~END~~
 
 
@@ -5560,13 +5578,16 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'Jon%'
-Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c2)::text))::text ~~ 'Jon%'::text)
+Gather  (cost=0.13..12.23 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+        Filter: ((remove_accents_internal((c2)::text))::text ~~ 'Jon%'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 
@@ -5575,13 +5596,16 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'jone_'
-Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jone_'::text)
+Gather  (cost=0.13..12.23 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+        Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jone_'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.102 ms
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 
@@ -5590,13 +5614,16 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE '_one_'
-Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c2)::text))::text ~~ '_one_'::text)
+Gather  (cost=0.13..12.23 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+        Filter: ((remove_accents_internal((c2)::text))::text ~~ '_one_'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.102 ms
+Babelfish T-SQL Batch Parsing Time: 0.137 ms
 ~~END~~
 
 
@@ -5605,13 +5632,16 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE '%on%s'
-Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c2)::text))::text ~~ '%on%s'::text)
+Gather  (cost=0.13..12.23 rows=1 width=6)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+        Filter: ((remove_accents_internal((c2)::text))::text ~~ '%on%s'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.122 ms
+Babelfish T-SQL Batch Parsing Time: 0.153 ms
 ~~END~~
 
 
@@ -5814,4 +5844,3 @@ GO
 int
 0
 ~~END~~
-

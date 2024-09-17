@@ -156,7 +156,7 @@ GO
 SELECT (case when db_id() = db_id('db1') then 'true' else 'false' end) result;
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -167,7 +167,7 @@ GO
 SELECT (case when db_id() = db_id('master') then 'true' else 'false' end) result;
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -446,7 +446,7 @@ GO
 SELECT (case when db_id() = db_id('db1') then 'true' else 'false' end) result;
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -457,7 +457,7 @@ GO
 SELECT (case when db_id() = db_id('master') then 'true' else 'false' end) result;
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
