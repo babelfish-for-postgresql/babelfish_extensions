@@ -149,6 +149,7 @@ forjson
 forjson-subquery
 forjson-datatypes
 forxml
+forxml-path
 forxml-subquery
 BABEL-PROCID
 babel_trigger
