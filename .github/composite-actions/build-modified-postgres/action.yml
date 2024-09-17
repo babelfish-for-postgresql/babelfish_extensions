@@ -49,42 +49,42 @@ runs:
         cd postgresql_modified_for_babelfish
         git rev-parse HEAD
         if [[ ${{inputs.tap_tests}} == "yes" ]]; then
-          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi
+          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi > /dev/null
         elif [[ ${{inputs.code_coverage}} == "yes" ]]; then
-          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu > /dev/null
         elif [[ ${{inputs.release_mode}} == "yes" ]]; then
-            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 CFLAGS="-ggdb -O2" --with-libxml --with-uuid=ossp --with-icu
+            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 CFLAGS="-ggdb -O2" --with-libxml --with-uuid=ossp --with-icu > /dev/null
         else
-            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu > /dev/null
         fi
         make -j 4 2>error.txt
-        make install
-        cd contrib && make && sudo make install
+        make install > /dev/null
+        cd contrib && make && sudo make install > /dev/null
 
         if [[ ${{inputs.engine_branch}} == *"__PG_14_"* ]]; then
           cd ../..
           rm -rf pg_hint_plan
-          git clone --depth 1 --branch REL14_1_4_0 https://github.com/ossc-db/pg_hint_plan.git
+          git clone --depth 1 --branch REL14_1_4_0 https://github.com/ossc-db/pg_hint_plan.git > /dev/null
           cd pg_hint_plan
-          export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
-          make
-          make install
+          export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH > /dev/null
+          make > /dev/null
+          make install > /dev/null
         elif [[ ${{inputs.engine_branch}} == *"__PG_15_"* ]]; then
           cd ../..
           rm -rf pg_hint_plan
-          git clone --depth 1 --branch REL15_1_5_1 https://github.com/ossc-db/pg_hint_plan.git
+          git clone --depth 1 --branch REL15_1_5_1 https://github.com/ossc-db/pg_hint_plan.git > /dev/null
           cd pg_hint_plan
-          export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
-          make
-          make install
+          export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH > /dev/null
+          make > /dev/null
+          make install > /dev/null
         elif [[ ${{inputs.engine_branch}} != *"__PG_13_"* ]]; then
           cd ../..
           rm -rf pg_hint_plan
-          git clone --depth 1 --branch REL16_1_6_0 https://github.com/ossc-db/pg_hint_plan.git
+          git clone --depth 1 --branch REL16_1_6_0 https://github.com/ossc-db/pg_hint_plan.git > /dev/null
           cd pg_hint_plan
-          export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
-          make
-          make install
+          export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH > /dev/null
+          make > /dev/null
+          make install > /dev/null
         fi
       env:
         HEAD_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
@@ -92,13 +92,13 @@ runs:
 
     - name: Enable Ubuntu Coredumps
       run: |
-        sudo mkdir -p /var/coredumps
-        sudo chmod a+w /var/coredumps
-        sudo sysctl kernel.core_pattern=/var/coredumps/core-%e-%p
-        echo 'kernel.core_pattern=/var/coredumps/core-%e-%p' | sudo tee -a /etc/sysctl.conf
-        echo '* soft core unlimited' | sudo tee -a /etc/security/limits.conf
-        sudo systemctl daemon-reload
-        ulimit -c unlimited
-        echo 'DefaultLimitCORE=Infinity' | sudo tee -a /etc/systemd/system.conf
-        sudo systemctl daemon-reexec
+        sudo mkdir -p /var/coredumps > /dev/null
+        sudo chmod a+w /var/coredumps > /dev/null
+        sudo sysctl kernel.core_pattern=/var/coredumps/core-%e-%p > /dev/null
+        echo 'kernel.core_pattern=/var/coredumps/core-%e-%p' | sudo tee -a /etc/sysctl.conf > /dev/null
+        echo '* soft core unlimited' | sudo tee -a /etc/security/limits.conf > /dev/null
+        sudo systemctl daemon-reload > /dev/null
+        ulimit -c unlimited > /dev/null
+        echo 'DefaultLimitCORE=Infinity' | sudo tee -a /etc/systemd/system.conf > /dev/null
+        sudo systemctl daemon-reexec > /dev/null
       shell: bash
