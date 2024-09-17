@@ -240,12 +240,22 @@ USE master;
 GO
 
 -- psql
+
 -- CREATE a plpgsql function in master_dbo which accesses cross-db table from db1 database
 CREATE FUNCTION master_dbo.babel_cross_db_vu_prepare_pg_func() RETURNS INT AS $$
 DECLARE
+    schema_name TEXT;
     res INT;
 BEGIN
-    SELECT COUNT(*) INTO res FROM my_babel_cross_db_vu_prepare_db1_babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+    -- Retrieve the schema name
+    SELECT ne.nspname 
+    INTO schema_name 
+    FROM sys.babelfish_namespace_ext ne 
+    INNER JOIN sys.babelfish_sysdatabases sd 
+    ON ne.dbid = sd.dbid 
+    WHERE sd.name = 'my_babel_cross_db_vu_prepare_db1'
+    AND ne.orig_name = 'babel_cross_db_vu_prepare_s2';
+    EXECUTE format('SELECT COUNT(*) FROM %I.babel_cross_db_vu_prepare_t2', schema_name) INTO res;
     RETURN res;
 END;
 $$ LANGUAGE plpgsql;
