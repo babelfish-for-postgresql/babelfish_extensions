@@ -58,6 +58,7 @@
 #include "../src/catalog.h"
 #include "../src/timezone.h"
 #include "../src/collation.h"
+#include "../src/dbcmds.h"
 #include "../src/rolecmds.h"
 #include "utils/fmgroids.h"
 #include "utils/acl.h"
@@ -2620,6 +2621,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	const char *user = NULL;
 	const char *login;
 	int16		db_id;
+	bool		login_is_db_owner;
 
 	i = strlen(lowercase_db_name);
 	while (i > 0 && isspace((unsigned char) lowercase_db_name[i - 1]))
@@ -2632,6 +2634,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(lowercase_db_name, login);
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(lowercase_db_name), NAMEDATALEN);
 
 	/*
 	 * Special cases: Database Owner should always have access If this DB has
@@ -2642,7 +2645,11 @@ has_dbaccess(PG_FUNCTION_ARGS)
 		Oid			datdba;
 
 		datdba = get_role_oid("sysadmin", false);
-		if (is_member_of_role(GetSessionUserId(), datdba))
+		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
+			/* 
+			 * The login will have access to the database if it is a member
+			 * of sysadmin or it is the owner of the database.
+			 */
 			user = get_dbo_role_name(lowercase_db_name);
 		else
 		{

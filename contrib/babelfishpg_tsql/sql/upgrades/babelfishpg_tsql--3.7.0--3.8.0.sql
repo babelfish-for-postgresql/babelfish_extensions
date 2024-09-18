@@ -11,6 +11,36 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
+-- Assigning dbo role to the db_owner login
+DO $$
+DECLARE
+    owner_name NAME;
+    db_name TEXT;
+    role_name NAME;
+    owner_cursor CURSOR FOR SELECT DISTINCT owner, name FROM sys.babelfish_sysdatabases;
+BEGIN
+    OPEN owner_cursor;
+    FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
+
+    WHILE FOUND
+    LOOP
+        SELECT rolname FROM sys.babelfish_authid_user_ext WHERE database_name = db_name INTO role_name;
+
+        IF db_name = 'master' OR db_name = 'tempdb' OR db_name = 'msdb'
+        THEN
+            FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
+            CONTINUE;
+        END IF;
+
+        EXECUTE FORMAT('GRANT %I TO %I', role_name, owner_name);
+
+        FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
+    END LOOP;
+
+    CLOSE owner_cursor;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION bbf_string_agg_finalfn_varchar(INTERNAL)
 RETURNS sys.VARCHAR
 AS 'string_agg_finalfn' LANGUAGE INTERNAL;
