@@ -866,6 +866,17 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			queryDesc->instrument_options |= INSTRUMENT_WAL;
 	}
 
+	/* In TSQL dialect the RTE permissions might need to be checked against session user. */
+	if (sql_dialect == SQL_DIALECT_TSQL && queryDesc->plannedstmt != NULL)
+	{
+		if (GetUserId() == get_bbf_role_admin_oid())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("Encountered bbf_role_admin.")));
+		}
+	}
+
 	if (prev_ExecutorStart)
 		prev_ExecutorStart(queryDesc, ef);
 	else
@@ -2868,6 +2879,16 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 
 	if (access == OAT_POST_CREATE && classId == ProcedureRelationId)
 		revoke_func_permission_from_public(objectId);
+
+	if (access == OAT_FUNCTION_EXECUTE && classId == ProcedureRelationId)
+	{
+		if (GetUserId() == get_bbf_role_admin_oid())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("Encountered bbf_role_admin.")));
+		}
+	}
 }
 
 static void
