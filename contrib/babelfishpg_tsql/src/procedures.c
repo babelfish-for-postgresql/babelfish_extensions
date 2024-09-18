@@ -1704,12 +1704,14 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	char	   *tempq = "CREATE OR REPLACE PROCEDURE %s.xp_qv(IN SYS.NVARCHAR(256), IN SYS.NVARCHAR(256))"
 	"AS \'babelfishpg_tsql\', \'xp_qv_internal\' LANGUAGE C";
 
-	const char *dbo_scm = get_dbo_schema_name("master");
+	char	   *dbo_scm = get_dbo_schema_name("master");
 
 	if (dbo_scm == NULL)
 		elog(ERROR, "Failed to retrieve dbo schema name");
 
 	query = psprintf(tempq, dbo_scm);
+
+	pfree(dbo_scm);
 
 	PG_TRY();
 	{
@@ -1794,13 +1796,15 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	char	   *tempq2 = "CREATE OR REPLACE PROCEDURE %s.xp_instance_regread(IN p1 sys.nvarchar(512), IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param sys.nvarchar(512))"
 	"AS \'babelfishpg_tsql\', \'xp_instance_regread_internal\' LANGUAGE C";
 
-	const char *dbo_scm = get_dbo_schema_name("master");
+	char	   *dbo_scm = get_dbo_schema_name("master");
 
 	if (dbo_scm == NULL)
 		elog(ERROR, "Failed to retrieve dbo schema name");
 
 	query = psprintf(tempq, dbo_scm);
 	query2 = psprintf(tempq2, dbo_scm);
+
+	pfree(dbo_scm);
 
 	PG_TRY();
 	{
@@ -3357,7 +3361,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		if (!strcmp(logical_schema_name, ""))
 		{
 			const char *user = get_user_for_database(db_name);
-			const char *guest_role_name = get_guest_role_name(db_name);
+			char	   *guest_role_name = get_guest_role_name(db_name);
 
 			if (!user)
 				ereport(ERROR,
@@ -3375,6 +3379,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 				physical_schema_name = get_physical_schema_name(db_name, logical_schema_name);
 				pfree(logical_schema_name);
 			}
+			pfree(guest_role_name);
 		}
 		else
 		{

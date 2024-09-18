@@ -519,7 +519,7 @@ grant_guests_to_login(const char *login)
 												 &is_null);
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
-		const char *guest_name = NULL;
+		char	   *guest_name = NULL;
 		AccessPriv *tmp = makeNode(AccessPriv);
 
 		if (guest_role_exists_for_db(db_name))
@@ -533,6 +533,7 @@ grant_guests_to_login(const char *login)
 		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
+		pfree(guest_name);
 	}
 	table_endscan(scan);
 	table_close(db_rel, AccessShareLock);
@@ -1255,11 +1256,11 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 	while (HeapTupleIsValid(tuple))
 	{
 		Datum		db_name_datum;
-		const char *db_name;
-		const char *dbo_role;
-		const char *db_owner_role;
-		const char *guest;
-		RoleSpec   *rolspec;
+		const char	*db_name;
+		char 		*dbo_role;
+		char 		*db_owner_role;
+		char 		*guest;
+		RoleSpec	*rolspec;
 
 		db_name_datum = heap_getattr(tuple,
 									 Anum_sysdatabases_name,
@@ -1296,6 +1297,9 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
+		pfree(dbo_role);
+		pfree(db_owner_role);
+		pfree(guest);
 	}
 	table_endscan(scan);
 	table_close(db_rel, AccessShareLock);
@@ -1832,14 +1836,14 @@ is_rolemember(PG_FUNCTION_ARGS)
 	Oid			cur_user_oid = GetUserId();
 	Oid			db_owner_oid;
 	Oid			dbo_role_oid;
-	char	   *role;
-	char	   *dc_role;
-	char	   *dc_principal = NULL;
-	char	   *physical_role_name;
-	char	   *physical_principal_name;
-	char	   *cur_db_name;
-	const char *db_owner_name;
-	const char *dbo_role_name;
+	char		*role;
+	char		*dc_role;
+	char		*dc_principal = NULL;
+	char		*physical_role_name;
+	char		*physical_principal_name;
+	char		*cur_db_name;
+	char		*db_owner_name;
+	char		*dbo_role_name;
 	int			idx;
 
 	if (PG_ARGISNULL(0))
@@ -1905,11 +1909,23 @@ is_rolemember(PG_FUNCTION_ARGS)
 	db_owner_oid = get_role_oid(db_owner_name, false);
 	dbo_role_oid = get_role_oid(dbo_role_name, false);
 	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid))
+	{
+		pfree(db_owner_name);
+		pfree(dbo_role_name);
 		PG_RETURN_INT32(0);
+	}
 	else if (is_member_of_role_nosuper(principal_oid, role_oid))
+	{
+		pfree(db_owner_name);
+		pfree(dbo_role_name);
 		PG_RETURN_INT32(1);
+	}
 	else
+	{
+		pfree(db_owner_name);
+		pfree(dbo_role_name);
 		PG_RETURN_INT32(0);
+	}
 }
 
 /*

@@ -3233,10 +3233,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	char	*attname;
 	char	*token;
 	const char	*schema_name;
-	const char	*nsp_name;
+	char		*nsp_name;
 	const char	*user;
-	const char	*guest_role_name;
-	const char	*dbo_role_name;
+	char		*guest_role_name;
+	char		*dbo_role_name;
 	const char	*login;
 	int64	max_identity_value = 0;
 	int64	cur_identity_value = 0;
@@ -3346,6 +3346,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		}
 	}
 	pfree(db_name);
+	pfree(guest_role_name);
+	pfree(dbo_role_name);
 
 	/*
 	 * get schema oid from physical schema name, it will return InvalidOid if
@@ -3399,6 +3401,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			errmsg("'%s.%s' does not contain an identity column.",
 				nsp_name, dbcc_stmt.table_name)));
 	}
+
+	pfree(nsp_name);
 
 	PG_TRY();
 	{

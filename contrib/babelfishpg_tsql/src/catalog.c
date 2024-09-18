@@ -3093,7 +3093,7 @@ update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 bool
 guest_role_exists_for_db(const char *dbname)
 {
-	const char *guest_role = get_guest_role_name(dbname);
+	char		*guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
@@ -3121,6 +3121,7 @@ guest_role_exists_for_db(const char *dbname)
 
 	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	pfree(guest_role);
 
 	return role_exists;
 }
@@ -3128,7 +3129,7 @@ guest_role_exists_for_db(const char *dbname)
 static void
 create_guest_role_for_db(const char *dbname)
 {
-	const char *guest = get_guest_role_name(dbname);
+	char	   *guest = get_guest_role_name(dbname);
 	const char *db_owner_role = get_db_owner_role_name(dbname);
 	List	   *logins = NIL;
 	List	   *res;
@@ -3217,6 +3218,7 @@ create_guest_role_for_db(const char *dbname)
 		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
+		pfree(guest);
 	}
 	PG_END_TRY();
 }
@@ -5001,15 +5003,20 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		CommitTransactionCommand();
 }
 
+/* 
+ * user_exists_for_db
+ *		returns true if the user/role exists in the sys.babelfish_authid_user_ext catalog,
+ *		false otherwise.
+ */
 bool
 user_exists_for_db(const char *db_name, const char *user_name)
 {
-	Relation	  bbf_authid_user_ext_rel;
-	HeapTuple	  tuple_user_ext;
-	ScanKeyData   key[2];
-	TableScanDesc scan;
-	NameData      *rolname;
-	bool          user_exists = false;
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData		key[2];
+	TableScanDesc	scan;
+	NameData		*rolname;
+	bool			user_exists = false;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);

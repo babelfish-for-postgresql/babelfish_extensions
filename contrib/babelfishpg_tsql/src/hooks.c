@@ -4932,8 +4932,8 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 	HeapTuple 	 	tuple;
 	char 			*func_schema_name = NULL,
 					*new_search_path = NULL;
-	const char  	*func_dbo_schema,
-					*cur_dbname = get_cur_db_name();
+	char  			*func_dbo_schema;
+	const char		*cur_dbname = get_cur_db_name();
 	
 	tuple = SearchSysCache1(NAMESPACEOID,
 						ObjectIdGetDatum(proc_nsp_oid));
@@ -4950,6 +4950,9 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 		
 		ReleaseSysCache(tuple);
 	}
+	
+	pfree(func_dbo_schema);
+
 	return new_search_path;
 }
 

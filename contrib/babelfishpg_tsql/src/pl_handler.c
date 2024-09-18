@@ -2937,7 +2937,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *db_owner_name;
+						char *db_owner_name;
 
 						db_owner_name = get_db_owner_name(get_cur_db_name());
 						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
@@ -3215,7 +3215,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *dbo_name;
+						char	   *dbo_name;
 						char	   *db_name;
 						char	   *user_name;
 						char	   *cur_user;
@@ -3296,6 +3296,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						set_session_properties(db_name);
 						pfree(cur_user);
 						pfree(db_name);
+						pfree(dbo_name);
 
 						return;
 					}
@@ -3344,10 +3345,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								foreach(item, stmt->roles)
 								{
-									RoleSpec   *rolspec = lfirst(item);
-									char	   *user_name;
-									const char *db_principal_type = drop_user ? "user" : "role";
-									const char *db_owner_name;
+									RoleSpec	*rolspec = lfirst(item);
+									char		*user_name;
+									const char	*db_principal_type = drop_user ? "user" : "role";
+									char		*db_owner_name;
 									int			role_oid;
 									int			rolename_len;
 									bool		is_tsql_db_principal = false;
@@ -3420,6 +3421,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 
 									pfree(rolspec->rolename);
+									pfree(db_owner_name);
 									rolspec->rolename = user_name;
 								}
 							}

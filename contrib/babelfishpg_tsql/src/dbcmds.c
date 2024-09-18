@@ -403,13 +403,13 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	HeapTuple	tuple;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
-	const char *dbo_scm;
-	const char *dbo_role;
-	const char *db_owner_role;
-	const char *guest_scm;
+	char		*dbo_scm;
+	char		*dbo_role;
+	char		*db_owner_role;
+	char		*guest_scm;
 	NameData	default_collation;
 	NameData	owner_namedata;
-	const char *guest;
+	char		*guest;
 	int			stmt_number = 0;
 	int 			save_sec_context;
 	bool 			is_set_userid = false;
@@ -622,6 +622,11 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
+		pfree(dbo_scm);
+		pfree(dbo_role);
+		pfree(db_owner_role);
+		pfree(guest);
+		pfree(guest_scm);
 	}
 	PG_END_TRY();
 }
@@ -633,10 +638,10 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	HeapTuple	tuple;
 	Form_sysdatabases bbf_db;
 	int16		dbid;
-	const char *schema_name;
-	const char *db_owner_role;
-	const char *dbo_role;
-	const char *guest_schema_name;
+	char		*schema_name;
+	char		*db_owner_role;
+	char		*dbo_role;
+	char		*guest_schema_name;
 	List	   *db_users_list;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
@@ -805,6 +810,11 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	pfree(schema_name);
+	pfree(db_owner_role);
+	pfree(dbo_role);
+	pfree(guest_schema_name);
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);
