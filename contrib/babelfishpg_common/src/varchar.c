@@ -922,7 +922,11 @@ varchar2numeric(PG_FUNCTION_ARGS)
 	char	   *str;
 
 	str = varchar2cstring(source);
-	result = DatumGetNumeric(DirectFunctionCall1(numeric_in, CStringGetDatum(str)));
+	/* Updating numeric_in call with additional expected arguments `Elem type Oid` and `typmod` - BABEL-5129 */
+	result = DatumGetNumeric(DirectFunctionCall3(numeric_in, 
+        CStringGetDatum(str), 
+        ObjectIdGetDatum(InvalidOid),
+        Int32GetDatum(-1)));
 	pfree(str);
 	PG_RETURN_NUMERIC(result);
 }
