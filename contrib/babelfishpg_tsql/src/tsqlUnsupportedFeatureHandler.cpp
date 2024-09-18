@@ -8,8 +8,8 @@
 #include "tree/ParseTreeWalker.h" // antlr4-cpp-runtime
 #include "tree/ParseTreeProperty.h" // antlr4-cpp-runtime
 
-#include "antlr/antlr4cpp_generated_src/TSqlLexer/TSqlLexer.h"
-#include "antlr/antlr4cpp_generated_src/TSqlParser/TSqlParser.h"
+#include "../antlr/antlr4cpp_generated_src/TSqlLexer/TSqlLexer.h"
+#include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParser.h"
 #include "tsqlIface.hpp"
 
 #pragma GCC diagnostic push

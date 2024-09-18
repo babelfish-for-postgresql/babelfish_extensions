@@ -11,9 +11,9 @@
 #include "tree/ParseTreeWalker.h" // antlr4-cpp-runtime
 #include "tree/ParseTreeProperty.h" // antlr4-cpp-runtime
 
-#include "antlr/antlr4cpp_generated_src/TSqlLexer/TSqlLexer.h"
-#include "antlr/antlr4cpp_generated_src/TSqlParser/TSqlParser.h"
-#include "antlr/antlr4cpp_generated_src/TSqlParser/TSqlParserBaseListener.h"
+#include "../antlr/antlr4cpp_generated_src/TSqlLexer/TSqlLexer.h"
+#include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParser.h"
+#include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParserBaseListener.h"
 #include "tsqlIface.hpp"
 
 #define LOOP_JOIN_HINT 0
