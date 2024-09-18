@@ -2419,17 +2419,22 @@ exec_database_roles_subcmds(const char *schema)
 	const char	*db_datareader;
 	const char	*db_datawriter;
 	const char	*dbname = get_cur_db_name();
-	//Oid			current_user_id = GetUserId();
+	//Oid		current_user_id = GetUserId();
 	List		*stmt_list;
-	int			expected_stmts = 2;
-	ListCell   *parsetree_item;
+	int			expected_stmts = 4;
+	ListCell	*parsetree_item;
+	Node		*stmts;
+	int			i=0;
+
 
 	db_datareader = get_db_datareader_name(dbname);
 	db_datawriter = get_db_datawriter_name(dbname);
 
 	initStringInfo(&query);
-	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA %s GRANT SELECT ON TABLES TO %s; ", schema, db_datareader);
-	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA %s GRANT INSERT, UPDATE, DELETE ON TABLES TO %s; ", schema, db_datawriter);
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
 
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 	if (list_length(stmt_list) != expected_stmts)
@@ -2437,6 +2442,18 @@ exec_database_roles_subcmds(const char *schema)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Expected %d statements, but got %d statements after parsing",
 						expected_stmts, list_length(stmt_list))));
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, db_datareader, privilege_to_string(ACL_SELECT));
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, db_datawriter, privilege_to_string(ACL_INSERT));
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, db_datawriter, privilege_to_string(ACL_UPDATE));
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, db_datawriter, privilege_to_string(ACL_DELETE));
 
 	/* Run all subcommands */
 	foreach(parsetree_item, stmt_list)
