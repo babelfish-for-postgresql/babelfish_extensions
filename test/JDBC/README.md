@@ -20,6 +20,7 @@ The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for da
 - [Adding the test cases](#adding-the-test-cases)
 - [Reading the console output and diff](#reading-the-console-output-and-diff)
 - [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled)
+- [Running Tests with Single-DB Migration Mode](#running-tests-with-single-db-migration-mode)
 - [Running Tests with Non Default Server Collation](#running-tests-with-non-default-server-collation)
 - [Running Tests with Non Default Database Collation](#running-tests-with-non-default-database-collation)
 
@@ -485,6 +486,7 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
 4. How to add expected output for some test
     1. By default expected output of a test should be added into `expected` folder.
     2. If the expected output is different for single-db migration mode compared to multi-db migration mode, one can add a different expected output specially for single-db migration mode in `expected/single_db/` folder. Additionally, one needs to add `-- single_db_mode_expected` flag in the corresponding input file.
+    
 5. To exclude some tests from running via the JDBC in single-db migration mode, you can add test-case name with prefix `ignore#!#` in `singledb_jdbc_schedule` file.
 
 6. Cleanup all the objects, users, roles and databases created while running the tests:
