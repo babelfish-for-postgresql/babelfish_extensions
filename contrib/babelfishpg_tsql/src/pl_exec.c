@@ -4648,7 +4648,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * schemas, Change the session property.
 		 */
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+		{
 			set_session_properties(stmt->db_name);
+			SetCurrentRoleId(GetSessionUserId(), false);
+		}
 	}
 	if (stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
