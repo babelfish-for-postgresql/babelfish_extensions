@@ -1711,7 +1711,8 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 
 	query = psprintf(tempq, dbo_scm);
 
-	pfree(dbo_scm);
+	if(dbo_scm)
+		pfree(dbo_scm);
 
 	PG_TRY();
 	{
@@ -1804,7 +1805,8 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	query = psprintf(tempq, dbo_scm);
 	query2 = psprintf(tempq2, dbo_scm);
 
-	pfree(dbo_scm);
+	if(dbo_scm)
+		pfree(dbo_scm);
 
 	PG_TRY();
 	{
