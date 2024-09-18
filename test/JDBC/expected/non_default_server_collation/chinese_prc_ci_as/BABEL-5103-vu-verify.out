@@ -348,6 +348,38 @@ Registration Card - Standard
 ~~END~~
 
 
+SELECT BABEL_5103_F1('REGULAR');
+GO
+~~START~~
+nvarchar
+REGULAR
+~~END~~
+
+
+SELECT BABEL_5103_F1(N'登録カード–標準');
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT BABEL_5103_F1(N'بطاقة التسجيل - قياسية');
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT * FROM BABEL_5103_V2
+GO
+~~START~~
+nvarchar
+登録カード
+~~END~~
+
+
 SELECT CASE 1
    WHEN 1 THEN CAST('char' AS CHAR(100))
 END AS RESULT
