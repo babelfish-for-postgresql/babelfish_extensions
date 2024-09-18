@@ -541,4 +541,5 @@ replace
 alter-procedure-15_8-or-16_4
 binary-datatype-operators
 cast-varchar-to-time
+BABEL-5103-before-16_5-or-15_9
 

@@ -430,4 +430,5 @@ string_agg-before-15_9-or-16_5
 space
 binary-datatype-operators
 cast-varchar-to-time
+BABEL-5103-before-16_5-or-15_9
 
