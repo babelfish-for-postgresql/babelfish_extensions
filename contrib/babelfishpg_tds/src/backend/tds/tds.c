@@ -311,9 +311,6 @@ tds_shmem_request()
 	if (prev_shmem_request_hook)
 		prev_shmem_request_hook();
 
-	// extern ANTLR_result antlr_parser_cpp(const char *sourceText);
-	// ANTLR_result result = antlr_parser_cpp("SELECT tc.trc_revenuetype ,sum(fctx.foc_amount)  FROM p5foliocharge fctx JOIN p5foliocharge fc  ON fc.foc_refnum = fctx.foc_originatingref AND fc.foc_property = fctx.foc_property AND fc.foc_date = fctx.foc_date AND fc.foc_transactioncode = 'ADVDEP' JOIN p5transactioncode tc ON tc.trc_code = fc.foc_transactioncode AND tc.trc_property = fc.foc_property JOIN testview tg ON tg.tgt_taxgroup = fctx.foc_taxgroup  AND fctx.foc_transactioncode = tg.tgt_transactioncode JOIN p5transcodetaxstatus ts ON ts.tts_property = fc.foc_property AND ts.tts_trccode = fc.foc_transactioncode AND ts.tts_taxgroup = tg.tgt_taxgroup WHERE fctx.foc_property = 'MCRATL' AND fctx.foc_date = '2023-07-26' AND fctx.foc_isinclusivetax = '+' AND fctx.foc_isoffset = '-' GROUP BY tc.trc_revenuetype ;");
-
 	/*
 	 * Request additional shared resources.  (These are no-ops if we're not in
 	 * the postmaster process.)  We'll allocate or attach to the shared

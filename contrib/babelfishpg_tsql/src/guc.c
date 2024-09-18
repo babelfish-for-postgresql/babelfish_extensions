@@ -579,8 +579,6 @@ assign_language(const char *newval, void *extra)
 	}
 }
 
-
-
 static void
 assign_lock_timeout(int newval, void *extra)
 {

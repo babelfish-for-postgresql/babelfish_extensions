@@ -374,7 +374,6 @@ pe_authenticate(Port *port, const char **username)
 
 	*username = port->user_name;
 	port->is_tds_conn = true;
-
 }
 
 static void
