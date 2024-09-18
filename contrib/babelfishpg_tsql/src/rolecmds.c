@@ -661,7 +661,8 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	CommandCounterIncrement();
 
 	pfree(query.data);
-	pfree(dbo_role_name);
+	if(dbo_role_name)
+		pfree(dbo_role_name);
 }
 
 static List *
@@ -1990,20 +1991,26 @@ is_rolemember(PG_FUNCTION_ARGS)
 	dbo_role_oid = get_role_oid(dbo_role_name, false);
 	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid))
 	{
-		pfree(db_owner_name);
-		pfree(dbo_role_name);
+		if(db_owner_name)
+			pfree(db_owner_name);
+		if(dbo_role_name)
+			pfree(dbo_role_name);
 		PG_RETURN_INT32(0);
 	}
 	else if (is_member_of_role_nosuper(principal_oid, role_oid))
 	{
-		pfree(db_owner_name);
-		pfree(dbo_role_name);
+		if(db_owner_name)
+			pfree(db_owner_name);
+		if(dbo_role_name)
+			pfree(dbo_role_name);
 		PG_RETURN_INT32(1);
 	}
 	else
 	{
-		pfree(db_owner_name);
-		pfree(dbo_role_name);
+		if(db_owner_name)
+			pfree(db_owner_name);
+		if(dbo_role_name)
+			pfree(dbo_role_name);
 		PG_RETURN_INT32(0);
 	}
 }

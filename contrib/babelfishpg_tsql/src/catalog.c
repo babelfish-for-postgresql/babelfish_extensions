@@ -3121,7 +3121,9 @@ guest_role_exists_for_db(const char *dbname)
 
 	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
-	pfree(guest_role);
+
+	if(guest_role)
+		pfree(guest_role);
 
 	return role_exists;
 }
@@ -3218,7 +3220,8 @@ create_guest_role_for_db(const char *dbname)
 		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
-		pfree(guest);
+		if(guest)
+			pfree(guest);
 	}
 	PG_END_TRY();
 }
