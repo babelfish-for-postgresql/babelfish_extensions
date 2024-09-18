@@ -121,6 +121,16 @@ GO
 exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_test_escape_chars_sp_tables', @table_type = "'TABLE'"
 GO
 
+-- table type with mixed case
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'Table'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'tAbLe'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'table'"
+go
+
 -- unnamed invocation
 exec sp_tables 'babel_sp_tables_vu_prepare_t_sptables', 'dbo', 'babel_sp_tables_vu_prepare_db1'
 go

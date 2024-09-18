@@ -952,8 +952,8 @@ BEGIN
 		AND (@table_qualifier IS NULL OR table_qualifier LIKE @table_qualifier collate database_default)
 		AND (
 			@table_type IS NULL OR 
-			(upper(CAST(@table_type AS varchar(100))) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
-			(upper(CAST(@table_type AS varchar(100))) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
+			(CAST(@table_type AS varchar(100)) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
 		)
 		ORDER BY TABLE_QUALIFIER, TABLE_OWNER, TABLE_NAME;
 	ELSE
@@ -969,8 +969,8 @@ BEGIN
 		AND (@table_qualifier IS NULL OR table_qualifier = @table_qualifier collate database_default)
 		AND (
 			@table_type IS NULL OR 
-			(upper(CAST(@table_type AS varchar(100))) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
-			(upper(CAST(@table_type AS varchar(100))) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
+			(CAST(@table_type AS varchar(100)) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
 		)
 		ORDER BY TABLE_QUALIFIER, TABLE_OWNER, TABLE_NAME;
 END;

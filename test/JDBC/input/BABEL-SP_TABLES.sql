@@ -145,6 +145,16 @@ GO
 exec sp_tables @table_name = 'test_escape_chars_sp_tables', @table_type = "'TABLE'"
 GO
 
+-- table type with mixed case
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'Table'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'tAbLe'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'table'"
+go
+
 -- unnamed invocation
 exec sp_tables 't_sptables', 'dbo', 'db1'
 go
@@ -368,6 +378,16 @@ GO
 
 exec sp_tables @table_name = 'test_escape_chars_sp_tables', @table_type = "'TABLE'"
 GO
+
+-- table type with mixed case
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'Table'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'tAbLe'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'table'"
+go
 
 -- unnamed invocation
 exec sp_tables 't_sptables', 'dbo', 'db1'

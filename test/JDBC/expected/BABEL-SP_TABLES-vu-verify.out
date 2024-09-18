@@ -311,6 +311,31 @@ babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_test_escape_ch
 ~~END~~
 
 
+-- table type with mixed case
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'Table'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_s_tables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'tAbLe'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_s_tables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'table'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_t_s_tables2#!#TABLE#!#<NULL>
+~~END~~
+
+
 -- unnamed invocation
 exec sp_tables 'babel_sp_tables_vu_prepare_t_sptables', 'dbo', 'babel_sp_tables_vu_prepare_db1'
 go
