@@ -16,6 +16,7 @@
 #include "multidb.h"
 #include "session.h"
 #include "pltsql.h"
+#include "pl_explain.h"
 #include "guc.h"
 #include "storage/shm_toc.h"
 #include "collation.h"
@@ -206,7 +207,8 @@ void
 reset_session_properties(void)
 {
 	reset_cached_batch();
-	set_session_properties(get_cur_db_name());
+	pltsql_explain_only = false;
+	pltsql_explain_analyze = false;
 }
 
 void

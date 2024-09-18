@@ -2106,24 +2106,31 @@ TdsSetDbContext()
 	 * Check if user has privileges to access current database
 	 */
 	StartTransactionCommand();
+	PG_TRY();
+	{
 	user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(dbname);
 	if (!user)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 					errmsg("Cannot open database \"%s\" requested by the login. The login failed", dbname)));
-	CommitTransactionCommand();
-	if (dbname)
-		pfree(dbname);
 
 	/*
 	 * loginInfo has a database name provided, so we execute a "USE
 	 * [<db_name>]" through pgtsql inline handler
 	 */
-	StartTransactionCommand();
 	ExecuteSQLBatch(useDbCommand);
 	CommitTransactionCommand();
+	}
+	PG_CATCH();
+	{
+		CommitTransactionCommand();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 	if (useDbCommand)
 		pfree(useDbCommand);
+	if (dbname)
+		pfree(dbname);
 }
 
 /*
