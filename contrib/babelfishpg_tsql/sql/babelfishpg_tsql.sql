@@ -945,7 +945,7 @@ BEGIN
 			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
 			CAST(table_name AS sys.sysname) AS TABLE_NAME,
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
-			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			remarks AS REMARKS
 		FROM sys.sp_tables_view 
 		WHERE (@table_name IS NULL OR table_name LIKE @table_name collate database_default)
 		AND (@table_owner IS NULL OR table_owner LIKE @table_owner collate database_default)
@@ -962,7 +962,7 @@ BEGIN
 			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
 			CAST(table_name AS sys.sysname) AS TABLE_NAME,
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
-			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			remarks AS REMARKS
 		FROM sys.sp_tables_view
 		WHERE (@table_name IS NULL OR table_name = @table_name collate database_default)
 		AND (@table_owner IS NULL OR table_owner = @table_owner collate database_default)

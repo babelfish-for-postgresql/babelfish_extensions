@@ -10,6 +10,12 @@ create table t_sptables2(b int)
 go
 create table t_sotables2(c int)
 go
+create table t_s_tables2(c int)
+go
+create table t__tables2(c int)
+go
+create table test_escape_chars_sp_tables(c int)
+go
 create table MyTable1 (a int, b int, c int)
 go
 create table [MyTable2] ([a] int, [b] int, [c] int)
@@ -203,6 +209,7 @@ exec sp_tables @table_name = 't_s_tables2'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_s_tables2#!#TABLE#!#<NULL>
 db1#!#dbo#!#t_sotables2#!#TABLE#!#<NULL>
 db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
 ~~END~~
@@ -222,6 +229,7 @@ exec sp_tables @table_name = 't_s[^o]tables2'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_s_tables2#!#TABLE#!#<NULL>
 db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
 ~~END~~
 
@@ -264,6 +272,66 @@ go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 db1#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_s_tables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't[_]s[_]tables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_s_tables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't[_][_]tables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t__tables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't[__]tables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+exec sp_tables @table_name = 't[[_]]sptables', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+exec sp_tables @table_name = 'test\_escape_chars\_sp_tables', @table_type = "'TABLE'"
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+exec sp_tables @table_name = 'test\_escape\_chars\_sp\_tables', @table_type = "'TABLE'"
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+exec sp_tables @table_name = 'test_escape_chars_sp_tables', @table_type = "'TABLE'"
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#test_escape_chars_sp_tables#!#TABLE#!#<NULL>
 ~~END~~
 
 
@@ -414,6 +482,12 @@ go
 drop table t_sptables2
 go
 drop table t_sotables2
+go
+drop table t_s_tables2
+go
+drop table t__tables2
+go
+drop table test_escape_chars_sp_tables
 go
 use master
 go
@@ -435,6 +509,12 @@ create table t_sptables2(b int)
 go
 create table t_sotables2(c int)
 go
+create table t_s_tables2(c int)
+go
+create table t__tables2(c int)
+go
+create table test_escape_chars_sp_tables(c int)
+go
 create table MyTable1 (a int, b int, c int)
 go
 create table [MyTable2] ([a] int, [b] int, [c] int)
@@ -628,6 +708,7 @@ exec sp_tables @table_name = 't_s_tables2'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_s_tables2#!#TABLE#!#<NULL>
 db1#!#dbo#!#t_sotables2#!#TABLE#!#<NULL>
 db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
 ~~END~~
@@ -647,6 +728,7 @@ exec sp_tables @table_name = 't_s[^o]tables2'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_s_tables2#!#TABLE#!#<NULL>
 db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
 ~~END~~
 
@@ -689,6 +771,66 @@ go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 db1#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_s_tables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't[_]s[_]tables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_s_tables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't[_][_]tables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t__tables2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't[__]tables2', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+exec sp_tables @table_name = 't[[_]]sptables', @table_type = "'TABLE'"
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+exec sp_tables @table_name = 'test\_escape_chars\_sp_tables', @table_type = "'TABLE'"
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+exec sp_tables @table_name = 'test\_escape\_chars\_sp\_tables', @table_type = "'TABLE'"
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+exec sp_tables @table_name = 'test_escape_chars_sp_tables', @table_type = "'TABLE'"
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#test_escape_chars_sp_tables#!#TABLE#!#<NULL>
 ~~END~~
 
 
@@ -839,6 +981,12 @@ go
 drop table t_sptables2
 go
 drop table t_sotables2
+go
+drop table t_s_tables2
+go
+drop table t__tables2
+go
+drop table test_escape_chars_sp_tables
 go
 use master
 go

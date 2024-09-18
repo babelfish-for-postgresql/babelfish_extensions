@@ -97,6 +97,30 @@ go
 exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables5', @table_type = "'VIEW'"
 go
 
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]s[_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_][_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[__]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[[_]]sptables', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_test\_escape_chars\_sp_tables', @table_type = "'TABLE'"
+GO
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_test\_escape\_chars\_sp\_tables', @table_type = "'TABLE'"
+GO
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_test_escape_chars_sp_tables', @table_type = "'TABLE'"
+GO
+
 -- unnamed invocation
 exec sp_tables 'babel_sp_tables_vu_prepare_t_sptables', 'dbo', 'babel_sp_tables_vu_prepare_db1'
 go
