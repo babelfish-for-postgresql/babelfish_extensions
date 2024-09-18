@@ -3234,10 +3234,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	char	*attname;
 	char	*token;
 	const char	*schema_name;
-	char		*nsp_name;
+	char		*nsp_name = NULL;
 	const char	*user;
-	char		*guest_role_name;
-	char		*dbo_role_name;
+	char		*guest_role_name = NULL;
+	char		*dbo_role_name = NULL;
 	const char	*login;
 	int64	max_identity_value = 0;
 	int64	cur_identity_value = 0;
