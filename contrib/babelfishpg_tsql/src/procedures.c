@@ -2118,7 +2118,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 
 		/* check if role name is empty after removing trailing spaces */
@@ -2151,7 +2151,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(rolname);
-		while (isspace(rolname[len - 1]))
+		while (len > 0 && isspace(rolname[len - 1]))
 			rolname[--len] = 0;
 
 		/* Advance cmd counter to make the delete visible */
@@ -2274,7 +2274,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 
 		/* check if role name is empty after removing trailing spaces */
