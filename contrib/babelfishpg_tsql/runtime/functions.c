@@ -937,7 +937,7 @@ Datum getutcdate(PG_FUNCTION_ARGS)
 Datum getdate_internal(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime, 
-						DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
+						DirectFunctionCall2(timestamptz_trunc, CStringGetTextDatum("millisecond"),
 											TimestampTzGetDatum(GetCurrentStatementStartTimestamp()))));
 	
 }
