@@ -541,5 +541,6 @@ replace
 binary-datatype-operators
 SELECT_INTO_TEST
 cast-varchar-to-time
+BABEL-5119
 BABEL-5103-before-16_5-or-15_9
 
