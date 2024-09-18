@@ -32,7 +32,6 @@ tds_temp_srcs = $(shell find $(tds_top_dir) -name "*.c")
 tds_srcs = $(filter-out $(tds_exclude_files), $(tds_temp_srcs))
 
 OBJS = $(patsubst %.c, %.o, $(tds_srcs))
-OBJS += src/backend/tds/tdsIface.o
 OBJS +=$(TSQL_SRC)/src/tsqlwarmup.o
 OBJS += $(TSQL_SRC)/antlr/libantlr_tsql.a
 
@@ -43,7 +42,6 @@ antlr/Makefile: $(TSQL_SRC)/antlr/CMakeLists.txt $(TSQL_SRC)/antlr/TSqlLexer.g4 
 $(TSQL_SRC)/antlr/libantlr_tsql.a: $(TSQL_SRC)/antlr/Makefile
 	$(MAKE) -C $(@D) all
 
-src/backend/tds/tdsIface.o: src/backend/tds/tdsIface.cpp
 $(TSQL_SRC)/src/tsqlwarmup.o: $(TSQL_SRC)/src/tsqlwarmup.cpp
 
 $(tds_include)/error_mapping.h: error_mapping.txt generate_error_mapping.pl
