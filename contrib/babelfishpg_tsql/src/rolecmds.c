@@ -530,10 +530,10 @@ grant_guests_to_login(const char *login)
 			tmp->priv_name = pstrdup(guest_name);
 			tmp->cols = NIL;
 			guests = lappend(guests, tmp);
+			pfree(guest_name);
 		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
-		pfree(guest_name);
 	}
 	table_endscan(scan);
 	table_close(db_rel, AccessShareLock);
@@ -601,7 +601,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	PlannedStmt *wrapper;
 	AccessPriv *acc;
 
-	const char *dbo_role_name = get_dbo_role_name(db_name);
+	char 	   *dbo_role_name = get_dbo_role_name(db_name);
 	
 	initStringInfo(&query);
 
@@ -661,6 +661,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	CommandCounterIncrement();
 
 	pfree(query.data);
+	pfree(dbo_role_name);
 }
 
 static List *
@@ -1358,9 +1359,13 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			rolspec->rolename = pstrdup(dbo_role);
 			dbo_list = lappend(dbo_list, rolspec);
 			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true, false);
+			pfree(dbo_role);
 		}
 		if (db_owner_role)
+		{
 			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true, false);
+			pfree(db_owner_role);
+		}
 		if (guest)
 		{
 			/*
@@ -1371,12 +1376,10 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true, false);
 			else
 				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false, false);
+			pfree(guest);
 		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
-		pfree(dbo_role);
-		pfree(db_owner_role);
-		pfree(guest);
 	}
 	table_endscan(scan);
 	table_close(db_rel, AccessShareLock);

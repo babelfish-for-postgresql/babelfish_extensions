@@ -619,9 +619,15 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		}
 		set_cur_db(old_dbid, old_dbname);
 		if (dbo_role)
+		{
 			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false, true, false);
+			pfree(dbo_role);
+		}
 		if (db_owner_role)
+		{
 			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, true, true, false);
+			pfree(db_owner_role);
+		}
 		if (guest)
 		{
 			/*
@@ -632,6 +638,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 				add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, true, false);
 			else
 				add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, false, false);
+			pfree(guest);
 		}
 	}
 	PG_FINALLY();
@@ -641,9 +648,6 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
 		pfree(dbo_scm);
-		pfree(dbo_role);
-		pfree(db_owner_role);
-		pfree(guest);
 		pfree(guest_scm);
 	}
 	PG_END_TRY();

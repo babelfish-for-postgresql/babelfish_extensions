@@ -1305,7 +1305,7 @@ schema_id(PG_FUNCTION_ARGS)
 	{
 		char	   *db_name = get_cur_db_name();
 		const char *user = get_user_for_database(db_name);
-		char *guest_role_name = get_guest_role_name(db_name);
+		char 	   *guest_role_name = get_guest_role_name(db_name);
 
 		if (!user)
 		{
@@ -2888,7 +2888,6 @@ has_dbaccess(PG_FUNCTION_ARGS)
 
 	if (!user)
 	{
-		pfree(user);
 		PG_RETURN_INT32(0);
 	}
 	else
