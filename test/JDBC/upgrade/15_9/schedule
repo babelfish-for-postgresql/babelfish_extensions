@@ -222,6 +222,7 @@ forjson-nesting
 format
 format-dep
 forxml
+forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
@@ -541,4 +542,5 @@ binary-datatype-operators
 SELECT_INTO_TEST
 cast-varchar-to-time
 xml_exist-before-16_5
+BABEL-5119
 

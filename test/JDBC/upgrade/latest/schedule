@@ -223,6 +223,7 @@ forjsonauto
 format
 format-dep
 forxml
+forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
@@ -567,4 +568,5 @@ SELECT_INTO_TEST
 binary-datatype-operators
 cast-varchar-to-time
 xml_exist
+BABEL-5119
 

@@ -11,6 +11,36 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
+-- Assigning dbo role to the db_owner login
+DO $$
+DECLARE
+    owner_name NAME;
+    db_name TEXT;
+    role_name NAME;
+    owner_cursor CURSOR FOR SELECT DISTINCT owner, name FROM sys.babelfish_sysdatabases;
+BEGIN
+    OPEN owner_cursor;
+    FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
+
+    WHILE FOUND
+    LOOP
+        SELECT rolname FROM sys.babelfish_authid_user_ext WHERE database_name = db_name INTO role_name;
+
+        IF db_name = 'master' OR db_name = 'tempdb' OR db_name = 'msdb'
+        THEN
+            FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
+            CONTINUE;
+        END IF;
+
+        EXECUTE FORMAT('GRANT %I TO %I', role_name, owner_name);
+
+        FETCH NEXT FROM owner_cursor INTO owner_name, db_name;
+    END LOOP;
+
+    CLOSE owner_cursor;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
                                                                  IN p_style NUMERIC DEFAULT 0)
@@ -1205,7 +1235,8 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-		where pg_catalog.lower(table_name) like pg_catalog.lower(sys.babelfish_truncate_identifier(@table_name)) COLLATE database_default
+        -- TODO: Temporary fix to use '\' as escape character for now, need to remove ESCAPE clause from LIKE once we have fixed the dependencies on this procedure
+		where pg_catalog.lower(table_name) like pg_catalog.lower(sys.babelfish_truncate_identifier(@table_name)) COLLATE database_default ESCAPE '\'
 			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_owner),'')) = '' or table_owner like sys.babelfish_truncate_identifier(@table_owner) collate database_default)
 			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_qualifier),'')) = '' or table_qualifier like sys.babelfish_truncate_identifier(@table_qualifier) collate database_default)
 			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@column_name),'')) = '' or column_name like sys.babelfish_truncate_identifier(@column_name) collate database_default)
