@@ -933,8 +933,8 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 					 * We do not blindly want to check the permissions against session user (current login)
 					 * since permissions of RTEs inside a view are checked against that view's owner
 					 * which can very well be a user of some different database. So if we blindly check
-					 * permission against session user instead of view's owner thenit would break view's
-					 * ownership chaining. Instead, we will replace checkAsUser with it's corresponding mapped
+					 * permission against session user instead of view's owner then it would break view's
+					 * ownership behavior. Instead, we will replace checkAsUser with it's corresponding mapped
 					 * login if present and only in cases where checkAsUser is not set, we will replace it
 					 * with session user (login). We are using login to allow cross database queries since login
 					 * can access all its objects across the databases.
