@@ -2356,11 +2356,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool				isSameProc;
 					ObjectAddress 		address;
 					CreateFunctionStmt	*cfs;
-					ListCell 			*option, *location_cell = NULL, *return_cell = NULL;
+					ListCell 			*option;
 					int 				origname_location = -1;
 					ListCell            *parameter;
 
 					cfs = makeNode(CreateFunctionStmt);
+					cfs->returnType = NULL;
+					cfs->is_procedure = true;
 
 					if (!IS_TDS_CLIENT())
 					{
@@ -2394,32 +2396,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								* name from queryString.
 								*/
 								origname_location = intVal((Node *) defel->arg);
-								location_cell = option;
+								stmt->actions = foreach_delete_current(stmt->actions, option);
 								pfree(defel);
 							}
 							else if (strcmp(defel->defname, "return") == 0)
 							{
 								cfs->returnType = (TypeName *) defel->arg;
-								return_cell = option;
+								cfs->is_procedure = false;
+								stmt->actions = foreach_delete_current(stmt->actions, option);
 								pfree(defel);
 								stmt->objtype = OBJECT_FUNCTION;
 							}
-						}
-
-						/* delete location cell if it exists as it is for internal use only */
-						if (location_cell)
-							stmt->actions = list_delete_cell(stmt->actions, location_cell);
-
-						if (return_cell) 
-						{
-							if(location_cell)
-								return_cell -= 1;
-							stmt->actions = list_delete_cell(stmt->actions, return_cell);
-							cfs->is_procedure = false;
-						} else 
-						{
-							cfs->returnType = NULL;
-							cfs->is_procedure = true;
 						}
 
 						/* make a CreateFunctionStmt to pass into CreateFunction() */
@@ -2615,6 +2602,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (from_windows && orig_loginname)
 							{
+								char* domain_name = NULL;
+
 								/*
 								 * The login name must contain '\' if it is
 								 * windows login or else throw error.
@@ -2653,6 +2642,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (windows_login_contains_invalid_chars(orig_loginname))
 									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
+
+								/* 
+								 * Check whether the domain name is supported 
+								 * or not
+								 */
+								domain_name = get_windows_domain_name(orig_loginname);
+								if(windows_domain_is_not_supported(domain_name))
+									ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												errmsg("'%s' domain is not yet supported in Babelfish.", domain_name)));
 
 								/*
 								 * Check whether the domain name contains invalid characters or not.
