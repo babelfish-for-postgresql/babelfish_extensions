@@ -1818,9 +1818,9 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
 
-ALTER FUNCTION sys.sp_tables_internal RENAME TO sp_tables_internal_deprecated_in_4_3_0;
+ALTER FUNCTION sys.sp_tables_internal RENAME TO sp_tables_internal_deprecated_in_4_4_0;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_tables_internal_deprecated_in_4_3_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_tables_internal_deprecated_in_4_4_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
