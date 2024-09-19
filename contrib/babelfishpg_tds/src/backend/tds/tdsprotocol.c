@@ -154,13 +154,20 @@ ResetTDSConnection(void)
 	TdsProtocolInit();
 	TdsResetCache();
 	TdsResponseReset();
-	SetConfigOption("default_transaction_isolation", isolationOld,
-					PGC_BACKEND, PGC_S_CLIENT);
+	/* Retore previous isolation level when not called by sys.sp_reset_connection */
+	if (!resetTdsConnectionFlag)
+	{
+		SetConfigOption("default_transaction_isolation", isolationOld,
+						PGC_BACKEND, PGC_S_CLIENT);
+	}
 
 	tvp_lookup_list = NIL;
 
-	/* send an environement change token */
-	TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+	/* send an environement change token is its not called via sys.sp_reset_connection procedure */
+	if (!resetTdsConnectionFlag)
+	{
+		TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+	}
 }
 
 /*

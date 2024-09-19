@@ -1,0 +1,21 @@
+#Q#CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
+#Q#INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
+#Q#SELECT * from #babel_temp_table
+#D#int#!#int
+1#!#100
+2#!#200
+3#!#300
+#Q#sys.sp_reset_connection
+#Q#SELECT * from #babel_temp_table
+#E#relation "#babel_temp_table" does not exist
+#Q#DROP TABLE IF EXISTS babel_test_sp_reset_table;
+#Q#CREATE TABLE babel_test_sp_reset_table (ID INT identity(1,1), Data INT);
+#Q#INSERT INTO babel_test_sp_reset_table (Data) VALUES (100);
+#Q#INSERT INTO babel_test_sp_reset_table (Data) VALUES (200);
+#Q#sys.sp_reset_connection
+#Q#SELECT * FROM babel_test_sp_reset_table;
+#D#int#!#int
+1#!#100
+#Q#SELECT * FROM babel_test_sp_reset_table;
+#D#int#!#int
+1#!#100
