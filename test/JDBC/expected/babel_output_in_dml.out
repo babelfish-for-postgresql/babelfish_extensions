@@ -1293,7 +1293,7 @@ int#!#varchar
 update t1 set word = 'one unit' output concat(inserted.word, '_old') where num = 1;
 go
 ~~START~~
-text
+varchar
 one unit_old
 ~~END~~
 

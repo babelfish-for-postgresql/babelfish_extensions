@@ -49,6 +49,10 @@ WITH FUNCTION sys.varchar2time(sys.VARCHAR, INT4) AS IMPLICIT;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'varchar2time_deprecated_3_7_0');
 
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg text, rightarg text) RETURNS TEXT
+AS 'babelfishpg_tsql', 'babelfish_concat_wrapper'
+LANGUAGE C STABLE PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

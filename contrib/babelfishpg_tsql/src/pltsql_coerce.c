@@ -323,6 +323,10 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bytea", "pg_catalog", "text", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "datetimeoffset", "pg_catalog", "text", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "time", "pg_catalog", "text", NULL, 'i', 'i'},
+/*  date/time -> string via I/O */
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "time", "sys", "varchar", NULL, 'i', 'i'},
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "date", "sys", "varchar", NULL, 'i', 'i'},
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "datetimeoffset", "sys", "varchar", NULL, 'i', 'i'},
 };
 
 #define TOTAL_TSQL_CAST_COUNT (sizeof(tsql_cast_raw_infos)/sizeof(tsql_cast_raw_infos[0]))
@@ -1046,7 +1050,7 @@ init_special_function_list()
  * and also validate the input argument data types.
  */
 bool
-validate_special_function(char *func_nsname, char *func_name, List* fargs, int nargs, Oid *input_typeids)
+validate_special_function(char *func_nsname, char *func_name, List* fargs, int nargs, Oid *input_typeids, bool num_args_match)
 {
 	tsql_special_function_t    *special_func;
 	bool                        type_match;
@@ -1066,20 +1070,23 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 		return false;
 
 	/* Initialise T-SQL special function argument type id list if not already done */
-	if (!inited_tsql_special_function_list)
+	if (!inited_tsql_special_function_list && num_args_match)
 	{
 		init_special_function_list();
 	}
 
 	/* Get Special function details */
 	special_func = NULL;
-	for (int i = 0; i < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; i++)
+	if (num_args_match)
 	{
-		if (strcmp(func_name, tsql_special_function_list[i].funcname) == 0
-			&& nargs == tsql_special_function_list[i].nargs)
+		for (int i = 0; i < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; i++)
 		{
-			special_func = &tsql_special_function_list[i];
-			break;
+			if (strcmp(func_name, tsql_special_function_list[i].funcname) == 0
+				&& nargs == tsql_special_function_list[i].nargs)
+			{
+				special_func = &tsql_special_function_list[i];
+				break;
+			}
 		}
 	}
 
@@ -1087,7 +1094,7 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 	if (special_func == NULL)
 	{
 		/* report error for case when NULL casted to different datatypes and passed as 2nd or 3rd argument of SUBSTRING() function */
-		if (strlen(func_name) == 9 && strncmp(func_name, "substring", 9) == 0)
+		if (strlen(func_name) == 9 && strncmp(func_name, "substring", 9) == 0 && num_args_match)
 		{
 			for (int i = 1; i < nargs; i++)
 			{
@@ -1123,6 +1130,93 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 					}
 				}
 			}
+		}
+		else if (strlen(func_name) == 6 && strncmp(func_name, "concat", 6) == 0)
+		{
+			Oid		target_type_id = get_sys_varcharoid();
+			/* Defined as per TSQL definition but PG has limitation for max number of args = 100. */
+			if (nargs < 2 || nargs > 254)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+							errmsg("The concat function requires 2 to 254 arguments.")));
+			
+			for (int i = 0; i < nargs; i++)
+			{
+				if (input_typeids[i] == UNKNOWNOID)
+				{
+					Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
+					if (IsA(arg, Const) && ((Const *)arg)->constisnull)
+						continue;
+					else
+						input_type_id = target_type_id;
+				}
+				else
+					input_type_id = input_typeids[i];
+
+				base_type_id = get_immediate_base_type_of_UDT_internal(input_type_id);
+				if (OidIsValid(base_type_id))
+					input_type_id = base_type_id;
+
+				/* Check if the input type is implicitly castable to varchar. */
+				if (!can_coerce_type(1, &input_type_id, &target_type_id, COERCION_IMPLICIT))
+					ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+							errmsg("Implicit conversion from data type %s to varchar is not allowed.", format_type_be(input_typeids[i]))));
+			}
+			return true;
+		}
+		else if (strlen(func_name) == 9 && strncmp(func_name, "concat_ws", 9) == 0)
+		{
+			Oid		target_type_id = get_sys_varcharoid();
+			/* Defined as per TSQL definition but PG has limitation for max number of args = 100. */
+			if (nargs < 3 || nargs > 254)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+							errmsg("The concat_ws function requires 3 to 254 arguments.")));
+
+			for (int i = 0; i < nargs; i++)
+			{
+				if (input_typeids[i] == UNKNOWNOID)
+				{
+					Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
+					if (IsA(arg, Const) && ((Const *)arg)->constisnull)
+						continue;
+					else
+						input_type_id = target_type_id;
+				}
+				else
+					input_type_id = input_typeids[i];
+
+				base_type_id = get_immediate_base_type_of_UDT_internal(input_type_id);
+				if (OidIsValid(base_type_id))
+					input_type_id = base_type_id;
+
+				if (i == 0)
+				{
+					if (common_utility_plugin_ptr == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("Failed to find common utility plugin.")));
+					/* Separator can only be of types: {char, nchar, varchar, nvarchar, text, ntext}. */
+					if (!((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type_id)
+						|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_type_id)
+						|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_type_id)
+						|| (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_type_id)
+						|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(input_type_id)
+						|| (*common_utility_plugin_ptr->is_tsql_text_datatype)(input_type_id)))
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									errmsg("Argument data type %s is invalid for argument 1 of concat_ws function.", 
+										format_type_be(input_type_id))));
+
+				}
+				/* Check if the input type is implicitly castable to varchar. */
+				else if(!can_coerce_type(1, &input_type_id, &target_type_id, COERCION_IMPLICIT))
+					ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+							errmsg("Implicit conversion from data type %s to varchar is not allowed.", format_type_be(input_typeids[i]))));
+			}
+			return true;
 		}
 		return false;
 	}		
@@ -1227,7 +1321,7 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
-	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids);
+	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);
 
 	/* Return NULL if function is not a special function */
 	if (!is_func_validated)
@@ -1331,6 +1425,34 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 		else
 		{
 			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");			
+		}
+	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name, "concat_ws", 9) == 0)
+	{
+		expr_result_type = get_sys_varcharoid();
+		for (int i = 0; i < nargs; i++)
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(input_typeids[i]))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+				break;
+			}
+		}
+	}
+	else if (strlen(proc_name) == 6 && strncmp(proc_name, "concat", 6) == 0)
+	{
+		expr_result_type = get_sys_varcharoid();
+		for (int i = 0; i < nargs; i++)
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(input_typeids[i]))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+				break;
+			}
 		}
 	}
 

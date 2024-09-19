@@ -109,7 +109,6 @@ BABEL-728
 BABEL-741
 BABEL-775
 BABEL-889
-BABEL-937
 BABEL-APPLOCK
 babel_char
 BABEL-CHECK-CONSTRAINT
@@ -428,6 +427,8 @@ stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 reverse-before-15_8-or-16_4
 string_agg-before-15_9-or-16_5
+concat-before-15_9-or-16_5
+concat_ws-before-15_9-or-16_5
 space
 binary-datatype-operators
 cast-varchar-to-time

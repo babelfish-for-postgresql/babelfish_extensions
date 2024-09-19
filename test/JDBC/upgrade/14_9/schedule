@@ -143,7 +143,6 @@ BABEL-3748
 BABEL-383
 BABEL-405
 BABEL-4516
-BABEL-937
 forjson
 forjson-subquery
 forjson-datatypes
@@ -454,6 +453,8 @@ stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 reverse-before-15_8-or-16_4
 string_agg-before-15_9-or-16_5
+concat-before-15_9-or-16_5
+concat_ws-before-15_9-or-16_5
 space
 binary-datatype-operators
 cast-varchar-to-time

@@ -2214,7 +2214,7 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 /*
  * Functions in pltsql_coerce.c
  */
-extern bool validate_special_function(char *proc_nsname, char *proc_name,  List* fargs, int nargs, Oid *input_typeids);
+extern bool validate_special_function(char *proc_nsname, char *proc_name,  List* fargs, int nargs, Oid *input_typeids, bool num_args_match);
 extern void init_special_function_list(void);
 
 #endif							/* PLTSQL_H */

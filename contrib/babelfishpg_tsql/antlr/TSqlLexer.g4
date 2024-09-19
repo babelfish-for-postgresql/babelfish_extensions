@@ -190,6 +190,7 @@ COMPRESSION:                                     C O M P R E S S I O N;
 COMPUTE:                                         C O M P U T E;
 CONCAT:                                          C O N C A T;
 CONCAT_NULL_YIELDS_NULL:                         C O N C A T  UNDERLINE  N U L L  UNDERLINE  Y I E L D S  UNDERLINE  N U L L;
+CONCAT_WS:                                       C O N C A T  UNDERLINE  W S;
 CONFIGURATION:                                   C O N F I G U R A T I O N;
 CONNECT:                                         C O N N E C T;
 CONNECTION:                                      C O N N E C T I O N;

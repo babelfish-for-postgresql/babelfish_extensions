@@ -149,7 +149,7 @@ varchar
 select concat('test', null);
 go
 ~~START~~
-text
+varchar
 test
 ~~END~~
 
@@ -157,7 +157,7 @@ test
 select concat(null, 'test');
 go
 ~~START~~
-text
+varchar
 test
 ~~END~~
 

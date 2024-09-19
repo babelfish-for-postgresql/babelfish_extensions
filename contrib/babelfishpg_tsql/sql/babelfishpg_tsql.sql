@@ -1603,9 +1603,9 @@ CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
 
 CASE -- cases for when they are of type identity. 
 	WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
-	THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
+	THEN CAST(PG_CATALOG.CONCAT(t1.name, '() identity') AS sys.sysname)
 	WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
-	THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
+	THEN CAST(PG_CATALOG.CONCAT(t1.name, ' identity') AS sys.sysname)
 	ELSE CAST(t1.name AS sys.sysname)
 END AS TYPE_NAME,
 
@@ -1990,8 +1990,8 @@ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
-	WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
-	ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
+	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(p.proname, ';1') AS sys.nvarchar(134))
+	ELSE CAST(PG_CATALOG.concat(p.proname, ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -2012,8 +2012,8 @@ SELECT CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default 
 CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
 
 CASE 
-	WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
-	ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
+	WHEN prokind = 'p' THEN cast(PG_CATALOG.concat(proname, ';1') AS sys.nvarchar(134))
+	ELSE cast(PG_CATALOG.concat(proname, ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -2595,8 +2595,8 @@ CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be
 , CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
 , CAST(
 CASE
-  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
-  ELSE CONCAT(ss.proname, ';0')
+  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(ss.proname, ';1')
+  ELSE PG_CATALOG.CONCAT(ss.proname, ';0')
 END
 AS sys.nvarchar(134)) AS PROCEDURE_NAME
 , CAST(
@@ -3719,7 +3719,7 @@ BEGIN
                     	ELSE NULL END AS int) AS [SS_DATETIME_PRECISION]
    	FROM sys.sp_sproc_columns_view v
    	LEFT OUTER JOIN sys.all_parameters AS p 
-	ON v.column_name = p.name AND p.object_id = object_id(CONCAT(@procedure_schema, '.', @procedure_name))
+	ON v.column_name = p.name AND p.object_id = object_id(PG_CATALOG.CONCAT(@procedure_schema, '.', @procedure_name))
    	WHERE v.original_procedure_name = @procedure_name
     	AND v.procedure_owner = @procedure_schema
 	AND (@parameter_name IS NULL OR column_name = @parameter_name)

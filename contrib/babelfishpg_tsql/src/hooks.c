@@ -2301,24 +2301,24 @@ pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argname
 	{
 		const char *arg_str = (max_nargs < 2) ? "argument" : "arguments";
 
+		if (!proc_call)
+		{
+			/* deconstruct the names list */
+			DeconstructQualifiedName(names, &schemaname, &funcname);
+
+			/* 
+			 * Check whether function is an special function or not, and 
+			 * report appropriate error if applicable 
+			 */
+			validate_special_function(schemaname, funcname, fargs, nargs, input_typeids, found);
+		}
+		
 		/*
 		 * Found the proc/func having the same number of arguments. possibly
 		 * data-type mistmatch.
 		 */
 		if (found)
 		{
-			if (!proc_call)
-			{
-				/* deconstruct the names list */
-				DeconstructQualifiedName(names, &schemaname, &funcname);
-
-				/* 
-				 * Check whether function is an special function or not, and 
-				 * report appropriate error if applicable 
-				 */
-				validate_special_function(schemaname, funcname, fargs, nargs, input_typeids);
-			}
-
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.", obj_type, NameListToString(names))),
