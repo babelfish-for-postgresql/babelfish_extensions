@@ -29,6 +29,7 @@ public class Config {
     static boolean isSingleDbMode = Boolean.parseBoolean(properties.getProperty("isSingleDbMode"));
     static String serverCollationName = properties.getProperty("serverCollationName");
     static String parallelQueryTestIgnoreFileName = "./parallel_query_jdbc_schedule";
+    static String singleDBIgnoreFileName = "./singledb_jdbc_schedule";
     static boolean checkParallelQueryExpected = false;
     static boolean checkSingleDbModeExpected = false;
     static String testFileRoot = properties.getProperty("testFileRoot");
