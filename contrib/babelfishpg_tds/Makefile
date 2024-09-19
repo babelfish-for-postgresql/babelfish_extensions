@@ -36,7 +36,7 @@ OBJS +=$(TSQL_SRC)/src/tsqlwarmup.o
 OBJS += $(TSQL_SRC)/antlr/libantlr_tsql.a
 
 $(TSQL_SRC)/antlr/Makefile: $(TSQL_SRC)/antlr/CMakeLists.txt $(TSQL_SRC)/antlr/TSqlLexer.g4 $(TSQL_SRC)/antlr/TSqlLexer.g4
-	cd $(TSQL_SRC)/antlr && $(cmake) . && cd $(tds_top_dir)
+	cd $(TSQL_SRC)/antlr && $(cmake) . && cd ../../babelfishpg_tds
 
 .PHONY: $(TSQL_SRC)/antlr/libantlr_tsql.a  # to allow CMake's make check the build
 $(TSQL_SRC)/antlr/libantlr_tsql.a: $(TSQL_SRC)/antlr/Makefile
