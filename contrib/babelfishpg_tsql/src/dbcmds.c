@@ -413,14 +413,14 @@ static void
 create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid)
 {
 	int16		old_dbid;
-	char	   *old_dbname;
+	char		*old_dbname;
 	Oid			datdba;
-	Datum	   *new_record;
-	bool	   *new_record_nulls;
+	Datum		*new_record;
+	bool		*new_record_nulls;
 	Relation	sysdatabase_rel;
 	HeapTuple	tuple;
-	List	   *parsetree_list;
-	ListCell   *parsetree_item;
+	List		*parsetree_list;
+	ListCell	*parsetree_item;
 	char		*dbo_scm = NULL;
 	char		*dbo_role = NULL;
 	char		*db_owner_role = NULL;
@@ -428,13 +428,13 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	NameData	default_collation;
 	NameData	owner_namedata;
 	char		*guest = NULL;
-	int			stmt_number = 0;
-	int 			save_sec_context;
-	bool 			is_set_userid = false;
-	Oid 			save_userid;
+	int		stmt_number = 0;
+	int		save_sec_context;
+	bool 		is_set_userid = false;
+	Oid 		save_userid;
 	const char	*old_createrole_self_grant;
 	ListCell	*option;
-	const char *database_collation_name = NULL;
+	const char	*database_collation_name = NULL;
 
 	/* Check options */
 	foreach(option, options)
@@ -658,21 +658,21 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 void
 drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 {
-	volatile Relation sysdatabase_rel;
-	HeapTuple	tuple;
-	Form_sysdatabases bbf_db;
-	int16		dbid;
-	char		*schema_name = NULL;
-	char		*db_owner_role = NULL;
-	char		*dbo_role = NULL;
-	char		*guest_schema_name = NULL;
-	List	   *db_users_list;
-	List	   *parsetree_list;
-	ListCell   *parsetree_item;
-	const char *prev_current_user;
-	int 		save_sec_context;
-	bool 		is_set_userid = false;
-	Oid 		save_userid;
+	volatile Relation	sysdatabase_rel;
+	HeapTuple			tuple;
+	Form_sysdatabase	bbf_db;
+	int16				dbid;
+	char				*schema_name = NULL;
+	char				*db_owner_role = NULL;
+	char				*dbo_role = NULL;
+	char				*guest_schema_name = NULL;
+	List				*db_users_list;
+	List				*parsetree_list;
+	ListCell			*parsetree_item;
+	const char			*prev_current_user;
+	int					save_sec_context;
+	bool				is_set_userid = false;
+	Oid 				save_userid;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||

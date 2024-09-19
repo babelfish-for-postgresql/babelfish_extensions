@@ -3337,11 +3337,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									char		*user_name;
 									const char	*db_principal_type = drop_user ? "user" : "role";
 									char		*db_owner_name;
-									int			role_oid;
-									int			rolename_len;
+									int		role_oid;
+									int		rolename_len;
 									bool		is_tsql_db_principal = false;
 									bool		is_psql_db_principal = false;
-									Oid			dbowner;
+									Oid		dbowner;
 
 									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
 									db_owner_name = get_db_owner_name(db_name);

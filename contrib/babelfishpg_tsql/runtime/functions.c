@@ -2893,9 +2893,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	}
 
 	if (!user)
-	{
 		PG_RETURN_INT32(0);
-	}
 	else
 	{
 		pfree(user);

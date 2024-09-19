@@ -5017,7 +5017,7 @@ user_exists_for_db(const char *db_name, const char *user_name)
 	Relation		bbf_authid_user_ext_rel;
 	HeapTuple		tuple_user_ext;
 	ScanKeyData		key[2];
-	TableScanDesc	scan;
+	TableScanDesc		scan;
 	NameData		*rolname;
 	bool			user_exists = false;
 
