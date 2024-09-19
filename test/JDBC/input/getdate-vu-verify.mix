@@ -1,82 +1,32 @@
 exec sysdatetime_dep_proc
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 exec sysdatetimeoffset_dep_proc
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 exec sysutcdatetime_dep_proc
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 exec getdate_dep_proc
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 exec getutcdate_dep_proc
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 Select * from sysdatetime_dep_view
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 select * from sysdatetimeoffset_dep_view
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 select * from sysutcdatetime_dep_view
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 select * from getdate_dep_view
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 select * from getutcdate_dep_view
 go
-~~START~~
-int
-65536
-~~END~~
-
 
 declare @x datetime2 = sysdatetime()
 select set_config('timezone', 'US/Pacific', false);
@@ -84,21 +34,6 @@ declare @y datetime2 = sysdatetime()
 select set_config('timezone', 'UTC', false);
 select DATEDIFF(MINUTE, @y, @x)
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
-~~START~~
-int
-420
-~~END~~
-
 
 declare @x datetime2 = sysdatetimeoffset()
 select set_config('timezone', 'US/Pacific', false);
@@ -106,21 +41,6 @@ declare @y datetime2 = sysdatetimeoffset()
 select set_config('timezone', 'UTC', false);
 select DATEDIFF(MINUTE, @y, @x)
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
-~~START~~
-int
-420
-~~END~~
-
 
 declare @x datetime2 = getdate()
 select set_config('timezone', 'US/Pacific', false);
@@ -128,21 +48,6 @@ declare @y datetime2 = getdate()
 select set_config('timezone', 'UTC', false);
 select DATEDIFF(MINUTE, @y, @x)
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
-~~START~~
-int
-420
-~~END~~
-
 
 declare @x datetime2 = CURRENT_TIMESTAMP
 select set_config('timezone', 'US/Pacific', false);
@@ -150,250 +55,71 @@ declare @y datetime2 = CURRENT_TIMESTAMP
 select set_config('timezone', 'UTC', false);
 select DATEDIFF(MINUTE, @y, @x)
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
-~~START~~
-int
-420
-~~END~~
-
 
 declare @x datetime2 = sysdatetime() AT TIME ZONE 'Pacific Standard Time'
 declare @y datetime2 = sysdatetime() AT TIME ZONE 'UTC'
 select DATEDIFF(MINUTE, @y, @x)
 go
-~~START~~
-int
-0
-~~END~~
-
 
 declare @x datetime2 = sysdatetimeoffset() AT TIME ZONE 'Pacific Standard Time'
 declare @y datetime2 = sysdatetimeoffset() AT TIME ZONE 'UTC'
 select DATEDIFF(MINUTE, @y, @x)
 go
-~~START~~
-int
--420
-~~END~~
-
 
 declare @x datetime2 = getdate() AT TIME ZONE 'Pacific Standard Time'
 declare @y datetime2 = getdate() AT TIME ZONE 'UTC'
 select DATEDIFF(MINUTE, @y, @x)
 go
-~~START~~
-int
-0
-~~END~~
-
 
 declare @x datetime2 = CURRENT_TIMESTAMP AT TIME ZONE 'Pacific Standard Time'
 declare @y datetime2 = CURRENT_TIMESTAMP AT TIME ZONE 'UTC'
 select DATEDIFF(MINUTE, @y, @x)
 go
-~~START~~
-int
-0
-~~END~~
-
 
 EXEC dbo.GetSysDatetimeDiff;
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
-~~START~~
-int
-420
-~~END~~
-
 
 EXEC dbo.GetSysDatetimeOffsetDiff;
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
-~~START~~
-int
-420
-~~END~~
-
 
 EXEC dbo.GetDateDiff;
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
-~~START~~
-int
-420
-~~END~~
-
 
 EXEC dbo.GetCurrTimestampDiff;
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
-~~START~~
-int
-420
-~~END~~
-
 
 SELECT * from dbo.datetimediffView;
 go
-~~START~~
-int#!#int#!#int#!#int
-420#!#420#!#420#!#420
-~~END~~
-
 
 declare @x datetime2 = SYSDATETIME();
 select set_config('timezone', 'US/Pacific', false);
 select dbo.GetSysDatetimeDiffFunc(@x)
 select set_config('timezone', 'UTC', false);
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-int
--420
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
 
 declare @x datetime2 = sysdatetimeoffset();
 select set_config('timezone', 'US/Pacific', false);
 select dbo.GetSysDatetimeOffsetDiffFunc(@x)
 select set_config('timezone', 'UTC', false);
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-int
--420
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
 
 declare @x datetime2 = getdate();
 select set_config('timezone', 'US/Pacific', false);
 select dbo.GetDateDiffFunc(@x)
 select set_config('timezone', 'UTC', false);
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-int
--420
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
 
 declare @x datetime2 = CURRENT_TIMESTAMP;
 select set_config('timezone', 'US/Pacific', false);
 select dbo.GetCurrTimestampDiffFunc(@x)
 select set_config('timezone', 'UTC', false);
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-int
--420
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
 
 INSERT INTO datetimediffTable values (0, 0, 0, 0)
 go
-~~START~~
-text
-US/Pacific
-~~END~~
-
-~~START~~
-text
-UTC
-~~END~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 SELECT * from trgdatetimediffTestTab;
 go
-~~START~~
-int#!#int#!#int#!#int
-420#!#420#!#420#!#420
-~~END~~
-
 
 -- psql
 SET timezone = '+05:30';
@@ -402,26 +128,6 @@ select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
 select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
 select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
 GO
-~~START~~
-interval
--05:30:00
-~~END~~
-
-~~START~~
-interval
--05:30:00
-~~END~~
-
-~~START~~
-interval
--05:30:00
-~~END~~
-
-~~START~~
-interval
--05:30:00
-~~END~~
-
 
 SET timezone = DEFAULT;
 select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
@@ -429,26 +135,6 @@ select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
 select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
 select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
 GO
-~~START~~
-interval
-00:00:00
-~~END~~
-
-~~START~~
-interval
-00:00:00
-~~END~~
-
-~~START~~
-interval
-00:00:00
-~~END~~
-
-~~START~~
-interval
-00:00:00
-~~END~~
-
 
 SET timezone = 'Asia/Kolkata';
 select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
@@ -456,26 +142,6 @@ select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
 select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
 select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
 GO
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
 
 SET timezone = +5.5;
 select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
@@ -483,26 +149,6 @@ select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
 select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
 select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
 GO
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
 
 SET TIME ZONE '+05:30';
 select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
@@ -510,26 +156,6 @@ select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
 select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
 select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
 GO
-~~START~~
-interval
--05:30:00
-~~END~~
-
-~~START~~
-interval
--05:30:00
-~~END~~
-
-~~START~~
-interval
--05:30:00
-~~END~~
-
-~~START~~
-interval
--05:30:00
-~~END~~
-
 
 SET TIME ZONE DEFAULT;
 select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
@@ -537,26 +163,6 @@ select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
 select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
 select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
 GO
-~~START~~
-interval
-00:00:00
-~~END~~
-
-~~START~~
-interval
-00:00:00
-~~END~~
-
-~~START~~
-interval
-00:00:00
-~~END~~
-
-~~START~~
-interval
-00:00:00
-~~END~~
-
 
 SET TIME ZONE +5.5;
 select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
@@ -564,26 +170,6 @@ select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
 select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
 select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
 GO
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
 
 SET TIME ZONE 'Asia/Kolkata';
 select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
@@ -591,26 +177,6 @@ select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
 select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
 select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
 GO
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
 
 SET timezone = DEFAULT;
 BEGIN; 
@@ -621,35 +187,9 @@ select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
 select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
 COMMIT;
 GO
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
-~~START~~
-interval
-05:30:00
-~~END~~
-
 
 SELECT * from master_dbo.datetimediffView;
 GO
-~~START~~
-int4#!#int4#!#int4#!#int4
-420#!#420#!#420#!#420
-0#!#0#!#0#!#0
-~~END~~
-
 
 SET TIME ZONE 'Asia/Kolkata';
 select master_dbo.GetSysDatetimeOffsetDiffFunc(CAST(sys.sysdatetimeoffset() AS sys.datetime2));
@@ -658,23 +198,3 @@ select master_dbo.GetDateDiffFunc(sys.getdate());
 select master_dbo.GetCurrTimestampDiffFunc(CAST(CURRENT_TIMESTAMP AS sys.datetime2));
 SET timezone = DEFAULT;
 GO
-~~START~~
-int4
-0
-~~END~~
-
-~~START~~
-int4
-0
-~~END~~
-
-~~START~~
-int4
-0
-~~END~~
-
-~~START~~
-int4
-0
-~~END~~
-

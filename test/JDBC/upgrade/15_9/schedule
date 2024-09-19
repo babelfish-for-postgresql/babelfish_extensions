@@ -535,6 +535,7 @@ reverse
 stuff
 replicate
 string_agg
+getdate
 space
 replace
 binary-datatype-operators
