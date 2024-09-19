@@ -637,7 +637,6 @@ Function sys.sp_releaseapplock_function(character varying,character varying,char
 Function sys.sp_special_columns_length_helper(text,integer,smallint,bigint)
 Function sys.sp_special_columns_precision_helper(text,integer,smallint,bigint)
 Function sys.sp_special_columns_scale_helper(text,integer)
-Function sys.sp_tables_internal(sys.nvarchar,sys.nvarchar,sys.sysname,sys."varchar",sys."bit")
 Function sys.sql_variant_property(sys.sql_variant,sys."varchar")
 Function sys.sqlvariant_bbfbinary(sys.sql_variant)
 Function sys.sqlvariant_bigint(sys.sql_variant)
