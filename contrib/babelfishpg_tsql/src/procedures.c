@@ -4061,8 +4061,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		ObjectWithArgs *objwargs;
 		renamestmt->renameType = objtype;
 		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
-		if (curr_relname)
-			renamestmt->relation->relname = pstrdup(lowerstr(curr_relname));
+		renamestmt->relation->relname = pstrdup(lowerstr(curr_relname));
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
 		rewrite_object_refs(stmt);

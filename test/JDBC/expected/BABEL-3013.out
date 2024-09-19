@@ -18,14 +18,20 @@ EXEC sp_column_privileges 't'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#SELECT#!#YES
 db1#!#dbo#!#t#!#a#!#dbo#!#johndoe#!#SELECT#!#NO
+db1#!#dbo#!#t#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -34,11 +40,15 @@ EXEC sp_table_privileges 't'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t#!#dbo#!#db_datawriter#!#DELETE#!#NO
 db1#!#dbo#!#t#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#t#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t#!#dbo#!#dbo#!#SELECT#!#YES
 db1#!#dbo#!#t#!#dbo#!#johndoe#!#SELECT#!#NO
+db1#!#dbo#!#t#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -74,14 +84,20 @@ EXEC sp_column_privileges 't'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#SELECT#!#YES
 db1#!#dbo#!#t#!#a#!#dbo#!#johndoe#!#SELECT#!#NO
+db1#!#dbo#!#t#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -90,11 +106,15 @@ EXEC sp_table_privileges 't'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t#!#dbo#!#db_datawriter#!#DELETE#!#NO
 db1#!#dbo#!#t#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#t#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t#!#dbo#!#dbo#!#SELECT#!#YES
 db1#!#dbo#!#t#!#dbo#!#johndoe#!#SELECT#!#NO
+db1#!#dbo#!#t#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 

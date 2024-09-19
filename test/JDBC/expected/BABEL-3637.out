@@ -38,10 +38,12 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -87,10 +89,12 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -112,10 +116,12 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -135,10 +141,12 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -157,10 +165,12 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -184,11 +194,13 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 5~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -213,11 +225,13 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 5~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -237,11 +251,13 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 5~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -261,11 +277,13 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 5~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -318,10 +336,12 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -343,10 +363,12 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -366,10 +388,12 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -388,10 +412,12 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -415,11 +441,13 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 5~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -444,11 +472,13 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 5~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -468,11 +498,13 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 5~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
@@ -492,11 +524,13 @@ sysadmin#!#jdbc_user
 
 EXEC test_babel_3637_proc2
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 5~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+db_datareader#!#public#!#<NULL>#!#<NULL>#!#
+db_datawriter#!#public#!#<NULL>#!#<NULL>#!#
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
 guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~

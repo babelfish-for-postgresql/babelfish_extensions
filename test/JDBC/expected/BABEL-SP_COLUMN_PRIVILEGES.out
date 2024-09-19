@@ -58,9 +58,12 @@ EXEC sp_column_privileges @table_name = 't1'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -69,8 +72,11 @@ EXEC sp_column_privileges @table_name = 't2', @table_qualifier = 'db1', @COLUMN_
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -78,14 +84,23 @@ EXEC sp_column_privileges @table_name = 't3', @table_owner = 'dbo'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t3#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t3#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t3#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t3#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t3#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t3#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t3#!#b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t3#!#b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t3#!#b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t3#!#b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t3#!#b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t3#!#b#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t3#!#c#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t3#!#c#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t3#!#c#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t3#!#c#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t3#!#c#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t3#!#c#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -95,9 +110,12 @@ EXEC sp_column_privileges 't1', 'dbo', 'db1', 'a'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -125,13 +143,22 @@ EXEC SP_COLUMN_PRIVILEGES @TABLE_NAME = 't2', @TABLE_OWNER = 'dbo', @TABLE_QUALI
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
+db1#!#dbo#!#t2#!#b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#b#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -140,8 +167,11 @@ EXEC SP_COLUMN_PRIVILEGES 'T2', 'DBO', 'DB1', 'A'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -150,8 +180,11 @@ EXEC [sp_column_privileges] 't2', 'dbo', 'db1', 'a'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -159,8 +192,11 @@ EXEC [sys].[sp_column_privileges] 't2', 'dbo', 'db1', 'a'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -169,13 +205,19 @@ exec sp_column_privileges @table_name = 'mytable4'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -184,13 +226,19 @@ exec sp_column_privileges @table_name = 'MYTABLE4'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -199,13 +247,19 @@ exec sp_column_privileges @table_name = 'mytable5'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -214,13 +268,19 @@ exec sp_column_privileges @table_name = 'MYTABLE5'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -230,13 +290,19 @@ exec sp_column_privileges @table_name = [mytable4]
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -245,13 +311,19 @@ exec sp_column_privileges @table_name = [MYTABLE4]
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -260,13 +332,19 @@ exec sp_column_privileges @table_name = [mytable5]
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -275,13 +353,19 @@ exec sp_column_privileges @table_name = [MYTABLE5]
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -291,13 +375,19 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -306,13 +396,19 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -321,13 +417,19 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -336,9 +438,12 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -347,13 +452,19 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -380,9 +491,12 @@ EXEC sp_column_privileges 't1', 'dbo', 'db1', 'a'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -480,9 +594,12 @@ EXEC sp_column_privileges @table_name = 't1'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -491,8 +608,11 @@ EXEC sp_column_privileges @table_name = 't2', @table_qualifier = 'db1', @COLUMN_
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -500,14 +620,23 @@ EXEC sp_column_privileges @table_name = 't3', @table_owner = 'dbo'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t3#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t3#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t3#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t3#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t3#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t3#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t3#!#b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t3#!#b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t3#!#b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t3#!#b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t3#!#b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t3#!#b#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t3#!#c#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t3#!#c#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t3#!#c#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t3#!#c#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t3#!#c#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t3#!#c#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -517,9 +646,12 @@ EXEC sp_column_privileges 't1', 'dbo', 'db1', 'a'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -547,13 +679,22 @@ EXEC SP_COLUMN_PRIVILEGES @TABLE_NAME = 't2', @TABLE_OWNER = 'dbo', @TABLE_QUALI
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
+db1#!#dbo#!#t2#!#b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#b#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -562,8 +703,11 @@ EXEC SP_COLUMN_PRIVILEGES 'T2', 'DBO', 'DB1', 'A'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -572,8 +716,11 @@ EXEC [sp_column_privileges] 't2', 'dbo', 'db1', 'a'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -581,8 +728,11 @@ EXEC [sys].[sp_column_privileges] 't2', 'dbo', 'db1', 'a'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
+db1#!#dbo#!#t2#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 ~~END~~
 
 
@@ -591,13 +741,19 @@ exec sp_column_privileges @table_name = 'mytable4'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -606,13 +762,19 @@ exec sp_column_privileges @table_name = 'MYTABLE4'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -621,13 +783,19 @@ exec sp_column_privileges @table_name = 'mytable5'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -636,13 +804,19 @@ exec sp_column_privileges @table_name = 'MYTABLE5'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -652,13 +826,19 @@ exec sp_column_privileges @table_name = [mytable4]
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -667,13 +847,19 @@ exec sp_column_privileges @table_name = [MYTABLE4]
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -682,13 +868,19 @@ exec sp_column_privileges @table_name = [mytable5]
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -697,13 +889,19 @@ exec sp_column_privileges @table_name = [MYTABLE5]
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -713,13 +911,19 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -728,13 +932,19 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -743,13 +953,19 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -758,9 +974,12 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -769,13 +988,19 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -802,9 +1027,12 @@ EXEC sp_column_privileges 't1', 'dbo', 'db1', 'a'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#INSERT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#INSERT#!#YES
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datareader#!#SELECT#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
