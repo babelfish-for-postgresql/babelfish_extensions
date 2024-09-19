@@ -476,6 +476,12 @@ SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
 -- psql
+REINDEX TABLE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_columns;
+GO
+
+REINDEX TABLE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_computed_columns;
+GO
+
 ANALYZE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_columns;
 GO
 
