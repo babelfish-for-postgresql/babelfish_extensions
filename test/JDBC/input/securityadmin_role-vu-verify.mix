@@ -753,10 +753,19 @@ GO
 SET ROLE securityadmin;
 GO
 
+-- psql
+-- normal PG user
+CREATE USER securityadmin_restrictions_pg_user WITH LOGIN CREATEROLE PASSWORD '12345678' inherit;
+go
+
 -- psql user=securityadmin_restrictions_pg_user password=12345678
 -- a normal psql user should not be able to alter/grant/drop securityadmin from pg port
 ALTER ROLE securityadmin NOCREATEROLE;
 GO
+
+-- Altering a role by an underprivileged login should be restricted
+alter user securityadmin_restrict_new_login with password '123'
+go
 
 ALTER ROLE securityadmin WITH PASSWORD '12345678';
 GO
@@ -823,6 +832,9 @@ GO
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'securityadmin_restrict_new_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 go
+
+DROP USER securityadmin_restrictions_pg_user;
+GO
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);

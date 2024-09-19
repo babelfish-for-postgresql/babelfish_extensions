@@ -3715,10 +3715,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					StringInfoData query;
 					RoleSpec   *spec;
 					RoleSpec   *rolspec;
+					Oid	   grantee_oid;
 
 					check_alter_server_stmt(grant_role);
 					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
 					rolspec = (RoleSpec *) linitial(grant_role->granted_roles);
+					grantee_oid = get_role_oid(spec->rolename, false);
 					initStringInfo(&query);
 					
 					/* If sysadmin, provide attribute for role and database priv */
@@ -3726,7 +3728,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						if (grant_role->is_grant)
 							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
-						else if (has_privs_of_role(GetSessionUserId(), get_securityadmin_oid()))
+						
+						/* If grantee role is member of securityadmin then only revoke createdb */
+						else if (has_privs_of_role(grantee_oid, get_securityadmin_oid()))
 							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreatedb; ");
 						else 
 							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
@@ -3737,7 +3741,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						if (grant_role->is_grant)
 							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole; ");
-						else if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()))
+						
+						/* If grantee role is member of sysadmin then don't revoke createrole */
+						else if (!has_privs_of_role(grantee_oid, get_sysadmin_oid()))
 							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole; ");
 					}
 					

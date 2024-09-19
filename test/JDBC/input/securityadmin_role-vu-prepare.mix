@@ -11,11 +11,6 @@ go
 create user no_securityadmin_user1 for login no_securityadmin_login1
 go
 
--- psql
--- normal PG user
-CREATE USER securityadmin_restrictions_pg_user WITH LOGIN CREATEROLE PASSWORD '12345678' inherit;
-go
-
 -- tsql
 create role securityadmin_rol
 go

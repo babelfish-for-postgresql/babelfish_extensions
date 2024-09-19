@@ -61,7 +61,3 @@ go
 
 drop role securityadmin_rol
 go
-
--- psql
-DROP USER securityadmin_restrictions_pg_user;
-GO

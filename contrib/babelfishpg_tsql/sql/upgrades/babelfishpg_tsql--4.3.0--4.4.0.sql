@@ -134,7 +134,7 @@ BEGIN
     	RETURN 1;
 	
     ELSIF role = 'sysadmin' COLLATE sys.database_default OR role = 'securityadmin' COLLATE sys.database_default THEN
-	  	has_role = pg_has_role(login::TEXT, role::TEXT, 'MEMBER');
+	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER') OR pg_has_role(login::TEXT, 'sysadmin'::TEXT, 'MEMBER'));
 	    IF has_role THEN
 			RETURN 1;
 		ELSE
