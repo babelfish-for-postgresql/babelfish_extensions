@@ -27,6 +27,7 @@ static void CheckDatetimeoffsetRange(const tsql_datetimeoffset *df);
 static int	datetimeoffset_cmp_internal(tsql_datetimeoffset *df1, tsql_datetimeoffset *df2);
 static void datetimeoffset_timestamp_internal(const tsql_datetimeoffset *df, Timestamp *time);
 static void EncodeDatetimeoffsetTimezone(char *str, int tz, int style);
+Datum timestamptz_datetimeoffset(TimestampTz timestamp);
 
 PG_FUNCTION_INFO_V1(datetimeoffset_in);
 PG_FUNCTION_INFO_V1(datetimeoffset_out);
@@ -634,6 +635,42 @@ timestamp_datetimeoffset(PG_FUNCTION_ARGS)
 	result = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
 	result->tsql_ts = time;
 	result->tsql_tz = 0;
+	CheckDatetimeoffsetRange(result);
+
+	PG_RETURN_DATETIMEOFFSET(result);
+}
+
+/* timestamptz_datetimeoffset()
+ * Convert timestamp with time zone to datetimeoffset
+ */
+Datum
+timestamptz_datetimeoffset(TimestampTz timestamp)
+{
+	Timestamp	time;
+	tsql_datetimeoffset *result;
+
+	struct pg_tm tt,
+			   *tm = &tt;
+	fsec_t		fsec;
+	int			tz = 0;
+
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		time = timestamp;
+	else
+	{
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("data out of range for datetimeoffset")));
+		if (tm2timestamp(tm, fsec, NULL, &time) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("data out of range for datetimeoffset")));
+	}
+
+	result = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
+	result->tsql_ts = time;
+	result->tsql_tz = (int16) tz / 60;
 	CheckDatetimeoffsetRange(result);
 
 	PG_RETURN_DATETIMEOFFSET(result);

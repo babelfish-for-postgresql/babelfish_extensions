@@ -551,6 +551,7 @@ stuff
 replicate
 reverse
 string_agg-before-15_9-or-16_5
+getdate-before-15_9-or-16_5
 sys_sequences
 sys_partition_functions
 sys_partition_schemes

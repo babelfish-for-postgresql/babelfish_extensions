@@ -553,6 +553,7 @@ stuff
 replicate
 reverse
 string_agg
+getdate
 sys_sequences
 sys_partition_functions
 sys_partition_schemes
