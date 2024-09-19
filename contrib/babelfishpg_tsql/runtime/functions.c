@@ -2683,8 +2683,8 @@ type_id(PG_FUNCTION_ARGS)
         if (!OidIsValid(result))
         {
             /* find the default schema for current user and get physical schema name */
-            const char	*user = get_user_for_database(db_name);
-            char		*guest_role_name = get_guest_role_name(db_name);
+            const char  *user = get_user_for_database(db_name);
+            char        *guest_role_name = get_guest_role_name(db_name);
 
             if (!user)
             {
@@ -2836,20 +2836,20 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)
 {
-	char	   *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
+	char        *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
 
 	/*
 	 * Ensure the database name input argument is lower-case, as all Babel
 	 * table names are lower-case
 	 */
-	char	   *lowercase_db_name = lowerstr(db_name);
+	char        *lowercase_db_name = lowerstr(db_name);
 
 	/* Also strip trailing whitespace to mimic SQL Server behaviour */
-	int			i;
-	char		*user = NULL;
-	const char	*login;
-	int16		db_id;
-	bool		login_is_db_owner;
+	int         i;
+	char        *user = NULL;
+	const char  *login;
+	int16       db_id;
+	bool        login_is_db_owner;
 
 	i = strlen(lowercase_db_name);
 	while (i > 0 && isspace((unsigned char) lowercase_db_name[i - 1]))
