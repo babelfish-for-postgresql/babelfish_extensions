@@ -551,6 +551,7 @@ BABEL-3820
 stuff
 replicate
 reverse
+getdate
 sys_sequences
 sys_partition_functions
 sys_partition_schemes

@@ -137,3 +137,144 @@ AS
     FROM Tally
     WHERE min_getdate = sys.getutcdate()
 GO
+
+CREATE PROCEDURE dbo.GetSysDatetimeDiff
+AS
+BEGIN
+    DECLARE @x datetime2 = SYSDATETIME();
+    select set_config('timezone', 'Asia/Kolkata', false);
+    DECLARE @y datetime2 = SYSDATETIME()
+    select set_config('timezone', 'UTC', false);
+    DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+    IF @diff = -330 or @diff = -331
+        SELECT 1;
+    ELSE
+        SELECT 0;
+END;
+GO
+
+CREATE PROCEDURE dbo.GetSysDatetimeOffsetDiff
+AS
+BEGIN
+    DECLARE @x datetime2 = sysdatetimeoffset();
+    select set_config('timezone', 'Asia/Kolkata', false);
+    DECLARE @y datetime2 = sysdatetimeoffset()
+    select set_config('timezone', 'UTC', false);
+    DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+    IF @diff = -330 or @diff = -331
+        SELECT 1;
+    ELSE
+        SELECT 0;
+END;
+GO
+
+CREATE PROCEDURE dbo.GetDateDiff
+AS
+BEGIN
+    DECLARE @x datetime2 = getdate();
+    select set_config('timezone', 'Asia/Kolkata', false);
+    DECLARE @y datetime2 = getdate()
+    select set_config('timezone', 'UTC', false);
+    DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+    IF @diff = -330 or @diff = -331
+        SELECT 1;
+    ELSE
+        SELECT 0;
+END;
+GO
+
+CREATE PROCEDURE dbo.GetCurrTimestampDiff
+AS
+BEGIN
+    DECLARE @x datetime2 = CURRENT_TIMESTAMP;
+    select set_config('timezone', 'Asia/Kolkata', false);
+    DECLARE @y datetime2 = CURRENT_TIMESTAMP
+    select set_config('timezone', 'UTC', false);
+    DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+    IF @diff = -330 or @diff = -331
+        SELECT 1;
+    ELSE
+        SELECT 0;
+END;
+GO
+
+-- Need this function to validate datetime difference spillover to avoid flakiness.
+CREATE FUNCTION dbo.checkDatetimeDiff(@value int, @expectedValue int, @expectedDiff int)
+RETURNS int
+AS
+BEGIN
+    IF @value = @expectedValue or @value = @expectedValue + @expectedDiff or @value = @expectedValue - @expectedDiff
+        RETURN 1;
+    ELSE
+        RETURN 0;
+END;
+GO
+
+CREATE TABLE datetimediffTable(sysdatetime int, sysdatetimeoffset int, getdate int, currtimestamp int)
+GO
+
+DECLARE @sysdatetime1 datetime2, @sysdatetimeoffset1 datetime2, @getdate1 datetime2, @currtimestamp1 datetime2;
+DECLARE @sysdatetime2 datetime2, @sysdatetimeoffset2 datetime2, @getdate2 datetime2, @currtimestamp2 datetime2;
+SELECT @sysdatetime1 = SYSDATETIME(), @sysdatetimeoffset1 = sysdatetimeoffset(), @getdate1 = getdate(), @currtimestamp1 = CURRENT_TIMESTAMP;
+select set_config('timezone', 'Asia/Kolkata', false);
+SELECT @sysdatetime2 = SYSDATETIME(), @sysdatetimeoffset2 = sysdatetimeoffset(), @getdate2 = getdate(), @currtimestamp2 = CURRENT_TIMESTAMP;
+select set_config('timezone', 'UTC', false);
+INSERT INTO datetimediffTable values (dbo.checkDatetimeDiff(DATEDIFF(MINUTE, @sysdatetime2, @sysdatetime1), -330, -1), dbo.checkDatetimeDiff(DATEDIFF(MINUTE, @sysdatetimeoffset2, @sysdatetimeoffset1), -330, -1), dbo.checkDatetimeDiff(DATEDIFF(MINUTE, @getdate2, @getdate1), -330, -1), dbo.checkDatetimeDiff(DATEDIFF(MINUTE, @currtimestamp2, @currtimestamp1), -330, -1))
+GO
+
+CREATE VIEW dbo.datetimediffView AS SELECT * FROM datetimediffTable;
+GO
+
+CREATE FUNCTION dbo.GetSysDatetimeDiffFunc(@sysdatetime1 datetime2, @expected int, @diff int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @x datetime2 = SYSDATETIME();
+    RETURN checkDatetimeDiff(DATEDIFF(MINUTE, @sysdatetime1, @x), @expected, @diff);
+END;
+GO
+
+CREATE FUNCTION dbo.GetSysDatetimeOffsetDiffFunc(@sysdatetimeoffset1 datetime2, @expected int, @diff int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @x datetime2 = sysdatetimeoffset();
+    RETURN checkDatetimeDiff(DATEDIFF(MINUTE, @sysdatetimeoffset1, @x), @expected, @diff);
+END;
+GO
+
+CREATE FUNCTION dbo.GetDateDiffFunc(@getdate1 datetime2, @expected int, @diff int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @x datetime2 = getdate();
+    RETURN checkDatetimeDiff(DATEDIFF(MINUTE, @getdate1, @x), @expected, @diff);
+END;
+GO
+
+CREATE FUNCTION dbo.GetCurrTimestampDiffFunc(@currtimestamp1 datetime2, @expected int, @diff int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @x datetime2 = CURRENT_TIMESTAMP;
+    RETURN checkDatetimeDiff(DATEDIFF(MINUTE, @currtimestamp1, @x), @expected, @diff);
+END;
+GO
+
+CREATE TABLE trgdatetimediffTestTab(sysdatetime int, sysdatetimeoffset int, getdate int, currtimestamp int)
+GO
+
+CREATE TRIGGER trgdatetimediff
+ON datetimediffTable
+AFTER INSERT
+AS
+BEGIN
+    DECLARE @sysdatetime1 datetime2, @sysdatetimeoffset1 datetime2, @getdate1 datetime2, @currtimestamp1 datetime2;
+    DECLARE @sysdatetime2 datetime2, @sysdatetimeoffset2 datetime2, @getdate2 datetime2, @currtimestamp2 datetime2;
+    SELECT @sysdatetime1 = SYSDATETIME(), @sysdatetimeoffset1 = sysdatetimeoffset(), @getdate1 = getdate(), @currtimestamp1 = CURRENT_TIMESTAMP;
+    select set_config('timezone', 'Asia/Kolkata', false);
+    SELECT @sysdatetime2 = SYSDATETIME(), @sysdatetimeoffset2 = sysdatetimeoffset(), @getdate2 = getdate(), @currtimestamp2 = CURRENT_TIMESTAMP;
+    select set_config('timezone', 'UTC', false);
+    INSERT INTO trgdatetimediffTestTab values (dbo.checkDatetimeDiff(DATEDIFF(MINUTE, @sysdatetime2, @sysdatetime1), -330, -1), dbo.checkDatetimeDiff(DATEDIFF(MINUTE, @sysdatetimeoffset2, @sysdatetimeoffset1), -330, -1), dbo.checkDatetimeDiff(DATEDIFF(MINUTE, @getdate2, @getdate1), -330, -1), dbo.checkDatetimeDiff(DATEDIFF(MINUTE, @currtimestamp2, @currtimestamp1), -330, -1))
+END;
+GO

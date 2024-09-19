@@ -60,7 +60,7 @@ jobs:
 
       - name: Upload Log
         if: always() && steps.unit.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: postgres-log
           path: ~/psql/data/logfile

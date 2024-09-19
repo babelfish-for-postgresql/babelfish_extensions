@@ -347,3 +347,7 @@ ignore#!#BABEL_4330-before-15_8-or-16_4-vu-verify
 ignore#!#alter-procedure-before-15_8-or-16_4-vu-prepare
 ignore#!#alter-procedure-before-15_8-or-16_4-vu-verify
 ignore#!#alter-procedure-before-15_8-or-16_4-vu-cleanup
+
+ignore#!#getdate-before-15_9-or-16_5-vu-cleanup
+ignore#!#getdate-before-15_9-or-16_5-vu-prepare
+ignore#!#getdate-before-15_9-or-16_5-vu-verify

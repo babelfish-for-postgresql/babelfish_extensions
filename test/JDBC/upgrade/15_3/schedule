@@ -443,7 +443,7 @@ triggers_with_transaction
 datetimeoffset-timezone
 BABEL-4046
 table_constraint_wo_comma-before-15_6-or-16_2
-getdate
+getdate-before-15_9-or-16_5
 BABEL_4330-before-15_8-or-16_4
 AUTO_ANALYZE-before-15-5-or-14-10
 default_params
