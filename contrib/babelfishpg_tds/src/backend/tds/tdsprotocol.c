@@ -277,7 +277,7 @@ GetTDSRequest(bool *resetProtocol)
 		 * memory context before exit so that we can process the request
 		 * later.
 		 */
-		if ((status & TDS_PACKET_HEADER_STATUS_RESETCON) || resetTdsConnectionFlag == true)
+		if ((status & TDS_PACKET_HEADER_STATUS_RESETCON))
 		{
 			MemoryContextSwitchTo(TopMemoryContext);
 
@@ -292,7 +292,6 @@ GetTDSRequest(bool *resetProtocol)
 			ResetTDSConnection();
 			TdsErrorContext->err_text = "Fetching TDS Request";
 			*resetProtocol = true;
-			resetTdsConnectionFlag = false;
 			return NULL;
 		}
 
@@ -689,6 +688,12 @@ TdsSocketBackend(void)
 
 						/* Ready to fetch the next request */
 						TdsRequestCtrl->phase = TDS_REQUEST_PHASE_FETCH;
+
+						if (resetTdsConnectionFlag)
+						{
+							ResetTDSConnection();
+							resetTdsConnectionFlag = false;
+						}
 
 						break;
 					}
