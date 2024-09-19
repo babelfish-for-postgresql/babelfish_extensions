@@ -15,12 +15,21 @@ go
 drop table #t1
 go
 
+select * from #t1
+go
+
 -- constraint, depend, index, sequence, attrdefault
 
-create table #t2(a int identity primary key, b char(15) default 'column default')
+create table #t2(a int identity primary key, b int default 0)
 go
 
 alter table #t2 add c int
+go
+
+ALTER TABLE #t2 ALTER COLUMN a bigint
+go
+
+alter table #t2 alter column b bigint
 go
 
 insert into #t2(c) values (2)
@@ -29,11 +38,14 @@ go
 insert into #t2(c) values (4)
 go
 
-insert into #t2(b, c) values ('not default', 2)
+insert into #t2(b, c) values (3, 2)
 go
 
 select * from #t2
 go
 
 drop table #t2
+go
+
+select * from #t2
 go

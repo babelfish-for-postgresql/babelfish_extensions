@@ -22,12 +22,25 @@ int
 drop table #t1
 go
 
+select * from #t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t1" does not exist)~~
+
+
 
 -- constraint, depend, index, sequence, attrdefault
-create table #t2(a int identity primary key, b char(15) default 'column default')
+create table #t2(a int identity primary key, b int default 0)
 go
 
 alter table #t2 add c int
+go
+
+ALTER TABLE #t2 ALTER COLUMN a bigint
+go
+
+alter table #t2 alter column b bigint
 go
 
 insert into #t2(c) values (2)
@@ -40,7 +53,7 @@ go
 ~~ROW COUNT: 1~~
 
 
-insert into #t2(b, c) values ('not default', 2)
+insert into #t2(b, c) values (3, 2)
 go
 ~~ROW COUNT: 1~~
 
@@ -48,12 +61,19 @@ go
 select * from #t2
 go
 ~~START~~
-int#!#char#!#int
-1#!#column default #!#2
-2#!#column default #!#4
-3#!#not default    #!#2
+bigint#!#bigint#!#int
+1#!#0#!#2
+2#!#0#!#4
+3#!#3#!#2
 ~~END~~
 
 
 drop table #t2
 go
+
+select * from #t2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t2" does not exist)~~
+
