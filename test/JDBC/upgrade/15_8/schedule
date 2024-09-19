@@ -534,6 +534,7 @@ substring
 reverse
 stuff
 replicate
+getdate
 space
 replace
 binary-datatype-operators

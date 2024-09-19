@@ -942,21 +942,21 @@ Datum getutcdate(PG_FUNCTION_ARGS)
 
 Datum getdate_internal(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
-						TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime, 
+						DirectFunctionCall2(timestamptz_trunc,CStringGetTextDatum("millisecond"),
+											TimestampTzGetDatum(GetCurrentStatementStartTimestamp()))));
 	
 }
 
 Datum sysdatetime(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TIMESTAMPTZ(GetCurrentStatementStartTimestamp());
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime2, 
+							TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
 }
 
 Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
 {
-	
-
-	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamp_datetimeoffset,
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetimeoffset,
 							TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
 }
 
