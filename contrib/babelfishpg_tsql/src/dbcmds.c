@@ -414,7 +414,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 {
 	int16		old_dbid;
 	char		*old_dbname;
-	Oid			datdba;
+	Oid		datdba;
 	Datum		*new_record;
 	bool		*new_record_nulls;
 	Relation	sysdatabase_rel;
@@ -659,20 +659,20 @@ void
 drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 {
 	volatile Relation	sysdatabase_rel;
-	HeapTuple			tuple;
-	Form_sysdatabase	bbf_db;
-	int16				dbid;
-	char				*schema_name = NULL;
-	char				*db_owner_role = NULL;
-	char				*dbo_role = NULL;
-	char				*guest_schema_name = NULL;
-	List				*db_users_list;
-	List				*parsetree_list;
-	ListCell			*parsetree_item;
-	const char			*prev_current_user;
-	int					save_sec_context;
-	bool				is_set_userid = false;
-	Oid 				save_userid;
+	HeapTuple	tuple;
+	Form_sysdatabases	bbf_db;
+	int16		dbid;
+	char		*schema_name = NULL;
+	char		*db_owner_role = NULL;
+	char		*dbo_role = NULL;
+	char		*guest_schema_name = NULL;
+	List		*db_users_list;
+	List		*parsetree_list;
+	ListCell	*parsetree_item;
+	const char	*prev_current_user;
+	int	save_sec_context;
+	bool		is_set_userid = false;
+	Oid 		save_userid;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||

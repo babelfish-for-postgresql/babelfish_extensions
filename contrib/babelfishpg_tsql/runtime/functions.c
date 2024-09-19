@@ -2683,16 +2683,16 @@ type_id(PG_FUNCTION_ARGS)
         if (!OidIsValid(result))
         {
             /* find the default schema for current user and get physical schema name */
-            const char *user = get_user_for_database(db_name);
-            char	   *guest_role_name = get_guest_role_name(db_name);
+            const char	*user = get_user_for_database(db_name);
+            char		*guest_role_name = get_guest_role_name(db_name);
 
             if (!user)
             {
                 pfree(db_name);
                 pfree(schema_name);
                 pfree(object_name);
-				if(guest_role_name)
-					pfree(guest_role_name);
+                if(guest_role_name)
+                    pfree(guest_role_name);
                 PG_RETURN_NULL();
             }
             else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -2705,8 +2705,8 @@ type_id(PG_FUNCTION_ARGS)
                 schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
                 physical_schema_name = get_physical_schema_name(db_name, schema_name);
             }
-			if(guest_role_name)
-				pfree(guest_role_name);
+            if(guest_role_name)
+                pfree(guest_role_name);
         }
         else
         {
@@ -2847,7 +2847,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	/* Also strip trailing whitespace to mimic SQL Server behaviour */
 	int			i;
 	char		*user = NULL;
-	const char *login;
+	const char	*login;
 	int16		db_id;
 	bool		login_is_db_owner;
 
