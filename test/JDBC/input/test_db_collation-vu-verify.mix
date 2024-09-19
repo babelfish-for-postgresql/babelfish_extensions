@@ -1,10 +1,10 @@
 -- parallel_query_expected
 -- tsql
 -- Case 2: Validate that correct collation is picked up for all databases
-SELECT name, collation_name FROM sys.databases ORDER BY name;
+SELECT name, collation_name FROM sys.databases WHERE name LIKE 'test_db_collation_vu_prepare_%' OR name IN ('master','msdb','tempdb') ORDER BY name;
 GO
 
-SELECT name, default_collation FROM babelfish_sysdatabases ORDER BY name;
+SELECT name, default_collation FROM babelfish_sysdatabases WHERE name LIKE 'test_db_collation_vu_prepare_%' OR name IN ('master','msdb','tempdb') ORDER BY name;
 GO
 
 -- Case 3: Validate that correct collation is picked up for all databases using DATABASEPROPERTYEX

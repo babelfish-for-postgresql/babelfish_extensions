@@ -1,6 +1,6 @@
 -- tsql
 -- Case 2: Validate that correct collation is picked up for all databases
-SELECT name, collation_name FROM sys.databases ORDER BY name;
+SELECT name, collation_name FROM sys.databases WHERE name LIKE 'test_db_collation_vu_prepare_%' OR name IN ('master','msdb','tempdb') ORDER BY name;
 GO
 ~~START~~
 varchar#!#varchar
@@ -23,7 +23,7 @@ test_db_collation_vu_prepare_db141#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-SELECT name, default_collation FROM babelfish_sysdatabases ORDER BY name;
+SELECT name, default_collation FROM babelfish_sysdatabases WHERE name LIKE 'test_db_collation_vu_prepare_%' OR name IN ('master','msdb','tempdb') ORDER BY name;
 GO
 ~~START~~
 text#!#varchar
