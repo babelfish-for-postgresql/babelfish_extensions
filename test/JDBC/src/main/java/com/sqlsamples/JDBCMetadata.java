@@ -211,7 +211,7 @@ public class JDBCMetadata {
         bw.write("~~START~~");
         bw.newLine();
 
-        bw.write(String.valueOf(maxConn));
+        bw.write(String.valueOf(maxConn >= 0));
         bw.newLine();
 
         bw.write("~~END~~");
