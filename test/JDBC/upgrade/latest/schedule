@@ -568,3 +568,5 @@ SELECT_INTO_TEST
 binary-datatype-operators
 cast-varchar-to-time
 test_db_collation
+BABEL-5119
+
