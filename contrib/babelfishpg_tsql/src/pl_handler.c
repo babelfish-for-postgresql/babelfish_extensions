@@ -6379,6 +6379,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				/** Add alter table add identity node after Select Into statement */
 				altstmt = makeNode(AlterTableStmt);
 				altstmt->relation = into->rel;
+				altstmt->objtype = OBJECT_TABLE;
 				altstmt->cmds = NIL;
 
 				constraint = makeNode(Constraint);
