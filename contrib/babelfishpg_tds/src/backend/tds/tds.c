@@ -202,6 +202,8 @@ static LocalTdsStatus *tdsstat_fetch_stat_local_tdsentry(int beid);
 
 extern bool antlr_warmup_query_tsql(const char *sourceText);
 
+bool 		pltsql_quoted_identifier = true;
+
 /*
  * Module initialization function
  */
@@ -950,7 +952,10 @@ TdsSetGucStatVariable(const char *guc, bool boolVal, const char *strVal, int int
 		vtdsentry->st_language[len] = '\0';
 	}
 	else if (strcmp(guc, "babelfishpg_tsql.quoted_identifier") == 0)
+	{
 		vtdsentry->quoted_identifier = boolVal;
+		pltsql_quoted_identifier = boolVal;
+	}
 	else if (strcmp(guc, "babelfishpg_tsql.arithabort") == 0)
 		vtdsentry->arithabort = boolVal;
 	else if (strcmp(guc, "babelfishpg_tsql.ansi_null_dflt_on") == 0)
