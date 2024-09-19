@@ -112,7 +112,7 @@ sqlvariantin(PG_FUNCTION_ARGS)
 	svhdr = SV_HDR_5B(result);
 	SV_SET_METADATA(svhdr, VARCHAR_T, HDR_VER); /* hardcode as VARCHAR */
 	svhdr->typmod = VARSIZE_ANY_EXHDR(data_val);
-	svhdr->collid = get_server_collation_collidx();
+	svhdr->collid = get_database_or_server_collation_collidx();
 
 	/* Cleanup */
 	pfree(data_val);
@@ -221,7 +221,7 @@ get_varchar128_sv_datum(const char *value)
 	svhdr = SV_HDR_5B(result);
 	SV_SET_METADATA(svhdr, VARCHAR_T, HDR_VER);
 	svhdr->typmod = len;		/* Actual Data Length */
-	svhdr->collid = get_server_collation_collidx();
+	svhdr->collid = get_database_or_server_collation_collidx();
 
 	PG_RETURN_BYTEA_P(result);
 }

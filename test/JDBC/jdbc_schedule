@@ -44,6 +44,8 @@ ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-verify
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-cleanup
 ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
+ignore#!#sys-systypes-before-16-2-vu-prepare
+ignore#!#sys-systypes-before-16-2-vu-verify
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -361,11 +363,27 @@ ignore#!#replicate-before-15_8-or-16_4-vu-cleanup
 ignore#!#replace-before-15_8-or-16_4-vu-prepare
 ignore#!#replace-before-15_8-or-16_4-vu-verify
 ignore#!#replace-before-15_8-or-16_4-vu-cleanup
-ignore#!#replace-before-14_3-vu-prepare
-ignore#!#replace-before-14_3-vu-verify
-ignore#!#replace-before-14_3-vu-cleanup
 ignore#!#BABEL_4330-before-15_8-or-16_4-vu-prepare
 ignore#!#BABEL_4330-before-15_8-or-16_4-vu-verify
 ignore#!#alter-procedure-before-15_8-or-16_4-vu-prepare
 ignore#!#alter-procedure-before-15_8-or-16_4-vu-verify
 ignore#!#alter-procedure-before-15_8-or-16_4-vu-cleanup
+
+
+# These tests are meant for upgrade scenario prior to 15_9 or 16_5 release
+ignore#!#alter-procedure-15_8-or-16_4-vu-prepare
+ignore#!#alter-procedure-15_8-or-16_4-vu-verify
+ignore#!#alter-procedure-15_8-or-16_4-vu-cleanup
+ignore#!#string_agg-before-15_9-or-16_5-vu-prepare
+ignore#!#string_agg-before-15_9-or-16_5-vu-verify
+ignore#!#string_agg-before-15_9-or-16_5-vu-cleanup
+ignore#!#getdate-before-15_9-or-16_5-vu-cleanup
+ignore#!#getdate-before-15_9-or-16_5-vu-prepare
+ignore#!#getdate-before-15_9-or-16_5-vu-verify
+ignore#!#string_agg-before-14_5-vu-prepare
+ignore#!#string_agg-before-14_5-vu-verify
+ignore#!#string_agg-before-14_5-vu-cleanup
+ignore#!#string_agg_within-16_4-vu-prepare
+ignore#!#string_agg_within-16_4-vu-verify
+ignore#!#string_agg_within-16_4-vu-cleanup
+

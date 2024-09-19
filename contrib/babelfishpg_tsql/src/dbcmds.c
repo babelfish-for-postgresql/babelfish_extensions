@@ -42,6 +42,8 @@
 #include "pltsql.h"
 #include "extendedproperty.h"
 
+#define NOT_FOUND -1
+
 Oid sys_babelfish_db_seq_oid = InvalidOid;
 
 static Oid get_sys_babelfish_db_seq_oid(void);
@@ -49,15 +51,17 @@ static List *gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
 								  const char *db_owner,
 								  const char *guest,
-								  const char *guest_schema);
+								  const char *guest_schema,
+								  const char *owner);
 static List *gen_dropdb_subcmds(const char *schema,
 								const char *db_owner,
 								const char *dbo,
 								List *db_users,
 								const char *guest_schema);
-static Oid	do_create_bbf_db(const char *dbname, List *options, const char *owner);
-static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
+static Oid	do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const char *owner);
+static void create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
+
 
 static Oid
 get_sys_babelfish_db_seq_oid()
@@ -77,7 +81,7 @@ get_sys_babelfish_db_seq_oid()
  * Generate subcmds for CREATE DATABASE. Note 'guest' can be NULL.
  */
 static List *
-gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest, const char *guest_schema)
+gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest, const char *guest_schema, const char *owner)
 {
 	StringInfoData query;
 	List	   *res;
@@ -85,6 +89,9 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	Node	   *stmt;
 	int			i = 0;
 	int			expected_stmt_num;
+	AccessPriv *acc;
+	List	   *privs = NIL;
+	RoleSpec   *role_spec;
 
 	/*
 	 * To avoid SQL injection, we generate statement parsetree with dummy
@@ -95,6 +102,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	appendStringInfo(&query, "CREATE ROLE dummy CREATEROLE INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
+	appendStringInfo(&query, "GRANT dummy TO dummy; ");
 
 	if (guest)
 	{
@@ -115,9 +123,9 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
+		expected_stmt_num = list_length(logins) > 0 ? 10 : 9;
 	else
-		expected_stmt_num = 6;
+		expected_stmt_num = 7;
 
 	if (list_length(res) != expected_stmt_num)
 		ereport(ERROR,
@@ -134,6 +142,19 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
+
+	/* Grant dbo role to owner */
+	stmt = parsetree_nth_stmt(res, i++);
+	acc = makeNode(AccessPriv);
+	acc->priv_name = pstrdup(dbo);
+	acc->cols = NIL;
+	privs = lappend(privs, acc);
+
+	role_spec = makeNode(RoleSpec);
+	role_spec->roletype = ROLESPEC_CSTRING;
+	role_spec->location = -1;
+	role_spec->rolename = pstrdup(owner);
+	update_GrantRoleStmt(stmt, privs, list_make1(role_spec));
 
 	if (guest)
 	{
@@ -253,32 +274,9 @@ gen_dropdb_subcmds(const char *schema,
 Oid
 create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 {
-	ListCell   *option;
 	const char *owner = GetUserNameFromId(GetSessionUserId(), false);
-
-	/* Check options */
-	foreach(option, stmt->options)
-	{
-		DefElem    *defel = (DefElem *) lfirst(option);
-
-		if (strcmp(defel->defname, "collate") == 0)
-		{
-			const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
-
-			if (server_collation_name && strcmp(server_collation_name, defGetString(defel)))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("only \"%s\" supported for default collation", server_collation_name),
-						 parser_errposition(pstate, defel->location)));
-		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("option \"%s\" not recognized", defel->defname),
-					 parser_errposition(pstate, defel->location)));
-	}
-
-	return do_create_bbf_db(stmt->dbname, stmt->options, owner);
+	
+	return do_create_bbf_db(pstate, stmt->dbname, stmt->options, owner);
 }
 
 /*
@@ -358,7 +356,7 @@ getDbidForLogicalDbRestore(Oid relid)
 }
 
 static Oid
-do_create_bbf_db(const char *dbname, List *options, const char *owner)
+do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const char *owner)
 {
 	int16		dbid;
 	const char *prev_current_user;
@@ -378,13 +376,41 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 				 errmsg("cannot find an available ID for database \"%s\"", dbname)));
 	bbf_set_current_user(prev_current_user);
 
-	create_bbf_db_internal(dbname, options, owner, dbid);
+	create_bbf_db_internal(pstate, dbname, options, owner, dbid);
 
 	return dbid;
 }
 
 static void
-create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid)
+check_database_collation_name(const char *database_collation_name)
+{
+	coll_info_t coll_info_of_inputcollid;
+
+	if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Invalid collation \"%s\"", database_collation_name)));
+	}
+
+	/* Block any non-LATIN and CS collation */
+	coll_info_of_inputcollid = tsql_lookup_collation_table_internal(
+		get_collation_oid(list_make1(makeString((char*) database_collation_name)), false));
+
+	if (!supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page) 
+		|| coll_info_of_inputcollid.collateflags == 0x000c /* CS_AS */
+		|| coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI */)
+	{
+		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+		if (server_collation_name && strcmp(server_collation_name, database_collation_name))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("\"%s\" is not currently supported for database collation ", database_collation_name)));
+	}
+}
+
+static void
+create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid)
 {
 	int16		old_dbid;
 	char	   *old_dbname;
@@ -400,26 +426,44 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char *db_owner_role;
 	const char *guest_scm;
 	NameData	default_collation;
+	NameData	owner_namedata;
 	const char *guest;
 	int			stmt_number = 0;
 	int 			save_sec_context;
 	bool 			is_set_userid = false;
 	Oid 			save_userid;
 	const char	*old_createrole_self_grant;
+	ListCell	*option;
+	const char *database_collation_name = NULL;
 
-	/* TODO: Extract options */
-
-	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_server_collation_oid_internal(false)));
-	if (!HeapTupleIsValid(tuple))
+	/* Check options */
+	foreach(option, options)
 	{
-		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+		DefElem    *defel = (DefElem *) lfirst(option);
 
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("OID corresponding to collation \"%s\" does not exist", server_collation_name)));
+		if (strcmp(defel->defname, "collate") == 0)
+		{
+			database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(defGetString(defel));
+			check_database_collation_name(database_collation_name);
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("option \"%s\" not recognized", defel->defname),
+					 parser_errposition(pstate, defel->location)));
+		}	
 	}
-	default_collation = ((Form_pg_collation) GETSTRUCT(tuple))->collname;
-	ReleaseSysCache(tuple);
+
+	if (database_collation_name == NULL)
+	{
+		database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(GetConfigOption("babelfishpg_tsql.server_collation_name", false, false));
+		if (tsql_find_collation_internal(database_collation_name) == NOT_FOUND)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("\"%s\" is not currently supported for database collation ", database_collation_name)));
+	}
+	namestrcpy(&default_collation, database_collation_name);
 
 	/* single-db mode check. IDs 1-4 are reserved for native system databases */
 	if (SINGLE_DB == get_migration_mode() && dbid > 4)
@@ -492,11 +536,12 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	/* Write catalog entry */
 	new_record = palloc0(sizeof(Datum) * SYSDATABASES_NUM_COLS);
 	new_record_nulls = palloc0(sizeof(bool) * SYSDATABASES_NUM_COLS);
+	namestrcpy(&owner_namedata, owner);
 
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = Int32GetDatum(0);
 	new_record[2] = Int32GetDatum(0);
-	new_record[3] = CStringGetDatum(owner);
+	new_record[3] = NameGetDatum(&owner_namedata);
 	new_record[4] = NameGetDatum(&default_collation);
 	new_record[5] = CStringGetTextDatum(dbname);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));
@@ -512,7 +557,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	/* Advance cmd counter to make the database visible */
 	CommandCounterIncrement();
 
-	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest, guest_scm);
+	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest, guest_scm, owner);
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	old_createrole_self_grant = pstrdup(GetConfigOption("createrole_self_grant", false, true));
@@ -798,9 +843,9 @@ create_builtin_dbs(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		do_create_bbf_db("master", NULL, sa_name);
-		do_create_bbf_db("tempdb", NULL, sa_name);
-		do_create_bbf_db("msdb", NULL, sa_name);
+		do_create_bbf_db(NULL, "master", NULL, sa_name);
+		do_create_bbf_db(NULL, "tempdb", NULL, sa_name);
+		do_create_bbf_db(NULL, "msdb", NULL, sa_name);
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -837,7 +882,7 @@ create_msdb_if_not_exists(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		create_bbf_db_internal("msdb", NULL, sa_name, 4);
+		create_bbf_db_internal(NULL, "msdb", NULL, sa_name, 4);
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);

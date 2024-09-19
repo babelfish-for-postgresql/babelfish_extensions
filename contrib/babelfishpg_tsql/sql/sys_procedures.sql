@@ -129,7 +129,7 @@ BEGIN
     SELECT concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
   END IF;
 
-  IF lower("@option_scope") = 'server' THEN
+  IF PG_CATALOG.lower("@option_scope") = 'server' THEN
     server := true;
   ELSIF btrim("@option_scope") != '' THEN
     RAISE EXCEPTION 'invalid option: %', "@option_scope";
@@ -142,9 +142,9 @@ BEGIN
     ELSE
       RAISE EXCEPTION 'unknown configuration: %', normalized_name;
     END IF;
-  ELSIF cnt > 1 AND (lower("@option_value") != 'ignore' AND lower("@option_value") != 'strict' 
-                AND lower("@option_value") != 'default') THEN
-    RAISE EXCEPTION 'unvalid option: %', lower("@option_value");
+  ELSIF cnt > 1 AND (pg_catalog.lower("@option_value") != 'ignore' AND pg_catalog.lower("@option_value") != 'strict' 
+                AND pg_catalog.lower("@option_value") != 'default') THEN
+    RAISE EXCEPTION 'unvalid option: %', pg_catalog.lower("@option_value");
   END IF;
 
   OPEN cur FOR SELECT name FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
@@ -153,9 +153,9 @@ BEGIN
     exit when not found;
 
     SELECT boot_val, vartype, enumvals INTO default_value, value_type, enum_value FROM pg_catalog.pg_settings WHERE name = guc_name;
-    IF lower("@option_value") = 'default' THEN
+    IF pg_catalog.lower("@option_value") = 'default' THEN
         PERFORM pg_catalog.set_config(guc_name, default_value, 'false');
-    ELSIF lower("@option_value") = 'ignore' or lower("@option_value") = 'strict' THEN
+    ELSIF pg_catalog.lower("@option_value") = 'ignore' or pg_catalog.lower("@option_value") = 'strict' THEN
       IF value_type = 'enum' AND enum_value = '{"strict", "ignore"}' THEN
         PERFORM pg_catalog.set_config(guc_name, "@option_value", 'false');
       ELSE
@@ -167,9 +167,9 @@ BEGIN
     IF server THEN
       SELECT current_user INTO prev_user;
       PERFORM sys.babelfish_set_role(session_user);
-      IF lower("@option_value") = 'default' THEN
+      IF pg_catalog.lower("@option_value") = 'default' THEN
         EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, default_value);
-      ELSIF lower("@option_value") = 'ignore' or lower("@option_value") = 'strict' THEN
+      ELSIF pg_catalog.lower("@option_value") = 'ignore' or pg_catalog.lower("@option_value") = 'strict' THEN
         IF value_type = 'enum' AND enum_value = '{"strict", "ignore"}' THEN
           EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, "@option_value");
         ELSE

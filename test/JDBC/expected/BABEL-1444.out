@@ -98,14 +98,14 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-dbo
+db1_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-dbo, "$user", sys, pg_catalog
+db1_dbo, "$user", sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -135,14 +135,14 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-dbo
+db1_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-dbo, "$user", sys, pg_catalog
+db1_dbo, "$user", sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -227,6 +227,211 @@ dbo
 
 -- Test CREATE
 CREATE DATABASE db1;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+master_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+-- Clean up
+DROP DATABASE db1;
+GO
+
+-- Tests for db level collation
+-- Test properties after USE
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+master_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+USE db1;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+db1_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+db1_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+-- Error: Test DROP
+DROP DATABASE db1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop database "db1" because it is currently in use)~~
+
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+db1_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+db1_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+-- Test DROP when using another database
+USE MASTER;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+master_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+DROP DATABASE db1;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+master_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+-- Test CREATE
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
 
 SELECT current_setting('role');

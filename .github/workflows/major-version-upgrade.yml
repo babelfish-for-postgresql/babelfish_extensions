@@ -123,7 +123,7 @@ jobs:
           } > pg_hba.conf
           ~/${{env.OLD_INSTALL_DIR}}/bin/pg_ctl -c -D ~/${{env.OLD_INSTALL_DIR}}/data -l ~/${{env.OLD_INSTALL_DIR}}/data/logfile restart
           cd ~/work/babelfish_extensions/babelfish_extensions/
-          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="single-db" -v tsql_port="1433" -f .github/scripts/create_extension.sql
+          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="multi-db" -v tsql_port="1433" -f .github/scripts/create_extension.sql
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
         shell: bash
 
@@ -227,14 +227,14 @@ jobs:
      
       - name: Upload Postgres log
         if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
          name: postgres-log
          path: ~/${{env.NEW_INSTALL_DIR}}/data/logfile
 
       - name: Upload upgrade Log
         if: always() && steps.run-pg_upgrade.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: upgrade-logs
           path: |
@@ -254,14 +254,14 @@ jobs:
 
       - name: Upload Run Summary
         if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: test/JDBC/Info/run-summary.log
 
       - name: Upload Output Diff
         if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff

@@ -222,6 +222,7 @@ forjson-nesting
 format
 format-dep
 forxml
+forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
@@ -383,7 +384,7 @@ sys-sysobjects
 sys-system_objects
 sys-system_sql_modules
 sys-system_sql_modules-dep
-sys-systypes
+sys-systypes-before-16-2
 sys_sysusers_dep
 sys-tables
 sys-tables-dep
@@ -534,7 +535,12 @@ substring
 reverse
 stuff
 replicate
+string_agg
+getdate
 space
 replace
 binary-datatype-operators
+SELECT_INTO_TEST
+cast-varchar-to-time
+BABEL-5119
 

@@ -479,6 +479,16 @@ GO
 DROP DATABASE db_unsupported2;
 GO
 
+CREATE DATABASE db_unsupported1 CONTAINMENT = NONE COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+DROP DATABASE db_unsupported1;
+GO
+
+CREATE DATABASE db_unsupported2 COLLATE BBF_Unicode_CP1_CI_AI WITH DB_CHAINING ON;
+GO
+DROP DATABASE db_unsupported2;
+GO
+
 CREATE DATABASE db_unsupported3 WITH DB_CHAINING ON;
 GO
 DROP DATABASE db_unsupported3;
@@ -509,11 +519,29 @@ GO
 DROP DATABASE db_unsupported8;
 GO
 
+CREATE DATABASE db_unsupported9 CONTAINMENT = PARTIAL COLLATE Arabic_CI_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "arabic_ci_as" is not currently supported for database collation )~~
+
+DROP DATABASE db_unsupported9;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db_unsupported9" does not exist)~~
+
+
+CREATE DATABASE db_unsupported8 COLLATE SQL_Latin1_General_CP1_CI_AS WITH DB_CHAINING ON;
+GO
+DROP DATABASE db_unsupported8;
+GO
+
 CREATE DATABASE db_unsupported9 COLLATE Arabic_CI_AS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only "sql_latin1_general_cp1_ci_as" supported for default collation)~~
+~~ERROR (Message: "arabic_ci_as" is not currently supported for database collation )~~
 
 DROP DATABASE db_unsupported9;
 GO
@@ -537,11 +565,25 @@ GO
 ~~ERROR (Message: 'CONTAINMENT' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
 
 
+CREATE DATABASE db_unsupported1 CONTAINMENT = NONE COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'CONTAINMENT' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
+
+
 CREATE DATABASE db_unsupported2 CONTAINMENT = PARTIAL;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'CONTAINMENT' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
+
+
+CREATE DATABASE db_unsupported2 COLLATE BBF_Unicode_CP1_CI_AI WITH DB_CHAINING ON;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
 
 
 CREATE DATABASE db_unsupported3 WITH DB_CHAINING ON;
@@ -2440,7 +2482,7 @@ CREATE DATABASE t448 COLLATE NOT_VALID_COLLATION;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only "sql_latin1_general_cp1_ci_as" supported for default collation)~~
+~~ERROR (Message: Invalid collation "not_valid_collation")~~
 
 
 
@@ -2949,4 +2991,118 @@ GO
 
 ~~ERROR (Message: 'EXTERNAL NAME' is not currently supported in Babelfish)~~
 
+
+-- create login from windows
+-- Add 'dummydomain' domain entry
+exec sys.babelfish_add_domain_mapping_entry 'dummydomain', 'dummydomain.babel';
+GO
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
+
+
+CREATE LOGIN [\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The login name '\MSSQLSERVER' is invalid. The domain can not be empty.)~~
+
+
+CREATE LOGIN [NT Servicesomething\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Servicesomething\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [NT ServiceNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT ServiceNT Service\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [NT ServiceNT SerViCe\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT ServiceNT SerViCe\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [somethingNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'somethingNT Service\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [NT Service\NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The login name 'NT Service\NT Service\MSSQLSERVER' has invalid length. Login name length should be between 1 and 20 for windows login.)~~
+
+
+CREATE LOGIN [NT S\ervice\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT S\ervice\MSSQLSERVER' is not a valid name because it contains invalid characters.)~~
+
+
+CREATE LOGIN [NT Service\\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Service\\MSSQLSERVER' is not a valid name because it contains invalid characters.)~~
+
+
+CREATE LOGIN ["NT Service"\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: '"NT Service"\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [[NT Service]\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '\' at line 1 and character position 26)~~
+
+
+CREATE LOGIN [["NT Service"]\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '\' at line 1 and character position 28)~~
+
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
+
+
+CREATE LOGIN [NT SerViCe\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT SerViCe' domain is not yet supported in Babelfish.)~~
+
+
+CREATE LOGIN [dummydomain\NT Service] FROM WINDOWS
+GO
+
+-- Dropping 'nt service@DUMMYDOMAIN.BABEL'
+DROP LOGIN [dummydomain\NT Service]
+GO
+
+-- Remove entry for 'dummydomain'
+exec babelfish_remove_domain_mapping_entry 'dummydomain'
+GO
 

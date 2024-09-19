@@ -1693,6 +1693,7 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_tds_database_backend_count) (int16 db_id, bool ignore_current_connection);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
+	int		(*get_tds_numbackends) (void);
 	char	       *(*get_host_name) (void);
 	uint32_t        (*get_client_pid) (void);
 	Datum		(*get_datum_from_byte_ptr) (StringInfo buf, int datatype, int scale);
@@ -1767,6 +1768,10 @@ typedef struct PLtsql_protocol_plugin
 
 	uint64		(*bulk_load_callback) (int ncol, int nrow,
 									   Datum *Values, bool *Nulls);
+
+	void 		(*pltsql_rollback_txn_callback) (void);
+
+	void		(*pltsql_abort_any_transaction_callback) (void);
 
 	int			(*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
@@ -2147,6 +2152,7 @@ extern void PLTsqlRollbackTransaction(char *txnName, QueryCompletion *qc, bool c
 extern void pltsql_start_txn(void);
 extern void pltsql_commit_txn(void);
 extern void pltsql_rollback_txn(void);
+extern void pltsql_abort_any_transaction(void);
 extern bool pltsql_get_errdata(int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
 extern void pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, CachedPlanSource *cachedPlanSource);
 extern bool is_sysname_column(ColumnDef *coldef);
@@ -2160,6 +2166,7 @@ extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
 extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
+extern void update_RevokeRoleStmt(Node *n, List *privs, List *roles);
 extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);

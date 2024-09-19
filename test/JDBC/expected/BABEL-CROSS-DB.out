@@ -320,6 +320,7 @@ GO
 
 ~~ERROR (Message: permission denied for table master_t1)~~
 
+-- terminate-tsql-conn user=johndoe password=12345678
 
 -- tsql
 USE MASTER;
@@ -361,6 +362,359 @@ int#!#int
 4#!#10
 5#!#30
 6#!#20
+~~END~~
+
+
+USE master;
+GO
+-- terminate-tsql-conn user=johndoe password=12345678
+
+-- tsql
+USE db1;
+GO
+
+REVOKE SELECT ON dbo.db1_t1 FROM db1_janedoe;
+GO
+
+USE MASTER;
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP TABLE tab1
+GO
+
+DELETE FROM master.dbo.master_t1
+GO
+~~ROW COUNT: 5~~
+
+
+-- REPEATING SAME TESTS FOR "db1" BUT CREATED THROUGH COLLATE CLAUSE
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+USE db1;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+INSERT INTO master.dbo.master_t1 VALUES (10);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+7#!#10
+~~END~~
+
+
+SELECT * FROM master..master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+7#!#10
+~~END~~
+
+
+EXEC master.dbo.master_p1
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+master.dbo.master_p1
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC master.dbo.master_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tab1 resolves to master.myschema.tab1
+EXEC master.myschema.proc1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+1
+~~END~~
+
+
+-- tab1 resolves to master.dbo.tab1
+EXEC master.myschema.proc2
+GO
+
+SELECT * from master.dbo.tab1;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+-- runtime error
+EXEC master.dbo.master_p3
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+EXEC master..master_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+UPDATE master.dbo.master_t1
+SET a = 11
+WHERE id = 1;
+GO
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+7#!#10
+~~END~~
+
+
+DELETE FROM master.dbo.master_t1
+WHERE id = 1;
+GO
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+7#!#10
+~~END~~
+
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+CREATE PROCEDURE p1
+AS
+INSERT INTO master.dbo.master_t1 VALUES (10);
+GO
+
+EXEC p1;
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p1;
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p1;
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE dbo.db1_t1 (a int);
+GO
+
+INSERT INTO dbo.db1_t1 (a)
+SELECT (a) FROM master.dbo.master_t1;
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO dbo.db1_t1 (a)
+OUTPUT inserted.a INTO master.dbo.master_t1 (a)
+VALUES (30);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Expect an error
+INSERT INTO dbo.db1_t1 (a)
+EXECUTE master.dbo.master_p1;
+GO
+~~ROW COUNT: 5~~
+
+
+EXECUTE master.dbo.master_p1;
+GO
+~~START~~
+int
+10
+10
+10
+10
+30
+~~END~~
+
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+CREATE TABLE dbo.db1_t2 (a int);
+GO
+
+INSERT INTO dbo.db1_t2 VALUES (20);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO master.dbo.master_t1 (a)
+SELECT (a) FROM db1_t2;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+7#!#10
+8#!#10
+9#!#10
+10#!#10
+11#!#30
+12#!#20
+~~END~~
+
+
+USE MASTER;
+GO
+
+--tsql
+USE db1;
+GO
+
+CREATE USER db1_janedoe FOR LOGIN johndoe;
+GO
+
+-- tsql    user=johndoe    password=12345678
+USE MASTER;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+master_janedoe
+~~END~~
+
+
+SELECT * FROM db1.dbo.db1_t1 ORDER BY a;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table db1_t1)~~
+
+
+USE db1;
+GO
+
+EXEC master.dbo.master_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+db1_janedoe
+~~END~~
+
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+7#!#10
+8#!#10
+9#!#10
+10#!#10
+11#!#30
+12#!#20
+~~END~~
+
+-- terminate-tsql-conn user=johndoe password=12345678
+
+-- tsql
+USE MASTER;
+GO
+
+GRANT SELECT ON dbo.master_t1 TO master_janedoe;
+GO
+
+GRANT EXECUTE ON dbo.master_p2 TO master_janedoe;
+GO
+
+USE db1;
+GO
+
+GRANT SELECT ON dbo.db1_t1 TO db1_janedoe;
+GO
+
+-- tsql user=johndoe password=12345678
+USE MASTER;
+GO
+
+USE db1;
+GO
+
+EXEC master.dbo.master_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+7#!#10
+8#!#10
+9#!#10
+10#!#10
+11#!#30
+12#!#20
 ~~END~~
 
 
@@ -434,23 +788,6 @@ void
 DROP LOGIN johndoe;
 GO
 
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
-
 -- tsql
 USE master;
 GO
@@ -459,6 +796,93 @@ CREATE DATABASE db1;
 GO
 
 CREATE DATABASE db2;
+GO
+
+USE db1;
+GO
+
+CREATE PROCEDURE p1
+AS
+EXEC('USE db1');
+SELECT 10;
+GO
+
+CREATE TABLE dbo.db1_t1 (id int identity, a int);
+GO
+
+USE db2;
+GO
+
+INSERT INTO db1.dbo.db1_t1 (a) VALUES (10);
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE p1
+AS
+INSERT INTO db1.dbo.db1_t1 VALUES (1);
+GO
+
+EXEC p1;
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p1;
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE dbo.db2_t1 (b int);
+GO
+
+INSERT INTO dbo.db2_t1 (b)
+SELECT a FROM db1.dbo.db1_t1
+WHERE id = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM dbo.db2_t1 ORDER BY b;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC db1.dbo.p1;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+DROP PROCEDURE p1
+GO
+
+-- tsql
+USE db1;
+GO
+
+DROP TABLE db1_t1;
+GO
+
+USE master;
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+
+-- Repeating tests with AI collated database
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+CREATE DATABASE db2 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
 
 USE db1;
@@ -744,19 +1168,207 @@ GO
 DROP DATABASE db_4934_2;
 GO
 
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
+-- Repeating tests with AI collated database
+-- BABEL-4934 Test blocking cross-db SELECT-INTO statement
+CREATE DATABASE db_4934_1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+CREATE DATABASE db_4934_2 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+USE master;
+GO
+
+CREATE TABLE t1(a int);
+GO
+
+CREATE TABLE t2(b int);
+GO
+
+USE db_4934_1;
+GO
+
+CREATE TABLE t1(a int);
+GO
+
+CREATE TABLE t2(b int);
+GO
+
+USE db_4934_2;
+GO
+
+CREATE TABLE t1(a int);
+GO
+
+CREATE TABLE t2(b int);
+GO
+
+USE db_4934_1;
+GO
+
+-- #4934.1 It should be blocked
+SELECT * INTO t222 FROM master.dbo.t1; 
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO t222 FROM master..t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO t222 FROM db_4934_2..t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO t222 FROM db_4934_2.dbo.t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO t222 FROM db_4934_2..t1, t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO t222 FROM t1, db_4934_1..t2;
+GO
+
+SELECT * INTO t222 FROM master..t1, db_4934_2..t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO t222 FROM (SELECT * FROM master..t1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO t222 FROM (SELECT * FROM t1, master..t1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO t222 FROM (SELECT *, (SELECT * FROM master..t1) FROM t1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO t222 FROM (SELECT *, (SELECT * FROM t1) FROM master..t3);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO master..t222 FROM db_4934_2..t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO db_4934_1..t222 FROM db_4934_2..t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+SELECT * INTO master..t222 FROM master..t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+-- #4934.2 Following statements will succeed across same database
+SELECT * INTO t3 FROM db_4934_1.dbo.t1;
+GO
+
+SELECT * INTO t4 FROM dbo.t1;
+GO
+
+SELECT * INTO t5 FROM db_4934_1..t1;
+GO
+
+SELECT * INTO t6 FROM db_4934_1..t1, db_4934_1..t2;
+GO
+
+SELECT * INTO t7 FROM (SELECT * FROM db_4934_1..t1);
+GO
+
+SELECT * INTO t8 FROM (SELECT *, (SELECT * FROM db_4934_1..t2) FROM db_4934_1..t1);
+GO
+
+-- validate the access
+SELECT * FROM t3, t4, t5, t6, t7, t8;
 GO
 ~~START~~
-bool
-t
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
-SELECT pg_sleep(1);
+
+DROP TABLE t3, t4, t5, t6, t7, t8;
+GO
+
+-- #4934.3 Temporary table should not be blocked
+SELECT * INTO #t1 FROM db_4934_1.dbo.t1;
+GO
+
+SELECT * INTO #t2 FROM (SELECT * FROM db_4934_1.dbo.t1);
+GO
+
+-- validate the access
+SELECT * FROM #t1, #t2;
 GO
 ~~START~~
-void
-
+int#!#int
 ~~END~~
+
+
+DROP TABLE #t1, #t2;
+GO
+
+-- Even though this is same as above statement, this will still fail since
+-- internally it considers as cross-db statement (This behaviour is general to
+-- all of the applicable DMLs)
+SELECT * INTO tempdb..#t3 FROM db_4934_1.dbo.t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.)~~
+
+
+
+USE master;
+GO
+
+DROP TABLE t1, t2;
+GO
+
+DROP DATABASE db_4934_1;
+GO
+
+DROP DATABASE db_4934_2;
+GO
 

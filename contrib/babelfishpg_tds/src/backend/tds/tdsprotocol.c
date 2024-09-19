@@ -128,7 +128,7 @@ ResetTDSConnection(void)
 	TdsErrorContext->err_text = "Resetting the TDS connection";
 
 	/* Make sure we've killed any active transaction */
-	AbortOutOfAnyTransaction();
+	pltsql_plugin_handler_ptr->pltsql_abort_any_transaction_callback();
 
 	/*
 	 * Save the transaction isolation level that should be restored after
@@ -154,12 +154,18 @@ ResetTDSConnection(void)
 	TdsProtocolInit();
 	TdsResetCache();
 	TdsResponseReset();
+<<<<<<< HEAD
 	/* Retore previous isolation level when not called by sys.sp_reset_connection */
 	if (!resetTdsConnectionFlag)
 	{
 		SetConfigOption("default_transaction_isolation", isolationOld,
 						PGC_BACKEND, PGC_S_CLIENT);
 	}
+=======
+	TdsResetBcpOffset();
+	SetConfigOption("default_transaction_isolation", isolationOld,
+					PGC_BACKEND, PGC_S_CLIENT);
+>>>>>>> BABEL_4_X_DEV
 
 	tvp_lookup_list = NIL;
 

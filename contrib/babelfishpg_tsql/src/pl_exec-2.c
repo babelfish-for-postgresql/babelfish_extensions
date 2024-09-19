@@ -24,6 +24,7 @@
 #include "dbcmds.h"
 #include "pl_explain.h"
 #include "pltsql.h"
+#include "rolecmds.h"
 #include "session.h"
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
@@ -3599,6 +3600,7 @@ execute_bulk_load_insert(int ncol, int nrow,
 				pfree(cstmt->relation);
 			}
 			pfree(cstmt);
+			cstmt = NULL;
 		}
 
 		/* Reset Insert-Bulk Options. */
@@ -3632,27 +3634,11 @@ execute_bulk_load_insert(int ncol, int nrow,
 		 * In an error condition, the caller calls the function again to do
 		 * the cleanup.
 		 */
-		MemoryContext oldcontext;
-
 		/* Cleanup cstate. */
 		EndBulkCopy(cstmt->cstate, true);
 
 		if (ActiveSnapshotSet() && GetActiveSnapshot() == snap)
 			PopActiveSnapshot();
-		oldcontext = CurrentMemoryContext;
-
-		/*
-		 * If a transaction block is already in progress then abort it, else
-		 * rollback entire transaction.
-		 */
-		if (!IsTransactionBlockActive())
-		{
-			AbortCurrentTransaction();
-			StartTransactionCommand();
-		}
-		else
-			pltsql_rollback_txn();
-		MemoryContextSwitchTo(oldcontext);
 
 		/* Reset Insert-Bulk Options. */
 		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
@@ -3869,6 +3855,8 @@ static int
 exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *stmt)
 {
 	char *new_owner_is_user;
+	Oid 		save_userid;
+	int 		save_sec_context;
 	
 	/* Verify target database exists. */
 	if (!DbidIsValid(get_db_id(stmt->db_name)))
@@ -3921,9 +3909,29 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						errmsg("The proposed new database owner is already a user or aliased in the database.")));				
 	}
-					
-	/* All validations done, perform the actual update */
-	update_db_owner(stmt->new_owner_name, stmt->db_name);	
+
+	/* Save the previous user to be restored after granting dbo role to the login. */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	PG_TRY();
+	{
+		/*
+		* Set current user to bbf_role_admin to grant roles.
+		*/
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		
+		/* Revoke dbo role from the previous owner */
+		grant_revoke_dbo_to_login(get_owner_of_db(stmt->db_name), stmt->db_name, false);
+
+		/* Grant dbo role to the new owner */
+		grant_revoke_dbo_to_login(stmt->new_owner_name, stmt->db_name, true);
+		update_db_owner(stmt->new_owner_name, stmt->db_name);	
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 	return PLTSQL_RC_OK;
 }
 
@@ -4304,7 +4312,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 
 	/* set the function oid of operator in tsql comparator context */
 	cxt.function_oid = cmpfunction_oid;
-	cxt.colloid = tsql_get_server_collation_oid_internal(false);
+	cxt.colloid = tsql_get_database_or_server_collation_oid_internal(false);
 	cxt.contains_duplicate = false;
 
 	/* 

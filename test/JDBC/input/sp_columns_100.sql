@@ -95,10 +95,35 @@ go
 create table nums(a int, b smallint, c tinyint, d bigint, e bit, f float, g real, h numeric(5,3), i money, j smallmoney)
 go
 
+create table test_escape_chars_sp_columns_100(a int);
+go
+
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 
+-- TODO: Should NOT return any row once the dependencies on sp_columns_100 has been fixed (added '\' as ESCAPE character as temporary fix for now)
+EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+
+EXEC sys.sp_columns_100 'test\_escape\_chars\_sp\_columns\_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+
+EXEC sys.sp_columns_100 'test_escape_chars_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+
+EXEC sys.sp_columns_100 'test\_escape\_chars\_sp\_columns\_100', 'dbo', NULL, NULL
+GO
+
+EXEC sys.sp_columns_100 'test_escape_chars_sp_columns_100', 'dbo', NULL, NULL
+GO
+
+EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL
+GO
+
 drop table nums
+go
+
+drop table test_escape_chars_sp_columns_100;
 go
 
 Use master
@@ -192,3 +217,54 @@ drop type binary_t;
 drop type image_t;
 drop database sp_cols;
 go
+
+--Collation using BBF_Unicode_CP1_CI_AI
+Create database sp_cols collate BBF_Unicode_CP1_CI_AI
+go
+
+Use sp_cols
+go
+
+EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+go
+
+create table nums(a int, b smallint, c tinyint, d bigint, e bit, f float, g real, h numeric(5,3), i money, j smallmoney)
+go
+
+create table test_escape_chars_sp_columns_100(a int);
+go
+
+EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+go
+
+-- TODO: Should NOT return any row once the dependencies on sp_columns_100 has been fixed (added '\' as ESCAPE character as temporary fix for now)
+EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+
+EXEC sys.sp_columns_100 'test\_escape\_chars\_sp\_columns\_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+
+EXEC sys.sp_columns_100 'test_escape_chars_sp_columns_100', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+
+EXEC sys.sp_columns_100 'test\_escape\_chars\_sp\_columns\_100', 'dbo', NULL, NULL
+GO
+
+EXEC sys.sp_columns_100 'test_escape_chars_sp_columns_100', 'dbo', NULL, NULL
+GO
+
+EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL
+GO
+
+drop table nums
+go
+
+drop table test_escape_chars_sp_columns_100;
+go
+
+use master
+go
+
+drop database sp_cols
+go
+
