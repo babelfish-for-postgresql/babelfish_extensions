@@ -1,3 +1,11 @@
+#Q#DROP TABLE IF EXISTS sp_reset_connection_test_table;
+#Q#CREATE TABLE sp_reset_connection_test_table(id int);
+#Q#INSERT INTO sp_reset_connection_test_table VALUES(1)
+#Q#INSERT INTO sp_reset_connection_test_table VALUES(2)
+#Q#sys.sp_reset_connection
+#Q#SELECT * FROM sp_reset_connection_test_table
+#D#int
+1
 #Q#CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
 #Q#INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
 #Q#SELECT * from #babel_temp_table
@@ -8,14 +16,21 @@
 #Q#sys.sp_reset_connection
 #Q#SELECT * from #babel_temp_table
 #E#relation "#babel_temp_table" does not exist
-#Q#DROP TABLE IF EXISTS babel_test_sp_reset_table;
-#Q#CREATE TABLE babel_test_sp_reset_table (ID INT identity(1,1), Data INT);
-#Q#INSERT INTO babel_test_sp_reset_table (Data) VALUES (100);
-#Q#INSERT INTO babel_test_sp_reset_table (Data) VALUES (200);
+#Q#select current_setting('transaction_isolation')
+#D#text
+repeatable read
 #Q#sys.sp_reset_connection
-#Q#SELECT * FROM babel_test_sp_reset_table;
+#Q#select current_setting('transaction_isolation')
+#D#text
+read committed
+#Q#CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
+#Q#INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
+#Q#SELECT * from #babel_temp_table
 #D#int#!#int
 1#!#100
-#Q#SELECT * FROM babel_test_sp_reset_table;
-#D#int#!#int
-1#!#100
+2#!#200
+3#!#300
+#Q#sys.sp_reset_connection
+#Q#sys.sp_reset_connection
+#Q#SELECT * from #babel_temp_table
+#E#relation "#babel_temp_table" does not exist

@@ -1,19 +1,35 @@
-# Test (1): Test sys.sp_reset_connection stored procedure
+# Test (1): Test abort open transaction
+DROP TABLE IF EXISTS sp_reset_connection_test_table;
+CREATE TABLE sp_reset_connection_test_table(id int);
+INSERT INTO sp_reset_connection_test_table VALUES(1)
+txn#!#begin
+INSERT INTO sp_reset_connection_test_table VALUES(2)
+storedproc#!#prep#!#sys.sp_reset_connection#!#
+txn#!#commit
+SELECT * FROM sp_reset_connection_test_table
+# Test (1): End
+
+# Test (2): Test temp table deletion
 CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
 INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
 SELECT * from #babel_temp_table
 storedproc#!#prep#!#sys.sp_reset_connection#!#
 SELECT * from #babel_temp_table
-# Test (1): End
-
-# Test (2): 
-DROP TABLE IF EXISTS babel_test_sp_reset_table;
-CREATE TABLE babel_test_sp_reset_table (ID INT identity(1,1), Data INT);
-INSERT INTO babel_test_sp_reset_table (Data) VALUES (100);
-txn#!#BEGIN
-INSERT INTO babel_test_sp_reset_table (Data) VALUES (200);
-storedproc#!#prep#!#sys.sp_reset_connection#!#
-SELECT * FROM babel_test_sp_reset_table;
-#txn#!#COMMIT
-SELECT * FROM babel_test_sp_reset_table;
 # Test (2): End
+
+# Test (3): Test reset of isolation level
+txn#!#begin#!#isolation#!#ss
+select current_setting('transaction_isolation')
+storedproc#!#prep#!#sys.sp_reset_connection#!#
+select current_setting('transaction_isolation')
+txn#!#commit 
+# Test (3): End
+
+# Test (4): Test prepexec sp_reset_connection
+CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
+INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
+SELECT * from #babel_temp_table
+prepst#!#sys.sp_reset_connection#!#
+prepst#!#exec#!#
+SELECT * from #babel_temp_table
+# Test (4): End

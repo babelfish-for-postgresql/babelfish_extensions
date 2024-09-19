@@ -1,2 +1,0 @@
-DROP PROC test_sp_reset_connection_proc
-GO
