@@ -1313,13 +1313,11 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
 			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
 		{
-			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
-				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
+			if (((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
+				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0)) 
+				&& (suppress_role_error || user_exists_for_db(db_name, new_user_name)))
 			{
-				if(suppress_role_error || user_exists_for_db(db_name, new_user_name))
-				{
-					return new_user_name;
-				}
+				return new_user_name;
 			}
 		}
 	}
@@ -1351,32 +1349,20 @@ get_dbo_schema_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if (0 == strcmp(dbname, "master"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "master_dbo");
-		return name;
+	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
 	}
-	if (0 == strcmp(dbname, "tempdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "tempdb_dbo");
-		return name;
-	}
-	if (0 == strcmp(dbname, "msdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "msdb_dbo");
-		return name;
-	}
-	if (SINGLE_DB == get_migration_mode())
+	else if (SINGLE_DB == get_migration_mode())
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
-		return name;
 	}
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
 char *
@@ -1384,32 +1370,20 @@ get_dbo_role_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if (0 == strcmp(dbname, "master"))
+	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
 	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "master_dbo");
-		return name;
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
 	}
-	if (0 == strcmp(dbname, "tempdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "tempdb_dbo");
-		return name;
-	}
-	if (0 == strcmp(dbname, "msdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "msdb_dbo");
-		return name;
-	}
-	if (SINGLE_DB == get_migration_mode())
+	else if (SINGLE_DB == get_migration_mode())
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
-		return name;
 	}
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
 char *
@@ -1417,32 +1391,20 @@ get_db_owner_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if (0 == strcmp(dbname, "master"))
+	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
 	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "master_db_owner");
-		return name;
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_owner", dbname);
 	}
-	if (0 == strcmp(dbname, "tempdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "tempdb_db_owner");
-		return name;
-	}
-	if (0 == strcmp(dbname, "msdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "msdb_db_owner");
-		return name;
-	}
-	if (SINGLE_DB == get_migration_mode())
+	else if (SINGLE_DB == get_migration_mode())
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_owner");
-		return name;
 	}
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_owner", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
 char *
@@ -1450,32 +1412,13 @@ get_guest_role_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if (0 == strcmp(dbname, "master"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "master_guest");
-		return name;
-	}
-	if (0 == strcmp(dbname, "tempdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "tempdb_guest");
-		return name;
-	}
-	if (0 == strcmp(dbname, "msdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "msdb_guest");
-		return name;
-	}
-		
 	/*
 	 * Always prefix with dbname regardless if single or multidb. Note that
 	 * dbo is an exception.
 	 */
-	else
-	{
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
-		truncate_identifier(name, strlen(name), false);
-		return name;
-	}
+	snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
+	truncate_identifier(name, strlen(name), false);
+	return name;
 }
 
 char *
@@ -1483,33 +1426,20 @@ get_guest_schema_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if (0 == strcmp(dbname, "master"))
+	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
 	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "master_guest");
-		return name;
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
 	}
-	if (0 == strcmp(dbname, "tempdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "tempdb_guest");
-		return name;
-	}
-	if (0 == strcmp(dbname, "msdb"))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "msdb_guest");
-		return name;
-	}
-
-	if (SINGLE_DB == get_migration_mode())
+	else if (SINGLE_DB == get_migration_mode())
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "guest");
-		return name;
 	}
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
 bool
