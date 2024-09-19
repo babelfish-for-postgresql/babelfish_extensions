@@ -50,7 +50,7 @@ GO
 
 -- Case 1.5: CREATE DATABASE WITH COLLATION CREATED FROM PG-ENDPOINT
 -- psql
-CREATE COLLATION sys.my_collation (provider = icu, locale = '@colStrength=secondary', deterministic = false);
+CREATE COLLATION db_level_collation (provider = icu, locale = '@colStrength=secondary', deterministic = false);
 GO
 
 -- tsql

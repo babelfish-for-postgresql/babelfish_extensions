@@ -266,5 +266,5 @@ DROP DATABASE test_db_collation_vu_prepare_db142;
 GO
 
 -- psql
-DROP COLLATION sys.my_collation;
+DROP COLLATION db_level_collation;
 GO

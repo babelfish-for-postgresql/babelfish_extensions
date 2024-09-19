@@ -1,4 +1,5 @@
 Could not find dependencies on
+Collation db_level_collation
 Collation sys.bbf_unicode_cp1250_cs_ai
 Collation sys.bbf_unicode_cp1251_ci_ai
 Collation sys.bbf_unicode_cp1251_cs_ai
@@ -51,7 +52,6 @@ Collation sys.korean_wansung_ci_as
 Collation sys.modern_spanish_ci_as
 Collation sys.mongolian_ci_ai
 Collation sys.mongolian_cs_as
-Collation sys.my_collation
 Collation sys.polish_cs_as
 Collation sys.thai_ci_ai
 Collation sys.thai_ci_as
