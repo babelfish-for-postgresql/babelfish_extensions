@@ -277,7 +277,7 @@ GetTDSRequest(bool *resetProtocol)
 		 * memory context before exit so that we can process the request
 		 * later.
 		 */
-		if ((status & TDS_PACKET_HEADER_STATUS_RESETCON))
+		if (status & TDS_PACKET_HEADER_STATUS_RESETCON)
 		{
 			MemoryContextSwitchTo(TopMemoryContext);
 
