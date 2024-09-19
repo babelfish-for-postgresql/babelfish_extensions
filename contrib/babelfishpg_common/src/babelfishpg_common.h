@@ -1,7 +1,6 @@
 #include "postgres.h"
 
 #include "fmgr.h"
-#include "utils/timestamp.h"
 
 /*
  * Casting float < -1.0 to unsigned integer could cause issues on ARM.
@@ -64,7 +63,7 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_rowversion_or_timestamp_datatype) (Oid oid);
 	Datum		(*datetime_in_str) (char *str, Node *escontext);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);
-	Datum		(*timestamptz_datetimeoffset) (TimestampTz timestamp);
+	Datum		(*timestamptz_datetimeoffset) (PG_FUNCTION_ARGS);
 	Datum		(*timestamptz_datetime2) (PG_FUNCTION_ARGS);
 	Datum		(*timestamptz_datetime) (PG_FUNCTION_ARGS);
 	Datum		(*datetimeoffset_timestamp) (PG_FUNCTION_ARGS);

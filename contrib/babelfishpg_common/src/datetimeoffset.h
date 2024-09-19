@@ -26,7 +26,7 @@ extern void AdjustTimestampForSmallDatetime(Timestamp *time);
 extern void CheckSmalldatetimeRange(const Timestamp time, Node *escontext);
 extern void CheckDatetimeRange(const Timestamp time, Node *escontext);
 extern void CheckDatetime2Range(const Timestamp time, Node *escontext);
-extern Datum timestamptz_datetimeoffset(TimestampTz timestamp);
+extern Datum timestamptz_datetimeoffset(PG_FUNCTION_ARGS);
 extern Datum timestamptz_datetime2(PG_FUNCTION_ARGS);
 extern Datum timestamptz_datetime(PG_FUNCTION_ARGS);
 extern Datum datetimeoffset_timestamp(PG_FUNCTION_ARGS);
