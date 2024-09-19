@@ -222,6 +222,7 @@ forjson-nesting
 format
 format-dep
 forxml
+forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
@@ -541,3 +542,5 @@ binary-datatype-operators
 SELECT_INTO_TEST
 securityadmin_role
 cast-varchar-to-time
+BABEL-5119
+
