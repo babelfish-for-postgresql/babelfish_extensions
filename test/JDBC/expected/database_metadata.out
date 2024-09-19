@@ -21,9 +21,12 @@ tempdb
 dbmeta#!#getColumnPrivileges#!#master|dbo|dbmeta_tab1|col1
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#dbo#!#INSERT#!#YES
 master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#dbo#!#REFERENCES#!#YES
+master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#db_datareader#!#SELECT#!#NO
 master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#dbo#!#SELECT#!#YES
+master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 master#!#dbo#!#dbmeta_tab1#!#col1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -216,10 +219,14 @@ dbo#!#<NULL>
 dbmeta#!#getTablePrivileges#!#master|dbo|dbmeta_tab1
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#DELETE#!#YES
+master#!#dbo#!#dbmeta_tab1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#INSERT#!#YES
 master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#REFERENCES#!#YES
+master#!#dbo#!#dbmeta_tab1#!#dbo#!#db_datareader#!#SELECT#!#NO
 master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#SELECT#!#YES
+master#!#dbo#!#dbmeta_tab1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 master#!#dbo#!#dbmeta_tab1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 

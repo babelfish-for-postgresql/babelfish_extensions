@@ -13,10 +13,14 @@ exec sp_table_privileges @table_name = 'babel_sp_table_priviliges_vu_prepare_t1'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -25,10 +29,14 @@ exec sp_table_privileges @table_name = 'babel_sp_table_priviliges_vu_prepare_t2'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -37,10 +45,14 @@ exec sp_table_privileges @table_name = 'babel_sp_table_priviliges_vu_prepare_t3'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t3#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t3#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t3#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t3#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t3#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t3#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t3#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t3#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t3#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -50,10 +62,14 @@ exec sp_table_privileges 'babel_sp_table_priviliges_vu_prepare_t1', 'dbo', 'babe
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -63,10 +79,14 @@ EXEC SP_TABLE_PRIVILEGES @TABLE_NAME = 'babel_sp_table_priviliges_vu_prepare_t2'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -76,10 +96,14 @@ exec sp_table_privileges @TABLE_NAME = 'babel_sp_table_priviliges_vu_prepare_T2'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -89,10 +113,14 @@ exec [sp_table_privileges] @TABLE_NAME = 'babel_sp_table_priviliges_vu_prepare_t
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t2#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -102,10 +130,14 @@ exec [sp_table_privileges] @TABLE_NAME = 'babel_sp_table_priviliges_vu_prepare_m
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -114,10 +146,14 @@ exec sp_table_privileges @TABLE_NAME = 'babel_sp_table_priviliges_vu_prepare_MYT
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -126,10 +162,14 @@ exec sp_table_privileges @TABLE_NAME = 'babel_sp_table_priviliges_vu_prepare_myt
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -138,10 +178,14 @@ exec sp_table_privileges @TABLE_NAME = 'babel_sp_table_priviliges_vu_prepare_MYT
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -151,10 +195,14 @@ exec sp_table_privileges @TABLE_NAME = [babel_sp_table_priviliges_vu_prepare_myt
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -163,10 +211,14 @@ exec sp_table_privileges @TABLE_NAME = [babel_sp_table_priviliges_vu_prepare_MYT
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -175,10 +227,14 @@ exec sp_table_privileges @TABLE_NAME = [babel_sp_table_priviliges_vu_prepare_myt
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -187,10 +243,14 @@ exec sp_table_privileges @TABLE_NAME = [babel_sp_table_priviliges_vu_prepare_MYT
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -208,15 +268,23 @@ exec sp_table_privileges @TABLE_NAME = 'babel_sp_table_priviliges_vu_prepare_foo
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#UPDATE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar2#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar2#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar2#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar2#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar2#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar2#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar2#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar2#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar2#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -225,15 +293,23 @@ exec sp_table_privileges @table_name = 'babel_sp_table_priviliges_vu_prepare_fo_
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#UPDATE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -243,15 +319,23 @@ exec sp_table_privileges @table_name = 'babel_sp_table_priviliges_vu_prepare_fo[
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#UPDATE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_foobar1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -260,10 +344,14 @@ exec sp_table_privileges @table_name = 'babel_sp_table_priviliges_vu_prepare_fo[
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -272,10 +360,14 @@ exec sp_table_privileges @table_name = 'babel_sp_table_priviliges_vu_prepare_fo[
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#DELETE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#INSERT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#INSERT#!#YES
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datareader#!#SELECT#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_folbar1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
@@ -295,10 +387,14 @@ exec sp_table_privileges @table_name = 'babel_sp_table_priviliges_vu_prepare_t4'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t4#!#dbo#!#db_datawriter#!#DELETE#!#NO
 master#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t4#!#dbo#!#dbo#!#DELETE#!#YES
+master#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t4#!#dbo#!#db_datawriter#!#INSERT#!#NO
 master#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t4#!#dbo#!#dbo#!#INSERT#!#YES
 master#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t4#!#dbo#!#dbo#!#REFERENCES#!#YES
+master#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t4#!#dbo#!#db_datareader#!#SELECT#!#NO
 master#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t4#!#dbo#!#dbo#!#SELECT#!#YES
+master#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t4#!#dbo#!#db_datawriter#!#UPDATE#!#NO
 master#!#dbo#!#babel_sp_table_priviliges_vu_prepare_t4#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
