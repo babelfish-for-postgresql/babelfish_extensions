@@ -6018,14 +6018,16 @@ clean_up_bbf_partition_metadata(int16 dbid)
 	table_close(rel, RowExclusiveLock);
 }
 
-
 static ViewStmt *
-make_pivot_view_helper_view(Node* node, const char *viewName, const char *schemaname)
+make_pivot_helper_viewstmt(Node* node, const char *viewName, const char *schemaname)
 {
 	ViewStmt *n;
 
 	n = makeNode(ViewStmt);
-	n->view = makeRangeVar(pstrdup(schemaname), pstrdup(viewName), -1);
+	if (schemaname != NULL)
+		n->view = makeRangeVar(pstrdup(schemaname), pstrdup(viewName), -1);
+	else
+		n->view = makeRangeVar(NULL, pstrdup(viewName), -1);
 	n->view->relpersistence = RELPERSISTENCE_PERMANENT;
 	n->aliases = NIL;
 	n->query = node;
@@ -6066,7 +6068,12 @@ get_uuid_str_no_dash(pg_uuid_t *uuid)
  * 		Add a new entry to the sys.bbf_pivot_view catalog table.
  */
 char *
-add_entry_to_bbf_pivot_view(const char *pivot_view_name, Node *src_parsetree, Node *cat_parsetree, const char * source_text, const char *agg_func_name)
+add_entry_to_bbf_pivot_view(const char *pivot_view_name, 
+							const char *schema_name,
+							Node *src_parsetree, 
+							Node *cat_parsetree, 
+							const char * source_text, 
+							const char *agg_func_name)
 {
 	Relation	rel;
 	TupleDesc	dsc;
@@ -6083,7 +6090,11 @@ add_entry_to_bbf_pivot_view(const char *pivot_view_name, Node *src_parsetree, No
 	bool		new_record_nulls[BBF_PIVOT_VIEW_NUM_COLS];
 	StringInfoData 		buf;
 
-	logical_schema_name = get_authid_user_ext_schema_name(get_cur_db_name(), get_user_for_database(get_cur_db_name()));
+	/* if we don't have a schema defined, then we will use the default schema */
+	if (schema_name != NULL)
+		logical_schema_name = (char *) schema_name;
+	else
+		logical_schema_name = get_authid_user_ext_schema_name(get_cur_db_name(), get_user_for_database(get_cur_db_name()));
 	physical_schema_name = get_physical_schema_name(get_cur_db_name(), logical_schema_name);
 
 	rel = table_open(get_bbf_pivot_view_oid(), RowExclusiveLock);
@@ -6104,8 +6115,8 @@ add_entry_to_bbf_pivot_view(const char *pivot_view_name, Node *src_parsetree, No
 	cat_view_name = pstrdup(buf.data);
 
     /* create view for src_view and cat_view */
-	src_view = (ViewStmt *) make_pivot_view_helper_view(src_parsetree, src_view_name, physical_schema_name);
-	cat_view = (ViewStmt *) make_pivot_view_helper_view(cat_parsetree, cat_view_name, physical_schema_name);
+	src_view = (ViewStmt *) make_pivot_helper_viewstmt(src_parsetree, src_view_name, physical_schema_name);
+	cat_view = (ViewStmt *) make_pivot_helper_viewstmt(cat_parsetree, cat_view_name, physical_schema_name);
 	DefineView(src_view, pstrdup(source_text), -1, strlen(source_text));
 	DefineView(cat_view, pstrdup(source_text), -1, strlen(source_text));
 
@@ -6129,12 +6140,15 @@ add_entry_to_bbf_pivot_view(const char *pivot_view_name, Node *src_parsetree, No
 	return uuid_str;
 }
 
-static void drop_pivot_view_helper_view(char *view_name)
+static void drop_pivot_view_helper_view(char *schema_name, char *view_name)
 {
 	DropStmt *n;
 
 	n = makeNode(DropStmt);
-	n->objects = list_make1(list_make1(makeString(view_name)));
+	if (schema_name != NULL)
+		n->objects = list_make1(list_make2(makeString(schema_name), makeString(view_name)));
+	else
+		n->objects = list_make1(list_make1(makeString(view_name)));
 	n->removeType = OBJECT_VIEW;
 	n->behavior = DROP_RESTRICT;
 	n->missing_ok = false;
@@ -6156,15 +6170,12 @@ check_and_validate_uuid_in_bbf_pivot_view(const char *uuid)
 	HeapTuple	tuple;
 	bool		result,
 				uuid_is_null,
-				dbid_is_null,
-				schema_name_is_null;
-	char	   *catalog_uuid, 
-			   *catalog_schema_name;
+				dbid_is_null;
+	char	   *catalog_uuid;
 	int16 		catalog_dbid;
 
 	result = false;
 	catalog_uuid = NULL;
-	catalog_schema_name = NULL;
 	catalog_dbid = -1;
 
 	rel = table_open(get_bbf_pivot_view_oid(), AccessShareLock);
@@ -6181,12 +6192,9 @@ check_and_validate_uuid_in_bbf_pivot_view(const char *uuid)
 	{
 		catalog_dbid = DatumGetInt16(heap_getattr(tuple, Anum_bbf_pivot_view_dbid, RelationGetDescr(rel), &dbid_is_null));
 		catalog_uuid = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_pivot_view_pivot_view_uuid, RelationGetDescr(rel), &uuid_is_null));
-		catalog_schema_name = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_pivot_view_schema_name, RelationGetDescr(rel), &schema_name_is_null));
-
 
 		if (strcmp(catalog_uuid, uuid) == 0 
-				&& catalog_dbid == get_cur_db_id() 
-				&& strcmp(catalog_schema_name, get_authid_user_ext_schema_name(get_cur_db_name(), get_user_for_database(get_cur_db_name()))) == 0 )
+				&& catalog_dbid == get_cur_db_id())
 			result = true;
 	}
 	
@@ -6233,12 +6241,15 @@ remove_entrys_from_bbf_pivot_view(int16 dbid, const char *logical_schema_name, c
 	while (HeapTupleIsValid(tuple))
 	{
 		char 	*uuid;
+		char 	*schema_name;
 		char	*src_view_name;
 		char 	*cat_view_name;
 		bool	uuid_is_null;
+		bool	schema_is_null;
 		StringInfoData 	buf;
 		
 		uuid = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_pivot_view_pivot_view_uuid, RelationGetDescr(rel), &uuid_is_null));
+		schema_name = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_pivot_view_schema_name, RelationGetDescr(rel), &schema_is_null));
 
 		initStringInfo(&buf);
 		appendStringInfoString(&buf, BBF_PIVOT_VIEW_SRC_PREFIX);
@@ -6250,8 +6261,8 @@ remove_entrys_from_bbf_pivot_view(int16 dbid, const char *logical_schema_name, c
 		appendStringInfoString(&buf, uuid);
 		cat_view_name = pstrdup(buf.data);
 
-		drop_pivot_view_helper_view(src_view_name);
-		drop_pivot_view_helper_view(cat_view_name);
+		drop_pivot_view_helper_view(schema_name, src_view_name);
+		drop_pivot_view_helper_view(schema_name, cat_view_name);
 
 		if (HeapTupleIsValid(tuple))
 			CatalogTupleDelete(rel, &tuple->t_self);
@@ -6292,9 +6303,7 @@ clean_up_bbf_pivot_view(int16 dbid)
     tuple = systable_getnext(scan);
 	while (HeapTupleIsValid(tuple))
 	{
-		if (HeapTupleIsValid(tuple))
-			CatalogTupleDelete(rel, &tuple->t_self);
-		
+		CatalogTupleDelete(rel, &tuple->t_self);	
         tuple = systable_getnext(scan);
 	}
 

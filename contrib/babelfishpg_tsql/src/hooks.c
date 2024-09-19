@@ -5256,9 +5256,12 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	if (is_view_transform)
 	{	/* case 1: current query is wrapped in a view */
 		char		*view_name;
+		char		*schema_name;
 		char		*view_uuid;
 		view_name = getQueryEnvViewName(pstate->p_queryEnv);
+		schema_name = getQueryEnvViewSchemaName(pstate->p_queryEnv);
 		view_uuid = add_entry_to_bbf_pivot_view(view_name,
+												schema_name,
 												(Node *) copyObject(pivot_src_sql), 
 												(Node *) copyObject(stmt->catSql), 
 												pstate->p_sourcetext,
@@ -5304,7 +5307,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
  *    prepare a RawStmt for pivot view helper view.
  */
 static RawStmt*
-prepare_pivot_view_helper_view_rawstmt(char *view_name)
+prepare_pivot_view_helper_view_rawstmt(char *schema_name, char *view_name)
 {
 	RawStmt		*rawstmt;
 	SelectStmt  *selectstmt;
@@ -5323,7 +5326,7 @@ prepare_pivot_view_helper_view_rawstmt(char *view_name)
 
 	selectstmt = makeNode(SelectStmt);
 	selectstmt->targetList = list_make1(a_star_restarget);
-	selectstmt->fromClause = list_make1(makeRangeVar(NULL, pstrdup(view_name), -1));
+	selectstmt->fromClause = list_make1(makeRangeVar(pstrdup(schema_name), pstrdup(view_name), -1));
 	
 	rawstmt = makeNode(RawStmt);
 	rawstmt->stmt = (Node *) selectstmt;
@@ -5344,6 +5347,7 @@ pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	func_name = NULL;
 	func_arg_typeOid = InvalidOid;
 
 	/* check if the current function call is bbf_pivot */
@@ -5360,7 +5364,7 @@ pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr)
 		ReleaseSysCache(tuple);
 	}
 
-	if (strcmp(func_name, "bbf_pivot") != 0 || func_arg_typeOid != TEXTOID)
+	if (func_name == NULL || strcmp(func_name, "bbf_pivot") != 0 || func_arg_typeOid != TEXTOID)
 		return;
 
 	/* At this point, we are certain the function is bbf_pivot */
@@ -5386,7 +5390,9 @@ pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr)
 			}
 		}
 	}
-	else if (pivot_view_uuid && strlen(pivot_view_uuid) == PIVOT_UUID_LEN)
+	else if (pivot_view_uuid 
+			 && strlen(pivot_view_uuid) == PIVOT_UUID_LEN 
+			 && check_and_validate_uuid_in_bbf_pivot_view(pivot_view_uuid))
 	{
 		/* 
 		 * pivot view case
@@ -5399,10 +5405,12 @@ pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr)
 		RawStmt		*s_sql;
 		RawStmt		*c_sql;
 		char		*funcName;
+		char 		*logical_schema;
 		List 		*pivot_context_list;
 		StringInfoData 		buf;
 		
 		funcName = "";
+		logical_schema = NULL;
 		/* get pivot aggregate function name */
 		rel = table_open(get_bbf_pivot_view_oid(), RowExclusiveLock);
 
@@ -5419,6 +5427,13 @@ pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr)
 		{
 			bool isnull;
 			funcName = TextDatumGetCString(heap_getattr(tp, Anum_bbf_pivot_view_agg_func_name, RelationGetDescr(rel), &isnull));
+			logical_schema = TextDatumGetCString(heap_getattr(tp, Anum_bbf_pivot_view_schema_name, RelationGetDescr(rel), &isnull));
+		}
+		else
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+					errmsg("Babelfish PIVOT is not properly initialized. PIVOT Helper UUID not found")));
 		}
 		
 		systable_endscan(scan);
@@ -5428,12 +5443,12 @@ pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr)
 		initStringInfo(&buf);
 		appendStringInfoString(&buf, BBF_PIVOT_VIEW_SRC_PREFIX);
 		appendStringInfoString(&buf, pivot_view_uuid);
-		s_sql = prepare_pivot_view_helper_view_rawstmt(buf.data);
+		s_sql = prepare_pivot_view_helper_view_rawstmt(logical_schema, buf.data);
 		
 		resetStringInfo(&buf);
 		appendStringInfoString(&buf, BBF_PIVOT_VIEW_CAT_PREFIX);
 		appendStringInfoString(&buf, pivot_view_uuid);
-		c_sql = prepare_pivot_view_helper_view_rawstmt(buf.data);
+		c_sql = prepare_pivot_view_helper_view_rawstmt(logical_schema, buf.data);
 
 		/* combine everything into a context list */
 		pivot_context_list = list_make3(list_make1(makeString("bbf_pivot_func")),
@@ -5683,18 +5698,20 @@ parse_analyze_babelfish_view(ViewStmt *stmt, RawStmt *rawstmt, const char *query
 {
 	Query 	*viewParse;
 	char	*viewName;
+	char 	*schemaName;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return parse_analyze_fixedparams(rawstmt, queryString, NULL, 0, NULL);
 
 	viewParse = NULL;
 	viewName = ((RangeVar *)(stmt->view))->relname;
+	schemaName = ((RangeVar *)(stmt->view))->schemaname;
 
 	create_queryEnv2(AllocSetContextCreate(CurrentMemoryContext,
 											"BabelViewMemoryContext",
 											ALLOCSET_DEFAULT_SIZES),
 								false);
-	setQueryEnvViewInfo(currentQueryEnv, viewName, true);
+	setQueryEnvViewInfo(currentQueryEnv, schemaName, viewName, true);
 	PG_TRY();
 	{
 		viewParse = parse_analyze_fixedparams(rawstmt, queryString, NULL, 0, currentQueryEnv);
