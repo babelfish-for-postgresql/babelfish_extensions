@@ -1,4 +1,10 @@
 -- tsql
+alter login securityadmin_login1 with password='123'
+go
+
+alter login no_securityadmin_login1 with password='123'
+go
+
 -- make login member of securityadmin
 Alter server role securityadmin add member securityadmin_login1
 go
@@ -10,6 +16,14 @@ varchar#!#varchar
 sysadmin#!#jdbc_user
 securityadmin#!#securityadmin_login1
 ~~END~~
+
+
+-- should error out
+create login securityadmin with password = '123'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The Server principal 'securityadmin' already exists)~~
 
 
 -- terminate-tsql-conn
@@ -420,6 +434,141 @@ go
 exec securityadmin_drop_login_p1
 go
 
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+-- login is member of both securityadmin as well as sysadmin
+drop user securityadmin_user1
+go
+
+Alter server role sysadmin add member securityadmin_login1
+go
+
+create database securityadmin_db1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+-- it should be able to connect to the database
+use securityadmin_db1
+go
+
+-- it should be dbo
+select current_user
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+-- both attribute should be true
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'securityadmin_login1'
+go
+~~START~~
+varchar#!#bit#!#bit
+securityadmin_login1#!#1#!#1
+~~END~~
+
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+-- only member of securityadmin
+alter server role sysadmin drop member securityadmin_login1
+go
+
+create user securityadmin_user1 for login securityadmin_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+
+-- only rolcreaterole attribute should be true
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'securityadmin_login1'
+go
+~~START~~
+varchar#!#bit#!#bit
+securityadmin_login1#!#1#!#0
+~~END~~
+
+
+-- should be able to create/drop login
+create login test_securityadmin_l1 with password ='123'
+go
+
+drop login test_securityadmin_l1
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+-- only member of sysadmin
+drop user securityadmin_user1
+go
+
+alter server role sysadmin add member securityadmin_login1
+go
+
+alter server role securityadmin drop member securityadmin_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+
+-- both attribute should be true
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'securityadmin_login1'
+go
+~~START~~
+varchar#!#bit#!#bit
+securityadmin_login1#!#1#!#1
+~~END~~
+
+
+-- should be able to create/drop login
+create login test_securityadmin_l1 with password ='123'
+go
+
+drop login test_securityadmin_l1
+go
+
+-- should return 1
+select is_srvrolemember ('sysadmin')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- should return 1
+select is_srvrolemember ('securityadmin')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+-- make it member of securityadmin only
+alter server role sysadmin drop member securityadmin_login1
+go
+
+alter server role securityadmin add member securityadmin_login1
+go
+
+create user securityadmin_user1 for login securityadmin_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
 -- Case 2 - negatives
 -- alter server role sysadmin should give permission denied
 Alter server role sysadmin add member no_securityadmin_login1
@@ -427,6 +576,34 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Current login securityadmin_login1 does not have permission to alter server role)~~
+
+
+-- alter server role securityadmin add member db roles should error out
+Alter server role securityadmin add member guest
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "guest" does not exist)~~
+
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+create role dummy_role
+go
+
+drop database securityadmin_db1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+-- should error out
+Alter server role securityadmin add member dummy_role
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "dummy_role" does not exist)~~
 
 
 -- create database permission denied
@@ -440,6 +617,9 @@ go
 -- terminate-tsql-conn user=securityadmin_login1 password=123
 
 -- tsql
+drop role dummy_role
+go
+
 create database securityadmin_db1
 go
 
@@ -742,6 +922,60 @@ go
 
 
 Revoke exec on securityadmin_proc1 from no_securityadmin_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function securityadmin_proc1)~~
+
+
+-- grant on schema
+-- permission denied
+grant select on securityadmin_v1 to no_securityadmin_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table securityadmin_v1)~~
+
+grant select on dbo.securityadmin_v1 to no_securityadmin_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table securityadmin_v1)~~
+
+grant execute on securityadmin_proc1 to no_securityadmin_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function securityadmin_proc1)~~
+
+grant execute on dbo.securityadmin_proc1 to no_securityadmin_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function securityadmin_proc1)~~
+
+
+-- revoke on schema
+-- permission denied
+revoke select on securityadmin_v1 from no_securityadmin_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table securityadmin_v1)~~
+
+revoke select on dbo.securityadmin_v1 from no_securityadmin_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table securityadmin_v1)~~
+
+revoke execute on securityadmin_proc1 from no_securityadmin_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function securityadmin_proc1)~~
+
+revoke execute on dbo.securityadmin_proc1 from no_securityadmin_user1;
 go
 ~~ERROR (Code: 33557097)~~
 

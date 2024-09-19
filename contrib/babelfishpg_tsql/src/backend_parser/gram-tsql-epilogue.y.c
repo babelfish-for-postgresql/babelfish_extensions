@@ -1969,7 +1969,7 @@ tsql_index_nulls_order(List *indexParams, const char *accessMethod)
 }
 
 static void
-is_server_role_supported (const char* serverrole, int position, core_yyscan_t yyscanner)
+is_server_role_supported (const char *serverrole, int position, core_yyscan_t yyscanner)
 {
 	if (strcmp(serverrole, "serveradmin") == 0
 		|| strcmp(serverrole, "setupadmin") == 0

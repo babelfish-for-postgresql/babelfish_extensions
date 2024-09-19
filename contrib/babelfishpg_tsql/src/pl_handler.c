@@ -3739,7 +3739,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						if (grant_role->is_grant)
 							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
-						else
+						else if (has_privs_of_role(GetSessionUserId(), get_securityadmin_oid()))
+							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreatedb; ");
+						else 
 							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
 					}
 
@@ -3748,7 +3750,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						if (grant_role->is_grant)
 							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole; ");
-						else
+						else if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()))
 							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole; ");
 					}
 					
@@ -3767,14 +3769,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
-						exec_alter_role_cmd(query.data, spec);
+						if (*query.data)
+							exec_alter_role_cmd(query.data, spec);
 
 					}
 					PG_FINALLY();
 					{
 						/* Clean up. Restore previous state. */
 						SetUserIdAndSecContext(save_userid, save_sec_context);
-						pfree(query.data);
+						if (query.data)
+							pfree(query.data);
 					}
 					PG_END_TRY();
 					return;

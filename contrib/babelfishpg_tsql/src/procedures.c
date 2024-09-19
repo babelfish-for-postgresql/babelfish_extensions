@@ -3021,7 +3021,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	initStringInfo(&query);
 
 	/*
-	 * check privileses for login
+	 * check privileges for login
 	 * allow if has privileges of sysadmin or securityadmin.
 	 */
 	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
@@ -3127,7 +3127,7 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	remove_trailing_spaces(servername);
 
 	/*
-	 * check privileses for login
+	 * check privileges for login
 	 * allow if has privileges of sysadmin or securityadmin.
 	 */
 	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
