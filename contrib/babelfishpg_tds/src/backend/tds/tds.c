@@ -175,7 +175,6 @@ static int	localNumBackends = 0;
 static bool isLocalStatusTableValid = false;
 
 TdsInstrPlugin **tds_instr_plugin_ptr = NULL;
-bool pltsql_quoted_identifier = true;
 
 extern void _PG_init(void);
 extern void _PG_fini(void);
