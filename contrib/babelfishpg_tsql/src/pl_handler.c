@@ -2615,7 +2615,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_CreateRoleStmt:
 			{
-				if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
+				if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0 && strcmp(queryString, "(CREATE DATABASE ROLES) ") != 0)
 				{
 					CreateRoleStmt *stmt = (CreateRoleStmt *) parsetree;
 					List	   *login_options = NIL;

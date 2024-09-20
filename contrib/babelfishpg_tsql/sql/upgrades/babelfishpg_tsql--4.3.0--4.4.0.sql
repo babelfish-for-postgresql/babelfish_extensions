@@ -192,14 +192,6 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
-LANGUAGE C
-AS 'babelfishpg_tsql', 'create_database_roles_for_all_dbs';
-
-CALL sys.babel_create_database_roles();
-
-DROP PROCEDURE sys.babel_create_database_roles();
-
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT,
 														IN p_moneyval PG_CATALOG.MONEY,
 														IN p_style NUMERIC DEFAULT 0)
@@ -1762,6 +1754,14 @@ AND sc.out_is_identity::INTEGER = 1
 AND pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname) IS NOT NULL
 AND has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
 GRANT SELECT ON sys.identity_columns TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'create_database_roles_for_all_dbs';
+
+CALL sys.babel_create_database_roles();
+
+DROP PROCEDURE sys.babel_create_database_roles();
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
