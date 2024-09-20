@@ -223,6 +223,7 @@ forjsonauto
 format
 format-dep
 forxml
+forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
@@ -527,6 +528,7 @@ babel-3254
 babel-4517
 babel_table_type
 alter-procedure
+alter-function
 1_GRANT_SCHEMA
 BABEL-4707
 BABEL_4817
@@ -556,10 +558,15 @@ BABEL-3820
 stuff
 PARTITION
 BABEL-5071
-string_agg
+string_agg_within
 reverse
+string_agg
+getdate
 sys_sequences
 replicate
 space
 SELECT_INTO_TEST
 binary-datatype-operators
+cast-varchar-to-time
+BABEL-5119
+

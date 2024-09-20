@@ -1,0 +1,865 @@
+-- tsql
+create table tab_kill_spid(spid int)
+go
+create login victim_user_tds with password = '12345678';
+go
+
+-- tsql user=victim_user_tds password=12345678
+select 1
+go
+~~START~~
+int
+1
+~~END~~
+
+-- not allowed: no sysadmin role
+KILL 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to use the KILL statement)~~
+
+
+-- tsql user=jdbc_user password=12345678
+/* find a TDS session that is not the current one */
+declare @victim_user_tds int
+declare @sql varchar(20)
+select top 1 @victim_user_tds = session_id from sys.dm_exec_sessions where login_name = 'victim_user_tds' and session_id <> @@spid
+if @victim_user_tds is null
+begin
+print 'ERROR: no victim spid found'
+end
+insert tab_kill_spid values(@victim_user_tds)
+set @sql = 'kill ' + convert(varchar, @victim_user_tds)
+execute(@sql)
+go
+~~ROW COUNT: 1~~
+
+
+-- allow the kill to complete; this might take a while under heavy workload
+exec pg_sleep 10
+go
+
+-- verify session does not exist anymore
+declare @victim_user_tds int
+select @victim_user_tds = spid from tab_kill_spid
+select count(distinct session_id) from sys.dm_exec_sessions where session_id = @victim_user_tds
+go
+~~START~~
+int
+0
+~~END~~
+
+
+
+/* Cannot currently be tested: trying to kill a PG session
+ * Reason is that the error message contains the spid number, which is not predicatable
+ * and will therefore always lead to a test failure
+ */
+go
+
+-- KILL in a procedure: allowed
+CREATE PROC kill_proc_1
+as
+KILL 1
+go
+EXECUTE kill_proc_1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Process ID 1 is not an active process ID)~~
+
+
+-- KILL not allowed in a SQL function: not allowed
+CREATE FUNCTION kill_func() RETURNS INT
+AS
+BEGIN
+KILL 1
+END
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'KILL' within a function.)~~
+
+
+-- try to kill current TDS session 
+declare @sql varchar(100)
+set @sql = 'kill ' + convert(varchar, @@spid)
+execute(@sql)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use KILL to kill your own process.)~~
+
+
+-- kill non-existing spid
+KILL 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Process ID 1 is not an active process ID)~~
+
+
+KILL -123
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '-' at line 1 and character position 5)~~
+
+
+KILL 999999999999999999999999999999999999999999999
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Session ID -1 is not valid)~~
+
+
+KILL 123 WITH STATUSONLY
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'KILL with STATUSONLY' is not currently supported in Babelfish)~~
+
+
+KILL UOW WITH STATUSONLY
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'KILL with STATUSONLY' is not currently supported in Babelfish)~~
+
+
+KILL 'A0499C66-F938-45CA-BF7E-E2B6194B48CF'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'KILL with a session ID string' is not currently supported in Babelfish)~~
+
+
+KILL 'A0499C66-F938-45CA-BF7E-E2B6194B48CF' with statusonly
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'KILL with STATUSONLY' is not currently supported in Babelfish)~~
+
+
+KILL STATS JOB 123
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'KILL with STATS JOB' is not currently supported in Babelfish)~~
+
+
+KILL QUERY NOTIFICATION SUBSCRIPTION ALL
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'KILL with QUERY NOTIFICATION' is not currently supported in Babelfish)~~
+
+
+KILL QUERY NOTIFICATION SUBSCRIPTION 123
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'KILL with QUERY NOTIFICATION' is not currently supported in Babelfish)~~
+
+
+
+-- error semantics tests:
+-- basic: cannot use KILL inside a transaction
+BEGIN TRAN
+go
+KILL 1
+go
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+ROLLBACK
+go
+
+CREATE TABLE tab_kill_test(a INT)
+go
+
+-- cannot use KILL in a transaction, XACT_ABORT=OFF
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+~~ROW COUNT: 1~~
+
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~~~WARNING (Message: after kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+1
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+ROLLBACK
+go
+
+-- cannot use KILL in a transaction, XACT_ABORT=ON
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+~~ROW COUNT: 1~~
+
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+0
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+~~END~~
+
+
+-- batch is not aborted when KILL in transaction, XACT_ABORT=OFF
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+~~ROW COUNT: 1~~
+
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~~~WARNING (Message: after kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+1
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+ROLLBACK
+go
+
+-- respects XACT_ABORT=ON
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+~~ROW COUNT: 1~~
+
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+0
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+~~END~~
+
+
+-- KILL in procedure, XACT_ABORT=OFF
+CREATE PROCEDURE kill_proc_2
+AS
+BEGIN
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+END
+go
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+EXECUTE kill_proc_2
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+~~ROW COUNT: 1~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+1
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+ROLLBACK
+go
+ 
+-- KILL in procedure, XACT_ABORT=ON
+CREATE PROCEDURE kill_proc_3
+AS
+BEGIN
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+END
+go
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+EXECUTE kill_proc_3
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+0
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+~~END~~
+
+
+-- tsql
+-- BABEL-5219 Multiple Session Kill
+CREATE LOGIN test_kill WITH PASSWORD = '12345678'
+GO
+
+-- CREATE 11 Databases
+create database test_kill_db1
+GO
+use test_kill_db1
+GO
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+
+create database test_kill_db2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db2
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db2" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+create database test_kill_db3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db3
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db3" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+create database test_kill_db4
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db4
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db4" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+create database test_kill_db5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db5
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db5" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+create database test_kill_db6
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db6
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db6" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+create database test_kill_db7
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db7
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db7" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+create database test_kill_db8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db8
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db8" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+create database test_kill_db9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db9
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db9" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+
+create database test_kill_db10
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db10
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db10" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+create database test_kill_db11
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "test_kill_db1" already exists)~~
+
+use test_kill_db11
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db11" does not exist)~~
+
+CREATE USER user_kill FOR LOGIN test_kill;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_kill_db1_user_kill" already exists)~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db1
+-- CREATE 11 sessions
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db2
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db2" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db3
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db3" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db4
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db4" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db5
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db5" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db6
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db6" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db7
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db7" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db8
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db8" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db9
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db9" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db10
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db10" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=test_kill password=12345678 database=test_kill_db11
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db11" does not exist )~~
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+SELECT count(*) from sys.dm_exec_sessions where login_name = 'test_kill' 
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) from pg_stat_activity where usename = 'test_kill'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Kill Sessions
+USE [MASTER]
+DECLARE @UserName NVARCHAR(255) = 'test_kill'
+DECLARE @SPID INT
+-- Creates temp table to store SPIDs
+IF OBJECT_ID('tempdb..#UserSessions') IS NOT NULL
+BEGIN
+-- dropa tabela se existir
+DROP TABLE #UserSessions
+END
+CREATE TABLE #UserSessions (SPID INT)
+-- Inserting SPIDs from User Sessions into the Temporary Table
+INSERT INTO #UserSessions (SPID)
+SELECT session_id
+FROM sys.dm_exec_sessions
+WHERE login_name = @UserName
+-- Loop to kill user sessions
+DECLARE @RowCount INT = (SELECT COUNT(*) FROM #UserSessions)
+DECLARE @Counter INT = 1
+DECLARE @CmdKill NVARCHAR(100)
+WHILE @Counter <= @RowCount
+BEGIN
+SELECT TOP 1 @SPID = SPID FROM #UserSessions
+SET @CmdKill = 'KILL ' + CAST(@SPID AS NVARCHAR(10))
+execute(@CmdKill)
+DELETE FROM #UserSessions WHERE SPID = @SPID
+SET @Counter = @Counter + 1
+END
+-- Temporary Table Cleaning
+DROP TABLE #UserSessions
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+
+-- allow the kill to complete; this might take a while under heavy workload
+exec pg_sleep 5
+go
+
+SELECT count(*) from sys.dm_exec_sessions where login_name = 'test_kill' 
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) from pg_stat_activity where usename = 'test_kill'
+GO
+~~START~~
+int
+0
+~~END~~
+

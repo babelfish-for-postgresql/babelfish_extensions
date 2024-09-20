@@ -149,6 +149,7 @@ forjson
 forjson-subquery
 forjson-datatypes
 forxml
+forxml-path
 forxml-subquery
 BABEL-PROCID
 babel_trigger
@@ -454,6 +455,9 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
+string_agg-before-15_9-or-16_5
+getdate-before-15_9-or-16_5
 space
 binary-datatype-operators
+cast-varchar-to-time
 

@@ -1875,7 +1875,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(postgresStmt);
-		while (isspace(postgresStmt[len - 1]))
+		while (len > 0 && isspace(postgresStmt[len - 1]))
 			postgresStmt[--len] = 0;
 
 		/* check if input statement is empty after removing trailing spaces */
@@ -2114,7 +2114,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 
 		/* check if role name is empty after removing trailing spaces */
@@ -2147,7 +2147,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(rolname);
-		while (isspace(rolname[len - 1]))
+		while (len > 0 && isspace(rolname[len - 1]))
 			rolname[--len] = 0;
 
 		/* Advance cmd counter to make the delete visible */
@@ -2270,7 +2270,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 
 		/* check if role name is empty after removing trailing spaces */
@@ -2408,10 +2408,10 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces in rolename and membername */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 		len = strlen(lowercase_membername);
-		while (isspace(lowercase_membername[len - 1]))
+		while (len > 0 && isspace(lowercase_membername[len - 1]))
 			lowercase_membername[--len] = 0;
 
 		/*
@@ -2579,10 +2579,10 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces in rolename and membername */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 		len = strlen(lowercase_membername);
-		while (isspace(lowercase_membername[len - 1]))
+		while (len > 0 && isspace(lowercase_membername[len - 1]))
 			lowercase_membername[--len] = 0;
 
 		/*
@@ -3696,20 +3696,20 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 
 		/* remove trailing whitespaces for both input */
 		len = strlen(obj_name);
-		while (isspace(obj_name[len - 1]))
+		while (len > 0 && isspace(obj_name[len - 1]))
 			obj_name[--len] = 0;
 		len = strlen(schema_name);
-		while (isspace(schema_name[len - 1]))
+		while (len > 0 && isspace(schema_name[len - 1]))
 			schema_name[--len] = 0;
 		len = strlen(new_name);
-		while (isspace(new_name[len - 1]))
+		while (len > 0 && isspace(new_name[len - 1]))
 			new_name[--len] = 0;
 		len = strlen(objtype);
-		while (isspace(objtype[len - 1]))
+		while (len > 0 && isspace(objtype[len - 1]))
 			objtype[--len] = 0;
 		if (curr_relname != NULL) {
 			len = strlen(curr_relname);
-			while(isspace(curr_relname[len - 1]))
+			while(len > 0 && isspace(curr_relname[len - 1]))
 				curr_relname[--len] = 0;
 		}
 

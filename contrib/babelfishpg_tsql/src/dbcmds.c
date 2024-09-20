@@ -51,7 +51,8 @@ static List *gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
 								  const char *db_owner,
 								  const char *guest,
-								  const char *guest_schema);
+								  const char *guest_schema,
+								  const char *owner);
 static List *gen_dropdb_subcmds(const char *schema,
 								const char *db_owner,
 								const char *dbo,
@@ -80,7 +81,7 @@ get_sys_babelfish_db_seq_oid()
  * Generate subcmds for CREATE DATABASE. Note 'guest' can be NULL.
  */
 static List *
-gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest, const char *guest_schema)
+gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest, const char *guest_schema, const char *owner)
 {
 	StringInfoData query;
 	List	   *res;
@@ -88,6 +89,9 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	Node	   *stmt;
 	int			i = 0;
 	int			expected_stmt_num;
+	AccessPriv *acc;
+	List	   *privs = NIL;
+	RoleSpec   *role_spec;
 
 	/*
 	 * To avoid SQL injection, we generate statement parsetree with dummy
@@ -98,6 +102,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	appendStringInfo(&query, "CREATE ROLE dummy CREATEROLE INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
+	appendStringInfo(&query, "GRANT dummy TO dummy; ");
 
 	if (guest)
 	{
@@ -118,9 +123,9 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
+		expected_stmt_num = list_length(logins) > 0 ? 10 : 9;
 	else
-		expected_stmt_num = 6;
+		expected_stmt_num = 7;
 
 	if (list_length(res) != expected_stmt_num)
 		ereport(ERROR,
@@ -137,6 +142,19 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
+
+	/* Grant dbo role to owner */
+	stmt = parsetree_nth_stmt(res, i++);
+	acc = makeNode(AccessPriv);
+	acc->priv_name = pstrdup(dbo);
+	acc->cols = NIL;
+	privs = lappend(privs, acc);
+
+	role_spec = makeNode(RoleSpec);
+	role_spec->roletype = ROLESPEC_CSTRING;
+	role_spec->location = -1;
+	role_spec->rolename = pstrdup(owner);
+	update_GrantRoleStmt(stmt, privs, list_make1(role_spec));
 
 	if (guest)
 	{
@@ -408,6 +426,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	const char *db_owner_role;
 	const char *guest_scm;
 	NameData	default_collation;
+	NameData	owner_namedata;
 	const char *guest;
 	int			stmt_number = 0;
 	int 			save_sec_context;
@@ -517,11 +536,12 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	/* Write catalog entry */
 	new_record = palloc0(sizeof(Datum) * SYSDATABASES_NUM_COLS);
 	new_record_nulls = palloc0(sizeof(bool) * SYSDATABASES_NUM_COLS);
+	namestrcpy(&owner_namedata, owner);
 
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = Int32GetDatum(0);
 	new_record[2] = Int32GetDatum(0);
-	new_record[3] = CStringGetDatum(owner);
+	new_record[3] = NameGetDatum(&owner_namedata);
 	new_record[4] = NameGetDatum(&default_collation);
 	new_record[5] = CStringGetTextDatum(dbname);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));
@@ -537,7 +557,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	/* Advance cmd counter to make the database visible */
 	CommandCounterIncrement();
 
-	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest, guest_scm);
+	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest, guest_scm, owner);
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	old_createrole_self_grant = pstrdup(GetConfigOption("createrole_self_grant", false, true));
