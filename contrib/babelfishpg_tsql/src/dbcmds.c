@@ -638,6 +638,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 				add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, true, false);
 			else
 				add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, false, false);
+
 			pfree(guest);
 		}
 	}
@@ -647,6 +648,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
+		
 		if(dbo_scm)
 			pfree(dbo_scm);
 		if(guest_scm)

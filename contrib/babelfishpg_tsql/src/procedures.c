@@ -3381,6 +3381,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 				physical_schema_name = get_physical_schema_name(db_name, logical_schema_name);
 				pfree(logical_schema_name);
 			}
+			
 			if(guest_role_name)
 				pfree(guest_role_name);
 		}

@@ -3220,6 +3220,7 @@ create_guest_role_for_db(const char *dbname)
 		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
+
 		if(guest)
 			pfree(guest);
 	}
@@ -5008,8 +5009,8 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 
 /* 
  * user_exists_for_db
- *		returns true if the user/role exists in the sys.babelfish_authid_user_ext catalog,
- *		false otherwise.
+ *	returns true if the user/role exists in the sys.babelfish_authid_user_ext catalog,
+ *	false otherwise.
  */
 bool
 user_exists_for_db(const char *db_name, const char *user_name)

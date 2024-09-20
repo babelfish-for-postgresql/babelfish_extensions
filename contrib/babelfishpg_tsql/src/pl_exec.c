@@ -10401,8 +10401,10 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 	}
 	
 	pfree(cur_dbname);
+
 	if(dbo_schema)
 		pfree(dbo_schema);
+	
 	return false;
 }
 

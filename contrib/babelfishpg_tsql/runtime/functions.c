@@ -1310,8 +1310,10 @@ schema_id(PG_FUNCTION_ARGS)
 		if (!user)
 		{
 			pfree(db_name);
+
 			if(guest_role_name)
 				pfree(guest_role_name);
+
 			PG_RETURN_NULL();
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -1324,6 +1326,7 @@ schema_id(PG_FUNCTION_ARGS)
 			physical_name = get_physical_schema_name(db_name, name);
 		}
 		pfree(db_name);
+
 		if(guest_role_name)
 			pfree(guest_role_name);
 	}
@@ -2233,10 +2236,12 @@ object_id(PG_FUNCTION_ARGS)
 			pfree(db_name);
 			pfree(schema_name);
 			pfree(object_name);
+
 			if(guest_role_name)
 				pfree(guest_role_name);
 			if (object_type)
 				pfree(object_type);
+
 			PG_RETURN_NULL();
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -2249,6 +2254,7 @@ object_id(PG_FUNCTION_ARGS)
 			schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 			physical_schema_name = get_physical_schema_name(db_name, schema_name);
 		}
+
 		if(guest_role_name)
 			pfree(guest_role_name);
 	}
@@ -2691,8 +2697,10 @@ type_id(PG_FUNCTION_ARGS)
                 pfree(db_name);
                 pfree(schema_name);
                 pfree(object_name);
+
                 if(guest_role_name)
                     pfree(guest_role_name);
+
                 PG_RETURN_NULL();
             }
             else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -2705,6 +2713,7 @@ type_id(PG_FUNCTION_ARGS)
                 schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
                 physical_schema_name = get_physical_schema_name(db_name, schema_name);
             }
+			
             if(guest_role_name)
                 pfree(guest_role_name);
         }

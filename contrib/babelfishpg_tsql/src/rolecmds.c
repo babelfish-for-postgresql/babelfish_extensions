@@ -661,6 +661,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	CommandCounterIncrement();
 
 	pfree(query.data);
+
 	if(dbo_role_name)
 		pfree(dbo_role_name);
 }
@@ -1377,6 +1378,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true, false);
 			else
 				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false, false);
+				
 			pfree(guest);
 		}
 

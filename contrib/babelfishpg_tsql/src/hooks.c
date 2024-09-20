@@ -4949,6 +4949,7 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 										quote_identifier(func_dbo_schema));
 		
 		ReleaseSysCache(tuple);
+		
 		if(func_dbo_schema)
 			pfree(func_dbo_schema);
 	}
