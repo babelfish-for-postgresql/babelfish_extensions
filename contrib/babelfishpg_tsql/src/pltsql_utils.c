@@ -1022,12 +1022,7 @@ update_DropOwnedStmt(Node *n, List *role_list)
 	foreach(elem, role_list)
 	{
 		char	   *name = (char *) lfirst(elem);
-		RoleSpec   *tmp = makeNode(RoleSpec);
-
-		tmp->roletype = ROLESPEC_CSTRING;
-		tmp->location = -1;
-		tmp->rolename = pstrdup(name);
-		rolespec_list = lappend(rolespec_list, tmp);
+		rolespec_list = lappend(rolespec_list, make_rolespec_node(name));
 	}
 	stmt->roles = rolespec_list;
 }
@@ -2419,7 +2414,6 @@ exec_database_roles_subcmds(const char *schema)
 	const char	*db_datareader;
 	const char	*db_datawriter;
 	const char	*dbname = get_cur_db_name();
-	//Oid		current_user_id = GetUserId();
 	List		*stmt_list;
 	int			expected_stmts = 4;
 	ListCell	*parsetree_item;
@@ -2481,3 +2475,31 @@ exec_database_roles_subcmds(const char *schema)
 	}
 	CommandCounterIncrement();
 }
+
+AccessPriv *
+make_accesspriv_node(const char *priv_name)
+{
+	AccessPriv *n = makeNode(AccessPriv);
+
+	Assert(priv_name != NULL || strlen(priv_name) != 0);
+
+	n->priv_name = pstrdup(priv_name);
+	n->cols = NIL;
+
+	return n;
+}
+
+RoleSpec *
+make_rolespec_node(const char *rolename)
+{
+	RoleSpec *n = makeNode(RoleSpec);
+
+	Assert(rolename != NULL || strlen(rolename) != 0);
+
+	n->roletype = ROLESPEC_CSTRING;
+	n->location = -1;
+	n->rolename = pstrdup(rolename);
+
+	return n;
+}
+
