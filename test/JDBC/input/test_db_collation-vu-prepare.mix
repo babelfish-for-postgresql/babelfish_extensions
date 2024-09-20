@@ -211,35 +211,35 @@ GO
 
 -- Create indexes
 -- Hash index
-CREATE INDEX hash_idx ON test_db_collation_vu_prepare_db121_columns (a) WITH (HASH = ON)
+CREATE INDEX db_idx1 ON test_db_collation_vu_prepare_db121_columns (a) WITH (HASH = ON)
 GO
 
 -- clustered index
-CREATE CLUSTERED INDEX clustered_idx ON test_db_collation_vu_prepare_db121_columns (b);
+CREATE CLUSTERED INDEX db_idx2 ON test_db_collation_vu_prepare_db121_columns (b);
 GO
 
 -- nonclustered index
-CREATE NONCLUSTERED INDEX nonclustered_idx ON test_db_collation_vu_prepare_db121_columns (c);
+CREATE NONCLUSTERED INDEX db_idx3 ON test_db_collation_vu_prepare_db121_columns (c);
 GO
 
 -- unique index
-CREATE UNIQUE INDEX unique_idx on test_db_collation_vu_prepare_db121_columns (a, b);
+CREATE UNIQUE INDEX db_idx4 on test_db_collation_vu_prepare_db121_columns (a, b);
 GO
 
 -- index with included column
-CREATE NONCLUSTERED INDEX included_column_idx ON test_db_collation_vu_prepare_db121_columns (a) INCLUDE (d);
+CREATE NONCLUSTERED INDEX db_idx5 ON test_db_collation_vu_prepare_db121_columns (a) INCLUDE (d);
 GO
 
 -- index on computed column
-CREATE INDEX computed_column_idx ON test_db_collation_vu_prepare_db121_computed_columns (b);
+CREATE INDEX db_idx6 ON test_db_collation_vu_prepare_db121_computed_columns (b);
 GO
 
 -- composite index
-CREATE INDEX composite_idx ON test_db_collation_vu_prepare_db121_columns(a, b, c);
+CREATE INDEX db_idx7 ON test_db_collation_vu_prepare_db121_columns(a, b, c);
 GO
 
 -- filtered index
-CREATE NONCLUSTERED INDEX filtered_idx ON test_db_collation_vu_prepare_db121_columns (d) WHERE d > 'Default';
+CREATE NONCLUSTERED INDEX db_idx8 ON test_db_collation_vu_prepare_db121_columns (d) WHERE d > 'Default';
 GO
 
 
