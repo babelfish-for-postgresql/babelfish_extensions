@@ -3599,6 +3599,123 @@ INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext
 WHERE cidx.indislive;
 GRANT SELECT ON sys.partitions TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.sp_tables_view AS
+SELECT
+t2.dbname AS TABLE_QUALIFIER,
+CAST(t3.name AS name) AS TABLE_OWNER,
+t1.relname AS TABLE_NAME,
+
+CASE 
+WHEN t1.relkind = 'v' 
+	THEN 'VIEW'
+ELSE 'TABLE'
+END AS TABLE_TYPE,
+
+CAST(NULL AS varchar(254)) AS remarks
+FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, sys.schemas AS t3
+WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','p','v','m') 
+AND t1.relispartition = false
+AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
+SELECT
+CAST(1 AS SMALLINT) AS SCOPE,
+CAST(coalesce (split_part(a.attoptions[1] COLLATE "C", '=', 2) ,a.attname) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
+
+CASE -- cases for when they are of type identity. 
+	WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
+	THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
+	WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
+	THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
+	ELSE CAST(t1.name AS sys.sysname)
+END AS TYPE_NAME,
+
+CAST(sys.sp_special_columns_precision_helper(COALESCE(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS PRECISION,
+CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS LENGTH,
+CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS SMALLINT) AS SCALE,
+CAST(1 AS smallint) AS PSEUDO_COLUMN,
+CASE
+	WHEN a.attnotnull
+	THEN CAST(0 AS INT)
+	ELSE CAST(1 AS INT) END
+AS IS_NULLABLE,
+CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(C.relname AS sys.sysname) AS TABLE_NAME,
+
+CASE 
+	WHEN X.indisprimary
+	THEN CAST('p' AS sys.sysname)
+	ELSE CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
+END AS CONSTRAINT_TYPE,
+CAST(I.relname AS sys.sysname) CONSTRAINT_NAME,
+CAST(X.indexrelid AS int) AS INDEX_ID
+
+FROM( pg_index X
+JOIN pg_class C ON X.indrelid = C.oid
+JOIN pg_class I ON I.oid = X.indexrelid
+CROSS JOIN LATERAL unnest(X.indkey) AS ak(k)
+        LEFT JOIN pg_attribute a
+                       ON (a.attrelid = X.indrelid AND a.attnum = ak.k)
+)
+LEFT JOIN sys.pg_namespace_ext nsp_ext ON C.relnamespace = nsp_ext.oid
+LEFT JOIN sys.schemas s1 ON s1.schema_id = C.relnamespace
+LEFT JOIN sys.columns c1 ON c1.object_id = X.indrelid AND cast(a.attname AS sys.sysname) = c1.name COLLATE sys.database_default
+LEFT JOIN pg_catalog.pg_type AS T ON T.oid = c1.system_type_id
+LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
+LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
+, sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
+WHERE X.indislive ;
+
+GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
+
+CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
+SELECT 
+CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
+
+CASE 
+	WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
+	ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM pg_catalog.pg_proc p 
+
+INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
+INNER JOIN sys.databases d ON d.database_id = sys.db_id()
+
+UNION 
+
+SELECT CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
+
+CASE 
+	WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
+	ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM    pg_catalog.pg_namespace n 
+JOIN    pg_catalog.pg_proc p 
+ON      pronamespace = n.oid   
+WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
+
+GRANT SELECT ON sys.sp_stored_procedures_view TO PUBLIC;
+
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_tables_internal_deprecated_in_4_4_0');
 
 -- Drops the temporary procedure used by the upgrade script.
