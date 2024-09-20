@@ -912,63 +912,6 @@ AND has_schema_privilege(t1.relnamespace, 'USAGE')
 AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
-	in_table_name sys.nvarchar(384) = NULL,
-	in_table_owner sys.nvarchar(384) = NULL, 
-	in_table_qualifier sys.sysname = NULL,
-	in_table_type sys.varchar(100) = NULL,
-	in_fusepattern sys.bit = '1')
-	RETURNS TABLE (
-		out_table_qualifier sys.sysname,
-		out_table_owner sys.sysname,
-		out_table_name sys.sysname,
-		out_table_type sys.varchar(32),
-		out_remarks sys.varchar(254)
-	)
-	AS $$
-		DECLARE opt_table sys.varchar(16) = '';
-		DECLARE opt_view sys.varchar(16) = '';
-		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
-	BEGIN
-		IF upper(cs_as_in_table_type) LIKE '%''TABLE''%' THEN
-			opt_table = 'TABLE';
-		END IF;
-		IF upper(cs_as_in_table_type) LIKE '%''VIEW''%' THEN
-			opt_view = 'VIEW';
-		END IF;
-		IF in_fusepattern = 1 THEN
-			RETURN query
-			SELECT 
-			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
-			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
-			CAST(table_name AS sys.sysname) AS TABLE_NAME,
-			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
-			CAST(remarks AS sys.varchar(254)) AS REMARKS
-			FROM sys.sp_tables_view
-			WHERE (in_table_name IS NULL OR table_name LIKE in_table_name collate sys.database_default)
-			AND (in_table_owner IS NULL OR table_owner LIKE in_table_owner collate sys.database_default)
-			AND (in_table_qualifier IS NULL OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
-			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
-			ORDER BY table_qualifier, table_owner, table_name;
-		ELSE 
-			RETURN query
-			SELECT 
-			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
-			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
-			CAST(table_name AS sys.sysname) AS TABLE_NAME,
-			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
-			CAST(remarks AS sys.varchar(254)) AS REMARKS
-			FROM sys.sp_tables_view
-			WHERE (in_table_name IS NULL OR table_name = in_table_name collate sys.database_default)
-			AND (in_table_owner IS NULL OR table_owner = in_table_owner collate sys.database_default)
-			AND (in_table_qualifier IS NULL OR table_qualifier = in_table_qualifier collate sys.database_default)
-			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
-			ORDER BY table_qualifier, table_owner, table_name;
-		END IF;
-	END;
-$$
-LANGUAGE plpgsql STABLE;
-
 CREATE OR REPLACE PROCEDURE sys.sp_tables (
     "@table_name" sys.nvarchar(384) = NULL,
     "@table_owner" sys.nvarchar(384) = NULL, 
@@ -997,13 +940,40 @@ BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 	END
 	
-	SELECT
-	CAST(out_table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
-	CAST(out_table_owner AS sys.sysname) AS TABLE_OWNER,
-	CAST(out_table_name AS sys.sysname) AS TABLE_NAME,
-	CAST(out_table_type AS sys.varchar(32)) AS TABLE_TYPE,
-	CAST(out_remarks AS sys.varchar(254)) AS REMARKS
-	FROM sys.sp_tables_internal(@table_name, @table_owner, @table_qualifier, CAST(@table_type AS varchar(100)), @fusepattern);
+	IF (@fusepattern = 1)
+		SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			remarks AS REMARKS
+		FROM sys.sp_tables_view 
+		WHERE (@table_name IS NULL OR table_name LIKE @table_name collate database_default)
+		AND (@table_owner IS NULL OR table_owner LIKE @table_owner collate database_default)
+		AND (@table_qualifier IS NULL OR table_qualifier LIKE @table_qualifier collate database_default)
+		AND (
+			@table_type IS NULL OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
+		)
+		ORDER BY TABLE_QUALIFIER, TABLE_OWNER, TABLE_NAME;
+	ELSE
+		SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			remarks AS REMARKS
+		FROM sys.sp_tables_view
+		WHERE (@table_name IS NULL OR table_name = @table_name collate database_default)
+		AND (@table_owner IS NULL OR table_owner = @table_owner collate database_default)
+		AND (@table_qualifier IS NULL OR table_qualifier = @table_qualifier collate database_default)
+		AND (
+			@table_type IS NULL OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
+		)
+		ORDER BY TABLE_QUALIFIER, TABLE_OWNER, TABLE_NAME;
 END;
 $$
 LANGUAGE 'pltsql';
