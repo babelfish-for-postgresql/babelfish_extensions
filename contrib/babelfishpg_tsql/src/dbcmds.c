@@ -1385,6 +1385,10 @@ create_db_roles_if_not_exists(const uint16 dbid,
 
 		/* make sure later steps can see the object created here */
 		CommandCounterIncrement();
+		if (db_datareader)
+			add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
+		if (db_datawriter)
+			add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
 
 	}
 	PG_FINALLY();
