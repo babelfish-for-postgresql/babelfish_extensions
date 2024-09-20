@@ -1336,8 +1336,6 @@ create_db_roles_if_not_exists(const uint16 dbid,
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
-
-	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
 
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
