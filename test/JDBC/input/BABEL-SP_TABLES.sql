@@ -10,6 +10,12 @@ create table t_sptables2(b int)
 go
 create table t_sotables2(c int)
 go
+create table t_s_tables2(c int)
+go
+create table t__tables2(c int)
+go
+create table test_escape_chars_sp_tables(c int)
+go
 create table MyTable1 (a int, b int, c int)
 go
 create table [MyTable2] ([a] int, [b] int, [c] int)
@@ -93,7 +99,7 @@ go
 exec sp_tables @table_name = 't_s_tables2'
 go
 
--- NOTE: Incorrect output with [] wildcards, see BABEL-2452
+-- NOTE: Incorrect output with [] wildcards, see BABEL-2452 -- Fixed in BABEL-4128
 exec sp_tables @table_name = 't_s[op]tables2'
 go
 
@@ -101,6 +107,52 @@ exec sp_tables @table_name = 't_s[^o]tables2'
 go
 
 exec sp_tables @table_name = 't_s[o-p]tables2'
+go
+
+exec sp_tables @table_name = 't[_]sptables', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_]sptables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_]sotables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_]sptables5', @table_type = "'VIEW'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_]s[_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_][_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[__]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[[_]]sptables', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'test\_escape_chars\_sp_tables', @table_type = "'TABLE'"
+GO
+
+exec sp_tables @table_name = 'test\_escape\_chars\_sp\_tables', @table_type = "'TABLE'"
+GO
+
+exec sp_tables @table_name = 'test_escape_chars_sp_tables', @table_type = "'TABLE'"
+GO
+
+-- table type with mixed case
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'Table'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'tAbLe'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'table'"
 go
 
 -- unnamed invocation
@@ -165,6 +217,12 @@ go
 drop table t_sptables2
 go
 drop table t_sotables2
+go
+drop table t_s_tables2
+go
+drop table t__tables2
+go
+drop table test_escape_chars_sp_tables
 go
 use master
 go
@@ -186,6 +244,12 @@ create table t_sptables2(b int)
 go
 create table t_sotables2(c int)
 go
+create table t_s_tables2(c int)
+go
+create table t__tables2(c int)
+go
+create table test_escape_chars_sp_tables(c int)
+go
 create table MyTable1 (a int, b int, c int)
 go
 create table [MyTable2] ([a] int, [b] int, [c] int)
@@ -269,7 +333,7 @@ go
 exec sp_tables @table_name = 't_s_tables2'
 go
 
--- NOTE: Incorrect output with [] wildcards, see BABEL-2452
+-- NOTE: Incorrect output with [] wildcards, see BABEL-2452 -- Fixed in BABEL-4128
 exec sp_tables @table_name = 't_s[op]tables2'
 go
 
@@ -277,6 +341,52 @@ exec sp_tables @table_name = 't_s[^o]tables2'
 go
 
 exec sp_tables @table_name = 't_s[o-p]tables2'
+go
+
+exec sp_tables @table_name = 't[_]sptables', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_]sptables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_]sotables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_]sptables5', @table_type = "'VIEW'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_]s[_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[_][_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[__]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 't[[_]]sptables', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'test\_escape_chars\_sp_tables', @table_type = "'TABLE'"
+GO
+
+exec sp_tables @table_name = 'test\_escape\_chars\_sp\_tables', @table_type = "'TABLE'"
+GO
+
+exec sp_tables @table_name = 'test_escape_chars_sp_tables', @table_type = "'TABLE'"
+GO
+
+-- table type with mixed case
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'Table'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'tAbLe'"
+go
+
+exec sp_tables @table_name = 't_s[_]tables2', @table_type = "'table'"
 go
 
 -- unnamed invocation
@@ -341,6 +451,12 @@ go
 drop table t_sptables2
 go
 drop table t_sotables2
+go
+drop table t_s_tables2
+go
+drop table t__tables2
+go
+drop table test_escape_chars_sp_tables
 go
 use master
 go
