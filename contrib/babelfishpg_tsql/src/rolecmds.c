@@ -1321,7 +1321,6 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		char 		*dbo_role;
 		char 		*db_owner_role;
 		char 		*guest;
-		RoleSpec	*rolspec;
 
 		db_name_datum = heap_getattr(tuple,
 									 Anum_sysdatabases_name,

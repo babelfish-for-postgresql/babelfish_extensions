@@ -611,10 +611,6 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 
 		if(dbo_role)
 			pfree(dbo_role);
-		if (db_owner_role)
-			pfree(db_owner_role);
-		if (guest)
-			pfree(guest);
 	}
 	PG_FINALLY();
 	{
@@ -622,11 +618,6 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
-		
-		if(dbo_scm)
-			pfree(dbo_scm);
-		if(guest_scm)
-			pfree(guest_scm);
 	}
 	PG_END_TRY();
 }
@@ -801,14 +792,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	}
 	PG_END_TRY();
 
-	if(schema_name)
-		pfree(schema_name);
-	if(db_owner_role)
-		pfree(db_owner_role);
 	if(dbo_role)
 		pfree(dbo_role);
-	if(guest_schema_name)
-		pfree(guest_schema_name);
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);
