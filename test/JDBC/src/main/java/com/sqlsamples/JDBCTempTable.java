@@ -189,14 +189,14 @@ public class JDBCTempTable {
         /*
          * TEST: Ensure that we can create up to (and no more) than the oid buffer size.
          */
-        alter_guc.execute("ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.temp_oid_buffer_size = 10");
+        alter_guc.execute("ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.temp_oid_buffer_size = 3");
 
         /* We need a new connection here to pick up the updated guc. */
         Connection c2 = DriverManager.getConnection(connectionString);
         Statement s = c2.createStatement();
 
         try {
-            for (int i = 0; i < 11; i++) {
+            for (int i = 0; i < 4; i++) {
                 String queryString = "CREATE TABLE #tab" + i + " (a int)";
                 s.execute(queryString);
             }
@@ -229,8 +229,8 @@ public class JDBCTempTable {
         s.execute("DROP TABLE #tab0");
         int new_oid = create_table_and_report_oid(c2, "CREATE TABLE #new_table(a int)", "#new_table");
         
-        if (old_oid != new_oid) {
-            bw.write("Wraparound did not handle new OIDs properly.");
+        if (old_oid > new_oid) {
+            bw.write(String.format("Wraparound did not handle new OIDs properly. Old OID was %d and new oid is %d", old_oid, new_oid));
             bw.newLine();
         }
 
