@@ -1253,13 +1253,12 @@ create_db_roles_if_not_exists(const uint16 dbid,
 							const char *dbname)
 {
 	StringInfoData query;
-	//List	   *parsetree_list;
 	Oid			datdba;
 	const char *prev_current_user;
 	uint16		old_dbid;
-	const char *old_dbname,
-			   *db_datareader,
-			   *db_datawriter;
+	const char *old_dbname;
+	const char *db_datareader;
+	const char *db_datawriter;
 	ListCell	*parsetree_item;
 	List		*stmt_list;
 	Node		*stmts;

@@ -36,7 +36,6 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
-
 static int	FindMatchingParam(List *params, const char *name);
 static Node *TransformParamRef(ParseState *pstate, ParamRef *pref);
 Node	   *TdsFindParam(ParseState *pstate, ColumnRef *cref);
