@@ -503,7 +503,6 @@ grant_guests_to_login(const char *login)
 	List	   *parsetree_list;
 	List	   *guests = NIL;
 	Node	   *stmt;
-	RoleSpec   *tmp;
 	PlannedStmt *wrapper;
 
 	initStringInfo(&query);
@@ -520,16 +519,13 @@ grant_guests_to_login(const char *login)
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
 		char	   *guest_name = NULL;
-		AccessPriv *tmp = makeNode(AccessPriv);
 
 		if (guest_role_exists_for_db(db_name))
 			guest_name = get_guest_role_name(db_name);
 
 		if (guest_name)
 		{
-			tmp->priv_name = pstrdup(guest_name);
-			tmp->cols = NIL;
-			guests = lappend(guests, tmp);
+			guests = lappend(guests, make_accesspriv_node(guest_name));
 			pfree(guest_name);
 		}
 
@@ -554,12 +550,7 @@ grant_guests_to_login(const char *login)
 
 	/* Update the dummy statement with real values */
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
-	tmp = makeNode(RoleSpec);
-	tmp->roletype = ROLESPEC_CSTRING;
-	tmp->location = -1;
-	tmp->rolename = pstrdup(login);
-
-	update_GrantRoleStmt(stmt, guests, list_make1(tmp));
+	update_GrantRoleStmt(stmt, guests, list_make1(make_rolespec_node(login)));
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
@@ -597,18 +588,13 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	List	   *parsetree_list;
 	List	   *dbo = NIL;
 	Node	   *stmt;
-	RoleSpec   *tmp;
 	PlannedStmt *wrapper;
-	AccessPriv *acc;
 
 	char 	   *dbo_role_name = get_dbo_role_name(db_name);
 	
 	initStringInfo(&query);
 
-	acc = makeNode(AccessPriv);
-	acc->priv_name = pstrdup(dbo_role_name);
-	acc->cols = NIL;
-	dbo = lappend(dbo, acc);
+	dbo = lappend(dbo, make_accesspriv_node(dbo_role_name));
 
 	if (is_grant)
 	{
@@ -631,12 +617,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 
 	/* Update the dummy statement with real values */
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
-	tmp = makeNode(RoleSpec);
-	tmp->roletype = ROLESPEC_CSTRING;
-	tmp->location = -1;
-	tmp->rolename = pstrdup(login);
-
-	update_GrantRoleStmt(stmt, dbo, list_make1(tmp));
+	update_GrantRoleStmt(stmt, dbo, list_make1(make_rolespec_node(login)));
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
@@ -1355,11 +1336,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		/* Add users to catalog ext */
 		if (dbo_role)
 		{
-			rolspec = makeNode(RoleSpec);
-			rolspec->type = ROLESPEC_CSTRING;
-			rolspec->location = -1;
-			rolspec->rolename = pstrdup(dbo_role);
-			dbo_list = lappend(dbo_list, rolspec);
+			dbo_list = lappend(dbo_list, make_rolespec_node(dbo_role));
 			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true, false);
 			pfree(dbo_role);
 		}
@@ -2546,16 +2523,11 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 		if ((strcmp(rolname, "sysadmin") != 0) && !has_privs_of_role(get_role_oid(rolname, false), get_sysadmin_oid()))
 		{
 			StringInfoData query;
-			RoleSpec *role;
 
-			role = makeNode(RoleSpec);
-			role->roletype = ROLESPEC_CSTRING;
-			role->location = -1;
-			role->rolename = rolname;
 			initStringInfo(&query);
 
 			appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
-			exec_alter_role_cmd(query.data, role);
+			exec_alter_role_cmd(query.data, make_rolespec_node(rolname));
 			pfree(query.data);
 		}
 		pfree(rolname);
