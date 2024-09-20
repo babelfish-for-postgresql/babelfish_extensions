@@ -98,13 +98,6 @@ where ext.dbid = sys.db_id();
 GRANT SELECT ON sys.schemas TO PUBLIC;
 CREATE SEQUENCE sys.babelfish_db_seq MAXVALUE 32767 CYCLE;
 
--- CATALOG INITIALIZER
-CREATE OR REPLACE PROCEDURE babel_catalog_initializer()
-LANGUAGE C
-AS 'babelfishpg_tsql', 'init_catalog';
-
-CALL babel_catalog_initializer();
-
 CREATE OR REPLACE PROCEDURE babel_create_builtin_dbs(IN login TEXT)
 LANGUAGE C
 AS 'babelfishpg_tsql', 'create_builtin_dbs';
@@ -407,6 +400,13 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_namespace_ext', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_schema_permissions', '');
+
+-- CATALOG INITIALIZER
+CREATE OR REPLACE PROCEDURE babel_catalog_initializer()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'init_catalog';
+
+CALL babel_catalog_initializer();
 
 -- DATABASE_PRINCIPALS
 CREATE OR REPLACE VIEW sys.database_principals AS

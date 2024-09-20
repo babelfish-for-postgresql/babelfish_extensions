@@ -139,7 +139,6 @@ alter authorization on database::change_owner_db to dba_login
 go
 
 -- tsql user=new_owner_login password=12345678
--- previous owner is still in the DB and should still have access despite no longer being the owner
 select suser_name(), db_name()
 go
 ~~START~~
@@ -149,10 +148,9 @@ new_OWNER_login#!#change_owner_db
 
 select * from t
 go
-~~START~~
-int
-123
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t)~~
 
 create table t2(a int)
 go

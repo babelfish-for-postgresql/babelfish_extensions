@@ -824,7 +824,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	SPIExecuteOptions options;
 	bool		need_path_reset = false;
 
-	Oid			current_user_id = GetUserId();
 	char	   *cur_dbname = get_cur_db_name();
 
 	/* fetch current search_path */
@@ -837,18 +836,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	if (stmt->is_cross_db)
 	{
-		char	   *login = GetUserNameFromId(GetSessionUserId(), false);
-		char	   *user = get_user_for_database(stmt->db_name);
-
 		estate->db_name = stmt->db_name;
-		if (user)
-			SetCurrentRoleId(GetSessionUserId(), false);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_DATABASE),
-					 errmsg("The server principal \"%s\" is not able to access "
-							"the database \"%s\" under the current security context",
-							login, stmt->db_name)));
 	}
 
 	/*
@@ -874,7 +862,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			(void) set_config_option("search_path", new_search_path,
 									 PGC_USERSET, PGC_S_SESSION,
 									 GUC_ACTION_SAVE, true, 0, false);
-			SetCurrentRoleId(GetSessionUserId(), false);
 			need_path_reset = true;
 		}
 	}
@@ -1270,11 +1257,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			(void) set_config_option("search_path", old_search_path,
 									 PGC_USERSET, PGC_S_SESSION,
 									 GUC_ACTION_SAVE, true, 0, false);
-			SetCurrentRoleId(current_user_id, false);
 		}
-
-		if (stmt->is_cross_db)
-			SetCurrentRoleId(current_user_id, false);
 
 		/*
 		 * If we aren't saving the plan, unset the pointer.  Note that it
@@ -1291,15 +1274,11 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	}
 	PG_END_TRY();
 
-	if (stmt->is_cross_db)
-		SetCurrentRoleId(current_user_id, false);
-
 	if (need_path_reset)
 	{
 		(void) set_config_option("search_path", old_search_path,
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
-		SetCurrentRoleId(current_user_id, false);
 	}
 
 	if (expr->plan && !expr->plan->saved)

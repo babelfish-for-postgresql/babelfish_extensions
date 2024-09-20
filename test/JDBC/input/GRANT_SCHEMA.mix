@@ -1713,7 +1713,7 @@ select * from db1.s1.v1;
 go
 exec db1.s1.p1;
 go
-select db1.s1.f1(); -- Needs fix [BABEL-4841]
+select db1.s1.f1();
 go
 
 -- tsql
