@@ -1179,6 +1179,63 @@ get_current_physical_schema_name(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(ret));
 }
 
+char *
+get_physical_user_name_by_mode(char *db_name, char *user_name, bool suppress_error, MigrationMode mode)
+{
+	char	   *new_user_name;
+	char	   *result;
+	int			len;
+
+	if (!user_name)
+		return NULL;
+
+	len = strlen(user_name);
+	if (len == 0)
+		return NULL;
+
+	if (!DbidIsValid(get_db_id(db_name)) && !suppress_error)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist.", db_name)));
+
+	/* Get a new copy */
+	len = len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND;
+	new_user_name = palloc0(len + 1);
+	strncpy(new_user_name, user_name, len);
+
+	/* Truncate to 64 bytes */
+	truncate_tsql_identifier(new_user_name);
+
+	/*
+	 * All role and user names are prefixed. Historically, dbo and
+	 * db_owner in single-db mode were unprefixed These are two exceptions to
+	 * the naming convention
+	 */
+	if (SINGLE_DB == mode)
+	{
+		/* check that db_name is not "master", "tempdb", or "msdb" */
+		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
+			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
+			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
+		{
+			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
+				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
+			{
+				return new_user_name;
+			}
+		}
+	}
+
+	result = palloc0(MAX_BBF_NAMEDATALEND);
+
+	snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, new_user_name);
+
+	/* Truncate final result to 64 bytes */
+	truncate_tsql_identifier(result);
+
+	return result;
+}
+
 
 /* db_name is the logical db that user want to query against
  * retrieve the physical mapped schema for the query
@@ -1493,7 +1550,7 @@ is_builtin_database(const char *dbname)
 bool
 physical_schema_name_exists(char *phys_schema_name)
 {
-	return SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(phys_schema_name));
+	return SearchSysCacheExists1(AUTHOID, PointerGetDatum(phys_schema_name));
 }
 
 /*

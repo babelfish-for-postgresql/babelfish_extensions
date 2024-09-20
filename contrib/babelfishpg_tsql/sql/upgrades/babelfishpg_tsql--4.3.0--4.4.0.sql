@@ -192,6 +192,14 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'create_database_roles_for_all_dbs';
+
+CALL sys.babel_create_database_roles();
+
+DROP PROCEDURE sys.babel_create_database_roles();
+
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT,
 														IN p_moneyval PG_CATALOG.MONEY,
 														IN p_style NUMERIC DEFAULT 0)

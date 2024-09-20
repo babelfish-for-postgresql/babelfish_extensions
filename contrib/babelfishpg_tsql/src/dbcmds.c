@@ -1282,3 +1282,197 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(0);
 }
+
+static void
+create_db_roles_if_not_exists(const uint16 dbid,
+							const char *dbname)
+{
+	StringInfoData query;
+	//List	   *parsetree_list;
+	Oid			datdba;
+	const char *prev_current_user;
+	uint16		old_dbid;
+	const char *old_dbname,
+			   *db_datareader,
+			   *db_datawriter;
+	ListCell	*parsetree_item;
+	List		*stmt_list;
+	Node		*stmts;
+	int			i=0;
+
+	/*
+	 * During upgrade, the migration mode is reset to single-db so we cannot
+	 * call get_physical_user_name() directly. Detect whether the original
+	 * migration was single-db or multi-db.
+	 */
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+
+	db_datareader = get_physical_user_name_by_mode((char *) dbname, "db_datareader", false, baseline_mode);
+	db_datawriter = get_physical_user_name_by_mode((char *) dbname, "db_datawriter", false, baseline_mode);
+
+	/*
+	 * database roles prepends dbname based on single-db or multi-db. If for
+	 * some reason database roles exist, then that is a bigger problem.
+	 * The roles should be manually cleaned up before the upgrade.
+	 */
+	if (OidIsValid(get_role_oid(db_datareader, true)))
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("role \"%s\" already exists. Please drop the role and restart upgrade.", db_datareader)));
+		return;
+	}
+
+	if (OidIsValid(get_role_oid(db_datawriter, true)))
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("role \"%s\" already exists. Please drop the role and restart upgrade.", db_datawriter)));
+		return;
+	}
+
+	datdba = get_role_oid("sysadmin", false);
+	check_can_set_role(GetSessionUserId(), datdba);
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	Assert(list_length(stmt_list) == 2);
+
+	/* Set current user to session user for create permissions */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+
+	old_dbid = get_cur_db_id();
+	old_dbname = get_cur_db_name();
+	set_cur_db(dbid, dbname);
+
+	PG_TRY();
+	{
+		/* Replace dummy elements in parsetree with real values */
+    	stmts = parsetree_nth_stmt(stmt_list, i++);
+    	update_CreateRoleStmt(stmts, db_datareader, NULL, NULL);
+
+    	stmts = parsetree_nth_stmt(stmt_list, i++);
+    	update_CreateRoleStmt(stmts, db_datawriter, NULL, NULL);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, stmt_list)
+		{
+			Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 0;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						query.data,
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+		}
+
+		/* make sure later steps can see the object created here */
+		CommandCounterIncrement();
+
+	}
+	PG_FINALLY();
+	{
+		bbf_set_current_user(prev_current_user);
+		set_cur_db(old_dbid, old_dbname);
+	}
+	PG_END_TRY();
+
+	bbf_set_current_user(prev_current_user);
+	set_cur_db(old_dbid, old_dbname);
+
+}
+
+
+/*
+* This function is only being used for the purpose of the upgrade script to create
+* database roles db_datareader and db_datawriter for each database if the database
+* does not have the roles yet.
+*/
+PG_FUNCTION_INFO_V1(create_database_roles_for_all_dbs);
+Datum
+create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
+{
+	Relation	sysdatabase_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	const char *sql_dialect_value_old;
+	const char *tsql_dialect = "tsql";
+	Form_sysdatabases bbf_db;
+	const char *dbname;
+	bool		creating_extension_backup = creating_extension;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"create_database_roles_for_all_dbs()")));
+
+	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		/*
+		 * Since this is part of upgrade script, PG assumes we would like to
+		 * set the babelfish extension depend on this new schema. This is not
+		 * true so we tell PG not to set any dependency for us. Check
+		 * recordDependencyOnCurrentExtension() for more information.
+		 */
+		creating_extension = false;
+
+		sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+		scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+
+		while (HeapTupleIsValid(tuple))
+		{
+			bbf_db = (Form_sysdatabases) GETSTRUCT(tuple);
+			dbname = text_to_cstring(&(bbf_db->name));
+
+			create_db_roles_if_not_exists(bbf_db->dbid, dbname);
+
+			tuple = heap_getnext(scan, ForwardScanDirection);
+		}
+		table_endscan(scan);
+		table_close(sysdatabase_rel, RowExclusiveLock);
+
+		creating_extension = creating_extension_backup;
+		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_FINALLY();
+	{
+		creating_extension = creating_extension_backup;
+		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_END_TRY();
+
+	PG_RETURN_INT32(0);
+}
+

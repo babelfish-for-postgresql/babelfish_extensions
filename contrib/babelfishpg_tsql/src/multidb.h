@@ -18,6 +18,7 @@ extern List* rewrite_plain_name(List *name); /* Value Strings */
 
 /* helper functions */
 extern char *get_physical_user_name(char *db_name, char *user_name, bool suppress_error);
+extern char *get_physical_user_name_by_mode(char *db_name, char *user_name, bool suppress_error,  MigrationMode mode);
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
 extern char *get_physical_schema_name_by_mode(char *db_name, const char *schema_name, MigrationMode mode);
 extern const char *get_dbo_schema_name(const char *dbname);
