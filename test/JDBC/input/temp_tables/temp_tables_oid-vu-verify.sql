@@ -1,4 +1,7 @@
--- Tables typically consume three OIDs - we checked this in permanent tables.
+-- Tables consume a minimum of 3 OIDs:
+-- 1 oid for the table itself, 1 for the type array (pg_type.typarray), and one for the composite type.
+-- See heap_create_with_catalog for more details.
+
 create table #temp_tables_oid_t1(a int)
 create table #temp_tables_oid_t2(a int)
 select object_id('#temp_tables_oid_t2') - object_id('#temp_tables_oid_t1')
@@ -69,6 +72,39 @@ go
 
 drop table #temp_tables_oid_t1
 go
+
+-- Ensure that toasts/indexes are in ENR as well. 
+
+create table #temp_tables_oid_t4(a int)
+go
+
+create index #temp_table_index_t4 on #temp_tables_oid_t4(a)
+go
+
+-- 2 entries expected - one for table, one for index
+select count(*) from sys.babelfish_get_enr_list()
+GO
+
+drop table #temp_tables_oid_t4
+go
+
+-- 0 entries expected
+select count(*) from sys.babelfish_get_enr_list()
+GO
+
+create table #temp_tables_oid_t5(a varchar(2000))
+GO
+
+-- 3 entries expected - one for table, one for toast, one for toast index. 
+select count(*) from sys.babelfish_get_enr_list()
+GO
+
+drop table #temp_tables_oid_t5
+go
+
+-- 0 entries expected
+select count(*) from sys.babelfish_get_enr_list()
+GO
 
 -- At the end of all the temp table creation, let's ensure that the permanent OID count did not increase
 -- This should be 3 when temp OID generation is turned on. 
