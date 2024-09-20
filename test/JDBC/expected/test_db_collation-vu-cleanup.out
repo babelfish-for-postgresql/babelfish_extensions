@@ -15,28 +15,28 @@ GO
 USE test_db_collation_vu_prepare_db121;
 GO
 
-DROP INDEX db_idx1 ON test_db_collation_vu_prepare_db121_columns;
+DROP INDEX test_db_idx1 ON test_db_collation_vu_prepare_db121_columns;
 GO
 
-DROP INDEX db_idx2 ON test_db_collation_vu_prepare_db121_columns;
+DROP INDEX test_db_idx2 ON test_db_collation_vu_prepare_db121_columns;
 GO
 
-DROP INDEX db_idx3 ON test_db_collation_vu_prepare_db121_columns;
+DROP INDEX test_db_idx3 ON test_db_collation_vu_prepare_db121_columns;
 GO
 
-DROP INDEX db_idx4 ON test_db_collation_vu_prepare_db121_columns;
+DROP INDEX test_db_idx4 ON test_db_collation_vu_prepare_db121_columns;
 GO
 
-DROP INDEX db_idx5 on test_db_collation_vu_prepare_db121_columns;
+DROP INDEX test_db_idx5 on test_db_collation_vu_prepare_db121_columns;
 GO
 
-DROP INDEX db_idx6 on test_db_collation_vu_prepare_db121_computed_columns;
+DROP INDEX test_db_idx6 on test_db_collation_vu_prepare_db121_computed_columns;
 GO
 
-DROP INDEX db_idx7 on test_db_collation_vu_prepare_db121_columns;
+DROP INDEX test_db_idx7 on test_db_collation_vu_prepare_db121_columns;
 GO
 
-DROP INDEX db_idx8 on test_db_collation_vu_prepare_db121_columns;
+DROP INDEX test_db_idx8 on test_db_collation_vu_prepare_db121_columns;
 GO
 
 DROP VIEW test_db_collation_vu_prepare_db121_v1;
