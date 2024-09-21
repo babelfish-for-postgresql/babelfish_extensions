@@ -377,6 +377,9 @@ ignore#!#alter-procedure-15_8-or-16_4-vu-cleanup
 ignore#!#string_agg-before-15_9-or-16_5-vu-prepare
 ignore#!#string_agg-before-15_9-or-16_5-vu-verify
 ignore#!#string_agg-before-15_9-or-16_5-vu-cleanup
+ignore#!#getdate-before-15_9-or-16_5-vu-cleanup
+ignore#!#getdate-before-15_9-or-16_5-vu-prepare
+ignore#!#getdate-before-15_9-or-16_5-vu-verify
 ignore#!#string_agg-before-14_5-vu-prepare
 ignore#!#string_agg-before-14_5-vu-verify
 ignore#!#string_agg-before-14_5-vu-cleanup

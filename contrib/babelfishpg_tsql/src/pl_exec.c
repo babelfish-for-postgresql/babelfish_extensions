@@ -4622,7 +4622,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	CmdType		cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
 	StringInfoData query;
-	Oid			current_user_id = GetUserId();
 	bool		need_path_reset = false;
 	char	   *cur_dbname = get_cur_db_name();
 	bool		reset_session_properties = false;
@@ -4639,22 +4638,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	if (stmt->is_cross_db)
 	{
-		char	   *login = GetUserNameFromId(GetSessionUserId(), false);
-		char	   *user = get_user_for_database(stmt->db_name);
-
 		if (stmt->insert_exec)
 		{
 			estate->db_name = stmt->db_name;
 		}
-
-		if (user)
-			SetCurrentRoleId(GetSessionUserId(), false);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_DATABASE),
-					 errmsg("The server principal \"%s\" is not able to access "
-							"the database \"%s\" under the current security context",
-							login, stmt->db_name)));
 
 		/*
 		 * When there is cross db reference to sys or information_schema
@@ -4685,13 +4672,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			{
 				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 					set_session_properties(cur_dbname);
-
-				SetCurrentRoleId(current_user_id, false);
 			}
 			if (reset_session_properties)
 			{
 				set_session_properties(cur_dbname);
-				SetCurrentRoleId(current_user_id, false);
 			}
 			return ret;
 		}
@@ -5095,13 +5079,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		if (reset_session_properties)
 		{
 			set_session_properties(cur_dbname);
-			SetCurrentRoleId(current_user_id, false);
 		}
 		if (stmt->is_cross_db)
 		{
 			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 				set_session_properties(cur_dbname);
-			SetCurrentRoleId(current_user_id, false);
 		}
 		PG_RE_THROW();
 	}
@@ -5114,13 +5096,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	if (reset_session_properties)
 	{
 		set_session_properties(cur_dbname);
-		SetCurrentRoleId(current_user_id, false);
 	}
 	if (stmt->is_cross_db)
 	{
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 			set_session_properties(cur_dbname);
-		SetCurrentRoleId(current_user_id, false);
 	}
 
 	return PLTSQL_RC_OK;

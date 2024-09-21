@@ -503,7 +503,6 @@ grant_guests_to_login(const char *login)
 	List	   *parsetree_list;
 	List	   *guests = NIL;
 	Node	   *stmt;
-	RoleSpec   *tmp;
 	PlannedStmt *wrapper;
 
 	initStringInfo(&query);
@@ -520,17 +519,12 @@ grant_guests_to_login(const char *login)
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
 		const char *guest_name = NULL;
-		AccessPriv *tmp = makeNode(AccessPriv);
 
 		if (guest_role_exists_for_db(db_name))
 			guest_name = get_guest_role_name(db_name);
 
 		if (guest_name)
-		{
-			tmp->priv_name = pstrdup(guest_name);
-			tmp->cols = NIL;
-			guests = lappend(guests, tmp);
-		}
+			guests = lappend(guests, make_accesspriv_node(guest_name));
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
@@ -553,12 +547,7 @@ grant_guests_to_login(const char *login)
 
 	/* Update the dummy statement with real values */
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
-	tmp = makeNode(RoleSpec);
-	tmp->roletype = ROLESPEC_CSTRING;
-	tmp->location = -1;
-	tmp->rolename = pstrdup(login);
-
-	update_GrantRoleStmt(stmt, guests, list_make1(tmp));
+	update_GrantRoleStmt(stmt, guests, list_make1(make_rolespec_node(login)));
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
@@ -572,6 +561,73 @@ grant_guests_to_login(const char *login)
 	/* do this step */
 	ProcessUtility(wrapper,
 				   "(CREATE DATABASE )",
+				   false,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
+
+	pfree(query.data);
+}
+
+/* 
+ * Grant/revoke dbo role from the login.
+ * The 'is_grant' flag determines if the action is grant/revoke.
+ */
+void
+grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
+{
+	StringInfoData query;
+	List	   *parsetree_list;
+	List	   *dbo = NIL;
+	Node	   *stmt;
+	PlannedStmt *wrapper;
+
+	const char *dbo_role_name = get_dbo_role_name(db_name);
+	
+	initStringInfo(&query);
+
+	dbo = lappend(dbo, make_accesspriv_node(dbo_role_name));
+
+	if (is_grant)
+	{
+		/* Build dummy GRANT statement to grant membership to login  */
+		appendStringInfo(&query, "GRANT dummy TO dummy; ");
+	}
+	else
+	{
+		/* Build dummy REVOKE statement to revoke membership from login */
+		appendStringInfo(&query, "REVOKE dummy FROM dummy; ");
+	}
+
+	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+	update_GrantRoleStmt(stmt, dbo, list_make1(make_rolespec_node(login)));
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 23;
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				   "(ALTER DATABASE OWNER )",
 				   false,
 				   PROCESS_UTILITY_SUBCOMMAND,
 				   NULL,
@@ -1260,7 +1316,6 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		const char *db_owner_role;
 		const char *db_accessadmin_role;
 		const char *guest;
-		RoleSpec   *rolspec;
 
 		db_name_datum = heap_getattr(tuple,
 									 Anum_sysdatabases_name,
@@ -1276,11 +1331,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		/* Add users to catalog ext */
 		if (dbo_role)
 		{
-			rolspec = makeNode(RoleSpec);
-			rolspec->type = ROLESPEC_CSTRING;
-			rolspec->location = -1;
-			rolspec->rolename = pstrdup(dbo_role);
-			dbo_list = lappend(dbo_list, rolspec);
+			dbo_list = lappend(dbo_list, make_rolespec_node(dbo_role));
 			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true, false);
 		}
 		if (db_owner_role)
@@ -2457,16 +2508,11 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 		if ((strcmp(rolname, "sysadmin") != 0) && !has_privs_of_role(get_role_oid(rolname, false), get_sysadmin_oid()))
 		{
 			StringInfoData query;
-			RoleSpec *role;
 
-			role = makeNode(RoleSpec);
-			role->roletype = ROLESPEC_CSTRING;
-			role->location = -1;
-			role->rolename = rolname;
 			initStringInfo(&query);
 
 			appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
-			exec_alter_role_cmd(query.data, role);
+			exec_alter_role_cmd(query.data, make_rolespec_node(rolname));
 			pfree(query.data);
 		}
 		pfree(rolname);

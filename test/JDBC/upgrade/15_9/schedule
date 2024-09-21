@@ -536,9 +536,11 @@ reverse
 stuff
 replicate
 string_agg
+getdate
 space
 replace
 binary-datatype-operators
 SELECT_INTO_TEST
 cast-varchar-to-time
+BABEL-5119
 
