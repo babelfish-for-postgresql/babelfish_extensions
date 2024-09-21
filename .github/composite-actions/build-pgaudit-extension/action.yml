@@ -37,12 +37,5 @@ runs:
         ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
         sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE EXTENSION pgaudit;"
         sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
-        cd ~
-        cd babelfish_extensions/test
-        sudo sed -i '$a\ignore#!#BABEL-2843' JDBC/jdbc_schedule
-        sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant' JDBC/jdbc_schedule
-        sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-prepare' JDBC/jdbc_schedule
-        sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-verify' JDBC/jdbc_schedule
-        sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-cleanup' JDBC/jdbc_schedule
 
       shell: bash
