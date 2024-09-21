@@ -3615,19 +3615,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							orig_schema = "dbo";
 					}
-
-					owner_oid = rolspec ? get_rolespec_oid(rolspec, true) : InvalidOid;
-					if (OidIsValid(owner_oid) && !member_can_set_role(owner_oid, GetUserId()) &&
-					    has_privs_of_role(GetUserId(), db_accessadmin) &&
-					    (is_user(owner_oid, true) || is_role(owner_oid, true)))
+					else
 					{
-						/*
-						 * db_accessadmin members can create schema for other users as owner
-						 * but it does not actually have the required permission from PG
-						 * perspective to do so, hence handle it this way.
-						 */
-						create_schema->authrole = NULL;
-						alter_owner = true;
+						owner_oid = rolspec ? get_rolespec_oid(rolspec, true) : InvalidOid;
+						if (OidIsValid(owner_oid) && !member_can_set_role(GetUserId(), owner_oid) &&
+							has_privs_of_role(GetUserId(), db_accessadmin) &&
+							(is_user(owner_oid, true) || is_role(owner_oid, true)))
+						{
+							/*
+							* db_accessadmin members can create schema for other users as owner
+							* but it does not actually have the required permission from PG
+							* perspective to do so, hence handle it this way.
+							*/
+							create_schema->authrole = NULL;
+							alter_owner = true;
+						}
 					}
 
 					if (prev_ProcessUtility)
