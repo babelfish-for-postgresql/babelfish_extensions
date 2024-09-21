@@ -197,14 +197,17 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 {
 	const char     *dbo;
 	const char     *db_owner;
+	const char     *db_accessadmin;
 	const char     *guest;
 
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
+	db_accessadmin = get_db_accessadmin_role_name(dbname);
 	guest = get_guest_role_name(dbname);
 
 	add_to_bbf_authid_user_ext(dbo, "dbo", dbname, "dbo", NULL, false, true, false);
 	add_to_bbf_authid_user_ext(db_owner, "db_owner", dbname, NULL, NULL, true, true, false);
+	add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
 
 	/*
 	 * For master, tempdb and msdb databases, the guest user will be

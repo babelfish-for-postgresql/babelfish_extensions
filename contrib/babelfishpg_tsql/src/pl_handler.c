@@ -3386,9 +3386,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									int			role_oid = get_role_oid(user_name, true);
 									int			rolename_len = strlen(rolspec->rolename);
 
-									if (!OidIsValid(role_oid) ||
-									    (drop_user && !is_user(role_oid, true)) ||
-									    (drop_role && !is_role(role_oid, true)))
+									if (!OidIsValid(role_oid) ||                        /* Not found */
+									    (drop_user && !is_user(role_oid, true)) ||      /* Found but not a user in current logical db */
+									    (drop_role && !is_role(role_oid, true)))        /* Found but not a role in current logical db */
 									{
 										if (stmt->missing_ok)
 										{
@@ -3621,7 +3621,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					    has_privs_of_role(GetUserId(), db_accessadmin) &&
 					    (is_user(owner_oid, true) || is_role(owner_oid, true)))
 					{
-						/* do not pfree authrole since rolspec is still refrencing it */
+						/*
+						 * db_accessadmin members can create schema for other users as owner
+						 * but it does not actually have the required permission from PG
+						 * perspective to do so, hence handle it this way.
+						 */
 						create_schema->authrole = NULL;
 						alter_owner = true;
 					}
