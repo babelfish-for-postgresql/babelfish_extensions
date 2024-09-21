@@ -82,6 +82,7 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
+#include "commands/event_trigger.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -221,6 +222,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
  *****************************************/
 static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
+static void cache_look_from_ddl_event_trigger(ObjectAddress *addr,char *identity);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -499,6 +501,8 @@ InstallExtendedHooks(void)
 
 	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
 	ExecFuncProc_AclCheck_hook = pltsql_ExecFuncProc_AclCheck;
+	
+	cache_look_ddl_event_trigger_hook = cache_look_from_ddl_event_trigger;
 }
 
 void
@@ -572,6 +576,7 @@ UninstallExtendedHooks(void)
 	bbf_ParallelWorkerMain_hook = NULL;
 	handle_param_collation_hook = NULL;
 	handle_default_collation_hook = NULL;
+	cache_look_ddl_event_trigger_hook = NULL;
 }
 
 /*****************************************
@@ -5487,4 +5492,24 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 	}
 
 	return oid;
+}
+static void
+cache_look_from_ddl_event_trigger(ObjectAddress* address,char *identity)
+{
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	PG_TRY();
+	{
+			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",										
+						GUC_CONTEXT_CONFIG,		\
+						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+			identity = getObjectIdentity(address,true);
+	}
+	PG_FINALLY();
+	{
+			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,										
+				GUC_CONTEXT_CONFIG,		\
+				PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_END_TRY();
+	return;
 }

@@ -9,6 +9,23 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
+# BABEL_539-vu-prepare
+# BABEL_539-vu-verify
+# BABEL_539-vu-cleanup
+# SELECT_INTO_TEST-vu-prepare
+# SELECT_INTO_TEST-vu-verify
+# SELECT_INTO_TEST-vu-cleanup
+# babel_datatype_sqlvariant-vu-prepare
+# babel_datatype_sqlvariant-vu-verify
+# babel_datatype_sqlvariant-vu-cleanup
+# BABEL-3101
+# BABEL-1636
+ignore#!#BABEL-2843
+ignore#!#babel_datatype_sqlvariant
+ignore#!#babel_datatype_sqlvariant-vu-prepare
+ignore#!#babel_datatype_sqlvariant-vu-verify
+babel_datatype_sqlvariant-vu-clean
+
 # BABEL-2843
 # GRANT_SCHEMA
 # BABEL-3392-vu-prepare

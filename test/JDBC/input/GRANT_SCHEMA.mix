@@ -472,7 +472,8 @@ go
 -- should show original object names
 select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
 go
-
+-- SELECT pg_sleep(20);
+-- go
 -- tsql
 -- rename the objects where permissions are already granted
 sp_rename 'babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
