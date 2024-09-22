@@ -24,7 +24,7 @@ ignore#!#BABEL-2843
 ignore#!#babel_datatype_sqlvariant
 ignore#!#babel_datatype_sqlvariant-vu-prepare
 ignore#!#babel_datatype_sqlvariant-vu-verify
-ignore#!#babel_datatype_sqlvariant-vu-clean
+ignore#!#babel_datatype_sqlvariant-vu-cleanup
 
 # BABEL-2843
 # GRANT_SCHEMA
