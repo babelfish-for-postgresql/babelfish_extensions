@@ -1,48 +1,103 @@
--- single_db_mode_expected
 -- tsql
 -- Error cases
 create role db_datareader; -- Error, this role already exists
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_db_datareader" already exists)~~
+
 
 create role db_datawriter; -- Error, this role already exists
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_db_datawriter" already exists)~~
+
 
 -- grants not allowed on these special roles
 grant select on schema::dbo to db_datareader; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 grant execute on schema::dbo to db_datawriter; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 revoke select on schema::dbo from db_datareader; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 revoke execute on schema::dbo from db_datawriter; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 grant select on object::t1 to db_datareader; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 grant insert on object::t1 to db_datawriter; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 grant execute on object::t1 to db_datareader; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 revoke select on object::t1 to db_datareader; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 revoke insert on object::t1 to db_datawriter; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 revoke execute on object::t1 to db_datareader; -- Error, no grant on special roles
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
 
 drop role db_datareader; -- Error, should not be dropped
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_datareader'.)~~
+
 
 drop role db_datawriter; -- Error, should not be dropped
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_datawriter'.)~~
+
 
 -- create login, user and add members
 create login l1 with password = '123';
@@ -50,9 +105,17 @@ go
 
 create user db_datareader for login l1; -- Error, this role already exists
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_db_datareader" already exists)~~
+
 
 create user db_datawriter for login l1; -- Error, this role already exists
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_db_datawriter" already exists)~~
+
 
 create user u1 for login l1;
 go
@@ -91,47 +154,101 @@ go
 -- Basic membership check
 SELECT IS_MEMBER('db_datareader')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT IS_MEMBER('db_datawriter')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 select * from after_t1; -- allowed
 go
+~~START~~
+int
+~~END~~
+
 
 select * from before_t1; -- allowed
 go
+~~START~~
+int
+~~END~~
+
 
 insert into after_t1 values(1); -- allowed
 go
+~~ROW COUNT: 1~~
+
 
 insert into after_t1 values(1); -- allowed
 go
+~~ROW COUNT: 1~~
+
 
 select * from s1.after_t1; -- allowed
 go
+~~START~~
+int
+~~END~~
+
 
 select * from s1.before_t1; -- allowed
 go
+~~START~~
+int
+~~END~~
+
 
 insert into s1.after_t1 values(1); -- allowed
 go
+~~ROW COUNT: 1~~
+
 
 insert into s1.after_t1 values(1); -- allowed
 go
+~~ROW COUNT: 1~~
+
 
 -- tsql
 -- Basic membership check
 SELECT IS_ROLEMEMBER('db_datareader', 'u1')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datawriter', 'u1')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datareader', 'r1')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datawriter', 'r1')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 alter role db_datareader drop member u1;
 go
@@ -148,47 +265,109 @@ go
 -- Basic membership check
 SELECT IS_ROLEMEMBER('db_datareader', 'u1')
 GO
+~~START~~
+int
+<NULL>
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datawriter', 'u1')
 GO
+~~START~~
+int
+<NULL>
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datareader', 'r1')
 GO
+~~START~~
+int
+<NULL>
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datawriter', 'r1')
 GO
+~~START~~
+int
+<NULL>
+~~END~~
+
 
 -- tsql user=l1 password=123
 -- Basic membership check
 SELECT IS_MEMBER('db_datareader')
 GO
+~~START~~
+int
+0
+~~END~~
+
 
 SELECT IS_MEMBER('db_datawriter')
 GO
+~~START~~
+int
+0
+~~END~~
+
 
 select * from after_t1;  -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
 
 select * from before_t1; -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
 
 insert into after_t1 values(1); -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
 
 insert into after_t1 values(1); -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
 
 select * from s1.after_t1;  -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
 
 select * from s1.before_t1; -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
 
 insert into s1.after_t1 values(1); -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
 
 insert into s1.after_t1 values(1); -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
 
 -- tsql
 exec sp_addrolemember 'db_datareader', 'u1';
@@ -207,35 +386,79 @@ go
 -- Basic membership check
 SELECT IS_MEMBER('db_datareader')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT IS_MEMBER('db_datawriter')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 select * from after_t1; -- allowed
 go
+~~START~~
+int
+1
+1
+~~END~~
+
 
 select * from before_t1; -- allowed
 go
+~~START~~
+int
+~~END~~
+
 
 insert into after_t1 values(1); -- allowed
 go
+~~ROW COUNT: 1~~
+
 
 insert into after_t1 values(1); -- allowed
 go
+~~ROW COUNT: 1~~
+
 
 -- tsql
 -- Basic membership check
 SELECT IS_ROLEMEMBER('db_datareader', 'u1')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datawriter', 'u1')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datareader', 'r1')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datawriter', 'r1')
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 exec sp_droprolemember 'db_datareader', 'u1';
 go
@@ -252,35 +475,81 @@ go
 -- Basic membership check
 SELECT IS_ROLEMEMBER('db_datareader', 'u1')
 GO
+~~START~~
+int
+<NULL>
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datawriter', 'u1')
 GO
+~~START~~
+int
+<NULL>
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datareader', 'r1')
 GO
+~~START~~
+int
+<NULL>
+~~END~~
+
 
 SELECT IS_ROLEMEMBER('db_datawriter', 'r1')
 GO
+~~START~~
+int
+<NULL>
+~~END~~
+
 
 -- tsql user=l1 password=123
 -- Basic membership check
 SELECT IS_MEMBER('db_datareader')
 GO
+~~START~~
+int
+0
+~~END~~
+
 
 SELECT IS_MEMBER('db_datawriter')
 GO
+~~START~~
+int
+0
+~~END~~
+
 
 select * from after_t1; -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
 
 select * from before_t1; -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
 
 insert into after_t1 values(1); -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
 
 insert into after_t1 values(1); -- not allowed
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
 
 -- tsql
 create database db1;
@@ -288,29 +557,65 @@ go
 
 select rolname, login_name, orig_username, database_name, default_schema_name from babelfish_authid_user_ext where database_name = 'db1';
 go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
+dbo#!##!#dbo#!#db1#!#dbo
+db_owner#!##!#db_owner#!#db1#!#
+db_datareader#!##!#db_datareader#!#db1#!#
+db_datawriter#!##!#db_datawriter#!#db1#!#
+db1_guest#!##!#guest#!#db1#!#guest
+~~END~~
+
 
 drop database db1;
 go
 
 select rolname, login_name, orig_username, database_name, default_schema_name from babelfish_authid_user_ext where database_name = 'db1';
 go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
+~~END~~
+
 
 -- psql user=l1 password=123
 drop role master_db_datareader;
 go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to drop role
+  Detail: Only roles with the CREATEROLE attribute and the ADMIN option on the target roles may drop roles.
+    Server SQLState: 42501)~~
+
 
 drop role master_db_datawriter;
 go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to drop role
+  Detail: Only roles with the CREATEROLE attribute and the ADMIN option on the target roles may drop roles.
+    Server SQLState: 42501)~~
+
 
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 go
+~~START~~
+bool
+t
+t
+~~END~~
+
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 go
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 -- drop objects

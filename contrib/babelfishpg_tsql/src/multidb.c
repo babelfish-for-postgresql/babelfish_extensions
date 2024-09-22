@@ -1367,7 +1367,9 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
 		{
 			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
-				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
+				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0) ||
+				(strlen(user_name) == 13 && strncmp(user_name, "db_datareader", 13) == 0) ||
+				(strlen(user_name) == 13 && strncmp(user_name, "db_datawriter", 13) == 0))
 			{
 				return new_user_name;
 			}

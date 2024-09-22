@@ -53,9 +53,7 @@ static List *gen_createdb_subcmds(const char *dbname,
 								  const char *db_datareader,
 								  const char *db_datawriter);
 static List *gen_dropdb_subcmds(const char *dbname,
-								List *db_users,
-								const char *db_datareader,
-								const char *db_datawriter);
+								List *db_users);
 static void add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname);
 
 static Oid	do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const char *owner);
@@ -231,9 +229,7 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
  * Generate subcmds for DROP DATABASE. Note 'guest' can be NULL.
  */
 static List *
-gen_dropdb_subcmds(const char *dbname, List *db_users,
-					const char *db_datareader,
-				    const char *db_datawriter)
+gen_dropdb_subcmds(const char *dbname, List *db_users)
 {
 	StringInfoData query;
 	List	   *stmt_list;
@@ -243,6 +239,8 @@ gen_dropdb_subcmds(const char *dbname, List *db_users,
 	int         i = 0;
 	const char *dbo;
 	const char *db_owner;
+	const char *db_datareader;
+	const char *db_datawriter;
 	const char *schema;
 	const char *guest_schema;
 
@@ -250,6 +248,8 @@ gen_dropdb_subcmds(const char *dbname, List *db_users,
 	db_owner = get_db_owner_name(dbname);
 	schema = get_dbo_schema_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "DROP SCHEMA dummy CASCADE; ");
@@ -663,8 +663,6 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	Form_sysdatabases bbf_db;
 	int16		dbid;
 	const char *dbo_role;
-	const char *db_datareader;
-	const char *db_datawriter;
 	List	   *db_users_list;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
@@ -750,13 +748,11 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		CommandCounterIncrement();
 
 		dbo_role = get_dbo_role_name(dbname);
-		db_datareader = get_db_datareader_name(dbname);
-		db_datawriter = get_db_datawriter_name(dbname);
 
 		/* Get a list of all the database's users */
 		db_users_list = get_authid_user_ext_db_users(dbname);
 
-		parsetree_list = gen_dropdb_subcmds(dbname, db_users_list, db_datareader, db_datawriter);
+		parsetree_list = gen_dropdb_subcmds(dbname, db_users_list);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
