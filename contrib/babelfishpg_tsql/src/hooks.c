@@ -5494,7 +5494,7 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 	return oid;
 }
 static void
-cache_look_from_ddl_event_trigger(ObjectAddress* address,char *identity)
+cache_look_from_ddl_event_trigger(ObjectAddress* address,char *temp_identity)
 {
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	PG_TRY();
@@ -5502,7 +5502,7 @@ cache_look_from_ddl_event_trigger(ObjectAddress* address,char *identity)
 			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",										
 						GUC_CONTEXT_CONFIG,		\
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-			identity = getObjectIdentity(address,true);
+			temp_identity = getObjectIdentity(address,true);
 	}
 	PG_FINALLY();
 	{
