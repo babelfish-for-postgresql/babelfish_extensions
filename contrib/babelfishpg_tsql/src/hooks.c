@@ -5498,7 +5498,7 @@ cache_look_from_ddl_event_trigger(ObjectAddress* address)
 {
 	// int sql_dialect_old = sql_dialect;
 	char *identity = NULL;
-	int	save_nestlevel;
+	int	save_nestlevel = 0;
 	PG_TRY();
 	{
 		save_nestlevel = pltsql_new_guc_nest_level();
