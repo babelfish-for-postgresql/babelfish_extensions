@@ -1255,7 +1255,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-	set_config_option("babelfishpg_tsql.migration_mode", physical_schema_name_exists("dbo") ? 'single-db' : 'multi-db',
+	set_config_option("babelfishpg_tsql.migration_mode", physical_schema_name_exists("dbo") ? "single-db" : "multi-db",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
@@ -1269,7 +1269,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		Node           *stmt;
 		const char     *db_owner = get_db_owner_name(dbname);
 		const char     *db_accessadmin = get_db_accessadmin_role_name(dbname);
-		const char     *old_createrole_self_grant;
+		const char     *old_createrole_self_grant = GetConfigOption("createrole_self_grant", false, true);
 		int            i = 0;
 		int save_sec_context = 0;
 		Oid save_userid = InvalidOid;
@@ -1280,7 +1280,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		initStringInfo(&query);
 
 		appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
-		appendStringInfo(&query, "GRANT CREATE ON DATABASE %s TO %s; '");
+		appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
 
 		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
@@ -1307,14 +1307,13 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 			/* Run all subcommands */
 			foreach(parsetree_item, parsetree_list)
 			{
-				Node	   		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 				PlannedStmt 	*wrapper;
 
 				/* need to make a wrapper PlannedStmt */
 				wrapper = makeNode(PlannedStmt);
 				wrapper->commandType = CMD_UTILITY;
 				wrapper->canSetTag = false;
-				wrapper->utilityStmt = stmt;
+				wrapper->utilityStmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 				wrapper->stmt_location = 0;
 				stmt_number++;
 
@@ -1338,6 +1337,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 			SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 		}
+		PG_END_TRY();
 
 		pfree(query.data);
 
