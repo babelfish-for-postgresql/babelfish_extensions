@@ -222,7 +222,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
  *****************************************/
 static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
-static void cache_look_from_ddl_event_trigger(ObjectAddress *addr,char *identity);
+static char* cache_look_from_ddl_event_trigger(ObjectAddress *addr);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -5493,16 +5493,17 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 
 	return oid;
 }
-static void
-cache_look_from_ddl_event_trigger(ObjectAddress* address,char *temp_identity)
+static char*
+cache_look_from_ddl_event_trigger(ObjectAddress* address)
 {
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	char *identity;
 	PG_TRY();
 	{
 			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",										
 						GUC_CONTEXT_CONFIG,		\
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-			temp_identity = getObjectIdentity(address,true);
+			identity = getObjectIdentity(address,true);
 	}
 	PG_FINALLY();
 	{
@@ -5511,5 +5512,5 @@ cache_look_from_ddl_event_trigger(ObjectAddress* address,char *temp_identity)
 				PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();
-	return;
+	return identity;
 }
