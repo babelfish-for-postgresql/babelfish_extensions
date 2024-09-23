@@ -254,7 +254,7 @@ rewrite_object_refs(Node *stmt)
 				 * Try to get physical granted role name, see if it's an
 				 * existing db role
 				 */
-				physical_role_name = get_physical_user_name(db_name, role_name, false);
+				physical_role_name = get_physical_user_name(db_name, role_name, false, true);
 				if (get_role_oid(physical_role_name, true) == InvalidOid)
 					break;
 
@@ -273,7 +273,7 @@ rewrite_object_refs(Node *stmt)
 				pfree(granted->priv_name);
 				granted->priv_name = physical_role_name;
 
-				physical_principal_name = get_physical_user_name(db_name, principal_name, false);
+				physical_principal_name = get_physical_user_name(db_name, principal_name, false, true);
 				pfree(grantee->rolename);
 				grantee->rolename = physical_principal_name;
 
@@ -343,7 +343,7 @@ rewrite_object_refs(Node *stmt)
 						char	   *user_name;
 						char	   *db_name = get_cur_db_name();
 
-						user_name = get_physical_user_name(db_name, create_role->role, false);
+						user_name = get_physical_user_name(db_name, create_role->role, false, true);
 						pfree(create_role->role);
 						create_role->role = user_name;
 
@@ -394,7 +394,7 @@ rewrite_object_refs(Node *stmt)
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									 errmsg("Cannot alter the user %s", user_name)));
 
-						physical_user_name = get_physical_user_name(db_name, user_name, false);
+						physical_user_name = get_physical_user_name(db_name, user_name, false, false);
 						pfree(alter_role->role->rolename);
 						alter_role->role->rolename = physical_user_name;
 					}
@@ -1035,7 +1035,7 @@ rewrite_role_name(RoleSpec *role)
 {
 	char	   *cur_db = get_cur_db_name();
 
-	role->rolename = get_physical_user_name(cur_db, role->rolename, false);
+	role->rolename = get_physical_user_name(cur_db, role->rolename, false, false);
 }
 
 bool
@@ -1271,7 +1271,7 @@ get_physical_schema_name(char *db_name, const char *schema_name)
  * Map the logical user name to its physical name in the database.
  */
 char *
-get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
+get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, bool suppress_role_error)
 {
 	char	   *new_user_name;
 	char	   *result;
@@ -1284,7 +1284,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 	if (len == 0)
 		return NULL;
 
-	if (!DbidIsValid(get_db_id(db_name)) && !suppress_error)
+	if (!DbidIsValid(get_db_id(db_name)) && !suppress_db_error)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist.", db_name)));
@@ -1309,8 +1309,9 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
 			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
 		{
-			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
-				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
+			if (((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
+				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0)) 
+				&& (suppress_role_error || user_exists_for_db(db_name, new_user_name)))
 			{
 				return new_user_name;
 			}
@@ -1324,116 +1325,117 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 	/* Truncate final result to 64 bytes */
 	truncate_tsql_identifier(result);
 
+	/* 
+	 * If the user or role is not found in the sys.babelfish_authid_user_ext 
+	 * catalog, then an error is thrown. The 'suppress_role_error' flag indicates if 
+	 * it is ok for the user or role to be absent from the catalog.
+	 */
+	if(!suppress_role_error && !user_exists_for_db(db_name, result))
+	{
+		ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("User or role \"%s\" does not exist", new_user_name)));
+	}
+
 	return result;
 }
 
-const char *
+char *
 get_dbo_schema_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_dbo";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_dbo";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_dbo";
-	if (SINGLE_DB == get_migration_mode())
-		return "dbo";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
+	}
+	else if (SINGLE_DB == get_migration_mode())
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
+	}
 	else
 	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
-const char *
+char *
 get_dbo_role_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_dbo";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_dbo";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_dbo";
-	if (SINGLE_DB == get_migration_mode())
-		return "dbo";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
+	}
+	else if (SINGLE_DB == get_migration_mode())
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
+	}
 	else
 	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
-const char *
+char *
 get_db_owner_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_db_owner";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_db_owner";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_db_owner";
-	if (SINGLE_DB == get_migration_mode())
-		return "db_owner";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_owner", dbname);
+	}
+	else if (SINGLE_DB == get_migration_mode())
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_owner");
+	}
 	else
 	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_owner", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
-const char *
+char *
 get_guest_role_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_guest";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_guest";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_guest";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
 	/*
 	 * Always prefix with dbname regardless if single or multidb. Note that
 	 * dbo is an exception.
 	 */
-	else
-	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
-		truncate_identifier(name, strlen(name), false);
-		return name;
-	}
+	snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
+	truncate_identifier(name, strlen(name), false);
+	return name;
 }
 
-const char *
+char *
 get_guest_schema_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_guest";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_guest";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_guest";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if (SINGLE_DB == get_migration_mode())
-		return "guest";
+	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
+	}
+	else if (SINGLE_DB == get_migration_mode())
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "guest");
+	}
 	else
 	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
 bool
