@@ -852,6 +852,7 @@ bool
 is_user(Oid role_oid, bool current_db_only)
 {
 	bool		is_user = false;
+	bool		isnull;
 	HeapTuple	tuple;
 	char    	*rolname;
 
@@ -861,22 +862,32 @@ is_user(Oid role_oid, bool current_db_only)
 	if (HeapTupleIsValid(tuple))
 	{
 		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		VarChar dbname = ((Form_authid_user_ext) GETSTRUCT(tuple))->database_name;
 		char *type_str = bpchar_to_cstring(&type);
-		char *db_name = varchar_to_cstring(&dbname);
-		char *current_db_name = get_cur_db_name();
 
 		/*
 		 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
 		 * is "S" or "U" etc, we should drop the user
 		 */
 		if (strcmp(type_str, "R") != 0)
-			is_user = (!current_db_only || strcmp(db_name, current_db_name) == 0);
+		{
+			if (current_db_only)
+			{
+				Datum db_name = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+												 Anum_bbf_authid_user_ext_database_name, &isnull);
+				char *db_name_cstring = TextDatumGetCString(db_name);
+				char *current_db_name = get_cur_db_name();
+
+				is_user = (strcmp(db_name_cstring, current_db_name) == 0);
+
+				pfree(db_name_cstring);
+				pfree(current_db_name);
+			}
+			else
+				is_user = true;
+		}
 
 		ReleaseSysCache(tuple);
 		pfree(type_str);
-		pfree(db_name);
-		pfree(current_db_name);
 	}
 
 	pfree(rolname);
@@ -888,6 +899,7 @@ bool
 is_role(Oid role_oid, bool current_db_only)
 {
 	bool		is_role = false;
+	bool		isnull;
 	HeapTuple	tuple;
 	char    	*rolname;
 
@@ -897,18 +909,28 @@ is_role(Oid role_oid, bool current_db_only)
 	if (HeapTupleIsValid(tuple))
 	{
 		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		VarChar dbname = ((Form_authid_user_ext) GETSTRUCT(tuple))->database_name;
 		char *type_str = bpchar_to_cstring(&type);
-		char *db_name = varchar_to_cstring(&dbname);
-		char *current_db_name = get_cur_db_name();
 
 		if (strcmp(type_str, "R") == 0)
-			is_role = (!current_db_only || strcmp(db_name, current_db_name) == 0);
+		{
+			if (current_db_only)
+			{
+				Datum db_name = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+												 Anum_bbf_authid_user_ext_database_name, &isnull);
+				char *db_name_cstring = TextDatumGetCString(db_name);
+				char *current_db_name = get_cur_db_name();
+
+				is_role = (strcmp(db_name_cstring, current_db_name) == 0);
+
+				pfree(current_db_name);
+				pfree(current_db_name);
+			}
+			else
+				is_role = true;
+		}
 		
 		ReleaseSysCache(tuple);
 		pfree(type_str);
-		pfree(db_name);
-		pfree(current_db_name);
 	}
 
 	pfree(rolname);
