@@ -5041,7 +5041,8 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 		
 		ReleaseSysCache(tuple);
 		
-		pfree(func_dbo_schema);
+		if(func_dbo_schema)
+			pfree(func_dbo_schema);
 	}
 
 	return new_search_path;
