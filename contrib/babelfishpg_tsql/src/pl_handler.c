@@ -3294,7 +3294,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									ereport(ERROR,
 											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-												errmsg("Current user does not have privileges to change login")));
+											 errmsg("Current user does not have privileges to change login")));
 								}
 							}
 						}
@@ -3603,7 +3603,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					GrantStmt  *stmt;
 					PlannedStmt *wrapper;
 					RoleSpec *rolspec = create_schema->authrole;
-					Oid       owner_oid;
+					Oid       owner_oid = InvalidOid;
 					Oid       db_accessadmin = get_role_oid(get_db_accessadmin_role_name(get_cur_db_name()), false);
 					bool      alter_owner = false;
 

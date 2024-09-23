@@ -54,7 +54,6 @@ DECLARE
     db_accessadmin TEXT := 'db_accessadmin';
     db_owner TEXT := 'db_owner';
 BEGIN
-    SET LOCAL ROLE bbf_role_admin;
     single_db_mode_user_db_exists := (SELECT COUNT(*) FROM sys.babelfish_namespace_ext WHERE nspname = 'dbo');
     FOR db_name IN SELECT name FROM sys.babelfish_sysdatabases
     LOOP
