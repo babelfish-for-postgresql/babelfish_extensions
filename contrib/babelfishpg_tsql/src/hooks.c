@@ -65,7 +65,6 @@
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/ruleutils.h"
-#include "utils/queryenvironment.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/numeric.h"
@@ -169,7 +168,6 @@ static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNu
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
-static bool SIMessageIsForTempTable(const SharedInvalidationMessage *msg);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
@@ -4800,60 +4798,6 @@ static EphemeralNamedRelation
 pltsql_get_tsql_enr_from_oid(const Oid oid)
 {
 	return temp_oid_buffer_size > 0 ? get_ENR_withoid(currentQueryEnv, oid, ENR_TSQL_TEMP) : NULL;
-}
-
-/*
- * SIMessageIsForTempTable
- * 
- * Determine whether the msg sent is for a temp table. 
- * TSQL style temp tables do not need to add messages to the
- * SI queue, as catalog changes are all session-local.
- * 
- * See LocalExecuteInvalidationMessage
- */
-static bool SIMessageIsForTempTable(const SharedInvalidationMessage *msg)
-{
-	if (sql_dialect != SQL_DIALECT_TSQL || temp_oid_buffer_size == 0)
-		return false;
-
-	if (msg->id >= 0)
-	{
-		ListCell *lc;
-		if (!currentQueryEnv)
-			return false;
-		foreach(lc, currentQueryEnv->savedCatcacheMessages)
-		{
-			SharedInvalCatcacheMsg *saved_msg = (SharedInvalCatcacheMsg *) lfirst(lc);
-			if (saved_msg->dbId == msg->cc.dbId
-			&& saved_msg->hashValue == msg->cc.hashValue
-			&& saved_msg->id == msg->cc.id)
-				return true;
-		}
-		return false;
-	}
-	else if (msg->id == SHAREDINVALCATALOG_ID)
-	{
-		return false;
-	}
-	else if (msg->id == SHAREDINVALRELCACHE_ID)
-	{
-		/* This is set in AddRelcacheInvalidationMessage. */
-		return msg->rc.local_only;
-	}
-	else if (msg->id == SHAREDINVALSMGR_ID)
-	{
-		return false;
-	}
-	else if (msg->id == SHAREDINVALRELMAP_ID)
-	{
-		return false;
-	}
-	else if (msg->id == SHAREDINVALSNAPSHOT_ID)
-	{
-		return false;
-	}
-	else
-		elog(ERROR, "unrecognized SI message ID: %d", msg->id);
 }
 
 /*
