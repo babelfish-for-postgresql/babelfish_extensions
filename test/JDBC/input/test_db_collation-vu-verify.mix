@@ -482,6 +482,9 @@ GO
 ANALYZE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_computed_columns;
 GO
 
+SELECT pg_get_expr(adbin, adrelid, true) FROM pg_attrdef WHERE adrelid = 'test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_columns'::regclass;
+GO
+
 -- tsql
 -- hash index
 SELECT a FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
@@ -534,9 +537,6 @@ GO
 SELECT nv FROM test_db_collation_vu_prepare_db121_t1 GROUP BY nv ORDER BY nv;
 GO
 
-CREATE VIEW test_db_collation_vu_prepare_db121_v1 AS SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
-GO
-
 SELECT * FROM test_db_collation_vu_prepare_db121_v1;
 GO
 
@@ -547,19 +547,6 @@ SELECT * FROM test_db_collation_vu_prepare_db121_v1 WHERE nv LIKE '%aiv%';
 GO
 
 SELECT * FROM test_db_collation_vu_prepare_db121_v1 GROUP BY nv ORDER BY nv;
-GO
-
-CREATE PROCEDURE test_db_collation_vu_prepare_db121_p1 @param NVARCHAR(50)
-AS
-BEGIN
-    DECLARE @localVar NVARCHAR(11)
-
-    SELECT @localVar = nv 
-    FROM test_db_collation_vu_prepare_db121_t1
-    WHERE nv = @param;
-
-    SELECT @localVar;
-END;
 GO
 
 -- Executing stored procedure

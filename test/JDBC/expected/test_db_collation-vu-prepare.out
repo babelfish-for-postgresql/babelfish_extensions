@@ -298,7 +298,7 @@ GO
 ~~ROW COUNT: 9~~
 
 
-CREATE TABLE test_db_collation_vu_prepare_db121_columns(a nvarchar(MAX) PRIMARY KEY, b nvarchar(MAX) REFERENCES test_db_collation_vu_prepare_db121_columns_foreign(id), c nvarchar(MAX) UNIQUE, d nvarchar(MAX) DEFAULT 'Default Value');
+CREATE TABLE test_db_collation_vu_prepare_db121_columns(a nvarchar(MAX) PRIMARY KEY DEFAULT 'Default Value', b nvarchar(MAX) REFERENCES test_db_collation_vu_prepare_db121_columns_foreign(id) DEFAULT 'Default Value', c nvarchar(MAX) UNIQUE DEFAULT 'Default Value', d nvarchar(MAX) DEFAULT 'Default Value');
 GO
 
 INSERT INTO test_db_collation_vu_prepare_db121_columns (a, b, c) VALUES
@@ -387,6 +387,22 @@ bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varc
 0#!#2#!#col2#!#1#!#17084#!#nvarchar#!#100#!#0#!#0#!#bbf_unicode_cp1_ci_ai#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#231#!#100#!#15729673#!#54
 ~~END~~
 
+
+CREATE VIEW test_db_collation_vu_prepare_db121_v1 AS SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
+GO
+
+
+
+CREATE PROCEDURE test_db_collation_vu_prepare_db121_p1 @param NVARCHAR(50)
+AS
+BEGIN
+    DECLARE @localVar NVARCHAR(11)
+    SELECT @localVar = nv 
+    FROM test_db_collation_vu_prepare_db121_t1
+    WHERE nv = @param;
+    SELECT @localVar;
+END;
+GO
 
 USE test_db_collation_vu_prepare_db122;
 GO

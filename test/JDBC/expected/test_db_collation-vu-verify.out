@@ -276,6 +276,7 @@ test_db_collation_vu_prepare_db121_t2#!#sn#!#bbf_unicode_cp1_ci_as
 test_db_collation_vu_prepare_db121_t2#!#sqlv#!#bbf_unicode_cp1_ci_as
 test_db_collation_vu_prepare_db121_t2#!#t#!#bbf_unicode_cp1_ci_as
 test_db_collation_vu_prepare_db121_t2#!#v#!#bbf_unicode_cp1_ci_as
+test_db_collation_vu_prepare_db121_v1#!#nv#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -1640,6 +1641,17 @@ GO
 ANALYZE test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_computed_columns;
 GO
 
+SELECT pg_get_expr(adbin, adrelid, true) FROM pg_attrdef WHERE adrelid = 'test_db_collation_vu_prepare_db121_dbo.test_db_collation_vu_prepare_db121_columns'::regclass;
+GO
+~~START~~
+text
+'Default Value'::sys."varchar" COLLATE sys.bbf_unicode_cp1_ci_ai
+'Default Value'::sys."varchar" COLLATE sys.bbf_unicode_cp1_ci_ai
+'Default Value'::sys."varchar" COLLATE sys.bbf_unicode_cp1_ci_ai
+'Default Value'::sys."varchar" COLLATE sys.bbf_unicode_cp1_ci_ai
+~~END~~
+
+
 -- tsql
 -- hash index
 SELECT a FROM test_db_collation_vu_prepare_db121_columns ORDER BY a;
@@ -1652,7 +1664,7 @@ Index Only Scan using test_db_idx7test_db_collation_vdf57299c5d8d3338614dbfb1e48
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.216 ms
+Babelfish T-SQL Batch Parsing Time: 0.277 ms
 ~~END~~
 
 
@@ -1667,7 +1679,7 @@ Index Only Scan using test_db_idx2test_db_collation_vcdbea9e4134a0c2a226849d9903
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.160 ms
+Babelfish T-SQL Batch Parsing Time: 0.153 ms
 ~~END~~
 
 
@@ -1682,7 +1694,7 @@ Index Only Scan using test_db_idx3test_db_collation_vfdc9e950ab834cd625650533753
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.158 ms
+Babelfish T-SQL Batch Parsing Time: 0.149 ms
 ~~END~~
 
 
@@ -1697,7 +1709,7 @@ Index Only Scan using test_db_idx7test_db_collation_vdf57299c5d8d3338614dbfb1e48
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.177 ms
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -1712,7 +1724,7 @@ Index Scan using test_db_idx7test_db_collation_vdf57299c5d8d3338614dbfb1e48fc574
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 41.049 ms
+Babelfish T-SQL Batch Parsing Time: 42.160 ms
 ~~END~~
 
 
@@ -1728,7 +1740,7 @@ Sort  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.607 ms
+Babelfish T-SQL Batch Parsing Time: 8.788 ms
 ~~END~~
 
 
@@ -1743,7 +1755,7 @@ Index Only Scan using test_db_idx6test_db_collation_v21c2afe5b4ac1ecc3dfb725647b
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.159 ms
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
 ~~END~~
 
 
@@ -1758,7 +1770,7 @@ Index Only Scan using test_db_idx7test_db_collation_vdf57299c5d8d3338614dbfb1e48
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.197 ms
+Babelfish T-SQL Batch Parsing Time: 0.189 ms
 ~~END~~
 
 
@@ -1775,7 +1787,7 @@ Sort  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.158 ms
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
 ~~END~~
 
 
@@ -1823,9 +1835,6 @@ TELÉFONO
 TEññiȘ
 ~~END~~
 
-
-CREATE VIEW test_db_collation_vu_prepare_db121_v1 AS SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
-GO
 
 SELECT * FROM test_db_collation_vu_prepare_db121_v1;
 GO
@@ -1884,19 +1893,6 @@ TELÉFONO
 TEññiȘ
 ~~END~~
 
-
-
-
-CREATE PROCEDURE test_db_collation_vu_prepare_db121_p1 @param NVARCHAR(50)
-AS
-BEGIN
-    DECLARE @localVar NVARCHAR(11)
-    SELECT @localVar = nv 
-    FROM test_db_collation_vu_prepare_db121_t1
-    WHERE nv = @param;
-    SELECT @localVar;
-END;
-GO
 
 -- Executing stored procedure
 EXEC test_db_collation_vu_prepare_db121_p1 @param = 'cafe'
