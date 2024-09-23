@@ -1493,7 +1493,7 @@ get_db_datawriter_name(const char *dbname)
 	}
 }
 
-char *
+const char *
 get_guest_role_name(const char *dbname)
 {
 	if (0 == strcmp(dbname, "master"))
