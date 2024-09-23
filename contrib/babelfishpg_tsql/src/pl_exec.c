@@ -10227,7 +10227,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 	char	   *cur_dbname = get_cur_db_name();
 	char	   *new_search_path;
 	char	   *physical_schema;
-	char	   *dbo_schema = NULL;
+	const char *dbo_schema;
 
 	top_es_entry = exec_state_call_stack->next;
 
@@ -10378,10 +10378,6 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 	}
 	
 	pfree(cur_dbname);
-
-	if(dbo_schema)
-		pfree(dbo_schema);
-	
 	return false;
 }
 
