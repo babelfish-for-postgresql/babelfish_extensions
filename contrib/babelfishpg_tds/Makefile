@@ -9,11 +9,6 @@ tds_backend = $(tds_top_dir)/src/backend
 tds_include = $(tds_top_dir)/src/include
 TSQL_SRC = ../babelfishpg_tsql
 
-export ANTLR4_JAVA_BIN=java
-export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
-export ANTLR4_RUNTIME_INCLUDE_DIR=/usr/local/include/antlr4-runtime
-export ANTLR4_RUNTIME_LIB_DIR=/usr/local/lib
-
 PG_CFLAGS += -Werror -Wfloat-conversion
 PG_CFLAGS += -fstack-protector-strong
 PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)

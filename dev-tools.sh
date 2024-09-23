@@ -142,6 +142,11 @@ build_bbf() {
     export PG_CONFIG=$2/postgres/bin/pg_config
     export PG_SRC=$1/postgresql_modified_for_babelfish
     export cmake=$(which cmake)
+    export ANTLR4_JAVA_BIN=java
+    export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
+    export ANTLR4_RUNTIME_INCLUDE_DIR=/usr/local/include/antlr4-runtime
+    export ANTLR4_RUNTIME_LIB_DIR=/usr/local/lib
+
     cd contrib/babelfishpg_money
     make clean && make && make install
     cd ../babelfishpg_common
