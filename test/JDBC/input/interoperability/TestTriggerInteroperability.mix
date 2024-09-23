@@ -64,7 +64,7 @@ GO
 begin tran;
 GO
 
--- should throw permission denied error
+-- should succeed as login is the owner of underlying table psql_tbl_2
 insert into test_tbl_trig_bbf_2 values (1);
 GO
 
