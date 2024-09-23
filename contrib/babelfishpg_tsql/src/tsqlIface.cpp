@@ -187,7 +187,7 @@ template <class T> static void rewrite_geospatial_query_helper(T ctx, TSqlParser
 template <class T> static void rewrite_geospatial_col_ref_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
 template <class T> static void rewrite_geospatial_func_ref_no_arg_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
 template <class T> static void rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t start_index, size_t arg_list_start_index, size_t arg_list_stop_index);
-template <class T> static void rewrite_function_call_dot_func_ref_args(T ctx, size_t col_stop_index, size_t func_start_index, size_t arg_list_start_index, size_t arg_list_stop_index);
+template <class T> static void rewrite_function_call_dot_func_ref_args(T ctx);
 template <class T> static void rewrite_function_call_geospatial_func_ref_no_arg(T ctx);
 static void handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
@@ -8591,10 +8591,32 @@ rewrite_function_call_geospatial_func_ref_no_arg(T ctx)
  */
 template<class T>
 void
-rewrite_function_call_dot_func_ref_args(T ctx, size_t col_stop_index, size_t func_start_index, size_t arg_list_start_index, size_t arg_list_stop_index)
+rewrite_function_call_dot_func_ref_args(T ctx)
 {
 	std::vector<size_t> keysToRemove;
 	std::string func_ctx = ::getFullText(ctx);
+	size_t col_stop_index, func_start_index, arg_list_start_index, arg_list_stop_index;
+
+	if (ctx->spatial_proc_name_server_database_schema())
+	{
+		col_stop_index = ctx->spatial_proc_name_server_database_schema()->column->stop->getStopIndex();
+		func_start_index = ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex();
+		arg_list_start_index = ctx->function_arg_list()->start->getStartIndex();
+		arg_list_stop_index = ctx->function_arg_list()->stop->getStopIndex();
+	}
+	else if (ctx->xml_proc_name_table_column())
+	{
+		col_stop_index = ctx->xml_proc_name_table_column()->column->stop->getStopIndex();
+		func_start_index = ctx->xml_proc_name_table_column()->xml_func_arg()->start->getStartIndex();
+		arg_list_start_index = ctx->expression_list()->start->getStartIndex();
+		arg_list_stop_index = ctx->expression_list()->stop->getStopIndex();
+	}
+	else
+	{
+		/* rewrite only in case of xml and spatial function */
+		return;
+	}
+
 	int col_len = (int)col_stop_index - ctx->start->getStartIndex();
 	int method_len = (int)ctx->stop->getStopIndex() - func_start_index;
 	std::string expr = "";
@@ -8688,14 +8710,7 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 
 		/* This if-elseIf clause rewrites the query in case of geospatial function calls */
 		if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg() && ctx->function_arg_list())
-		{
-			size_t col_stop_index = ctx->spatial_proc_name_server_database_schema()->column->stop->getStopIndex();
-			size_t func_start_index = ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex();
-			size_t arg_list_start_index = ctx->function_arg_list()->start->getStartIndex();
-			size_t arg_list_stop_index = ctx->function_arg_list()->stop->getStopIndex();
-
-			rewrite_function_call_dot_func_ref_args(ctx, col_stop_index, func_start_index, arg_list_start_index, arg_list_stop_index);
-		}
+			rewrite_function_call_dot_func_ref_args(ctx);
 		else if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg() && !ctx->function_arg_list())
 			rewrite_function_call_geospatial_func_ref_no_arg(ctx);
 	}
@@ -8734,11 +8749,7 @@ handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 		/* validate the xml method arguments before rewriting */
 		validateXMLFunctionArgs(ctx->xml_proc_name_table_column()->xml_func_arg(), ctx->expression_list());
 
-		size_t col_stop_index = ctx->xml_proc_name_table_column()->column->stop->getStopIndex();
-		size_t func_start_index = ctx->xml_proc_name_table_column()->xml_func_arg()->start->getStartIndex();
-		size_t arg_list_start_index = ctx->expression_list()->start->getStartIndex();
-		size_t arg_list_stop_index = ctx->expression_list()->stop->getStopIndex();
-		rewrite_function_call_dot_func_ref_args(ctx, col_stop_index, func_start_index, arg_list_start_index, arg_list_stop_index);
+		rewrite_function_call_dot_func_ref_args(ctx);
 	}
 }
 
