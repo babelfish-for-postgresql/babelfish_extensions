@@ -1259,7 +1259,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-	sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+	sysdatabase_rel = table_open(get_sysdatabases_oid(), RowExclusiveLock);
 	scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)

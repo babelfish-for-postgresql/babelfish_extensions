@@ -388,6 +388,16 @@ void pltsql_drop_relation_refcnt_hook(Relation relation)
 /*****************************************
  *			SYSDATABASES
  *****************************************/
+Oid
+get_sysdatabases_oid()
+{
+	if (!OidIsValid(sysdatabases_oid))
+		sysdatabases_oid = get_relname_relid(SYSDATABASES_TABLE_NAME,
+											 get_namespace_oid("sys", false));
+
+	return bbf_view_def_oid;
+}
+
 int16
 get_db_id(const char *dbname)
 {

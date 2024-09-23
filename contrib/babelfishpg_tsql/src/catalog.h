@@ -52,6 +52,8 @@ extern Oid	sysdatabaese_idx_name_oid;
 #define Anum_sysdatabases_name 6
 #define Anum_sysdatabases_crdate 7
 
+extern Oid get_sysdatabases_oid(void);
+
 /* MUST comply with babelfish_sysdatabases table */
 typedef struct FormData_sysdatabases
 {
