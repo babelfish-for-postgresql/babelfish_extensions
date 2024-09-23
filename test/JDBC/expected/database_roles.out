@@ -582,8 +582,7 @@ drop role master_db_datareader;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to drop role
-  Detail: Only roles with the CREATEROLE attribute and the ADMIN option on the target roles may drop roles.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -591,8 +590,7 @@ drop role master_db_datawriter;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to drop role
-  Detail: Only roles with the CREATEROLE attribute and the ADMIN option on the target roles may drop roles.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
