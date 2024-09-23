@@ -1279,7 +1279,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 
 		initStringInfo(&query);
 
-		appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
+		appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
 		appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
 
 		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
@@ -1295,7 +1295,6 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		PG_TRY();
 		{
 			ListCell *parsetree_item;
-			int      stmt_number = 0;
 			/*
 			* We have performed all the permissions checks.
 			* Set current user to bbf_role_admin for create permissions.
@@ -1315,7 +1314,6 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 				wrapper->canSetTag = false;
 				wrapper->utilityStmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 				wrapper->stmt_location = 0;
-				stmt_number++;
 
 				/* do this step */
 				ProcessUtility(wrapper,
