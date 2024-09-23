@@ -644,6 +644,9 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		}
 		set_cur_db(old_dbid, old_dbname);
 		add_fixed_user_roles_to_bbf_authid_user_ext(dbname);
+
+		if(dbo_role)
+			pfree(dbo_role);
 	}
 	PG_FINALLY();
 	{
@@ -658,18 +661,18 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 void
 drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 {
-	volatile Relation sysdatabase_rel;
-	HeapTuple	tuple;
-	Form_sysdatabases bbf_db;
-	int16		dbid;
-	const char *dbo_role;
-	List	   *db_users_list;
-	List	   *parsetree_list;
-	ListCell   *parsetree_item;
-	const char *prev_current_user;
-	int 		save_sec_context;
-	bool 		is_set_userid = false;
-	Oid 		save_userid;
+	volatile Relation   sysdatabase_rel;
+	HeapTuple           tuple;
+	Form_sysdatabases   bbf_db;
+	int16               dbid;
+	char               *dbo_role = NULL;
+	List               *db_users_list;
+	List               *parsetree_list;
+	ListCell           *parsetree_item;
+	const char         *prev_current_user;
+	int                save_sec_context;
+	bool               is_set_userid = false;
+	Oid                save_userid;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
@@ -825,6 +828,9 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	if(dbo_role)
+		pfree(dbo_role);
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);
@@ -1107,7 +1113,7 @@ create_schema_if_not_exists(const uint16 dbid,
 	 * some reason guest role does not exist, then that is a bigger problem.
 	 * We skip creating the guest schema entirely instead of crashing though.
 	 */
-	phys_role = get_physical_user_name((char *) dbname, (char *) owner_role, false);
+	phys_role = get_physical_user_name((char *) dbname, (char *) owner_role, false, true);
 	if (!OidIsValid(get_role_oid(phys_role, true)))
 	{
 		ereport(LOG,

@@ -47,7 +47,7 @@ extern bool babelfish_dump_restore;
 extern char *get_cur_db_name(void);
 extern char *construct_unique_index_name(char *index_name, char *relation_name); 
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
-extern const char *get_dbo_schema_name(const char *dbname);
+extern char *get_dbo_schema_name(const char *dbname);
 PG_FUNCTION_INFO_V1(split_identifier_internal);
 
 /* To cache oid of sys.varchar */

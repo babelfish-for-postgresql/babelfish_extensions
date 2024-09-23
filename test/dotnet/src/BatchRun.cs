@@ -224,7 +224,13 @@ namespace BabelfishDotnetFramework
 								$"########################## INSERT BULK:- {strLine} ##########################", logger, "information");
 							string sourceTable = result[1];
 							string destinationTable = result[2];
-							testFlag &= testUtils.insertBulkCopyWithTransaction(bblCnn, bblCmd, sourceTable, destinationTable, bblTransaction, logger, ref stCount);
+							string bulkCopyOption = "";
+							/* Check if bulk copy option is specified explicitly. */
+							if (result.Length > 3)
+							{
+								bulkCopyOption = result[3];
+							}
+							testFlag &= testUtils.insertBulkCopyWithTransaction(bblCnn, bblCmd, sourceTable, destinationTable, bulkCopyOption, bblTransaction, logger, ref stCount);
 						}
 						/* Case for sp_customtype RPC. */
 						else if (strLine.ToLowerInvariant().StartsWith("storedp"))

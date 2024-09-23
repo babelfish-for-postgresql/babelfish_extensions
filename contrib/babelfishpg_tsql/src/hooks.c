@@ -32,6 +32,7 @@
 #include "commands/trigger.h"
 #include "commands/view.h"
 #include "common/logging.h"
+#include "executor/execExpr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -195,6 +196,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static void pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr);
+static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
 
 /*****************************************
  * 			Replication Hooks
@@ -281,6 +283,7 @@ static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_cons
 static pltsql_strpos_non_determinstic_hook_type prev_pltsql_strpos_non_determinstic_hook = NULL;
 static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determinstic_hook = NULL;
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
+static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -493,6 +496,9 @@ InstallExtendedHooks(void)
 
 	handle_param_collation_hook = set_param_collation;
 	handle_default_collation_hook = default_collation_for_builtin_type;
+
+	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
+	ExecFuncProc_AclCheck_hook = pltsql_ExecFuncProc_AclCheck;
 }
 
 void
@@ -560,6 +566,7 @@ UninstallExtendedHooks(void)
 	pltsql_strpos_non_determinstic_hook = prev_pltsql_strpos_non_determinstic_hook;
 	pltsql_replace_non_determinstic_hook = prev_pltsql_replace_non_determinstic_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;
+	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -841,6 +848,38 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	return newOid;
 }
 
+static AclResult
+pltsql_ExecFuncProc_AclCheck(Oid funcid)
+{
+	Oid userid = GetUserId();
+
+	/* In TDS client, the permissions might need to be checked against session user. */
+	if (IS_TDS_CLIENT())
+	{
+		Oid schema_id = get_func_namespace(funcid);
+
+		if (OidIsValid(schema_id))
+		{
+			char *nspname = get_namespace_name(schema_id);
+
+			/*
+			 * Check if function's schema is from a different logical database and
+			 * it is not a shared schema. If yes, then set userid to session user
+			 * to allow cross database access.
+			 */
+			if (nspname != NULL && !is_shared_schema(nspname) &&
+				!is_schema_from_db(schema_id, get_cur_db_id()))
+				userid = GetSessionUserId();
+			if (nspname)
+				pfree(nspname);
+		}
+	}
+	else if (prev_ExecFuncProc_AclCheck_hook)
+		return prev_ExecFuncProc_AclCheck_hook(funcid);
+
+	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
+}
+
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
@@ -864,6 +903,58 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
 		if (pltsql_explain_wal)
 			queryDesc->instrument_options |= INSTRUMENT_WAL;
+	}
+
+	/*
+	 * In TDS client, the RTE permissions might need to be checked against login mapped to given checkAsUser,
+	 * if it is valid, otherwise permissions are checked against session user (current login).
+	 */
+	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL)
+	{
+		ListCell	*lc;
+
+		foreach(lc, queryDesc->plannedstmt->permInfos)
+		{
+			RTEPermissionInfo	*perminfo = lfirst_node(RTEPermissionInfo, lc);
+			Oid             	relOid = perminfo->relid;
+
+			if (OidIsValid(relOid))
+			{
+				Oid schema_id = get_rel_namespace(relOid);
+
+				if (OidIsValid(schema_id))
+				{
+					char *nspname = get_namespace_name(schema_id);
+
+					/*
+					 * Check if relation's schema is valid and is not a shared schema. If yes,
+					 * then replace checkAsUser to its mapped login if present otherwise replace
+					 * with session user (current login).
+					 * We do not blindly want to check the permissions against session user (current login)
+					 * since permissions of RTEs inside a view are checked against that view's owner
+					 * which can very well be a user of some different database. So if we blindly check
+					 * permission against session user instead of view's owner then it would break view's
+					 * ownership behavior. Instead, we will replace checkAsUser with it's corresponding mapped
+					 * login if present and only in cases where checkAsUser is not set, we will replace it
+					 * with session user (login). We are using login to allow cross database queries since login
+					 * can access all its objects across the databases.
+					 */
+					if (nspname != NULL && !is_shared_schema(nspname))
+					{
+						if (OidIsValid(perminfo->checkAsUser))
+						{
+							Oid loginId = get_login_for_user(perminfo->checkAsUser, nspname);
+							if (OidIsValid(loginId))
+								perminfo->checkAsUser = loginId;
+						}
+						else
+							perminfo->checkAsUser = GetSessionUserId();
+					}
+					if (nspname)
+						pfree(nspname);
+				}
+			}
+		}
 	}
 
 	if (prev_ExecutorStart)
@@ -4932,8 +5023,8 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 	HeapTuple 	 	tuple;
 	char 			*func_schema_name = NULL,
 					*new_search_path = NULL;
-	const char  	*func_dbo_schema,
-					*cur_dbname = get_cur_db_name();
+	char  			*func_dbo_schema = NULL;
+	const char		*cur_dbname = get_cur_db_name();
 	
 	tuple = SearchSysCache1(NAMESPACEOID,
 						ObjectIdGetDatum(proc_nsp_oid));
@@ -4949,7 +5040,11 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 										quote_identifier(func_dbo_schema));
 		
 		ReleaseSysCache(tuple);
+		
+		if(func_dbo_schema)
+			pfree(func_dbo_schema);
 	}
+
 	return new_search_path;
 }
 
