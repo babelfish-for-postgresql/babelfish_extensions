@@ -1465,7 +1465,7 @@ is_builtin_database(const char *dbname)
 bool
 physical_schema_name_exists(char *phys_schema_name)
 {
-	return SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(phys_schema_name));
+	return SearchSysCacheExists1(SYSNAMESPACENAME, CStringGetDatum(phys_schema_name));
 }
 
 /*

@@ -1226,3 +1226,126 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(0);
 }
+
+
+/*
+* This function is only being used for the purpose of the upgrade script to create
+* database roles db_datareader and db_datawriter for each database if the database
+* does not have the roles yet.
+*/
+PG_FUNCTION_INFO_V1(create_database_roles_for_all_dbs);
+Datum
+create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
+{
+	Relation	sysdatabase_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	Form_sysdatabases bbf_db;
+	const char *dbname;
+	int 		saved_nest_level = 0;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"create_database_roles_for_all_dbs()")));
+
+	saved_nest_level = pltsql_new_guc_nest_level();
+	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						GUC_CONTEXT_CONFIG,
+						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	set_config_option("babelfishpg_tsql.migration_mode", physical_schema_name_exists("dbo") ? 'single-db' : 'multi-db',
+						GUC_CONTEXT_CONFIG,
+						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+	scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		StringInfoData query;
+		List           *parsetree_list;
+		Node           *stmt;
+		const char     *db_owner = get_db_owner_name(dbname);
+		const char     *db_accessadmin = get_db_accessadmin_role_name(dbname);
+		const char     *old_createrole_self_grant;
+		int            i = 0;
+		int save_sec_context = 0;
+		Oid save_userid = InvalidOid;
+
+		bbf_db = (Form_sysdatabases) GETSTRUCT(tuple);
+		dbname = text_to_cstring(&(bbf_db->name));
+
+		initStringInfo(&query);
+
+		appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
+		appendStringInfo(&query, "GRANT CREATE ON DATABASE %s TO %s; '");
+
+		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+		stmt = parsetree_nth_stmt(parsetree_list, i++);
+		update_CreateRoleStmt(stmt, db_accessadmin, db_owner, NULL);
+
+		stmt = parsetree_nth_stmt(parsetree_list, i++);
+		update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
+
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+		PG_TRY();
+		{
+			ListCell *parsetree_item;
+			int      stmt_number = 0;
+			/*
+			* We have performed all the permissions checks.
+			* Set current user to bbf_role_admin for create permissions.
+			* Set createrole_self_grant to "inherit" so that bbf_role_admin
+			* inherits the new role.
+			*/
+			SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+			SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
+			/* Run all subcommands */
+			foreach(parsetree_item, parsetree_list)
+			{
+				Node	   		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+				PlannedStmt 	*wrapper;
+
+				/* need to make a wrapper PlannedStmt */
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = stmt;
+				wrapper->stmt_location = 0;
+				stmt_number++;
+
+				/* do this step */
+				ProcessUtility(wrapper,
+							"(CREATE LOGICAL DATABASE )",
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+
+				CommandCounterIncrement();
+			}
+			add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
+		}
+		PG_FINALLY();
+		{
+			/* Clean up. Restore previous state. */
+			SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
+			SetUserIdAndSecContext(save_userid, save_sec_context);
+		}
+
+		pfree(query.data);
+
+	}
+	pltsql_revert_guc(saved_nest_level);
+	table_endscan(scan);
+	table_close(sysdatabase_rel, RowExclusiveLock);
+
+	PG_RETURN_INT32(0);
+}
+
