@@ -4025,7 +4025,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				Assert(list_length(grant->objects) == 1);
 				if (grant->objtype == OBJECT_SCHEMA)
 						break;
-				else if (grant->objtype == OBJECT_TABLE && strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0)
+				else if (grant->objtype == OBJECT_TABLE && strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0 && strcmp(queryString, "(CREATE DATABASE ROLES) ") != 0)
 				{
 					/*
 					 * Ignore GRANT statements that are executed implicitly as a part of

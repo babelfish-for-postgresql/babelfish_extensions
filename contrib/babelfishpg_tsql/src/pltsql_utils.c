@@ -185,14 +185,10 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 		if (strcmp(defel->defname, "language") == 0)
 		{
 			if (language_item)
-			{
-				ereport(WARNING,
-					(errmsg("error in  pltsql_createFunction")));
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						errmsg("conflicting or redundant options"),
 						parser_errposition(pstate, defel->location)));
-			}
 			language_item = defel;
 		}
 	}
@@ -2422,15 +2418,15 @@ void
 exec_database_roles_subcmds(const char *schema)
 {
 	StringInfoData	query;
-	const char	*db_datareader;
-	const char	*db_datawriter;
-	const char	*dbo_role;
-	const char	*dbname = get_cur_db_name();
-	List		*stmt_list;
-	int			expected_stmts = 4;
-	ListCell	*parsetree_item;
-	Node		*stmts;
-	int			i=0;
+	const char		*db_datareader;
+	const char		*db_datawriter;
+	char			*dbo_role;
+	const char		*dbname = get_cur_db_name();
+	List			*stmt_list;
+	int				expected_stmts = 4;
+	ListCell		*parsetree_item;
+	Node			*stmts;
+	int				i=0;
 
 
 	db_datareader = get_db_datareader_name(dbname);

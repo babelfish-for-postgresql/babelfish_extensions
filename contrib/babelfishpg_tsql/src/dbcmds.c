@@ -89,11 +89,11 @@ gen_createdb_subcmds(const char *dbname, const char *owner,
 	Node           *stmt;
 	int            i = 0;
 	int            expected_stmt_num;
-	const char     *schema;
-	const char     *dbo;
-	const char     *db_owner;
-	const char     *guest;
-	const char     *guest_schema;
+	char     *schema;
+	char     *dbo;
+	char     *db_owner;
+	char     *guest;
+	char     *guest_schema;
 
 	schema = get_dbo_schema_name(dbname);
 	dbo = get_dbo_role_name(dbname);
@@ -198,11 +198,11 @@ gen_createdb_subcmds(const char *dbname, const char *owner,
 static void
 add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 {
-	const char     *dbo;
-	const char     *db_owner;
-	const char     *guest;
-	const char		*db_datareader;
-	const char		*db_datawriter;
+	char		*dbo;
+	char		*db_owner;
+	char		*guest;
+	const char	*db_datareader;
+	const char	*db_datawriter;
 
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
@@ -231,18 +231,18 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 static List *
 gen_dropdb_subcmds(const char *dbname, List *db_users)
 {
-	StringInfoData query;
-	List	   *stmt_list;
-	ListCell   *elem;
-	Node	   *stmt;
-	int         expected_stmts = 8;
-	int         i = 0;
-	const char *dbo;
-	const char *db_owner;
-	const char *db_datareader;
-	const char *db_datawriter;
-	const char *schema;
-	const char *guest_schema;
+	StringInfoData	query;
+	List			*stmt_list;
+	ListCell		*elem;
+	Node			*stmt;
+	int         	expected_stmts = 8;
+	int         	i = 0;
+	char			*dbo;
+	char			*db_owner;
+	const char		*db_datareader;
+	const char		*db_datawriter;
+	char			*schema;
+	char			*guest_schema;
 
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
@@ -461,28 +461,28 @@ check_database_collation_name(const char *database_collation_name)
 
 static void
 create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid)
-{
-	int16		old_dbid;
-	char	   *old_dbname;
-	Oid			datdba;
-	Datum	   *new_record;
-	bool	   *new_record_nulls;
-	Relation	sysdatabase_rel;
-	HeapTuple	tuple;
-	List	   *parsetree_list;
-	ListCell   *parsetree_item;
-	const char *dbo_role;
-	const char *db_datareader;
-	const char *db_datawriter;
-	NameData	default_collation;
-	NameData	owner_namedata;
-	int			stmt_number = 0;
-	int 			save_sec_context;
-	bool 			is_set_userid = false;
-	Oid 			save_userid;
-	const char	*old_createrole_self_grant;
-	ListCell	*option;
-	const char *database_collation_name = NULL;
+{	
+	int16       old_dbid;
+	char        *old_dbname;
+	Oid         datdba;
+	Datum       *new_record;
+	bool        *new_record_nulls;
+	Relation    sysdatabase_rel;
+	HeapTuple   tuple;
+	List        *parsetree_list;
+	ListCell    *parsetree_item;
+	char        *dbo_role = NULL;
+	const char	*db_datareader;
+	const char	*db_datawriter;
+	NameData    default_collation;
+	NameData    owner_namedata;
+	int         stmt_number = 0;
+	int         save_sec_context;
+	bool        is_set_userid = false;
+	Oid         save_userid;
+	const char  *old_createrole_self_grant;
+	ListCell    *option;
+	const char  *database_collation_name = NULL;
 
 	/* Check options */
 	foreach(option, options)
@@ -1286,7 +1286,7 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		ListCell		*parsetree_item;
 		//int			schema_owner_id;
 		//char		*schema_owner;
-		const char		*dbo_role;
+		char		*dbo_role;
 		//bool			more_alter_query = false;
 
 		datum = heap_getattr(tuple, Anum_namespace_ext_namespace, namespace_rel_descr, &isNull);
