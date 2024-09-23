@@ -2610,13 +2610,8 @@ create_guest_role_for_db(const char *dbname)
 
 	if (list_length(logins) > 0)
 	{
-		AccessPriv *tmp = makeNode(AccessPriv);
-
-		tmp->priv_name = pstrdup(guest);
-		tmp->cols = NIL;
-
 		stmt = parsetree_nth_stmt(res, i++);
-		update_GrantRoleStmt(stmt, list_make1(tmp), logins);
+		update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(guest)), logins);
 	}
 
 	/* Set current user to session user for create permissions */
