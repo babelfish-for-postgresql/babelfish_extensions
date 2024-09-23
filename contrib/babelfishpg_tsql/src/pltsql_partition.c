@@ -173,9 +173,6 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
 	deconstruct_array(values, sql_variant_type_oid, -1, false, 'i', &datum_values, &nulls, &nelems);
 
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
-
 	/*
 	 * If the partition columns type is UDT type, then we need
 	 * to use the base type of that type while comparing with
@@ -202,6 +199,8 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	 */
 	if (partition_column_typoid != input_type_oid)
 	{
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
 		ereport(ERROR, 
 			(errcode(ERRCODE_UNDEFINED_OBJECT), 
 				errmsg("Partition column '%s' has data type '%s' which is different from the partition function '%s' parameter data type '%s'.",
@@ -222,6 +221,9 @@ bbf_create_partition_tables(CreateStmt *stmt)
 								sql_variant_type_oid, -1,
 								CSTRINGOID, -1);
 	}
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
 
 	/*
 	 * Find default schema for current user when schema
