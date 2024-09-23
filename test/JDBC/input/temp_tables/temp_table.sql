@@ -32,6 +32,20 @@ GO
 SELECT * FROM #t1
 GO
 
+-- BABEL-5273 ALTER COLUMN to another char type
+INSERT INTO #t1 (b) VALUES ('hello')
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b char(5)
+GO
+
+SELECT * FROM #t1
+GO
+
+-- should fail due to possible truncation
+ALTER TABLE #t1 ALTER COLUMN b char(4)
+GO
+
 ALTER TABLE #t1 DROP COLUMN b
 GO
 
