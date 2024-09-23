@@ -1236,7 +1236,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 	int         saved_nest_level = 0;
 
 	/* We only allow this to be called from an extension's SQL script. */
-	if (creating_extension)
+	if (!creating_extension)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
