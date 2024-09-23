@@ -1481,25 +1481,21 @@ tsql_func_select_candidate(List *names,
 }
 
 static bool
-is_tsql_char_type_with_len(Oid type)
+is_tsql_char_type_with_len(Oid type, const char *context)
 {
+	bool				result = false;
+	bool				is_case_expr = (strlen(context) == 4 && (context, "CASE", 4) == 0) ? true : false;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-	return utilptr->is_tsql_bpchar_datatype(type) ||
-			utilptr->is_tsql_nchar_datatype(type) ||
-			utilptr->is_tsql_varchar_datatype(type) ||
-			utilptr->is_tsql_nvarchar_datatype(type);
-}
+	result =  utilptr->is_tsql_bpchar_datatype(type) ||
+			  utilptr->is_tsql_nchar_datatype(type) ||
+			  utilptr->is_tsql_varchar_datatype(type) ||
+			  utilptr->is_tsql_nvarchar_datatype(type);
 
-static bool
-is_tsql_char_type_with_len_case_exp(Oid type)
-{
-	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-	return utilptr->is_tsql_bpchar_datatype(type) ||
-			utilptr->is_tsql_nchar_datatype(type) ||
-			utilptr->is_tsql_varchar_datatype(type) ||
-			utilptr->is_tsql_nvarchar_datatype(type) ||
-			utilptr->is_tsql_text_datatype(type) ||
-			utilptr->is_tsql_ntext_datatype(type);
+	if(isCase)
+		result |= utilptr->is_tsql_text_datatype(type) ||
+				  utilptr->is_tsql_ntext_datatype(type);
+
+	return result;
 }
 
 static bool
@@ -1775,22 +1771,22 @@ static Oid
 tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
 				  				Node **which_expr)
 {
-	int32  length;
+	int32  len;
 	if (sql_dialect != SQL_DIALECT_TSQL || !context)
 		return InvalidOid;
     
-	length = strlen(context);
+	len = strlen(context);
 	
 	if (strncmp(context, "ISNULL", strlen("ISNULL")) == 0)
 		return select_common_type_for_isnull(pstate, exprs);
 	else if(strncmp(context, "TSQL_COALESCE", strlen("TSQL_COALESCE")) == 0)
 		return select_common_type_for_coalesce_function(pstate, exprs);
-	else if ((length == 5 && strncmp(context, "UNION", 5) == 0) || 
-            (length == 9 && strncmp(context, "INTERSECT", 9) == 0) ||
-            (length == 6 && strncmp(context, "EXCEPT", 6) == 0) ||
-            (length == 6 && strncmp(context, "VALUES", 6) == 0) ||
-            (length == 22 && strncmp(context, "UNION/INTERSECT/EXCEPT", 22) == 0) ||
-            (length == 4 && strncmp(context, "CASE", 4) == 0))
+	else if ((len == 5 && strncmp(context, "UNION", 5) == 0) || 
+            (len == 9 && strncmp(context, "INTERSECT", 9) == 0) ||
+            (len == 6 && strncmp(context, "EXCEPT", 6) == 0) ||
+            (len == 6 && strncmp(context, "VALUES", 6) == 0) ||
+            (len == 22 && strncmp(context, "UNION/INTERSECT/EXCEPT", 22) == 0) ||
+            (len == 4 && strncmp(context, "CASE", 4) == 0))
 		return select_common_type_setop(pstate, exprs, which_expr, context);
 
 	return InvalidOid;
@@ -1846,7 +1842,6 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	Node		*result_expr = (Node*) linitial(exprs);
 	Oid			result_type = InvalidOid;
 	ListCell	*lc;
-    bool        isCase = (strncmp(context, "CASE", 4) == 0) ? true : false;
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
@@ -1861,8 +1856,7 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 			continue;
 		else if (is_tsql_str_const(expr))
 			type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
-		else if ((!isCase && !is_tsql_char_type_with_len(type)) ||
-		         (isCase && !is_tsql_char_type_with_len_case_exp(type)))
+		else if (!is_tsql_char_type_with_len(type, context))
 			return InvalidOid;
 		
 		if (tsql_has_higher_precedence(type, result_type) || result_type == InvalidOid)
