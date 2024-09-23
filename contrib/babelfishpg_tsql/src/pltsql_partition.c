@@ -173,9 +173,6 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
 	deconstruct_array(values, sql_variant_type_oid, -1, false, 'i', &datum_values, &nulls, &nelems);
 
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
-
 	/*
 	 * If the partition columns type is UDT type, then we need
 	 * to use the base type of that type while comparing with
@@ -222,6 +219,10 @@ bbf_create_partition_tables(CreateStmt *stmt)
 								sql_variant_type_oid, -1,
 								CSTRINGOID, -1);
 	}
+
+	/* Close the catalog. */
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
 
 	/*
 	 * Find default schema for current user when schema
