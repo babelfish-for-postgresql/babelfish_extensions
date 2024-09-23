@@ -165,11 +165,11 @@ set_cur_user_db_and_path(const char *db_name)
 static void
 set_search_path_for_user_schema(const char *db_name, const char *user)
 {
-	const char *path;
-	const char *buffer = "%s, \"$user\", sys, pg_catalog";
-	const char *physical_schema;
-	const char *dbo_role_name = get_dbo_role_name(db_name);
-	const char *guest_role_name = get_guest_role_name(db_name);
+	const char	*path;
+	const char	*buffer = "%s, \"$user\", sys, pg_catalog";
+	char		*physical_schema = NULL;
+	char		*dbo_role_name = get_dbo_role_name(db_name);
+	char		*guest_role_name = get_guest_role_name(db_name);
 
 	if ((dbo_role_name && strcmp(user, dbo_role_name) == 0))
 	{
@@ -196,6 +196,13 @@ set_search_path_for_user_schema(const char *db_name, const char *user)
 					path,
 					PGC_SUSET,
 					PGC_S_DATABASE_USER);
+	
+	if(dbo_role_name)
+		pfree(dbo_role_name);
+	if(guest_role_name)
+		pfree(guest_role_name);
+	if(physical_schema)
+		pfree(physical_schema);
 }
 
 /*

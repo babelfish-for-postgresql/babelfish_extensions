@@ -17,14 +17,14 @@ extern void rewrite_object_refs(Node *stmt);
 extern List* rewrite_plain_name(List *name); /* Value Strings */
 
 /* helper functions */
-extern char *get_physical_user_name(char *db_name, char *user_name, bool suppress_error);
+extern char *get_physical_user_name(char *db_name, char *user_name, bool suppress_error, bool missing_ok);
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
 extern char *get_physical_schema_name_by_mode(char *db_name, const char *schema_name, MigrationMode mode);
-extern const char *get_dbo_schema_name(const char *dbname);
-extern const char *get_dbo_role_name(const char *dbname);
-extern const char *get_db_owner_name(const char *dbname);
-extern const char *get_guest_role_name(const char *dbname);
-extern const char *get_guest_schema_name(const char *dbname);
+extern char *get_dbo_schema_name(const char *dbname);
+extern char *get_dbo_role_name(const char *dbname);
+extern char *get_db_owner_name(const char *dbname);
+extern char *get_guest_role_name(const char *dbname);
+extern char *get_guest_schema_name(const char *dbname);
 extern bool is_shared_schema(const char *name);
 extern void truncate_tsql_identifier(char *ident);
 extern bool physical_schema_name_exists(char *phys_schema_name);
