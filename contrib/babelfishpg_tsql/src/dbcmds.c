@@ -1236,7 +1236,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 	int         saved_nest_level = 0;
 
 	/* We only allow this to be called from an extension's SQL script. */
-	if (!creating_extension)
+	if (creating_extension)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
@@ -1296,6 +1296,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 			*/
 			SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 			SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
+			add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
 			/* Run all subcommands */
 			foreach(parsetree_item, parsetree_list)
 			{
@@ -1320,7 +1321,6 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 
 				CommandCounterIncrement();
 			}
-			add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
 		}
 		PG_FINALLY();
 		{
