@@ -873,7 +873,3 @@ SELECT p1.EmployeeID as p1_EmployeeID, STORE2, p2.EmployeeID as p2_EmployeeID, S
     ) AS pvt where EmployeeID > 245
 ) AS p2
 GO
-
---- Check for inconsistent metadata before upgrade
-SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
-GO

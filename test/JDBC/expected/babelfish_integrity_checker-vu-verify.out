@@ -41,7 +41,6 @@ babelfish_partition_function
 babelfish_partition_function_seq
 babelfish_partition_scheme
 babelfish_partition_scheme_seq
-babelfish_pivot_view
 babelfish_schema_permissions
 babelfish_server_options
 babelfish_sysdatabases

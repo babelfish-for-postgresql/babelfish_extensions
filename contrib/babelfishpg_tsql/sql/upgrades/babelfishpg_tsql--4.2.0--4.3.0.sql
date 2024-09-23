@@ -188,6 +188,13 @@ CREATE TABLE sys.babelfish_partition_depend
   PRIMARY KEY(dbid, schema_name, table_name)
 );
 
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_function', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_scheme', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_depend', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_function_seq', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_partition_scheme_seq', '');
+
+
 CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
 LANGUAGE plpgsql
 AS $$

@@ -1,15 +1,6 @@
 use pivot_test
 GO
 
---- Check for inconsistent metadata after upgrade
-SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
-GO
-~~START~~
-int
-0
-~~END~~
-
-
 -- 2 column in src table pivot
 SELECT 'OrderNumbers' AS OrderCountbyStore, [1] AS STORE1, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5
 FROM
@@ -1018,7 +1009,7 @@ Limit  (cost=26.61..26.62 rows=5 width=24)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 27.497 ms
+Babelfish T-SQL Batch Parsing Time: 26.599 ms
 ~~END~~
 
 SET BABELFISH_SHOWPLAN_ALL OFF;

@@ -40,22 +40,10 @@ LANGUAGE plpgsql;
 ALTER FUNCTION sys.bbf_pivot() RENAME TO bbf_pivot_deprecated_in_4_4_0;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_pivot_deprecated_in_4_4_0');
 
-CREATE OR REPLACE FUNCTION sys.bbf_pivot(IN arg TEXT)
+CREATE OR REPLACE FUNCTION sys.bbf_pivot(IN src_sql TEXT, IN cat_sql TEXT, IN agg_func TEXT, IN in_view BOOL)
 RETURNS setof record
 AS 'babelfishpg_tsql', 'bbf_pivot'
 LANGUAGE C STABLE;
-
-CREATE TABLE sys.babelfish_pivot_view
-(
-  dbid SMALLINT NOT NULL,
-  pivot_view_uuid sys.NVARCHAR(128) NOT NULL,
-  schema_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
-  pivot_view_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
-  agg_func_name sys.NVARCHAR(128) NOT NULL,
-  PRIMARY KEY(pivot_view_uuid)
-);
-
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_pivot_view', '');
 
 -- Assigning dbo role to the db_owner login
 DO $$

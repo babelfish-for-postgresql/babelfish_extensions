@@ -80,7 +80,7 @@
 #define DATEPART_MIN_VALUE -53690               	/* minimun value for datepart general_integer_datatype */
 #define DATEPART_SMALLMONEY_MAX_VALUE 214748.3647	/* maximum value for datepart smallmoney */
 #define DATEPART_SMALLMONEY_MIN_VALUE -53690		/* minimum value for datepart smallmoney */
-#define PIVOT_METADATA_COUNT 3						/* total of 3 metadata is needed by bbf_pivot function */
+#define PIVOT_METADATA_COUNT 2						/* total of 2 metadata is needed by bbf_pivot function */
 
 typedef enum
 {
@@ -4656,8 +4656,8 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	RawStmt	   		*bbf_pivot_src_sql;
 	RawStmt	   		*bbf_pivot_cat_sql;
 	List			*pivot_parsetree;
-	List			*pivot_extrainfo;
-	char			*query_string;
+	char			*s_sql_string;
+	char			*c_sql_string;
 	char			*funcName;
 	Node 			*node;	
 
@@ -4690,18 +4690,17 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	}
 
 	pivot_parsetree = (List *) list_nth((List *) fcinfo->context, 1);
-	pivot_extrainfo = (List *) list_nth((List *) fcinfo->context, 2);
 	
-	if (!IsA(pivot_parsetree, List) || !IsA(pivot_extrainfo, List))
+	if (!IsA(pivot_parsetree, List))
 		ereport(ERROR,
 			(errcode(ERRCODE_CHECK_VIOLATION),
 				errmsg("Babelfish PIVOT is not properly initialized.")));
 
 	bbf_pivot_src_sql = (RawStmt *) list_nth(pivot_parsetree, 0);
 	bbf_pivot_cat_sql = (RawStmt *) list_nth(pivot_parsetree, 1);
-	query_string = ((String *) list_nth(pivot_extrainfo, 0))->sval;
-	funcName = ((String *) list_nth(pivot_extrainfo, 1))->sval;
-
+	s_sql_string = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	c_sql_string = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	funcName = text_to_cstring(PG_GETARG_TEXT_PP(2));
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -4723,14 +4722,14 @@ bbf_pivot(PG_FUNCTION_ARGS)
 						"bbf_pivot function are not compatible")));
 
 	/* load up the categories hash table */
-	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, query_string, per_query_ctx);
+	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, c_sql_string, per_query_ctx);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
 
 	/* now go build it */
 	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_src_sql,
-												query_string,
+												s_sql_string,
 												funcName,
 												bbf_pivot_hash,
 												tupdesc,
@@ -4783,9 +4782,7 @@ load_categories_hash(RawStmt *cats_sql,
 		/* internal error */
 		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
 
-	/* 
-	 * Retrieve the category name rows    
-	 */
+	/* Retrieve the category name rows */
 	ret = SPI_execute_raw_parsetree(cats_sql, sourcetext, true, 0);
 	tuple_processed = SPI_processed;
 
@@ -4845,8 +4842,6 @@ load_categories_hash(RawStmt *cats_sql,
 	return bbf_pivot_hash;
 }
 
-
-
 /*
  * create and populate the bbf_pivot tuplestore
  */
@@ -4874,9 +4869,7 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 		/* internal error */
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_connect returned %d", ret);
 
-	/* 
-	 * Now retrieve the bbf_pivot source rows    
-	 */
+	/* Now retrieve the bbf_pivot source rows */
 	ret = SPI_execute_raw_parsetree(sql, sourcetext, true, 0);
 	tuple_processed = SPI_processed;
 

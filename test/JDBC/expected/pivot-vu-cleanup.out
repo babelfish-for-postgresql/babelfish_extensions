@@ -111,12 +111,3 @@ GO
 
 DROP DATABASE pivot_test;
 GO
-
---- Check for inconsistent metadata
-SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata()
-GO
-~~START~~
-int
-0
-~~END~~
-

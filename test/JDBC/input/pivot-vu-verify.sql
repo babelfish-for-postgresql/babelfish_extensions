@@ -1,10 +1,6 @@
 use pivot_test
 GO
 
---- Check for inconsistent metadata after upgrade
-SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
-GO
-
 -- 2 column in src table pivot
 SELECT 'OrderNumbers' AS OrderCountbyStore, [1] AS STORE1, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5
 FROM
