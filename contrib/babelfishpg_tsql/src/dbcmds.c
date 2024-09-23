@@ -1267,8 +1267,8 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		StringInfoData query;
 		List           *parsetree_list;
 		Node           *stmt;
-		const char     *db_owner = get_db_owner_name(dbname);
-		const char     *db_accessadmin = get_db_accessadmin_role_name(dbname);
+		const char     *db_owner;
+		const char     *db_accessadmin;
 		const char     *old_createrole_self_grant = GetConfigOption("createrole_self_grant", false, true);
 		int            i = 0;
 		int save_sec_context = 0;
@@ -1276,6 +1276,8 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 
 		bbf_db = (Form_sysdatabases) GETSTRUCT(tuple);
 		dbname = text_to_cstring(&(bbf_db->name));
+		db_owner = get_db_owner_name(dbname);
+		db_accessadmin = get_db_accessadmin_role_name(dbname);
 
 		initStringInfo(&query);
 
