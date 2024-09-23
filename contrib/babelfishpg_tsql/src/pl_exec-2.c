@@ -1666,14 +1666,14 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 	PG_CATCH();
 	{
 		/* Delete temporary tables as ENR */
-		pltsql_remove_current_query_env();
+		pltsql_remove_current_query_env(true);
 
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	/* Delete temporary tables as ENR */
-	pltsql_remove_current_query_env();
+	pltsql_remove_current_query_env(false);
 
 	after_lxid = MyProc->lxid;
 
