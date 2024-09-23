@@ -185,10 +185,14 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 		if (strcmp(defel->defname, "language") == 0)
 		{
 			if (language_item)
+			{
+				ereport(WARNING,
+					(errmsg("error in  pltsql_createFunction")));
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						errmsg("conflicting or redundant options"),
 						parser_errposition(pstate, defel->location)));
+			}
 			language_item = defel;
 		}
 	}
@@ -1112,8 +1116,8 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	}
 }
 
-static void
-update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv)
+void
+update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role, const char *grantee, const char *priv)
 {
 	AlterDefaultPrivilegesStmt *stmt = (AlterDefaultPrivilegesStmt *) n;
 	ListCell *lc;
@@ -1128,11 +1132,18 @@ update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grant
 
 	foreach(lc, stmt->options)
 	{
-		if (object)
+		if (schema)
 		{
 			DefElem *tmp = (DefElem *) lfirst(lc);
 			tmp->defname = pstrdup("schemas");
-			tmp->arg = (Node *)list_make1(makeString((char *)object));
+			tmp->arg = (Node *)list_make1(makeString((char *)schema));
+		}
+
+		if (role)
+		{
+			DefElem *tmp = (DefElem *) lfirst(lc);
+			tmp->defname = pstrdup("roles");
+			tmp->arg = (Node *)list_make1(makeString((char *)role));
 		}
 	}
 }
@@ -2290,7 +2301,7 @@ static List
 	if (privilege == ACL_EXECUTE)
 		update_GrantStmt(stmt, schema, NULL, rolname, privilege_to_string(privilege));
 	else
-		update_AlterDefaultPrivilegesStmt(stmt, schema, rolname, privilege_to_string(privilege));
+		update_AlterDefaultPrivilegesStmt(stmt, schema, NULL, rolname, privilege_to_string(privilege));
 
 	pfree(query.data);
 	return stmt_list;
@@ -2413,6 +2424,7 @@ exec_database_roles_subcmds(const char *schema)
 	StringInfoData	query;
 	const char	*db_datareader;
 	const char	*db_datawriter;
+	const char	*dbo_role;
 	const char	*dbname = get_cur_db_name();
 	List		*stmt_list;
 	int			expected_stmts = 4;
@@ -2423,6 +2435,7 @@ exec_database_roles_subcmds(const char *schema)
 
 	db_datareader = get_db_datareader_name(dbname);
 	db_datawriter = get_db_datawriter_name(dbname);
+	dbo_role = get_dbo_role_name(dbname);
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
@@ -2438,16 +2451,16 @@ exec_database_roles_subcmds(const char *schema)
 						expected_stmts, list_length(stmt_list))));
 
 	stmts = parsetree_nth_stmt(stmt_list, i++);
-	update_AlterDefaultPrivilegesStmt(stmts, schema, db_datareader, privilege_to_string(ACL_SELECT));
+	update_AlterDefaultPrivilegesStmt(stmts, schema, dbo_role, db_datareader, privilege_to_string(ACL_SELECT));
 
 	stmts = parsetree_nth_stmt(stmt_list, i++);
-	update_AlterDefaultPrivilegesStmt(stmts, schema, db_datawriter, privilege_to_string(ACL_INSERT));
+	update_AlterDefaultPrivilegesStmt(stmts, schema, dbo_role, db_datawriter, privilege_to_string(ACL_INSERT));
 
 	stmts = parsetree_nth_stmt(stmt_list, i++);
-	update_AlterDefaultPrivilegesStmt(stmts, schema, db_datawriter, privilege_to_string(ACL_UPDATE));
+	update_AlterDefaultPrivilegesStmt(stmts, schema, dbo_role, db_datawriter, privilege_to_string(ACL_UPDATE));
 
 	stmts = parsetree_nth_stmt(stmt_list, i++);
-	update_AlterDefaultPrivilegesStmt(stmts, schema, db_datawriter, privilege_to_string(ACL_DELETE));
+	update_AlterDefaultPrivilegesStmt(stmts, schema, dbo_role, db_datawriter, privilege_to_string(ACL_DELETE));
 
 	/* Run all subcommands */
 	foreach(parsetree_item, stmt_list)
