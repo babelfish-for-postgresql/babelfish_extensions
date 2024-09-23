@@ -922,7 +922,7 @@ is_role(Oid role_oid, bool current_db_only)
 
 				is_role = (strcmp(db_name_cstring, current_db_name) == 0);
 
-				pfree(current_db_name);
+				pfree(db_name_cstring);
 				pfree(current_db_name);
 			}
 			else
