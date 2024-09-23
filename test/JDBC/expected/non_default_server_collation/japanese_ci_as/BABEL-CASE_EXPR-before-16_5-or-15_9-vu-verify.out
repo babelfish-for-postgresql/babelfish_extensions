@@ -375,7 +375,7 @@ nvarchar
 SELECT * FROM BABEL_5103_V2
 GO
 ~~START~~
-nvarchar
+varchar
 登録カード
 ~~END~~
 
