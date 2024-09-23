@@ -687,14 +687,17 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 
 	PG_TRY();
 	{
+		Oid			db_owner_oid;
+		const char *db_owner_role;
 		Oid			roleid = GetSessionUserId();
 		const char *login = GetUserNameFromId(roleid, false);
 		bool		login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 
 		db_owner_role = get_db_owner_name(dbname);
+		db_owner_oid = get_role_oid(db_owner_role, false);
 
 		/* If current login's associated user in database is member of db_owner role, allow it to drop the database */
-		if (!has_privs_of_role(prev_current_user_id, get_role_oid(db_owner_role, false)) && (!(has_privs_of_role(roleid, get_role_oid("sysadmin", false)) || login_is_db_owner)))
+		if (!has_privs_of_role(prev_current_user_id, db_owner_oid) && (!(has_privs_of_role(roleid, get_role_oid("sysadmin", false)) || login_is_db_owner)))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   dbname);
 
@@ -718,7 +721,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 
 		dbo_role = get_dbo_role_name(dbname);
 		/* Get a list of all the database's users */
-		db_users_list = get_authid_user_ext_db_users(dbname);
+		db_users_list = get_authid_user_ext_db_users(dbname, dbo_role, db_owner_oid);
 
 		parsetree_list = gen_dropdb_subcmds(dbname, db_users_list);
 

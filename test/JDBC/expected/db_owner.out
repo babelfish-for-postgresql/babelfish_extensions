@@ -4,6 +4,8 @@ create user u1 for login l1
 go
 create login l2 with password = '123'
 go
+create login temp with password = '123'
+go
 create user u2 for login l2
 go
 create schema s1 authorization u1
@@ -15,6 +17,11 @@ go
 create function dbo.f0() returns int as begin return 10 end
 go
 create procedure dbo.p0 as select 20
+go
+
+create role r1
+go
+create role r2
 go
 
 -- tsql user=l1 password=123
@@ -130,6 +137,207 @@ go
 create procedure s3.p3 as select 23
 go
 
+grant select on schema::s1 to u2
+go
+grant insert on schema::s2 to guest
+go
+grant update on schema::s3 to u2
+go
+grant delete on schema::dbo to u2
+go
+grant select on object::dbo.t0 to u2
+go
+grant insert on object::s1.t1 to u2
+go
+grant update on object::s2.t2 to u1
+go
+grant delete on object::s3.t3 to u2
+go
+grant execute on object::s1.f1 to u1
+go
+grant execute on object::s3.p3 to u1
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
+where grantee IN ('master_guest', 'master_u1', 'master_u2') order by permission;
+GO
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
+s1#!#t1#!#1#!#master_u2#!#<NULL>
+s2#!#ALL#!#1#!#master_guest#!#<NULL>
+s1#!#ALL#!#2#!#master_u2#!#<NULL>
+dbo#!#t0#!#2#!#master_u2#!#<NULL>
+s3#!#ALL#!#4#!#master_u2#!#<NULL>
+s2#!#t2#!#4#!#master_u1#!#<NULL>
+s3#!#t3#!#8#!#master_u2#!#<NULL>
+dbo#!#ALL#!#8#!#master_u2#!#<NULL>
+s3#!#p3#!#128#!#master_u1#!#<NULL>
+s1#!#f1#!#128#!#master_u1#!#<NULL>
+~~END~~
+
+
+-- tsql user=l1 password=123
+revoke select on schema::s1 to u2
+go
+revoke insert on schema::s2 to guest
+go
+revoke update on schema::s3 to u2
+go
+revoke delete on schema::dbo to u2
+go
+revoke select on object::dbo.t0 to u2
+go
+revoke insert on object::s1.t1 to u2
+go
+revoke update on object::s2.t2 to u1
+go
+revoke delete on object::s3.t3 to u2
+go
+revoke execute on object::s1.f1 to u1
+go
+revoke execute on object::s3.p3 to u1
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
+where grantee IN ('master_guest', 'master_u1', 'master_u2') order by permission;
+GO
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
+~~END~~
+
+
+-- tsql user=l1 password=123
+-- CASE : ALTER ANY USER
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+~~END~~
+
+alter user u1 with default_schema = s1
+go
+alter user u1 with name = new_u1
+go
+alter user u2 with default_schema = dbo
+go
+alter user u2 with login = temp
+go
+alter user u2 with name = new_u2
+go
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+master_new_u1#!#l1#!#s1#!#English
+master_new_u2#!#temp#!#dbo#!#English
+~~END~~
+
+select sys.user_name(), sys.suser_name(), is_member('db_owner')
+go
+~~START~~
+nvarchar#!#nvarchar#!#int
+new_u1#!#l1#!#1
+~~END~~
+
+alter user new_u2 with default_schema = dbo
+go
+alter user new_u2 with login = l2
+go
+alter user new_u2 with name = u2
+go
+alter user new_u1 with login = temp
+go
+select sys.user_name(), sys.suser_name(), is_member('db_owner')
+go
+~~START~~
+nvarchar#!#nvarchar#!#int
+guest#!#l1#!#0
+~~END~~
+
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+master_new_u1#!#temp#!#s1#!#English
+~~END~~
+
+alter user new_u1 with login = l1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change login)~~
+
+alter user new_u1 with name = u1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change user name)~~
+
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+master_new_u1#!#temp#!#s1#!#English
+~~END~~
+
+select name from sys.database_principals order by name
+go
+~~START~~
+varchar
+db_owner
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
+
+-- tsql
+alter role db_owner drop member new_u1
+go
+alter role db_owner add member new_u1
+go
+alter user new_u1 with login = l1
+go
+
+-- terminate-tsql-conn user=l1 password=123
+
+-- tsql user=l1 password=123
+select sys.user_name(), is_member('db_owner')
+go
+~~START~~
+nvarchar#!#int
+new_u1#!#1
+~~END~~
+
+alter user new_u1 with name = u1
+go
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+~~END~~
+
+select name from sys.database_principals order by name
+go
+~~START~~
+varchar
+db_owner
+dbo
+guest
+INFORMATION_SCHEMA
+public
+r1
+r2
+sys
+u1
+u2
+~~END~~
+
+
 -- tsql user=l2 password=123
 select is_member('db_owner')
 go
@@ -217,6 +425,20 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for procedure p3)~~
+
+
+select name from sys.database_principals order by name
+go
+~~START~~
+varchar
+db_owner
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+u2
+~~END~~
 
 
 -- psql
@@ -375,6 +597,24 @@ int
 23
 ~~END~~
 
+
+select name from sys.database_principals order by name
+go
+~~START~~
+varchar
+db_owner
+dbo
+guest
+INFORMATION_SCHEMA
+public
+r1
+r2
+sys
+u1
+u2
+~~END~~
+
+
 alter role db_owner drop member u1
 go
 
@@ -469,6 +709,49 @@ int
 ~~END~~
 
 
+create role r3
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+create role r4
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+create user temp for login temp
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+alter role r1 add member u2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login l1 does not have permission to alter role master_r1)~~
+
+drop user u2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'u2', because it does not exist or you do not have permission.)~~
+
+drop role r1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'r1', because it does not exist or you do not have permission.)~~
+
+drop role r2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'r2', because it does not exist or you do not have permission.)~~
+
+
 -- psql
 -- Procedure/function owners should be master_u1
 SELECT proname,
@@ -539,6 +822,62 @@ master_u1#!#master_s3
 
 
 -- tsql
+alter role db_owner add member u1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql user=l1 password=123
+select is_member('db_owner')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+create role r3
+go
+create role r4
+go
+create user temp for login temp
+go
+alter role r1 add member temp
+go
+alter role r3 add member temp
+go
+alter role r3 add member r1
+go
+alter role r4 add member r2
+go
+drop user temp
+go
+drop role r1
+go
+drop role r2
+go
+drop role r3
+go
+drop role r4
+go
+
 drop table dbo.t0
 go
 drop function dbo.f0
@@ -571,6 +910,21 @@ drop schema s2
 go
 drop schema s3
 go
+drop user u2
+go
+
+-- tsql
+alter role db_owner drop member u1
+go
+
+-- tsql user=l1 password=123
+select is_member('db_owner')
+go
+~~START~~
+int
+0
+~~END~~
+
 
 -- tsql
 -- Check if db_owner can drop the database
@@ -603,18 +957,52 @@ int
 drop database db_owner_test_db
 go
 
+-- tsql
+-- Check if there can be multiple db_owners
+create database db_owner_test_db
+go
+use db_owner_test_db
+go
+create user db_owner_test_db_u1 for login l1
+go
+alter role db_owner add member db_owner_test_db_u1
+go
+use master
+go
+
+-- tsql user=l1 password=123
+-- Add another user but as db_owner
+use db_owner_test_db
+go
+select is_member('db_owner')
+go
+~~START~~
+int
+1
+~~END~~
+
+create user db_owner_test_db_u2 for login l2
+go
+
+-- tsql
+use db_owner_test_db
+go
+alter role db_owner add member db_owner_test_db_u2
+go
+select is_rolemember('db_owner', 'db_owner_test_db_u1'), is_rolemember('db_owner', 'db_owner_test_db_u2')
+go
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+use master
+go
+
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
 WHERE sys.suser_name(usesysid) = 'l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-GO
-~~START~~
-bool
-t
-~~END~~
-
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
-WHERE sys.suser_name(usesysid) = 'l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
 ~~START~~
 bool
@@ -630,12 +1018,48 @@ void
 ~~END~~
 
 
--- tsql
-drop user u1
+
+-- psql
+-- Check if dropping user, also drops the linked "_obj" role
+select rolname from pg_authid where rolname like 'db_owner_test_db_%'
 go
-drop user u2
+~~START~~
+name
+db_owner_test_db_guest
+db_owner_test_db_db_owner_test_db_u1
+db_owner_test_db_db_owner_test_db_u1_obj
+db_owner_test_db_db_owner_test_db_u2
+db_owner_test_db_db_owner_test_db_u2_obj
+~~END~~
+
+
+-- tsql
+use db_owner_test_db
+go
+drop user db_owner_test_db_u1
+go
+drop user db_owner_test_db_u2
+go
+use master
+go
+
+-- psql
+select rolname from pg_authid where rolname like 'db_owner_test_db_%'
+go
+~~START~~
+name
+db_owner_test_db_guest
+~~END~~
+
+
+-- tsql
+drop database db_owner_test_db
+go
+drop user u1
 go
 drop login l1
 go
 drop login l2
+go
+drop login temp
 go

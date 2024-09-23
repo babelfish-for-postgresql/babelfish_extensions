@@ -4,6 +4,8 @@ create user u1 for login l1
 go
 create login l2 with password = '123'
 go
+create login temp with password = '123'
+go
 create user u2 for login l2
 go
 create schema s1 authorization u1
@@ -15,6 +17,11 @@ go
 create function dbo.f0() returns int as begin return 10 end
 go
 create procedure dbo.p0 as select 20
+go
+
+create role r1
+go
+create role r2
 go
 
 -- tsql user=l1 password=123
@@ -73,6 +80,118 @@ go
 create procedure s3.p3 as select 23
 go
 
+grant select on schema::s1 to u2
+go
+grant insert on schema::s2 to guest
+go
+grant update on schema::s3 to u2
+go
+grant delete on schema::dbo to u2
+go
+grant select on object::dbo.t0 to u2
+go
+grant insert on object::s1.t1 to u2
+go
+grant update on object::s2.t2 to u1
+go
+grant delete on object::s3.t3 to u2
+go
+grant execute on object::s1.f1 to u1
+go
+grant execute on object::s3.p3 to u1
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
+where grantee IN ('master_guest', 'master_u1', 'master_u2') order by permission;
+GO
+
+-- tsql user=l1 password=123
+revoke select on schema::s1 to u2
+go
+revoke insert on schema::s2 to guest
+go
+revoke update on schema::s3 to u2
+go
+revoke delete on schema::dbo to u2
+go
+revoke select on object::dbo.t0 to u2
+go
+revoke insert on object::s1.t1 to u2
+go
+revoke update on object::s2.t2 to u1
+go
+revoke delete on object::s3.t3 to u2
+go
+revoke execute on object::s1.f1 to u1
+go
+revoke execute on object::s3.p3 to u1
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
+where grantee IN ('master_guest', 'master_u1', 'master_u2') order by permission;
+GO
+
+-- CASE : ALTER ANY USER
+-- tsql user=l1 password=123
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+alter user u1 with default_schema = s1
+go
+alter user u1 with name = new_u1
+go
+alter user u2 with default_schema = dbo
+go
+alter user u2 with login = temp
+go
+alter user u2 with name = new_u2
+go
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+select sys.user_name(), sys.suser_name(), is_member('db_owner')
+go
+alter user new_u2 with default_schema = dbo
+go
+alter user new_u2 with login = l2
+go
+alter user new_u2 with name = u2
+go
+alter user new_u1 with login = temp
+go
+select sys.user_name(), sys.suser_name(), is_member('db_owner')
+go
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+alter user new_u1 with login = l1
+go
+alter user new_u1 with name = u1
+go
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+select name from sys.database_principals order by name
+go
+
+-- tsql
+alter role db_owner drop member new_u1
+go
+alter role db_owner add member new_u1
+go
+alter user new_u1 with login = l1
+go
+
+-- terminate-tsql-conn user=l1 password=123
+
+-- tsql user=l1 password=123
+select sys.user_name(), is_member('db_owner')
+go
+alter user new_u1 with name = u1
+go
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+go
+select name from sys.database_principals order by name
+go
+
 -- tsql user=l2 password=123
 select is_member('db_owner')
 go
@@ -101,6 +220,9 @@ go
 select s3.f3()
 go
 exec s3.p3
+go
+
+select name from sys.database_principals order by name
 go
 
 -- psql
@@ -178,6 +300,10 @@ select s3.f3()
 go
 exec s3.p3
 go
+
+select name from sys.database_principals order by name
+go
+
 alter role db_owner drop member u1
 go
 
@@ -209,6 +335,21 @@ go
 select s3.f3()
 go
 exec s3.p3
+go
+
+create role r3
+go
+create role r4
+go
+create user temp for login temp
+go
+alter role r1 add member u2
+go
+drop user u2
+go
+drop role r1
+go
+drop role r2
 go
 
 -- psql
@@ -260,6 +401,47 @@ ORDER BY ns.nspname;
 GO
 
 -- tsql
+alter role db_owner add member u1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql user=l1 password=123
+select is_member('db_owner')
+go
+
+create role r3
+go
+create role r4
+go
+create user temp for login temp
+go
+alter role r1 add member temp
+go
+alter role r3 add member temp
+go
+alter role r3 add member r1
+go
+alter role r4 add member r2
+go
+drop user temp
+go
+drop role r1
+go
+drop role r2
+go
+drop role r3
+go
+drop role r4
+go
+
 drop table dbo.t0
 go
 drop function dbo.f0
@@ -292,6 +474,16 @@ drop schema s2
 go
 drop schema s3
 go
+drop user u2
+go
+
+-- tsql
+alter role db_owner drop member u1
+go
+
+-- tsql user=l1 password=123
+select is_member('db_owner')
+go
 
 -- Check if db_owner can drop the database
 -- tsql
@@ -314,24 +506,75 @@ go
 drop database db_owner_test_db
 go
 
+-- Check if there can be multiple db_owners
+-- tsql
+create database db_owner_test_db
+go
+use db_owner_test_db
+go
+create user db_owner_test_db_u1 for login l1
+go
+alter role db_owner add member db_owner_test_db_u1
+go
+use master
+go
+
+-- Add another user but as db_owner
+-- tsql user=l1 password=123
+use db_owner_test_db
+go
+select is_member('db_owner')
+go
+create user db_owner_test_db_u2 for login l2
+go
+
+-- tsql
+use db_owner_test_db
+go
+alter role db_owner add member db_owner_test_db_u2
+go
+select is_rolemember('db_owner', 'db_owner_test_db_u1'), is_rolemember('db_owner', 'db_owner_test_db_u2')
+go
+use master
+go
+
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
 WHERE sys.suser_name(usesysid) = 'l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
-WHERE sys.suser_name(usesysid) = 'l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-GO
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
 
--- tsql
-drop user u1
+
+-- Check if dropping user, also drops the linked "_obj" role
+-- psql
+select rolname from pg_authid where rolname like 'db_owner_test_db_%'
 go
-drop user u2
+
+-- tsql
+use db_owner_test_db
+go
+drop user db_owner_test_db_u1
+go
+drop user db_owner_test_db_u2
+go
+use master
+go
+
+-- psql
+select rolname from pg_authid where rolname like 'db_owner_test_db_%'
+go
+
+-- tsql
+drop database db_owner_test_db
+go
+drop user u1
 go
 drop login l1
 go
 drop login l2
+go
+drop login temp
 go

@@ -153,7 +153,7 @@ extern Oid	get_authid_user_ext_oid(void);
 extern Oid	get_authid_user_ext_idx_oid(void);
 extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
 extern char *get_authid_user_ext_schema_name(const char *db_name, const char *user_name);
-extern List *get_authid_user_ext_db_users(const char *db_name);
+extern List *get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_owner_oid);
 extern char *get_user_for_database(const char *db_name);
 extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name);
 extern bool guest_role_exists_for_db(const char *dbname);
