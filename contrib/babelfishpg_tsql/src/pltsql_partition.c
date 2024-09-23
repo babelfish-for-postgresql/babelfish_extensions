@@ -199,8 +199,6 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	 */
 	if (partition_column_typoid != input_type_oid)
 	{
-		systable_endscan(scan);
-		table_close(rel, AccessShareLock);
 		ereport(ERROR, 
 			(errcode(ERRCODE_UNDEFINED_OBJECT), 
 				errmsg("Partition column '%s' has data type '%s' which is different from the partition function '%s' parameter data type '%s'.",
@@ -222,6 +220,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 								CSTRINGOID, -1);
 	}
 
+	/* Close the catalog. */
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
 

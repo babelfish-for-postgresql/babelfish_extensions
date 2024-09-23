@@ -2041,8 +2041,6 @@ search_partition(PG_FUNCTION_ARGS)
 		deconstruct_array(values, sqlvariant_typoid,
 					-1, false, 'i', &range_values, &nulls, &nelems);
 	}
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
 
 	/* Raise error if provided partition function doesn't exist in the provided database. */
 	if (!func_param_typname)
@@ -2057,6 +2055,8 @@ search_partition(PG_FUNCTION_ARGS)
 	 */
 	if (PG_ARGISNULL(1))
 	{
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
 		pfree(partition_func_name);
 		pfree(func_param_typname);
 		pfree(nulls);
@@ -2100,6 +2100,10 @@ search_partition(PG_FUNCTION_ARGS)
 	
 	/* Perform binary search on sorted range values. */
 	result = tsql_bsearch_arg(&arg, range_values, nelems, sizeof(Datum), tsql_compare_values, &cxt);
+
+	/* Close the catalog. */
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
 
 	/* Free the allocated memory. */
 	pfree(arg_types);
