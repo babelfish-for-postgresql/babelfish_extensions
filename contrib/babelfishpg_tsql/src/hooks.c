@@ -5496,21 +5496,16 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 static char*
 cache_look_from_ddl_event_trigger(ObjectAddress* address)
 {
-	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
-	char *identity;
+	int sql_dialect_old = sql_dialect;
+	char *identity = NULL;
 	PG_TRY();
 	{
-			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",										
-						GUC_CONTEXT_CONFIG,		\
-						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+			sql_dialect = SQL_DIALECT_TSQL;
 			identity = getObjectIdentity(address,true);
-			
 	}
 	PG_FINALLY();
 	{
-			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,										
-				GUC_CONTEXT_CONFIG,		\
-				PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+			sql_dialect = sql_dialect_old;
 	}
 	PG_END_TRY();
 	return identity;
