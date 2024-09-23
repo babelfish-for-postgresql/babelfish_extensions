@@ -210,6 +210,11 @@ databasepropertyex(PG_FUNCTION_ARGS)
 	{
 		const char *ret = "READ_WRITE";
 
+		if (strcmp(GetConfigOption("transaction_read_only", false, false), "on") == 0) 
+		{
+			ret = "READ_ONLY";
+		}
+
 		vch = (*common_utility_plugin_ptr->tsql_varchar_input) (ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "UserAccess") == 0)
