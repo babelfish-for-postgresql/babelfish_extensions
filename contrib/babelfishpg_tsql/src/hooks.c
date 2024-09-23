@@ -5504,6 +5504,7 @@ cache_look_from_ddl_event_trigger(ObjectAddress* address)
 						GUC_CONTEXT_CONFIG,		\
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 			identity = getObjectIdentity(address,true);
+			
 	}
 	PG_FINALLY();
 	{
