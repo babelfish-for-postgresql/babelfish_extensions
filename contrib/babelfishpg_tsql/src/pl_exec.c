@@ -10292,6 +10292,10 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 										 PGC_USERSET, PGC_S_SESSION,
 										 GUC_ACTION_SAVE, true, 0, false);
 				pfree(new_search_path);
+
+				if(dbo_schema)
+					pfree(dbo_schema);
+					
 				return true;
 			}
 			else if (top_es_entry->estate->db_name != NULL && stmt->is_ddl)
@@ -10343,6 +10347,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 											 PGC_USERSET, PGC_S_SESSION,
 											 GUC_ACTION_SAVE, true, 0, false);
 					pfree(new_search_path);
+					pfree(dbo_schema);
 					return true;
 				}
 			}
@@ -10374,6 +10379,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
 		pfree(new_search_path);
+		pfree(dbo_schema);
 		return true;
 	}
 	

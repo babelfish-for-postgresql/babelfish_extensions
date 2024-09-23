@@ -3400,6 +3400,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 														 errmsg("Cannot disable access to the guest user in master or tempdb.")));
 
 											alter_user_can_connect(false, rolspec->rolename, db_name);
+											pfree(db_owner_name);
 											return;
 										}
 										else
@@ -3410,10 +3411,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 
 									pfree(rolspec->rolename);
-
-									if(db_owner_name)
-										pfree(db_owner_name);
-									
+									pfree(db_owner_name);
 									rolspec->rolename = user_name;
 								}
 							}

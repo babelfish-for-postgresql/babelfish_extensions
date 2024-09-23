@@ -608,9 +608,6 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		}
 		set_cur_db(old_dbid, old_dbname);
 		add_fixed_user_roles_to_bbf_authid_user_ext(dbname);
-
-		if(dbo_role)
-			pfree(dbo_role);
 	}
 	PG_FINALLY();
 	{
@@ -620,6 +617,9 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		set_cur_db(old_dbid, old_dbname);
 	}
 	PG_END_TRY();
+
+	if(dbo_role)
+		pfree(dbo_role);
 }
 
 void

@@ -642,9 +642,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	CommandCounterIncrement();
 
 	pfree(query.data);
-
-	if(dbo_role_name)
-		pfree(dbo_role_name);
+	pfree(dbo_role_name);
 }
 
 static List *
@@ -1968,10 +1966,8 @@ is_rolemember(PG_FUNCTION_ARGS)
 	db_owner_oid = get_role_oid(db_owner_name, false);
 	dbo_role_oid = get_role_oid(dbo_role_name, false);
 
-	if(db_owner_name)
-		pfree(db_owner_name);
-	if(dbo_role_name)
-		pfree(dbo_role_name);
+	pfree(db_owner_name);
+	pfree(dbo_role_name);
 
 	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid))
 		PG_RETURN_INT32(0);

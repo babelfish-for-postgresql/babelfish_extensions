@@ -1277,6 +1277,8 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 	char	   *result;
 	int			len;
 
+	Assert(db_name != NULL);
+
 	if (!user_name)
 		return NULL;
 
@@ -1284,7 +1286,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 	if (len == 0)
 		return NULL;
 
-	if (!DbidIsValid(get_db_id(db_name)) && !suppress_db_error)
+	if (!suppress_db_error && !DbidIsValid(get_db_id(db_name)))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist.", db_name)));
@@ -1345,11 +1347,10 @@ get_dbo_schema_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
-	{
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
-	}
-	else if (SINGLE_DB == get_migration_mode())
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == get_migration_mode() && 0 != strcmp(dbname, "master") 
+	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
 	}
@@ -1366,11 +1367,10 @@ get_dbo_role_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
-	}
-	else if (SINGLE_DB == get_migration_mode())
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == get_migration_mode() && 0 != strcmp(dbname, "master") 
+	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
 	}
@@ -1387,11 +1387,10 @@ get_db_owner_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_owner", dbname);
-	}
-	else if (SINGLE_DB == get_migration_mode())
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == get_migration_mode() && 0 != strcmp(dbname, "master") 
+	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_owner");
 	}
@@ -1408,6 +1407,8 @@ get_guest_role_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
+	Assert(dbname != NULL);
+
 	/*
 	 * Always prefix with dbname regardless if single or multidb. Note that
 	 * dbo is an exception.
@@ -1422,11 +1423,10 @@ get_guest_schema_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if ((0 == strcmp(dbname, "master")) || (0 == strcmp(dbname, "tempdb")) || (0 == strcmp(dbname, "msdb")))
-	{	
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
-	}
-	else if (SINGLE_DB == get_migration_mode())
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == get_migration_mode() && 0 != strcmp(dbname, "master") 
+	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "guest");
 	}

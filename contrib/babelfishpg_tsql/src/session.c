@@ -197,10 +197,9 @@ set_search_path_for_user_schema(const char *db_name, const char *user)
 					PGC_SUSET,
 					PGC_S_DATABASE_USER);
 	
-	if(dbo_role_name)
-		pfree(dbo_role_name);
-	if(guest_role_name)
-		pfree(guest_role_name);
+	pfree(dbo_role_name);
+	pfree(guest_role_name);
+	
 	if(physical_schema)
 		pfree(physical_schema);
 }

@@ -3382,8 +3382,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 				pfree(logical_schema_name);
 			}
 			
-			if(guest_role_name)
-				pfree(guest_role_name);
+			pfree(guest_role_name);
 		}
 		else
 		{
