@@ -230,6 +230,206 @@ Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
 
+# check if the identity value for newly inserted column is correctly assigned
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+insert into sourceTable values (1), (2), (3)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+insert into destinationTable values (4)
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# tests are same as in bcp.txt but with keep identity flag ON
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, -4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity)
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, 2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity)
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity(-1, -1))
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, 2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity(-1, -1))
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity(-1, -1))
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, -4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity(-1, -1))
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, 4)
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# test identity with primary key, will raise error on duplicate entries
+create table sourceTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT destinationTable ON
+INSERT INTO destinationTable (c1, c2) VALUES(1001, 'Foo')
+ set IDENTITY_INSERT destinationTable OFF
+bcp -E#!#sourceTable#!#destinationTable
+create table sourceTable1(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable1 ON
+INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable1 OFF
+bcp -E#!#sourceTable1#!#destinationTable
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+select count(c1) from destinationTable
+select Ident_CURRENT('sourceTable')
+select Ident_CURRENT('sourceTable1')
+select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+# test identity with check constraint, will raise error on entries violating the constraint
+create table sourceTable(c1 int identity, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity, c2 CHAR(1024), check (c1 < 500))
+bcp#!#sourceTable1#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+create table sourceTable1(c1 int identity, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable1 ON
+INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable1 OFF
+bcp -E#!#sourceTable1#!#destinationTable
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+select count(c1) from destinationTable
+select Ident_CURRENT('sourceTable')
+select Ident_CURRENT('sourceTable1')
+select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+# retry the bcp command in a loop
+create table sourceTable(c1 int identity, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) VALUES (1, 'Foo'), (2, 'Foo')
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT destinationTable ON
+INSERT INTO destinationTable (c1, c2) VALUES(2, 'Foo')
+bcp -E#!#sourceTable#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+bcp -E#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
 # -R 
 Create table sourceTable(a bigint, b bigint not null)
 Create table destinationTable(a bigint, b bigint not null)
