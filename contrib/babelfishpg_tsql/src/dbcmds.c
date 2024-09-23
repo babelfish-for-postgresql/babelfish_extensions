@@ -656,9 +656,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	List	   *db_users_list;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
-	const char *prev_current_user;
 	int 		save_sec_context;
-	Oid 		save_userid = InvalidOid;
+	Oid 		save_userid;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
@@ -703,10 +702,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 				(errcode(ERRCODE_CHECK_VIOLATION),
 				 errmsg("Cannot drop database \"%s\" because it is currently in use", dbname)));
 
-	/* Set current user to session user for dropping permissions */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-
-	bbf_set_current_user("sysadmin");
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 
 	PG_TRY();
 	{
@@ -748,7 +744,6 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 			PlannedStmt *wrapper;
 
-			GetUserIdAndSecContext(&save_userid, &save_sec_context);
 			if (stmt->type == T_DropOwnedStmt || stmt->type == T_DropRoleStmt || stmt->type == T_GrantStmt) /* need bbf_role_admin to perform DropOwnedObjects */
 				SetUserIdAndSecContext(get_bbf_role_admin_oid(),
 										save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
@@ -799,18 +794,14 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	}
 	PG_CATCH();
 	{
-		if(OidIsValid(save_userid))
-			SetUserIdAndSecContext(save_userid, save_sec_context);
-
-		/* Clean up. Restore previous state. */
-		bbf_set_current_user(prev_current_user);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	/* Set current user back to previous user */
-	bbf_set_current_user(prev_current_user);
+	SetUserIdAndSecContext(save_userid, save_sec_context);
+
 }
 
 PG_FUNCTION_INFO_V1(create_builtin_dbs);
@@ -1241,8 +1232,8 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 	TableScanDesc scan;
 	HeapTuple	tuple;
 	Form_sysdatabases bbf_db;
-	const char *dbname;
-	int 		saved_nest_level = 0;
+	char        *dbname;
+	int         saved_nest_level = 0;
 
 	/* We only allow this to be called from an extension's SQL script. */
 	if (!creating_extension)
@@ -1340,6 +1331,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		PG_END_TRY();
 
 		pfree(query.data);
+		pfree(dbname);
 
 	}
 	pltsql_revert_guc(saved_nest_level);
