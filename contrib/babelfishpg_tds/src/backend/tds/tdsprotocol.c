@@ -154,10 +154,10 @@ ResetTDSConnection(void)
 	TdsProtocolInit();
 	TdsResetCache();
 	TdsResponseReset();
+	TdsResetBcpOffset();
 	/* Retore previous isolation level when not called by sys.sp_reset_connection */
 	if (!resetTdsConnectionFlag)
 	{
-		TdsResetBcpOffset();
 		SetConfigOption("default_transaction_isolation", isolationOld,
 						PGC_BACKEND, PGC_S_CLIENT);
 	}
