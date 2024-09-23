@@ -3207,31 +3207,31 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	struct	dbcc_checkident dbcc_stmt = stmt->dbcc_stmt_data.dbcc_checkident;
 	Relation	rel;
 	TupleDesc	tupdesc;
-	char		*db_name = NULL;
-	char		*max_identity_value_str = NULL;
-	char		*query = NULL;
-	char		*attname;
-	char		*token;
+	char	*db_name = NULL;
+	char	*max_identity_value_str = NULL;
+	char	*query = NULL;
+	char	*attname;
+	char	*token;
 	const char	*schema_name;
-	char		*nsp_name = NULL;
+	const char	*nsp_name;
 	const char	*user;
-	char		*guest_role_name = NULL;
-	char		*dbo_role_name = NULL;
+	const char	*guest_role_name;
+	const char	*dbo_role_name;
 	const char	*login;
-	int64		max_identity_value = 0;
-	int64		cur_identity_value = 0;
-	int		attnum;
-	int		rc = 0;
-	int64		reseed_value = 0;
-	Oid		nsp_oid;
-	Oid		table_oid;
-	Oid		seqid = InvalidOid;
-	Oid		current_user_id = GetUserId();
-	volatile bool	cur_value_is_null = true;
-	bool		login_is_db_owner;
+	int64	max_identity_value = 0;
+	int64	cur_identity_value = 0;
+	int	attnum;
+	int	rc = 0;
+	int64	reseed_value = 0;
+	Oid	nsp_oid;
+	Oid 	table_oid;
+	Oid	seqid = InvalidOid;
+	Oid	current_user_id = GetUserId();
+	volatile bool cur_value_is_null = true;
+	bool	login_is_db_owner;
 	StringInfoData msg;
-	bool		is_float_value;
-	bool		is_cross_db = false;
+	bool	is_float_value;
+	bool    is_cross_db = false;
 
 
 	if(dbcc_stmt.new_reseed_value)
@@ -3327,11 +3327,6 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	}
 	pfree(db_name);
 
-	if(guest_role_name)
-		pfree(guest_role_name);
-	if(dbo_role_name)
-		pfree(dbo_role_name);
-
 	/*
 	 * get schema oid from physical schema name, it will return InvalidOid if
 	 * user don't have lookup access
@@ -3384,9 +3379,6 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			errmsg("'%s.%s' does not contain an identity column.",
 				nsp_name, dbcc_stmt.table_name)));
 	}
-	
-	if(nsp_name)
-		pfree(nsp_name);
 
 	PG_TRY();
 	{
@@ -3763,7 +3755,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		Oid	role_oid;
 		bool	is_public = 0 == strcmp(grantee_name, PUBLIC_ROLE_NAME);
 		if (!is_public)
-			rolname	= get_physical_user_name(dbname, grantee_name, false, true);
+			rolname	= get_physical_user_name(dbname, grantee_name, false);
 		else
 			rolname = pstrdup(PUBLIC_ROLE_NAME);
 		role_oid = get_role_oid(rolname, true);
