@@ -334,6 +334,126 @@ Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
 
+# identity test when both tables have positive increment value and we insert less than seed value
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+ SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, -4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when both tables have positive increment value and we insert more than seed value
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+ SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when source table has negative increment value and we insert more than seed value
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity)
+ SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, 2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when source table has negative increment value and we insert less than seed value
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity)
+ SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when both tables have negative increment value and we insert more than seed value
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity(-1, -1))
+ SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, 2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when both tables have negative increment value and we insert less than seed value
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity(-1, -1))
+ SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -2)
+insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when destination table has negative increment value and we insert less than seed value
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity(-1, -1))
+ SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, -4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when destination table has negative increment value and we insert more than seed value
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity(-1, -1))
+ SET IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, 4)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
 # trigger
 create table t_rcv (a int)
 create table t_rcv2 (b int)
