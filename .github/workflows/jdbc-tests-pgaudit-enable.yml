@@ -60,6 +60,18 @@ jobs:
         with:
           install_dir: 'psql'
 
+      - name: Ignore some JDBC files 
+        run: |
+          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
+          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+          export inputFilesPath=${{inputs.input_dir}}
+          cd test
+          sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant' JDBC/jdbc_schedule
+          sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-prepare' JDBC/jdbc_schedule
+          sudo sed -i '$a\ignore#!#BABEL-2843' JDBC/jdbc_schedule
+          sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-verify' JDBC/jdbc_schedule
+          sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-cleanup' JDBC/jdbc_schedule
+
       - name: Run JDBC Tests
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'

@@ -9,33 +9,7 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
-# BABEL_539-vu-prepare
-# BABEL_539-vu-verify
-# BABEL_539-vu-cleanup
-# SELECT_INTO_TEST-vu-prepare
-# SELECT_INTO_TEST-vu-verify
-# SELECT_INTO_TEST-vu-cleanup
-# babel_datatype_sqlvariant-vu-prepare
-# babel_datatype_sqlvariant-vu-verify
-# babel_datatype_sqlvariant-vu-cleanup
-# BABEL-3101
-# BABEL-1636
-ignore#!#BABEL-2843
-ignore#!#babel_datatype_sqlvariant
-ignore#!#babel_datatype_sqlvariant-vu-prepare
-ignore#!#babel_datatype_sqlvariant-vu-verify
-ignore#!#babel_datatype_sqlvariant-vu-cleanup
 
-# BABEL-2843
-# GRANT_SCHEMA
-# BABEL-3392-vu-prepare
-# BABEL-3392-vu-verify
-# BABEL-3392-vu-cleanup
-# ignore#!#GRANT_SCHEMA
-# sp_who-vu-verify
-# BABEL-EXTENDEDPROPERTY-v2-vu-prepare
-# BABEL-EXTENDEDPROPERTY-v2-vu-verify
-# BABEL-EXTENDEDPROPERTY-v2-vu-cleanup
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
@@ -72,9 +46,6 @@ ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
 ignore#!#sys-systypes-before-16-2-vu-prepare
 ignore#!#sys-systypes-before-16-2-vu-verify
-ignore#!#table-variable-vu-prepare
-ignore#!#table-variable-vu-verify
-ignore#!#table-variable-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -415,4 +386,3 @@ ignore#!#string_agg-before-14_5-vu-cleanup
 ignore#!#string_agg_within-16_4-vu-prepare
 ignore#!#string_agg_within-16_4-vu-verify
 ignore#!#string_agg_within-16_4-vu-cleanup
-
