@@ -1281,12 +1281,14 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		char		*schema_owner;
 		const char		*dbo_role;
 		bool			more_alter_query = false;
+		MigrationMode	baseline_mode = is_user_database_singledb(get_db_name(dbid)) ? SINGLE_DB : MULTI_DB;
 
 		datum = heap_getattr(tuple, Anum_namespace_ext_namespace, namespace_rel_descr, &isNull);
 		schema_name = NameStr(*DatumGetName(datum));
 		//schema_owner_id = get_owner_of_schema(schema_name);
 		schema_owner = GetUserNameFromId(get_owner_of_schema(schema_name), false);
-		dbo_role = get_dbo_role_name(get_db_name(dbid));
+
+		dbo_role = get_dbo_schema_name_by_mode(get_db_name(dbid), baseline_mode);
 
 		//if ((GetUserId() != get_owner_of_schema(schema_name)) && strcmp(GetUserNameFromId(GetUserId(), false), dbo_role != 0))
 		if (strcmp(schema_owner, dbo_role) != 0)

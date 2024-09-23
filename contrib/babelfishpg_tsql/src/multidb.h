@@ -22,6 +22,7 @@ extern char *get_physical_user_name_by_mode(char *db_name, char *user_name, bool
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
 extern char *get_physical_schema_name_by_mode(char *db_name, const char *schema_name, MigrationMode mode);
 extern const char *get_dbo_schema_name(const char *dbname);
+extern const char *get_dbo_schema_name_by_mode(const char *dbname, MigrationMode mode);
 extern const char *get_dbo_role_name(const char *dbname);
 extern const char *get_db_owner_name(const char *dbname);
 extern const char *get_db_datareader_name(const char *dbname);

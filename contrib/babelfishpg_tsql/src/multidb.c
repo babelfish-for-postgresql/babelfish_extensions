@@ -1410,6 +1410,27 @@ get_dbo_schema_name(const char *dbname)
 }
 
 const char *
+get_dbo_schema_name_by_mode(const char *dbname, MigrationMode mode)
+{
+	if (0 == strcmp(dbname, "master"))
+		return "master_dbo";
+	if (0 == strcmp(dbname, "tempdb"))
+		return "tempdb_dbo";
+	if (0 == strcmp(dbname, "msdb"))
+		return "msdb_dbo";
+	if (SINGLE_DB == mode)
+		return "dbo";
+	else
+	{
+		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
+		truncate_identifier(name, strlen(name), false);
+		return name;
+	}
+}
+
+const char *
 get_dbo_role_name(const char *dbname)
 {
 	if (0 == strcmp(dbname, "master"))
