@@ -222,6 +222,7 @@ forjson-nesting
 format
 format-dep
 forxml
+forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
@@ -535,8 +536,11 @@ reverse
 stuff
 replicate
 string_agg
+getdate
 space
 replace
 binary-datatype-operators
 SELECT_INTO_TEST
+cast-varchar-to-time
+BABEL-5119
 

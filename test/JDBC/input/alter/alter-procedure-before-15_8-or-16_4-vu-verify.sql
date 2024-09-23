@@ -69,15 +69,6 @@ GO
 exec alter_proc_p1 @param = '2020-01-02'
 GO
 
--- Test Case: attempt to alter function, expect error for being unsupported
-alter function alter_proc_f1()
-returns int
-as
-BEGIN
-    return 5
-END
-go
-
 -- Test Case: Confirm transaction updates procedure correctly
 exec alter_proc_p3 @z = 500
 go

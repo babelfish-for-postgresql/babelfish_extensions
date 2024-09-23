@@ -223,6 +223,7 @@ forjsonauto
 format
 format-dep
 forxml
+forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
@@ -526,7 +527,7 @@ babel-4475
 babel-3254
 babel-4517
 babel_table_type
-alter-procedure
+alter-procedure-15_8-or-16_4
 1_GRANT_SCHEMA
 BABEL-4707
 BABEL_4817
@@ -561,6 +562,8 @@ reverse
 sys_sequences
 replicate
 string_agg-before-15_9-or-16_5
+getdate-before-15_9-or-16_5
 space
 binary-datatype-operators
-
+cast-varchar-to-time
+BABEL-5119

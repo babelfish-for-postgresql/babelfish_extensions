@@ -1693,6 +1693,7 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_tds_database_backend_count) (int16 db_id, bool ignore_current_connection);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
+	int		(*get_tds_numbackends) (void);
 	char	       *(*get_host_name) (void);
 	uint32_t        (*get_client_pid) (void);
 	Datum		(*get_datum_from_byte_ptr) (StringInfo buf, int datatype, int scale);
@@ -2167,6 +2168,8 @@ extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
 extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
+extern AccessPriv *make_accesspriv_node(const char *priv_name);
+extern RoleSpec   *make_rolespec_node(const char *rolename);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
 extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
