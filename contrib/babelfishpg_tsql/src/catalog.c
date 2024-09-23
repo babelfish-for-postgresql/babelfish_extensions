@@ -395,7 +395,7 @@ get_sysdatabases_oid()
 		sysdatabases_oid = get_relname_relid(SYSDATABASES_TABLE_NAME,
 											 get_namespace_oid("sys", false));
 
-	return bbf_view_def_oid;
+	return sysdatabases_oid;
 }
 
 int16
