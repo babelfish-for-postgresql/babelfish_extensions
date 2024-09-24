@@ -1738,7 +1738,7 @@ AS SELECT
   CAST(0 AS INT) AS time_source,
   CAST(NULL AS sys.NVARCHAR(60)) AS time_source_desc,
   CAST(0 AS INT) AS virtual_machine_type,
-  CAST('None' AS sys.NVARCHAR(60)) AS virtual_machine_type_desc,
+  CAST('NONE' AS sys.NVARCHAR(60)) AS virtual_machine_type_desc,
   CAST(0 AS INT) AS softnuma_configuration,
   CAST('OFF' AS sys.NVARCHAR(60)) AS softnuma_configuration_desc,
   CAST(NULL AS sys.NVARCHAR(3072)) AS process_physical_affinity,
