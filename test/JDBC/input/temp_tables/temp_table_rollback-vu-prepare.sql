@@ -64,3 +64,13 @@ BEGIN
     INSERT INTO @tv VALUES (1)
 END
 GO
+
+CREATE PROCEDURE tv_tt_no_error AS
+BEGIN
+    DECLARE @tv TABLE (a int)
+    CREATE TABLE #t1 (a int)
+    INSERT INTO temp_tab_rollback_mytab VALUES (1)
+    INSERT INTO @tv VALUES (1)
+    INSERT INTO #t1 VALUES (1)
+END
+GO
