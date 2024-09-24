@@ -6432,8 +6432,6 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 {
 
 	Node *parsetree = pstmt->utilityStmt;
-	// ObjectAddress address;
-	// ObjectAddress secondaryObject = InvalidObjectAddress;
 	List *stmts;
 	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
@@ -6443,7 +6441,6 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		if (IsA(stmt, CreateTableAsStmt))
 		{
 			*address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
-			// EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
 		}
 		else
 		{

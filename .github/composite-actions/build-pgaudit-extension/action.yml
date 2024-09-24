@@ -15,21 +15,11 @@ runs:
         rm -rf pgaudit
         sudo apt-get install -y git make gcc
         git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
-        echo "repo cloned successfully"
-        ls
         cd pgaudit
-        echo "came into pgaudit repo successfully"
-        pwd
-        ls
-        echo "pgaudit complied successfully"
         make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
-        echo "pgaudit installed successfully"
         cd ..
-        ls
         cd psql
-        ls
         cd data
-        cat postgresql.conf | grep shared_preload_libraries
         cd ..
         sudo sed -i "s/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'	# (change requires restart)/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements,pgaudit'/g" data/postgresql.conf
         echo "everything set"
