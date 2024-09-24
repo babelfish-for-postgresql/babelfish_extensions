@@ -77,7 +77,7 @@ select * from grant_connect_db1.dbo.grant_connect_t1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The server principal "grant_connect_abc" is not able to access the database "grant_connect_db1" under the current security context)~~
+~~ERROR (Message: permission denied for table grant_connect_t1)~~
 
 
 -- tsql

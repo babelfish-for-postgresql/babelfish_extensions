@@ -154,6 +154,28 @@ static struct cachedesc my_cacheinfo[] = {
 			0
 		},
 		16
+	},
+	{-1,						/* SYSNAMESPACENAME */
+		-1,
+		1,
+		{
+			Anum_namespace_ext_namespace,
+			0,
+			0,
+			0
+		},
+		16
+	},
+	{-1,						/* AUTHIDUSEREXTROLENAME */
+		-1,
+		1,
+		{
+			Anum_bbf_authid_user_ext_rolname,
+			0,
+			0,
+			0
+		},
+		16
 	}
 };
 
@@ -180,6 +202,12 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME, sys_schema_oid);
 	bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME, sys_schema_oid);
 
+	/* user ext */
+	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
+												sys_schema_oid);
+	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
+													sys_schema_oid);
+
 	/* syscache info */
 	my_cacheinfo[0].reloid = sysdatabases_oid;
 	my_cacheinfo[0].indoid = sysdatabaese_idx_oid_oid;
@@ -187,17 +215,16 @@ init_catalog(PG_FUNCTION_ARGS)
 	my_cacheinfo[1].indoid = sysdatabaese_idx_name_oid;
 	my_cacheinfo[2].reloid = bbf_function_ext_oid;
 	my_cacheinfo[2].indoid = bbf_function_ext_idx_oid;
+	my_cacheinfo[3].reloid = namespace_ext_oid;
+	my_cacheinfo[3].indoid = namespace_ext_idx_oid_oid;
+	my_cacheinfo[4].reloid = bbf_authid_user_ext_oid;
+	my_cacheinfo[4].indoid = bbf_authid_user_ext_idx_oid;
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
 												 sys_schema_oid);
 	bbf_authid_login_ext_idx_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_IDX_NAME,
 													 sys_schema_oid);
-	/* user ext */
-	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
-												sys_schema_oid);
-	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
-													sys_schema_oid);
 
 	/* bbf_view_def */
 	bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME, sys_schema_oid);
@@ -241,7 +268,7 @@ initTsqlSyscache()
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited)
 	{
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 3);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 5);
 		tsql_syscache_inited = true;
 	}
 }
@@ -556,90 +583,54 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 const char *
 get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 {
-	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	Datum		datum;
 	const char *logical_name;
-	TupleDesc	dsc;
 	bool		isnull;
 
 	if (get_namespace_oid(physical_schema_name, missingOk) == InvalidOid)
 		return NULL;
 
-	rel = table_open(namespace_ext_oid, AccessShareLock);
-	dsc = RelationGetDescr(rel);
-
-	ScanKeyInit(&scanKey,
-				Anum_namespace_ext_namespace,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(physical_schema_name));
-
-	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
-							  NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(SYSNAMESPACENAME, CStringGetDatum(physical_schema_name));
 	if (!HeapTupleIsValid(tuple))
 	{
-		systable_endscan(scan);
-		table_close(rel, AccessShareLock);
 		if (!missingOk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Could find logical schema name for: \"%s\"", physical_schema_name)));
 		return NULL;
 	}
-	datum = heap_getattr(tuple, Anum_namespace_ext_orig_name, dsc, &isnull);
+	datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_orig_name, &isnull);
 	logical_name = pstrdup(TextDatumGetCString(datum));
+	ReleaseSysCache(tuple);
 
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
 	return logical_name;
 }
 
 int16
 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk)
 {
-	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	Datum		datum;
 	int16		dbid;
-	TupleDesc	dsc;
 	bool		isnull;
 
 	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
 		return InvalidDbid;
 
-	rel = table_open(namespace_ext_oid, AccessShareLock);
-	dsc = RelationGetDescr(rel);
-
-	ScanKeyInit(&scanKey,
-				Anum_namespace_ext_namespace,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(physical_schema_name));
-
-	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
-							  NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(SYSNAMESPACENAME, CStringGetDatum(physical_schema_name));
 	if (!HeapTupleIsValid(tuple))
 	{
-		systable_endscan(scan);
-		table_close(rel, AccessShareLock);
 		if (!missingOk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Could not find db id for: \"%s\"", physical_schema_name)));
 		return InvalidDbid;
 	}
-	datum = heap_getattr(tuple, Anum_namespace_ext_dbid, dsc, &isnull);
+	datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_dbid, &isnull);
 	dbid = DatumGetInt16(datum);
+	ReleaseSysCache(tuple);
 
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
 	return dbid;
 }
 
@@ -814,14 +805,10 @@ get_authid_login_ext_idx_oid(void)
 bool
 is_user(Oid role_oid)
 {
-	Relation	relation;
 	bool		is_user = true;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
-	char	   *type_str = "";
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
 	if (!HeapTupleIsValid(authtuple))
@@ -829,43 +816,23 @@ is_user(Oid role_oid)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("role with OID %u does not exist", role_oid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-
-	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
-
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
-
-	scan = systable_beginscan(relation,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
 
 	if (!HeapTupleIsValid(tuple))
 		is_user = false;
 	else
 	{
-		Datum		datum;
-		bool		isnull;
-		TupleDesc	dsc;
+		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
+		char *type_str = bpchar_to_cstring(&type);
 
-		dsc = RelationGetDescr(relation);
-		datum = heap_getattr(tuple, USER_EXT_TYPE + 1, dsc, &isnull);
-		if (!isnull)
-			type_str = pstrdup(TextDatumGetCString(datum));
+		/*
+		 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
+		 * is "S" or "U" etc, we should drop the user
+		 */
+		if (strcmp(type_str, "R") == 0)
+			is_user = false;
+		ReleaseSysCache(tuple);
 	}
-
-	/*
-	 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
-	 * is "S" or "U" etc, we should drop the user
-	 */
-	if (strcmp(type_str, "R") == 0)
-		is_user = false;
-
-	systable_endscan(scan);
-	table_close(relation, AccessShareLock);
 
 	ReleaseSysCache(authtuple);
 
@@ -875,15 +842,10 @@ is_user(Oid role_oid)
 bool
 is_role(Oid role_oid)
 {
-	Relation	relation;
 	bool		is_role = true;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
-	BpChar		type;
-	char	   *type_str = "";
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
 	if (!HeapTupleIsValid(authtuple))
@@ -891,33 +853,19 @@ is_role(Oid role_oid)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("role with OID %u does not exist", role_oid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-
-	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
-
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
-
-	scan = systable_beginscan(relation,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
 
 	if (!HeapTupleIsValid(tuple))
 		is_role = false;
 	else
 	{
-		type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		type_str = bpchar_to_cstring(&type);
+		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
+		char *type_str = bpchar_to_cstring(&type);
 
 		if (strcmp(type_str, "R") != 0)
 			is_role = false;
+		ReleaseSysCache(tuple);
 	}
-
-	systable_endscan(scan);
-	table_close(relation, AccessShareLock);
 
 	ReleaseSysCache(authtuple);
 
@@ -2552,34 +2500,67 @@ guest_role_exists_for_db(const char *dbname)
 {
 	const char *guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
-	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 
-	/* Fetch the relation */
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
-
-	/* Search if the role exists */
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(guest_role));
-
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(guest_role));
 
 	if (HeapTupleIsValid(tuple))
+	{
 		role_exists = true;
-
-	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		ReleaseSysCache(tuple);
+	}
 
 	return role_exists;
+}
+
+/*
+ * get_login_for_user
+ * Get mapped login for given user_id.
+ * Usually login can be retrived from login_name column of bbf_authid_login_ext
+ * catalog although sometimes the column can be empty such as when user_id belongs
+ * to dbo or guest user. In case the user_id is of dbo role then we get owner of
+ * the respective database which can be deduced from physical_schema_name. For all
+ * other cases, return InvalidOid since mapped login does not exist for the rest.
+ */
+Oid
+get_login_for_user(Oid user_id, const char *physical_schema_name)
+{
+	HeapTuple	tuple;
+	Oid loginId = InvalidOid;
+	char *physical_user_name = GetUserNameFromId(user_id, true);
+
+	if (!physical_user_name || !physical_schema_name)
+		return InvalidOid;
+
+	/* Search if the role exists */
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(physical_user_name));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Datum datum;
+		bool isnull;
+
+		datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple, Anum_bbf_authid_user_ext_login_name, &isnull);
+		Assert(!isnull);
+		loginId = get_role_oid((DatumGetName(datum)->data), true);
+
+		if (!OidIsValid(loginId))
+		{
+			char *orig_username = TextDatumGetCString(SysCacheGetAttr(AUTHIDUSEREXTROLENAME,
+								tuple, Anum_bbf_authid_user_ext_orig_username, &isnull));
+
+			Assert(!isnull);
+			/* Get owner of the db if the user is dbo */
+			if (strlen(orig_username) == 3 && pg_strcasecmp(orig_username, "dbo") == 0)
+			{
+				int16 dbid = get_dbid_from_physical_schema_name(physical_schema_name, false);
+				loginId = get_role_oid(get_owner_of_db(get_db_name(dbid)), false);
+			}
+		}
+		ReleaseSysCache(tuple);
+	}
+
+	return loginId;
 }
 
 static void
