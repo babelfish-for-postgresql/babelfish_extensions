@@ -237,12 +237,12 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	Node			*stmt;
 	int         	expected_stmts = 8;
 	int         	i = 0;
-	const char			*dbo;
-	const char			*db_owner;
+	const char		*dbo;
+	const char		*db_owner;
 	const char		*db_datareader;
 	const char		*db_datawriter;
-	const char			*schema;
-	const char			*guest_schema;
+	const char		*schema;
+	const char		*guest_schema;
 
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
@@ -1292,7 +1292,7 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 
 		//if ((GetUserId() != get_owner_of_schema(schema_name)) && strcmp(GetUserNameFromId(GetUserId(), false), dbo_role != 0))
 		if (strcmp(schema_owner, dbo_role) != 0)
-				more_alter_query = true;
+				more_alter_query = false;
 
 		initStringInfo(&query);
 		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
