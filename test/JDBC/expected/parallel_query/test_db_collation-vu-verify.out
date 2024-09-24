@@ -189,34 +189,34 @@ test_db_collation_vu_prepare_db11_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db11_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_as
 nc#!#bbf_unicode_cp1_ci_as
-v#!#bbf_unicode_cp1_ci_as
-nv#!#bbf_unicode_cp1_ci_as
-t#!#bbf_unicode_cp1_ci_as
 nt#!#bbf_unicode_cp1_ci_as
-sqlv#!#bbf_unicode_cp1_ci_as
+nv#!#bbf_unicode_cp1_ci_as
 sn#!#bbf_unicode_cp1_ci_as
+sqlv#!#bbf_unicode_cp1_ci_as
+t#!#bbf_unicode_cp1_ci_as
+v#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db11_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -281,34 +281,34 @@ test_db_collation_vu_prepare_db121_v1#!#nv#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db121_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db121_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_as
 nc#!#bbf_unicode_cp1_ci_as
-v#!#bbf_unicode_cp1_ci_as
-nv#!#bbf_unicode_cp1_ci_as
-t#!#bbf_unicode_cp1_ci_as
 nt#!#bbf_unicode_cp1_ci_as
-sqlv#!#bbf_unicode_cp1_ci_as
+nv#!#bbf_unicode_cp1_ci_as
 sn#!#bbf_unicode_cp1_ci_as
+sqlv#!#bbf_unicode_cp1_ci_as
+t#!#bbf_unicode_cp1_ci_as
+v#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
@@ -365,34 +365,34 @@ test_db_collation_vu_prepare_db122_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db122_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db122_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -449,34 +449,34 @@ test_db_collation_vu_prepare_db131_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db131_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1250_ci_ai
 nc#!#bbf_unicode_cp1250_ci_ai
-v#!#bbf_unicode_cp1250_ci_ai
-nv#!#bbf_unicode_cp1250_ci_ai
-t#!#bbf_unicode_cp1250_ci_ai
 nt#!#bbf_unicode_cp1250_ci_ai
-sqlv#!#bbf_unicode_cp1250_ci_ai
+nv#!#bbf_unicode_cp1250_ci_ai
 sn#!#bbf_unicode_cp1250_ci_ai
+sqlv#!#bbf_unicode_cp1250_ci_ai
+t#!#bbf_unicode_cp1250_ci_ai
+v#!#bbf_unicode_cp1250_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db131_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -533,34 +533,34 @@ test_db_collation_vu_prepare_db132_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db132_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1257_ci_ai
 nc#!#bbf_unicode_cp1257_ci_ai
-v#!#bbf_unicode_cp1257_ci_ai
-nv#!#bbf_unicode_cp1257_ci_ai
-t#!#bbf_unicode_cp1257_ci_ai
 nt#!#bbf_unicode_cp1257_ci_ai
-sqlv#!#bbf_unicode_cp1257_ci_ai
+nv#!#bbf_unicode_cp1257_ci_ai
 sn#!#bbf_unicode_cp1257_ci_ai
+sqlv#!#bbf_unicode_cp1257_ci_ai
+t#!#bbf_unicode_cp1257_ci_ai
+v#!#bbf_unicode_cp1257_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db132_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -617,34 +617,34 @@ test_db_collation_vu_prepare_db133_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db133_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db133_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -701,34 +701,34 @@ test_db_collation_vu_prepare_db134_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db134_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#estonian_ci_ai
 nc#!#estonian_ci_ai
-v#!#estonian_ci_ai
-nv#!#estonian_ci_ai
-t#!#estonian_ci_ai
 nt#!#estonian_ci_ai
-sqlv#!#estonian_ci_ai
+nv#!#estonian_ci_ai
 sn#!#estonian_ci_ai
+sqlv#!#estonian_ci_ai
+t#!#estonian_ci_ai
+v#!#estonian_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db134_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -785,34 +785,34 @@ test_db_collation_vu_prepare_db135_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db135_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#finnish_swedish_ci_ai
 nc#!#finnish_swedish_ci_ai
-v#!#finnish_swedish_ci_ai
-nv#!#finnish_swedish_ci_ai
-t#!#finnish_swedish_ci_ai
 nt#!#finnish_swedish_ci_ai
-sqlv#!#finnish_swedish_ci_ai
+nv#!#finnish_swedish_ci_ai
 sn#!#finnish_swedish_ci_ai
+sqlv#!#finnish_swedish_ci_ai
+t#!#finnish_swedish_ci_ai
+v#!#finnish_swedish_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db135_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -869,34 +869,34 @@ test_db_collation_vu_prepare_db136_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select COLUMN_NAME, COLLATION_NAME FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db136_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#french_ci_ai
 nc#!#french_ci_ai
-v#!#french_ci_ai
-nv#!#french_ci_ai
-t#!#french_ci_ai
 nt#!#french_ci_ai
-sqlv#!#french_ci_ai
+nv#!#french_ci_ai
 sn#!#french_ci_ai
+sqlv#!#french_ci_ai
+t#!#french_ci_ai
+v#!#french_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db136_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -953,34 +953,34 @@ test_db_collation_vu_prepare_db137_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db137_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#modern_spanish_ci_ai
 nc#!#modern_spanish_ci_ai
-v#!#modern_spanish_ci_ai
-nv#!#modern_spanish_ci_ai
-t#!#modern_spanish_ci_ai
 nt#!#modern_spanish_ci_ai
-sqlv#!#modern_spanish_ci_ai
+nv#!#modern_spanish_ci_ai
 sn#!#modern_spanish_ci_ai
+sqlv#!#modern_spanish_ci_ai
+t#!#modern_spanish_ci_ai
+v#!#modern_spanish_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db137_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -1037,34 +1037,34 @@ test_db_collation_vu_prepare_db138_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db138_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#polish_ci_ai
 nc#!#polish_ci_ai
-v#!#polish_ci_ai
-nv#!#polish_ci_ai
-t#!#polish_ci_ai
 nt#!#polish_ci_ai
-sqlv#!#polish_ci_ai
+nv#!#polish_ci_ai
 sn#!#polish_ci_ai
+sqlv#!#polish_ci_ai
+t#!#polish_ci_ai
+v#!#polish_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db138_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -1121,34 +1121,34 @@ test_db_collation_vu_prepare_db139_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db139_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#traditional_spanish_ci_ai
 nc#!#traditional_spanish_ci_ai
-v#!#traditional_spanish_ci_ai
-nv#!#traditional_spanish_ci_ai
-t#!#traditional_spanish_ci_ai
 nt#!#traditional_spanish_ci_ai
-sqlv#!#traditional_spanish_ci_ai
+nv#!#traditional_spanish_ci_ai
 sn#!#traditional_spanish_ci_ai
+sqlv#!#traditional_spanish_ci_ai
+t#!#traditional_spanish_ci_ai
+v#!#traditional_spanish_ci_ai
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db139_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -1221,34 +1221,34 @@ test_db_collation_vu_prepare_db142_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db141_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_as
 nc#!#bbf_unicode_cp1_ci_as
-v#!#bbf_unicode_cp1_ci_as
-nv#!#bbf_unicode_cp1_ci_as
-t#!#bbf_unicode_cp1_ci_as
 nt#!#bbf_unicode_cp1_ci_as
-sqlv#!#bbf_unicode_cp1_ci_as
+nv#!#bbf_unicode_cp1_ci_as
 sn#!#bbf_unicode_cp1_ci_as
+sqlv#!#bbf_unicode_cp1_ci_as
+t#!#bbf_unicode_cp1_ci_as
+v#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db141_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -1325,34 +1325,34 @@ test_db_collation_vu_prepare_db142_t2#!#v#!#bbf_unicode_cp1_ci_ai
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db142_t1' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_as
 nc#!#bbf_unicode_cp1_ci_as
-v#!#bbf_unicode_cp1_ci_as
-nv#!#bbf_unicode_cp1_ci_as
-t#!#bbf_unicode_cp1_ci_as
 nt#!#bbf_unicode_cp1_ci_as
-sqlv#!#bbf_unicode_cp1_ci_as
+nv#!#bbf_unicode_cp1_ci_as
 sn#!#bbf_unicode_cp1_ci_as
+sqlv#!#bbf_unicode_cp1_ci_as
+t#!#bbf_unicode_cp1_ci_as
+v#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
 select column_name, collation_name FROM information_schema_tsql.COLUMNS WHERE TABLE_NAME = 'test_db_collation_vu_prepare_db142_t2' AND
-COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLLATION_NAME + COALESCE(collation_name, ''));
+COLUMN_NAME IN ('c', 'nc', 'v', 'nv', 't', 'nt', 'sqlv', 'sn') ORDER BY (TABLE_NAME + COLUMN_NAME + COALESCE(collation_name, ''));
 GO
 ~~START~~
 nvarchar#!#nvarchar
 c#!#bbf_unicode_cp1_ci_ai
 nc#!#bbf_unicode_cp1_ci_ai
-v#!#bbf_unicode_cp1_ci_ai
-nv#!#bbf_unicode_cp1_ci_ai
-t#!#bbf_unicode_cp1_ci_ai
 nt#!#bbf_unicode_cp1_ci_ai
-sqlv#!#bbf_unicode_cp1_ci_ai
+nv#!#bbf_unicode_cp1_ci_ai
 sn#!#bbf_unicode_cp1_ci_ai
+sqlv#!#bbf_unicode_cp1_ci_ai
+t#!#bbf_unicode_cp1_ci_ai
+v#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 
@@ -1667,7 +1667,7 @@ Gather  (cost=0.14..12.27 rows=9 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.373 ms
+Babelfish T-SQL Batch Parsing Time: 0.382 ms
 ~~END~~
 
 
@@ -1685,7 +1685,7 @@ Gather  (cost=0.14..12.27 rows=9 width=2)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.231 ms
+Babelfish T-SQL Batch Parsing Time: 0.232 ms
 ~~END~~
 
 
@@ -1703,7 +1703,7 @@ Gather  (cost=0.14..12.27 rows=9 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.227 ms
+Babelfish T-SQL Batch Parsing Time: 0.223 ms
 ~~END~~
 
 
@@ -1721,7 +1721,7 @@ Gather  (cost=0.14..12.27 rows=9 width=10)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.263 ms
+Babelfish T-SQL Batch Parsing Time: 0.262 ms
 ~~END~~
 
 
@@ -1739,7 +1739,7 @@ Gather  (cost=0.14..12.27 rows=9 width=22)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 70.931 ms
+Babelfish T-SQL Batch Parsing Time: 70.845 ms
 ~~END~~
 
 
@@ -1758,7 +1758,7 @@ Gather  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 15.081 ms
+Babelfish T-SQL Batch Parsing Time: 11.953 ms
 ~~END~~
 
 
@@ -1776,7 +1776,7 @@ Gather  (cost=0.13..12.19 rows=4 width=9)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.233 ms
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
 ~~END~~
 
 
@@ -1794,7 +1794,7 @@ Gather  (cost=0.14..12.27 rows=9 width=18)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.285 ms
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
 ~~END~~
 
 
@@ -1814,7 +1814,7 @@ Gather  (cost=12.41..12.44 rows=9 width=14)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.225 ms
+Babelfish T-SQL Batch Parsing Time: 0.154 ms
 ~~END~~
 
 
