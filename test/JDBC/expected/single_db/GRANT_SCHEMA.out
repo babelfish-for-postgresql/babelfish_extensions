@@ -3449,11 +3449,12 @@ int
 1
 ~~END~~
 
-select db1.s1.f1(); -- Needs fix [BABEL-4841]
+select db1.s1.f1();
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function f1)~~
+~~START~~
+int
+1
+~~END~~
 
 
 -- tsql

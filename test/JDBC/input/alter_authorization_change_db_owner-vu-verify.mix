@@ -81,7 +81,6 @@ alter authorization on database::change_owner_db to dba_login
 go
 
 -- tsql user=new_owner_login password=12345678
--- previous owner is still in the DB and should still have access despite no longer being the owner
 select suser_name(), db_name()
 go
 select * from t
