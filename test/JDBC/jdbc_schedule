@@ -237,9 +237,6 @@ ignore#!#load_road
 ignore#!#load_tenk
 ignore#!#load_stud_emp
 ignore#!#load_student
-ignore#!#temp_tables_concurrent-vu-cleanup
-ignore#!#temp_tables_concurrent-vu-prepare
-ignore#!#temp_tables_concurrent-vu-verify
 
 # These tests are meant for upgrade scenario prior to 14_12 or 15_7 or 16_3 release
 ignore#!#BABEL-4641-before-16_3-or-15_7-or-14_12-vu-prepare
