@@ -12,6 +12,3 @@ GO
 
 DROP PROCEDURE tv_base_rollback
 GO
-
-DROP PROCEDURE tv_tt_no_error
-GO
