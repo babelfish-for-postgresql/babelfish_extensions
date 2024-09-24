@@ -567,6 +567,15 @@ bit
 ~~ERROR (Message: Cannot call methods on image.)~~
 
 
+-- UDT on type XML
+SELECT XmlUDTColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_udt
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
 -- NULL values
 DECLARE @xml XML = NULL
 SELECT @xml.exist('/artists/artist/@name')

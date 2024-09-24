@@ -291,6 +291,10 @@ GO
 SELECT ImageUDTColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_udt
 GO
 
+-- UDT on type XML
+SELECT XmlUDTColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_udt
+GO
+
 -- NULL values
 DECLARE @xml XML = NULL
 SELECT @xml.exist('/artists/artist/@name')

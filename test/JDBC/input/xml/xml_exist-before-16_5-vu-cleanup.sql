@@ -1,6 +1,9 @@
 DROP TABLE babel_5222_xml_exist_udt
 GO
 
+DROP TYPE dbo.babel_5222_xml_exist_xmlUDT
+GO
+
 DROP TYPE dbo.babel_5222_xml_exist_varcharUDT
 GO
 

@@ -33,11 +33,14 @@ GO
 CREATE TYPE dbo.babel_5222_xml_exist_imageUDT FROM IMAGE;
 GO
 
-CREATE TABLE babel_5222_xml_exist_udt (VarUDTColumn dbo.babel_5222_xml_exist_varcharUDT, ImageUDTColumn dbo.babel_5222_xml_exist_imageUDT,)
+CREATE TYPE dbo.babel_5222_xml_exist_xmlUDT FROM XML;
+GO
+
+CREATE TABLE babel_5222_xml_exist_udt (VarUDTColumn dbo.babel_5222_xml_exist_varcharUDT, ImageUDTColumn dbo.babel_5222_xml_exist_imageUDT, XmlUDTColumn dbo.babel_5222_xml_exist_xmlUDT)
 GO
 
 INSERT INTO babel_5222_xml_exist_udt
-VALUES ('<Root><Child1>Value1</Child1></Root>', CAST('<Root><Child1>Value1</Child1></Root>' AS IMAGE))
+VALUES ('<Root><Child1>Value1</Child1></Root>', CAST('<Root><Child1>Value1</Child1></Root>' AS IMAGE), '<Root><Child1>Value1</Child1></Root>')
 GO
 ~~ROW COUNT: 1~~
 
