@@ -42,16 +42,6 @@
 #include "pltsql.h"
 #include "extendedproperty.h"
 
-/*
- * Return true if database is any of the three
- * system databases "master", "tempdb", "msdb"
- * else return false
- */
-#define IS_BBF_SYSTEM_DB(dbname) \
-((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) || \
-	(strlen(dbname) == 6 && (strncmp(dbname, "tempdb", 6) == 0)) || \
-	(strlen(dbname) == 4 && (strncmp(dbname, "msdb", 4) == 0)))
-
 Oid sys_babelfish_db_seq_oid = InvalidOid;
 
 static Oid get_sys_babelfish_db_seq_oid(void);
@@ -116,12 +106,16 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	const char     *db_owner;
 	const char     *guest;
 	const char     *guest_schema;
+	Oid       	owner_oid;
+	bool     	owner_is_sa;
 
 	schema = get_dbo_schema_name(dbname);
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
 	guest = get_guest_role_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
+	owner_oid = get_role_oid(owner, true);
+	owner_is_sa = role_is_sa(owner_oid);
 
 	/*
 	 * To avoid SQL injection, we generate statement parsetree with dummy
@@ -132,7 +126,9 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
-	if (!IS_BBF_SYSTEM_DB(dbname))
+	
+	/* Only grant dbo to owner if owner is not master user  */
+	if (!owner_is_sa)
 		appendStringInfo(&query, "GRANT dummy TO dummy; ");
 
 	if (guest)
@@ -155,7 +151,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 
 	if (guest)
 	{
-		if (!IS_BBF_SYSTEM_DB(dbname))
+		if (!owner_is_sa)
 			expected_stmt_num = list_length(logins) > 0 ? 10 : 9;	
 		else
 			expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
@@ -164,7 +160,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	{
 		expected_stmt_num = 6;
 
-		if (!IS_BBF_SYSTEM_DB(dbname))
+		if (!owner_is_sa)
 			expected_stmt_num++;
 	}
 
@@ -184,7 +180,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
 
-	if (!IS_BBF_SYSTEM_DB(dbname))
+	if (!owner_is_sa)
 	{
 		/* Grant dbo role to owner */
 		stmt = parsetree_nth_stmt(res, i++);
