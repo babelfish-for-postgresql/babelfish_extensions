@@ -3604,7 +3604,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					PlannedStmt *wrapper;
 					RoleSpec *rolspec = create_schema->authrole;
 					Oid       owner_oid = InvalidOid;
-					Oid       db_accessadmin = get_role_oid(get_db_accessadmin_role_name(get_cur_db_name()), false);
+					Oid       db_accessadmin = get_role_oid(get_db_accessadmin_role_name(get_cur_db_name()), true);
 					bool      alter_owner = false;
 
 					if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
@@ -3618,7 +3618,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					else
 					{
 						owner_oid = rolspec ? get_rolespec_oid(rolspec, true) : InvalidOid;
-						if (OidIsValid(owner_oid) && !member_can_set_role(GetUserId(), owner_oid) &&
+						if (OidIsValid(owner_oid) && OidIsValid(db_accessadmin) && !member_can_set_role(GetUserId(), owner_oid) &&
 							has_privs_of_role(GetUserId(), db_accessadmin) &&
 							(is_user(owner_oid, true) || is_role(owner_oid, true)))
 						{
