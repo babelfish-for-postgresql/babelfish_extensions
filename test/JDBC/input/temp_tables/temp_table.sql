@@ -26,6 +26,7 @@ GO
 SELECT * FROM #t1
 GO
 
+-- should throw error due to generated column
 ALTER TABLE #t1 DROP COLUMN a
 GO
 
@@ -33,6 +34,23 @@ SELECT * FROM #t1
 GO
 
 -- BABEL-5273 ALTER COLUMN to another type
+ALTER TABLE #t1 ALTER COLUMN b CHAR(5)
+GO
+
+INSERT INTO #t1 (b) VALUES ('hello')
+GO
+
+SELECT * FROM #t1
+GO
+
+-- should fail due to possible truncation
+ALTER TABLE #t1 ALTER COLUMN b CHAR(4)
+GO
+
+DELETE FROM #t1 WHERE b = 'hello'
+GO
+
+-- try all other TSQL types
 ALTER TABLE #t1 ALTER COLUMN b TINYINT
 GO
 
@@ -111,7 +129,7 @@ GO
 ALTER TABLE #t1 ALTER COLUMN b BINARY
 GO
 
--- should raise error due to incompatible types
+-- TODO: should raise error due to incompatible types
 ALTER TABLE #t1 ALTER COLUMN b VARBINARY
 GO
 
@@ -119,7 +137,7 @@ GO
 ALTER TABLE #t1 ALTER COLUMN b IMAGE
 GO
 
--- should raise error due to incompatible types
+-- TODO: should raise error due to incompatible types
 ALTER TABLE #t1 ALTER COLUMN b GEOGRAPHY
 GO
 
@@ -129,19 +147,6 @@ GO
 
 -- TODO: fix this, it should work and not raise a syntax error
 ALTER TABLE #t1 ALTER COLUMN b XML
-GO
-
-ALTER TABLE #t1 ALTER COLUMN b CHAR(5)
-GO
-
-INSERT INTO #t1 (b) VALUES ('hello')
-GO
-
-SELECT * FROM #t1
-GO
-
--- should fail due to possible truncation
-ALTER TABLE #t1 ALTER COLUMN b CHAR(4)
 GO
 
 ALTER TABLE #t1 DROP COLUMN b
