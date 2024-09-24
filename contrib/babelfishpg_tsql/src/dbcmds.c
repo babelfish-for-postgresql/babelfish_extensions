@@ -1315,13 +1315,21 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 			* Set createrole_self_grant to "inherit" so that bbf_role_admin
 			* inherits the new role.
 			*/
-			SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 			SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
 			add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
 			/* Run all subcommands */
 			foreach(parsetree_item, parsetree_list)
 			{
 				PlannedStmt 	*wrapper;
+
+				if (stmt->type == T_GrantStmt)
+				{
+					SetUserIdAndSecContext(get_role_oid("sysadmin", false), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				}
+				else
+				{
+					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				}
 
 				/* need to make a wrapper PlannedStmt */
 				wrapper = makeNode(PlannedStmt);
