@@ -4991,12 +4991,12 @@ bool
 user_exists_for_db(const char *db_name, const char *user_name)
 {
 	HeapTuple		tuple_cache;
-	NameData		*rolname = NULL;
+	NameData		rolname;
 	bool			user_exists = false;
 
-	namestrcpy(rolname, user_name);
+	namestrcpy(&rolname, user_name);
 
-	tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(rolname));
+	tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
 
 	if (HeapTupleIsValid(tuple_cache))
 	{
