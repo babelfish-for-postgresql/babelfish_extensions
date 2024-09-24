@@ -30,6 +30,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_shdepend.h"
+#include "catalog/storage.h"
 #include "commands/createas.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
@@ -5211,7 +5212,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 
 		func->cur_estate = save_cur_estate;
 
-		pltsql_remove_current_query_env();
+		pltsql_remove_current_query_env(send_error);
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
 	}
@@ -6483,7 +6484,7 @@ set_current_query_is_create_tbl_check_constraint(Node *expr)
 }
 
 void
-pltsql_remove_current_query_env(void)
+pltsql_remove_current_query_env(bool is_abort)
 {
 	bool old_abort_curr_txn = AbortCurTransaction;
 
@@ -6493,6 +6494,8 @@ pltsql_remove_current_query_env(void)
 		AbortCurTransaction = false;
 
 		ENRDropTempTables(currentQueryEnv);
+		if (is_abort)
+			smgrDoPendingDeletes(!old_abort_curr_txn);
 	}
 	PG_FINALLY();
 	{

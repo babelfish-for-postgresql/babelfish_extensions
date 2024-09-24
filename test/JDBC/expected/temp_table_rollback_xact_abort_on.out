@@ -67,6 +67,16 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE tv_tt_no_error AS
+BEGIN
+    DECLARE @tv TABLE (a int)
+    CREATE TABLE #t1 (a int)
+    INSERT INTO temp_tab_rollback_mytab VALUES (1)
+    INSERT INTO @tv VALUES (1)
+    INSERT INTO #t1 VALUES (1)
+END
+GO
+
 -- pg_class, pg_type, pg_depend, pg_attribute, pg_constraint, pg_index, pg_sequence are all covered by below tests. 
 -------------------------------
 -- Temp Table CREATE + ROLLBACK
@@ -928,6 +938,75 @@ int
 ~~END~~
 
 
+BEGIN TRAN
+INSERT INTO temp_tab_rollback_mytab VALUES (2)
+EXEC tv_tt_no_error
+SELECT * FROM temp_tab_rollback_mytab
+DROP TABLE temp_tab_rollback_mytab
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+1
+~~END~~
+
+
+SELECT * FROM temp_tab_rollback_mytab
+GO
+~~START~~
+int
+~~END~~
+
+
+BEGIN TRAN
+INSERT INTO temp_tab_rollback_mytab VALUES (2)
+CREATE TABLE #outer_table (a int)
+INSERT INTO #outer_table VALUES (1)
+EXEC tv_tt_no_error
+SELECT * FROM temp_tab_rollback_mytab
+DROP TABLE temp_tab_rollback_mytab
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+1
+~~END~~
+
+
+SELECT * FROM temp_tab_rollback_mytab
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT * FROM #outer_table
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#outer_table" does not exist)~~
+
+
 DROP TABLE temp_tab_rollback_mytab
 GO
 
@@ -1398,4 +1477,7 @@ DROP PROCEDURE implicit_rollback_in_proc
 GO
 
 DROP PROCEDURE tv_base_rollback
+GO
+
+DROP PROCEDURE tv_tt_no_error
 GO
