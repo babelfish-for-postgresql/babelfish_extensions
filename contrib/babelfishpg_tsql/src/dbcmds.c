@@ -44,6 +44,16 @@
 
 #define NOT_FOUND -1
 
+/*
+ * Return true if database is any of the three
+ * system databases "master", "tempdb", "msdb"
+ * else return false
+ */
+#define IS_BBF_SYSTEM_DB(dbname) \
+((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) || \
+	(strlen(dbname) == 6 && (strncmp(dbname, "tempdb", 6) == 0)) || \
+	(strlen(dbname) == 4 && (strncmp(dbname, "msdb", 4) == 0)))
+
 Oid sys_babelfish_db_seq_oid = InvalidOid;
 
 static Oid get_sys_babelfish_db_seq_oid(void);
@@ -55,7 +65,6 @@ static void add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname);
 static Oid	do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
-
 
 static Oid
 get_sys_babelfish_db_seq_oid()
@@ -104,7 +113,8 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	appendStringInfo(&query, "CREATE ROLE dummy CREATEROLE INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
-	appendStringInfo(&query, "GRANT dummy TO dummy; ");
+	if (!IS_BBF_SYSTEM_DB(dbname))
+		appendStringInfo(&query, "GRANT dummy TO dummy; ");
 
 	if (guest)
 	{
@@ -125,9 +135,19 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 10 : 9;
+	{
+		if (!IS_BBF_SYSTEM_DB(dbname))
+			expected_stmt_num = list_length(logins) > 0 ? 10 : 9;	
+		else
+			expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
+	}
 	else
-		expected_stmt_num = 7;
+	{
+		expected_stmt_num = 6;
+
+		if (!IS_BBF_SYSTEM_DB(dbname))
+			expected_stmt_num++;
+	}
 
 	if (list_length(res) != expected_stmt_num)
 		ereport(ERROR,
@@ -145,11 +165,13 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
 
-	/* Grant dbo role to owner */
-	stmt = parsetree_nth_stmt(res, i++);
-
-	update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(dbo)),
-						 list_make1(make_rolespec_node(owner)));
+	if (!IS_BBF_SYSTEM_DB(dbname))
+	{
+		/* Grant dbo role to owner */
+		stmt = parsetree_nth_stmt(res, i++);
+		update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(dbo)),
+							list_make1(make_rolespec_node(owner)));
+	}
 
 	if (guest)
 	{
