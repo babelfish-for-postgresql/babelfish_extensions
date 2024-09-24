@@ -198,9 +198,12 @@ GO
 ~~ERROR (Message: type "BINARY" does not exist)~~
 
 
--- TODO: should raise error due to incompatible types
+-- should raise error due to incompatible types
 ALTER TABLE #t1 ALTER COLUMN b VARBINARY
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" cannot be cast automatically to type varbinary)~~
 
 -- should raise error due to incompatible types
 ALTER TABLE #t1 ALTER COLUMN b IMAGE
@@ -213,9 +216,6 @@ GO
 -- TODO: should raise error due to incompatible types
 ALTER TABLE #t1 ALTER COLUMN b GEOGRAPHY
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "b" cannot be cast automatically to type geography)~~
 
 
 -- should raise error due to incompatible types

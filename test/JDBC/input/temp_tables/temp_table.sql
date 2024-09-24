@@ -129,7 +129,7 @@ GO
 ALTER TABLE #t1 ALTER COLUMN b BINARY
 GO
 
--- TODO: should raise error due to incompatible types
+-- should raise error due to incompatible types
 ALTER TABLE #t1 ALTER COLUMN b VARBINARY
 GO
 
