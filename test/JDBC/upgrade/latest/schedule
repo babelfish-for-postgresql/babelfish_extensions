@@ -567,6 +567,7 @@ replicate
 space
 SELECT_INTO_TEST
 binary-datatype-operators
+sys_dm_os_sys_info
 cast-varchar-to-time
 BABEL-5119
 
