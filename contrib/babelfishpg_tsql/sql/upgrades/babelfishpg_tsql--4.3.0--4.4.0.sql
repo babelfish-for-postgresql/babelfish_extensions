@@ -1906,6 +1906,36 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_statistics_inte
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_pkeys_internal_deprecated_in_4_4_0');
 
+UPDATE pg_proc p1
+SET probin = (
+    SELECT (
+        jsonb_set(
+            probin::jsonb,
+            '{typmod_array}',
+            to_jsonb(
+                (
+                    SELECT jsonb_agg(
+                        CASE
+                            WHEN val::text = '-8000' THEN '-1'
+                            WHEN val::text = '-1' AND p2.proallargtypes[indx] = ('sys.smalldatetime'::regtype)::oid THEN '0'
+                            WHEN val::text = '-1' THEN '1'
+                            ELSE val::text
+                        END
+                    )
+                    FROM jsonb_array_elements_text(probin::jsonb->'typmod_array')  WITH ORDINALITY AS elem(val,indx)
+                )
+            )
+        )::text
+    )
+)
+FROM (
+    SELECT p.oid, p.proallargtypes
+    FROM pg_proc p
+    INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p.pronamespace::regnamespace::name
+    INNER JOIN sys.babelfish_function_ext f ON p.proname = f.funcname AND sch.nspname = f.nspname
+) p2
+WHERE p1.oid = p2.oid;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

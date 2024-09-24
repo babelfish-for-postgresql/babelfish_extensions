@@ -139,7 +139,7 @@ END
 GO
 
 CREATE FUNCTION forjson_vu_f_1()
-RETURNS sys.NVARCHAR(5000) AS
+RETURNS sys.NVARCHAR(4000) AS
 BEGIN
 RETURN (select U.Id AS "users.userid", O.productId AS "өглөө", O.Id AS "product.oid", P.price AS "product.price", S.totalSales AS "totalsales" FROM forjson_auto_vu_t_users U JOIN forjson_auto_vu_t_orders O ON (U.id = O.userid) JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) JOIN forjson_auto_vu_t_sales S ON (P.price = S.price) FOR JSON AUTO)
 END

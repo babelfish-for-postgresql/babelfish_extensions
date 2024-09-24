@@ -4,6 +4,9 @@ GO
 DROP PROCEDURE proc_test_1_1;
 GO
 
+DROP PROCEDURE proc_test_1_2 ;
+GO
+
 DROP PROCEDURE proc_test_2;
 GO
 
@@ -96,4 +99,10 @@ DROP PROCEDURE proc_test_29;
 GO
 
 DROP PROCEDURE proc_test_30;
+GO
+
+DROP PROCEDURE proc_test_main;
+GO
+
+DROP PROCEDURE proc_test_main2;
 GO

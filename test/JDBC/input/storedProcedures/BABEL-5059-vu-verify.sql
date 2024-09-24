@@ -129,3 +129,9 @@ GO
 Declare @a bpchar(8000); Declare @b bpchar(8000); SET @a = Replicate('A',9340); EXEC proc_test_30 @a = @a , @b = @b OUT ;
 GO
 
+-- misc
+Declare @a smalldatetime; Declare @b varchar; SET @a = '2024-09-01 10:00' ; SET @b = 'abc' EXEC proc_test_main @a = @a , @b = @b OUT ;
+GO
+
+Declare @a varchar; Declare @b varchar(max); SET @a = Replicate('A',9340);EXEC proc_test_main2 @a = @a , @b = @b OUT ;
+GO

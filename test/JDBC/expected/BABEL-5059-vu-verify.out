@@ -354,3 +354,24 @@ int
 ~~END~~
 
 
+-- misc
+Declare @a smalldatetime; Declare @b varchar; SET @a = '2024-09-01 10:00' ; SET @b = 'abc' EXEC proc_test_main @a = @a , @b = @b OUT ;
+GO
+~~START~~
+smalldatetime
+2024-09-01 10:00:00.0
+~~END~~
+
+~~START~~
+varchar
+a
+~~END~~
+
+
+Declare @a varchar; Declare @b varchar(max); SET @a = Replicate('A',9340);EXEC proc_test_main2 @a = @a , @b = @b OUT ;
+GO
+~~START~~
+varchar
+A
+~~END~~
+

@@ -5,6 +5,9 @@ GO
 CREATE PROCEDURE proc_test_1_1 (@a NVARCHAR, @b NVARCHAR OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
 GO
 
+CREATE PROCEDURE proc_test_1_2 (@a NVARCHAR, @b NVARCHAR OUTPUT) AS BEGIN SET @b=@a; SELECT len(@a); END;
+GO
+
 CREATE PROCEDURE proc_test_2 (@a NVARCHAR(max), @b NVARCHAR(max) OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
 GO
 
@@ -108,3 +111,9 @@ GO
 CREATE PROCEDURE proc_test_30 (@a bpchar(8000), @b bpchar(8000) OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
 GO
 
+-- misc
+CREATE PROCEDURE proc_test_main (@a smalldatetime, @b varchar OUTPUT) AS BEGIN SELECT @a;SELECT @b; END;
+GO
+
+CREATE PROCEDURE proc_test_main2 (@a varchar(max), @b varchar OUTPUT) AS BEGIN SET @b=@a; SELECT @b; END;
+GO
