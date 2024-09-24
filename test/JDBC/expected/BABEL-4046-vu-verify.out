@@ -9,7 +9,7 @@ varchar
 ~~END~~
 
 
-select * from babel4046;
+select * from babel4046 ORDER BY (a + b);
 GO
 ~~START~~
 varchar#!#varchar
@@ -20,7 +20,7 @@ AAA#!#A%
 ~~END~~
 
 
-select * from babel4046_2;
+select * from babel4046_2 ORDER BY (a + b);
 GO
 ~~START~~
 varchar#!#varchar

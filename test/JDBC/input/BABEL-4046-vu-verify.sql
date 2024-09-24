@@ -5,10 +5,10 @@ select options_t.name
     on options_t.name like 'UM\_%' + svc_defs.svc_name escape '\'
 go
 
-select * from babel4046;
+select * from babel4046 ORDER BY (a + b);
 GO
 
-select * from babel4046_2;
+select * from babel4046_2 ORDER BY (a + b);
 GO
 
 ;with EMP_T AS (
