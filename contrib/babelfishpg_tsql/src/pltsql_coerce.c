@@ -1490,6 +1490,9 @@ is_tsql_char_type_with_len(Oid type, bool is_case_expr)
 			  utilptr->is_tsql_varchar_datatype(type) ||
 			  utilptr->is_tsql_nvarchar_datatype(type);
 	
+	/* For case expr we need to find common type based on TSQL's
+	 * precedence for text and ntext also.
+	 */
 	if(is_case_expr)
 		result |= utilptr->is_tsql_text_datatype(type) ||
 			  	  utilptr->is_tsql_ntext_datatype(type);
@@ -1776,9 +1779,9 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
     
 	len = strlen(context);
 	
-	if (strncmp(context, "ISNULL", strlen("ISNULL")) == 0)
+	if (len == 6 && strncmp(context, "ISNULL", 6) == 0)
 		return select_common_type_for_isnull(pstate, exprs);
-	else if(strncmp(context, "TSQL_COALESCE", strlen("TSQL_COALESCE")) == 0)
+	else if(len == 13 && strncmp(context, "TSQL_COALESCE", 13) == 0)
 		return select_common_type_for_coalesce_function(pstate, exprs);
 	else if ((len == 5 && strncmp(context, "UNION", 5) == 0) || 
             (len == 9 && strncmp(context, "INTERSECT", 9) == 0) ||
@@ -1841,12 +1844,13 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	Node		*result_expr = (Node*) linitial(exprs);
 	Oid			result_type = InvalidOid;
 	ListCell	*lc;
-    bool        is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
+        bool             is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
 	 * or NVARCHAR is present, let engine handle finding the type.
-	 * But if it is CASE expr then it will also check for text and ntext */
+	 * But if it is CASE expr then it will also check for text and ntext.
+         */
 	foreach(lc, exprs)
 	{
 		Node	*expr = (Node *) lfirst(lc);
