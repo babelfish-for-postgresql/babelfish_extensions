@@ -48,6 +48,7 @@ int#!#varchar#!#int
 ~~END~~
 
 
+-- should throw error due to generated column
 ALTER TABLE #t1 DROP COLUMN a
 GO
 ~~ERROR (Code: 33557097)~~
@@ -61,6 +62,176 @@ GO
 int#!#varchar#!#int
 1#!#<NULL>#!#2
 ~~END~~
+
+
+-- BABEL-5273 ALTER COLUMN to another type
+ALTER TABLE #t1 ALTER COLUMN b CHAR(5)
+GO
+
+INSERT INTO #t1 (b) VALUES ('hello')
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int#!#char#!#int
+1#!#<NULL>#!#2
+2#!#hello#!#3
+~~END~~
+
+
+-- should fail due to possible truncation
+ALTER TABLE #t1 ALTER COLUMN b CHAR(4)
+GO
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character(4))~~
+
+
+DELETE FROM #t1 WHERE b = 'hello'
+GO
+~~ROW COUNT: 1~~
+
+
+-- try all other TSQL types
+ALTER TABLE #t1 ALTER COLUMN b TINYINT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b SMALLINT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b INT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b BIGINT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b BIT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b DECIMAL
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b NUMERIC
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b MONEY
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b SMALLMONEY
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b FLOAT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b REAL
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b DATE
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" cannot be cast automatically to type date)~~
+
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b TIME
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" cannot be cast automatically to type time without time zone)~~
+
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b DATETIME2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" cannot be cast automatically to type datetime2)~~
+
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b DATETIMEOFFSET
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" cannot be cast automatically to type datetimeoffset)~~
+
+
+ALTER TABLE #t1 ALTER COLUMN b DATETIME
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b SMALLDATETIME
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b CHAR
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b VARCHAR
+GO
+
+-- TODO: fix this, it should work and not raise a syntax error
+ALTER TABLE #t1 ALTER COLUMN b TEXT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "TEXT")~~
+
+
+ALTER TABLE #t1 ALTER COLUMN b NCHAR
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b NVARCHAR
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b NTEXT
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b BINARY
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "BINARY" does not exist)~~
+
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b VARBINARY
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" cannot be cast automatically to type varbinary)~~
+
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b IMAGE
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" cannot be cast automatically to type image)~~
+
+
+-- TODO: should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b GEOGRAPHY
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b GEOMETRY
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" cannot be cast automatically to type geometry)~~
+
+
+-- TODO: fix this, it should work and not raise a syntax error
+ALTER TABLE #t1 ALTER COLUMN b XML
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "XML")~~
 
 
 ALTER TABLE #t1 DROP COLUMN b
