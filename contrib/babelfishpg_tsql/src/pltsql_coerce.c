@@ -1841,7 +1841,7 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	Node		*result_expr = (Node*) linitial(exprs);
 	Oid			result_type = InvalidOid;
 	ListCell	*lc;
-    bool        is_case_expr = (strlen(context) == 6 && strncmp(context, "CASE", 4) == 0) ? true : false;
+    bool        is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
