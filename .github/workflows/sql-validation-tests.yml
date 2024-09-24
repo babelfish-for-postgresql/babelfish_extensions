@@ -20,7 +20,7 @@ jobs:
           python3 sql_validation.py
       - name: Upload artifacts
         if: always() && steps.run-test.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: expected-output-files
           path: test/python/output/sql_validation_framework/*

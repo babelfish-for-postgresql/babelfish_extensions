@@ -14,6 +14,10 @@
 ### 6. Reset-connection testing with Primary Key error
 ### 7. Savepoint rollback and commit in error and non-error case.
 ### 8. implicit_transactions have no role to play here but we have still added tests.
+### 9. Check identity with error case
+###    a. transaction testing with identity and primary key column
+###    b. transaction testing with identity and check constraint
+###    c. Test Reset-connection with error (retry the insert bulk in a loop)
 ### The above tests test the seq and index.
 ##########################################################
 
@@ -556,3 +560,77 @@ drop table sourceTable1
 drop table destinationTable
 
  SET implicit_transactions OFF
+
+# identity
+# test identity with primary key, will raise error on duplicate entries
+create table sourceTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT destinationTable ON
+INSERT INTO destinationTable (c1, c2) VALUES(1001, 'Foo')
+ set IDENTITY_INSERT destinationTable OFF
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+create table sourceTable1(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable1 ON
+INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable1 OFF
+traninsertbulk#!#sourceTable1#!#destinationTable#!#keepIdentity
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+select count(c1) from destinationTable
+select Ident_CURRENT('sourceTable')
+select Ident_CURRENT('sourceTable1')
+select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+# test identity with check constraint, will raise error on entries violating the constraint
+create table sourceTable(c1 int identity, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity, c2 CHAR(1024), check (c1 < 500))
+traninsertbulk#!#sourceTable#!#destinationTable
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+create table sourceTable1(c1 int identity, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable1 ON
+INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable1 OFF
+traninsertbulk#!#sourceTable1#!#destinationTable#!#keepIdentity
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+select count(c1) from destinationTable
+select Ident_CURRENT('sourceTable')
+select Ident_CURRENT('sourceTable1')
+select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+# Reset-connection with error (retry the insert bulk in a loop)
+create table sourceTable(c1 int identity, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) VALUES (1, 'Foo'), (2, 'Foo')
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity PRIMARY KEY, c2 CHAR(1024))
+ set IDENTITY_INSERT destinationTable ON
+INSERT INTO destinationTable (c1, c2) VALUES(2, 'Foo')
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable

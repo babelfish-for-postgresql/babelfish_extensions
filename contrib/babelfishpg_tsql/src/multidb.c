@@ -7,6 +7,7 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/scansup.h"
 #include "parser/parser.h"
+#include "pltsql.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -352,12 +353,7 @@ rewrite_object_refs(Node *stmt)
 
 							if (strcmp(defel->defname, "rolemembers") == 0)
 							{
-								RoleSpec   *spec;
-
-								spec = makeNode(RoleSpec);
-								spec->roletype = ROLESPEC_CSTRING;
-								spec->location = -1;
-								spec->rolename = pstrdup(get_db_owner_name(db_name));
+								RoleSpec   *spec = make_rolespec_node(get_db_owner_name(db_name));
 
 								if (defel->arg == NULL)
 									defel->arg = (Node *) list_make1(spec);

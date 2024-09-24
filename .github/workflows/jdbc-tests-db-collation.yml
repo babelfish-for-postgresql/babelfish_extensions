@@ -107,7 +107,7 @@ jobs:
 
       - name: Upload Log
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: postgres-log-jdbc
           path: |
@@ -135,7 +135,7 @@ jobs:
 
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: |
@@ -144,7 +144,7 @@ jobs:
 
       - name: Upload Output Diff
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: jdbc-output-diff.diff
           path: |

@@ -60,6 +60,7 @@
 #include "../src/catalog.h"
 #include "../src/timezone.h"
 #include "../src/collation.h"
+#include "../src/dbcmds.h"
 #include "../src/hooks.h"
 #include "../src/rolecmds.h"
 #include "utils/fmgroids.h"
@@ -942,21 +943,21 @@ Datum getutcdate(PG_FUNCTION_ARGS)
 
 Datum getdate_internal(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
-						TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime, 
+						DirectFunctionCall2(timestamptz_trunc,CStringGetTextDatum("millisecond"),
+											TimestampTzGetDatum(GetCurrentStatementStartTimestamp()))));
 	
 }
 
 Datum sysdatetime(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TIMESTAMPTZ(GetCurrentStatementStartTimestamp());
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime2, 
+							TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
 }
 
 Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
 {
-	
-
-	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamp_datetimeoffset,
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetimeoffset,
 							TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
 }
 
@@ -2040,8 +2041,6 @@ search_partition(PG_FUNCTION_ARGS)
 		deconstruct_array(values, sqlvariant_typoid,
 					-1, false, 'i', &range_values, &nulls, &nelems);
 	}
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
 
 	/* Raise error if provided partition function doesn't exist in the provided database. */
 	if (!func_param_typname)
@@ -2056,6 +2055,8 @@ search_partition(PG_FUNCTION_ARGS)
 	 */
 	if (PG_ARGISNULL(1))
 	{
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
 		pfree(partition_func_name);
 		pfree(func_param_typname);
 		pfree(nulls);
@@ -2099,6 +2100,10 @@ search_partition(PG_FUNCTION_ARGS)
 	
 	/* Perform binary search on sorted range values. */
 	result = tsql_bsearch_arg(&arg, range_values, nelems, sizeof(Datum), tsql_compare_values, &cxt);
+
+	/* Close the catalog. */
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
 
 	/* Free the allocated memory. */
 	pfree(arg_types);
@@ -2836,6 +2841,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	const char *user = NULL;
 	const char *login;
 	int16		db_id;
+	bool		login_is_db_owner;
 
 	i = strlen(lowercase_db_name);
 	while (i > 0 && isspace((unsigned char) lowercase_db_name[i - 1]))
@@ -2848,6 +2854,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(lowercase_db_name, login);
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(lowercase_db_name), NAMEDATALEN);
 
 	/*
 	 * Special cases: Database Owner should always have access If this DB has
@@ -2858,7 +2865,11 @@ has_dbaccess(PG_FUNCTION_ARGS)
 		Oid			datdba;
 
 		datdba = get_role_oid("sysadmin", false);
-		if (is_member_of_role(GetSessionUserId(), datdba))
+		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
+			/* 
+			 * The login will have access to the database if it is a member
+			 * of sysadmin or it is the owner of the database.
+			 */
 			user = get_dbo_role_name(lowercase_db_name);
 		else
 		{

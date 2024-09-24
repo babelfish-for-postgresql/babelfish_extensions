@@ -2422,12 +2422,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool				isSameProc;
 					ObjectAddress 		address;
 					CreateFunctionStmt	*cfs;
-					ListCell 			*option, *location_cell = NULL, *return_cell = NULL;
+					ListCell 			*option;
 					int 				origname_location = -1;
 					bool 				with_recompile = false;
 					ListCell            *parameter;
 
 					cfs = makeNode(CreateFunctionStmt);
+					cfs->returnType = NULL;
+					cfs->is_procedure = true;
 
 					if (!IS_TDS_CLIENT())
 					{
@@ -2461,7 +2463,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								* name from queryString.
 								*/
 								origname_location = intVal((Node *) defel->arg);
-								location_cell = option;
+								stmt->actions = foreach_delete_current(stmt->actions, option);
 								pfree(defel);
 							}
 							else if (strcmp(defel->defname, "recompile") == 0)
@@ -2475,26 +2477,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							else if (strcmp(defel->defname, "return") == 0)
 							{
 								cfs->returnType = (TypeName *) defel->arg;
-								return_cell = option;
+								cfs->is_procedure = false;
+								stmt->actions = foreach_delete_current(stmt->actions, option);
 								pfree(defel);
 								stmt->objtype = OBJECT_FUNCTION;
 							}
-						}
-
-						/* delete location cell if it exists as it is for internal use only */
-						if (location_cell)
-							stmt->actions = list_delete_cell(stmt->actions, location_cell);
-
-						if (return_cell) 
-						{
-							if(location_cell)
-								return_cell -= 1;
-							stmt->actions = list_delete_cell(stmt->actions, return_cell);
-							cfs->is_procedure = false;
-						} else 
-						{
-							cfs->returnType = NULL;
-							cfs->is_procedure = true;
 						}
 
 						/* make a CreateFunctionStmt to pass into CreateFunction() */
