@@ -86,6 +86,28 @@ int#!#int#!#int
 ~~END~~
 
 
+-- Test NULL varchar variable
+DECLARE @v varchar(20);
+SELECT @v = NULL;
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+~~START~~
+int#!#int#!#int
+0#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test NULL nvarchar variable
+DECLARE @nv nvarchar(10);
+SELECT @nv = null;
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+~~START~~
+int#!#int#!#int
+0#!#<NULL>#!#<NULL>
+~~END~~
+
+
 -- Test empty varchar variable
 DECLARE @v varchar(20);
 SELECT @v = '';

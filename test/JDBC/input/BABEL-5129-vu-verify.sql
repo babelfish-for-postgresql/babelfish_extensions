@@ -41,6 +41,18 @@ SELECT @nv = '12.3420000000';
 SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
 GO
 
+-- Test NULL varchar variable
+DECLARE @v varchar(20);
+SELECT @v = NULL;
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+
+-- Test NULL nvarchar variable
+DECLARE @nv nvarchar(10);
+SELECT @nv = null;
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+
 -- Test empty varchar variable
 DECLARE @v varchar(20);
 SELECT @v = '';
