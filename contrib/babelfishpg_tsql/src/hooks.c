@@ -5496,7 +5496,7 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 static char*
 cache_look_from_ddl_event_trigger(ObjectAddress* address)
 {
-	char *identity = NULL;
+	char *identity = NULL; 
 	int	save_nestlevel = 0;
 	PG_TRY();
 	{
