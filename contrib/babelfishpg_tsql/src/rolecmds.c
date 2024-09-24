@@ -1314,7 +1314,6 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		const char *db_name;
 		const char *dbo_role;
 		const char *db_owner_role;
-		const char *db_accessadmin_role;
 		const char *guest;
 
 		db_name_datum = heap_getattr(tuple,
@@ -1325,7 +1324,6 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		db_name = TextDatumGetCString(db_name_datum);
 		dbo_role = get_dbo_role_name(db_name);
 		db_owner_role = get_db_owner_name(db_name);
-		db_accessadmin_role = get_db_accessadmin_role_name(db_name);
 		guest = get_guest_role_name(db_name);
 
 		/* Add users to catalog ext */
@@ -1336,8 +1334,6 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		}
 		if (db_owner_role)
 			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true, false);
-		if (db_accessadmin_role)
-			add_to_bbf_authid_user_ext(db_accessadmin_role, DB_ACCESSADMIN, db_name, NULL, NULL, true, true, false);
 		if (guest)
 		{
 			/*
