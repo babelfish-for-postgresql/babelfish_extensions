@@ -5,7 +5,7 @@ int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#nvarcha
 103#!#user connections#!#100#!#1#!#262143#!#100#!#Sets the maximum number of concurrent connections.#!#0#!#1
 115#!#nested triggers#!#1#!#0#!#1#!#1#!#Allow triggers to be invoked within triggers#!#1#!#0
 124#!#default language#!#0#!#0#!#9999#!#0#!#default language#!#1#!#0
-505#!#network packet size (B)#!#4096#!#512#!#32767#!#4096#!#Sets the default packet size forall the clients being connected#!#1#!#1
+505#!#network packet size (B)#!#4096#!#512#!#32767#!#4096#!#Sets the default packet size for all the clients being connected#!#1#!#1
 1126#!#default full-text language#!#1033#!#0#!#2147483647#!#1033#!#default full-text language#!#1#!#1
 1127#!#two digit year cutoff#!#2049#!#1753#!#9999#!#2049#!#two digit year cutoff#!#1#!#1
 1534#!#user options#!#0#!#0#!#32767#!#0#!#user options#!#1#!#0
@@ -44,7 +44,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -61,7 +61,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -81,7 +81,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -97,7 +97,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -113,7 +113,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -130,7 +130,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -147,7 +147,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -163,7 +163,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -229,7 +229,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -245,7 +245,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -261,7 +261,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -278,7 +278,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -295,7 +295,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
@@ -311,7 +311,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 1033#!#1126#!#default full-text language#!#3
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
-4096#!#505#!#Sets the default packet size forall the clients being connected#!#3
+4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
 100#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
