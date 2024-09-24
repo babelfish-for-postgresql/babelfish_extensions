@@ -605,6 +605,12 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 				is_set_userid = true;
 			}
+			else if (stmt->type = T_GrantStmt)
+			{
+				SetUserIdAndSecContext(datdba,
+							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				is_set_userid = true;
+			}
 			/* need to make a wrapper PlannedStmt */
 			wrapper = makeNode(PlannedStmt);
 			wrapper->commandType = CMD_UTILITY;
@@ -656,7 +662,9 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	List	   *db_users_list;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
+	const char *prev_current_user;
 	int 		save_sec_context;
+	bool 		is_set_userid = false;
 	Oid 		save_userid;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
@@ -702,7 +710,10 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 				(errcode(ERRCODE_CHECK_VIOLATION),
 				 errmsg("Cannot drop database \"%s\" because it is currently in use", dbname)));
 
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	/* Set current user to session user for dropping permissions */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+
+	bbf_set_current_user("sysadmin");
 
 	PG_TRY();
 	{
@@ -743,14 +754,19 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		{
 			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 			PlannedStmt *wrapper;
+			is_set_userid = false;
 
-			if (stmt->type == T_DropOwnedStmt || stmt->type == T_DropRoleStmt || stmt->type == T_GrantStmt) /* need bbf_role_admin to perform DropOwnedObjects */
-				SetUserIdAndSecContext(get_bbf_role_admin_oid(),
-										save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-			else
-				SetUserIdAndSecContext(get_role_oid(dbo_role, true),
-										save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-
+			if(stmt->type != T_GrantStmt)
+			{
+				GetUserIdAndSecContext(&save_userid, &save_sec_context);
+				if (stmt->type == T_DropOwnedStmt || stmt->type == T_DropRoleStmt) /* need bbf_role_admin to perform DropOwnedObjects */
+					SetUserIdAndSecContext(get_bbf_role_admin_oid(),
+										   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				else
+					SetUserIdAndSecContext(get_role_oid(dbo_role, true),
+										   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				is_set_userid = true;
+			}
 			/* need to make a wrapper PlannedStmt */
 			wrapper = makeNode(PlannedStmt);
 			wrapper->commandType = CMD_UTILITY;
@@ -769,7 +785,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 						   None_Receiver,
 						   NULL);
 			
-			SetUserIdAndSecContext(save_userid, save_sec_context);
+			if(is_set_userid)
+				SetUserIdAndSecContext(save_userid, save_sec_context);
 			
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
@@ -794,14 +811,18 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	}
 	PG_CATCH();
 	{
-		SetUserIdAndSecContext(save_userid, save_sec_context);
+		if(is_set_userid)
+			SetUserIdAndSecContext(save_userid, save_sec_context);
+
+		/* Clean up. Restore previous state. */
+		bbf_set_current_user(prev_current_user);
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	SetUserIdAndSecContext(save_userid, save_sec_context);
-
+	/* Set current user back to previous user */
+	bbf_set_current_user(prev_current_user);
 }
 
 PG_FUNCTION_INFO_V1(create_builtin_dbs);
