@@ -5521,7 +5521,7 @@ pltsql_get_object_identity_event_trigger(ObjectAddress* address)
     }
     else
     {
-        identity = getObjectIdentity(address,true);
+        identity = getObjectIdentity(address,true); 
     }
     
     return identity;
