@@ -43,6 +43,9 @@ LANGUAGE plpgsql;
  END;
  $$ LANGUAGE plpgsql;
 
+alter system set log_statement = 'all';
+select pg_reload_conf();
+
 
 CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
 LANGUAGE C
