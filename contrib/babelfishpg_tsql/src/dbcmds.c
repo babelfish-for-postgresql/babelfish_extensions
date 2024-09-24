@@ -1384,7 +1384,6 @@ entry_exists_in_bbf_auth_ext(const char *rolname)
 	HeapTuple		tuple_user_ext;
 	ScanKeyData 		key;
 	SysScanDesc		scan;
-	char	   		*schema_name = NULL;
 	NameData   		*user_name;
 	bool			catalog_entry_exists = false;
 
@@ -1399,7 +1398,7 @@ entry_exists_in_bbf_auth_ext(const char *rolname)
 	ScanKeyInit(&key,
 				Anum_bbf_authid_user_ext_rolname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(rolname));
+				NameGetDatum(user_name));
 
 	scan = systable_beginscan(bbf_authid_user_ext_rel,
 				get_authid_user_ext_idx_oid(),
@@ -1517,11 +1516,11 @@ create_db_roles_if_not_exists(const uint16 dbid,
 		CommandCounterIncrement();
 
 		/* Add entries to the catalog if not exists. */
-		if (!entry_exists_in_bbf_auth_ext)
-		{
+		if (!entry_exists_in_bbf_auth_ext(db_datareader))
 			add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
+		if (!entry_exists_in_bbf_auth_ext(db_datawriter))
 			add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
-		}
+
 
 		/* Grant permissions on all the schemas in a database to db_datareader/db_datawriter */
 		grant_permissions_to_datareader_datawriter(dbid, db_datareader, db_datawriter);
