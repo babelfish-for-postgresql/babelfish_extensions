@@ -82,7 +82,6 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
-#include "commands/event_trigger.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -5493,6 +5492,12 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 
 	return oid;
 }
+/*
+ * Special handling to resolve crash in some tests due to memory leak when running JDBC tests with PgAudit enabled. 
+ * When PgAudit is enabled we reach to ENRgetSystableScan() from postgres dialect which results that we are not 
+ * initialising the cache due to such handling in ENRgetSystableScan()
+ * Here we are changing the dialect for the table objects and then initialise the cache and abort it.
+ */
 static char*
 pltsql_get_object_identity_event_trigger(ObjectAddress* address)
 {
