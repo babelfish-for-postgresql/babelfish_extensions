@@ -37,6 +37,11 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+ DO $$
+ BEGIN
+   EXECUTE FORMAT('REVOKE GRANT OPTION FOR CREATE ON DATABASE %I FROM %I', CURRENT_DATABASE(), 'bbf_role_admin');
+ END;
+ $$ LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
