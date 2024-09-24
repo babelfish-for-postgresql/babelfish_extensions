@@ -222,7 +222,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
  *****************************************/
 static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
-static char* cache_look_from_ddl_event_trigger(ObjectAddress *addr);
+static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -502,7 +502,7 @@ InstallExtendedHooks(void)
 	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
 	ExecFuncProc_AclCheck_hook = pltsql_ExecFuncProc_AclCheck;
 	
-	cache_look_ddl_event_trigger_hook = cache_look_from_ddl_event_trigger;
+	pltsql_get_object_identity_event_trigger_hook = pltsql_get_object_identity_event_trigger;
 }
 
 void
@@ -576,7 +576,7 @@ UninstallExtendedHooks(void)
 	bbf_ParallelWorkerMain_hook = NULL;
 	handle_param_collation_hook = NULL;
 	handle_default_collation_hook = NULL;
-	cache_look_ddl_event_trigger_hook = NULL;
+	pltsql_get_object_identity_event_trigger_hook = NULL;
 }
 
 /*****************************************
@@ -5494,22 +5494,30 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 	return oid;
 }
 static char*
-cache_look_from_ddl_event_trigger(ObjectAddress* address)
+pltsql_get_object_identity_event_trigger(ObjectAddress* address)
 {
 	char *identity = NULL;
-	int	save_nestlevel = 0;
-	PG_TRY();
+	if(getObjectClass(address) == OCLASS_CLASS)
 	{
-		save_nestlevel = pltsql_new_guc_nest_level();
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",										
-			GUC_CONTEXT_CONFIG,		\
-			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		int	save_nestlevel = 0;
+		PG_TRY();
+	    {
+	    	save_nestlevel = pltsql_new_guc_nest_level();
+	    	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",										
+	    		GUC_CONTEXT_CONFIG,		\
+	    		PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	    	identity = getObjectIdentity(address,true);
+	    }
+	    PG_FINALLY();
+	    {
+	    	pltsql_revert_guc(save_nestlevel);
+	    }
+	    PG_END_TRY();
+	}
+	else
+	{
 		identity = getObjectIdentity(address,true);
 	}
-	PG_FINALLY();
-	{
-		pltsql_revert_guc(save_nestlevel);
-	}
-	PG_END_TRY();
+	
 	return identity;
 }
