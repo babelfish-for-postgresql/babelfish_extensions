@@ -2,7 +2,7 @@ SELECT * FROM sys_dm_os_sys_info_test_view
 GO
 ~~START~~
 bigint#!#text#!#int#!#int#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#int#!#bigint#!#int#!#int#!#int#!#int#!#int#!#int#!#text#!#text#!#int#!#nvarchar#!#bigint#!#bigint#!#int#!#nvarchar#!#int#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#int#!#int#!#int#!#int#!#nvarchar
-0#!#true#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#true#!#true#!#0#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#0#!#HYPERVISOR#!#0#!#OFF#!#<NULL>#!#0#!#<NULL>#!#0#!#0#!#0#!#0#!#<NULL>
+0#!#true#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#true#!#true#!#0#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#0#!#NONE#!#0#!#OFF#!#<NULL>#!#0#!#<NULL>#!#0#!#0#!#0#!#0#!#<NULL>
 ~~END~~
 
 
@@ -10,7 +10,7 @@ EXEC sys_dm_os_sys_info_test_proc
 GO
 ~~START~~
 bigint#!#text#!#int#!#int#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#int#!#bigint#!#int#!#int#!#int#!#int#!#int#!#int#!#text#!#text#!#int#!#nvarchar#!#bigint#!#bigint#!#int#!#nvarchar#!#int#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#int#!#int#!#int#!#int#!#nvarchar
-0#!#true#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#true#!#true#!#0#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#0#!#HYPERVISOR#!#0#!#OFF#!#<NULL>#!#0#!#<NULL>#!#0#!#0#!#0#!#0#!#<NULL>
+0#!#true#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#true#!#true#!#0#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#0#!#NONE#!#0#!#OFF#!#<NULL>#!#0#!#<NULL>#!#0#!#0#!#0#!#0#!#<NULL>
 ~~END~~
 
 
