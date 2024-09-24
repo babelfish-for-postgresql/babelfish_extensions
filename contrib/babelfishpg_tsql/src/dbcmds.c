@@ -605,7 +605,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 				is_set_userid = true;
 			}
-			else if (stmt->type = T_GrantStmt)
+			else if (stmt->type == T_GrantStmt)
 			{
 				SetUserIdAndSecContext(datdba,
 							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
