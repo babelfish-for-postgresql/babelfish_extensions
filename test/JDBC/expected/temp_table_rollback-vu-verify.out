@@ -859,6 +859,75 @@ int
 ~~END~~
 
 
+BEGIN TRAN
+INSERT INTO temp_tab_rollback_mytab VALUES (2)
+EXEC tv_tt_no_error
+SELECT * FROM temp_tab_rollback_mytab
+DROP TABLE temp_tab_rollback_mytab
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+1
+~~END~~
+
+
+SELECT * FROM temp_tab_rollback_mytab
+GO
+~~START~~
+int
+~~END~~
+
+
+BEGIN TRAN
+INSERT INTO temp_tab_rollback_mytab VALUES (2)
+CREATE TABLE #outer_table (a int)
+INSERT INTO #outer_table VALUES (1)
+EXEC tv_tt_no_error
+SELECT * FROM temp_tab_rollback_mytab
+DROP TABLE temp_tab_rollback_mytab
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+1
+~~END~~
+
+
+SELECT * FROM temp_tab_rollback_mytab
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT * FROM #outer_table
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#outer_table" does not exist)~~
+
+
 DROP TABLE temp_tab_rollback_mytab
 GO
 

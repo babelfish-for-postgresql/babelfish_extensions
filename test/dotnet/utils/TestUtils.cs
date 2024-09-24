@@ -67,7 +67,7 @@ namespace BabelfishDotnetFramework
 			return true;
 		}
 
-		public bool insertBulkCopyWithTransaction(DbConnection bblCnn, DbCommand bblCmd, String sourceTable, String destinationTable, DbTransaction transaction, Logger logger, ref int stCount)
+		public bool insertBulkCopyWithTransaction(DbConnection bblCnn, DbCommand bblCmd, String sourceTable, String destinationTable, String bulkCopyOption, DbTransaction transaction, Logger logger, ref int stCount)
 		{
 			bblCmd.CommandText = "Select * from " + sourceTable;
 			bblCmd.Transaction = transaction;
@@ -79,8 +79,15 @@ namespace BabelfishDotnetFramework
 				dataTable.Load(reader);
 				reader.Close();
 
-				/* Set CheckConstraints default for this API since this is the only mechanism to use BCP Options. */
-				SqlBulkCopy bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn, SqlBulkCopyOptions.CheckConstraints, (SqlTransaction) transaction);
+				SqlBulkCopy bulkCopy = null;
+
+				if (bulkCopyOption.Equals("keepIdentity"))
+					/* Set KeepIdentity option */
+					bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn, SqlBulkCopyOptions.KeepIdentity, (SqlTransaction) transaction);
+				else
+					/* Set CheckConstraints default for this API since this is the only mechanism to use BCP Options. */
+					bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn, SqlBulkCopyOptions.CheckConstraints, (SqlTransaction) transaction);
+
 				bulkCopy.DestinationTableName = destinationTable;
 				bulkCopy.WriteToServer(dataTable);
 			}

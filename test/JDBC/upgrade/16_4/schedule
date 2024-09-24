@@ -223,6 +223,7 @@ forjsonauto
 format
 format-dep
 forxml
+forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
@@ -561,6 +562,8 @@ reverse
 sys_sequences
 replicate
 string_agg-before-15_9-or-16_5
+getdate-before-15_9-or-16_5
 space
 binary-datatype-operators
 cast-varchar-to-time
+BABEL-5119
