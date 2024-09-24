@@ -38,6 +38,14 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+ALTER FUNCTION sys.bbf_pivot() RENAME TO bbf_pivot_deprecated_in_4_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_pivot_deprecated_in_4_4_0');
+
+CREATE OR REPLACE FUNCTION sys.bbf_pivot(IN src_sql TEXT, IN cat_sql TEXT, IN agg_func TEXT)
+RETURNS setof record
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;
+
 -- Assigning dbo role to the db_owner login
 DO $$
 DECLARE

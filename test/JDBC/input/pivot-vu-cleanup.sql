@@ -1,57 +1,119 @@
-use pivot_test;
+USE pivot_test;
 GO
 
-drop trigger pivot_trigger
+DROP VIEW PIVOT_VIEW2
 GO
 
-drop table trigger_testing
+DROP VIEW PIVOT_VIEW3
 GO
 
-drop table OSTable;
+DROP VIEW PIVOT_VIEW4
 GO
 
-drop table STable;
+DROP VIEW TOP_PIVOT
 GO
 
-drop table seating_tbl;
+DROP VIEW DISTINCT_PIVOT
 GO
 
-drop view StoreReceipt_view;
+DROP VIEW UNION_PIVOT
 GO
 
-drop view pivot_view;
+DROP VIEW SUBQUERY_PIVOT
 GO
 
-drop table pivot_insert_into;
+DROP VIEW PIVOT_FUNCTION
 GO
 
-drop table pivot_select_into;
+DROP VIEW CTE_VIEW1
 GO
 
-drop procedure top_n_pivot;
+DROP VIEW CTE_VIEW2
 GO
 
-drop function test_table_valued_function;
+DROP VIEW CTE_VIEW3
 GO
 
-drop table StoreReceipt;
+DROP VIEW JOIN_PIVOT1
 GO
 
-drop table orders;
+DROP VIEW JOIN_PIVOT2
 GO
 
-drop table products;
+DROP VIEW JOIN_PIVOT3
 GO
 
-drop table pivot_schema.products_sch;
+DROP VIEW JOIN_PIVOT4
 GO
 
-drop schema pivot_schema;
+DROP VIEW JOIN_PIVOT5
 GO
 
-use master;
+DROP VIEW JOIN_PIVOT6
 GO
 
-drop database pivot_test;
+DROP VIEW JOIN_PIVOT7
 GO
 
+DROP VIEW JOIN_PIVOT8
+GO
+
+DROP VIEW pivot_schema.QUAL_NAME_VIEW
+GO
+
+DROP TRIGGER pivot_trigger
+GO
+
+DROP TABLE trigger_testing
+GO
+
+DROP TABLE OSTable;
+GO
+
+DROP TABLE STable;
+GO
+
+DROP TABLE seating_tbl;
+GO
+
+DROP VIEW StoreReceipt_view;
+GO
+
+DROP VIEW pivot_schema.data_src 
+GO
+
+DROP TABLE pivot_insert_into;
+GO
+
+DROP TABLE pivot_select_into;
+GO
+
+DROP PROCEDURE top_n_pivot;
+GO
+
+DROP FUNCTION test_table_valued_function;
+GO
+
+DROP TABLE FruitSalesTable
+GO
+
+DROP TABLE StoreReceipt;
+GO
+
+DROP TABLE orders;
+GO
+
+DROP TABLE products;
+GO
+
+DROP TABLE pivot_schema.products_sch;
+GO
+
+DROP SCHEMA pivot_schema;
+GO
+
+USE master;
+GO
+
+DROP DATABASE pivot_test;
+GO
