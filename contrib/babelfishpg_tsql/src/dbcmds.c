@@ -1377,20 +1377,57 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 	table_close(namespace_rel, RowExclusiveLock);
 }
 
+static bool
+entry_exists_in_bbf_auth_ext(const char *rolname)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData 		key;
+	SysScanDesc		scan;
+	char	   		*schema_name = NULL;
+	NameData   		*user_name;
+	bool			catalog_entry_exists = false;
+
+	if (!rolname)
+		return NULL;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	user_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(user_name->data, NAMEDATALEN, "%s", rolname);
+	ScanKeyInit(&key,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(rolname));
+
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+				get_authid_user_ext_idx_oid(),
+				true, NULL, 1, &key);
+
+	tuple_user_ext = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple_user_ext))
+		catalog_entry_exists = true;
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
+	return catalog_entry_exists;
+}
+
 static void
 create_db_roles_if_not_exists(const uint16 dbid,
 							const char *dbname)
 {
-	StringInfoData query;
+	StringInfoData		query;
 	Oid			datdba;
-	const char *prev_current_user;
-	uint16		old_dbid;
-	const char *old_dbname;
-	const char *db_datareader;
-	const char *db_datawriter;
-	ListCell	*parsetree_item;
-	List		*stmt_list;
-	Node		*stmts;
+	const char		*prev_current_user;
+	uint16			old_dbid;
+	const char		*old_dbname;
+	const char		*db_datareader;
+	const char 		*db_datawriter;
+	ListCell		*parsetree_item;
+	List			*stmt_list;
+	Node			*stmts;
 	int			i=0;
 
 	/*
@@ -1479,13 +1516,15 @@ create_db_roles_if_not_exists(const uint16 dbid,
 		/* make sure later steps can see the object created here */
 		CommandCounterIncrement();
 
-		/* Add entries to the catalog. */
-		add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
-		add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
+		/* Add entries to the catalog if not exists. */
+		if (!entry_exists_in_bbf_auth_ext)
+		{
+			add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
+			add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
+		}
 
 		/* Grant permissions on all the schemas in a database to db_datareader/db_datawriter */
 		grant_permissions_to_datareader_datawriter(dbid, db_datareader, db_datawriter);
-
 	}
 	PG_FINALLY();
 	{
@@ -1498,7 +1537,6 @@ create_db_roles_if_not_exists(const uint16 dbid,
 	set_cur_db(old_dbid, old_dbname);
 
 }
-
 
 /*
 * This function is only being used for the purpose of the upgrade script to create
