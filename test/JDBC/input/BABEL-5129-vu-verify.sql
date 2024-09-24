@@ -65,6 +65,40 @@ SELECT @nv = '';
 SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
 GO
 
+-- Test varchar with number argument that exceeds range of bigint.
+DECLARE @v varchar(20);
+SELECT @v = '9223372036854775807';
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+
+DECLARE @v varchar(20);
+SELECT @v = '-9223372036854775808';
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+
+-- Test nvarchar with number argument that exceeds range of bigint.
+DECLARE @nv nvarchar(20);
+SELECT @nv = '9223372036854775807';
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+
+DECLARE @nv nvarchar(20);
+SELECT @nv = '-9223372036854775808';
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+
+-- Test varchar with lengthy numeric value
+DECLARE @v varchar;
+SELECT @v = '12345678901234567890123456789012345';
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+
+-- Test nvarchar with lengthy numeric value
+DECLARE @nv nvarchar;
+SELECT @nv = '12345678901234567890123456789012345';
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+
 -- Test varchar variable with invalid numeric
 DECLARE @v varchar(20);
 SELECT @v = '12.34.20000000';
