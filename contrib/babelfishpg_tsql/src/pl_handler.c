@@ -6429,7 +6429,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 }
 
 void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv,
-								 ParamListInfo params, QueryCompletion *qc,ObjectAddress *address)
+								 ParamListInfo params, QueryCompletion *qc, ObjectAddress *address)
 {
 
 	Node *parsetree = pstmt->utilityStmt;

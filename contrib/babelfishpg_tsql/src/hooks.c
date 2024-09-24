@@ -5501,28 +5501,28 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 static char*
 pltsql_get_object_identity_event_trigger(ObjectAddress* address)
 {
-	char *identity = NULL;
-	if(getObjectClass(address) == OCLASS_CLASS)
-	{
-		int	save_nestlevel = 0;
-		PG_TRY();
-	    {
-	    	save_nestlevel = pltsql_new_guc_nest_level();
-	    	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",										
-	    		GUC_CONTEXT_CONFIG,		\
-	    		PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-	    	identity = getObjectIdentity(address,true);
-	    }
-	    PG_FINALLY();
-	    {
-	    	pltsql_revert_guc(save_nestlevel);
-	    }
-	    PG_END_TRY();
-	}
-	else
-	{
-		identity = getObjectIdentity(address,true);
-	}
-	
-	return identity;
+    char *identity = NULL;
+    if(getObjectClass(address) == OCLASS_CLASS)
+    {
+        int save_nestlevel = 0;
+        PG_TRY();
+        {
+            save_nestlevel = pltsql_new_guc_nest_level();
+            set_config_option("babelfishpg_tsql.sql_dialect", "tsql",                                       
+                GUC_CONTEXT_CONFIG,     \
+                PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+            identity = getObjectIdentity(address,true);
+        }
+        PG_FINALLY();
+        {
+            pltsql_revert_guc(save_nestlevel);
+        }
+        PG_END_TRY();
+    }
+    else
+    {
+        identity = getObjectIdentity(address,true);
+    }
+    
+    return identity;
 }

@@ -66,9 +66,10 @@ jobs:
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           export inputFilesPath=${{inputs.input_dir}}
           cd test
+          sudo sed -i '$a\# ignoring BABEL-2843 as we are printing the query with babelfish statistics on and getting a diff file' JDBC/jdbc_schedule
+          sudo sed -i '$a\ignore#!#BABEL-2843' JDBC/jdbc_schedule
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant' JDBC/jdbc_schedule
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-prepare' JDBC/jdbc_schedule
-          sudo sed -i '$a\ignore#!#BABEL-2843' JDBC/jdbc_schedule
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-verify' JDBC/jdbc_schedule
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-cleanup' JDBC/jdbc_schedule
 
@@ -110,7 +111,7 @@ jobs:
 
       - name: Upload Log
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: postgres-log-jdbc
           path: |
@@ -138,7 +139,7 @@ jobs:
 
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: |
@@ -147,7 +148,7 @@ jobs:
 
       - name: Upload Output Diff
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jdbc-output-diff.diff
           path: |
@@ -157,35 +158,3 @@ jobs:
       - name: Check and upload coredumps
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: ./.github/composite-actions/upload-coredump
-
-      - name: Generate Code Coverage
-        id: generate-code-coverage
-        if: always() && (steps.jdbc.outcome == 'success' && steps.replication.outcome == 'success')
-        run: |
-          export PG_CONFIG=~/psql/bin/pg_config
-          export PG_SRC=~/work/postgresql_modified_for_babelfish
-          export cmake=$(which cmake)
-          cd contrib
-          for ext in babelfishpg_common babelfishpg_money babelfishpg_tds babelfishpg_tsql  
-          do
-            cd $ext
-            /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
-            cd ..
-          done
-        shell: bash
-
-      - name: Summarize code coverage
-        id: code-coverage-summary
-        if: always() && steps.generate-code-coverage.outcome == 'success'
-        run: |
-          cd contrib/
-          lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o jdbc-lcov.info
-          lcov --list jdbc-lcov.info
-
-      - name: Upload Coverage Report for Babelfish Extensions
-        if: always() && steps.code-coverage-summary.outcome == 'success'
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage-babelfish-extensions-jdbc
-          path: contrib/jdbc-lcov.info
-          retention-days: 1
