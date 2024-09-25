@@ -5,7 +5,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 select 1  select CONCAT_WS('a') select 2
 GO
@@ -18,13 +18,13 @@ int
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 select CONCAT_WS('-', 'a')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 select 1  select CONCAT_WS('-', 'a') select 2
 GO
@@ -35,7 +35,7 @@ int
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 select CONCAT_WS()
 GO
@@ -43,25 +43,25 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 select CONCAT_WS(CAST('12' AS sql_variant))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 select CONCAT_WS(CAST('-' AS sql_variant), 12)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 select CONCAT_WS(CAST('-' AS sql_variant), CAST('12' AS sql_variant))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 SELECT CONCAT_WS(' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y' );
 GO
@@ -85,14 +85,14 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 
 SELECT CONCAT_WS(NULL, NULL)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 254 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
 
 
 SELECT CONCAT_WS(NULL, NULL, NULL)

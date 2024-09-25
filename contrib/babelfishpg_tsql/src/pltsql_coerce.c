@@ -1134,11 +1134,11 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 		else if (strlen(func_name) == 6 && strncmp(func_name, "concat", 6) == 0)
 		{
 			Oid		target_type_id = get_sys_varcharoid();
-			/* Defined as per TSQL definition but PG has limitation for max number of args = 100. */
-			if (nargs < 2 || nargs > 254)
+			/* PG has limitation for max number of args = 100. */
+			if (nargs < 2 || nargs > 100)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-							errmsg("The concat function requires 2 to 254 arguments.")));
+							errmsg("The concat function requires 2 to 100 arguments.")));
 			
 			for (int i = 0; i < nargs; i++)
 			{
@@ -1168,11 +1168,11 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 		else if (strlen(func_name) == 9 && strncmp(func_name, "concat_ws", 9) == 0)
 		{
 			Oid		target_type_id = get_sys_varcharoid();
-			/* Defined as per TSQL definition but PG has limitation for max number of args = 100. */
-			if (nargs < 3 || nargs > 254)
+			/* PG has limitation for max number of args = 100. */
+			if (nargs < 3 || nargs > 100)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-							errmsg("The concat_ws function requires 3 to 254 arguments.")));
+							errmsg("The concat_ws function requires 3 to 100 arguments.")));
 
 			for (int i = 0; i < nargs; i++)
 			{

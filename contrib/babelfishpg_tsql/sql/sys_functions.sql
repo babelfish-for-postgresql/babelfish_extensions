@@ -4010,9 +4010,9 @@ DECLARE
 BEGIN
     arr_len := array_length(args, 1);
 
-    -- Defined as per TSQL definition but PG has limitation for max number of args = 100
-    IF arr_len IS NULL OR arr_len < 2 OR arr_len > 254 THEN
-        RAISE EXCEPTION 'The concat function requires 2 to 254 arguments.';
+    -- PG has limitation for max number of args = 100
+    IF arr_len IS NULL OR arr_len < 2 OR arr_len > 100 THEN
+        RAISE EXCEPTION 'The concat function requires 2 to 100 arguments.';
     END IF;
 
     RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
@@ -4027,9 +4027,9 @@ DECLARE
 BEGIN
     arr_len := array_length(args, 1);
 
-    -- Defined as per TSQL definition but PG has limitation for max number of args = 100
-    IF arr_len < 2 OR arr_len > 254 THEN
-        RAISE EXCEPTION 'The concat function requires 2 to 254 arguments.';
+    -- PG has limitation for max number of args = 100
+    IF arr_len < 2 OR arr_len > 100 THEN
+        RAISE EXCEPTION 'The concat function requires 2 to 100 arguments.';
     END IF;
 
     RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
@@ -4045,9 +4045,9 @@ DECLARE
 BEGIN
     arr_len := array_length(args, 1);
 
-    -- Defined as per TSQL definition but PG has limitation for max number of args = 100
-    IF arr_len IS NULL OR arr_len < 2 OR arr_len > 253 THEN
-        RAISE EXCEPTION 'The concat_ws function requires 3 to 254 arguments.';
+    -- PG has limitation for max number of args = 100
+    IF arr_len IS NULL OR arr_len < 2 OR arr_len > 99 THEN
+        RAISE EXCEPTION 'The concat_ws function requires 3 to 100 arguments.';
     END IF;
 
     IF seperator IS NULL THEN
@@ -4066,9 +4066,9 @@ DECLARE
 BEGIN
     arr_len := array_length(args, 1);
 
-    -- Defined as per TSQL definition but PG has limitation for max number of args = 100
-    IF arr_len < 2 OR arr_len > 253 THEN
-        RAISE EXCEPTION 'The concat_ws function requires 3 to 254 arguments.';
+    -- PG has limitation for max number of args = 100
+    IF arr_len < 2 OR arr_len > 99 THEN
+        RAISE EXCEPTION 'The concat_ws function requires 3 to 100 arguments.';
     END IF;
 
     IF seperator IS NULL THEN
