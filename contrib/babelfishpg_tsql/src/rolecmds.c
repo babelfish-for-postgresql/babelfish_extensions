@@ -585,6 +585,14 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 
 	const char *dbo_role_name = get_dbo_role_name(db_name);
 
+	/*
+	 * If login i.e old_owner/new_owner is master user 
+	 * then skip grant/revoke dbo to login
+	 * since it will always be the member of sysadmin.
+	 */
+	if (role_is_sa(get_role_oid(login, true)))
+		return;
+	
 	initStringInfo(&query);
 
 	dbo = lappend(dbo, make_accesspriv_node(dbo_role_name));
