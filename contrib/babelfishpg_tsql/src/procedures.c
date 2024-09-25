@@ -1707,13 +1707,9 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 
 	char	   *dbo_scm = get_dbo_schema_name("master");
 
-	if (dbo_scm == NULL)
-		elog(ERROR, "Failed to retrieve dbo schema name");
-
 	query = psprintf(tempq, dbo_scm);
 
-	if(dbo_scm)
-		pfree(dbo_scm);
+	pfree(dbo_scm);
 
 	PG_TRY();
 	{
@@ -1800,14 +1796,10 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 
 	char	   *dbo_scm = get_dbo_schema_name("master");
 
-	if (dbo_scm == NULL)
-		elog(ERROR, "Failed to retrieve dbo schema name");
-
 	query = psprintf(tempq, dbo_scm);
 	query2 = psprintf(tempq2, dbo_scm);
 
-	if(dbo_scm)
-		pfree(dbo_scm);
+	pfree(dbo_scm);
 
 	PG_TRY();
 	{
@@ -3383,8 +3375,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 				pfree(logical_schema_name);
 			}
 			
-			if(guest_role_name)
-				pfree(guest_role_name);
+			pfree(guest_role_name);
 		}
 		else
 		{
