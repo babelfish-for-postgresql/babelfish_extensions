@@ -58,6 +58,7 @@ PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
 PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
+PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -2848,3 +2849,13 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	return res;
 }
 
+Datum
+sp_reset_connection_internal(PG_FUNCTION_ARGS)
+{
+	if (*pltsql_protocol_plugin_ptr) 
+	{
+		(*pltsql_protocol_plugin_ptr)->set_reset_tds_connection_flag();
+	}
+
+	PG_RETURN_VOID();
+}

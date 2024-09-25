@@ -1664,6 +1664,8 @@ typedef struct PLtsql_protocol_plugin
 
 	char	   *(*get_physical_schema_name) (char *db_name, const char *schema_name);
 
+	void		(*set_reset_tds_connection_flag) ();
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -1677,7 +1679,6 @@ typedef struct PLtsql_protocol_plugin
 	int			datefirst;
 	int			lock_timeout;
 	const char *language;
-
 } PLtsql_protocol_plugin;
 
 /*
