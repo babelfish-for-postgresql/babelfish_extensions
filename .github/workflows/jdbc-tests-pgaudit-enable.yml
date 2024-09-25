@@ -21,7 +21,6 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           install_dir: 'psql'
-          code_coverage: 'yes'
       
       - name: Compile ANTLR
         id: compile-antlr
@@ -66,8 +65,9 @@ jobs:
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           export inputFilesPath=${{inputs.input_dir}}
           cd test
-          sudo sed -i '$a\# ignoring BABEL-2843 as we are printing the query with babelfish statistics on and getting a diff file' JDBC/jdbc_schedule
+          # ignoring BABEL-2843 test file BABEL-2843,as in this file we are enabling the babelfish_statistics profile On, which is not giving any error but just adding the query under Query Text  which is being passed from pg_audit and hence getting a diff file
           sudo sed -i '$a\ignore#!#BABEL-2843' JDBC/jdbc_schedule
+          # ignoring below files as we will fix this issue in BABEL-5272
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant' JDBC/jdbc_schedule
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-prepare' JDBC/jdbc_schedule
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-verify' JDBC/jdbc_schedule
