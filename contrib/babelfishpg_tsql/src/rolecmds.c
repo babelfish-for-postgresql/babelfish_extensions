@@ -2772,8 +2772,13 @@ change_object_owner_if_db_owner()
 	int			rc = 0;
 	Oid role_oid = GetUserId();
 
-	/* TSQL specific behavior and do not call if during CREATE EXTENSION */
-	if (sql_dialect != SQL_DIALECT_TSQL || creating_extension)
+	/* TSQL specific behavior */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	dbo_id = get_role_oid(get_dbo_role_name(get_cur_db_name()), true);
+
+	if (role_oid == dbo_id || dbo_id == InvalidOid || role_oid == get_bbf_role_admin_oid())
 		return;
 
 	rolname = GetUserNameFromId(role_oid, true);
@@ -2782,11 +2787,6 @@ change_object_owner_if_db_owner()
 		return;
 
 	if (!is_user(role_oid))
-		return;
-
-	dbo_id = get_role_oid(get_dbo_role_name(get_cur_db_name()), true);
-
-	if (role_oid == dbo_id || dbo_id == InvalidOid)
 		return;
 
 	if (!is_member_of_role(role_oid, get_role_oid(get_db_owner_name(get_cur_db_name()), true)))
