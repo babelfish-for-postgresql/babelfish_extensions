@@ -5505,9 +5505,9 @@ pltsql_get_object_identity_event_trigger(ObjectAddress* address)
     if(getObjectClass(address) == OCLASS_CLASS)
     {
         int save_nestlevel = 0;
+		save_nestlevel = pltsql_new_guc_nest_level();
         PG_TRY();
         {
-            save_nestlevel = pltsql_new_guc_nest_level();
             set_config_option("babelfishpg_tsql.sql_dialect", "tsql",                                       
                 GUC_CONTEXT_CONFIG,     \
                 PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
