@@ -3232,7 +3232,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						is_member_of_db_owner = has_privs_of_role(GetUserId(), db_owner);
 						/* check membership in db_accessadmin if alter user and not already a member of db_owner */
-						if (!is_member_of_db_owner && !isuser)
+						if (!is_member_of_db_owner && isuser)
 							is_member_of_db_accessadmin = has_privs_of_role(GetUserId(), db_accessadmin);
 
 						/*
@@ -3299,13 +3299,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 						}
 
+						GetUserIdAndSecContext(&save_userid, &save_sec_context);
 						/*
 						 * We have performed all the permissions checks.
 						 * Set current user to bbf_role_admin for alter permissions.
 						 */
 						PG_TRY();
 						{
-							GetUserIdAndSecContext(&save_userid, &save_sec_context);
 							SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 							if (prev_ProcessUtility)
@@ -3568,11 +3568,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * We have performed all the permissions checks.
 					 * Set current user to bbf_role_admin for drop permissions.
 					 */
+					GetUserIdAndSecContext(&save_userid, &save_sec_context);
+					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
 					PG_TRY();
 					{
-						GetUserIdAndSecContext(&save_userid, &save_sec_context);
-						SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-
 						if (prev_ProcessUtility)
 							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 												params, queryEnv, dest,
@@ -3673,7 +3673,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					if (alter_owner)
 					{
-						AlterSchemaOwner_oid(get_namespace_oid(create_schema->schemaname, false), owner_oid);
+						Oid save_userid;
+						int save_sec_context;
+
+						GetUserIdAndSecContext(&save_userid, &save_sec_context);
+						PG_TRY();
+						{
+							SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+							AlterSchemaOwner_oid(get_namespace_oid(create_schema->schemaname, false), owner_oid);
+						}
+						PG_FINALLY();
+						{
+							SetUserIdAndSecContext(save_userid, save_sec_context);
+						}
+						PG_END_TRY();
 					}
 
 					/* Grant ALL schema privileges to the user.*/

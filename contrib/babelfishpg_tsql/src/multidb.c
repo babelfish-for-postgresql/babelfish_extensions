@@ -249,6 +249,17 @@ rewrite_object_refs(Node *stmt)
 								 errmsg("Dropping members to db_owner is not currently supported "
 										"in Babelfish")));
 				}
+				else if (strcmp(role_name, DB_ACCESSADMIN) == 0)
+				{
+					if (has_privs_of_role(GetUserId(), get_role_oid(get_db_owner_name(db_name), false)))
+					{
+						/* only members of db_owner can alter drop members to fixed db roles */
+					}
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", role_name)));
+				}
 
 				/*
 				 * Try to get physical granted role name, see if it's an
@@ -1417,7 +1428,7 @@ get_guest_role_name(const char *dbname)
 	}
 }
 
-const char *
+char *
 get_db_accessadmin_role_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
