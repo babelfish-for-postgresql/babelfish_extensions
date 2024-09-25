@@ -1275,7 +1275,6 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 	char        *dbname;
 	int         saved_nest_level = 0;
 
-	/* We only allow this to be called from an extension's SQL script. */
 	if (!creating_extension)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1328,15 +1327,10 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		PG_TRY();
 		{
 			ListCell *parsetree_item;
-			/*
-			* We have performed all the permissions checks.
-			* Set current user to bbf_role_admin for create permissions.
-			* Set createrole_self_grant to "inherit" so that bbf_role_admin
-			* inherits the new role.
-			*/
+
 			SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
 			add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
-			/* Run all subcommands */
+
 			foreach(parsetree_item, parsetree_list)
 			{
 				PlannedStmt 	*wrapper;
@@ -1350,14 +1344,12 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 				}
 
-				/* need to make a wrapper PlannedStmt */
 				wrapper = makeNode(PlannedStmt);
 				wrapper->commandType = CMD_UTILITY;
 				wrapper->canSetTag = false;
 				wrapper->utilityStmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 				wrapper->stmt_location = 0;
 
-				/* do this step */
 				ProcessUtility(wrapper,
 							"(CREATE LOGICAL DATABASE )",
 							false,
@@ -1372,7 +1364,6 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		}
 		PG_FINALLY();
 		{
-			/* Clean up. Restore previous state. */
 			SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 		}

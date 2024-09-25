@@ -874,10 +874,12 @@ is_user(Oid role_oid, bool current_db_only)
 			{
 				Datum db_name = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
 												 Anum_bbf_authid_user_ext_database_name, &isnull);
-				char *db_name_cstring = TextDatumGetCString(db_name);
-				char *current_db_name = get_cur_db_name();
+				char *db_name_cstring;
+				char *current_db_name;
 
 				Assert(!isnull);
+				db_name_cstring = TextDatumGetCString(db_name);
+				current_db_name = get_cur_db_name();
 
 				is_user = (strcmp(db_name_cstring, current_db_name) == 0);
 
@@ -919,10 +921,12 @@ is_role(Oid role_oid, bool current_db_only)
 			{
 				Datum db_name = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
 												 Anum_bbf_authid_user_ext_database_name, &isnull);
-				char *db_name_cstring = TextDatumGetCString(db_name);
-				char *current_db_name = get_cur_db_name();
+				char *db_name_cstring;
+				char *current_db_name;
 
 				Assert(!isnull);
+				db_name_cstring = TextDatumGetCString(db_name);
+				current_db_name = get_cur_db_name();
 
 				is_role = (strcmp(db_name_cstring, current_db_name) == 0);
 
