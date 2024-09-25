@@ -264,7 +264,8 @@ rewrite_object_refs(Node *stmt)
 
 				/* Forbidden the use of some special principals */
 				if (strcmp(principal_name, "dbo") == 0 ||
-					strcmp(principal_name, "db_owner") == 0)
+					strcmp(principal_name, "db_owner") == 0 ||
+					strcmp(principal_name, DB_ACCESSADMIN) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("Cannot use the special principal '%s'", principal_name)));
@@ -389,7 +390,8 @@ rewrite_object_refs(Node *stmt)
 						/* TODO: allow ALTER ROLE db_owner */
 						if (strcmp(user_name, "dbo") == 0 ||
 							strcmp(user_name, "db_owner") == 0 ||
-							strcmp(user_name, "guest") == 0)
+							strcmp(user_name, "guest") == 0 ||
+							strcmp(user_name, DB_ACCESSADMIN) == 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									 errmsg("Cannot alter the user %s", user_name)));
@@ -1310,7 +1312,8 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
 		{
 			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
-				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
+				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0) ||
+				(strlen(user_name) == 14 && strncmp(user_name, DB_ACCESSADMIN, 14) == 0))
 			{
 				return new_user_name;
 			}
@@ -1415,6 +1418,21 @@ get_guest_role_name(const char *dbname)
 }
 
 const char *
+get_db_accessadmin_role_name(const char *dbname)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	if (get_migration_mode() == SINGLE_DB && strcmp(dbname, "master") != 0
+	    && strcmp(dbname, "tempdb") != 0 && strcmp(dbname, "msdb") != 0)
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_ACCESSADMIN);
+	else
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_ACCESSADMIN);
+
+	truncate_identifier(name, strlen(name), false);
+	return name;
+}
+
+const char *
 get_guest_schema_name(const char *dbname)
 {
 	if (0 == strcmp(dbname, "master"))
@@ -1447,7 +1465,7 @@ is_builtin_database(const char *dbname)
 bool
 physical_schema_name_exists(char *phys_schema_name)
 {
-	return SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(phys_schema_name));
+	return SearchSysCacheExists1(SYSNAMESPACENAME, CStringGetDatum(phys_schema_name));
 }
 
 /*

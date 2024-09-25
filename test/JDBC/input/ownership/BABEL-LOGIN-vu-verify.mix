@@ -162,7 +162,7 @@ go
 DROP USER babel_login_vu_prepare_err_user;
 go
 
-DROP USER babel_login_vu_prepare_r1_new
+DROP USER babel_login_vu_prepare_r1
 go
 
 DROP USER babel_login_vu_prepare_r2

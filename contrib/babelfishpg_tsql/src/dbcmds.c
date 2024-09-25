@@ -86,12 +86,14 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	const char     *schema;
 	const char     *dbo;
 	const char     *db_owner;
+	const char     *db_accessadmin;
 	const char     *guest;
 	const char     *guest_schema;
 
 	schema = get_dbo_schema_name(dbname);
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
+	db_accessadmin = get_db_accessadmin_role_name(dbname);
 	guest = get_guest_role_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
 
@@ -105,6 +107,10 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
 	appendStringInfo(&query, "GRANT dummy TO dummy; ");
+
+	/* create db_accessadmin for database */
+	appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+	appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
 
 	if (guest)
 	{
@@ -125,9 +131,9 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 10 : 9;
+		expected_stmt_num = list_length(logins) > 0 ? 12 : 11;
 	else
-		expected_stmt_num = 7;
+		expected_stmt_num = 9;
 
 	if (list_length(res) != expected_stmt_num)
 		ereport(ERROR,
@@ -147,9 +153,14 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 
 	/* Grant dbo role to owner */
 	stmt = parsetree_nth_stmt(res, i++);
-
 	update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(dbo)),
 						 list_make1(make_rolespec_node(owner)));
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_CreateRoleStmt(stmt, db_accessadmin, db_owner, NULL);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
 
 	if (guest)
 	{
@@ -186,14 +197,17 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 {
 	const char     *dbo;
 	const char     *db_owner;
+	const char     *db_accessadmin;
 	const char     *guest;
 
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
+	db_accessadmin = get_db_accessadmin_role_name(dbname);
 	guest = get_guest_role_name(dbname);
 
 	add_to_bbf_authid_user_ext(dbo, "dbo", dbname, "dbo", NULL, false, true, false);
 	add_to_bbf_authid_user_ext(db_owner, "db_owner", dbname, NULL, NULL, true, true, false);
+	add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
 
 	/*
 	 * For master, tempdb and msdb databases, the guest user will be
@@ -215,15 +229,17 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	List	   *stmt_list;
 	ListCell   *elem;
 	Node	   *stmt;
-	int         expected_stmts = 6;
+	int         expected_stmts = 8;
 	int         i = 0;
 	const char *dbo;
 	const char *db_owner;
+	const char *db_accessadmin;
 	const char *schema;
 	const char *guest_schema;
 
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
+	db_accessadmin = get_db_accessadmin_role_name(dbname);
 	schema = get_dbo_schema_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
 
@@ -235,13 +251,17 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0 &&
+			strcmp(user_name, db_accessadmin) != 0)
 		{
 			appendStringInfo(&query, "DROP OWNED BY dummy CASCADE; ");
 			appendStringInfo(&query, "DROP ROLE dummy; ");
 			expected_stmts += 2;
 		}
 	}
+	/* Drop db_accessadmin*/
+	appendStringInfo(&query, "REVOKE CREATE ON DATABASE dummy FROM dummy; ");
+	appendStringInfo(&query, "DROP ROLE dummy; ");
 	/* Then drop db_owner and dbo in that order */
 	appendStringInfo(&query, "DROP OWNED BY dummy, dummy CASCADE; ");
 	appendStringInfo(&query, "REVOKE CREATE, CONNECT, TEMPORARY ON DATABASE dummy FROM dummy; ");
@@ -266,7 +286,8 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0 &&
+			strcmp(user_name, db_accessadmin) != 0)
 		{
 			stmt = parsetree_nth_stmt(stmt_list, i++);
 			update_DropOwnedStmt(stmt, list_make1(user_name));
@@ -275,6 +296,11 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 			update_DropRoleStmt(stmt, user_name);
 		}
 	}
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropRoleStmt(stmt, db_accessadmin);
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropOwnedStmt(stmt, list_make2(pstrdup(db_owner), pstrdup(dbo)));
@@ -576,6 +602,12 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 				|| stmt->type == T_ViewStmt)
 			{
 				SetUserIdAndSecContext(get_role_oid(dbo_role, true),
+							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				is_set_userid = true;
+			}
+			else if (stmt->type == T_GrantStmt)
+			{
+				SetUserIdAndSecContext(datdba,
 							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 				is_set_userid = true;
 			}
@@ -1206,3 +1238,134 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(0);
 }
+
+
+/*
+* This function is only being used during upgrade to v4.4.0
+* to create database roles db_accessadmin for each database
+*/
+PG_FUNCTION_INFO_V1(create_database_roles_for_all_dbs);
+Datum
+create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
+{
+	Relation	sysdatabase_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	Form_sysdatabases bbf_db;
+	char        *dbname;
+	int         saved_nest_level = 0;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"create_database_roles_for_all_dbs()")));
+
+	saved_nest_level = pltsql_new_guc_nest_level();
+	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						GUC_CONTEXT_CONFIG,
+						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	set_config_option("babelfishpg_tsql.migration_mode", physical_schema_name_exists("dbo") ? "single-db" : "multi-db",
+						GUC_CONTEXT_CONFIG,
+						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+	scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		StringInfoData query;
+		List           *parsetree_list;
+		Node           *stmt;
+		const char     *db_owner;
+		const char     *db_accessadmin;
+		const char     *old_createrole_self_grant = GetConfigOption("createrole_self_grant", false, true);
+		int            i = 0;
+		int save_sec_context = 0;
+		Oid save_userid = InvalidOid;
+
+		bbf_db = (Form_sysdatabases) GETSTRUCT(tuple);
+		dbname = text_to_cstring(&(bbf_db->name));
+		db_owner = get_db_owner_name(dbname);
+		db_accessadmin = get_db_accessadmin_role_name(dbname);
+
+		initStringInfo(&query);
+
+		appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+		appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
+
+		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+		stmt = parsetree_nth_stmt(parsetree_list, i++);
+		update_CreateRoleStmt(stmt, db_accessadmin, db_owner, NULL);
+
+		stmt = parsetree_nth_stmt(parsetree_list, i++);
+		update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
+
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+		PG_TRY();
+		{
+			ListCell *parsetree_item;
+			/*
+			* We have performed all the permissions checks.
+			* Set current user to bbf_role_admin for create permissions.
+			* Set createrole_self_grant to "inherit" so that bbf_role_admin
+			* inherits the new role.
+			*/
+			SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
+			add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
+			/* Run all subcommands */
+			foreach(parsetree_item, parsetree_list)
+			{
+				PlannedStmt 	*wrapper;
+
+				if (stmt->type == T_GrantStmt)
+				{
+					SetUserIdAndSecContext(get_role_oid("sysadmin", false), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				}
+				else
+				{
+					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				}
+
+				/* need to make a wrapper PlannedStmt */
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+				wrapper->stmt_location = 0;
+
+				/* do this step */
+				ProcessUtility(wrapper,
+							"(CREATE LOGICAL DATABASE )",
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+
+				CommandCounterIncrement();
+			}
+		}
+		PG_FINALLY();
+		{
+			/* Clean up. Restore previous state. */
+			SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
+			SetUserIdAndSecContext(save_userid, save_sec_context);
+		}
+		PG_END_TRY();
+
+		pfree(query.data);
+		pfree(dbname);
+
+	}
+	pltsql_revert_guc(saved_nest_level);
+	table_endscan(scan);
+	table_close(sysdatabase_rel, RowExclusiveLock);
+
+	PG_RETURN_INT32(0);
+}
+

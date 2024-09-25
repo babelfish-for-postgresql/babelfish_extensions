@@ -849,24 +849,17 @@ get_authid_login_ext_idx_oid(void)
  *****************************************/
 
 bool
-is_user(Oid role_oid)
+is_user(Oid role_oid, bool current_db_only)
 {
-	bool		is_user = true;
+	bool		is_user = false;
+	bool		isnull;
 	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
+	char    	*rolname;
 
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
+	rolname = GetUserNameFromId(role_oid, false);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(rolname));
 
-	if (!HeapTupleIsValid(tuple))
-		is_user = false;
-	else
+	if (HeapTupleIsValid(tuple))
 	{
 		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
 		char *type_str = bpchar_to_cstring(&type);
@@ -875,45 +868,72 @@ is_user(Oid role_oid)
 		 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
 		 * is "S" or "U" etc, we should drop the user
 		 */
-		if (strcmp(type_str, "R") == 0)
-			is_user = false;
+		if (strcmp(type_str, "R") != 0)
+		{
+			if (current_db_only)
+			{
+				Datum db_name = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+												 Anum_bbf_authid_user_ext_database_name, &isnull);
+				char *db_name_cstring = TextDatumGetCString(db_name);
+				char *current_db_name = get_cur_db_name();
+
+				is_user = (strcmp(db_name_cstring, current_db_name) == 0);
+
+				pfree(db_name_cstring);
+				pfree(current_db_name);
+			}
+			else
+				is_user = true;
+		}
+
 		ReleaseSysCache(tuple);
+		pfree(type_str);
 	}
 
-	ReleaseSysCache(authtuple);
+	pfree(rolname);
 
 	return is_user;
 }
 
 bool
-is_role(Oid role_oid)
+is_role(Oid role_oid, bool current_db_only)
 {
-	bool		is_role = true;
+	bool		is_role = false;
+	bool		isnull;
 	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
+	char    	*rolname;
 
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
+	rolname = GetUserNameFromId(role_oid, false);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(rolname));
 
-	if (!HeapTupleIsValid(tuple))
-		is_role = false;
-	else
+	if (HeapTupleIsValid(tuple))
 	{
 		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
 		char *type_str = bpchar_to_cstring(&type);
 
-		if (strcmp(type_str, "R") != 0)
-			is_role = false;
+		if (strcmp(type_str, "R") == 0)
+		{
+			if (current_db_only)
+			{
+				Datum db_name = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+												 Anum_bbf_authid_user_ext_database_name, &isnull);
+				char *db_name_cstring = TextDatumGetCString(db_name);
+				char *current_db_name = get_cur_db_name();
+
+				is_role = (strcmp(db_name_cstring, current_db_name) == 0);
+
+				pfree(db_name_cstring);
+				pfree(current_db_name);
+			}
+			else
+				is_role = true;
+		}
+		
 		ReleaseSysCache(tuple);
+		pfree(type_str);
 	}
 
-	ReleaseSysCache(authtuple);
+	pfree(rolname);
 
 	return is_role;
 }
@@ -4935,7 +4955,8 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 
 			if (SINGLE_DB == get_migration_mode() &&
 				((strlen(role) == 3 && strncmp(role, "dbo", 3) == 0) ||
-				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0)))
+				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0) ||
+				(strlen(role) == 14 && strncmp(role, DB_ACCESSADMIN, 14) == 0)))
 				continue;
 
 			old_role_name = get_physical_user_name(old_db_name, role, true);

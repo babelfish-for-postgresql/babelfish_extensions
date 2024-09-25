@@ -32,6 +32,7 @@ rename_db_database1_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+rename_db_database1_db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 rename_db_database1_db_owner#!##!#db_owner#!#rename_db_database1
 rename_db_database1_dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_guest#!##!#guest#!#rename_db_database1
@@ -80,6 +81,7 @@ rename_db_database2_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+rename_db_database2_db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 rename_db_database2_db_owner#!##!#db_owner#!#rename_db_database2
 rename_db_database2_dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_guest#!##!#guest#!#rename_db_database2
@@ -128,6 +130,7 @@ rename_db_database1_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+rename_db_database1_db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 rename_db_database1_db_owner#!##!#db_owner#!#rename_db_database1
 rename_db_database1_dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_guest#!##!#guest#!#rename_db_database1
@@ -176,6 +179,7 @@ rename_db_database2_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+rename_db_database2_db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 rename_db_database2_db_owner#!##!#db_owner#!#rename_db_database2
 rename_db_database2_dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_guest#!##!#guest#!#rename_db_database2
@@ -236,6 +240,7 @@ rename_db_database1_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+rename_db_database1_db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 rename_db_database1_db_owner#!##!#db_owner#!#rename_db_database1
 rename_db_database1_dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_guest#!##!#guest#!#rename_db_database1
@@ -284,6 +289,7 @@ rename_db_database2_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+rename_db_database2_db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 rename_db_database2_db_owner#!##!#db_owner#!#rename_db_database2
 rename_db_database2_dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_guest#!##!#guest#!#rename_db_database2
@@ -332,6 +338,7 @@ rename_db_database1_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+rename_db_database1_db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 rename_db_database1_db_owner#!##!#db_owner#!#rename_db_database1
 rename_db_database1_dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_guest#!##!#guest#!#rename_db_database1
@@ -380,6 +387,7 @@ rename_db_database2_rename_db_schema1#!#rename_db_schema1
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+rename_db_database2_db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 rename_db_database2_db_owner#!##!#db_owner#!#rename_db_database2
 rename_db_database2_dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_guest#!##!#guest#!#rename_db_database2
