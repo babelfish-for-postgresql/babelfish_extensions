@@ -62,6 +62,12 @@ pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char **
 	char	   *langname;
 	int			probin_len;
 	Jsonb	   *jb;
+	bool		dump_restore = false;
+	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+
+	if (babelfish_dump_restore &&
+		 strncmp(babelfish_dump_restore, "on", 2) == 0)
+		dump_restore = true;
 
 	langname = get_language_name(languageOid, true);
 	/* only write probin when language is pltsql */
@@ -69,7 +75,7 @@ pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char **
 		return;
 
 	/* skip if probin is already set */
-	if ((*probin_str_p) && (*probin_str_p)[0] == '{')
+	if ((*probin_str_p) && (*probin_str_p)[0] == '{' && (!dump_restore))
 		return;
 
 	jb = ProbinJsonbBuilder(stmt, probin_str_p);
@@ -396,6 +402,12 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 	ListCell   *x;
 	TypeName   *ret = stmt->returnType;
 	int			i = 0;
+	bool		dump_restore = false;
+	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+
+	if (babelfish_dump_restore &&
+		 strncmp(babelfish_dump_restore, "on", 2) == 0)
+		dump_restore = true;
 
 	*array_len_p = list_length(stmt->parameters);
 
@@ -419,7 +431,7 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 		{
 			(*typmod_array_p)[i] = -1;
 
-			if (sql_dialect == SQL_DIALECT_TSQL)
+			if (sql_dialect == SQL_DIALECT_TSQL || dump_restore)
 				pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, true);
 		}
 		else
@@ -438,7 +450,7 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 				{
 					(*typmod_array_p)[i] = ptr->val.ival.ival;
 
-					if (sql_dialect == SQL_DIALECT_TSQL)
+					if (sql_dialect == SQL_DIALECT_TSQL || dump_restore)
 						pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, true);
 				}
 				typmod_head = lnext(arg_typmod, typmod_head);
@@ -470,7 +482,7 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 			{
 				(*typmod_array_p)[i] = ptr->val.ival.ival;
 
-				if (sql_dialect == SQL_DIALECT_TSQL)
+				if (sql_dialect == SQL_DIALECT_TSQL || dump_restore)
 					pltsql_check_or_set_default_typmod(ret, &(*typmod_array_p)[i], false, true);
 			}
 			typmod_head = lnext(ret->typmods, typmod_head);
@@ -480,7 +492,7 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 	{
 		(*typmod_array_p)[i] = -1;
 
-        if (sql_dialect == SQL_DIALECT_TSQL)
+        if (sql_dialect == SQL_DIALECT_TSQL || dump_restore)
             pltsql_check_or_set_default_typmod(ret, &(*typmod_array_p)[i], false, true);
 		i++;
 	}
