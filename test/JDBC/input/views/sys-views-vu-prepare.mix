@@ -7,6 +7,18 @@ GO
 CREATE VIEW sys_views_vu_prepare_t1 AS select 1;
 GO
 
+CREATE schema s1;
+GO
+
+create view s1.v1 as select 1;
+GO
+
+create login l1 WITH PASSWORD = '12345678';
+GO
+
+create user u1 for login l1;
+GO
+
 USE master;
 GO
 

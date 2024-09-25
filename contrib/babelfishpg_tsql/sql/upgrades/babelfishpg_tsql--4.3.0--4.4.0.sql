@@ -1890,14 +1890,6 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
 
-ALTER FUNCTION sys.sp_tables_internal RENAME TO sp_tables_internal_deprecated_in_4_4_0;
-
-ALTER FUNCTION sys.sp_columns_100_internal RENAME TO sp_columns_100_internal_deprecated_in_4_4_0;
-
-ALTER FUNCTION sys.sp_statistics_internal RENAME TO sp_statistics_internal_deprecated_in_4_4_0;
-
-ALTER FUNCTION sys.sp_pkeys_internal RENAME TO sp_pkeys_internal_deprecated_in_4_4_0;
-
 create or replace view sys.tables as
 with tt_internal as MATERIALIZED
 (
@@ -3762,6 +3754,14 @@ ON      pronamespace = n.oid
 WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
 
 GRANT SELECT ON sys.sp_stored_procedures_view TO PUBLIC;
+
+ALTER FUNCTION sys.sp_tables_internal RENAME TO sp_tables_internal_deprecated_in_4_4_0;
+
+ALTER FUNCTION sys.sp_columns_100_internal RENAME TO sp_columns_100_internal_deprecated_in_4_4_0;
+
+ALTER FUNCTION sys.sp_statistics_internal RENAME TO sp_statistics_internal_deprecated_in_4_4_0;
+
+ALTER FUNCTION sys.sp_pkeys_internal RENAME TO sp_pkeys_internal_deprecated_in_4_4_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_tables_internal_deprecated_in_4_4_0');
 

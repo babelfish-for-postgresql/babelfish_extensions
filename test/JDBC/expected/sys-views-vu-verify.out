@@ -113,3 +113,52 @@ int
 0
 ~~END~~
 
+
+-- tsql user=l1 password=12345678
+USE sys_views_vu_prepare_db1;
+GO
+
+#view s1.v1 should not be visible in db1 database to l1.
+select count(*) from sys.views where name = 'v1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'v1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+use sys_views_vu_prepare_db1;
+GO
+
+GRANT select on schema::s1 to u1;
+GO
+
+-- tsql user=l1 password=12345678
+USE sys_views_vu_prepare_db1;
+GO
+
+# view s1.v1 should be visible in db1 database to l1 now.
+select count(*) from sys.views where name = 'v1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'v1';
+GO
+~~START~~
+int
+1
+~~END~~
+

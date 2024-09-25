@@ -4,6 +4,15 @@ GO
 DROP VIEW sys_views_vu_prepare_t1;
 GO
 
+DROP view s1.v1 ;
+GO
+
+DROP schema s1;
+GO
+
+DROP login l1;
+GO
+
 USE master;
 GO
 
