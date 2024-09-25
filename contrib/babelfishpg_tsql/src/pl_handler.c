@@ -3548,7 +3548,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
 						{
 							/* Execute the GRANT SCHEMA subcommands. */
-							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
+							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i], true);
 						}
 					}
 					return;
