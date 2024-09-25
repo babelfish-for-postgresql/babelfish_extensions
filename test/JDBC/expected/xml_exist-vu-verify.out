@@ -750,6 +750,8 @@ DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
 DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
 SELECT @point1.STDistance(@point2).exist('/artists/artist/@name');
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
@@ -758,6 +760,8 @@ GO
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT @point.STArea().exist('/artists/artist/@name');
 go
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
@@ -766,6 +770,8 @@ go
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT @point.STX.exist('/artists/artist/@name');
 go
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~

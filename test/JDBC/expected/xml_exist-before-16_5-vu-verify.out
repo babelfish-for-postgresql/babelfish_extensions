@@ -750,6 +750,8 @@ DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
 DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
 SELECT @point1.STDistance(@point2).exist('/artists/artist/@name');
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
@@ -758,6 +760,8 @@ GO
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT @point.STArea().exist('/artists/artist/@name');
 go
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
@@ -766,6 +770,8 @@ go
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT @point.STX.exist('/artists/artist/@name');
 go
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
@@ -888,195 +894,6 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "babel_5222_xml_exist_constraint" does not exist)~~
-
-
--- Testing computed columns and constraints with quoted_identifier as ON
--- Testing computed columns created on wrapper function of xml exist when quoted_identifier was ON
-INSERT INTO babel_5222_xml_exist_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_compcol1 VALUES (2, '<artist />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
-
-
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol1 ORDER BY id
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
-
-
--- Testing constraint created on wrapper function of xml exist
-INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist name="Rohit Bhagat" />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_constraint1" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_constraint1" does not exist)~~
-
-
--- Testing view created on xml exist when quoted_identifier was OFF
-SELECT * FROM babel_5222_xml_exist_dep_view2
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_dep_view2" does not exist)~~
-
-
--- Testing computed columns created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_compcol2 VALUES (2, '<artist />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
-
-
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol2 ORDER BY id
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
-
-
--- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist name="Rohit Bhagat" />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_constraint2" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_constraint2" does not exist)~~
-
-
-SET QUOTED_IDENTIFIER OFF
-GO
-
-SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
-GO
-~~START~~
-sql_variant
-0
-~~END~~
-
-
--- Testing computed columns and constraints with quoted_identifier as OFF 
--- Testing computed columns created on wrapper function of xml exist when quoted_identifier was ON
-INSERT INTO babel_5222_xml_exist_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_compcol1 VALUES (2, '<artist />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
-
-
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol1 ORDER BY id
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
-
-
--- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist name="Rohit Bhagat" />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_constraint1" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_constraint1" does not exist)~~
-
-
--- Testing view created on xml exist when quoted_identifier was OFF
-SELECT * FROM babel_5222_xml_exist_dep_view2
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_dep_view2" does not exist)~~
-
-
--- Testing computed columns and constraints with quoted_identifier as OFF 
--- Testing computed columns created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_compcol2 VALUES (2, '<artist />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
-
-
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol2 ORDER BY id
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
-
-
--- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist name="Rohit Bhagat" />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_constraint2" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_constraint2" does not exist)~~
-
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
-GO
-~~START~~
-sql_variant
-1
-~~END~~
 
 
 SELECT student FROM babel_5222_xml_exist_school_details ORDER BY id
