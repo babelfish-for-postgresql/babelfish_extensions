@@ -115,10 +115,6 @@ Create database reset_con_db1;
 GO
 Create database reset_con_db2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Database 'reset_con_db2' already exists. Choose a different database name.)~~
-
 
 -- tsql database=reset_con_db1
 select db_name();
