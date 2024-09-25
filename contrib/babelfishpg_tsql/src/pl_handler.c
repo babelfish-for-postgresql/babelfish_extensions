@@ -30,6 +30,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_shdepend.h"
+#include "catalog/storage.h"
 #include "commands/createas.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
@@ -6495,6 +6496,7 @@ pltsql_remove_current_query_env(void)
 		AbortCurTransaction = false;
 
 		ENRDropTempTables(currentQueryEnv);
+		smgrDoPendingDeletes(!old_abort_curr_txn, true);
 	}
 	PG_FINALLY();
 	{
