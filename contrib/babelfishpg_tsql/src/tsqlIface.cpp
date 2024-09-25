@@ -362,12 +362,12 @@ stripQuoteFromId(TSqlParser::IdContext *ctx)
 std::string
 stripQuoteFromId(std::string s)
 {
-	if (s.front() == '[')
+	if (!s.empty() && s.front() == '[')
 	{
 		Assert(s.back() == ']');
 		return s.substr(1,s.length()-2);
 	}
-	else if (s.front() == '"')
+	else if (!s.empty() && s.front() == '"')
 	{
 		Assert(s.back() == '"');
 		return s.substr(1,s.length()-2);

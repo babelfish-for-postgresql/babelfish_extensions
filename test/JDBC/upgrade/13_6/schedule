@@ -100,7 +100,6 @@ BABEL-889
 BABEL-APPLOCK
 babel_char
 BABEL-CHECK-CONSTRAINT-before-14_6
-BABEL-CROSS-DB
 babel_datatype_sqlvariant
 BABEL-EXTENDEDPROPERTY-before-15_4
 babelfish_authid_login_ext
@@ -327,7 +326,7 @@ timefromparts
 triggers_with_transaction
 BABEL-4046
 table_constraint_wo_comma-before-15_6-or-16_2
-getdate
+getdate-before-15_9-or-16_5
 BABEL-4410
 AUTO_ANALYZE-before-15-5-or-14-10
 TestDatatypeAggSort

@@ -561,12 +561,15 @@ BABEL-5071
 string_agg_within
 reverse
 string_agg
+getdate
 sys_sequences
 replicate
 space
 SELECT_INTO_TEST
 binary-datatype-operators
+sys_dm_os_sys_info
 cast-varchar-to-time
 xml_exist
+test_db_collation
 BABEL-5119
 

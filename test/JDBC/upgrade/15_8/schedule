@@ -536,6 +536,7 @@ reverse
 stuff
 replicate
 string_agg-before-15_9-or-16_5
+getdate-before-15_9-or-16_5
 space
 replace
 alter-procedure-15_8-or-16_4

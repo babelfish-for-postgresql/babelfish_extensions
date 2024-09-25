@@ -1,0 +1,109 @@
+-- 1. Test resets GUC variables
+SET lock_timeout 0;
+GO
+SELECT @@lock_timeout;
+GO
+~~START~~
+int
+0
+~~END~~
+
+EXEC sys.sp_reset_connection
+-- TODO: GUC is not resetting
+SELECT @@lock_timeout;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- 2. Test open transactions are aborted on reset
+DROP TABLE IF EXISTS sp_reset_connection_test_table;
+CREATE TABLE sp_reset_connection_test_table(id int);
+BEGIN TRANSACTION
+INSERT INTO sp_reset_connection_test_table VALUES(1)
+GO
+~~ROW COUNT: 1~~
+
+EXEC sys.sp_reset_connection
+GO
+COMMIT TRANSACTION
+GO
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
+SELECT * FROM sp_reset_connection_test_table
+GO
+~~START~~
+int
+~~END~~
+
+
+-- 3. Test temp tables are deleted on reset
+CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
+INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
+GO
+~~ROW COUNT: 3~~
+
+SELECT * from #babel_temp_table
+GO
+~~START~~
+int#!#int
+1#!#100
+2#!#200
+3#!#300
+~~END~~
+
+EXEC sys.sp_reset_connection
+GO
+SELECT * from #babel_temp_table
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#babel_temp_table" does not exist)~~
+
+
+-- 4. Test isolation level is reset
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+EXEC sys.sp_reset_connection
+GO
+select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+-- 5. Test sp_reset_connection called with sp_prepexec
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+DECLARE @handle int;
+EXEC SP_PREPARE @handle output, NULL, N'exec sys.sp_reset_connection'
+EXEC SP_EXECUTE @handle
+GO
+GO
+select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
+GO
+~~START~~
+smallint
+2
+~~END~~
+

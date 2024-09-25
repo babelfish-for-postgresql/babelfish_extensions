@@ -2,6 +2,12 @@
 USE master
 GO
 
+CREATE LOGIN babel_cross_db_vu_prepare_l1 WITH PASSWORD = '12345678';
+GO
+
+CREATE LOGIN babel_cross_db_vu_prepare_l2 WITH PASSWORD = '12345678';
+GO
+
 CREATE SCHEMA babel_cross_db_vu_prepare_myschema
 GO
 
@@ -40,26 +46,216 @@ AS
 SELECT 1/0;
 GO
 
-CREATE DATABASE babel_cross_db_vu_prepare_db1;
+CREATE DATABASE my_babel_cross_db_vu_prepare_db1;
 GO
 
-USE babel_cross_db_vu_prepare_db1;
+USE my_babel_cross_db_vu_prepare_db1;
 GO
 
 CREATE TABLE dbo.babel_cross_db_vu_prepare_db1_t1 (a int);
 GO
 
-CREATE TABLE dbo.babel_cross_db_vu_prepare_db1_t2 (a int);
+CREATE TABLE dbo.my_babel_cross_db_vu_prepare_db1_t2 (a int);
 GO
 
-CREATE PROCEDURE babel_cross_db_vu_prepare_db1_p1
+CREATE PROCEDURE my_babel_cross_db_vu_prepare_db1_p1
 AS
-EXEC('USE babel_cross_db_vu_prepare_db1');
+EXEC('USE my_babel_cross_db_vu_prepare_db1');
 SELECT 10;
 GO
 
-CREATE TABLE dbo.babel_cross_db_vu_prepare_db1_t3 (id int identity, a int);
+CREATE TABLE dbo.my_babel_cross_db_vu_prepare_db1_t3 (id int identity, a int);
+GO
+
+-- We have created a login and a user database so far, now let's create
+-- users and schemas for that login in both master a new databases to test
+-- cross-db access. Also create cross-db views and functions as well.
+
+USE master
+GO
+
+CREATE USER babel_cross_db_vu_prepare_u1 FOR LOGIN babel_cross_db_vu_prepare_l1;
+GO
+
+CREATE SCHEMA babel_cross_db_vu_prepare_s1 AUTHORIZATION babel_cross_db_vu_prepare_u1;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+CREATE USER babel_cross_db_vu_prepare_u2 FOR LOGIN babel_cross_db_vu_prepare_l1;
+GO
+
+CREATE SCHEMA babel_cross_db_vu_prepare_s2 AUTHORIZATION babel_cross_db_vu_prepare_u2;
+GO
+
+CREATE TABLE dbo.babel_cross_db_vu_prepare_t2 (id INT IDENTITY PRIMARY KEY, name VARCHAR(20));
+GO
+
+CREATE TABLE dbo.babel_cross_db_vu_prepare_t3 (id INT IDENTITY PRIMARY KEY, name VARCHAR(20));
+GO
+
+CREATE FUNCTION dbo.babel_cross_db_vu_prepare_f2 (@a int)
+    RETURNS INT AS
+    BEGIN
+        RETURN @a;
+    END;
+GO
+
+-- tsql user=babel_cross_db_vu_prepare_l1 password=12345678
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+CREATE TABLE babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 (id INT IDENTITY PRIMARY KEY, name VARCHAR(20));
+GO
+
+INSERT INTO babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2(name) VALUES('abc');
+GO
+
+CREATE FUNCTION babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2 (@a int)
+    RETURNS INT AS
+    BEGIN
+        RETURN @a;
+    END;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2 AS
+    SELECT id, babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(id), name
+    FROM babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2
+    ORDER BY id;
+GO
+
+CREATE PROCEDURE babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_p2
+AS
+    SELECT * FROM babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 ORDER BY id;
+    SELECT * FROM babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_v2;
 GO
 
 USE master;
+GO
+
+CREATE TABLE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1 (id INT IDENTITY PRIMARY KEY, name VARCHAR(20));
+GO
+
+INSERT INTO babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1(name) VALUES('def');
+GO
+
+-- View containing cross-db table and function on which login babel_cross_db_vu_prepare_l1 has privilege
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1 AS
+    SELECT x.id,
+        my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(x.id),
+        x.name AS t1_name,
+        y.name AS t2_name
+    FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1 x INNER JOIN
+    my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 y
+    ON x.id = y.id
+    WHERE x.id = my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(x.id)
+    ORDER BY x.id;
+GO
+
+-- View containing cross-db table on which login babel_cross_db_vu_prepare_l1 does not have privilege
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2 AS
+    SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_t2
+    ORDER BY id;
+GO
+
+-- View containing cross-db function on which login babel_cross_db_vu_prepare_l1 does not have privilege
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3 AS
+    SELECT my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_f2(id) AS id, name
+    FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1
+    ORDER BY id;
+GO
+
+-- View containing cross-db tables on which login babel_cross_db_vu_prepare_l1 does not have permission on either of joined tables
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4 AS
+    SELECT x.id,
+        x.name AS t1_name,
+        y.name AS t2_name
+    FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_t2 x INNER JOIN
+    my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_t3 y
+    ON x.id = y.id
+    ORDER BY x.id;
+GO
+
+-- Procedure which accesses cross database objects
+CREATE PROCEDURE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1
+AS
+    SELECT * FROM master.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1; -- SELECT from table in same database
+    SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2; -- SELECT from table in different database
+    SELECT * FROM master.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1; -- SELECT from a view which accesses objects from different database
+
+    -- SELECT from a view which accesses objects from different database without permission
+    SELECT * FROM master.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
+GO
+
+-- Nested variants of all the objects above
+CREATE FUNCTION babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1 (@a int)
+    RETURNS INT AS
+    BEGIN
+        RETURN my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_f2(@a);
+    END;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1_nested AS
+    SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2_nested AS
+    SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v2;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3_nested AS
+    SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v3;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4_nested AS
+    SELECT * FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v4;
+GO
+
+CREATE VIEW babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v5_nested AS
+    SELECT babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1(1) AS id;
+GO
+
+CREATE PROCEDURE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1_nested
+AS
+    EXEC master.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_p1;
+GO
+
+-- tsql
+USE master;
+GO
+
+-- View containing union between two cross-db tables from different datababses.
+CREATE VIEW dbo.babel_cross_db_vu_prepare_v1 AS
+    SELECT id FROM master.dbo.babel_cross_db_vu_prepare_master_t1
+    UNION
+    SELECT id FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+GO
+
+USE master;
+GO
+
+-- psql
+-- CREATE a plpgsql function in master_dbo which accesses cross-db table from db1 database
+CREATE FUNCTION master_dbo.babel_cross_db_vu_prepare_pg_func() RETURNS INT AS $$
+DECLARE
+    schema_name TEXT;
+    res INT;
+BEGIN
+    -- Retrieve the schema name
+    SELECT ne.nspname 
+    INTO schema_name 
+    FROM sys.babelfish_namespace_ext ne 
+    INNER JOIN sys.babelfish_sysdatabases sd 
+    ON ne.dbid = sd.dbid 
+    WHERE sd.name = 'my_babel_cross_db_vu_prepare_db1'
+    AND ne.orig_name = 'babel_cross_db_vu_prepare_s2';
+
+    EXECUTE format('SELECT COUNT(*) FROM %I.babel_cross_db_vu_prepare_t2', schema_name) INTO res;
+    RETURN res;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+GRANT EXECUTE ON FUNCTION master_dbo.babel_cross_db_vu_prepare_pg_func to master_babel_cross_db_vu_prepare_u1;
 GO
