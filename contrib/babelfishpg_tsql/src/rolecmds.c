@@ -2772,8 +2772,8 @@ change_object_owner_if_db_owner()
 	int			rc = 0;
 	Oid role_oid = GetUserId();
 
-	/* TSQL specific behavior */
-	if (sql_dialect != SQL_DIALECT_TSQL)
+	/* TSQL specific behavior and do not call if during CREATE EXTENSION */
+	if (sql_dialect != SQL_DIALECT_TSQL || creating_extension)
 		return;
 
 	rolname = GetUserNameFromId(role_oid, true);
