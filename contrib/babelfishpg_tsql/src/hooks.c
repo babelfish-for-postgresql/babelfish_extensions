@@ -4791,7 +4791,7 @@ static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
 static bool
 pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg)
 {
-	return temp_oid_buffer_size > 0 && (msg->id == SHAREDINVALRELCACHE_ID && msg->rc.local_only);
+	return SIMessageIsForTempTable(msg);
 }
 
 static EphemeralNamedRelation
