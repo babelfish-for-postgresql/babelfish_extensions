@@ -73,10 +73,10 @@ typedef ResetConnectionData *ResetConnection;
 TdsRequestCtrlData *TdsRequestCtrl = NULL;
 
 ResetConnection resetCon = NULL;
-static bool resetTdsConnectionFlag = false;
+bool resetTdsConnectionFlag = false;
 
 /* Local functions */
-static void ResetTDSConnection(void);
+static void ResetTDSConnection();
 static TDSRequest GetTDSRequest(bool *resetProtocol);
 static void ProcessTDSRequest(TDSRequest request);
 static void enable_statement_timeout(void);
@@ -119,7 +119,7 @@ TdsDiscardAll()
  * for RESETCON.
  */
 static void
-ResetTDSConnection(void)
+ResetTDSConnection()
 {
 	const char *isolationOld;
 
@@ -161,7 +161,6 @@ ResetTDSConnection(void)
 		SetConfigOption("default_transaction_isolation", isolationOld,
 						PGC_BACKEND, PGC_S_CLIENT);
 	}
-	TdsSetDbContext();
 	tvp_lookup_list = NIL;
 
 	/* Send an environement change token is its not called via sys.sp_reset_connection procedure. */
@@ -295,7 +294,16 @@ GetTDSRequest(bool *resetProtocol)
 			resetCon->messageType = messageType;
 			resetCon->status = (status & ~TDS_PACKET_HEADER_STATUS_RESETCON);
 
+			/*
+			 * Set resetTdsConnectionFlag to true so that we avoid
+			 * sending any env change token for the USE DB command
+			 * which will get executed.
+			 */
+			resetTdsConnectionFlag = true;
+			TdsSetDbContext();
+			resetTdsConnectionFlag = false;
 			ResetTDSConnection();
+
 			TdsErrorContext->err_text = "Fetching TDS Request";
 			*resetProtocol = true;
 			return NULL;
@@ -364,23 +372,6 @@ GetTDSRequest(bool *resetProtocol)
 	}
 	PG_CATCH();
 	{
-		if (resetCon)
-		{
-			/* Before terminating the connection, send the response to the client */
-			EmitErrorReport();
-			FlushErrorState();
-
-			TdsSendError(596, 1, ERROR,
-					"Cannot continue the execution because the session is in the kill state.", 1);
-
-			TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR, 0, 0);
-			TdsFlush();
-
-			ereport(FATAL,
-					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-					errmsg("Reset Connection Failed")));
-
-		}
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -700,6 +691,17 @@ TdsSocketBackend(void)
 				case TDS_REQUEST_PHASE_FLUSH:
 					{
 						TdsErrorContext->phase = "TDS_REQUEST_PHASE_FLUSH";
+
+						if (resetTdsConnectionFlag)
+						{
+							/*
+							 * We must set the Db Context before resetting TDS state,
+							 * becasue we need the existing TDS state to flush any errors
+							 * along with the reset.
+							 */
+							TdsSetDbContext();
+						}
+
 						/* Send the response now */
 						TdsFlush();
 

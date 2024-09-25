@@ -1,0 +1,5 @@
+#Q#select db_name();
+#D#nvarchar
+master
+#Q#drop database db1;
+

@@ -1,0 +1,6 @@
+#Q#create database db1;
+#Q#use db1;
+#Q#Select db_name()
+#D#nvarchar
+db1
+

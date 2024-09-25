@@ -80,4 +80,6 @@ extern TdsRequestCtrlData *TdsRequestCtrl;
 extern void SetResetTDSConnectionFlag(void);
 extern bool GetResetTDSConnectionFlag(void);
 
+extern bool resetTdsConnectionFlag;
+
 #endif							/* TDS_PROTOCOL_H */
