@@ -77,5 +77,6 @@ typedef struct
 } TdsRequestCtrlData;
 
 extern TdsRequestCtrlData *TdsRequestCtrl;
+extern void SetResetTDSConnectionFlag(void);
 
 #endif							/* TDS_PROTOCOL_H */
