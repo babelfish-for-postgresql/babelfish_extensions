@@ -2124,6 +2124,10 @@ GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
+CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
+AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
