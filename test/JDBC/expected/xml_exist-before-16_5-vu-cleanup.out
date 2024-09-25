@@ -17,6 +17,13 @@ GO
 ~~ERROR (Message: view "babel_5222_xml_exist_dep_view" does not exist)~~
 
 
+DROP VIEW babel_5222_xml_exist_dep_view2
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_5222_xml_exist_dep_view2" does not exist)~~
+
+
 DROP PROCEDURE babel_5222_xml_exist_dep_proc
 GO
 
@@ -45,6 +52,48 @@ GO
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: table "babel_5222_xml_exist_constraint" does not exist)~~
+
+
+DROP TABLE babel_5222_xml_exist_compcol1
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel_5222_xml_exist_compcol1" does not exist)~~
+
+
+DROP TABLE babel_5222_xml_exist_constraint1
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel_5222_xml_exist_constraint1" does not exist)~~
+
+
+DROP FUNCTION dbo.wrapper_xmlexist1
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a function named "master_dbo.wrapper_xmlexist1")~~
+
+
+DROP TABLE babel_5222_xml_exist_compcol2
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel_5222_xml_exist_compcol2" does not exist)~~
+
+
+DROP TABLE babel_5222_xml_exist_constraint2
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel_5222_xml_exist_constraint2" does not exist)~~
+
+
+DROP FUNCTION dbo.wrapper_xmlexist2
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a function named "master_dbo.wrapper_xmlexist2")~~
 
 
 DROP TRIGGER  babel_5222_xml_exist_tr_parital_student_entry

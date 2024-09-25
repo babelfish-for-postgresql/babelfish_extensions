@@ -128,6 +128,8 @@ bit
 DECLARE @xml XML = '<root><child>Hello & World</child></root>';
 SELECT @xml.exist('(//child)[1]');
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not parse XML document)~~
@@ -217,6 +219,8 @@ bit
 DECLARE @xml XML = '<child1>Test1</child1><child2>Test2</child2>';
 SELECT @xml.exist('(//child1)[1]'), @xml.exist('(//child2)[1]');
 GO
+~~START~~
+bit#!#bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not parse XML document)~~
@@ -314,6 +318,8 @@ GO
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
 SELECT @xml.exist('(//ns:data)[1]')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not create XPath object)~~
@@ -331,6 +337,8 @@ bit
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
 SELECT @xml.exist('(//child/@ns:attr)[1]');
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not create XPath object)~~
@@ -340,6 +348,8 @@ GO
 DECLARE @xml XML = '<root>Hello&#0;World</root>';
 SELECT @xml.exist('(/root)[1]');
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not parse XML document)~~
@@ -477,6 +487,8 @@ GO
 DECLARE @xml VARCHAR(100) = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on varchar.)~~
@@ -485,6 +497,8 @@ GO
 DECLARE @xml NVARCHAR(100) = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on nvarchar.)~~
@@ -493,6 +507,8 @@ GO
 DECLARE @xml INT = 1
 SELECT @xml.exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on int.)~~
@@ -501,6 +517,8 @@ GO
 DECLARE @xml BIGINT = 1
 SELECT @xml.exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on bigint.)~~
@@ -509,6 +527,8 @@ GO
 DECLARE @xml FLOAT = 1
 SELECT @xml.exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
@@ -517,6 +537,8 @@ GO
 DECLARE @xml DECIMAL = 1
 SELECT @xml.exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on decimal.)~~
@@ -525,6 +547,8 @@ GO
 DECLARE @xml NUMERIC = 1
 SELECT @xml.exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on numeric.)~~
@@ -533,6 +557,8 @@ GO
 DECLARE @xml BIT = 1
 SELECT @xml.exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on bit.)~~
@@ -748,6 +774,8 @@ go
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.exist('/artists/artist/@name').exist('/artists/artist/@name').exist('/artists/artist/@name').exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on bit.)~~
@@ -862,6 +890,195 @@ GO
 ~~ERROR (Message: relation "babel_5222_xml_exist_constraint" does not exist)~~
 
 
+-- Testing computed columns and constraints with quoted_identifier as ON
+-- Testing computed columns created on wrapper function of xml exist when quoted_identifier was ON
+INSERT INTO babel_5222_xml_exist_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
+
+
+INSERT INTO babel_5222_xml_exist_compcol1 VALUES (2, '<artist />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
+
+
+SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol1 ORDER BY id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
+
+
+-- Testing constraint created on wrapper function of xml exist
+INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist name="Rohit Bhagat" />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_constraint1" does not exist)~~
+
+
+INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_constraint1" does not exist)~~
+
+
+-- Testing view created on xml exist when quoted_identifier was OFF
+SELECT * FROM babel_5222_xml_exist_dep_view2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_dep_view2" does not exist)~~
+
+
+-- Testing computed columns created on wrapper function of xml exist when quoted_identifier was OFF
+INSERT INTO babel_5222_xml_exist_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
+
+
+INSERT INTO babel_5222_xml_exist_compcol2 VALUES (2, '<artist />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
+
+
+SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol2 ORDER BY id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
+
+
+-- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
+INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist name="Rohit Bhagat" />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_constraint2" does not exist)~~
+
+
+INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_constraint2" does not exist)~~
+
+
+SET QUOTED_IDENTIFIER OFF
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- Testing computed columns and constraints with quoted_identifier as OFF 
+-- Testing computed columns created on wrapper function of xml exist when quoted_identifier was ON
+INSERT INTO babel_5222_xml_exist_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
+
+
+INSERT INTO babel_5222_xml_exist_compcol1 VALUES (2, '<artist />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
+
+
+SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol1 ORDER BY id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol1" does not exist)~~
+
+
+-- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
+INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist name="Rohit Bhagat" />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_constraint1" does not exist)~~
+
+
+INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_constraint1" does not exist)~~
+
+
+-- Testing view created on xml exist when quoted_identifier was OFF
+SELECT * FROM babel_5222_xml_exist_dep_view2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_dep_view2" does not exist)~~
+
+
+-- Testing computed columns and constraints with quoted_identifier as OFF 
+-- Testing computed columns created on wrapper function of xml exist when quoted_identifier was OFF
+INSERT INTO babel_5222_xml_exist_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
+
+
+INSERT INTO babel_5222_xml_exist_compcol2 VALUES (2, '<artist />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
+
+
+SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol2 ORDER BY id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_compcol2" does not exist)~~
+
+
+-- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
+INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist name="Rohit Bhagat" />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_constraint2" does not exist)~~
+
+
+INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist />')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5222_xml_exist_constraint2" does not exist)~~
+
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
 SELECT student FROM babel_5222_xml_exist_school_details ORDER BY id
 GO
 ~~START~~
@@ -969,6 +1186,8 @@ sql_variant
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.exist('/artists/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
@@ -1030,6 +1249,8 @@ GO
 DECLARE @xml XML = '<root><child>Hello</child></root>';
 SELECT @xml.exist('(//*:child)[1]');
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid XPath expression)~~

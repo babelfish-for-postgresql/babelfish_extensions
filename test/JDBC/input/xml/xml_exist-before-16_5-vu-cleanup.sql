@@ -13,6 +13,9 @@ GO
 DROP VIEW babel_5222_xml_exist_dep_view
 GO
 
+DROP VIEW babel_5222_xml_exist_dep_view2
+GO
+
 DROP PROCEDURE babel_5222_xml_exist_dep_proc
 GO
 
@@ -29,6 +32,24 @@ DROP TABLE babel_5222_xml_exist_compcol
 GO
 
 DROP TABLE babel_5222_xml_exist_constraint
+GO
+
+DROP TABLE babel_5222_xml_exist_compcol1
+GO
+
+DROP TABLE babel_5222_xml_exist_constraint1
+GO
+
+DROP FUNCTION dbo.wrapper_xmlexist1
+GO
+
+DROP TABLE babel_5222_xml_exist_compcol2
+GO
+
+DROP TABLE babel_5222_xml_exist_constraint2
+GO
+
+DROP FUNCTION dbo.wrapper_xmlexist2
 GO
 
 DROP TRIGGER  babel_5222_xml_exist_tr_parital_student_entry
