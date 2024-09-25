@@ -76,7 +76,7 @@ ResetConnection resetCon = NULL;
 bool resetTdsConnectionFlag = false;
 
 /* Local functions */
-static void ResetTDSConnection();
+static void ResetTDSConnection(void);
 static TDSRequest GetTDSRequest(bool *resetProtocol);
 static void ProcessTDSRequest(TDSRequest request);
 static void enable_statement_timeout(void);
@@ -119,7 +119,7 @@ TdsDiscardAll()
  * for RESETCON.
  */
 static void
-ResetTDSConnection()
+ResetTDSConnection(void)
 {
 	const char *isolationOld;
 
