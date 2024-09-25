@@ -4092,6 +4092,70 @@ tsql_AlterFunctionStmt:
 					n->actions = list_concat(list_make3(lang, body, location), $5); // piggy-back on actions to just put the new proc body instead
 					$$ = (Node *) n;
 				}
+			| TSQL_ALTER FUNCTION func_name tsql_createfunc_args
+			  RETURNS func_return tsql_createfunc_options opt_as tokens_remaining
+				{
+					ObjectWithArgs *owa = makeNode(ObjectWithArgs);
+					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
+					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
+					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($9)), @9);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@3), @3);
+					/* 
+					 *	Adding a option for volatility with value STABLE. 
+					 *	Function created from tsql dialect will be created as STABLE
+					 *	by default
+					 */
+					DefElem *vol = makeDefElem("volatility", (Node *) makeString("stable"), @1);
+					
+					/* Remove return defelem from list after extracting in pl_handler*/
+					DefElem *ret = makeDefElem("return", (Node *) $6, @6);
+
+					/* Fill in the ObjectWithArgs node */
+					owa->objname = $3;
+					owa->objargs = extractArgTypes($4);
+					owa->objfuncargs = $4;
+
+					n->objtype = OBJECT_PROCEDURE; /* Set as proc to avoid psql alter func impl */
+					n->func = owa;
+					n->actions = list_concat(list_make5(lang, body, location, vol, ret), $7); // piggy-back on actions to just put the new proc body instead
+					$$ = (Node *) n;
+				}
+			| TSQL_ALTER FUNCTION func_name tsql_createfunc_args
+			  RETURNS TABLE opt_as tokens_remaining
+				{
+					ObjectWithArgs *owa = makeNode(ObjectWithArgs);
+					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
+					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
+					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($8)), @8);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@3), @3);
+					TypeName *returnType = SystemTypeName("record");
+					DefElem *ret;
+					
+					/*
+					 * Do not include table parameters here, will be added in
+					 * pltsql_validator()
+					 */
+					
+					owa->objname = $3;
+					owa->objargs = extractArgTypes($4);
+					owa->objfuncargs = $4;
+
+					/*
+					 * Use RECORD type here. In case of single result column,
+					 * will be changed to that column's type in
+					 * pltsql_validator()
+					 */
+					
+					returnType = SystemTypeName("record");
+					returnType->setof = true;
+					returnType->location = @6;
+					ret = makeDefElem("return", (Node *) returnType, @6);
+
+					n->objtype = OBJECT_PROCEDURE; /* Set as proc to avoid psql alter func impl */
+					n->func = owa;
+					n->actions = list_make4(lang, body, location, ret); // piggy-back on actions to just put the new proc body instead
+					$$ = (Node *)n;
+				}
 		;
 
 /*

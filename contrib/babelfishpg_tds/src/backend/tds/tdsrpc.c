@@ -3684,7 +3684,14 @@ TdsFetchInParamValues(ParamListInfo params)
 		if (!isNull && token->type != TDS_TYPE_TABLE)
 			pval = tempFuncInfo->recvFuncPtr(req->messageData, token);
 		else if (token->type == TDS_TYPE_TABLE)
+		{
+			/*
+			 * We are only logging the tvp name and not the record variable
+			 * So set the datatype to CString so that pval is treated as such
+			 */
+			ptype = CSTRINGOID;
 			pval = (Datum) token->tvpInfo->tvpTypeName;
+		}
 		else
 			pval = (Datum) 0;
 

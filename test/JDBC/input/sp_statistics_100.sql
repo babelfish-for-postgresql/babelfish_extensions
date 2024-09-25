@@ -72,4 +72,53 @@ go
 drop database db1
 go
 
+--Using Collation BBF_Unicode_CP1_CI_AI
+create table t1(a int)
+go
+
+create index i1 on t1(a)
+go
+
+create table t2(a int, b int not null primary key)
+go
+
+create index i2 on t2(a,b)
+go
+
+create table t3(a int)
+go
+
+create database db1 collate BBF_Unicode_CP1_CI_AI
+go
+
+use db1
+go
+
+exec [sys].sp_statistics_100 @table_name = 't2', @table_owner = 'dbo'
+go
+
+exec [sys].sp_statistics_100 @table_name = 't1', @table_qualifier = 'master'
+go
+
+use master
+go
+
+--cleanup
+drop index i1 on t1
+go
+
+drop index i2 on t2
+go
+
+drop table t1
+go
+
+drop table t2
+go
+
+drop table t3
+go
+
+drop database db1
+go
 

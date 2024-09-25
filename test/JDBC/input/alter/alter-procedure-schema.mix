@@ -79,7 +79,49 @@ go
 
 drop database alter_proc_db1
 go
+--Using Collation BBF_Unicode_CP1_CI_AI
+create database alter_proc_db1 collate BBF_Unicode_CP1_CI_AI
+go
 
+use alter_proc_db1
+go
+
+create schema alter_proc_schema1
+go
+
+create proc alter_proc_schema1.p1 @l int as select (@l * 100);
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_proc_schema1' collate sys.database_default order by object_name;
+go
+
+-- tsql user=alter_proc_l1 password=12345678
+exec alter_proc_schema1.p1 @l = 1
+go
+
+alter procedure alter_proc_schema1.p1 @l int as select (@l + 2);
+go
+
+exec alter_proc_schema1.p1 @l = 1
+go
+
+drop proc alter_proc_schema1.p1
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_proc_schema1' collate sys.database_default order by object_name;
+go
+
+-- tsql user=alter_proc_l1 password=12345678
+drop schema alter_proc_schema1;
+go
+
+use master
+go
+
+drop database alter_proc_db1
+go
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
@@ -213,7 +255,61 @@ go
 
 drop database alter_proc_db2
 go
+-- Using Collation BBF_Unicode_CP1_CI_AI
+create database alter_proc_db2 collate BBF_Unicode_CP1_CI_AI
+go
 
+use alter_proc_db2
+go
+
+create schema alter_proc_schema3
+go
+
+create proc alter_proc_schema3.p1 @l int as select (@l * 100);
+go
+
+create proc alter_proc_schema3.p2 as select 5;
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_proc_schema3' collate sys.database_default order by object_name;
+go
+
+-- tsql user=alter_proc_l3 password=12345678
+exec alter_proc_schema3.p1 @l = 1
+go
+
+alter procedure alter_proc_schema3.p1 @l int as select (@l + 2);
+go
+
+alter procedure alter_proc_schema3.p2 @param int as select @param
+go
+
+exec alter_proc_schema3.p1 @l = 1
+go
+
+exec alter_proc_schema3.p2 @param = 200
+go
+
+drop proc alter_proc_schema3.p1
+go
+
+drop proc alter_proc_schema3.p2
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'alter_proc_schema3' collate sys.database_default order by object_name;
+go
+
+-- tsql user=alter_proc_l3 password=12345678
+drop schema alter_proc_schema3;
+go
+
+use master
+go
+
+drop database alter_proc_db2
+go
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
@@ -238,6 +334,63 @@ GO
 
 -- tsql user=alter_proc_l4 password=12345678
 create database alter_proc_db3
+go
+
+use alter_proc_db3
+go
+
+create schema alter_proc_schema4
+go
+
+create schema alter_proc_schema5
+go
+
+create proc alter_proc_schema4.p1 @l int as select @l;
+go
+
+create proc alter_proc_schema5.p1 @l int as select @l;
+go
+
+-- tsql user=alter_proc_l4 password=12345678
+
+exec alter_proc_schema4.p1 @l = 10
+go
+
+exec alter_proc_schema5.p1 @l = 10
+go
+
+alter proc alter_proc_schema4.p1 @z nvarchar(10) as select @z
+go
+
+alter proc alter_proc_schema5.p1 @z nvarchar(10) as select @z
+go
+
+exec alter_proc_schema4.p1 @z = 'test'
+go
+
+exec alter_proc_schema5.p1 @z = 'test'
+go
+
+drop proc alter_proc_schema4.p1
+go
+
+drop proc alter_proc_schema5.p1
+go
+
+-- tsql user=alter_proc_l4 password=12345678
+drop schema alter_proc_schema4;
+go
+
+drop schema alter_proc_schema5;
+go
+
+use master
+go
+
+drop database alter_proc_db3
+go
+-- Using Collation BBF_Unicode_CP1_CI_AI
+create database alter_proc_db3 collate BBF_Unicode_CP1_CI_AI
 go
 
 use alter_proc_db3

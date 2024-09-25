@@ -1,0 +1,85 @@
+-- tsql
+DROP LOGIN victim_user_tds
+go
+
+DROP TABLE tab_kill_spid
+go
+
+DROP PROCEDURE kill_proc_1
+go
+
+DROP PROCEDURE kill_proc_2
+go
+
+DROP PROCEDURE kill_proc_3
+go
+
+DROP TABLE tab_kill_test
+go
+
+DROP Database test_kill_db1
+GO
+DROP Database test_kill_db2
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db2" does not exist)~~
+
+DROP Database test_kill_db3
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db3" does not exist)~~
+
+DROP Database test_kill_db4
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db4" does not exist)~~
+
+DROP Database test_kill_db5
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db5" does not exist)~~
+
+DROP Database test_kill_db6
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db6" does not exist)~~
+
+DROP Database test_kill_db7
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db7" does not exist)~~
+
+DROP Database test_kill_db8
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db8" does not exist)~~
+
+DROP Database test_kill_db9
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db9" does not exist)~~
+
+DROP Database test_kill_db10
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db10" does not exist)~~
+
+DROP Database test_kill_db11
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "test_kill_db11" does not exist)~~
+
+
+DROP LOGIN test_kill;
+GO
+

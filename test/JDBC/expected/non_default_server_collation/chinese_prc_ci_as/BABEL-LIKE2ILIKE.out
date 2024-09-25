@@ -153,7 +153,7 @@ abcD
 ~~END~~
 
 -- test sub-queries
-Select count(*) from like_tesing1 where c1 LIKE (select c1 from like_tesing1 where c1 LIKE 'AbcD')
+Select count(*) from like_tesing1 where c1 LIKE (select c1 from like_tesing1 where c1 LIKE 'AbcD' COLLATE sql_latin1_general_cp1_ci_as)
 GO
 ~~START~~
 int

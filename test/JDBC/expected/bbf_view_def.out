@@ -314,6 +314,38 @@ go
 drop database db1;
 go
 
+-- tsql
+-- CASE: create view in different db
+create database db1 COLLATE BBF_Unicode_CP1_CI_AI;;
+go
+
+use db1;
+go
+
+create view db1_v1 as select 1;
+go
+
+create schema db1_sch1;
+go
+
+create view db1_sch1.db1_v2 as select 2;
+go
+
+select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%db1_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+go
+~~START~~
+text#!#varchar#!#varchar#!#ntext
+db1#!#db1_sch1#!#db1_v2#!#create view db1_sch1.db1_v2 as select 2;
+db1#!#dbo#!#db1_v1#!#create view db1_v1 as select 1;
+~~END~~
+
+
+use master;
+go
+
+drop database db1;
+go
+
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%db1_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 ~~START~~

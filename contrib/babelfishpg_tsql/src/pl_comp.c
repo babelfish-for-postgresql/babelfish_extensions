@@ -45,6 +45,7 @@
 #include "codegen.h"
 #include "iterative_exec.h"
 #include "multidb.h"
+#include "collation.h"
 
 /* ----------
  * Our own local and global variables
@@ -2592,6 +2593,10 @@ pltsql_build_datatype(Oid typeOid, int32 typmod,
 		elog(ERROR, "cache lookup failed for type %u", typeOid);
 
 	typ = build_datatype(typeTup, typmod, collation, origtypname);
+
+	/* Check whether datatype is collatable, if yes then assign database level collation to it */
+	if (OidIsValid(typ->collation))
+		typ->collation = tsql_get_database_or_server_collation_oid_internal(false);
 
 	ReleaseSysCache(typeTup);
 

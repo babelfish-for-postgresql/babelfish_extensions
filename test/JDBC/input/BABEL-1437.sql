@@ -54,3 +54,24 @@ DROP DATABASE babel_1437_db;
 GO
 SELECT db_id('babel_1437_db');
 GO
+
+-- Tests for db level collation
+-- Test custom database
+CREATE DATABASE babel_1437_db COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+USE babel_1437_db;
+GO
+
+SELECT (case when db_name() = 'babel_1437_db' then 'true' else 'false' end) result;
+SELECT (case when db_name(db_id()) = 'babel_1437_db' then 'true' else 'false' end) result;
+SELECT (case when db_id('babel_1437_db') = db_id() then 'true' else 'false' end) result;
+GO
+
+-- test dropped database, expecting db_id to return null
+USE MASTER;
+GO
+
+DROP DATABASE babel_1437_db;
+GO
+SELECT db_id('babel_1437_db');
+GO

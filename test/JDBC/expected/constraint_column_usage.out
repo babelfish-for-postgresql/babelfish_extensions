@@ -163,4 +163,171 @@ void
 -- tsql
 drop login user_const_col_usage;
 go
+-- terminate-tsql-conn
+
+-- tsql
+create database db_constraint_column_usage COLLATE BBF_Unicode_CP1_CI_AI;
+go
+
+Use db_constraint_column_usage;
+go
+
+create table constraint_column_usage_tbl1(arg1 int, arg2 int, primary key(arg1));
+go
+
+create table constraint_column_usage_tbl2(arg3 int, arg4 int, primary key(arg3), foreign key(arg4) references constraint_column_usage_tbl1(arg1));
+go
+
+create schema constraint_column_usage_sc1;
+go
+
+create table constraint_column_usage_sc1.constraint_column_usage_tbl3 (arg5 int, arg6 int, primary key (arg5,arg6));
+go
+
+create table constraint_column_usage_sc1.constraint_column_usage_tbl4 (arg7 int, arg8 int, check ( arg7 > 0  and arg8 < 0));
+go
+
+create table constraint_column_usage_tbl5 (arg9 int, arg10 int, arg11 int, foreign key(arg10,arg11) references constraint_column_usage_sc1.constraint_column_usage_tbl3(arg5,arg6));
+go
+
+SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl1#!#arg1#!#db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl1_pkey
+db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl5#!#arg10#!#db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl5_arg10_arg11_fkey
+db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl5#!#arg11#!#db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl5_arg10_arg11_fkey
+db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl2#!#arg3#!#db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl2_pkey
+db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl2#!#arg4#!#db_constraint_column_usage#!#dbo#!#constraint_column_usage_tbl2_arg4_fkey
+db_constraint_column_usage#!#constraint_column_usage_sc1#!#constraint_column_usage_tbl3#!#arg5#!#db_constraint_column_usage#!#constraint_column_usage_sc1#!#constraint_column_usage_tbl3_pkey
+db_constraint_column_usage#!#constraint_column_usage_sc1#!#constraint_column_usage_tbl3#!#arg6#!#db_constraint_column_usage#!#constraint_column_usage_sc1#!#constraint_column_usage_tbl3_pkey
+db_constraint_column_usage#!#constraint_column_usage_sc1#!#constraint_column_usage_tbl4#!#arg7#!#db_constraint_column_usage#!#constraint_column_usage_sc1#!#constraint_column_usage_tbl4_check
+db_constraint_column_usage#!#constraint_column_usage_sc1#!#constraint_column_usage_tbl4#!#arg8#!#db_constraint_column_usage#!#constraint_column_usage_sc1#!#constraint_column_usage_tbl4_check
+~~END~~
+
+
+Use master;
+go
+
+create login user_const_col_usage1 with password='123456789';
+go
+
+SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+~~END~~
+
+
+create table constraint_column_usage_tbl6 (arg12 int, arg13 int not null, UNIQUE(arg13));
+go
+
+SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#constraint_column_usage_tbl6#!#arg13#!#master#!#dbo#!#constraint_column_usage_tbl6_arg13_key
+~~END~~
+
+
+drop table constraint_column_usage_tbl6;
+go
+
+use db_constraint_column_usage;
+go
+
+create user user_const_col_usage1 for login user_const_col_usage1;
+go
+
+use master;
+go
+
+-- tsql user=user_const_col_usage1 password=123456789
+-- should return 0 since user_const_col_usage1 doesn't have any privileges
+use db_constraint_column_usage;
+go
+
+select count(*) from information_schema.constraint_column_usage where table_name='constraint_column_usage_tbl2';
+go
+~~START~~
+int
+0
+~~END~~
+
+
+use master
+go
+
+-- tsql
+use db_constraint_column_usage;
+go
+
+grant select on constraint_column_usage_tbl2 to user_const_col_usage1;
+go
+
+use master;
+go
+
+-- tsql user=user_const_col_usage1 password=123456789
+-- should return 2 since user_const_col_usage1 has select privileges
+use db_constraint_column_usage;
+go
+
+select count(*) from information_schema.constraint_column_usage where table_name='constraint_column_usage_tbl2';
+go
+~~START~~
+int
+2
+~~END~~
+
+
+use master
+go
+
+-- tsql
+use db_constraint_column_usage;
+go
+
+drop table constraint_column_usage_tbl2;
+go
+drop table constraint_column_usage_tbl1;
+go
+drop table constraint_column_usage_tbl5;
+go
+drop table constraint_column_usage_sc1.constraint_column_usage_tbl3;
+go
+drop table constraint_column_usage_sc1.constraint_column_usage_tbl4;
+go
+drop schema constraint_column_usage_sc1;
+go
+
+use master
+go
+
+drop database db_constraint_column_usage;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'user_const_col_usage1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login user_const_col_usage1;
+go
 

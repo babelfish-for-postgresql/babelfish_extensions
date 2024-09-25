@@ -279,6 +279,16 @@ GO
 DROP DATABASE db_unsupported2;
 GO
 
+CREATE DATABASE db_unsupported1 CONTAINMENT = NONE COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+DROP DATABASE db_unsupported1;
+GO
+
+CREATE DATABASE db_unsupported2 COLLATE BBF_Unicode_CP1_CI_AI WITH DB_CHAINING ON;
+GO
+DROP DATABASE db_unsupported2;
+GO
+
 CREATE DATABASE db_unsupported3 WITH DB_CHAINING ON;
 GO
 DROP DATABASE db_unsupported3;
@@ -309,6 +319,16 @@ GO
 DROP DATABASE db_unsupported8;
 GO
 
+CREATE DATABASE db_unsupported9 CONTAINMENT = PARTIAL COLLATE Arabic_CI_AS;
+GO
+DROP DATABASE db_unsupported9;
+GO
+
+CREATE DATABASE db_unsupported8 COLLATE SQL_Latin1_General_CP1_CI_AS WITH DB_CHAINING ON;
+GO
+DROP DATABASE db_unsupported8;
+GO
+
 CREATE DATABASE db_unsupported9 COLLATE Arabic_CI_AS;
 GO
 DROP DATABASE db_unsupported9;
@@ -320,7 +340,13 @@ GO
 CREATE DATABASE db_unsupported1 CONTAINMENT = NONE;
 GO
 
+CREATE DATABASE db_unsupported1 CONTAINMENT = NONE COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
 CREATE DATABASE db_unsupported2 CONTAINMENT = PARTIAL;
+GO
+
+CREATE DATABASE db_unsupported2 COLLATE BBF_Unicode_CP1_CI_AI WITH DB_CHAINING ON;
 GO
 
 CREATE DATABASE db_unsupported3 WITH DB_CHAINING ON;
@@ -1629,6 +1655,64 @@ CREATE FUNCTION babel_3571_f1()
 RETURNS TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline (id1, id2))
 AS
 EXTERNAL NAME babel_3571
+GO
+
+-- create login from windows
+-- Add 'dummydomain' domain entry
+exec sys.babelfish_add_domain_mapping_entry 'dummydomain', 'dummydomain.babel';
+GO
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT Servicesomething\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT ServiceNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT ServiceNT SerViCe\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [somethingNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT Service\NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT S\ervice\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT Service\\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN ["NT Service"\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [[NT Service]\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [["NT Service"]\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+
+CREATE LOGIN [NT SerViCe\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+
+CREATE LOGIN [dummydomain\NT Service] FROM WINDOWS
+GO
+
+-- Dropping 'nt service@DUMMYDOMAIN.BABEL'
+DROP LOGIN [dummydomain\NT Service]
+GO
+
+-- Remove entry for 'dummydomain'
+exec babelfish_remove_domain_mapping_entry 'dummydomain'
 GO
 
 -- INSERT BULK is No op. No point in failing this 

@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 CREATE LOGIN test1 WITH PASSWORD = 'abc';
 GO
 

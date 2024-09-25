@@ -143,3 +143,149 @@ GO
 -- tsql
 DROP LOGIN johndoe;
 GO
+
+-- tsql
+CREATE LOGIN r2 WITH PASSWORD = 'abc';
+GO
+
+CREATE LOGIN johndoe2 WITH PASSWORD = 'abc';
+GO
+
+CREATE DATABASE db1 COLLATE bbf_unicode_cp1_ci_ai;
+GO
+
+USE db1;
+GO
+
+CREATE USER r2;
+GO
+
+CREATE TABLE tb1 (a int);
+GO
+
+INSERT INTO tb1 (a) VALUES (1);
+GO
+
+GRANT SELECT ON tb1 TO r2;
+GO
+
+CREATE USER janedoe FOR LOGIN johndoe2;
+GO
+
+CREATE SCHEMA janedoe_schema;
+GO
+
+CREATE TABLE janedoe_schema.t1 (a int);
+GO
+
+INSERT INTO janedoe_schema.t1 (a) VALUES (10);
+GO
+
+GRANT SELECT ON janedoe_schema.t1 TO janedoe;
+GO
+
+USE master;
+GO
+
+SELECT db_name();
+GO
+
+USE tempdb;
+GO
+
+SELECT db_name();
+GO
+
+USE msdb;
+GO
+
+SELECT db_name();
+GO
+
+USE master;
+GO
+
+
+-- tsql user=r2 password=abc
+USE db1;
+GO
+
+SELECT db_name();
+GO
+
+SELECT user_name();
+GO
+
+SELECT schema_name();
+GO
+
+SELECT * FROM tb1;
+GO
+
+USE master;
+GO
+
+-- tsql user=johndoe2 password=abc
+USE db1;
+GO
+
+SELECT schema_name();
+GO
+
+ALTER USER janedoe WITH DEFAULT_SCHEMA = janedoe_schema;
+GO
+
+SELECT schema_name();
+GO
+
+SELECT * FROM t1;
+GO
+
+USE master;
+GO
+
+-- tsql
+USE db1;
+GO
+
+DROP TABLE tb1;
+GO
+
+DROP TABLE janedoe_schema.t1;
+GO
+
+DROP SCHEMA janedoe_schema;
+GO
+
+USE master;
+go
+
+DROP DATABASE db1;
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN r2;
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'johndoe2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN johndoe2;
+GO

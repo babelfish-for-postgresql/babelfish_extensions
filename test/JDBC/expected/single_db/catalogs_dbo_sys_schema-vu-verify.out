@@ -1,0 +1,7778 @@
+use master
+go
+select name from sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from ..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from ...sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from ..dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from master..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .master..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select distinct type from syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from ..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from ...syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from ..dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from master.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .master.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from master.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .master.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from master..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .master..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from tempdb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .tempdb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from tempdb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .tempdb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from tempdb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .tempdb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from myschematest_mydb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .myschematest_mydb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from myschematest_mydb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .myschematest_mydb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from myschematest_mydb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .myschematest_mydb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select top 3 config from sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ...sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ...syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 alias from syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from ..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from ...syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from ..dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from master.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .master.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from master.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .master.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from master..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .master..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from tempdb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .tempdb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from tempdb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .tempdb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from tempdb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .tempdb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from myschematest_mydb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .myschematest_mydb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from myschematest_mydb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .myschematest_mydb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from myschematest_mydb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .myschematest_mydb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select name from syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from ..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from ...syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from ..dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from master.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .master.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from master.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .master.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from master..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .master..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from tempdb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .tempdb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from tempdb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .tempdb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from tempdb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .tempdb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from myschematest_mydb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .myschematest_mydb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from myschematest_mydb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .myschematest_mydb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from myschematest_mydb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .myschematest_mydb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select 0 from sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ...sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select object_name(id) from syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from ..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from ...syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from ..dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from tempdb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select 0 from sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ...sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select object_name(id) from sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from ..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from ...sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from ..dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from tempdb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_name(id) from sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from ..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from ...sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from ..dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from tempdb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select schema_name(uid), object_name(id) from myschematest_mydb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .myschematest_mydb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from myschematest_mydb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .myschematest_mydb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from myschematest_mydb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .myschematest_mydb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select name from systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from ..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from ...systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from ..dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from master.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .master.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from master.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .master.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from master..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .master..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from myschematest_mydb.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from ..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from ...sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from ..dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from master.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .master.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from master.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .master.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from master..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .master..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from myschematest_mydb.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+exec p_myschematest
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from vw_myschematest order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+
+-- non-catalog table
+select * from master..tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+select * from .master..tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+go
+select * from master.dbo.tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+select * from .master.dbo.tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+
+select * from tempdb..tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+select * from .tempdb..tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+go
+select * from tempdb.dbo.tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+select * from .tempdb.dbo.tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+
+select * from myschematest_mydb..tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+select * from .myschematest_mydb..tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+go
+select * from myschematest_mydb.dbo.tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+select * from .myschematest_mydb.dbo.tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+
+-- negative tests
+select count(*) from master.myschema.sysobjects
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_myschema.sysobjects" does not exist)~~
+
+select count(*) from tempdb.myschema.sysobjects
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "tempdb_myschema.sysobjects" does not exist)~~
+
+select count(*) from myschematest_mydb.myschema.sysobjects
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "myschema.sysobjects" does not exist)~~
+
+
+
+use tempdb
+go
+select name from sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from ..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from ...sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from ..dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from master..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .master..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select distinct type from syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from ..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from ...syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from ..dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from master.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .master.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from master.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .master.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from master..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .master..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from tempdb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .tempdb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from tempdb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .tempdb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from tempdb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .tempdb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from myschematest_mydb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .myschematest_mydb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from myschematest_mydb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .myschematest_mydb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from myschematest_mydb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .myschematest_mydb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select top 3 config from sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ...sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ...syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 alias from syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from ..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from ...syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from ..dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from master.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .master.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from master.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .master.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from master..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .master..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from tempdb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .tempdb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from tempdb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .tempdb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from tempdb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .tempdb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from myschematest_mydb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .myschematest_mydb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from myschematest_mydb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .myschematest_mydb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from myschematest_mydb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .myschematest_mydb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select name from syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from ..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from ...syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from ..dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from master.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .master.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from master.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .master.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from master..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .master..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from tempdb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .tempdb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from tempdb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .tempdb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from tempdb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .tempdb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from myschematest_mydb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .myschematest_mydb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from myschematest_mydb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .myschematest_mydb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from myschematest_mydb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .myschematest_mydb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select 0 from sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ...sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select object_name(id) from syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from ..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from ...syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from ..dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from master.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from tempdb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select 0 from sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ...sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select object_name(id) from sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from ..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from ...sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from ..dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from master.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from tempdb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_name(id) from sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from ..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from ...sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from ..dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from master.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from tempdb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select schema_name(uid), object_name(id) from myschematest_mydb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .myschematest_mydb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from myschematest_mydb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .myschematest_mydb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from myschematest_mydb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .myschematest_mydb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select name from master.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .master.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from master.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .master.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from master..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .master..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from myschematest_mydb.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from master.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .master.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from master.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .master.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from master..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .master..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from myschematest_mydb.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+exec p_myschematest
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from vw_myschematest order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+
+-- non-catalog table
+select * from master..tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+select * from .master..tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+go
+select * from master.dbo.tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+select * from .master.dbo.tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+
+select * from tempdb..tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+select * from .tempdb..tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+go
+select * from tempdb.dbo.tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+select * from .tempdb.dbo.tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+
+select * from myschematest_mydb..tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+select * from .myschematest_mydb..tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+go
+select * from myschematest_mydb.dbo.tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+select * from .myschematest_mydb.dbo.tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+
+-- negative tests
+select count(*) from master.myschema.sysobjects
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_myschema.sysobjects" does not exist)~~
+
+select count(*) from tempdb.myschema.sysobjects
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "tempdb_myschema.sysobjects" does not exist)~~
+
+select count(*) from myschematest_mydb.myschema.sysobjects
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "myschema.sysobjects" does not exist)~~
+
+
+use myschematest_mydb
+go
+select name from sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from ..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from ...sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from ..dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from master..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .master..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select distinct type from syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from ..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from ...syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from ..dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from master.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .master.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from master.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .master.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from master..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .master..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from tempdb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .tempdb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from tempdb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .tempdb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from tempdb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .tempdb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from myschematest_mydb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .myschematest_mydb.dbo.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from myschematest_mydb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .myschematest_mydb.sys.syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from myschematest_mydb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select distinct type from .myschematest_mydb..syscharsets order by 1
+go
+~~START~~
+int
+1001
+~~END~~
+
+select top 3 config from sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ...sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.dbo.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.sys.sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb..sysconfigures order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ...syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from ..dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from master..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .master..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from tempdb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .tempdb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.dbo.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb.sys.syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from myschematest_mydb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 config from .myschematest_mydb..syscurconfigs order by 1
+go
+~~START~~
+int
+115
+124
+1126
+~~END~~
+
+select top 3 alias from syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from ..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from ...syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from ..dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from master.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .master.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from master.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .master.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from master..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .master..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from tempdb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .tempdb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from tempdb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .tempdb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from tempdb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .tempdb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from myschematest_mydb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .myschematest_mydb.dbo.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from myschematest_mydb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .myschematest_mydb.sys.syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from myschematest_mydb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select top 3 alias from .myschematest_mydb..syslanguages order by 1
+go
+~~START~~
+varchar
+ARABIC
+ARABIC (ALGERIA)
+ARABIC (BAHRAIN)
+~~END~~
+
+select name from syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from ..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from ...syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from ..dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from master.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .master.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from master.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .master.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from master..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .master..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from tempdb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .tempdb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from tempdb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .tempdb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from tempdb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .tempdb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from myschematest_mydb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .myschematest_mydb.dbo.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from myschematest_mydb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .myschematest_mydb.sys.syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from myschematest_mydb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select name from .myschematest_mydb..syslogins where name like 'login_myschematest_%' order by 1
+go
+~~START~~
+varchar
+login_myschematest_master
+login_myschematest_mydb
+login_myschematest_tempdb
+~~END~~
+
+select 0 from sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ...sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.dbo.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.sys.sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb..sysprocesses where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from ..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from ...syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from ..dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_name(id) from master.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from tempdb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.dbo.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.sys.syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb..syscolumns where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select 0 from sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ...sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from ..dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from master..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .master..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from tempdb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .tempdb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.dbo.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb.sys.sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select 0 from .myschematest_mydb..sysforeignkeys where 0 = 1 order by 1
+go
+~~START~~
+int
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from ..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from ...sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from ..dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_name(id) from master.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from tempdb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.dbo.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb.sys.sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from myschematest_mydb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_schema_name(id, db_id('myschematest_mydb')), object_name(id) from .myschematest_mydb..sysindexes where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from ..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from ...sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from ..dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select object_name(id) from master.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from master..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from .master..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_master
+~~END~~
+
+select object_name(id) from tempdb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from tempdb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select object_name(id) from .tempdb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1
+go
+~~START~~
+varchar
+tb_myschematest_tempdb
+~~END~~
+
+select schema_name(uid), object_name(id) from myschematest_mydb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .myschematest_mydb.dbo.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from myschematest_mydb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .myschematest_mydb.sys.sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from myschematest_mydb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select schema_name(uid), object_name(id) from .myschematest_mydb..sysobjects where object_name(id) like 'tb_myschematest_%' order by 1,2
+go
+~~START~~
+varchar#!#varchar
+dbo#!#tb_myschematest_mydb
+myschema#!#tb_myschematest_mydb
+~~END~~
+
+select name from systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from ..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from ...systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from ..dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from master.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .master.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from master.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .master.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from master..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from .master..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_master
+~~END~~
+
+select name from myschematest_mydb.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.dbo.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.sys.systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb..systypes where name like 'type_myschematest_%' order by 1
+go
+~~START~~
+varchar
+type_myschematest_mydb
+~~END~~
+
+select name from sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from ..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from ...sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from ..dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from master.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .master.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from master.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .master.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from master..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from .master..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_master
+~~END~~
+
+select name from myschematest_mydb.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.dbo.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb.sys.sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from myschematest_mydb..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+select name from .myschematest_mydb..sysusers where name like 'user_myschematest_%' order by 1
+go
+~~START~~
+varchar
+user_myschematest_mydb
+~~END~~
+
+exec p_myschematest
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+select name from vw_myschematest order by 1
+go
+~~START~~
+text
+myschematest_mydb
+~~END~~
+
+
+-- non-catalog table
+select * from master..tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+select * from .master..tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+go
+select * from master.dbo.tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+select * from .master.dbo.tb_myschematest_master
+go
+~~START~~
+int
+~~END~~
+
+
+select * from tempdb..tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+select * from .tempdb..tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+go
+select * from tempdb.dbo.tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+select * from .tempdb.dbo.tb_myschematest_tempdb
+go
+~~START~~
+int
+~~END~~
+
+
+select * from myschematest_mydb..tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+select * from .myschematest_mydb..tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+go
+select * from myschematest_mydb.dbo.tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+select * from .myschematest_mydb.dbo.tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+
+-- negative tests
+select count(*) from master.myschema.sysobjects
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_myschema.sysobjects" does not exist)~~
+
+select count(*) from tempdb.myschema.sysobjects
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "tempdb_myschema.sysobjects" does not exist)~~
+
+select count(*) from myschematest_mydb.myschema.sysobjects
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "myschema.sysobjects" does not exist)~~
+
+
+
+-- test for correct resolution of 'object' and '.object' notation in case of a non-dbo default schema
+go
+-- tsql user=login_myschematest_mydb password=12345678
+use myschematest_mydb
+go
+select db_name(), user_name(), suser_name()
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+myschematest_mydb#!#user_myschematest_mydb#!#login_myschematest_mydb
+~~END~~
+
+
+-- CORRECT: should resolve to dbo.tb_myschematest_mydb 
+select * from dbo.tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+
+-- CORRECT: should resolve to myschema.tb_myschematest_mydb
+select * from tb_myschematest_mydb
+go
+~~START~~
+varchar
+myschema.tb_myschematest_mydb
+~~END~~
+
+
+-- CORRECT: should resolve to myschema.tb_myschematest_mydb
+select * from .tb_myschematest_mydb
+go
+~~START~~
+varchar
+myschema.tb_myschematest_mydb
+~~END~~
+
+
+-- WRONG: should resolve to myschema.tb_myschematest_mydb but currently (incorrectly) resolves to dbo.tb_myschematest_mydb
+-- this needs to be addressed in a different fix, for BABEL-5050
+select * from myschematest_mydb..tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+
+select * from .myschematest_mydb..tb_myschematest_mydb
+go
+~~START~~
+varchar
+dbo.tb_myschematest_mydb
+~~END~~
+

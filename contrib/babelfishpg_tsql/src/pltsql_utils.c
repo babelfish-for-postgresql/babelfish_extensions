@@ -855,6 +855,13 @@ pltsql_rollback_txn(void)
 	StartTransactionCommand();
 }
 
+void
+pltsql_abort_any_transaction(void)
+{
+	NestedTranCount = 0;
+	AbortOutOfAnyTransaction();
+}
+
 bool
 pltsql_get_errdata(int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state)
 {
@@ -1014,12 +1021,7 @@ update_DropOwnedStmt(Node *n, List *role_list)
 	foreach(elem, role_list)
 	{
 		char	   *name = (char *) lfirst(elem);
-		RoleSpec   *tmp = makeNode(RoleSpec);
-
-		tmp->roletype = ROLESPEC_CSTRING;
-		tmp->location = -1;
-		tmp->rolename = pstrdup(name);
-		rolespec_list = lappend(rolespec_list, tmp);
+		rolespec_list = lappend(rolespec_list, make_rolespec_node(name));
 	}
 	stmt->roles = rolespec_list;
 }
@@ -2371,4 +2373,31 @@ privilege_to_string(AclMode privilege)
 			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
 	}
 	return NULL;
+}
+
+AccessPriv *
+make_accesspriv_node(const char *priv_name)
+{
+	AccessPriv *n = makeNode(AccessPriv);
+
+	Assert(priv_name != NULL || strlen(priv_name) != 0);
+
+	n->priv_name = pstrdup(priv_name);
+	n->cols = NIL;
+
+	return n;
+}
+
+RoleSpec *
+make_rolespec_node(const char *rolename)
+{
+	RoleSpec *n = makeNode(RoleSpec);
+
+	Assert(rolename != NULL || strlen(rolename) != 0);
+
+	n->roletype = ROLESPEC_CSTRING;
+	n->location = -1;
+	n->rolename = pstrdup(rolename);
+
+	return n;
 }

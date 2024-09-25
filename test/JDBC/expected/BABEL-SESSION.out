@@ -217,3 +217,223 @@ void
 -- tsql
 DROP LOGIN johndoe;
 GO
+
+-- tsql
+CREATE LOGIN r2 WITH PASSWORD = 'abc';
+GO
+
+CREATE LOGIN johndoe2 WITH PASSWORD = 'abc';
+GO
+
+CREATE DATABASE db1 COLLATE bbf_unicode_cp1_ci_ai;
+GO
+
+USE db1;
+GO
+
+CREATE USER r2;
+GO
+
+CREATE TABLE tb1 (a int);
+GO
+
+INSERT INTO tb1 (a) VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON tb1 TO r2;
+GO
+
+CREATE USER janedoe FOR LOGIN johndoe2;
+GO
+
+CREATE SCHEMA janedoe_schema;
+GO
+
+CREATE TABLE janedoe_schema.t1 (a int);
+GO
+
+INSERT INTO janedoe_schema.t1 (a) VALUES (10);
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON janedoe_schema.t1 TO janedoe;
+GO
+
+USE master;
+GO
+
+SELECT db_name();
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+USE tempdb;
+GO
+
+SELECT db_name();
+GO
+~~START~~
+nvarchar
+tempdb
+~~END~~
+
+
+USE msdb;
+GO
+
+SELECT db_name();
+GO
+~~START~~
+nvarchar
+msdb
+~~END~~
+
+
+USE master;
+GO
+
+
+-- tsql user=r2 password=abc
+USE db1;
+GO
+
+SELECT db_name();
+GO
+~~START~~
+nvarchar
+db1
+~~END~~
+
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+r2
+~~END~~
+
+
+SELECT schema_name();
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT * FROM tb1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+-- tsql user=johndoe2 password=abc
+USE db1;
+GO
+
+SELECT schema_name();
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+ALTER USER janedoe WITH DEFAULT_SCHEMA = janedoe_schema;
+GO
+
+SELECT schema_name();
+GO
+~~START~~
+varchar
+janedoe_schema
+~~END~~
+
+
+SELECT * FROM t1;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+USE master;
+GO
+
+-- tsql
+USE db1;
+GO
+
+DROP TABLE tb1;
+GO
+
+DROP TABLE janedoe_schema.t1;
+GO
+
+DROP SCHEMA janedoe_schema;
+GO
+
+USE master;
+go
+
+DROP DATABASE db1;
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN r2;
+GO
+
+-- psql
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'johndoe2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN johndoe2;
+GO

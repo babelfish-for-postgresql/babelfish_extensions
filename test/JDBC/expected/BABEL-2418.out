@@ -17,10 +17,46 @@ SELECT nspname FROM sys.babelfish_namespace_ext ORDER BY nspname;
 go
 ~~START~~
 varchar
-babel_2418_schema1
-babel_2418_schema2
-dbo
-guest
+babel_2418_db_babel_2418_schema1
+babel_2418_db_babel_2418_schema2
+babel_2418_db_dbo
+babel_2418_db_guest
+master_dbo
+master_guest
+msdb_dbo
+msdb_guest
+tempdb_dbo
+tempdb_guest
+~~END~~
+
+
+USE master
+go
+
+DROP DATABASE babel_2418_db
+go
+
+-- Tests for db level collation
+CREATE DATABASE babel_2418_db COLLATE BBF_Unicode_CP1_CI_AI
+go
+
+USE babel_2418_db
+go
+
+CREATE SCHEMA babel_2418_schema1
+go
+
+CREATE SCHEMA babel_2418_schema2
+go
+
+SELECT nspname FROM sys.babelfish_namespace_ext ORDER BY nspname;
+go
+~~START~~
+varchar
+babel_2418_db_babel_2418_schema1
+babel_2418_db_babel_2418_schema2
+babel_2418_db_dbo
+babel_2418_db_guest
 master_dbo
 master_guest
 msdb_dbo

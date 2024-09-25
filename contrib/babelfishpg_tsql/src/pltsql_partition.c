@@ -152,7 +152,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_partition_function_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
 
 	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
@@ -172,9 +172,6 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	input_parameter_type = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_type, RelationGetDescr(rel), &isnull));
 	values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
 	deconstruct_array(values, sql_variant_type_oid, -1, false, 'i', &datum_values, &nulls, &nelems);
-
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
 
 	/*
 	 * If the partition columns type is UDT type, then we need
@@ -222,6 +219,10 @@ bbf_create_partition_tables(CreateStmt *stmt)
 								sql_variant_type_oid, -1,
 								CSTRINGOID, -1);
 	}
+
+	/* Close the catalog. */
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
 
 	/*
 	 * Find default schema for current user when schema

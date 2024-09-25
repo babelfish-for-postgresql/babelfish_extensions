@@ -7,7 +7,21 @@ go
 DROP DATABASE [babelfish-1234];
 go
 
+-- Tests for db level collation
+CREATE DATABASE [babelfish-1234] COLLATE BBF_Unicode_CP1_CI_AI;
+go
+
+DROP DATABASE [babelfish-1234];
+go
+
 CREATE DATABASE babel_recursive_cte;
+go
+
+DROP DATABASE babel_recursive_cte;
+go
+
+-- Tests for db level collation
+CREATE DATABASE babel_recursive_cte COLLATE BBF_Unicode_CP1_CI_AI;
 go
 
 DROP DATABASE babel_recursive_cte;
@@ -88,7 +102,27 @@ go
 DROP DATABASE babel_2600_db_1
 go
 
+-- Tests for db level collation
+CREATE DATABASE babel_2600_db_1 COLLATE BBF_Unicode_CP1_CI_AI
+go
+USE babel_2600_db_1
+go
+USE master
+go
+DROP DATABASE babel_2600_db_1
+go
+
 CREATE DATABASE babel_2600_db_2
+go
+USE babel_2600_db_2
+go
+USE master
+go
+DROP DATABASE babel_2600_db_2
+go
+
+-- Tests for db level collation
+CREATE DATABASE babel_2600_db_2 COLLATE BBF_Unicode_CP1_CI_AI
 go
 USE babel_2600_db_2
 go
@@ -106,6 +140,16 @@ go
 DROP DATABASE babel_2600_db_3
 go
 
+-- Tests for db level collation
+CREATE DATABASE babel_2600_db_3 COLLATE BBF_Unicode_CP1_CI_AI
+go
+USE babel_2600_db_3
+go
+USE master
+go
+DROP DATABASE babel_2600_db_3
+go
+
 CREATE DATABASE babel_2600_db_4
 go
 USE babel_2600_db_4
@@ -115,7 +159,27 @@ go
 DROP DATABASE babel_2600_db_4
 go
 
+-- Tests for db level collation
+CREATE DATABASE babel_2600_db_4 COLLATE BBF_Unicode_CP1_CI_AI
+go
+USE babel_2600_db_4
+go
+USE master
+go
+DROP DATABASE babel_2600_db_4
+go
+
 CREATE DATABASE babel_2600_db_5
+go
+USE babel_2600_db_5
+go
+USE master
+go
+DROP DATABASE babel_2600_db_5
+go
+
+-- Tests for db level collation
+CREATE DATABASE babel_2600_db_5 COLLATE BBF_Unicode_CP1_CI_AI
 go
 USE babel_2600_db_5
 go
@@ -162,6 +226,52 @@ DROP DATABASE babel_2600_db
 go
 
 CREATE DATABASE babel_2600_db
+go
+USE babel_2600_db
+go
+USE master
+go
+DROP DATABASE babel_2600_db
+go
+
+-- Tests for db level collation
+CREATE DATABASE babel_2600_db COLLATE BBF_Unicode_CP1_CI_AI
+go
+USE babel_2600_db
+go
+USE master
+go
+DROP DATABASE babel_2600_db
+go
+
+CREATE DATABASE babel_2600_db COLLATE BBF_Unicode_CP1_CI_AI
+go
+USE babel_2600_db
+go
+USE master
+go
+DROP DATABASE babel_2600_db
+go
+
+CREATE DATABASE babel_2600_db COLLATE BBF_Unicode_CP1_CI_AI
+go
+USE babel_2600_db
+go
+USE master
+go
+DROP DATABASE babel_2600_db
+go
+
+CREATE DATABASE babel_2600_db COLLATE BBF_Unicode_CP1_CI_AI
+go
+USE babel_2600_db
+go
+USE master
+go
+DROP DATABASE babel_2600_db
+go
+
+CREATE DATABASE babel_2600_db COLLATE BBF_Unicode_CP1_CI_AI
 go
 USE babel_2600_db
 go

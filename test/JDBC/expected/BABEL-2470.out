@@ -2,7 +2,7 @@
 -- inner select should return all 1's (e.g. columns are the same)
 select owner_sid from 
 sys.sysdatabases as sdb 
-inner join sys.databases as d on sdb.name = d.name where owner_sid != [sid]
+inner join sys.databases as d on sdb.name = d.name collate database_default where owner_sid != [sid]
 go
 ~~START~~
 varbinary

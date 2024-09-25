@@ -196,6 +196,7 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->get_tds_database_backend_count = &get_tds_database_backend_count;
 	pltsql_plugin_handler_ptr->get_stat_values = &tds_stat_get_activity;
 	pltsql_plugin_handler_ptr->invalidate_stat_view = &invalidate_stat_table;
+	pltsql_plugin_handler_ptr->get_tds_numbackends = &tdsstat_fetch_stat_numbackends;
 	pltsql_plugin_handler_ptr->get_host_name = &get_tds_host_name;
 	pltsql_plugin_handler_ptr->get_client_pid = &get_tds_client_pid;
 	pltsql_plugin_handler_ptr->get_context_info = &get_tds_context_info;

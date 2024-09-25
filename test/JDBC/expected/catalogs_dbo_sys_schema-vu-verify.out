@@ -2594,7 +2594,7 @@ select count(*) from myschematest_mydb.myschema.sysobjects
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "myschema.sysobjects" does not exist)~~
+~~ERROR (Message: relation "myschematest_mydb_myschema.sysobjects" does not exist)~~
 
 
 
@@ -5096,7 +5096,7 @@ select count(*) from myschematest_mydb.myschema.sysobjects
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "myschema.sysobjects" does not exist)~~
+~~ERROR (Message: relation "myschematest_mydb_myschema.sysobjects" does not exist)~~
 
 
 use myschematest_mydb
@@ -7716,7 +7716,7 @@ select count(*) from myschematest_mydb.myschema.sysobjects
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "myschema.sysobjects" does not exist)~~
+~~ERROR (Message: relation "myschematest_mydb_myschema.sysobjects" does not exist)~~
 
 
 

@@ -1,0 +1,3 @@
+# Schedule File for JDBC Test Framework for local run for database level collation to ignore specific tests
+# 1. Lines starting with '#' will be treated as comments
+# 2. To ignore any test file, add an entry like ignore#!#<test_file_name>

@@ -4,7 +4,7 @@ inputs:
   migration_mode:
     description: 'Database migration mode'
     required: no
-    default: 'single-db'
+    default: 'multi-db'
   pg_old_dir:
     description: "Previous postgres intall directory"
     required: false

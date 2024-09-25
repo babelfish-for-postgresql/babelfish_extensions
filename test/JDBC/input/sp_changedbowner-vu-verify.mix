@@ -195,6 +195,144 @@ go
 drop database change_owner_db_sp
 go
 
+-- Tests for db level collation
+-- tsql user=dba_login_sp password=12345678
+use master
+go
+create database change_OWNER_db_sp COLLATE BBF_Unicode_CP1_CI_AI
+go
+use change_owner_DB_SP
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner 'no_such_login_sp'
+go
+
+-- new owner cannot be a user in the DB already
+create user new_owner_login_sp
+go
+execute sp_changedbowner new_owner_login_sp
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+drop user new_owner_login_sp
+go
+execute sp_changedbowner new_owner_LOGIN_SP
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+
+-- tsql user=new_owner_LOGIN_SP password=12345678
+use CHANGE_OWNER_DB_SP
+go
+select user_name(), db_name()
+go
+use master
+go
+
+-- tsql user=dba_login_sp password=12345678
+-- second argument is ignored
+use change_owner_db_sp
+go
+execute sp_changedbowner NEW_owner_login_sp2, null
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner [new_owner_LOGIN_SP3], 12345
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner [NEW_owner_login_sp3], 'abcde'
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner [new_owner_LOGIN_SP 4], 'abcdefgh'
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner "NEW_owner_login_sp5"
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner @loginame = "new_owner_LOGIN_SP 6", @map = 'some-string'
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+
+use change_owner_db_sp
+go
+execute sp_changedbowner "new_owner_login_sp"
+go
+use master
+go
+
+-- change owner to yourself
+-- tsql user=new_owner_LOGIN_SP password=12345678
+use change_owner_db_sp
+go
+select user_name(), db_name()
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner "new_owner_login_sp"
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner "NEW_OWNER_LOGIN_SP"
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner [NEW_owner_login_sp]
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+use master
+go
+
+-- tsql user=dba_login_sp password=12345678
+-- roll back owner change in transaction
+use change_owner_db_sp
+go
+begin tran
+go
+select 'before owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner NEW_owner_login_sp2
+go
+select 'after owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+rollback
+go
+select 'after rollback', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+
+
+-- NULL as new owner is a no-op
+execute sp_changedbowner NULL
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+execute sp_changedbowner @loginame=NULL
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+
+-- non-existing logins
+execute sp_changedbowner ''
+go
+execute sp_changedbowner ' '
+go
+execute sp_changedbowner @loginame=' '
+go
+execute sp_changedbowner [ ]
+go
+execute sp_changedbowner @loginame=[ ]
+go
+use master
+go
+drop database change_owner_db_sp
+go
+
 -- tests for long names and mixed case
 create login    LOGIN63long_345678901234567890123456789012345678901234567890123 with password = '12345678'
 go
@@ -219,10 +357,49 @@ go
 drop database DB63long_012345678901234567890123456789012345678901234567890123
 go
 
+-- Tests for db level collation
+-- tsql user=dba_login_sp password=12345678
+-- tests for long names and mixed case
+create database DB63long_012345678901234567890123456789012345678901234567890123 COLLATE BBF_Unicode_CP1_CI_AI
+go
+use DB63long_012345678901234567890123456789012345678901234567890123
+go
+execute sp_changedbowner LOGIN63long_345678901234567890123456789012345678901234567890123
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
+go
+use master
+go
+
+-- tsql user=LOGIN63long_345678901234567890123456789012345678901234567890123 password=12345678
+use DB63long_012345678901234567890123456789012345678901234567890123
+go
+select user_name(), db_name()
+go
+use master
+go
+drop database DB63long_012345678901234567890123456789012345678901234567890123
+go
+
 -- tsql user=dba_login_sp password=12345678
 create login    LOGIN64long_3456789012345678901234567890123456789012345678901234 with password = '12345678'
 go
 create database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+use DB64long_0123456789012345678901234567890123456789012345678901234
+go
+-- this returns 'principal not found' due to a bug in SUSER_ID() for names > 63 chars
+execute sp_changedbowner "LOGIN64long_3456789012345678901234567890123456789012345678901234"
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
+go
+use master
+go
+drop database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+
+-- Tests for db level collation
+create database DB64long_0123456789012345678901234567890123456789012345678901234 COLLATE BBF_Unicode_CP1_CI_AI
 go
 use DB64long_0123456789012345678901234567890123456789012345678901234
 go

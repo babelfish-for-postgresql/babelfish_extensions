@@ -3,7 +3,7 @@ select databasepropertyex(N'master',N'Collation')
 GO
 ~~START~~
 sql_variant
-sql_latin1_general_cp1_ci_as
+bbf_unicode_cp1_ci_as
 ~~END~~
 
 select databasepropertyex(N'master',N'IsInStandBy')

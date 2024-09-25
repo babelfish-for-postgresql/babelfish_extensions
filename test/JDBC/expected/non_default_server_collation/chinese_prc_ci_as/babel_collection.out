@@ -425,7 +425,7 @@ varchar
 abcD
 ~~END~~
 
-select c1 from testing4 where c1 NOT LIKE lower('%s');
+select c1 from testing4 where c1 NOT LIKE lower('%s') COLLATE sql_latin1_general_cp1_ci_as;
 GO
 ~~START~~
 varchar

@@ -148,6 +148,7 @@ forjson
 forjson-subquery
 forjson-datatypes
 forxml
+forxml-path
 forxml-subquery
 BABEL-PROCID
 babel_trigger
@@ -394,7 +395,7 @@ bbf_view_def
 BABEL-3802
 BABEL-3914
 BABEL_OBJECT_NAME
-sys-systypes
+sys-systypes-before-16-2
 BABEL_OBJECT_DEFINITION
 Test-sp_rename
 Test-sp_rename-dep
@@ -456,6 +457,9 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
+string_agg-before-15_9-or-16_5
+getdate-before-15_9-or-16_5
 space
 binary-datatype-operators
+cast-varchar-to-time
 

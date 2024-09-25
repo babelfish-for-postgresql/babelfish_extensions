@@ -32,6 +32,7 @@
 #include "commands/trigger.h"
 #include "commands/view.h"
 #include "common/logging.h"
+#include "executor/execExpr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -44,6 +45,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse_param.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
@@ -54,6 +56,8 @@
 #include "parser/scansup.h"
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
+#include "storage/lock.h"
+#include "storage/sinvaladt.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -162,6 +166,8 @@ static void pltsql_GetNewObjectId(VariableCache variableCache);
 static Oid  pltsql_GetNewTempObjectId(void);
 static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
+static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
+static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
@@ -190,6 +196,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static void pass_pivot_data_to_fcinfo(FunctionCallInfo fcinfo, Expr *expr);
+static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
 
 /*****************************************
  * 			Replication Hooks
@@ -208,6 +215,12 @@ static bool is_partitioned_table_reloptions_allowed(Datum reloptions);
  * 			Planner Hook
  *****************************************/
 static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+
+/*****************************************
+ * 			parser Hook
+ *****************************************/
+static Oid set_param_collation(Param *param);
+static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -233,6 +246,8 @@ static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
 static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
+static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_msg_hook = NULL;
+static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
@@ -268,6 +283,7 @@ static pltsql_unique_constraint_nulls_ordering_hook_type prev_pltsql_unique_cons
 static pltsql_strpos_non_determinstic_hook_type prev_pltsql_strpos_non_determinstic_hook = NULL;
 static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determinstic_hook = NULL;
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
+static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -359,6 +375,12 @@ InstallExtendedHooks(void)
 
 	prev_GetNewTempOidWithIndex_hook = GetNewTempOidWithIndex_hook;
 	GetNewTempOidWithIndex_hook = pltsql_GetNewTempOidWithIndex;
+
+	prev_pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg_hook;
+	pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg;
+
+	prev_pltsql_get_tsql_enr_from_oid_hook = pltsql_get_tsql_enr_from_oid_hook;
+	pltsql_get_tsql_enr_from_oid_hook = pltsql_get_tsql_enr_from_oid;
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
@@ -472,6 +494,11 @@ InstallExtendedHooks(void)
 	prev_pltsql_is_partitioned_table_reloptions_allowed_hook = pltsql_is_partitioned_table_reloptions_allowed_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = is_partitioned_table_reloptions_allowed; 
 
+	handle_param_collation_hook = set_param_collation;
+	handle_default_collation_hook = default_collation_for_builtin_type;
+
+	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
+	ExecFuncProc_AclCheck_hook = pltsql_ExecFuncProc_AclCheck;
 }
 
 void
@@ -539,9 +566,12 @@ UninstallExtendedHooks(void)
 	pltsql_strpos_non_determinstic_hook = prev_pltsql_strpos_non_determinstic_hook;
 	pltsql_replace_non_determinstic_hook = prev_pltsql_replace_non_determinstic_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;
+	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
+	handle_param_collation_hook = NULL;
+	handle_default_collation_hook = NULL;
 }
 
 /*****************************************
@@ -818,6 +848,38 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	return newOid;
 }
 
+static AclResult
+pltsql_ExecFuncProc_AclCheck(Oid funcid)
+{
+	Oid userid = GetUserId();
+
+	/* In TDS client, the permissions might need to be checked against session user. */
+	if (IS_TDS_CLIENT())
+	{
+		Oid schema_id = get_func_namespace(funcid);
+
+		if (OidIsValid(schema_id))
+		{
+			char *nspname = get_namespace_name(schema_id);
+
+			/*
+			 * Check if function's schema is from a different logical database and
+			 * it is not a shared schema. If yes, then set userid to session user
+			 * to allow cross database access.
+			 */
+			if (nspname != NULL && !is_shared_schema(nspname) &&
+				!is_schema_from_db(schema_id, get_cur_db_id()))
+				userid = GetSessionUserId();
+			if (nspname)
+				pfree(nspname);
+		}
+	}
+	else if (prev_ExecFuncProc_AclCheck_hook)
+		return prev_ExecFuncProc_AclCheck_hook(funcid);
+
+	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
+}
+
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
@@ -841,6 +903,58 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
 		if (pltsql_explain_wal)
 			queryDesc->instrument_options |= INSTRUMENT_WAL;
+	}
+
+	/*
+	 * In TDS client, the RTE permissions might need to be checked against login mapped to given checkAsUser,
+	 * if it is valid, otherwise permissions are checked against session user (current login).
+	 */
+	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL)
+	{
+		ListCell	*lc;
+
+		foreach(lc, queryDesc->plannedstmt->permInfos)
+		{
+			RTEPermissionInfo	*perminfo = lfirst_node(RTEPermissionInfo, lc);
+			Oid             	relOid = perminfo->relid;
+
+			if (OidIsValid(relOid))
+			{
+				Oid schema_id = get_rel_namespace(relOid);
+
+				if (OidIsValid(schema_id))
+				{
+					char *nspname = get_namespace_name(schema_id);
+
+					/*
+					 * Check if relation's schema is valid and is not a shared schema. If yes,
+					 * then replace checkAsUser to its mapped login if present otherwise replace
+					 * with session user (current login).
+					 * We do not blindly want to check the permissions against session user (current login)
+					 * since permissions of RTEs inside a view are checked against that view's owner
+					 * which can very well be a user of some different database. So if we blindly check
+					 * permission against session user instead of view's owner then it would break view's
+					 * ownership behavior. Instead, we will replace checkAsUser with it's corresponding mapped
+					 * login if present and only in cases where checkAsUser is not set, we will replace it
+					 * with session user (login). We are using login to allow cross database queries since login
+					 * can access all its objects across the databases.
+					 */
+					if (nspname != NULL && !is_shared_schema(nspname))
+					{
+						if (OidIsValid(perminfo->checkAsUser))
+						{
+							Oid loginId = get_login_for_user(perminfo->checkAsUser, nspname);
+							if (OidIsValid(loginId))
+								perminfo->checkAsUser = loginId;
+						}
+						else
+							perminfo->checkAsUser = GetSessionUserId();
+					}
+					if (nspname)
+						pfree(nspname);
+				}
+			}
+		}
 	}
 
 	if (prev_ExecutorStart)
@@ -2009,7 +2123,11 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 					 * for the last_dot position
 					 */
 					if (*colname_start == '-' && *(colname_start+1) == '-')
+					{
+						last_dot++;
+						colname_start = last_dot;
 						break;
+					}
 					if(open_square_bracket == 0 && *colname_start == '"')
 					{
 						double_quotes++;
@@ -3554,18 +3672,18 @@ alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int 
 		ScanKeyEntryInitialize(&key[1], 0,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber, InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 		ScanKeyEntryInitialize(&key[2], 0,
 					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber, InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ, CStringGetTextDatum(object_name));
 		ScanKeyEntryInitialize(&key[3], 0,
 					Anum_bbf_schema_perms_object_type,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_type));
 
@@ -4670,6 +4788,18 @@ static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
 	return true;
 }
 
+static bool
+pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg)
+{
+	return SIMessageIsForTempTable(msg);
+}
+
+static EphemeralNamedRelation
+pltsql_get_tsql_enr_from_oid(const Oid oid)
+{
+	return temp_oid_buffer_size > 0 ? get_ENR_withoid(currentQueryEnv, oid, ENR_TSQL_TEMP) : NULL;
+}
+
 /*
  * Modify the Tuple Descriptor to match the expected
  * result set. Currently used only for T-SQL OPENQUERY.
@@ -4839,8 +4969,10 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		if (nulls[attnum - 1])
 		{
 			const char *owner = GetUserNameFromId(get_sa_role_oid(), false);
+			Name owner_namedata = (Name) palloc(NAMEDATALEN);
 
-			values[attnum - 1] = CStringGetDatum(owner);
+			namestrcpy(owner_namedata, owner);
+			values[attnum - 1] = NameGetDatum(owner_namedata);
 			nulls[attnum - 1] = false;
 		}
 	}
@@ -5273,4 +5405,86 @@ is_partitioned_table_reloptions_allowed(Datum reloptions)
 		}
 	}
 	return true;
+}
+
+static bool
+is_babelfish_builtin_type(Oid typid)
+{
+	bool res = false;
+	HeapTuple	tp;
+	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		res = (typtup->typnamespace == sys_schema_oid);
+		ReleaseSysCache(tp);
+	}
+	return res;
+}
+
+/*
+ * set_param_collation - sets the collation of the given parameter
+ * 					   based on the sql dialect.
+ *
+ * 	@param param - parameter to set the collation for
+ * 	@return - collation of the parameter
+ */
+static Oid
+set_param_collation(Param *param)
+{
+	/*
+	 * If sql_dialect is PG then we need to set DEFAULT_COLLATION_OID for any param
+	 * to handle special cases such as checking foreign key when tupe is being inserted
+	 * in the table through TDS endpoint.
+	 */
+	if (sql_dialect == SQL_DIALECT_PG && is_babelfish_builtin_type(param->paramtype))
+	{
+		return DEFAULT_COLLATION_OID;
+	}
+	else
+	{
+		return get_typcollation(param->paramtype);
+	}
+}
+
+/*
+ * default_collation_for_builtin_type - returns the default collation for the given
+ * 									   builtin type.
+ *
+ * 	@param typ - given type (as type struct)
+ * 	@return - default collation for the given builtin type based on dialect
+ */
+static Oid
+default_collation_for_builtin_type(Type typ, bool handle_pg_type)
+{
+	Form_pg_type	typtup;
+	Oid				oid = InvalidOid;
+
+	typtup = (Form_pg_type) GETSTRUCT(typ);
+	if (OidIsValid(typtup->typcollation) &&
+		sql_dialect == SQL_DIALECT_TSQL &&
+		(typtup->typnamespace == sys_schema_oid))
+	{
+		/*
+		 * Always set CLUSTER_COLLATION_OID() for babelfish collatable types so that
+		 * we can set collation according to database or server level later.
+		 */
+		oid = CLUSTER_COLLATION_OID();
+	}
+	else
+	{
+		oid = typtup->typcollation;
+	}
+
+	/*
+	 * Special handling for PG datatypes such as TEXT because Babelfish does not define sys.TEXT.
+	 * This is required as Babelfish currently does not handle collation of String Const node correctly.
+	 * TODO: Fix the handling of the collation for String Const node.
+	 */
+	if (handle_pg_type && oid == DEFAULT_COLLATION_OID)
+	{
+		oid = CLUSTER_COLLATION_OID();
+	}
+
+	return oid;
 }

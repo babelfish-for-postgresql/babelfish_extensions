@@ -867,7 +867,16 @@ TdsReadNextPendingBcpRequest(StringInfo message)
 
 	if (TdsReadNextBuffer() == EOF)
 		return EOF;
-	Assert(TdsRecvMessageType == TDS_BULK_LOAD);
+
+	/*
+	 * The driver could send an attention packet even in the middle of a
+	 * large TDS request. In that case we should abort the entire request which
+	 * has been read.
+	 */
+	if (TdsRecvMessageType != TDS_BULK_LOAD)
+		ereport(FATAL,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("Unexpected out of band packet while fetching a Bulk Load Request.")));
 
 
 	readBytes = TdsLeftInPacket;

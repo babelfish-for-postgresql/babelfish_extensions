@@ -17,6 +17,7 @@
 #include "utils/varlena.h"
 #include "catalog.h"
 #include "catalog.h"
+#include "collation.h"
 
 PG_FUNCTION_INFO_V1(databasepropertyex);
 
@@ -36,10 +37,13 @@ databasepropertyex(PG_FUNCTION_ARGS)
 
 	if (strcasecmp(property, "Collation") == 0)
 	{
-		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+		char *database_collation_name = get_collation_name_for_db(dbname);
 
-		if (server_collation_name)
-			vch = (*common_utility_plugin_ptr->tsql_varchar_input) (server_collation_name, strlen(server_collation_name), -1);
+		if (database_collation_name)
+			vch = (*common_utility_plugin_ptr->tsql_varchar_input) (database_collation_name, strlen(database_collation_name), -1);
+
+		if (database_collation_name)
+			pfree(database_collation_name);
 	}
 	else if (strcasecmp(property, "ComparisonStyle") == 0)
 	{

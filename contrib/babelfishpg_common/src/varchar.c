@@ -543,7 +543,7 @@ varchar(PG_FUNCTION_ARGS)
 		 * function, varchar would be called from TDS to send the OUTPUT
 		 * params of stored proc.
 		 */
-		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
 	}
 
 	/* count the number of chars present in input string. */
@@ -888,11 +888,15 @@ Datum
 varchar2time(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	int32		typmod = -1;
 	char	   *str;
 	TimeADT		time;
+	
+	if (PG_NARGS() > 1)
+		typmod = PG_GETARG_INT32(1);
 
 	str = varchar2cstring(source);
-	time = DatumGetTimeADT(DirectFunctionCall1(time_in, CStringGetDatum(str)));
+	time = DatumGetTimeADT(DirectFunctionCall3(time_in, CStringGetDatum(str), InvalidOid, typmod));
 	pfree(str);
 	PG_RETURN_TIMEADT(time);
 }
@@ -1111,7 +1115,7 @@ bpchar(PG_FUNCTION_ARGS)
 		 * function, bpchar would be called from TDS to send the OUTPUT params
 		 * of stored proc.
 		 */
-		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
 	}
 
 	/*

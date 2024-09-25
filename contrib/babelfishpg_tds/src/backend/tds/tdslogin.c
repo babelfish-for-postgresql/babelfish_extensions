@@ -760,7 +760,8 @@ FetchLoginRequest(LoginRequest request)
 		return STATUS_ERROR;
 
 	/* Check we indeed got the correct packet */
-	Assert(TdsCheckMessageType(TDS_LOGIN7));
+	if (!TdsCheckMessageType(TDS_LOGIN7))
+		return STATUS_ERROR;
 
 	/* fix the client version now */
 	request->clientProVersion = pg_bswap32(request->clientProVersion);

@@ -185,6 +185,7 @@ update_extended_property(int16 db_id,
 	Datum		values[BBF_EXTENDED_PROPERTIES_NUM_COLS];
 	bool		nulls[BBF_EXTENDED_PROPERTIES_NUM_COLS];
 	bool		replaces[BBF_EXTENDED_PROPERTIES_NUM_COLS];
+	NameData 	new_value_namedata;
 
 	rel = table_open(get_bbf_extended_properties_oid(), RowExclusiveLock);
 
@@ -198,7 +199,9 @@ update_extended_property(int16 db_id,
 	MemSet(nulls, false, sizeof(nulls));
 	MemSet(replaces, false, sizeof(replaces));
 
-	values[attnum - 1] = CStringGetDatum(new_value);
+	namestrcpy(&new_value_namedata, new_value);
+
+	values[attnum - 1] = NameGetDatum(&new_value_namedata);
 	replaces[attnum - 1] = true;
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
@@ -644,14 +647,20 @@ sp_execextended_property(PG_FUNCTION_ARGS, ExtendedPropertyProc proc)
 	{
 		Datum		values[BBF_EXTENDED_PROPERTIES_NUM_COLS];
 		bool		nulls[BBF_EXTENDED_PROPERTIES_NUM_COLS];
+		NameData    schema_name_namedata;
+		NameData    major_name_namedata;
+		NameData    minor_name_namedata;
 
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
+		namestrcpy(&schema_name_namedata, schema_name);
+		namestrcpy(&major_name_namedata, major_name);
+		namestrcpy(&minor_name_namedata, minor_name);
 
 		values[0] = Int16GetDatum(db_id);
-		values[1] = CStringGetDatum(schema_name);
-		values[2] = CStringGetDatum(major_name);
-		values[3] = CStringGetDatum(minor_name);
+		values[1] = NameGetDatum(&schema_name_namedata);
+		values[2] = NameGetDatum(&major_name_namedata);
+		values[3] = NameGetDatum(&minor_name_namedata);
 		values[4] = CStringGetTextDatum(type);
 		values[5] = CStringGetTextDatum(name);
 		values[6] = CStringGetTextDatum(orig_name);
@@ -788,7 +797,7 @@ fn_listextendedproperty(PG_FUNCTION_ARGS)
 	sql_variant_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 									  CStringGetDatum("sql_variant"),
 									  ObjectIdGetDatum(nspoid));
-	colloid = tsql_get_server_collation_oid_internal(false);
+	colloid = tsql_get_database_or_server_collation_oid_internal(false);
 
 	/* need to build tuplestore in query context */
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;

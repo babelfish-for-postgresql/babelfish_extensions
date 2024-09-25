@@ -3,6 +3,9 @@ go
 
 DROP DATABASE sys_identity_columns_dep_vu_prepare_db1
 DROP PROCEDURE sys_identity_columns_dep_vu_prepare_p1
+DROP PROCEDURE sys_identity_columns_dep_vu_prepare_p2
 DROP FUNCTION sys_identity_columns_dep_vu_prepare_f1
+DROP FUNCTION sys_identity_columns_dep_vu_prepare_f2
 DROP TABLE sys_identity_columns_dep_vu_prepare
+DROP TABLE sys_identity_columns_dep_vu_prepare2
 go

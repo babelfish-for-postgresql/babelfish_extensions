@@ -26,12 +26,15 @@
 #define DATABASE_DEFAULT "database_default"
 #define CATALOG_DEFAULT "catalog_default"
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int	server_collation_collidx = NOT_FOUND;
 static Oid	server_collation_oid = InvalidOid;
-static bool db_collation_is_CI_AS = true;
+static bool db_collation_is_CI = true;
+
+static Oid database_collation_oid = InvalidOid;
+static int database_collation_collidx = NOT_FOUND;
 
 /*
  * Below two vars are defined to store the value of the babelfishpg_tsql.server_collation_name
@@ -527,6 +530,9 @@ find_collation(const char *collation_name)
 								 * collation (first + last) / 2; */
 	int			compare;
 
+	if (!collation_name)
+		return NOT_FOUND;
+
 	while (first <= last)
 	{
 		compare = pg_strcasecmp(coll_infos[middle].collname, collation_name);
@@ -556,11 +562,16 @@ collation_is_case_insensitive_and_accent_sensitive(int collidx)
 	return false;
 }
 
+/*
+ * Return true if database collation is case insensitive
+ * If database collation is invalid, determine whether
+ * server level collation is case insensitive or not
+ */
 bool
-is_server_collation_CI_AS(void)
+is_database_or_server_collation_CI(void)
 {
-	get_server_collation_oid_internal(false);
-	return db_collation_is_CI_AS;
+	get_database_or_server_collation_oid_internal(false);
+	return db_collation_is_CI;
 }
 
 /* Given a coll_infos index, return the CS_AS or BIN2 collation with
@@ -605,11 +616,19 @@ find_any_collation(const char *collation_name, bool check_for_server_collation_n
 static int
 translate_collation_utility(const char *collname)
 {
+	return find_collation(translate_tsql_collation_to_bbf_collation(collname));
+}
+
+/* 
+ * Translate TSQL collation to it's closest BBF Collation. 
+ */
+const char *
+translate_tsql_collation_to_bbf_collation(const char *collname)
+{
 	int			first = 0;
 	int			last = TOTAL_COLL_TRANSLATION_COUNT - 1;
 	int			middle = 25;	/* optimization: usually it's the default
 								 * collation (first + last) / 2; */
-	int			idx = NOT_FOUND;
 	int			compare;
 
 	while (first <= last)
@@ -619,15 +638,14 @@ translate_collation_utility(const char *collname)
 			first = middle + 1;
 		else if (compare == 0)
 		{
-			idx = find_collation(coll_translations[middle].to_collname);
-			break;
+			return (coll_translations[middle].to_collname);
 		}
 		else
 			last = middle - 1;
 
 		middle = (first + last) / 2;
 	}
-	return idx;
+	return collname;
 }
 
 /*
@@ -648,6 +666,11 @@ translate_collation(const char *collname, bool check_for_server_collation_name_g
 	 */
 	if (!check_for_server_collation_name_guc && (pg_strcasecmp(collname, DATABASE_DEFAULT) == 0 || pg_strcasecmp(collname, CATALOG_DEFAULT) == 0))
 	{
+		if (database_collation_collidx != NOT_FOUND)
+		{
+			return database_collation_collidx;
+		}
+
 		init_server_collation_name();
 		if (server_collation_name)
 		{
@@ -956,7 +979,7 @@ lookup_collation_table(Oid coll_oid)
 
 	if (!OidIsValid(coll_oid))
 	{
-		int			collidx = get_server_collation_collidx();
+		int			collidx = get_database_or_server_collation_collidx();
 
 		if (NOT_FOUND != collidx)
 			return coll_infos[collidx];
@@ -988,7 +1011,7 @@ lookup_collation_table(Oid coll_oid)
 			PG_SQL_ASCII		/* enc */
 		};
 
-		collidx = get_server_collation_collidx();
+		collidx = get_database_or_server_collation_collidx();
 		if (collidx == NOT_FOUND)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
@@ -1003,16 +1026,24 @@ lookup_collation_table(Oid coll_oid)
 }
 
 /*
- * get_server_collation_collidx -
+ * get_database_or_server_collation_collidx -
  * Get the Index of default collation from coll_infos array, or return NOT_FOUND if not found
+ * Firstly, we check whether database_collation_collidx (corresponds to database level collidx) 
+ * is FOUND or not - which should have been set during USE command
+ * If NOT_FOUND, then we fallback to server level collidx
+ * It is caller's responsibility to check whether server level collidx is NOT_FOUND or not
  */
 int
-get_server_collation_collidx(void)
+get_database_or_server_collation_collidx(void)
 {
+	if (database_collation_collidx != NOT_FOUND)
+		return database_collation_collidx;
 	init_server_collation_name();
 	if (NOT_FOUND == server_collation_collidx)
+	{
 		server_collation_collidx = find_any_collation(server_collation_name, false);
-
+	}
+	
 	return server_collation_collidx;
 }
 
@@ -1164,9 +1195,18 @@ get_collation_oid_internal(char *collation_name)
 	return collation_oid;
 }
 
+/*
+ * Return database collation Oid if valid
+ * Else return server collation Oid
+ * We follow this mechanism to fall back to server level collation
+ * if database level collation is invalid or not found
+ */
 Oid
-get_server_collation_oid_internal(bool missingOk)
+get_database_or_server_collation_oid_internal(bool missingOk)
 {
+	if (OidIsValid(database_collation_oid))
+		return database_collation_oid;
+		
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
 
@@ -1186,15 +1226,15 @@ get_server_collation_oid_internal(bool missingOk)
 							server_collation_name)));
 		else
 		{
-			db_collation_is_CI_AS = false;
+			db_collation_is_CI = false;
 			server_collation_collidx = NOT_FOUND;
 			return DEFAULT_COLLATION_OID;
 		}
 	}
 	else
 	{
-		db_collation_is_CI_AS = collation_is_CI_AS(server_collation_oid);
-		server_collation_collidx = get_server_collation_collidx();
+		db_collation_is_CI = collation_is_CI(server_collation_oid);
+		server_collation_collidx = get_database_or_server_collation_collidx();
 	}
 
 	return server_collation_oid;
@@ -1205,20 +1245,18 @@ BABELFISH_CLUSTER_COLLATION_OID()
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
-		get_server_collation_oid_internal(false);	/* set and cache
-													 * server_collation_oid */
-
-		if (OidIsValid(server_collation_oid))
-			return server_collation_oid;
+		Oid db_coll = get_database_or_server_collation_oid_internal(false);	/* set and cache
+													 * database or server_collation_oid */
+		return db_coll;
 	}
 	return DEFAULT_COLLATION_OID;
 }
 
 /*
- * collation_is_CI_AS - Returns true if collation with given colloid is CI_AS.
+ * collation_is_CI - Returns true if collation with given colloid is CI.
  */
 bool
-collation_is_CI_AS(Oid colloid)
+collation_is_CI(Oid colloid)
 {
 	HeapTuple	tp;
 	char	   *collcollate = NULL;
@@ -1255,15 +1293,16 @@ collation_is_CI_AS(Oid colloid)
 
 	/*
 	 * colStrength secondary, or level2, corresponds to a CI_AS collation,
+	 * colStrength primary, or level1, corresponds to a CI_AI collation,
 	 * unless colCaseLevel=yes, or kc-true, is also specified.
 	 */
-	if (strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) &&
-         0 == strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")))    /* without a colCaseLevel - not CS_AI */
-	         return true;
+	if ((strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) != NULL || strstr(lowerstr(collcollate), lowerstr("colStrength=primary")) != NULL) &&
+		strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")) == NULL)    /* without a colCaseLevel - not CS_AI */
+			return true;
 	 
 	/* Starting from PG16, locale string is canonicalized to a language tag. */
-	if (0 != strstr(lowerstr(collcollate), "level2") &&    /* CI_AS */
-		0 == strstr(lowerstr(collcollate), "kc-true"))
+	if ((strstr(lowerstr(collcollate), "level2") != NULL || strstr(lowerstr(collcollate), "level1") != NULL)  &&    /* CI_AS OR CI_AI */
+		strstr(lowerstr(collcollate), "kc-true") == NULL)
 		return true;
 
 	return false;
@@ -1295,7 +1334,7 @@ is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 	if (!OidIsValid(colloid))
 		PG_RETURN_BOOL(false);
 
-	if (collation_is_CI_AS(colloid))
+	if (collation_is_CI(colloid))
 		PG_RETURN_BOOL(true);
 
 	PG_RETURN_BOOL(false);
@@ -1413,7 +1452,7 @@ get_persist_collation_id(Oid coll_oid)
 		return entry->persist_id;
 	}
 
-	collidx = get_server_collation_collidx();
+	collidx = get_database_or_server_collation_collidx();
 	Assert(collidx >= 0);
 	return collidx;
 }
@@ -1568,9 +1607,9 @@ get_oid_from_collidx(int collidx)
 collation_callbacks *
 get_collation_callbacks(void)
 {
-	if (!collation_callbacks_var.get_server_collation_oid_internal)
+	if (!collation_callbacks_var.get_database_or_server_collation_oid_internal)
 	{
-		collation_callbacks_var.get_server_collation_oid_internal = &get_server_collation_oid_internal;
+		collation_callbacks_var.get_database_or_server_collation_oid_internal = &get_database_or_server_collation_oid_internal;
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
 		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
 		collation_callbacks_var.is_collated_ai_internal = &is_collated_ai_internal;
@@ -1578,7 +1617,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.tdscollationproperty_helper = &tdscollationproperty_helper;
 		collation_callbacks_var.lookup_collation_table_callback = &lookup_collation_table;
 		collation_callbacks_var.lookup_like_ilike_table = &lookup_like_ilike_table;
-		collation_callbacks_var.is_server_collation_CI_AS = &is_server_collation_CI_AS;
+		collation_callbacks_var.is_database_or_server_collation_CI = &is_database_or_server_collation_CI;
 		collation_callbacks_var.is_valid_server_collation_name = &is_valid_server_collation_name;
 		collation_callbacks_var.find_locale = &find_locale;
 		collation_callbacks_var.EncodingConversion = &encoding_conv_util;
@@ -1587,6 +1626,8 @@ get_collation_callbacks(void)
 		collation_callbacks_var.find_collation_internal = &find_collation;
 		collation_callbacks_var.has_ilike_node = &has_ilike_node;
 		collation_callbacks_var.translate_bbf_collation_to_tsql_collation = &translate_bbf_collation_to_tsql_collation;
+		collation_callbacks_var.translate_tsql_collation_to_bbf_collation = &translate_tsql_collation_to_bbf_collation;
+		collation_callbacks_var.set_db_collation = &set_db_collation;
 	}
 	return &collation_callbacks_var;
 }
@@ -1613,7 +1654,7 @@ babelfish_define_type_default_collation(Oid typeNamespace)
 		babelfish_restored_server_collation_name)
 		return get_collation_oid_internal(babelfish_restored_server_collation_name);
 
-	get_server_collation_oid_internal(false);	/* set and cache
+	get_database_or_server_collation_oid_internal(false);	/* set and cache
 												 * server_collation_oid */
 
 	Assert(OidIsValid(server_collation_oid));
@@ -1626,7 +1667,7 @@ PG_FUNCTION_INFO_V1(get_babel_server_collation_oid);
 Datum
 get_babel_server_collation_oid(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_OID(get_server_collation_oid_internal(false));
+	PG_RETURN_OID(get_database_or_server_collation_oid_internal(false));
 }
 
 PG_FUNCTION_INFO_V1(babelfish_update_server_collation_name);
@@ -1673,4 +1714,20 @@ void bbf_set_like_collation(Oid collation)
 Oid bbf_get_like_collation(void)
 {
 	return like_cid;
+}
+
+/*
+ * The following function expects a valid collation Oid
+ * Caller is reponsible to supply valid Oid
+ */
+void
+set_db_collation(Oid db_coll)
+{
+	if (!OidIsValid(db_coll))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_DATABASE),
+			 errmsg("Could not find database with collation oid \"%u\"", db_coll)));
+	database_collation_oid = db_coll;
+	database_collation_collidx = find_any_collation((lookup_collation_table(database_collation_oid).collname), false);
+	db_collation_is_CI = collation_is_CI(database_collation_oid);
 }

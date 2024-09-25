@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- sla 200000
 use master
 go

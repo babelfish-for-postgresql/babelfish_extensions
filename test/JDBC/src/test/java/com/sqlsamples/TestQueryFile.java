@@ -19,7 +19,6 @@ import static com.sqlsamples.JDBCTempTable.*;
 import static com.sqlsamples.Statistics.exec_times;
 import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
-import static com.sqlsamples.Config.checkParallelQueryExpected;
 
 public class TestQueryFile {
     
@@ -165,6 +164,8 @@ public class TestQueryFile {
         File dir = new File(inputFilesDirectoryPath);
         File scheduleFile = new File(scheduleFileName);
         File parallelQueryTestIgnoreFile = new File(parallelQueryTestIgnoreFileName);
+        File dbCollationIgnoreFile = new File(dbCollationIgnoreFileName);
+        File singleDBIgnoreFile = new File(singleDBIgnoreFileName);
         
         try (BufferedReader br = new BufferedReader(new FileReader(scheduleFile))) {
             String line;
@@ -179,6 +180,32 @@ public class TestQueryFile {
         /* Ignore tests in case of parallel query mode on */
         if (isParallelQueryMode) {
             try (BufferedReader br = new BufferedReader(new FileReader(parallelQueryTestIgnoreFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (!line.startsWith("#") && line.trim().length() > 0 && line.startsWith("ignore#!#"))
+                        testsToIgnore.add(line.split("#!#", -1)[1]);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /* Ignore tests in case of single-db mode test */
+        if (isSingleDbMode) {
+            try (BufferedReader br = new BufferedReader(new FileReader(singleDBIgnoreFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (!line.startsWith("#") && line.trim().length() > 0 && line.startsWith("ignore#!#"))
+                        testsToIgnore.add(line.split("#!#", -1)[1]);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /* Ignore tests in case of database level collation test */
+        if (isdbCollationMode) {
+            try (BufferedReader br = new BufferedReader(new FileReader(dbCollationIgnoreFile))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     if (!line.startsWith("#") && line.trim().length() > 0 && line.startsWith("ignore#!#"))
@@ -424,6 +451,7 @@ public class TestQueryFile {
         BufferedWriter bw = new BufferedWriter(fw);
         curr_exec_time = 0L;
         checkParallelQueryExpected = false;
+        checkSingleDbModeExpected = false;
         if (inputFileName.equals("temp_table_jdbc")) {
             JDBCTempTable.runTest(bw, logger);
             sla = defaultSLA*1000000L * 2; /* Increase SLA to avoid flakiness */
@@ -436,15 +464,24 @@ public class TestQueryFile {
         }
         File expectedFile;
         File nonDefaultServerCollationExpectedFile;
+        File dbCollationExpectedFile;
 
         if (isParallelQueryMode && checkParallelQueryExpected){
             expectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + outputFileName + ".out");
             nonDefaultServerCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+            dbCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "db_collation/" + outputFileName + ".out");
+        }
+        else if (isSingleDbMode && checkSingleDbModeExpected){
+            expectedFile = new File(generatedFilesDirectoryPath + "single_db/" + outputFileName + ".out");
+            nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "single_db/" + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+            dbCollationExpectedFile = new File(generatedFilesDirectoryPath + "single_db/" + "db_collation/" + outputFileName + ".out");
         }
         else{
             expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
             nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+            dbCollationExpectedFile = new File(generatedFilesDirectoryPath + "db_collation/" + outputFileName + ".out");
         }
+
 
         File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 
@@ -458,6 +495,10 @@ public class TestQueryFile {
         if (serverCollationName != "default" && nonDefaultServerCollationExpectedFile.exists()){    /* If server collation name is non-default then use it's corresponding expected file if exists */
             // get the diff
             result = compareOutFiles(outputFile, nonDefaultServerCollationExpectedFile);
+        }
+        else if (isdbCollationMode && dbCollationExpectedFile.exists()){    /* If database collation name is non-default then use it's corresponding expected file if exists */
+            // get the diff
+            result = compareOutFiles(outputFile, dbCollationExpectedFile);
         }
         else if (expectedFile.exists()) {
             // get the diff

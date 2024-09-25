@@ -49,9 +49,9 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
+db1_db_owner#!##!#db_owner#!#db1#!#
+db1_dbo#!##!#dbo#!#db1#!#dbo
 db1_guest#!##!#guest#!#db1#!#guest
-db_owner#!##!#db_owner#!#db1#!#
-dbo#!##!#dbo#!#db1#!#dbo
 master_db_owner#!##!#db_owner#!#master#!#
 master_dbo#!##!#dbo#!#master#!#dbo
 master_guest#!##!#guest#!#master#!#guest
@@ -85,7 +85,7 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#bit
-dbo#!#1
+db1_dbo#!#1
 master_dbo#!#1
 msdb_dbo#!#1
 tempdb_dbo#!#1
