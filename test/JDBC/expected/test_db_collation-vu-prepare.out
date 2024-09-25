@@ -54,7 +54,7 @@ GO
 
 -- psql
 -- Case 1.5: CREATE DATABASE WITH COLLATION CREATED FROM PG-ENDPOINT
-CREATE COLLATION sys.my_collation (provider = icu, locale = '@colStrength=secondary', deterministic = false);
+CREATE COLLATION db_level_collation (provider = icu, locale = '@colStrength=secondary', deterministic = false);
 GO
 ~~WARNING (Code: 0)~~
 
@@ -67,7 +67,7 @@ CREATE DATABASE test_db_collation_vu_prepare_db151 COLLATE my_collation;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid collation "my_collation")~~
+~~ERROR (Message: "my_collation" is not currently supported for database collation )~~
 
 
 -- Case 1.6: CREATE DATABASE WITH COLLATE NULL
@@ -83,7 +83,7 @@ CREATE DATABASE test_db_collation_vu_prepare_db161 COLLATE [NULL];
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid collation "null")~~
+~~ERROR (Message: "null" is not currently supported for database collation )~~
 
 
 CREATE DATABASE test_db_collation_vu_prepare_db161 COLLATE 'NULL';
@@ -298,7 +298,7 @@ GO
 ~~ROW COUNT: 9~~
 
 
-CREATE TABLE test_db_collation_vu_prepare_db121_columns(a nvarchar(MAX) PRIMARY KEY, b nvarchar(MAX) REFERENCES test_db_collation_vu_prepare_db121_columns_foreign(id), c nvarchar(MAX) UNIQUE, d nvarchar(MAX) DEFAULT 'Default Value');
+CREATE TABLE test_db_collation_vu_prepare_db121_columns(a nvarchar(MAX) PRIMARY KEY DEFAULT 'Default Value', b nvarchar(MAX) REFERENCES test_db_collation_vu_prepare_db121_columns_foreign(id) DEFAULT 'Default Value', c nvarchar(MAX) UNIQUE DEFAULT 'Default Value', d nvarchar(MAX) DEFAULT 'Default Value');
 GO
 
 INSERT INTO test_db_collation_vu_prepare_db121_columns (a, b, c) VALUES
@@ -311,35 +311,35 @@ GO
 
 -- Create indexes
 -- Hash index
-CREATE INDEX hash_idx ON test_db_collation_vu_prepare_db121_columns (a) WITH (HASH = ON)
+CREATE INDEX test_db_idx1 ON test_db_collation_vu_prepare_db121_columns (a) WITH (HASH = ON)
 GO
 
 -- clustered index
-CREATE CLUSTERED INDEX clustered_idx ON test_db_collation_vu_prepare_db121_columns (b);
+CREATE CLUSTERED INDEX test_db_idx2 ON test_db_collation_vu_prepare_db121_columns (b);
 GO
 
 -- nonclustered index
-CREATE NONCLUSTERED INDEX nonclustered_idx ON test_db_collation_vu_prepare_db121_columns (c);
+CREATE NONCLUSTERED INDEX test_db_idx3 ON test_db_collation_vu_prepare_db121_columns (c);
 GO
 
 -- unique index
-CREATE UNIQUE INDEX unique_idx on test_db_collation_vu_prepare_db121_columns (a, b);
+CREATE UNIQUE INDEX test_db_idx4 on test_db_collation_vu_prepare_db121_columns (a, b);
 GO
 
 -- index with included column
-CREATE NONCLUSTERED INDEX included_column_idx ON test_db_collation_vu_prepare_db121_columns (a) INCLUDE (d);
+CREATE NONCLUSTERED INDEX test_db_idx5 ON test_db_collation_vu_prepare_db121_columns (a) INCLUDE (d);
 GO
 
 -- index on computed column
-CREATE INDEX computed_column_idx ON test_db_collation_vu_prepare_db121_computed_columns (b);
+CREATE INDEX test_db_idx6 ON test_db_collation_vu_prepare_db121_computed_columns (b);
 GO
 
 -- composite index
-CREATE INDEX composite_idx ON test_db_collation_vu_prepare_db121_columns(a, b, c);
+CREATE INDEX test_db_idx7 ON test_db_collation_vu_prepare_db121_columns(a, b, c);
 GO
 
 -- filtered index
-CREATE NONCLUSTERED INDEX filtered_idx ON test_db_collation_vu_prepare_db121_columns (d) WHERE d > 'Default';
+CREATE NONCLUSTERED INDEX test_db_idx8 ON test_db_collation_vu_prepare_db121_columns (d) WHERE d > 'Default';
 GO
 
 
@@ -387,6 +387,22 @@ bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varc
 0#!#2#!#col2#!#1#!#17084#!#nvarchar#!#100#!#0#!#0#!#bbf_unicode_cp1_ci_ai#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#231#!#100#!#15729673#!#54
 ~~END~~
 
+
+CREATE VIEW test_db_collation_vu_prepare_db121_v1 AS SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
+GO
+
+
+
+CREATE PROCEDURE test_db_collation_vu_prepare_db121_p1 @param NVARCHAR(50)
+AS
+BEGIN
+    DECLARE @localVar NVARCHAR(11)
+    SELECT @localVar = nv 
+    FROM test_db_collation_vu_prepare_db121_t1
+    WHERE nv = @param;
+    SELECT @localVar;
+END;
+GO
 
 USE test_db_collation_vu_prepare_db122;
 GO
