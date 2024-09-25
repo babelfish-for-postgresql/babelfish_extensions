@@ -459,7 +459,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	HeapTuple   tuple;
 	List        *parsetree_list;
 	ListCell    *parsetree_item;
-	char        *dbo_role = NULL;
+	char        *dbo_role;
 	NameData    default_collation;
 	NameData    owner_namedata;
 	int         stmt_number = 0;
@@ -637,8 +637,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	}
 	PG_END_TRY();
 
-	if(dbo_role)
-		pfree(dbo_role);
+	pfree(dbo_role);
 }
 
 void
@@ -648,7 +647,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	HeapTuple           tuple;
 	Form_sysdatabases   bbf_db;
 	int16               dbid;
-	char               *dbo_role = NULL;
+	char               *dbo_role;
 	List               *db_users_list;
 	List               *parsetree_list;
 	ListCell           *parsetree_item;
@@ -811,8 +810,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	}
 	PG_END_TRY();
 
-	if(dbo_role)
-		pfree(dbo_role);
+	pfree(dbo_role);
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);

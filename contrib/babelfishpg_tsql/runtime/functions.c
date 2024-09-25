@@ -1310,9 +1310,7 @@ schema_id(PG_FUNCTION_ARGS)
 		if (!user)
 		{
 			pfree(db_name);
-
-			if(guest_role_name)
-				pfree(guest_role_name);
+			pfree(guest_role_name);
 
 			PG_RETURN_NULL();
 		}
@@ -1326,9 +1324,7 @@ schema_id(PG_FUNCTION_ARGS)
 			physical_name = get_physical_schema_name(db_name, name);
 		}
 		pfree(db_name);
-
-		if(guest_role_name)
-			pfree(guest_role_name);
+		pfree(guest_role_name);
 	}
 	else
 	{
@@ -2240,9 +2236,8 @@ object_id(PG_FUNCTION_ARGS)
 			pfree(db_name);
 			pfree(schema_name);
 			pfree(object_name);
+			pfree(guest_role_name);
 
-			if(guest_role_name)
-				pfree(guest_role_name);
 			if (object_type)
 				pfree(object_type);
 
@@ -2259,8 +2254,7 @@ object_id(PG_FUNCTION_ARGS)
 			physical_schema_name = get_physical_schema_name(db_name, schema_name);
 		}
 
-		if(guest_role_name)
-			pfree(guest_role_name);
+		pfree(guest_role_name);
 	}
 	else
 	{
@@ -2701,9 +2695,7 @@ type_id(PG_FUNCTION_ARGS)
                 pfree(db_name);
                 pfree(schema_name);
                 pfree(object_name);
-
-                if(guest_role_name)
-                    pfree(guest_role_name);
+                pfree(guest_role_name);
 
                 PG_RETURN_NULL();
             }
@@ -2718,8 +2710,7 @@ type_id(PG_FUNCTION_ARGS)
                 physical_schema_name = get_physical_schema_name(db_name, schema_name);
             }
 			
-            if(guest_role_name)
-                pfree(guest_role_name);
+            pfree(guest_role_name);
         }
         else
         {

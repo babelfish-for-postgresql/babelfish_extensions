@@ -3053,8 +3053,7 @@ guest_role_exists_for_db(const char *dbname)
 		ReleaseSysCache(tuple);
 	}
 
-	if(guest_role)
-		pfree(guest_role);
+	pfree(guest_role);
 
 	return role_exists;
 }
@@ -3199,8 +3198,7 @@ create_guest_role_for_db(const char *dbname)
 	}
 	PG_END_TRY();
 
-	if(guest)
-		pfree(guest);
+	pfree(guest);
 }
 
 /*
@@ -5006,6 +5004,8 @@ user_exists_for_db(const char *db_name, const char *user_name)
 
 		if (strcmp(db_name_from_cache, db_name) == 0)
 			user_exists = true;
+		
+		pfree(db_name_from_cache);
 	}
 
 	return user_exists;
