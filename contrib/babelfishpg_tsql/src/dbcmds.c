@@ -89,6 +89,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	const char     *guest;
 	const char     *guest_schema;
 	Oid       	owner_oid;
+	bool     	owner_is_sa;
 
 	schema = get_dbo_schema_name(dbname);
 	dbo = get_dbo_role_name(dbname);
@@ -96,6 +97,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	guest = get_guest_role_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
 	owner_oid = get_role_oid(owner, true);
+	owner_is_sa = role_is_sa(owner_oid);
 
 	/*
 	 * To avoid SQL injection, we generate statement parsetree with dummy
@@ -106,7 +108,9 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	appendStringInfo(&query, "CREATE ROLE dummy CREATEROLE INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
-	if (!role_is_sa(owner_oid))
+	
+	/* Only grant dbo to owner if owner is not master user  */
+	if (!owner_is_sa)
 		appendStringInfo(&query, "GRANT dummy TO dummy; ");
 
 	if (guest)
@@ -129,7 +133,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 
 	if (guest)
 	{
-		if (!role_is_sa(owner_oid))
+		if (!owner_is_sa)
 			expected_stmt_num = list_length(logins) > 0 ? 10 : 9;	
 		else
 			expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
@@ -138,7 +142,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	{
 		expected_stmt_num = 6;
 
-		if (!role_is_sa(owner_oid))
+		if (!owner_is_sa)
 			expected_stmt_num++;
 	}
 
@@ -158,7 +162,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
 
-	if (!role_is_sa(owner_oid))
+	if (!owner_is_sa)
 	{
 		/* Grant dbo role to owner */
 		stmt = parsetree_nth_stmt(res, i++);
