@@ -106,7 +106,6 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	const char     *db_owner;
 	const char     *guest;
 	const char     *guest_schema;
-	Oid       	owner_oid;
 	bool     	owner_is_sa;
 
 	schema = get_dbo_schema_name(dbname);
@@ -114,8 +113,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	db_owner = get_db_owner_name(dbname);
 	guest = get_guest_role_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
-	owner_oid = get_role_oid(owner, true);
-	owner_is_sa = role_is_sa(owner_oid);
+	owner_is_sa = role_is_sa(get_role_oid(owner, true));
 
 	/*
 	 * To avoid SQL injection, we generate statement parsetree with dummy
