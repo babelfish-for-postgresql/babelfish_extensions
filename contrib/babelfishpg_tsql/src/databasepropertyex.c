@@ -28,7 +28,12 @@ databasepropertyex(PG_FUNCTION_ARGS)
 	int64_t		intVal = 0;
 	const char *dbname = text_to_cstring(PG_GETARG_TEXT_P(0));
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(1));
-	Oid			dboid = get_db_id(dbname);
+	Oid			dboid = 0;
+	if(strcmp(dbname, "rdsadmin") == 0)
+	{
+		dbname = "master";
+	}
+	dboid = get_db_id(dbname);
 
 	if (dboid == InvalidOid)
 	{
@@ -210,7 +215,7 @@ databasepropertyex(PG_FUNCTION_ARGS)
 	{
 		const char *ret = "READ_WRITE";
 
-		if (strcmp(GetConfigOption("transaction_read_only", false, false), "on") == 0) 
+		if (strcmp(GetConfigOption("transaction_read_only", true, false), "on") == 0) 
 		{
 			ret = "READ_ONLY";
 		}
