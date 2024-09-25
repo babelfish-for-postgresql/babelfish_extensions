@@ -1916,13 +1916,13 @@ SET probin = (
                 (
                     SELECT jsonb_agg(
                         CASE
-                            WHEN val::text = '-8000' THEN '-1'
-                            WHEN val::text = '-1' AND p2.proallargtypes[indx] = ('sys.smalldatetime'::regtype)::oid THEN '0'
-                            WHEN val::text = '-1' THEN '1'
-                            ELSE val::text
+                            WHEN a::text = '-8000' AND (p2.proallargtypes[b] = ('sys.varchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.nvarchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.varbinary'::regtype)::oid) THEN '-1'
+                            WHEN a::text = '-1' AND p2.proallargtypes[b] = ('sys.smalldatetime'::regtype)::oid THEN '0'
+                            WHEN a::text = '-1' AND (p2.proallargtypes[b] = ('sys.varchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.nvarchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.varbinary'::regtype)::oid OR p2.proallargtypes[b] = ('sys.nchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.binary'::regtype)::oid OR p2.proallargtypes[b] = ('sys.bpchar'::regtype)::oid) THEN '1'
+                            ELSE a::text
                         END
                     )
-                    FROM jsonb_array_elements_text(probin::jsonb->'typmod_array')  WITH ORDINALITY AS elem(val,indx)
+                    FROM jsonb_array_elements_text(probin::jsonb->'typmod_array')  WITH ORDINALITY AS elem(a,b)
                 )
             )
         )::text
