@@ -877,6 +877,8 @@ is_user(Oid role_oid, bool current_db_only)
 				char *db_name_cstring = TextDatumGetCString(db_name);
 				char *current_db_name = get_cur_db_name();
 
+				Assert(!isnull);
+
 				is_user = (strcmp(db_name_cstring, current_db_name) == 0);
 
 				pfree(db_name_cstring);
@@ -919,6 +921,8 @@ is_role(Oid role_oid, bool current_db_only)
 												 Anum_bbf_authid_user_ext_database_name, &isnull);
 				char *db_name_cstring = TextDatumGetCString(db_name);
 				char *current_db_name = get_cur_db_name();
+
+				Assert(!isnull);
 
 				is_role = (strcmp(db_name_cstring, current_db_name) == 0);
 
@@ -963,7 +967,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[3];
+	ScanKeyData key[2];
 	TableScanDesc scan;
 	char	   *user_name = NULL;
 	NameData   *login_name;
@@ -990,14 +994,24 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		Form_authid_user_ext userform;
+		Datum datum;
 		char *db_accessadmin = get_db_accessadmin_role_name(db_name);
+		bool user_can_connect;
+		bool isnull;
 
-		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
-		if (userform->user_can_connect ||
-			(has_privs_of_role(GetUserId(), get_role_oid(db_accessadmin, false))))
+		datum = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_user_can_connect,
+							 RelationGetDescr(bbf_authid_user_ext_rel), &isnull);
+		Assert(!isnull);
+		user_can_connect = DatumGetInt32(datum);
+
+		if (user_can_connect == 1 ||
+			(has_privs_of_role(get_role_oid(login, false), get_role_oid(db_accessadmin, false))))
 		{
-			user_name = pstrdup(NameStr(userform->rolname));
+			datum = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_rolname,
+							 RelationGetDescr(bbf_authid_user_ext_rel), &isnull);
+			Assert(!isnull);
+
+			user_name = pstrdup(DatumGetCString(datum));
 		}
 		pfree(db_accessadmin);
 	}
