@@ -35,22 +35,22 @@ GO
 -- 4. Test isolation level is reset
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
 GO
-select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
+select transaction_isolation_level from sys.dm_exec_sessions where session_id = @@SPID
 GO
 EXEC sys.sp_reset_connection
 GO
-select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
+select transaction_isolation_level from sys.dm_exec_sessions where session_id = @@SPID
 GO
 
 -- 5. Test sp_reset_connection called with sp_prepexec
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
 GO
-select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
+select transaction_isolation_level from sys.dm_exec_sessions where session_id = @@SPID
 GO
 DECLARE @handle int;
 EXEC SP_PREPARE @handle output, NULL, N'exec sys.sp_reset_connection'
 EXEC SP_EXECUTE @handle
 GO
 GO
-select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
+select transaction_isolation_level from sys.dm_exec_sessions where session_id = @@SPID
 GO
