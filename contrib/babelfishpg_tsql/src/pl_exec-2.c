@@ -3213,7 +3213,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	char		*attname;
 	char		*token;
 	const char	*schema_name;
-	char		*nsp_name = NULL;
+	char		*nsp_name;
 	const char	*user;
 	char		*guest_role_name = NULL;
 	char		*dbo_role_name = NULL;
@@ -3385,8 +3385,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 				nsp_name, dbcc_stmt.table_name)));
 	}
 	
-	if(nsp_name)
-		pfree(nsp_name);
+	pfree(nsp_name);
 
 	PG_TRY();
 	{

@@ -10347,9 +10347,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 											 PGC_USERSET, PGC_S_SESSION,
 											 GUC_ACTION_SAVE, true, 0, false);
 					pfree(new_search_path);
-
-					if(dbo_schema)
-						pfree(dbo_schema);
+					pfree(dbo_schema);
 					
 					return true;
 				}
@@ -10382,17 +10380,12 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
 		pfree(new_search_path);
-
-		if(dbo_schema)
-			pfree(dbo_schema);
+		pfree(dbo_schema);
 			
 		return true;
 	}
 	
 	pfree(cur_dbname);
-
-	if(dbo_schema)
-		pfree(dbo_schema);
 	
 	return false;
 }

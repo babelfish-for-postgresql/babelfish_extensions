@@ -3283,9 +3283,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						set_session_properties(db_name);
 						pfree(cur_user);
 						pfree(db_name);
-						
-						if(dbo_name)
-							pfree(dbo_name);
+						pfree(dbo_name);
 
 						return;
 					}
@@ -3401,8 +3399,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 											alter_user_can_connect(false, rolspec->rolename, db_name);
 
-											if(db_owner_name)
-												pfree(db_owner_name);
+											pfree(db_owner_name);
 											
 											return;
 										}
@@ -3414,9 +3411,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 
 									pfree(rolspec->rolename);
-
-									if (db_owner_name)
-										pfree(db_owner_name);
+									pfree(db_owner_name);
 
 									rolspec->rolename = user_name;
 								}
