@@ -89,4 +89,6 @@ extern bool is_grantee_role_db_owner(GrantRoleStmt *stmt);
 extern void change_object_owner_if_db_owner(void);
 extern char* get_obj_role(const char *rolname);
 
+extern bool is_create_bbf_builtin_dbs;
+
 #endif

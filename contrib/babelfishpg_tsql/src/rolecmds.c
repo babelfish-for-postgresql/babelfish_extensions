@@ -2778,7 +2778,7 @@ change_object_owner_if_db_owner()
 
 	dbo_id = get_role_oid(get_dbo_role_name(get_cur_db_name()), true);
 
-	if (role_oid == dbo_id || dbo_id == InvalidOid || role_oid == get_bbf_role_admin_oid())
+	if (role_oid == dbo_id || dbo_id == InvalidOid || is_create_bbf_builtin_dbs)
 		return;
 
 	rolname = GetUserNameFromId(role_oid, true);
