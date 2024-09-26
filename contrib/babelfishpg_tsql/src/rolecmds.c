@@ -290,7 +290,7 @@ drop_bbf_roles(ObjectAccessType access,
 {
 	if (is_login(roleid))
 		drop_bbf_authid_login_ext(access, classId, roleid, subId, arg);
-	else if (is_user(roleid, false) || is_role(roleid, false))
+	else if (is_database_principal(roleid, false))
 		drop_bbf_authid_user_ext(access, classId, roleid, subId, arg);
 }
 
@@ -1763,7 +1763,7 @@ is_alter_role_stmt(GrantRoleStmt *stmt)
 		Oid			granted = get_role_oid(spec->rolename, true);
 
 		/* Check if the granted role is an existing database role */
-		if (granted == InvalidOid || !is_role(granted, false))
+		if (granted == InvalidOid || is_database_principal(granted, true) != BBF_ROLE)
 			return false;
 	}
 
@@ -1786,7 +1786,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	grantee = get_role_oid(grantee_name, false);
 
 	/* Disallow ALTER ROLE if the grantee is not a db principal */
-	if (!is_user(grantee, false) && !is_role(grantee, false))
+	if (is_database_principal(grantee, false))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s is not a database user or a user-defined database role",
@@ -1948,7 +1948,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	 * principal. Note that if given principal is current user, we'll always
 	 * have permissions.
 	 */
-	if (!is_role(role_oid, false) ||
+	if (is_database_principal(role_oid, false) != BBF_ROLE ||
 		((principal_oid != cur_user_oid) &&
 		 (!has_privs_of_role(cur_user_oid, role_oid) ||
 		  !has_privs_of_role(cur_user_oid, principal_oid))))

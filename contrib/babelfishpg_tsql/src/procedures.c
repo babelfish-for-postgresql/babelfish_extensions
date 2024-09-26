@@ -2284,7 +2284,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists */
-		if (role_oid == InvalidOid || !is_role(role_oid, false))
+		if (role_oid == InvalidOid || is_database_principal(role_oid, true) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot drop the role '%s', because it does not exist or you do not have permission.", rolname)));
@@ -2437,7 +2437,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 		 * Check if the user, group or role does not exists and given member
 		 * name is an role or user
 		 */
-		if (member_oid == InvalidOid || (!is_role(member_oid, false) && !is_user(member_oid, false)))
+		if (member_oid == InvalidOid || is_database_principal(member_oid, true))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("User or role '%s' does not exist in this database.", membername)));
@@ -2447,7 +2447,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists and given role name is an role */
-		if (role_oid == InvalidOid || !is_role(role_oid, false))
+		if (role_oid == InvalidOid || is_database_principal(role_oid, true) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
@@ -2599,7 +2599,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 		role_oid = get_role_oid(physical_name, true);
 
 		/* Throw an error id the given role name doesn't exist or isn't a role */
-		if (role_oid == InvalidOid || !is_role(role_oid, false))
+		if (role_oid == InvalidOid || is_database_principal(role_oid, true) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
@@ -2612,7 +2612,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 		 * Throw an error id the given member name doesn't exist or isn't a
 		 * role or user
 		 */
-		if (role_oid == InvalidOid || (!is_role(role_oid, false) && !is_user(role_oid, false)))
+		if (role_oid == InvalidOid || is_database_principal(role_oid, true))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot drop the principal '%s', because it does not exist or you do not have permission.", membername)));

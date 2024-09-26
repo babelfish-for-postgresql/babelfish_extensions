@@ -3222,10 +3222,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						Oid 		save_userid;
 						Oid 		db_owner = get_role_oid(get_db_owner_name(db_name), false);
 						Oid 		db_accessadmin = get_role_oid(get_db_accessadmin_role_name(db_name), false);
-						Oid 		user_name = get_role_oid(stmt->role->rolename, false);
+						Oid 		user_oid = get_role_oid(stmt->role->rolename, false);
 
 						/* db principal being altered should be a user or role in the current active logical database */
-						if (!((isuser && is_user(user_name, true)) || (isrole && is_role(user_name, true))))
+						if ((isuser && is_database_principal(user_oid, true) != BBF_USER) ||
+						    (isrole && is_database_principal(user_oid, true) != BBF_ROLE))
 							ereport(ERROR,
 									(errcode(ERRCODE_CHECK_VIOLATION),
 										errmsg("Cannot alter the %s '%s', because it does not exist or you do not have permission.", isuser ? "user" : "role", stmt->role->rolename)));
@@ -3245,7 +3246,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if (strcmp(defel->defname, "default_schema") == 0)
 							{
 								if (is_member_of_db_owner || (isuser && is_member_of_db_accessadmin) ||
-									user_name == GetUserId())
+									user_oid == GetUserId())
 								{
 									/*
 									 * members of db_owner can alter default schema for any role or user
@@ -3262,7 +3263,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							else if (strcmp(defel->defname, "rename") == 0)
 							{
 								if (is_member_of_db_owner || (isuser && is_member_of_db_accessadmin &&
-									!has_privs_of_role(user_name, db_owner)))
+									!has_privs_of_role(user_oid, db_owner)))
 								{
 									/*
 									 * members of db_owner can rename any role or user
@@ -3387,8 +3388,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									int			rolename_len = strlen(rolspec->rolename);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
-									    (drop_user && !is_user(role_oid, true)) ||      /* Found but not a user in current logical db */
-									    (drop_role && !is_role(role_oid, true)))        /* Found but not a role in current logical db */
+									    (drop_user && is_database_principal(role_oid, true) != BBF_USER) ||      /* Found but not a user in current logical db */
+									    (drop_role && is_database_principal(role_oid, true) != BBF_ROLE))        /* Found but not a role in current logical db */
 									{
 										if (stmt->missing_ok)
 										{
@@ -3521,9 +3522,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if (is_login(roleform->oid))
 							all_logins = true;
-						else if (is_user(roleform->oid, false))
+						else if (is_database_principal(roleform->oid, false) == BBF_USER)
 							all_users = true;
-						else if (is_role(roleform->oid, false))
+						else if (is_database_principal(roleform->oid, false) == BBF_ROLE)
 							all_roles = true;
 						else
 							other = true;
@@ -3615,12 +3616,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							orig_schema = "dbo";
 					}
-					else
+					else if (rolspec)
 					{
-						owner_oid = rolspec ? get_rolespec_oid(rolspec, true) : InvalidOid;
-						if (OidIsValid(owner_oid) && OidIsValid(db_accessadmin) && !member_can_set_role(GetUserId(), owner_oid) &&
+						owner_oid = get_rolespec_oid(rolspec, true);
+						if (OidIsValid(db_accessadmin) && !member_can_set_role(GetUserId(), owner_oid) &&
 							has_privs_of_role(GetUserId(), db_accessadmin) &&
-							(is_user(owner_oid, true) || is_role(owner_oid, true)))
+							(is_database_principal(owner_oid, true)))
 						{
 							/*
 							* db_accessadmin members can create schema for other users as owner
