@@ -1484,14 +1484,15 @@ tsql_func_select_candidate(List *names,
 static bool
 is_tsql_char_type_with_len(Oid type, bool is_case_expr)
 {
-	bool					result = false;
+	bool		       result;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 	result =  utilptr->is_tsql_bpchar_datatype(type) ||
 			  utilptr->is_tsql_nchar_datatype(type) ||
 			  utilptr->is_tsql_varchar_datatype(type) ||
 			  utilptr->is_tsql_nvarchar_datatype(type);
 	
-	/* For case expr we need to find common type based on TSQL's
+	/* 
+         * For case expr we need to find common type based on TSQL's
 	 * precedence for text and ntext also.
 	 */
 	if(is_case_expr)
@@ -2019,56 +2020,45 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	return max_typmods;
 }
 
-/* For CASE expression, this function will calculate typmod from tsql_select_common_typmod_hook(),
+/* 
+ * For CASE expression, this function will calculate typmod from tsql_select_common_typmod_hook(),
  * and after that we will set this typmod to all the CASE branches from coerce_to_target_type().
  */
 static Node*
 tsql_set_common_typemod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr *newc)
 {
-	CaseExpr   *tmpc  =  makeNode(CaseExpr);
 	int32       typmod;
         ListCell   *l;
 
-        if(sql_dialect != SQL_DIALECT_TSQL)
-                return (Node *) newc;
+        /* calculating common_typemod for case expr */
+        typmod = tsql_select_common_typmod_hook(pstate, exprs, newc->casetype);
 
-        tmpc->xpr = newc->xpr;
-        tmpc->casecollid = newc->casecollid;
-        tmpc->location = newc->location;
-        tmpc->arg = newc->arg;
-        tmpc->args = newc->args;
-        tmpc->defresult = newc->defresult;
-        tmpc->casetype = newc->casetype;
-
-        // calculating common_typemod for case exper
-        typmod = tsql_select_common_typmod_hook(pstate, exprs, tmpc->casetype);
-
-        tmpc->defresult = (Expr *) 
+        newc->defresult = (Expr *) 
                 coerce_to_target_type(pstate,
-                                (Node *) tmpc->defresult, 
-                                tmpc->casetype, 
-                                tmpc->casetype, 
+                                (Node *) newc->defresult, 
+                                newc->casetype, 
+                                newc->casetype, 
                                 typmod, 
                                 COERCION_ASSIGNMENT,
                                 COERCE_IMPLICIT_CAST,
                                 -1);
 
-        foreach(l, tmpc->args)
+        foreach(l, newc->args)
         {
                 CaseWhen   *w = (CaseWhen *) lfirst(l);
 
                 w->result = (Expr *)
                         coerce_to_target_type(pstate,
                                         (Node *) w->result, 
-                                        tmpc->casetype, 
-                                        tmpc->casetype, 
+                                        newc->casetype, 
+                                        newc->casetype, 
                                         typmod, 
                                         COERCION_ASSIGNMENT,
                                         COERCE_IMPLICIT_CAST,
                                         -1);
         }
 
-    return (Node *) tmpc;
+    return (Node *) newc;
 }
 
 Datum
