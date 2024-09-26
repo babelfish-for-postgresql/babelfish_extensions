@@ -19,9 +19,9 @@ SELECT * from #babel_temp_table
 
 # Test (3): Test reset of isolation level
 txn#!#begin#!#isolation#!#ss
-select current_setting('transaction_isolation')
+select transaction_isolation_level from sys.dm_exec_sessions where session_id = @@SPID
 storedproc#!#prep#!#sys.sp_reset_connection#!#
-select current_setting('transaction_isolation')
+select transaction_isolation_level from sys.dm_exec_sessions where session_id = @@SPID
 txn#!#commit 
 # Test (3): End
 
