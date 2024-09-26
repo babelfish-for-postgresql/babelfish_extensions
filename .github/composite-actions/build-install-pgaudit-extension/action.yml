@@ -1,4 +1,4 @@
-name: 'Build pgaudit Extension'
+name: 'Build and Install PgAudit'
 
 inputs:
   install_dir:

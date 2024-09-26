@@ -54,8 +54,8 @@ jobs:
         with:
           wal_level: logical
 
-      - name: Build pgaudit Extension
-        uses: ./.github/composite-actions/build-pgaudit-extension
+      - name: Build and Install PgAudit
+        uses: ./.github/composite-actions/build-install-pgaudit-extension
         with:
           install_dir: 'psql'
 
@@ -65,7 +65,7 @@ jobs:
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           export inputFilesPath=${{inputs.input_dir}}
           cd test
-          # ignoring BABEL-2843 test file BABEL-2843,as in this file we are enabling the babelfish_statistics profile On, which is not giving any error but just adding the query under Query Text  which is being passed from pg_audit and hence getting a diff file
+          # ignoring BABEL-2843 test file BABEL-2843,as in this file we are enabling the babelfish_statistics profile On for DDL, which is not giving any error but just adding the query under Query Text  which is being passed from pg_audit and hence getting a diff file
           sudo sed -i '$a\ignore#!#BABEL-2843' JDBC/jdbc_schedule
           # ignoring below files as we will fix this issue in BABEL-5272
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant' JDBC/jdbc_schedule
