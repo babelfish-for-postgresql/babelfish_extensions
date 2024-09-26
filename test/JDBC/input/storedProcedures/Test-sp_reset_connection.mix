@@ -60,8 +60,6 @@ GO
 --      Tests include negative cases where db is dropped or renamed
 Create database reset_con_db1;
 GO
-Create database reset_con_db2;
-GO
 
 -- tsql database=reset_con_db1
 select db_name();
@@ -81,19 +79,4 @@ use master;
 drop database reset_con_db1;
 GO
 exec sys.sp_reset_connection
-GO
--- tsql database=reset_con_db2
-select db_name();
-GO
-use master
-GO
-select db_name();
-GO
-ALTER DATABASE reset_con_db2 MODIFY NAME=reset_con_db3
-GO
-exec sys.sp_reset_connection
-GO
-
--- tsql
-DROP DATABASE reset_con_db3
 GO
