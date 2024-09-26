@@ -1,0 +1,2 @@
+select db_name();
+drop database db1;
