@@ -206,7 +206,6 @@ void
 reset_session_properties(void)
 {
 	reset_cached_batch();
-	set_session_properties(get_cur_db_name());
 }
 
 void
