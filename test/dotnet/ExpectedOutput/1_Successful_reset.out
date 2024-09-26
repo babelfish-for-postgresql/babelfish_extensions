@@ -2,4 +2,3 @@
 #D#nvarchar
 master
 #Q#drop database db1;
-
