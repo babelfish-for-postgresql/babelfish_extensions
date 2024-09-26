@@ -114,55 +114,14 @@ int
 ~~END~~
 
 
--- reset the login password
-ALTER LOGIN sys_views_login_l1 WITH PASSWORD = '12345678'
-GO
-
--- tsql user=sys_views_login_l1 password=12345678
-USE sys_views_vu_prepare_db1;
-GO
-
-#view sys_views_vu_prepare_s1.sys_views_vu_prepare_v1 should not be visible in db1 database to sys_views_login_l1.
-select count(*) from sys.views where name = 'sys_views_vu_prepare_v1';
+-- psql
+-- checking to make sure that all tsql users have USAGE privilege on tsql schemas.
+SELECT DISTINCT has_schema_privilege(r.rolname, n.nspname, 'USAGE')
+FROM sys.babelfish_authid_user_ext r
+CROSS JOIN sys.babelfish_namespace_ext n;
 GO
 ~~START~~
-int
-0
-~~END~~
-
-
-SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'sys_views_vu_prepare_v1';
-GO
-~~START~~
-int
-0
-~~END~~
-
-
--- tsql
-use sys_views_vu_prepare_db1;
-GO
-
-GRANT select on schema::sys_views_vu_prepare_s1 to sys_views_user_u1;
-GO
-
--- tsql user=sys_views_login_l1 password=12345678
-USE sys_views_vu_prepare_db1;
-GO
-
-# view sys_views_vu_prepare_s1.sys_views_vu_prepare_v1 should be visible in db1 database to sys_views_login_l1 now.
-select count(*) from sys.views where name = 'sys_views_vu_prepare_v1';
-GO
-~~START~~
-int
-1
-~~END~~
-
-
-SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'sys_views_vu_prepare_v1';
-GO
-~~START~~
-int
-1
+bool
+t
 ~~END~~
 
