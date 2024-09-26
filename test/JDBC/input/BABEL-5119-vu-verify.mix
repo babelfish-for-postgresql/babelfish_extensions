@@ -48,16 +48,16 @@ SELECT name FROM BABEL5119_db.sys.procedures WHERE name LIKE 'BABEL5119%'
 ORDER BY name
 GO
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
@@ -78,7 +78,7 @@ INSERT INTO #babel5119_tmp_table_2 SELECT name FROM BABEL5119_db.sys.databases W
 GO
 
 CREATE TABLE #babel5119_tmp_table_3(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_3 SELECT TABLE_NAME FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_3 SELECT TABLE_NAME FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 
 SELECT has_dbaccess(BABEL5119_db.sys.databases.name) FROM BABEL5119_db.sys.databases WHERE BABEL5119_db.sys.databases.name='BABEL5119_db'
@@ -100,16 +100,16 @@ SELECT name FROM master.sys.procedures WHERE name LIKE 'BABEL5119%'
 ORDER BY name
 GO
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
@@ -130,7 +130,7 @@ INSERT INTO #babel5119_tmp_table_5 SELECT name FROM master.sys.databases WHERE n
 GO
 
 CREATE TABLE #babel5119_tmp_table_6(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_6 SELECT TABLE_NAME FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_6 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 
 SELECT has_dbaccess(master.sys.databases.name) FROM master.sys.databases WHERE master.sys.databases.name='BABEL5119_db'
@@ -156,16 +156,16 @@ SELECT name FROM BABEL5119_db.sys.procedures WHERE name LIKE 'BABEL5119%'
 ORDER BY name
 GO
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
@@ -186,7 +186,7 @@ INSERT INTO #babel5119_tmp_table_8 SELECT name FROM BABEL5119_db.sys.databases W
 GO
 
 CREATE TABLE #babel5119_tmp_table_9(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_9 SELECT TABLE_NAME FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_9 SELECT TABLE_NAME FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 
 SELECT has_dbaccess(BABEL5119_db.sys.databases.name) FROM BABEL5119_db.sys.databases WHERE BABEL5119_db.sys.databases.name='BABEL5119_db'
@@ -208,16 +208,16 @@ SELECT name FROM master.sys.procedures WHERE name LIKE 'BABEL5119%'
 ORDER BY name
 GO
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
@@ -238,7 +238,7 @@ INSERT INTO #babel5119_tmp_table_11 SELECT name FROM master.sys.databases WHERE 
 GO
 
 CREATE TABLE #babel5119_tmp_table_12(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_12 SELECT TABLE_NAME FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_12 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 
 SELECT has_dbaccess(master.sys.databases.name) FROM master.sys.databases WHERE master.sys.databases.name='BABEL5119_db'
@@ -264,16 +264,16 @@ SELECT name FROM BABEL5119_db.sys.procedures WHERE name LIKE 'BABEL5119%'
 ORDER BY name
 GO
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
@@ -294,7 +294,7 @@ INSERT INTO #babel5119_tmp_table_14 SELECT name FROM BABEL5119_db.sys.databases 
 GO
 
 CREATE TABLE #babel5119_tmp_table_15(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_15 SELECT TABLE_NAME FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_15 SELECT TABLE_NAME FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 
 SELECT has_dbaccess(BABEL5119_db.sys.databases.name) FROM BABEL5119_db.sys.databases WHERE BABEL5119_db.sys.databases.name='BABEL5119_db'
@@ -312,16 +312,16 @@ SELECT name FROM master.sys.procedures WHERE name LIKE 'BABEL5119%'
 ORDER BY name
 GO
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 
@@ -335,7 +335,7 @@ INSERT INTO #babel5119_tmp_table_17 SELECT name FROM master.sys.databases WHERE 
 GO
 
 CREATE TABLE #babel5119_tmp_table_18(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_18 SELECT TABLE_NAME FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_18 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 
 SELECT has_dbaccess(master.sys.databases.name) FROM master.sys.databases WHERE master.sys.databases.name='BABEL5119_db'

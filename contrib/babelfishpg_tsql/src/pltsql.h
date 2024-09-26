@@ -1797,6 +1797,10 @@ typedef struct PLtsql_protocol_plugin
 
 	char	   *(*get_physical_schema_name) (char *db_name, const char *schema_name);
 
+	void		(*set_reset_tds_connection_flag) ();
+
+	bool		(*get_reset_tds_connection_flag) ();
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -1810,7 +1814,6 @@ typedef struct PLtsql_protocol_plugin
 	int			datefirst;
 	int			lock_timeout;
 	const char *language;
-
 } PLtsql_protocol_plugin;
 
 /*
@@ -2165,10 +2168,11 @@ extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
 extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
-extern void update_RevokeRoleStmt(Node *n, List *privs, List *roles);
 extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
+extern AccessPriv *make_accesspriv_node(const char *priv_name);
+extern RoleSpec   *make_rolespec_node(const char *rolename);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
 extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);

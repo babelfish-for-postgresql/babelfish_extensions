@@ -302,6 +302,7 @@ extern int	TdsProcessLogin(Port *port, bool LoadSsl);
 extern void TdsSendLoginAck(Port *port);
 extern uint32_t GetClientTDSVersion(void);
 extern char *get_tds_login_domainname(void);
+extern void TdsSetDbContext(void);
 
 /* Functions in backend/tds/tdsprotocol.c */
 extern int	TdsSocketBackend(void);
