@@ -566,4 +566,5 @@ binary-datatype-operators
 cast-varchar-to-time
 SELECT_INTO_TEST
 BABEL-5119
+BABEL-5129
 
