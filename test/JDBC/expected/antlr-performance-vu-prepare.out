@@ -1,0 +1,49 @@
+-- tsql
+create login antlr_login with password='12345678'
+go
+
+CREATE USER antlr_user FOR LOGIN antlr_login
+GO
+
+DROP TABLE IF EXISTS antlr_orders;
+go
+
+DROP TABLE IF EXISTS antlr_lineitem;
+go
+
+CREATE TABLE antlr_orders  ( o_orderkey       INTEGER NOT NULL,
+                       o_custkey        INTEGER NOT NULL,
+                       o_orderstatus    CHAR(1) NOT NULL,
+                       o_totalprice     DECIMAL(15,2) NOT NULL,
+                       o_orderdate      DATE NOT NULL,
+                       o_orderpriority  CHAR(15) NOT NULL,  
+                       o_clerk          CHAR(15) NOT NULL, 
+                       o_shippriority   INTEGER NOT NULL,
+                       o_comment        VARCHAR(79) NOT NULL,
+                       PRIMARY KEY (o_orderkey));
+GO
+
+CREATE TABLE antlr_lineitem ( l_orderkey    INTEGER NOT NULL,
+                        l_partkey     INTEGER NOT NULL,
+                        l_suppkey     INTEGER NOT NULL,
+                        l_linenumber  INTEGER NOT NULL,
+                        l_quantity    DECIMAL(15,2) NOT NULL,
+                        l_extendedprice  DECIMAL(15,2) NOT NULL,
+                        l_discount    DECIMAL(15,2) NOT NULL,
+                        l_tax         DECIMAL(15,2) NOT NULL,
+                        l_returnflag  CHAR(1) NOT NULL,
+                        l_linestatus  CHAR(1) NOT NULL,
+                        l_shipdate    DATE NOT NULL,
+                        l_commitdate  DATE NOT NULL,
+                        l_receiptdate DATE NOT NULL,
+                        l_shipinstruct CHAR(25) NOT NULL,
+                        l_shipmode     CHAR(10) NOT NULL,
+                        l_comment      VARCHAR(44) NOT NULL,
+                        PRIMARY KEY (l_orderkey, l_linenumber));
+GO
+
+GRANT SELECT ON antlr_orders TO antlr_user;
+GO
+
+GRANT SELECT ON antlr_lineitem TO antlr_user;
+GO

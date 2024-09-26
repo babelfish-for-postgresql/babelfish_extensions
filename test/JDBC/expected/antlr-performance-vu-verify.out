@@ -1,0 +1,1441 @@
+
+-- tsql user=antlr_login password=12345678
+-- don't change that 12000 sla, if it's not expected, then warm up failed
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 237.279 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 235.525 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.574 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 235.975 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 243.387 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 243.302 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 240.121 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 235.287 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 235.170 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 235.419 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.509 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 237.477 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 238.497 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 233.743 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 233.666 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.657 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 234.610 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.129 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 234.273 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 235.070 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.197 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 233.664 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 238.750 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 233.960 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 240.602 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 237.826 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 233.826 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.123 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 237.703 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 235.050 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.643 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 238.501 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.798 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.195 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 238.183 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 239.559 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 234.109 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 238.248 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 234.667 ms
+~~END~~
+
+
+-- tsql user=antlr_login password=12345678
+set BABELFISH_SHOWPLAN_ALL on
+GO
+
+SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GO
+~~START~~
+text
+Query Text: SELECT O_ORDERPRIORITY, COUNT(*) AS ORDER_COUNT FROM antlr_ORDERS
+WHERE O_ORDERDATE >= '1993-07-01' AND O_ORDERDATE < dateadd(mm,3, cast('1993-07-01' as date))
+AND EXISTS (SELECT * FROM antlr_LINEITEM WHERE L_ORDERKEY = O_ORDERKEY AND L_COMMITDATE < L_RECEIPTDATE)
+GROUP BY O_ORDERPRIORITY
+ORDER BY O_ORDERPRIORITY
+GroupAggregate  (cost=29.85..29.88 rows=1 width=36)
+  Group Key: antlr_orders.o_orderpriority
+  ->  Sort  (cost=29.85..29.86 rows=1 width=32)
+        Sort Key: antlr_orders.o_orderpriority NULLS FIRST
+        ->  Hash Semi Join  (cost=13.84..29.84 rows=1 width=32)
+              Hash Cond: (antlr_orders.o_orderkey = antlr_lineitem.l_orderkey)
+              ->  Seq Scan on antlr_orders  (cost=0.00..16.00 rows=2 width=36)
+                    Filter: ((o_orderdate >= '1993-07-01'::date) AND (o_orderdate < '1993-10-01'::date))
+              ->  Hash  (cost=12.88..12.88 rows=77 width=4)
+                    ->  Seq Scan on antlr_lineitem  (cost=0.00..12.88 rows=77 width=4)
+                          Filter: (l_commitdate < l_receiptdate)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 238.582 ms
+~~END~~
+

@@ -1,0 +1,35 @@
+DROP TABLE IF EXISTS antlr_nation ;
+go
+
+DROP TABLE IF EXISTS antlr_region;
+go
+
+DROP TABLE IF EXISTS antlr_part;
+go
+
+DROP TABLE IF EXISTS antlr_supplier;
+go
+
+DROP TABLE IF EXISTS antlr_partsupp;
+go
+
+DROP TABLE IF EXISTS antlr_orders;
+go
+
+DROP TABLE IF EXISTS antlr_customer;
+go
+
+DROP TABLE IF EXISTS antlr_lineitem;
+go
+
+-- psql 
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'antlr_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
+drop login antlr_login;
+GO
+
+drop user antlr_user;
+GO
