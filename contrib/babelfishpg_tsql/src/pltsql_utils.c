@@ -2263,7 +2263,10 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 	List		*parsetree_list;
 	ListCell	*parsetree_item;
 	const char *prev_current_user;
-	const char *dbo_role = get_dbo_role_name(get_cur_db_name());
+	const char *dbo_role;
+	const char *dbname = get_cur_db_name();
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+	dbo_role = get_dbo_role_name_by_mode(dbname, baseline_mode);
 
 	/* Need dbo user to execute the statements. */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
