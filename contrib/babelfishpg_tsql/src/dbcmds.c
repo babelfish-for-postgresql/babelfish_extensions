@@ -106,12 +106,14 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	const char     *db_owner;
 	const char     *guest;
 	const char     *guest_schema;
+	bool     	owner_is_sa;
 
 	schema = get_dbo_schema_name(dbname);
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
 	guest = get_guest_role_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
+	owner_is_sa = role_is_sa(get_role_oid(owner, true));
 
 	/*
 	 * To avoid SQL injection, we generate statement parsetree with dummy
@@ -122,7 +124,10 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
-	appendStringInfo(&query, "GRANT dummy TO dummy; ");
+	
+	/* Only grant dbo to owner if owner is not master user  */
+	if (!owner_is_sa)
+		appendStringInfo(&query, "GRANT dummy TO dummy; ");
 
 	if (guest)
 	{
@@ -143,9 +148,19 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 10 : 9;
+	{
+		if (!owner_is_sa)
+			expected_stmt_num = list_length(logins) > 0 ? 10 : 9;	
+		else
+			expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
+	}
 	else
-		expected_stmt_num = 7;
+	{
+		expected_stmt_num = 6;
+
+		if (!owner_is_sa)
+			expected_stmt_num++;
+	}
 
 	if (list_length(res) != expected_stmt_num)
 		ereport(ERROR,
@@ -163,11 +178,13 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
 
-	/* Grant dbo role to owner */
-	stmt = parsetree_nth_stmt(res, i++);
-
-	update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(dbo)),
-						 list_make1(make_rolespec_node(owner)));
+	if (!owner_is_sa)
+	{
+		/* Grant dbo role to owner */
+		stmt = parsetree_nth_stmt(res, i++);
+		update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(dbo)),
+							list_make1(make_rolespec_node(owner)));
+	}
 
 	if (guest)
 	{
