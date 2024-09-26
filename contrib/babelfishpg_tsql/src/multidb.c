@@ -348,7 +348,6 @@ rewrite_object_refs(Node *stmt)
 						user_name = get_physical_user_name(db_name, create_role->role, false, true);
 						pfree(create_role->role);
 						create_role->role = user_name;
-						pfree(user_name);
 
 						foreach(option, create_role->options)
 						{
@@ -369,6 +368,8 @@ rewrite_object_refs(Node *stmt)
 								}
 							}
 						}
+
+						pfree(user_name);
 					}
 				}
 				break;
