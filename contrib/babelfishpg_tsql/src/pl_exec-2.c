@@ -2916,14 +2916,19 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 			top_es_entry = top_es_entry->next;
 	}
 
-	snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
-	/* send env change token to user */
-	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
-		((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
-	/* send message to user */
-	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-		((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
-
+	/*
+	 * In case of reset-connection we do not need to send the environment change token.
+	 */
+	if (!((*pltsql_protocol_plugin_ptr) && (*pltsql_protocol_plugin_ptr)->get_reset_tds_connection_flag()))
+	{
+		snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
+		/* send env change token to user */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
+			((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
+		/* send message to user */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+	}
 	return PLTSQL_RC_OK;
 }
 
