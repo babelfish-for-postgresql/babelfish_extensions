@@ -245,7 +245,7 @@ _PG_init(void)
 	next_ProcessUtility = ProcessUtility_hook;
 	ProcessUtility_hook = tdsutils_ProcessUtility;
 
-	antlr_warmup_query_tsql("select a,b,c,d,e from t join t1 on t.a = t1.b where t.a = 'c'");
+	antlr_warmup_query_tsql("select a,b,c,d,e from t where t.c = 'c'");
 	inited = true;
 }
 

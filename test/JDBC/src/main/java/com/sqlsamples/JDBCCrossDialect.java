@@ -103,7 +103,7 @@ public class JDBCCrossDialect {
             // if we already have opened a tsql connection then reuse that
             tsqlConnection = tsqlConnectionMap.get(newUser + newPassword + newDatabase + newPort);
 
-            if (tsqlConnection == null) {
+            if (tsqlConnection == null || newUser.equals("antlr_login")) {
                 // Create a new connection on tsql port and use that
                 String connectionString = createSQLServerConnectionString(URL, newPort, newDatabase, newUser, newPassword);
                 tsqlConnection = DriverManager.getConnection(connectionString);

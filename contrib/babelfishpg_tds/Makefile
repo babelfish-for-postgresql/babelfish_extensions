@@ -27,6 +27,7 @@ tds_temp_srcs = $(shell find $(tds_top_dir) -name "*.c")
 tds_srcs = $(filter-out $(tds_exclude_files), $(tds_temp_srcs))
 
 OBJS = $(patsubst %.c, %.o, $(tds_srcs))
+OBJS += $(WIN32RES)
 OBJS +=$(TSQL_SRC)/src/tsqlwarmup.o
 OBJS += $(TSQL_SRC)/antlr/libantlr_tsql.a
 
