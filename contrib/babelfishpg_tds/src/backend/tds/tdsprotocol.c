@@ -123,7 +123,7 @@ ResetTDSConnection(void)
 {
 	const char *isolationOld;
 
-	Assert(resetTdsConnectionFlag || TdsRequestCtrl->request == NULL);
+	Assert(TdsRequestCtrl->request == NULL);
 	Assert(TdsRequestCtrl->requestContext != NULL);
 	TdsErrorContext->err_text = "Resetting the TDS connection";
 

@@ -16,7 +16,6 @@
 #include "multidb.h"
 #include "session.h"
 #include "pltsql.h"
-#include "pl_explain.h"
 #include "guc.h"
 #include "storage/shm_toc.h"
 #include "collation.h"

@@ -22,6 +22,7 @@
 
 #include "catalog.h"
 #include "dbcmds.h"
+#include "pl_explain.h"
 #include "pltsql.h"
 #include "rolecmds.h"
 #include "session.h"
