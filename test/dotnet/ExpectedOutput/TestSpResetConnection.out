@@ -16,13 +16,13 @@
 #Q#sys.sp_reset_connection
 #Q#SELECT * from #babel_temp_table
 #E#relation "#babel_temp_table" does not exist
-#Q#select current_setting('transaction_isolation')
-#D#text
-repeatable read
+#Q#select transaction_isolation_level from sys.dm_exec_sessions where session_id = @@SPID
+#D#smallint
+5
 #Q#sys.sp_reset_connection
-#Q#select current_setting('transaction_isolation')
-#D#text
-read committed
+#Q#select transaction_isolation_level from sys.dm_exec_sessions where session_id = @@SPID
+#D#smallint
+2
 #Q#CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
 #Q#INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
 #Q#SELECT * from #babel_temp_table
