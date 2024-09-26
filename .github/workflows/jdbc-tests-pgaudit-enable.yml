@@ -1,5 +1,7 @@
 name: JDBC Tests With PG AUDIT Enable
-on: [push, pull_request]
+on:
+  schedule:
+    - cron: '0 0 * * *'  # runs every midnight
 
 jobs:
   run-babelfish-jdbc-tests-with-pg-audit:
