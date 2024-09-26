@@ -73,6 +73,7 @@ typedef ResetConnectionData *ResetConnection;
 TdsRequestCtrlData *TdsRequestCtrl = NULL;
 
 ResetConnection resetCon = NULL;
+static bool resetTdsConnectionFlag = false;
 
 /* Local functions */
 static void ResetTDSConnection(void);
@@ -154,13 +155,28 @@ ResetTDSConnection(void)
 	TdsResetCache();
 	TdsResponseReset();
 	TdsResetBcpOffset();
-	SetConfigOption("default_transaction_isolation", isolationOld,
-					PGC_BACKEND, PGC_S_CLIENT);
+	/* Retore previous isolation level when not called by sys.sp_reset_connection */
+	if (!resetTdsConnectionFlag)
+	{
+		SetConfigOption("default_transaction_isolation", isolationOld,
+						PGC_BACKEND, PGC_S_CLIENT);
+	}
 
 	tvp_lookup_list = NIL;
 
-	/* send an environement change token */
-	TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+	/* send an environement change token is its not called via sys.sp_reset_connection procedure */
+	if (!resetTdsConnectionFlag)
+	{
+		TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+	}
+}
+
+/*
+ * SetResetTDSConnectionFlag - Sets reset tds connection flag
+ */
+void SetResetTDSConnectionFlag()
+{
+	resetTdsConnectionFlag = true;	
 }
 
 /*
@@ -673,6 +689,12 @@ TdsSocketBackend(void)
 
 						/* Ready to fetch the next request */
 						TdsRequestCtrl->phase = TDS_REQUEST_PHASE_FETCH;
+
+						if (resetTdsConnectionFlag)
+						{
+							ResetTDSConnection();
+							resetTdsConnectionFlag = false;
+						}
 
 						break;
 					}
