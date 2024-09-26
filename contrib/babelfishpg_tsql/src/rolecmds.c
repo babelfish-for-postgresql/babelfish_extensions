@@ -1803,7 +1803,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	original_user_name = get_authid_user_ext_original_name(granted_name, true);
 	Assert(original_user_name);
 
-	/* only members of db_owner can alter drop members to fixed db roles */
+	/* only members of db_owner can alter drop members of fixed db roles */
 	if (strcmp(original_user_name, DB_ACCESSADMIN) == 0 &&
 	    !has_privs_of_role(GetUserId(), get_role_oid(db_owner, false)))
 		ereport(ERROR,

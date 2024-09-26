@@ -3621,15 +3621,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						Oid       db_accessadmin = get_role_oid(get_db_accessadmin_role_name(get_cur_db_name()), false);
 
 						owner_oid = get_rolespec_oid(rolspec, true);
-						if (OidIsValid(db_accessadmin) && !member_can_set_role(GetUserId(), owner_oid) &&
+						/*
+						* db_accessadmin members can create schema with owner being any db principal
+						* If it does not have the pg permission then handle it here. We will set owner
+						* to current user and later alter schema owner using bbf_role_admin
+						*/
+						if (!member_can_set_role(GetUserId(), owner_oid) &&
 							has_privs_of_role(GetUserId(), db_accessadmin) &&
 							(is_database_principal(owner_oid, true)))
 						{
-							/*
-							* db_accessadmin members can create schema for other users as owner
-							* but it does not actually have the required permission from PG
-							* perspective to do so, hence handle it this way.
-							*/
 							create_schema->authrole = NULL;
 							alter_owner = true;
 						}

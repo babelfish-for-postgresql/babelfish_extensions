@@ -2347,16 +2347,15 @@ GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
 $$
 BEGIN
-	DECLARE @rolenamelower sys.SYSNAME = LOWER(RTRIM(@rolename))
 	-- Returns a list of the fixed database roles. 
-	IF @rolenamelower IS NULL OR @rolenamelower IN ('db_owner', 'db_accessadmin')
+	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) IN ('db_owner', 'db_accessadmin')
 	BEGIN
-		SELECT CAST(DbFixedRole as sys.SYSNAME), CAST(Description AS sys.nvarchar(70)) FROM (
+		SELECT CAST(DbFixedRole as sys.SYSNAME) AS DbFixedRole, CAST(Description AS sys.nvarchar(70)) AS Description FROM (
 			VALUES ('db_owner', 'DB Owners'),
 			('db_accessadmin', 'DB Access Administrators')) x(DbFixedRole, Description)
-			WHERE @rolenamelower IS NULL OR @rolenamelower = DbFixedRole;
+			WHERE LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = DbFixedRole;
 	END
-	ELSE IF @rolenamelower IN (
+	ELSE IF LOWER(RTRIM(@rolename)) IN (
 			'db_securityadmin','db_ddladmin', 'db_backupoperator', 
 			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
 	BEGIN
@@ -2365,7 +2364,7 @@ BEGIN
 		WHERE 1=0;	
 	END
 	ELSE
-		RAISERROR('''%s'' is not a known fixed role.', 16, 1, @rolename);
+		RAISERROR('''%s'' is not a known fixed role.', 16, 1, LOWER(RTRIM(@rolename)));
 END
 $$
 LANGUAGE 'pltsql';

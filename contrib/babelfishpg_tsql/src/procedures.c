@@ -2437,7 +2437,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 		 * Check if the user, group or role does not exists and given member
 		 * name is an role or user
 		 */
-		if (member_oid == InvalidOid || is_database_principal(member_oid, true))
+		if (member_oid == InvalidOid || !is_database_principal(member_oid, true))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("User or role '%s' does not exist in this database.", membername)));
@@ -2612,7 +2612,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 		 * Throw an error id the given member name doesn't exist or isn't a
 		 * role or user
 		 */
-		if (role_oid == InvalidOid || is_database_principal(role_oid, true))
+		if (role_oid == InvalidOid || !is_database_principal(role_oid, true))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot drop the principal '%s', because it does not exist or you do not have permission.", membername)));
