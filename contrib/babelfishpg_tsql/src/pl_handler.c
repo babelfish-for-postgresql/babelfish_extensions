@@ -3616,7 +3616,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							orig_schema = "dbo";
 					}
-					else if (rolspec && strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
+					else if (rolspec && strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0 &&
+					         strcmp(queryString, CREATE_GUEST_SCHEMAS_DURING_UPGRADE) != 0)
 					{
 						Oid       db_accessadmin = get_role_oid(get_db_accessadmin_role_name(get_cur_db_name()), false);
 

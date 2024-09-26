@@ -1163,7 +1163,7 @@ create_schema_if_not_exists(const uint16 dbid,
 		wrapper->stmt_len = 0;
 
 		ProcessUtility(wrapper,
-					   query.data,
+					   CREATE_GUEST_SCHEMAS_DURING_UPGRADE,
 					   false,
 					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
