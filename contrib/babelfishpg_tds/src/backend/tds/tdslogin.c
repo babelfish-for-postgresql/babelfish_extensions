@@ -61,6 +61,7 @@
 
 #include "src/include/tds_debug.h"
 #include "src/include/tds_int.h"
+#include "src/include/tds_protocol.h"
 #include "src/include/tds_request.h"
 #include "src/include/tds_response.h"
 #include "src/include/guc.h"
@@ -2050,6 +2051,128 @@ TdsProcessLogin(Port *port, bool loadedSsl)
 }
 
 /*
+ * TdsSetDbContext:
+ *		Used to Set the Database Context during login
+ *		and during reset connection.
+ *		Note: We should not optimize the scenario during
+ *		reset connection to reset to the same database
+ *		which might be in use since the USE db command
+ *		will reset other configurations which might
+ *		have changed.
+ */
+void
+TdsSetDbContext()
+{
+	char *dbname				= NULL;
+	char *useDbCommand			= NULL;
+	char *user 					= NULL;
+	MemoryContext oldContext	= CurrentMemoryContext;
+
+	PG_TRY();
+	{
+		if (loginInfo->database != NULL && loginInfo->database[0] != '\0')
+		{
+			Oid			db_id;
+
+			/*
+			 * Before preparing the query, first check whether we got a valid
+			 * database name and it exists.  Otherwise, there'll be risk of
+			 * SQL injection.
+			 */
+			StartTransactionCommand();
+			db_id = pltsql_plugin_handler_ptr->pltsql_get_database_oid(loginInfo->database);
+			CommitTransactionCommand();
+			MemoryContextSwitchTo(oldContext);
+
+			if (!OidIsValid(db_id))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_DATABASE),
+							errmsg("database \"%s\" does not exist", loginInfo->database)));
+
+			/*
+			 * Any delimitated/quoted db name identifier requested in login
+			 * must be already handled before this point.
+			 */
+			useDbCommand = psprintf("USE [%s]", loginInfo->database);
+			dbname = pstrdup(loginInfo->database);
+		}
+		else
+		{
+			char	   *temp = NULL;
+
+			StartTransactionCommand();
+			temp = pltsql_plugin_handler_ptr->pltsql_get_login_default_db(loginInfo->username);
+			MemoryContextSwitchTo(oldContext);
+
+			if (temp == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_DATABASE),
+							errmsg("could not find default database for user \"%s\"", loginInfo->username)));
+
+			useDbCommand = psprintf("USE [%s]", temp);
+			dbname = pstrdup(temp);
+			CommitTransactionCommand();
+			MemoryContextSwitchTo(oldContext);
+		}
+
+		StartTransactionCommand();
+		/*
+		 * Check if user has privileges to access current database.
+		 */
+		user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(dbname);
+		if (!user)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+						errmsg("Cannot open database \"%s\" requested by the login. The login failed", dbname)));
+
+		/*
+		 * loginInfo has a database name provided, so we execute a "USE
+		 * [<db_name>]" through pltsql inline handler.
+		 */
+		ExecuteSQLBatch(useDbCommand);
+		CommitTransactionCommand();
+	}
+	PG_CATCH();
+	{
+		/*
+		 * If this is during reset phase and we encounter an error
+		 * with mapped user or db not found then we should terminate
+		 * the connection.
+		 */
+		if (resetTdsConnectionFlag)
+		{
+			/* Before terminating the connection, send the response to the client. */
+			EmitErrorReport();
+			FlushErrorState();
+
+			/*
+			 * Client driver terminates the connection with a
+			 * dual error token and with error 596. Otherwise
+			 * it sends the next requests before realising the
+			 * session was terminated.
+			 */
+			TdsSendError(596, 1, ERROR,
+					"Cannot continue the execution because the session is in the kill state.", 1);
+
+			TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR, 0, 0);
+			TdsFlush();
+
+			/* Terminate the connection. */
+			ereport(FATAL,
+					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+					errmsg("Reset Connection Failed")));
+		}
+		/* Else rethrow the error. */
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	if (useDbCommand)
+		pfree(useDbCommand);
+	if (dbname)
+		pfree(dbname);
+}
+
+/*
  * TdsSendLoginAck - Send a login acknowledgement to the client
  *
  * This function should be called in postmaster context.
@@ -2058,17 +2181,13 @@ void
 TdsSendLoginAck(Port *port)
 {
 	uint16_t	temp16;
-	char	   *dbname = NULL;
 	int			prognameLen = pg_mbstrlen(default_server_name);
 	LoginRequest request;
 	StringInfoData buf;
 	uint8		temp8;
 	uint32_t	collationInfo;
 	char		collationBytesNew[5];
-	char	   *useDbCommand = NULL;
-	char	   *user = NULL;
 	Oid			roleid = InvalidOid;
-	MemoryContext oldContext;
 	uint32_t	tdsVersion = pg_hton32(loginInfo->tdsVersion);
 	char		srvVersionBytes[4];
 
@@ -2179,75 +2298,7 @@ TdsSendLoginAck(Port *port)
 						 errmsg("\"%s\" is not a Babelfish user", port->user_name)));
 		}
 
-		oldContext = CurrentMemoryContext;
-
-		if (request->database != NULL && request->database[0] != '\0')
-		{
-			Oid			db_id;
-
-			/*
-			 * Before preparing the query, first check whether we got a valid
-			 * database name and it exists.  Otherwise, there'll be risk of
-			 * SQL injection.
-			 */
-			StartTransactionCommand();
-			db_id = pltsql_plugin_handler_ptr->pltsql_get_database_oid(request->database);
-			CommitTransactionCommand();
-			MemoryContextSwitchTo(oldContext);
-
-			if (!OidIsValid(db_id))
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_DATABASE),
-						 errmsg("database \"%s\" does not exist", request->database)));
-
-			/*
-			 * Any delimitated/quoted db name identifier requested in login
-			 * must be already handled before this point.
-			 */
-			useDbCommand = psprintf("USE [%s]", request->database);
-			dbname = pstrdup(request->database);
-		}
-		else
-		{
-			char	   *temp = NULL;
-
-			StartTransactionCommand();
-			temp = pltsql_plugin_handler_ptr->pltsql_get_login_default_db(port->user_name);
-			MemoryContextSwitchTo(oldContext);
-
-			if (temp == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_DATABASE),
-						 errmsg("could not find default database for user \"%s\"", port->user_name)));
-
-			useDbCommand = psprintf("USE [%s]", temp);
-			dbname = pstrdup(temp);
-			CommitTransactionCommand();
-			MemoryContextSwitchTo(oldContext);
-		}
-
-		/*
-		 * Check if user has privileges to access current database
-		 */
-		StartTransactionCommand();
-		user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(dbname);
-		if (!user)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_DATABASE),
-					 errmsg("Cannot open database \"%s\" requested by the login. The login failed", dbname)));
-		CommitTransactionCommand();
-		if (dbname)
-			pfree(dbname);
-
-		/*
-		 * Request has a database name provided, so we execute a "USE
-		 * [<db_name>]" through pgtsql inline handler
-		 */
-		StartTransactionCommand();
-		ExecuteSQLBatch(useDbCommand);
-		CommitTransactionCommand();
-		if (useDbCommand)
-			pfree(useDbCommand);
+		TdsSetDbContext();
 
 		/*
 		 * Set the GUC for language, it will take care of changing the GUC,
