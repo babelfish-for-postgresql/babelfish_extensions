@@ -2517,7 +2517,7 @@ TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 
 	if (new_val)
 	{
-		temp8 = strlen(new_val);
+		temp8 = newUtf16.len / 2;
 		TdsPutbytes(&temp8, sizeof(temp8));
 		TdsPutbytes(newUtf16.data, newUtf16.len);
 	}
@@ -2529,7 +2529,7 @@ TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 
 	if (old_val)
 	{
-		temp8 = strlen(old_val);
+		temp8 = oldUtf16.len / 2;
 		TdsPutbytes(&temp8, sizeof(temp8));
 		TdsPutbytes(oldUtf16.data, oldUtf16.len);
 	}
