@@ -1,0 +1,26 @@
+-- Tests for ISNUMERIC function with varchar and nvarchar variables
+
+CREATE TABLE babel_5129 (
+    int_type int,
+    numeric_type numeric(10,5),
+    money_type money,
+    varchar_type varchar(20),
+    nvarchar_type nvarchar(20)
+)
+GO
+
+INSERT INTO babel_5129 (
+    int_type,
+    numeric_type,
+    money_type,
+    varchar_type,
+    nvarchar_type
+)
+VALUES (
+    45000,
+    12345.12,
+    237891.22,
+    '12.3420000000',
+    '12.3420000000'
+)
+GO
