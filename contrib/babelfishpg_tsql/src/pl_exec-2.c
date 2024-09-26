@@ -22,7 +22,6 @@
 
 #include "catalog.h"
 #include "dbcmds.h"
-#include "pl_explain.h"
 #include "pltsql.h"
 #include "rolecmds.h"
 #include "session.h"
@@ -2919,7 +2918,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	/*
 	 * In case of reset-connection we do not need to send the environment change token.
 	 */
-	if (!(*pltsql_protocol_plugin_ptr)->get_reset_tds_connection_flag())
+	if (!((*pltsql_protocol_plugin_ptr) && (*pltsql_protocol_plugin_ptr)->get_reset_tds_connection_flag()))
 	{
 		snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
 		/* send env change token to user */
