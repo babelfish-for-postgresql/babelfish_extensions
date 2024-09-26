@@ -2146,7 +2146,6 @@ TdsSendLoginAck(Port *port)
 	uint8		temp8;
 	uint32_t	collationInfo;
 	char		collationBytesNew[5];
-	Oid			roleid = InvalidOid;
 	uint32_t	tdsVersion = pg_hton32(loginInfo->tdsVersion);
 	char		srvVersionBytes[4];
 
