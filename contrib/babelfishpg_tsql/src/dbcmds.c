@@ -279,11 +279,11 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 			expected_stmts += 2;
 		}
 	}
-	/* Drop db_accessadmin*/
+	appendStringInfo(&query, "DROP OWNED BY dummy, dummy, dummy CASCADE; ");
+
+	/* Then drop db_accessadmin, db_owner and dbo in that order */
 	appendStringInfo(&query, "REVOKE CREATE ON DATABASE dummy FROM dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
-	/* Then drop db_owner and dbo in that order */
-	appendStringInfo(&query, "DROP OWNED BY dummy, dummy CASCADE; ");
 	appendStringInfo(&query, "REVOKE CREATE, CONNECT, TEMPORARY ON DATABASE dummy FROM dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
@@ -318,12 +318,12 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	}
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropOwnedStmt(stmt, list_make3(pstrdup(db_accessadmin), pstrdup(db_owner), pstrdup(dbo)));
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, db_accessadmin);
-
-	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_DropOwnedStmt(stmt, list_make2(pstrdup(db_owner), pstrdup(dbo)));
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
@@ -645,7 +645,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 
 			/* do this step */
 			ProcessUtility(wrapper,
-						   "(CREATE LOGICAL DATABASE )",
+						   CREATE_LOGICAL_DATABASE,
 						   false,
 						   PROCESS_UTILITY_SUBCOMMAND,
 						   NULL,
@@ -1272,8 +1272,11 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 	TableScanDesc scan;
 	HeapTuple	tuple;
 	Form_sysdatabases bbf_db;
+	StringInfoData query;
+	List        *parsetree_list;
 	char        *dbname;
-	int         saved_nest_level = 0;
+	int         pltsql_save_nestlevel;
+	int         save_nestlevel;
 
 	if (!creating_extension)
 		ereport(ERROR,
@@ -1281,7 +1284,8 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
 						"create_database_roles_for_all_dbs()")));
 
-	saved_nest_level = pltsql_new_guc_nest_level();
+	pltsql_save_nestlevel = pltsql_new_guc_nest_level();
+	save_nestlevel = NewGUCNestLevel();
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -1289,32 +1293,29 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
+	initStringInfo(&query);
+
+	appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+	appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
+
+	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
 	sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
 	scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		StringInfoData query;
-		List           *parsetree_list;
 		Node           *stmt;
+		Oid            save_userid;
+		int            save_sec_context;
+		int            i = 0;
 		const char     *db_owner;
 		const char     *db_accessadmin;
-		const char     *old_createrole_self_grant = GetConfigOption("createrole_self_grant", false, true);
-		int            i = 0;
-		int save_sec_context = 0;
-		Oid save_userid = InvalidOid;
 
 		bbf_db = (Form_sysdatabases) GETSTRUCT(tuple);
 		dbname = text_to_cstring(&(bbf_db->name));
 		db_owner = get_db_owner_name(dbname);
 		db_accessadmin = get_db_accessadmin_role_name(dbname);
-
-		initStringInfo(&query);
-
-		appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
-		appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
-
-		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 		stmt = parsetree_nth_stmt(parsetree_list, i++);
 		update_CreateRoleStmt(stmt, db_accessadmin, db_owner, NULL);
@@ -1351,7 +1352,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 				wrapper->stmt_location = 0;
 
 				ProcessUtility(wrapper,
-							"(CREATE LOGICAL DATABASE )",
+							CREATE_FIXED_DB_ROLES,
 							false,
 							PROCESS_UTILITY_SUBCOMMAND,
 							NULL,
@@ -1364,16 +1365,16 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		}
 		PG_FINALLY();
 		{
-			SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 		}
 		PG_END_TRY();
 
-		pfree(query.data);
 		pfree(dbname);
 
 	}
-	pltsql_revert_guc(saved_nest_level);
+	pfree(query.data);
+	AtEOXact_GUC(false, save_nestlevel);
+	pltsql_revert_guc(pltsql_save_nestlevel);
 	table_endscan(scan);
 	table_close(sysdatabase_rel, RowExclusiveLock);
 

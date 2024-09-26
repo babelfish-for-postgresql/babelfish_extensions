@@ -2347,16 +2347,16 @@ GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
 $$
 BEGIN
+	DECLARE @rolenamelower sys.SYSNAME = LOWER(RTRIM(@rolename))
 	-- Returns a list of the fixed database roles. 
-	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_owner'
+	IF @rolenamelower IS NULL OR @rolenamelower IN ('db_owner', 'db_accessadmin')
 	BEGIN
-		SELECT CAST('db_owner' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Owners' AS sys.nvarchar(70)) AS Description;
+		SELECT CAST(DbFixedRole as sys.SYSNAME), CAST(Description AS sys.nvarchar(70)) FROM (
+			VALUES ('db_owner', 'DB Owners'),
+			('db_accessadmin', 'DB Access Administrators')) x(DbFixedRole, Description)
+			WHERE @rolenamelower IS NULL OR @rolenamelower = DbFixedRole;
 	END
-	ELSE IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_accessadmin'
-	BEGIN
-		SELECT CAST('db_accessadmin' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Access Administrators' AS sys.nvarchar(70)) AS Description;
-	END
-	ELSE IF LOWER(RTRIM(@rolename)) IN (
+	ELSE IF @rolenamelower IN (
 			'db_securityadmin','db_ddladmin', 'db_backupoperator', 
 			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
 	BEGIN

@@ -2616,7 +2616,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_CreateRoleStmt:
 			{
-				if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
+				if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, CREATE_LOGICAL_DATABASE) != 0 &&
+				    strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
 				{
 					CreateRoleStmt *stmt = (CreateRoleStmt *) parsetree;
 					List	   *login_options = NIL;
@@ -3604,11 +3605,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					GrantStmt  *stmt;
 					PlannedStmt *wrapper;
 					RoleSpec *rolspec = create_schema->authrole;
-					Oid       owner_oid = InvalidOid;
-					Oid       db_accessadmin = get_role_oid(get_db_accessadmin_role_name(get_cur_db_name()), true);
+					Oid       owner_oid;
 					bool      alter_owner = false;
 
-					if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
+					if (strcmp(queryString, CREATE_LOGICAL_DATABASE) == 0
 						&& context == PROCESS_UTILITY_SUBCOMMAND)
 					{
 						if (pstmt->stmt_len == 19)
@@ -3616,8 +3616,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							orig_schema = "dbo";
 					}
-					else if (rolspec)
+					else if (rolspec && strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
 					{
+						Oid       db_accessadmin = get_role_oid(get_db_accessadmin_role_name(get_cur_db_name()), false);
+
 						owner_oid = get_rolespec_oid(rolspec, true);
 						if (OidIsValid(db_accessadmin) && !member_can_set_role(GetUserId(), owner_oid) &&
 							has_privs_of_role(GetUserId(), db_accessadmin) &&
@@ -3691,7 +3693,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 
 					/* Grant ALL schema privileges to the user.*/
-					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
+					if (rolspec && strcmp(queryString, CREATE_LOGICAL_DATABASE) != 0)
 					{
 						int i;
 						for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
@@ -3773,7 +3775,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 			}
 		case T_GrantRoleStmt:
-			if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
+			if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, CREATE_LOGICAL_DATABASE) != 0 &&
+			    strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
 			{
 				GrantRoleStmt *grant_role = (GrantRoleStmt *) parsetree;
 				Oid 	save_userid;
@@ -4101,7 +4104,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				Assert(list_length(grant->objects) == 1);
 				if (grant->objtype == OBJECT_SCHEMA)
 						break;
-				else if (grant->objtype == OBJECT_TABLE && strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0)
+				else if (grant->objtype == OBJECT_TABLE && strcmp(CREATE_LOGICAL_DATABASE, queryString) != 0)
 				{
 					/*
 					 * Ignore GRANT statements that are executed implicitly as a part of

@@ -1777,6 +1777,9 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	Oid			grantee;
 	const char *granted_name;
 	const char *grantee_name;
+	const char *original_user_name;
+	const char *db_name = get_cur_db_name();
+	const char *db_owner = get_db_owner_name(db_name);
 	RoleSpec   *granted_spec;
 	RoleSpec   *grantee_spec;
 
@@ -1786,7 +1789,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	grantee = get_role_oid(grantee_name, false);
 
 	/* Disallow ALTER ROLE if the grantee is not a db principal */
-	if (is_database_principal(grantee, false))
+	if (!is_database_principal(grantee, true))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s is not a database user or a user-defined database role",
@@ -1796,6 +1799,16 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	granted_spec = (RoleSpec *) linitial(stmt->granted_roles);
 	granted_name = granted_spec->rolename;
 	granted = get_role_oid(granted_name, false);
+
+	original_user_name = get_authid_user_ext_original_name(granted_name, true);
+	Assert(original_user_name);
+
+	/* only members of db_owner can alter drop members to fixed db roles */
+	if (strcmp(original_user_name, DB_ACCESSADMIN) == 0 &&
+	    !has_privs_of_role(GetUserId(), get_role_oid(db_owner, false)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", original_user_name)));
 
 	/*
 	 * Disallow ALTER ROLE if 1. Current login doesn't have permission on the
