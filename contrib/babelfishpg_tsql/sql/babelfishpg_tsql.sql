@@ -2364,7 +2364,7 @@ BEGIN
 		WHERE 1=0;	
 	END
 	ELSE
-		RAISERROR('''%s'' is not a known fixed role.', 16, 1, LOWER(RTRIM(@rolename)));
+		RAISERROR('''%s'' is not a known fixed role.', 16, 1, @rolename);
 END
 $$
 LANGUAGE 'pltsql';
