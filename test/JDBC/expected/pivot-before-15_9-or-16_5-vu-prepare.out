@@ -217,6 +217,406 @@ insert into StoreReceipt (OrderID, ItemID, Price, EmployeeID, StoreID, Manufactu
 insert into StoreReceipt (OrderID, ItemID, Price, EmployeeID, StoreID, ManufactureID, PurchaseDate) values (199, 2147, 779.36, 237, 2, 1245, '2023-10-25');
 insert into StoreReceipt (OrderID, ItemID, Price, EmployeeID, StoreID, ManufactureID, PurchaseDate) values (200, 2084, 735.91, 223, 5, 1221, '2023-10-30');
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 CREATE TABLE orders (
     orderId INT PRIMARY KEY,
@@ -226,12 +626,12 @@ CREATE TABLE orders (
     date DATE);
 GO
 
+
 CREATE TABLE products (
     productId int PRIMARY KEY,
     productName VARCHAR(30),
     productPrice INT
 )
-
 INSERT INTO products VALUES
     (1, 'mac', 250000),
     (2, 'iphone', 80000),
@@ -239,6 +639,8 @@ INSERT INTO products VALUES
     (4, 'charger', 2900),
     (5, 'ipad', 50000)
 GO
+~~ROW COUNT: 5~~
+
 
 INSERT INTO orders VALUES
     (101, 5,'empA', 0x656D7041, '2024-05-01'),
@@ -261,13 +663,10 @@ INSERT INTO orders VALUES
     (202, 3,'empD', 0x656D7044, '2024-05-01'),
     (190, 1,'empD', 0x656D7044, '2024-05-01');
 GO
+~~ROW COUNT: 19~~
+
 
 create schema pivot_schema;
-GO
-
-create view pivot_schema.data_src 
-as
-select * from StoreReceipt
 GO
 
 CREATE TABLE pivot_schema.products_sch (
@@ -284,6 +683,8 @@ INSERT INTO pivot_schema.products_sch VALUES
     (4, 'charger', 2900),
     (5, 'ipad', 50000)
 GO
+~~ROW COUNT: 5~~
+
 
 create table pivot_insert_into(ManufactureID int, EmployeeID int, p1 int, p2 int, p3 int, p4 int, p5 int);
 GO
@@ -330,7 +731,7 @@ AS
 SELECT * FROM StoreReceipt;
 GO
 
--- BABEL-4558
+-- BABEL-4558 
 CREATE TABLE OSTable(
     [Oid] [int] NOT NULL,
     [Sid] [int] NOT NULL
@@ -356,6 +757,26 @@ insert into OSTable (Oid, Sid) values (8, 2);
 insert into OSTable (Oid, Sid) values (9, 15);
 insert into OSTable (Oid, Sid) values (10, 1);
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 insert into STable (Scode, Type) values ('vestibulum', 11);
 insert into STable (Scode, Type) values ('eget', 15);
@@ -373,6 +794,36 @@ insert into STable (Scode, Type) values ('nisi', 9);
 insert into STable (Scode, Type) values ('sociis', 1);
 insert into STable (Scode, Type) values ('ultrices', 14);
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 -- table for aggregate with string value
 CREATE TABLE seating_tbl (
@@ -388,6 +839,8 @@ VALUES ('SEAT1', 'LEFT'),
        ('SEAT3', 'LEFT'),
        ('SEAT3', 'RIGHT');
 GO
+~~ROW COUNT: 5~~
+
 
 create table trigger_testing(col nvarchar(60))
 GO
@@ -406,490 +859,4 @@ begin
         FOR StoreID IN ([1], [2], [3],[4], [5])
     ) AS pvt
 end
-GO
-
-CREATE TABLE FruitSalesTable
-(FruitType VARCHAR(20), SalesYear INT, FruitSales MONEY);
-GO
-
-INSERT INTO FruitSalesTable VALUES('Orange', 2024, 23425);
-INSERT INTO FruitSalesTable VALUES('Orange', 2024, 54234);
-INSERT INTO FruitSalesTable VALUES('Orange', 2023, 12490);
-INSERT INTO FruitSalesTable VALUES('Orange', 2023, 4535);
-INSERT INTO FruitSalesTable VALUES('Banana', 2024, 45745);
-INSERT INTO FruitSalesTable VALUES('Banana', 2024, 5636);
-INSERT INTO FruitSalesTable VALUES('Banana', 2023, 24654);
-INSERT INTO FruitSalesTable VALUES('Banana', 2023, 6547);
-GO
-
--- PIVOT VIEW TESTS
--- VIEW OF 2 COLUMN SRC TABLE PIVOT
-CREATE VIEW PIVOT_VIEW2
-AS
-SELECT 'OrderNumbers' AS OrderCountbyStore, [1] AS STORE1, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5
-FROM
-(
-    SELECT StoreID, OrderID
-    FROM StoreReceipt
-)AS SrcTable
-PIVOT (
-    COUNT (OrderID)
-    FOR StoreID IN ([1], [2], [3],[4], [5])
-) AS pvt
-GO
-
--- VIEW OF 3 COLUMN SRC TABLE PIVOT
-CREATE VIEW PIVOT_VIEW3
-AS
-SELECT TOP(5) ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)as srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID in ([2], [3], [4], [5], [6])
-) AS pvt
-ORDER BY 1
-GO
-
--- VIEW OF 4 COLUMN SRC TABLE PIVOT
-CREATE VIEW PIVOT_VIEW4
-AS
-SELECT ManufactureID, EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, EmployeeID, ItemID, StoreID
-    FROM StoreReceipt
-)AS srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt
-GO
-
--- VIEW OF TOP PIVOT
-CREATE VIEW TOP_PIVOT
-AS
-SELECT TOP 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)AS srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt
-ORDER BY 1
-GO
-
--- VIEW OF DISTINCT PIVOT
-CREATE VIEW DISTINCT_PIVOT
-AS
-SELECT distinct ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)AS srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt
-GO
-
--- VIEW OF UNION PIVOT
-CREATE VIEW UNION_PIVOT
-AS
-SELECT TOP 5 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT EmployeeID, ItemID, StoreID
-    FROM StoreReceipt
-)AS srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt
-UNION
-SELECT TOP 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)AS srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt2
-ORDER by 1
-GO
-
--- VIEW OF PIVOT IN SUBQUERY
-CREATE VIEW SUBQUERY_PIVOT
-AS
-SELECT TOP 3 ManufactureID, STORE2, STORE3 FROM (
-    SELECT ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT ManufactureID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (ItemID)
-        FOR StoreID IN ([2], [3], [4], [5], [6])
-    ) AS pvt2
-) p
-ORDER BY 1
-GO
-
--- VIEW OF PIVOT FUNCTION
-CREATE VIEW PIVOT_FUNCTION
-AS
-SELECT ManufactureID, STORE2, STORE3 FROM test_table_valued_function(12)
-GO
-
--- VIEW OF CTE PIVOT AS SRC TABLE
-CREATE VIEW CTE_VIEW1
-AS
-WITH
-SalesTotal AS
-(
-SELECT FruitType,
-  [2023] AS [2023_Total],
-  [2024] AS [2024_Total]
-FROM FruitSalesTable
-  PIVOT(SUM(FruitSales)
-  FOR SalesYear IN([2023], [2024])
-  ) AS PivotSales
-),
-SalesAvg AS
-(
-SELECT FruitType,
-  [2023] AS [2023_Avg],
-  [2024] AS [2024_Avg]
-FROM FruitSalesTable
-  PIVOT(AVG(FruitSales)
-  FOR SalesYear IN([2023], [2024])
-  ) AS PivotSales
-)
-SELECT st.FruitType, st.[2023_Total], sa.[2023_Avg],
-  st.[2024_Total], sa.[2024_Avg]
-FROM SalesTotal AS st
-  INNER JOIN SalesAvg AS sa
-  ON st.FruitType = sa.FruitType
-ORDER BY 1
-GO
-
--- VIEW OF CTE PIVOT AS SRC TABLE JOIN ANOTHER PIVOT
-CREATE VIEW CTE_VIEW2
-AS
-WITH
-SalesTotal AS
-(
-    SELECT FruitType,
-        [2023] AS [2023_Total],
-        [2024] AS [2024_Total]
-    FROM FruitSalesTable
-    PIVOT(SUM(FruitSales)
-    FOR SalesYear IN([2023], [2024])
-    ) AS PivotSales
-)
-SELECT st.FruitType, st.[2023_Total], sa.[2023_Avg],
-  st.[2024_Total], sa.[2024_Avg]
-FROM SalesTotal AS st
-JOIN (
-    SELECT FruitType,
-        [2023] AS [2023_Avg],
-        [2024] AS [2024_Avg]
-    FROM FruitSalesTable
-    PIVOT(AVG(FruitSales)
-    FOR SalesYear IN([2023], [2024])
-    ) AS PivotSales
-) sa ON st.FruitType = sa.FruitType;
-GO
-
--- VIEW OF CTE TABLE AS PIVOT SRC TABLE
-CREATE VIEW CTE_VIEW3
-AS
-WITH cte_table AS (
-    SELECT [p].productName, [o].[employeeName]
-    FROM orders [o] JOIN products AS [p] on (o.productId = p.productId)
-)
-SELECT CAST('COUNT' AS VARCHAR(10)), [mac],[ipad],[charger] FROM cte_table
-PIVOT (
-    COUNT(employeeName)
-    FOR productName IN (mac, [iphone], [ipad], [charger])
-) as pvt
-GO
-
--- VIEW OF JOIN PIVOT
-CREATE VIEW JOIN_PIVOT1
-AS
-SELECT p1.EmployeeID as p1_EmployeeID, STORE2, STORE3, p2.EmployeeID as p2_EmployeeID, STORE7, STORE8 FROM
-(
-    SELECT TOP 10 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([2], [3], [4], [5], [6])
-    ) AS pvt where EmployeeID > 250
-) AS p1
-JOIN
-(
-    SELECT TOP 10 EmployeeID, [7] AS STORE7, [8] AS STORE8, [9] AS STORE9, [10] AS STORE10
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([7], [8], [9], [10])
-    ) AS pvt where EmployeeID > 245
-) AS p2
-ON p1.EmployeeID = p2.EmployeeID
-GO
-
--- VIEW OF INNER JOIN PIVOT
-CREATE VIEW JOIN_PIVOT2
-AS
-SELECT p1.EmployeeID as p1_EmployeeID, STORE2, STORE3, p2.EmployeeID as p2_EmployeeID, STORE7, STORE8 FROM
-(
-    SELECT TOP 10 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([2], [3], [4], [5], [6])
-    ) AS pvt where EmployeeID > 250
-) AS p1
-INNER JOIN
-(
-    SELECT TOP 10 EmployeeID, [7] AS STORE7, [8] AS STORE8, [9] AS STORE9, [10] AS STORE10
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([7], [8], [9], [10])
-    ) AS pvt where EmployeeID > 245
-) AS p2
-ON p1.EmployeeID = p2.EmployeeID
-GO
-
--- VIEW OF LEFT JOIN PIVOT
-CREATE VIEW JOIN_PIVOT3
-AS
-SELECT p1.EmployeeID as p1_EmployeeID, STORE2, STORE3, p2.EmployeeID as p2_EmployeeID, STORE7, STORE8 FROM
-(
-    SELECT TOP 10 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([2], [3], [4], [5], [6])
-    ) AS pvt where EmployeeID > 250
-) AS p1
-LEFT JOIN
-(
-    SELECT TOP 10 EmployeeID, [7] AS STORE7, [8] AS STORE8, [9] AS STORE9, [10] AS STORE10
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([7], [8], [9], [10])
-    ) AS pvt where EmployeeID > 245
-) AS p2
-ON p1.EmployeeID = p2.EmployeeID
-GO
-
--- VIEW OF RIGHT JOIN PIVOT
-CREATE VIEW JOIN_PIVOT4
-AS
-SELECT p1.EmployeeID as p1_EmployeeID, STORE2, STORE3, p2.EmployeeID as p2_EmployeeID, STORE7, STORE8 FROM
-(
-    SELECT TOP 10 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([2], [3], [4], [5], [6])
-    ) AS pvt where EmployeeID > 250
-) AS p1
-RIGHT JOIN
-(
-    SELECT TOP 10 EmployeeID, [7] AS STORE7, [8] AS STORE8, [9] AS STORE9, [10] AS STORE10
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([7], [8], [9], [10])
-    ) AS pvt where EmployeeID > 245
-) AS p2
-ON p1.EmployeeID = p2.EmployeeID
-GO
-
--- VIEW OF FULL JOIN PIVOT
-CREATE VIEW JOIN_PIVOT5
-AS
-SELECT p1.EmployeeID as p1_EmployeeID, STORE2, STORE3, p2.EmployeeID as p2_EmployeeID, STORE7, STORE8 FROM
-(
-    SELECT TOP 10 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([2], [3], [4], [5], [6])
-    ) AS pvt where EmployeeID > 250
-) AS p1
-FULL JOIN
-(
-    SELECT TOP 10 EmployeeID, [7] AS STORE7, [8] AS STORE8, [9] AS STORE9, [10] AS STORE10
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([7], [8], [9], [10])
-    ) AS pvt where EmployeeID > 245
-) AS p2
-ON p1.EmployeeID = p2.EmployeeID
-GO
-
--- VIEW OF CROSS JOIN PIVOT
-CREATE VIEW JOIN_PIVOT6
-AS
-SELECT p1.EmployeeID as p1_EmployeeID, STORE2, p2.EmployeeID as p2_EmployeeID, STORE10 FROM
-(
-    SELECT TOP 5 EmployeeID, [2] AS STORE2
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([2], [3], [4], [5], [6])
-    ) AS pvt where EmployeeID > 250
-) AS p1
-CROSS JOIN
-(
-    SELECT TOP 5 EmployeeID, [10] AS STORE10
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([7], [8], [9], [10])
-    ) AS pvt where EmployeeID > 245
-) AS p2
-GO
-
--- VIEW OF COMMA JOIN PIVOT
-CREATE VIEW JOIN_PIVOT7
-AS
-SELECT p1.EmployeeID as p1_EmployeeID, STORE2, STORE3, p2.EmployeeID as p2_EmployeeID, STORE7, STORE8 FROM
-(
-    SELECT TOP 10 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([2], [3], [4], [5], [6])
-    ) AS pvt where EmployeeID > 250
-) AS p1
-,
-(
-    SELECT TOP 10 EmployeeID, [7] AS STORE7, [8] AS STORE8, [9] AS STORE9, [10] AS STORE10
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([7], [8], [9], [10])
-    ) AS pvt where EmployeeID > 245
-) AS p2
-WHERE p1.EmployeeID = p2.EmployeeID
-GO
-
--- VIEW OF COMMA CROSS JOIN PIVOT
-CREATE VIEW JOIN_PIVOT8
-AS
-SELECT p1.EmployeeID as p1_EmployeeID, STORE2, p2.EmployeeID as p2_EmployeeID, STORE10 FROM
-(
-    SELECT TOP 5 EmployeeID, [2] AS STORE2
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([2], [3], [4], [5], [6])
-    ) AS pvt where EmployeeID > 250
-) AS p1
-,
-(
-    SELECT TOP 5 EmployeeID, [10] AS STORE10
-    FROM
-    (
-        SELECT EmployeeID, ItemID, StoreID
-        FROM StoreReceipt
-    )AS srctable
-    PIVOT (
-        COUNT (srctable.ItemID)
-        FOR StoreID IN ([7], [8], [9], [10])
-    ) AS pvt where EmployeeID > 245
-) AS p2
-GO
-
--- VIEW HAS SAME SCHEMA NAME AS SOURCE TABLE'S 
-CREATE VIEW pivot_schema.QUAL_NAME_VIEW
-AS
-SELECT 'OrderNumbers' AS OrderCountbyStore, [1] AS STORE1, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5
-FROM
-(
-    SELECT StoreID, OrderID
-    FROM pivot_schema.data_src
-)AS SrcTable
-PIVOT (
-    COUNT (OrderID)
-    FOR StoreID IN ([1], [2], [3],[4], [5])
-) AS pvt
 GO
