@@ -2161,7 +2161,7 @@ static List
 	 * 2. If the schema owner is not dbo
 	 * 3. If the schema owner is not db_owner
 	 */
-	if ((strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0) && !is_create_schema)
+	if (!is_create_schema && (strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0))
 	{
 		owner_other_than_dbo = true;
 	}
@@ -2191,6 +2191,7 @@ static List
 			
 			if (owner_other_than_dbo)
 			{
+				/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
 				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
 				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
 				expected_stmts = 3;
@@ -2211,6 +2212,7 @@ static List
 			appendStringInfo(&query, "REVOKE dummy ON ALL TABLES IN SCHEMA dummy FROM dummy; ");
 			if (owner_other_than_dbo)
 			{
+				/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
 				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
 				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
 				expected_stmts = 3;

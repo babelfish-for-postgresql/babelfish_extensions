@@ -168,6 +168,74 @@ go
 use master
 go
 
+-- tsql user=babel_5172_l1 password=123
+-- revoke privilege from the schema
+use babel_5172_db;
+go
+
+-- revoke select privilege on the schema with user babel_5172_u1
+revoke select, execute on schema::babel_5172_s1 from babel_5172_u2;
+go
+
+use master;
+go
+
+-- tsql user=babel_5172_l2 password=123
+-- no objects should be accessible, since schema privilege is revoked
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t1;
+go
+
+select * from babel_5172_s1.v1;
+go
+
+exec babel_5172_s1.p1;
+go
+
+select babel_5172_s1.f1();
+go
+
+select * from babel_5172_s1.t2;
+go
+
+select * from babel_5172_s1.v2;
+go
+
+exec babel_5172_s1.p2;
+go
+
+select babel_5172_s1.f2();
+go
+
+select * from babel_5172_s1.t3;
+go
+
+select * from babel_5172_s1.v3;
+go
+
+exec babel_5172_s1.p3;
+go
+
+select babel_5172_s1.f3();
+go
+
+select * from babel_5172_s1.t4;
+go
+
+select * from babel_5172_s1.v4;
+go
+
+exec babel_5172_s1.p4;
+go
+
+select babel_5172_s1.f4();
+go
+
+use master
+go
+
 -- tsql
 -- drop objects
 use babel_5172_db
