@@ -1039,8 +1039,6 @@ rewrite_role_name(RoleSpec *role)
 {
 	char	   *cur_db = get_cur_db_name();
 
-	pfree(role->rolename);
-
 	role->rolename = get_physical_user_name(cur_db, role->rolename, false, false);
 
 	pfree(cur_db);
