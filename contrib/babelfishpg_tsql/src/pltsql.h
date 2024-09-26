@@ -2002,7 +2002,7 @@ extern int	get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
-extern int get_owner_of_schema(const char *schema);
+extern Oid get_owner_of_schema(const char *schema);
 
 /*
  * Functions for namespace handling in pl_funcs.c
