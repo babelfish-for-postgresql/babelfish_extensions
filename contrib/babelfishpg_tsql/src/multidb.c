@@ -272,12 +272,10 @@ rewrite_object_refs(Node *stmt)
 				/* Rewrite granted and grantee roles */
 				pfree(granted->priv_name);
 				granted->priv_name = physical_role_name;
-				pfree(physical_role_name);
 
 				physical_principal_name = get_physical_user_name(db_name, principal_name, false, true);
 				pfree(grantee->rolename);
 				grantee->rolename = physical_principal_name;
-				pfree(physical_principal_name);
 
 				break;
 			}
@@ -368,8 +366,6 @@ rewrite_object_refs(Node *stmt)
 								}
 							}
 						}
-
-						pfree(user_name);
 					}
 				}
 				break;
