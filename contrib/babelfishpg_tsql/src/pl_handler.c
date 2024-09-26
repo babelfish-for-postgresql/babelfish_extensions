@@ -2931,6 +2931,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									 errmsg("User does not have permission to perform this action.")));
+
+						pfree(db_owner_name);
 					}
 
 					/*
@@ -3414,6 +3416,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									pfree(db_owner_name);
 
 									rolspec->rolename = user_name;
+									pfree(user_name);
 								}
 							}
 							else

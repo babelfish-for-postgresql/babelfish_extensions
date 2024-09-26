@@ -846,6 +846,7 @@ user_id(PG_FUNCTION_ARGS)
     }
 
     auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(user_name));
+	pfree(user_name);
 
     if (!HeapTupleIsValid(auth_tuple))
 	    PG_RETURN_NULL();
@@ -1622,6 +1623,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 					   NULL);
 
 		pfree(query.data);
+		pfree(physical_name);
 	}
 }
 
@@ -1882,6 +1884,7 @@ role_id(PG_FUNCTION_ARGS)
 	role_name = get_physical_user_name(get_cur_db_name(), user_input, false, true);
 
 	result = get_role_oid(role_name, true);
+	pfree(role_name);
 
 	if (result == InvalidOid)
 		PG_RETURN_NULL();
@@ -1922,6 +1925,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	dc_role = downcase_identifier(role, strlen(role), false, false);
 	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role, false, true);
 	role_oid = get_role_oid(physical_role_name, true);
+	pfree(physical_role_name);
 
 	/* If principal name is NULL, take current user instead */
 	if (PG_ARGISNULL(1))
@@ -1937,6 +1941,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 		dc_principal = downcase_identifier(principal, strlen(principal), false, false);
 		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal, false, true);
 		principal_oid = get_role_oid(physical_principal_name, true);
+		pfree(physical_principal_name);
 	}
 
 	/* Return 1 if given role is PUBLIC */

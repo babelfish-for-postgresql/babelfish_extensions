@@ -4945,6 +4945,9 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 			old_role_name = get_physical_user_name(old_db_name, role, true, true);
 			new_role_name = get_physical_user_name(new_db_name, role, true, true);
 			exec_rename_db_util(old_role_name, new_role_name, false);
+
+			pfree(old_role_name);
+			pfree(new_role_name);
 		}
 
 		/* Update the default_database field in babelfish_authid_login_ext. */
@@ -5001,6 +5004,8 @@ user_exists_for_db(const char *db_name, const char *user_name)
 		bool isnull;
 		char *db_name_from_cache = TextDatumGetCString(SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple_cache,
 												 Anum_bbf_authid_user_ext_database_name, &isnull));
+
+		Assert(db_name_from_cache != NULL);
 
 		if (strcmp(db_name_from_cache, db_name) == 0)
 			user_exists = true;

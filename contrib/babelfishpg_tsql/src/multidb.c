@@ -272,10 +272,12 @@ rewrite_object_refs(Node *stmt)
 				/* Rewrite granted and grantee roles */
 				pfree(granted->priv_name);
 				granted->priv_name = physical_role_name;
+				pfree(physical_role_name);
 
 				physical_principal_name = get_physical_user_name(db_name, principal_name, false, true);
 				pfree(grantee->rolename);
 				grantee->rolename = physical_principal_name;
+				pfree(physical_principal_name);
 
 				break;
 			}
@@ -346,6 +348,7 @@ rewrite_object_refs(Node *stmt)
 						user_name = get_physical_user_name(db_name, create_role->role, false, true);
 						pfree(create_role->role);
 						create_role->role = user_name;
+						pfree(user_name);
 
 						foreach(option, create_role->options)
 						{
@@ -397,6 +400,7 @@ rewrite_object_refs(Node *stmt)
 						physical_user_name = get_physical_user_name(db_name, user_name, false, false);
 						pfree(alter_role->role->rolename);
 						alter_role->role->rolename = physical_user_name;
+						pfree(physical_user_name);
 					}
 				}
 				break;
@@ -1035,7 +1039,11 @@ rewrite_role_name(RoleSpec *role)
 {
 	char	   *cur_db = get_cur_db_name();
 
+	pfree(role->rolename);
+
 	role->rolename = get_physical_user_name(cur_db, role->rolename, false, false);
+
+	pfree(cur_db);
 }
 
 bool

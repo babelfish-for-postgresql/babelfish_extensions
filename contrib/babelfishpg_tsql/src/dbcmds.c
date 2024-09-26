@@ -1068,8 +1068,8 @@ create_schema_if_not_exists(const uint16 dbid,
 	const char *prev_current_user;
 	uint16		old_dbid;
 	const char *old_dbname,
-			   *phys_schema_name,
-			   *phys_role;
+			   *phys_schema_name;
+	char	   *phys_role;
 
 	/*
 	 * During upgrade, the migration mode is reset to single-db so we cannot
@@ -1151,6 +1151,8 @@ create_schema_if_not_exists(const uint16 dbid,
 		set_cur_db(old_dbid, old_dbname);
 	}
 	PG_END_TRY();
+
+	pfree(phys_role);
 
 	bbf_set_current_user(prev_current_user);
 	set_cur_db(old_dbid, old_dbname);
