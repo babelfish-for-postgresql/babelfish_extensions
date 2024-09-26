@@ -1799,6 +1799,8 @@ typedef struct PLtsql_protocol_plugin
 
 	void		(*set_reset_tds_connection_flag) ();
 
+	bool		(*get_reset_tds_connection_flag) ();
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
