@@ -498,7 +498,7 @@ sys_certificates
 sys_database_permissions
 #BABEL-4279
 BABEL-4484
-pivot
+pivot-before-15_9-or-16_5
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
 TestDatatypeAggSort

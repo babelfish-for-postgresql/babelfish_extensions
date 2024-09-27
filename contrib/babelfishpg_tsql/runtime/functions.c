@@ -204,14 +204,12 @@ void	   *get_language(void);
 void	   *get_host_id(void);
 
 Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
-int 		SPI_execute_raw_parsetree(RawStmt *parsetree, const char *sourcetext, bool read_only, long tcount);
-static HTAB *load_categories_hash(RawStmt *cats_sql, const char *sourcetext, MemoryContext per_query_ctx);
-static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt 	*sql,
-												const char 	*sourcetext,
-												const char 	*funcName,
-												HTAB 		*bbf_pivot_hash,
-												TupleDesc 	tupdesc,
-												bool 		randomAccess);
+static HTAB *load_categories_hash(const char *sourcetext, MemoryContext per_query_ctx);
+static Tuplestorestate *get_bbf_pivot_tuplestore(const char 	*sourcetext,
+												 const char 	*funcName,
+												 HTAB 			*bbf_pivot_hash,
+												 TupleDesc 		tupdesc,
+												 bool 			randomAccess);
 
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
@@ -4581,68 +4579,6 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
-/*
-* We transformed tsql pivot stmt to 3 parsetree. The outer parsetree is a wrapper stmt
-* while the other two are helper stmts. Since postgres does not natively support execute
-* raw parsetree, and we can only get raw parsetree after the analyzer, we created this 
-* SPI function to help execute raw parsetree.
-*/
-int 
-SPI_execute_raw_parsetree(RawStmt *parsetree, const char * sourcetext, bool read_only, long tcount)
-{
-	_SPI_plan			plan;
-	int					ret = 0;
-	List				*plancache_list;
-	CachedPlanSource	*plansource;
-	int					prev_sql_dialect;
-
-	if (parsetree == NULL || tcount < 0)
-		return SPI_ERROR_ARGUMENT;
-	
-	/*
-	 * set sql_dialect to tsql, which is needed for raw parsetree parsing 
-	 * and processing
-	 */
-	prev_sql_dialect = sql_dialect;
-	sql_dialect = SQL_DIALECT_TSQL;
-	
-	memset(&plan, 0, sizeof(_SPI_plan));
-	plan.magic = _SPI_PLAN_MAGIC;
-	plan.parse_mode = RAW_PARSE_DEFAULT;
-	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
-
-	/*
-	 * Construct plancache entries, but don't do parse analysis yet.
-	 */
-	plancache_list = NIL;
-
-	/*
-	 * there are some parsetree node copied from the orginial parsetree,
-	 * and the node's location is fixed with the sourcetext. So we are 
-	 * passing the orginal sourcetext to the following function to prevent
-	 * analyzing error.
-	 */
-	plansource = CreateOneShotCachedPlan(parsetree,
-										sourcetext,
-										CreateCommandTag(parsetree->stmt));
-
-	plancache_list = lappend(plancache_list, plansource);
-	plan.plancache_list = plancache_list;
-	plan.oneshot = true;
-	PG_TRY();
-	{
-		ret = SPI_execute_plan_with_paramlist(&plan, NULL, read_only, tcount);
-	}
-	PG_FINALLY();
-	{
-		/* reset sql_dialect */
-		sql_dialect = prev_sql_dialect;
-	}
-	PG_END_TRY();
-
-	return ret;
-}
-
 PG_FUNCTION_INFO_V1(bbf_pivot);
 Datum
 bbf_pivot(PG_FUNCTION_ARGS)
@@ -4652,13 +4588,9 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	MemoryContext 	per_query_ctx;
 	MemoryContext 	oldcontext;
 	HTAB	   	   	*bbf_pivot_hash;
-	RawStmt	   		*bbf_pivot_src_sql;
-	RawStmt	   		*bbf_pivot_cat_sql;
-	List			*pivot_parsetree;
-	List			*pivot_extrainfo;
-	char			*query_string;
+	char			*src_sql_string;
+	char			*cat_sql_string;
 	char			*funcName;
-	Node 			*node;	
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -4671,33 +4603,19 @@ bbf_pivot(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 	
-	if (fcinfo->context == NULL || !IsA(fcinfo->context, List) || list_length((List *) fcinfo->context) != 3)
-		ereport(ERROR,
-			(errcode(ERRCODE_CHECK_VIOLATION),
-				errmsg("Babelfish PIVOT is not properly initialized.")));
+	src_sql_string = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	cat_sql_string = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	funcName = text_to_cstring(PG_GETARG_TEXT_PP(2));
 
-	node = list_nth((List *)fcinfo->context, 0);
-	if (!IsA(node, List) 
-			|| !IsA(list_nth((List *)node, 0), String) 
-			|| strcmp(((String *)list_nth((List *)node, 0))->sval, "bbf_pivot_func") != 0)
+	/* check if babelfish pivot metadata is complete */
+	if (src_sql_string == NULL || cat_sql_string == NULL || funcName == NULL 
+		|| strlen(src_sql_string) == 0 || strlen(src_sql_string) == 0 || strlen(funcName) == 0)
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_CHECK_VIOLATION),
 				errmsg("Babelfish PIVOT is not properly initialized.")));
 	}
-	pivot_parsetree = (List *) list_nth((List *) fcinfo->context, 1);
-	pivot_extrainfo = (List *) list_nth((List *) fcinfo->context, 2);
-	
-	if (!IsA(pivot_parsetree, List) || !IsA(pivot_extrainfo, List))
-		ereport(ERROR,
-			(errcode(ERRCODE_CHECK_VIOLATION),
-				errmsg("Babelfish PIVOT is not properly initialized.")));
-
-	bbf_pivot_src_sql = (RawStmt *) list_nth(pivot_parsetree, 0);
-	bbf_pivot_cat_sql = (RawStmt *) list_nth(pivot_parsetree, 1);
-	query_string = ((String *) list_nth(pivot_extrainfo, 0))->sval;
-	funcName = ((String *) list_nth(pivot_extrainfo, 1))->sval;
-
+		
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -4718,14 +4636,13 @@ bbf_pivot(PG_FUNCTION_ARGS)
 						"bbf_pivot function are not compatible")));
 
 	/* load up the categories hash table */
-	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, query_string, per_query_ctx);
+	bbf_pivot_hash = load_categories_hash(cat_sql_string, per_query_ctx);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
 
 	/* now go build it */
-	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_src_sql,
-												query_string,
+	rsinfo->setResult = get_bbf_pivot_tuplestore(src_sql_string,
 												funcName,
 												bbf_pivot_hash,
 												tupdesc,
@@ -4748,7 +4665,8 @@ bbf_pivot(PG_FUNCTION_ARGS)
  * load up the categories hash table
  */
 static HTAB *
-load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext per_query_ctx)
+load_categories_hash(const char 	*sourcetext, 
+					 MemoryContext 	per_query_ctx)
 {
 	HTAB	   *bbf_pivot_hash;
 	HASHCTL		ctl;
@@ -4776,7 +4694,7 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
 
 	/* Retrieve the category name rows */
-	ret = SPI_execute_raw_parsetree(cats_sql, sourcetext, true, 0);
+	ret = SPI_execute(sourcetext, true, 0);
 	tuple_processed = SPI_processed;
 
 	/* Check for qualifying tuples */
@@ -4835,18 +4753,15 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 	return bbf_pivot_hash;
 }
 
-
-
 /*
  * create and populate the bbf_pivot tuplestore
  */
 static Tuplestorestate *
-get_bbf_pivot_tuplestore(RawStmt 	*sql,
-						const char 	*sourcetext,
-						const char	*funcName,
-						HTAB 		*bbf_pivot_hash,
-						TupleDesc 	tupdesc,
-						bool 		randomAccess)
+get_bbf_pivot_tuplestore(const char 	*sourcetext,
+						 const char		*funcName,
+						 HTAB 			*bbf_pivot_hash,
+						 TupleDesc 		tupdesc,
+						 bool 			randomAccess)
 {
 	Tuplestorestate *tupstore;
 	int			num_categories = hash_get_num_entries(bbf_pivot_hash);
@@ -4865,7 +4780,7 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_connect returned %d", ret);
 
 	/* Now retrieve the bbf_pivot source rows */
-	ret = SPI_execute_raw_parsetree(sql, sourcetext, true, 0);
+	ret = SPI_execute(sourcetext, true, 0);
 	tuple_processed = SPI_processed;
 
 	/* Check for qualifying tuples */

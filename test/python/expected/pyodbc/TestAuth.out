@@ -32,3 +32,8 @@ py_auth#!#database|-|test1 SELECT 1
 ~~ERROR (Code: 911)~~
 ~~ERROR (Message: [08004] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]database "test1 select 1" does not exist (911) (SQLDriverConnect))~~
 
+
+CREATE DATABASE ["龙漫远龍漫😃😄漫遠.¢£€¥"]
+py_auth#!#database|-|"龙漫远龍漫😃😄漫遠.¢£€¥"
+~~SUCCESS~~
+DROP DATABASE ["龙漫远龍漫😃😄漫遠.¢£€¥"]
