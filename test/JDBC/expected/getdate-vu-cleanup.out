@@ -63,3 +63,6 @@ go
 
 DROP FUNCTION dbo.GetCurrTimestampDiffFunc
 go
+
+DROP FUNCTION dbo.checkDatetimeDiff
+go
