@@ -135,3 +135,19 @@ go
 
 drop table t1
 go
+
+-- database name with multi byte characters
+CREATE DATABASE ["龙漫远; 龍漫😃😄漫遠.¢£€¥"]
+GO
+CREATE DATABASE ["龙漫远; 龍漫😃😄漫遠.¢£€¥"]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database '"龙漫远; 龍漫😃😄漫遠.¢£€¥"' already exists. Choose a different database name.)~~
+
+USE ["龙漫远; 龍漫😃😄漫遠.¢£€¥"]
+GO
+USE master
+GO
+DROP DATABASE ["龙漫远; 龍漫😃😄漫遠.¢£€¥"]
+GO
