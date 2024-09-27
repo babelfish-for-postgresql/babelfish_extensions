@@ -105,6 +105,18 @@ GO
 SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY concat(a,b) DESC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 
+SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY trim(a) ASC) FROM string_agg_t GROUP BY g ORDER BY g
+GO
+
+SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY trim(a) DESC) FROM string_agg_t GROUP BY g ORDER BY g
+GO
+
+SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY translate(a, 'a', 'b') ASC) FROM string_agg_t GROUP BY g ORDER BY g
+GO
+
+SELECT STRING_AGG(concat(a,b),'-') WITHIN GROUP (ORDER BY translate(a, 'a', 'b') DESC) FROM string_agg_t GROUP BY g ORDER BY g
+GO
+
 SELECT STRING_AGG(a, char(10)) WITHIN GROUP (ORDER BY a ASC) FROM string_agg_t GROUP BY g ORDER BY g
 GO
 
