@@ -58,7 +58,7 @@ go
 use master
 go
 
--- tsql user=babel_5172_l1 password=123
+-- tsql
 -- create objects with babel_5172_u1 user
 use babel_5172_db
 go
