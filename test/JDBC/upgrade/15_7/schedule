@@ -555,3 +555,4 @@ BABEL-3820
 space
 binary-datatype-operators
 cast-varchar-to-time
+GRANT_SCHEMA-before-15_9-16_5
