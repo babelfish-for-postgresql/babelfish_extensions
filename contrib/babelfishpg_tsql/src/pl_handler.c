@@ -6464,6 +6464,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				/** Add alter table add identity node after Select Into statement */
 				altstmt = makeNode(AlterTableStmt);
 				altstmt->relation = into->rel;
+				altstmt->objtype = OBJECT_TABLE;
 				altstmt->cmds = NIL;
 
 				constraint = makeNode(Constraint);
@@ -6525,12 +6526,10 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 }
 
 void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv,
-								 ParamListInfo params, QueryCompletion *qc)
+								 ParamListInfo params, QueryCompletion *qc, ObjectAddress *address)
 {
 
 	Node *parsetree = pstmt->utilityStmt;
-	ObjectAddress address;
-	ObjectAddress secondaryObject = InvalidObjectAddress;
 	List *stmts;
 	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
@@ -6539,8 +6538,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		stmts = list_delete_first(stmts);
 		if (IsA(stmt, CreateTableAsStmt))
 		{
-			address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
-			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
+			*address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
 		}
 		else
 		{

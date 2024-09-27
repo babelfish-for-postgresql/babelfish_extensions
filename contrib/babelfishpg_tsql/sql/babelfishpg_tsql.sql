@@ -921,6 +921,9 @@ CREATE OR REPLACE PROCEDURE sys.sp_tables (
 AS $$
 BEGIN
 
+	-- Temporary variable to hold the current database name
+	DECLARE @current_db_name sys.sysname;
+
 	-- Handle special case: Enumerate all databases when name and owner are blank but qualifier is '%'
 	IF (@table_qualifier = '%' AND @table_owner = '' AND @table_name = '')
 	BEGIN
@@ -935,7 +938,9 @@ BEGIN
 		RETURN;
 	END;
 
-	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	SELECT @current_db_name = sys.db_name();
+
+	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(@current_db_name))
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 	END
