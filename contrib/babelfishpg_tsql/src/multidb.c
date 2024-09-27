@@ -397,7 +397,6 @@ rewrite_object_refs(Node *stmt)
 						physical_user_name = get_physical_user_name(db_name, user_name, false, false);
 						pfree(alter_role->role->rolename);
 						alter_role->role->rolename = physical_user_name;
-						pfree(physical_user_name);
 					}
 				}
 				break;
