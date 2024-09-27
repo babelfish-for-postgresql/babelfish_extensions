@@ -28,11 +28,8 @@ databasepropertyex(PG_FUNCTION_ARGS)
 	int64_t		intVal = 0;
 	const char *dbname = text_to_cstring(PG_GETARG_TEXT_P(0));
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(1));
-	Oid			dboid = 0;
-	if(strcmp(dbname, "rdsadmin") == 0)
-	{
-		dbname = "master";
-	}
+	Oid 		dboid = get_db_id(dbname);
+	
 	dboid = get_db_id(dbname);
 
 	if (dboid == InvalidOid)
