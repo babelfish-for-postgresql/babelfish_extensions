@@ -5005,7 +5005,7 @@ user_exists_for_db(const char *db_name, const char *user_name)
 		char *db_name_from_cache = TextDatumGetCString(SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple_cache,
 												 Anum_bbf_authid_user_ext_database_name, &isnull));
 
-		Assert(db_name_from_cache != NULL);
+		Assert(!isnull);
 
 		if (strcmp(db_name_from_cache, db_name) == 0)
 			user_exists = true;

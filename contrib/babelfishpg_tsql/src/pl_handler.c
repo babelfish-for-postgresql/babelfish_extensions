@@ -3416,7 +3416,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									pfree(db_owner_name);
 
 									rolspec->rolename = user_name;
-									pfree(user_name);
 								}
 							}
 							else
