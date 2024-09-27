@@ -93,6 +93,7 @@ FROM sys.babelfish_namespace_ext n
 INNER JOIN  sys.babelfish_sysdatabases db on n.dbid = db.dbid
 CROSS JOIN  sys.babelfish_authid_user_ext r
 WHERE db.name in ('master', 'tempdb', 'msdb', 'sys_views_vu_prepare_db1', 'sys_views_vu_prepare_db2')
+and r.database_name in ('master', 'tempdb', 'msdb', 'sys_views_vu_prepare_db1', 'sys_views_vu_prepare_db2')
 and n.orig_name in ('dbo', 'guest', 'sys_views_vu_prepare_s1', 'sys_views_vu_prepare_s2', 'sys_views_vu_prepare_s3')
 and r.orig_username in ('dbo', 'dbo_owner', 'guest', 'sys_views_user_u1', 'sys_views_user_u2', 'sys_views_user_u3')
 ORDER by n.nspname, r.rolname;
