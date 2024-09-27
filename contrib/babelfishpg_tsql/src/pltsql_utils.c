@@ -2294,11 +2294,11 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 						None_Receiver,
 						NULL);
 		}
-		PG_RE_THROW();
 	}
 	PG_CATCH();
 	{
 		SetUserIdAndSecContext(save_userid, save_sec_context);
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	SetUserIdAndSecContext(save_userid, save_sec_context);
