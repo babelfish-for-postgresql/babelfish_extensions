@@ -48,7 +48,7 @@ namespace BabelfishDotnetFramework
 			/* Creating Server Connection String and Query. */
 			dictionary["bblConnectionString"] = BuildConnectionString(dictionary["babel_URL"], dictionary["babel_port"],
 				dictionary["babel_databaseName"],
-				dictionary["babel_user"], dictionary["babel_password"]) + "pooling=false;";
+				dictionary["babel_user"], dictionary["babel_password"]);
 			dictionary["BCPConnectionString"] = BuildConnectionString(dictionary["babel_URL"], dictionary["babel_port"],
 				dictionary["babel_databaseName"],
 				dictionary["babel_user"], dictionary["babel_password"]);
