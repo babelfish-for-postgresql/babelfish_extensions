@@ -52,7 +52,7 @@ extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
 extern handle_constant_literals_hook_type handle_constant_literals_hook;
-extern set_common_typemod_case_expr_hook_type set_common_typemod_case_expr_hook;
+extern set_common_typmod_case_expr_hook_type set_common_typmod_case_expr_hook;
 
 extern bool babelfish_dump_restore;
 
@@ -2021,44 +2021,35 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 }
 
 /* 
- * For CASE expression, this function will calculate typmod from tsql_select_common_typmod_hook(),
- * and after that we will set this typmod to all the CASE branches from coerce_to_target_type().
+ * For CASE expression, this function will set the typmod to all the CASE branches from coerce_type_typmod().
  */
-static Node*
-tsql_set_common_typemod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr *newc)
+static void
+tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr *newc, int32 typmod)
 {
-	int32       typmod;
         ListCell   *l;
 
-        /* calculating common_typemod for case expr */
-        typmod = tsql_select_common_typmod_hook(pstate, exprs, newc->casetype);
-
         newc->defresult = (Expr *) 
-                coerce_to_target_type(pstate,
-                                (Node *) newc->defresult, 
-                                newc->casetype, 
+                coerce_type_typmod((Node *) newc->defresult, 
                                 newc->casetype, 
                                 typmod, 
                                 COERCION_ASSIGNMENT,
                                 COERCE_IMPLICIT_CAST,
-                                -1);
+                                -1,
+								false);
 
         foreach(l, newc->args)
         {
                 CaseWhen   *w = (CaseWhen *) lfirst(l);
 
                 w->result = (Expr *)
-                        coerce_to_target_type(pstate,
-                                        (Node *) w->result, 
-                                        newc->casetype, 
-                                        newc->casetype, 
+                        coerce_type_typmod((Node *) w->result, 
+                                        newc->casetype,
                                         typmod, 
                                         COERCION_ASSIGNMENT,
                                         COERCE_IMPLICIT_CAST,
-                                        -1);
+                                        -1,
+										false);
         }
-
-    return (Node *) newc;
 }
 
 Datum
@@ -2080,7 +2071,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	select_common_type_hook = tsql_select_common_type_hook;
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
 	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
-	set_common_typemod_case_expr_hook = tsql_set_common_typemod_case_expr_hook;
+	set_common_typmod_case_expr_hook = tsql_set_common_typmod_case_expr_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);
