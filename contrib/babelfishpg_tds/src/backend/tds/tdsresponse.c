@@ -2516,7 +2516,7 @@ TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 
 	if (new_val)
 	{
-		temp8 = strlen(new_val);
+		temp8 = newUtf16.len / 2;
 		TdsPutbytes(&temp8, sizeof(temp8));
 		TdsPutbytes(newUtf16.data, newUtf16.len);
 	}
@@ -2528,7 +2528,7 @@ TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 
 	if (old_val)
 	{
-		temp8 = strlen(old_val);
+		temp8 = oldUtf16.len / 2;
 		TdsPutbytes(&temp8, sizeof(temp8));
 		TdsPutbytes(oldUtf16.data, oldUtf16.len);
 	}
@@ -2635,7 +2635,7 @@ TdsSendInfoOrError(int token, int number, int state, int class,
 	int			messageLen = strlen(message);
 	int			serverNameLen = strlen(serverName);
 	int			procNameLen = strlen(procName);
-	int16_t		messageLen_16 = pg_mbstrlen(message);
+	int16_t		messageLen_16;
 	int32_t		number_32 = (int32_t) number;
 	int32_t		lineNo_32 = (int32_t) lineNo;
 	int16_t		totalLen;
@@ -2658,6 +2658,8 @@ TdsSendInfoOrError(int token, int number, int state, int class,
 	TdsUTF8toUTF16StringInfo(&messageUtf16, message, messageLen);
 	TdsUTF8toUTF16StringInfo(&serverNameUtf16, serverName, serverNameLen);
 	TdsUTF8toUTF16StringInfo(&procNameUtf16, procName, procNameLen);
+
+	messageLen_16 = messageUtf16.len / 2;
 
 	SendPendingDone(true);
 

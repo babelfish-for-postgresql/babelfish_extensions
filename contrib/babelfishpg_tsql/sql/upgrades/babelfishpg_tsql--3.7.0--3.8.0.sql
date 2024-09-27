@@ -38,6 +38,14 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+ALTER FUNCTION sys.bbf_pivot() RENAME TO bbf_pivot_deprecated_in_4_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_pivot_deprecated_in_4_4_0');
+
+CREATE OR REPLACE FUNCTION sys.bbf_pivot(IN src_sql TEXT, IN cat_sql TEXT, IN agg_func TEXT)
+RETURNS setof record
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;
+
 -- Assigning dbo role to the db_owner login
 DO $$
 DECLARE
@@ -7543,6 +7551,9 @@ CREATE OR REPLACE PROCEDURE sys.sp_tables (
 AS $$
 BEGIN
 
+	-- Temporary variable to hold the current database name
+	DECLARE @current_db_name sys.sysname;
+
 	-- Handle special case: Enumerate all databases when name and owner are blank but qualifier is '%'
 	IF (@table_qualifier = '%' AND @table_owner = '' AND @table_name = '')
 	BEGIN
@@ -7557,7 +7568,9 @@ BEGIN
 		RETURN;
 	END;
 
-	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	SELECT @current_db_name = sys.db_name();
+
+	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(@current_db_name))
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 	END
@@ -7614,3 +7627,7 @@ CALL sys.analyze_babelfish_catalogs();
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
+AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
