@@ -8331,14 +8331,11 @@ rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx)
 {
 	if (ctx->WITHIN() && ctx->order_by_clause())
 	{
-		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()[0]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()[0]), std::string(" ") + ::getFullText(ctx->order_by_clause()) + ::getFullText(ctx->RR_BRACKET()[0]))));
-
-		/* remove block (WITHIN GROUP LR_BRACKET order_by_clause RR_BRACKET) */
+		/* remove block (RR_BRACKET WITHIN GROUP LR_BRACKET) */
+		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()[0]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()[0]), "")));
 		rewritten_query_fragment.emplace(std::make_pair(ctx->WITHIN()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->WITHIN()), "")));
 		rewritten_query_fragment.emplace(std::make_pair(ctx->GROUP()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->GROUP()), "")));
 		rewritten_query_fragment.emplace(std::make_pair(ctx->LR_BRACKET()[1]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->LR_BRACKET()[1]), "")));
-		rewritten_query_fragment.emplace(std::make_pair(ctx->order_by_clause()->start->getStartIndex(), std::make_pair(::getFullText(ctx->order_by_clause()), "")));
-		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()[1]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->RR_BRACKET()[1]), "")));
 	}
 	
 	if (ctx->STRING_AGG())
