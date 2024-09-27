@@ -2029,26 +2029,28 @@ tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr 
         ListCell   *l;
 
         newc->defresult = (Expr *) 
-                coerce_type_typmod((Node *) newc->defresult, 
+                coerce_to_target_type(pstate,
+                                (Node *) newc->defresult, 
+                                newc->casetype, 
                                 newc->casetype, 
                                 typmod, 
-                                COERCION_ASSIGNMENT,
-                                COERCE_IMPLICIT_CAST,
-                                -1,
-								false);
+                                COERCION_IMPLICIT,
+								COERCE_IMPLICIT_CAST,
+                                -1);
 
         foreach(l, newc->args)
         {
                 CaseWhen   *w = (CaseWhen *) lfirst(l);
 
                 w->result = (Expr *)
-                        coerce_type_typmod((Node *) w->result, 
-                                        newc->casetype,
-                                        typmod, 
-                                        COERCION_ASSIGNMENT,
-                                        COERCE_IMPLICIT_CAST,
-                                        -1,
-										false);
+                        coerce_to_target_type(pstate,
+                                (Node *) w->result, 
+                                newc->casetype, 
+                                newc->casetype, 
+                                typmod, 
+                                COERCION_IMPLICIT,
+								COERCE_IMPLICIT_CAST,
+                                -1);
         }
 }
 
