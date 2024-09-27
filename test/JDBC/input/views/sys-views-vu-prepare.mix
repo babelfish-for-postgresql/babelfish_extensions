@@ -7,6 +7,9 @@ GO
 CREATE VIEW sys_views_vu_prepare_t1 AS select 1;
 GO
 
+CREATE schema sys_views_vu_prepare_s2;
+GO
+
 USE master;
 GO
 
