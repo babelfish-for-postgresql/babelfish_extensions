@@ -1833,11 +1833,7 @@ BEGIN
         RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
     END IF;
 
-    IF xmlexists($1 passing by value $2) THEN
-        RETURN 1;
-    ELSE
-        RETURN 0;
-    END IF;
+    RETURN xmlexists($1 passing by value $2);
 END
 $BODY$
 LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
