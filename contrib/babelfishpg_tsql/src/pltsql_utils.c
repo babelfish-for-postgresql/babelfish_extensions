@@ -2258,7 +2258,6 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 	ListCell	*parsetree_item;
 	const char *dbo_role;
 	const char *dbname = get_cur_db_name();
-	bool 			is_set_userid = false;
 	Oid 			save_userid;
 	int 			save_sec_context;
 	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
@@ -2270,7 +2269,6 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		SetUserIdAndSecContext(get_role_oid(dbo_role, true),
 					save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		is_set_userid = true;
 		parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege, is_create_schema);
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
@@ -2296,15 +2294,14 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 						None_Receiver,
 						NULL);
 		}
+		PG_RE_THROW();
 	}
 	PG_CATCH();
 	{
-		if(is_set_userid)
-			SetUserIdAndSecContext(save_userid, save_sec_context);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
 	}
 	PG_END_TRY();
-	if(is_set_userid)
-				SetUserIdAndSecContext(save_userid, save_sec_context);
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 AclMode
