@@ -198,6 +198,7 @@ BEGIN
 END;
 GO
 
+-- Need this function to validate datetime difference spillover to avoid flakiness.
 CREATE FUNCTION dbo.checkDatetimeDiff(@value int, @expectedValue int, @expectedDiff int)
 RETURNS int
 AS

@@ -28,6 +28,7 @@ go
 select * from getutcdate_dep_view
 go
 
+-- all the tests have datetime difference spillover correction to avoid flakiness.
 declare @x datetime2 = sysdatetime()
 select set_config('timezone', 'US/Pacific', false);
 declare @y datetime2 = sysdatetime()
