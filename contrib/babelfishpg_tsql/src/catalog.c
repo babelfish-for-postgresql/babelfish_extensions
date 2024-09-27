@@ -3937,3 +3937,155 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	table_endscan(tblscan);	
 	table_close(sysdatabases_rel, RowExclusiveLock);	
 }
+
+/* 
+ * This is a temporary procedure which is called during upgrade to alter
+ * default privileges on all the schemas where the schema owner is not dbo/db_owner.
+ */
+static void
+alter_default_privilege_for_db(const char *dbname)
+{
+	SysScanDesc scan;
+	Relation	bbf_schema_rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple_bbf_schema;
+	ScanKeyData scanKey[2];
+	int16		dbid = get_db_id(dbname);
+	int16		old_dbid;
+	const char *old_dbname;
+	const char	*prev_current_user;
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
+									AccessShareLock);
+	dsc = RelationGetDescr(bbf_schema_rel);
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_schema_perms_object_type,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ,
+				CStringGetTextDatum(OBJ_SCHEMA));
+
+	scan = systable_beginscan(bbf_schema_rel, get_bbf_schema_perms_idx_oid(),
+							true, NULL, 2, scanKey);
+	tuple_bbf_schema = systable_getnext(scan);
+
+	/* Set current user to session user for create permissions */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+
+	old_dbid = get_cur_db_id();
+	old_dbname = get_cur_db_name();
+	set_cur_db(dbid, dbname);	/* temporarily set current dbid as the new id */
+
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		bool		isnull;
+		const char	*schema_name;
+		const char	*grantee;
+		int			current_permission;
+		const char	*schema_owner;
+		const char	*physical_schema;
+		const char	*dbo_user;
+		const char	*db_owner;
+		int			i;
+
+		schema_name = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_schema_name, dsc, &isnull));
+		grantee = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_grantee, dsc, &isnull));
+		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
+
+		physical_schema = get_physical_schema_name_by_mode((char *) dbname, schema_name, baseline_mode);
+		dbo_user = get_dbo_role_name_by_mode((char *)dbname, baseline_mode);
+		db_owner = get_db_owner_name_by_mode((char *) dbname, baseline_mode);
+		schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
+
+		/* If schema owner is other that dbo or db_owner user, only then execute ALTER DEFAULT PRIVILEGES. */
+		if ((strcmp(schema_owner, dbo_user) != 0) && (strcmp(schema_owner, db_owner) != 0))
+		{
+			/* For each permission, grant alter default privileges explicitly. */
+			for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
+			{
+				if ((current_permission & permissions[i]) &&  permissions[i] != ACL_EXECUTE)
+				{
+					PG_TRY();
+					{
+						const char	*query = NULL;
+						List		*res;
+						AlterDefaultPrivilegesStmt	*alterdefpriv;
+						PlannedStmt	*wrapper;
+						query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
+						res = raw_parser(query, RAW_PARSE_DEFAULT);
+						alterdefpriv = (AlterDefaultPrivilegesStmt *) parsetree_nth_stmt(res, 0);
+
+						/* need to make a wrapper PlannedStmt */
+						wrapper = makeNode(PlannedStmt);
+						wrapper->commandType = CMD_UTILITY;
+						wrapper->canSetTag = false;
+						wrapper->utilityStmt = (Node *) alterdefpriv;
+						wrapper->stmt_location = 0;
+						wrapper->stmt_len = 1;
+
+						/* do this step */
+						ProcessUtility(wrapper,
+									"(ALTER DEFAULT STATEMENT )",
+									false,
+									PROCESS_UTILITY_SUBCOMMAND,
+									NULL,
+									NULL,
+									None_Receiver,
+									NULL);
+					}
+					PG_CATCH();
+					{
+						/* Clean up. Restore previous state. */
+						bbf_set_current_user(prev_current_user);
+						set_cur_db(old_dbid, old_dbname);
+						PG_RE_THROW();
+					}
+					PG_END_TRY();
+				}
+			}
+		}
+		tuple_bbf_schema = systable_getnext(scan);
+	}
+
+	/* Set current user back to previous user */
+	bbf_set_current_user(prev_current_user);
+	set_cur_db(old_dbid, old_dbname);
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, AccessShareLock);
+}
+
+
+PG_FUNCTION_INFO_V1(alter_default_privilege_on_schema);
+Datum
+alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
+{
+	Relation	db_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+												 db_rel->rd_att, &is_null);
+		const char *db_name = TextDatumGetCString(db_name_datum);
+
+		alter_default_privilege_for_db(db_name);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}

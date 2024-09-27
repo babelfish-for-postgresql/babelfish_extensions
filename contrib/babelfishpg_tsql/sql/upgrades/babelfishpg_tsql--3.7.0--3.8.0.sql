@@ -217,6 +217,17 @@ GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
 
 ALTER FUNCTION sys.sp_tables_internal RENAME TO sp_tables_internal_deprecated_in_3_8_0;
 
+-- This is a temporary procedure which is called during upgrade to alter
+-- default privileges on all the schemas where the schema owner is not dbo/db_owner
+CREATE OR REPLACE PROCEDURE sys.babelfish_alter_default_privilege_on_schema()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'alter_default_privilege_on_schema';
+
+CALL sys.babelfish_alter_default_privilege_on_schema();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_alter_default_privilege_on_schema();
+
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_tables_internal_deprecated_in_3_8_0');
 
 -- Drops the temporary procedure used by the upgrade script.

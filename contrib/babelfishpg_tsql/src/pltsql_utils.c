@@ -1109,7 +1109,7 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	}
 }
 
-static void
+void
 update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1, const char *role2, const char *grantee, const char *priv)
 {
 	AlterDefaultPrivilegesStmt *stmt = (AlterDefaultPrivilegesStmt *) n;

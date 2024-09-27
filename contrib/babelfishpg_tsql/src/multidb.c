@@ -1430,7 +1430,7 @@ get_dbo_role_name(const char *dbname)
 }
 
 const char *
-get_db_owner_name(const char *dbname)
+get_db_owner_name_by_mode(const char *dbname, MigrationMode mode)
 {
 	if (0 == strcmp(dbname, "master"))
 		return "master_db_owner";
@@ -1438,7 +1438,7 @@ get_db_owner_name(const char *dbname)
 		return "tempdb_db_owner";
 	if (0 == strcmp(dbname, "msdb"))
 		return "msdb_db_owner";
-	if (SINGLE_DB == get_migration_mode())
+	if (SINGLE_DB == mode)
 		return "db_owner";
 	else
 	{
@@ -1448,6 +1448,12 @@ get_db_owner_name(const char *dbname)
 		truncate_identifier(name, strlen(name), false);
 		return name;
 	}
+}
+
+const char *
+get_db_owner_name(const char *dbname)
+{
+	return get_db_owner_name_by_mode(dbname, get_migration_mode());
 }
 
 const char *
