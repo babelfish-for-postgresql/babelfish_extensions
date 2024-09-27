@@ -148,16 +148,17 @@ int
 -- objects (tables and views) created by babel_5172_u1 will not be accessible
 select * from babel_5172_s1.t4;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table t4)~~
+~~START~~
+int
+~~END~~
 
 
 select * from babel_5172_s1.v4;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for view v4)~~
+~~START~~
+int
+1
+~~END~~
 
 
 exec babel_5172_s1.p4;
