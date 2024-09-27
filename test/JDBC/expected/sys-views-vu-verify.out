@@ -1,3 +1,4 @@
+-- tsql
 USE sys_views_vu_prepare_db1
 GO
 
@@ -127,9 +128,6 @@ CREATE schema sys_views_vu_prepare_s1;
 GO
 
 USE sys_views_vu_prepare_db1
-GO
-
-CREATE schema sys_views_vu_prepare_s2;
 GO
 
 create user sys_views_user_u2 for login sys_views_login_l1;
