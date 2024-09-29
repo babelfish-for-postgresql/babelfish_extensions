@@ -204,6 +204,7 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->get_datum_from_byte_ptr = &TdsBytePtrToDatum;
 	pltsql_plugin_handler_ptr->get_datum_from_date_time_struct = &TdsDateTimeTypeToDatum;
 	pltsql_plugin_handler_ptr->set_reset_tds_connection_flag = &SetResetTDSConnectionFlag;
+	pltsql_plugin_handler_ptr->get_reset_tds_connection_flag = &GetResetTDSConnectionFlag;
 
 	invalidate_stat_table_hook = invalidate_stat_table;
 	guc_newval_hook = TdsSetGucStatVariable;

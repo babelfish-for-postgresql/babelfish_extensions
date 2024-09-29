@@ -107,3 +107,15 @@ go
 
 drop table t1
 go
+
+-- database name with multi byte characters
+CREATE DATABASE ["龙漫远; 龍漫😃😄漫遠.¢£€¥"]
+GO
+CREATE DATABASE ["龙漫远; 龍漫😃😄漫遠.¢£€¥"]
+GO
+USE ["龙漫远; 龍漫😃😄漫遠.¢£€¥"]
+GO
+USE master
+GO
+DROP DATABASE ["龙漫远; 龍漫😃😄漫遠.¢£€¥"]
+GO

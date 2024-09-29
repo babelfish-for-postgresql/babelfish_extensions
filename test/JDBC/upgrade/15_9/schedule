@@ -543,5 +543,6 @@ binary-datatype-operators
 BABEL-5059
 SELECT_INTO_TEST
 cast-varchar-to-time
+xml_exist-before-16_5
 BABEL-5119
 

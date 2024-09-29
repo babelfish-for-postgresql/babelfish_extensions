@@ -1,3 +1,4 @@
+-- tsql
 -- 1. Test resets GUC variables
 SET lock_timeout 0;
 GO
@@ -53,4 +54,46 @@ EXEC SP_EXECUTE @handle
 GO
 GO
 select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
+GO
+
+-- 6. Test Database Context being reset
+--      Tests include negative cases where db is dropped or renamed
+Create database reset_con_db1;
+GO
+Create database reset_con_db2;
+GO
+
+-- tsql database=reset_con_db1
+select db_name();
+GO
+exec sys.sp_reset_connection
+GO
+use master
+GO
+select db_name();
+GO
+exec sys.sp_reset_connection
+GO
+select db_name();
+GO
+-- test db being dropped before resetting to same db
+use master;
+drop database reset_con_db1;
+GO
+exec sys.sp_reset_connection
+GO
+-- tsql database=reset_con_db2
+select db_name();
+GO
+use master
+GO
+select db_name();
+GO
+ALTER DATABASE reset_con_db2 MODIFY NAME=reset_con_db3
+GO
+exec sys.sp_reset_connection
+GO
+
+-- tsql
+DROP DATABASE reset_con_db3
 GO
