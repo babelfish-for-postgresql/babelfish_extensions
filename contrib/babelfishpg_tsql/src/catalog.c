@@ -3951,9 +3951,6 @@ alter_default_privilege_for_db(const char *dbname)
 	HeapTuple	tuple_bbf_schema;
 	ScanKeyData scanKey[2];
 	int16		dbid = get_db_id(dbname);
-	int16		old_dbid;
-	const char *old_dbname;
-	const char	*prev_current_user;
 	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 
 	/* Fetch the relation */
@@ -3975,14 +3972,6 @@ alter_default_privilege_for_db(const char *dbname)
 	scan = systable_beginscan(bbf_schema_rel, get_bbf_schema_perms_idx_oid(),
 							true, NULL, 2, scanKey);
 	tuple_bbf_schema = systable_getnext(scan);
-
-	/* Set current user to session user for create permissions */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	bbf_set_current_user("sysadmin");
-
-	old_dbid = get_cur_db_id();
-	old_dbname = get_cur_db_name();
-	set_cur_db(dbid, dbname);	/* temporarily set current dbid as the new id */
 
 	while (HeapTupleIsValid(tuple_bbf_schema))
 	{
@@ -4013,32 +4002,18 @@ alter_default_privilege_for_db(const char *dbname)
 			{
 				if ((current_permission & permissions[i]) &&  permissions[i] != ACL_EXECUTE)
 				{
-					PG_TRY();
-					{
-						const char	*alter_query = NULL;
-						const char	*grant_query = NULL;
-						alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
-						exec_utility_cmd_helper((char *)alter_query);
-						grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
-						exec_utility_cmd_helper((char *) grant_query);
-					}
-					PG_CATCH();
-					{
-						/* Clean up. Restore previous state. */
-						bbf_set_current_user(prev_current_user);
-						set_cur_db(old_dbid, old_dbname);
-						PG_RE_THROW();
-					}
-					PG_END_TRY();
+					const char	*alter_query = NULL;
+					const char	*grant_query = NULL;
+					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
+					exec_utility_cmd_helper((char *)alter_query);
+					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
+					exec_utility_cmd_helper((char *) grant_query);
 				}
 			}
 		}
 		tuple_bbf_schema = systable_getnext(scan);
 	}
-
-	/* Set current user back to previous user */
-	bbf_set_current_user(prev_current_user);
-	set_cur_db(old_dbid, old_dbname);
+	
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
 }
