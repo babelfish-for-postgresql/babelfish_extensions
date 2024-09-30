@@ -89,7 +89,7 @@ elif [ "$1" == "test" ]; then
     MIGRATION_MODE=$3
     if [ ! ${MIGRATION_MODE} ]; then
         if [ "${TEST_MODE?}" == "normal" ]; then
-            MIGRATION_MODE="single-db"
+            MIGRATION_MODE="multi-db"
         else
             echo "Error: MIGRATION_MODE should be specified, single-db or multi-db" 1>&2
             exit 1
