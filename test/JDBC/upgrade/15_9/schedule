@@ -537,6 +537,8 @@ stuff
 replicate
 string_agg
 getdate
+concat
+concat_ws
 space
 replace
 binary-datatype-operators
