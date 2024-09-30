@@ -2024,10 +2024,12 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
  * For CASE expression, this function will set the typmod to all the CASE branches from coerce_type_typmod().
  */
 static void
-tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr *newc, int32 typmod)
+tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr *newc)
 {
-        ListCell   *l;
-
+        /* calculating common_typemod for case expr */
+        int32           typmod = select_common_typmod(pstate, exprs, newc->casetype);
+        ListCell       *l;
+        
         newc->defresult = (Expr *) 
                 coerce_to_target_type(pstate,
                                 (Node *) newc->defresult, 
@@ -2035,7 +2037,7 @@ tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr 
                                 newc->casetype, 
                                 typmod, 
                                 COERCION_IMPLICIT,
-								COERCE_IMPLICIT_CAST,
+				COERCE_IMPLICIT_CAST,
                                 -1);
 
         foreach(l, newc->args)
@@ -2049,7 +2051,7 @@ tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr 
                                 newc->casetype, 
                                 typmod, 
                                 COERCION_IMPLICIT,
-								COERCE_IMPLICIT_CAST,
+				COERCE_IMPLICIT_CAST,
                                 -1);
         }
 }
