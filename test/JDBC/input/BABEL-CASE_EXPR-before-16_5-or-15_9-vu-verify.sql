@@ -2764,3 +2764,297 @@ SELECT CASE 2
    WHEN 2 THEN CAST(100.00 AS SMALLMONEY)
 END AS RESULT
 GO
+
+-- Collation tests
+-- FIX ME: Following test cases shows behaviour mismatch,
+-- When we compare N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+-- with N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS  for CASE expression,
+-- Gives 'true' (as used in PG), whereas it should give 'false' (as in TSQL).
+
+SELECT CASE 'abcd' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE 'abcd' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE 'abcd' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 'abcd' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 'abcd' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 'abcd' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
