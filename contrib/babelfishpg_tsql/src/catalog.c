@@ -3041,7 +3041,7 @@ update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 bool
 guest_role_exists_for_db(const char *dbname)
 {
-	const char *guest_role = get_guest_role_name(dbname);
+	char		*guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
 	HeapTuple	tuple;
 
@@ -3052,6 +3052,8 @@ guest_role_exists_for_db(const char *dbname)
 		role_exists = true;
 		ReleaseSysCache(tuple);
 	}
+
+	pfree(guest_role);
 
 	return role_exists;
 }
@@ -3109,7 +3111,7 @@ get_login_for_user(Oid user_id, const char *physical_schema_name)
 static void
 create_guest_role_for_db(const char *dbname)
 {
-	const char *guest = get_guest_role_name(dbname);
+	char	   *guest = get_guest_role_name(dbname);
 	const char *db_owner_role = get_db_owner_role_name(dbname);
 	List	   *logins = NIL;
 	List	   *res;
@@ -3195,6 +3197,8 @@ create_guest_role_for_db(const char *dbname)
 		set_cur_db(old_dbid, old_dbname);
 	}
 	PG_END_TRY();
+
+	pfree(guest);
 }
 
 /*
@@ -4659,7 +4663,7 @@ update_babelfish_authid_user_ext_rename_db(
 							Anum_bbf_authid_user_ext_orig_username, bbf_authid_user_ext_dsc, &isNull));
 		NameData rolename_namedata;
 		
-		namestrcpy(&rolename_namedata, get_physical_user_name((char *)new_db_name, role_name, true));
+		namestrcpy(&rolename_namedata, get_physical_user_name((char *)new_db_name, role_name, true, true));
 		list_of_roles_to_rename = lappend(list_of_roles_to_rename, pstrdup(role_name));
 
 		/* update rolname */
@@ -4938,9 +4942,12 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0)))
 				continue;
 
-			old_role_name = get_physical_user_name(old_db_name, role, true);
-			new_role_name = get_physical_user_name(new_db_name, role, true);
+			old_role_name = get_physical_user_name(old_db_name, role, true, true);
+			new_role_name = get_physical_user_name(new_db_name, role, true, true);
 			exec_rename_db_util(old_role_name, new_role_name, false);
+
+			pfree(old_role_name);
+			pfree(new_role_name);
 		}
 
 		/* Update the default_database field in babelfish_authid_login_ext. */
@@ -4975,6 +4982,38 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 
 	if (!xactStarted)
 		CommitTransactionCommand();
+}
+
+/*
+ * Returns true if the user/role exists in the sys.babelfish_authid_user_ext catalog,
+ * false otherwise.
+ */
+bool
+user_exists_for_db(const char *db_name, const char *user_name)
+{
+	HeapTuple		tuple_cache;
+	NameData		rolname;
+	bool			user_exists = false;
+
+	namestrcpy(&rolname, user_name);
+
+	tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
+
+	if (HeapTupleIsValid(tuple_cache))
+	{
+		bool isnull;
+		char *db_name_from_cache = TextDatumGetCString(SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple_cache,
+												 Anum_bbf_authid_user_ext_database_name, &isnull));
+
+		Assert(!isnull);
+
+		if (strcmp(db_name_from_cache, db_name) == 0)
+			user_exists = true;
+		
+		pfree(db_name_from_cache);
+	}
+
+	return user_exists;
 }
 
 /*

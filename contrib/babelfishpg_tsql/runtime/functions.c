@@ -1303,11 +1303,13 @@ schema_id(PG_FUNCTION_ARGS)
 	{
 		char	   *db_name = get_cur_db_name();
 		const char *user = get_user_for_database(db_name);
-		const char *guest_role_name = get_guest_role_name(db_name);
+		char 	   *guest_role_name = get_guest_role_name(db_name);
 
 		if (!user)
 		{
 			pfree(db_name);
+			pfree(guest_role_name);
+
 			PG_RETURN_NULL();
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -1320,6 +1322,7 @@ schema_id(PG_FUNCTION_ARGS)
 			physical_name = get_physical_schema_name(db_name, name);
 		}
 		pfree(db_name);
+		pfree(guest_role_name);
 	}
 	else
 	{
@@ -2224,15 +2227,18 @@ object_id(PG_FUNCTION_ARGS)
 		 * name
 		 */
 		const char *user = get_user_for_database(db_name);
-		const char *guest_role_name = get_guest_role_name(db_name);
+		char 	   *guest_role_name = get_guest_role_name(db_name);
 
 		if (!user)
 		{
 			pfree(db_name);
 			pfree(schema_name);
 			pfree(object_name);
+			pfree(guest_role_name);
+
 			if (object_type)
 				pfree(object_type);
+
 			PG_RETURN_NULL();
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -2245,6 +2251,8 @@ object_id(PG_FUNCTION_ARGS)
 			schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 			physical_schema_name = get_physical_schema_name(db_name, schema_name);
 		}
+
+		pfree(guest_role_name);
 	}
 	else
 	{
@@ -2677,14 +2685,16 @@ type_id(PG_FUNCTION_ARGS)
         if (!OidIsValid(result))
         {
             /* find the default schema for current user and get physical schema name */
-            const char *user = get_user_for_database(db_name);
-            const char *guest_role_name = get_guest_role_name(db_name);
+            const char  *user = get_user_for_database(db_name);
+            char        *guest_role_name = get_guest_role_name(db_name);
 
             if (!user)
             {
                 pfree(db_name);
                 pfree(schema_name);
                 pfree(object_name);
+                pfree(guest_role_name);
+
                 PG_RETURN_NULL();
             }
             else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -2697,6 +2707,8 @@ type_id(PG_FUNCTION_ARGS)
                 schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
                 physical_schema_name = get_physical_schema_name(db_name, schema_name);
             }
+			
+            pfree(guest_role_name);
         }
         else
         {
@@ -2826,20 +2838,20 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)
 {
-	char	   *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
+	char        *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
 
 	/*
 	 * Ensure the database name input argument is lower-case, as all Babel
 	 * table names are lower-case
 	 */
-	char	   *lowercase_db_name = lowerstr(db_name);
+	char        *lowercase_db_name = lowerstr(db_name);
 
 	/* Also strip trailing whitespace to mimic SQL Server behaviour */
-	int			i;
-	const char *user = NULL;
-	const char *login;
-	int16		db_id;
-	bool		login_is_db_owner;
+	int         i;
+	char        *user = NULL;
+	const char  *login;
+	int16       db_id;
+	bool        login_is_db_owner;
 
 	i = strlen(lowercase_db_name);
 	while (i > 0 && isspace((unsigned char) lowercase_db_name[i - 1]))
@@ -2885,7 +2897,10 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	if (!user)
 		PG_RETURN_INT32(0);
 	else
+	{
+		pfree(user);
 		PG_RETURN_INT32(1);
+	}
 }
 
 Datum
