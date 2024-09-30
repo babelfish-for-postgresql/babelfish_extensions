@@ -15,6 +15,9 @@ go
 drop table babel_5172_s1.t4
 go
 
+drop table babel_5172_s1.t5
+go
+
 drop view babel_5172_s1.v1
 go
 
@@ -25,6 +28,9 @@ drop view babel_5172_s1.v3
 go
 
 drop view babel_5172_s1.v4
+go
+
+drop view babel_5172_s1.v5
 go
 
 drop procedure babel_5172_s1.p1
@@ -39,6 +45,9 @@ go
 drop procedure babel_5172_s1.p4
 go
 
+drop procedure babel_5172_s1.p5
+go
+
 drop function babel_5172_s1.f1
 go
 
@@ -49,6 +58,9 @@ drop function babel_5172_s1.f3
 go
 
 drop function babel_5172_s1.f4
+go
+
+drop function babel_5172_s1.f5
 go
 
 drop schema babel_5172_s1;
