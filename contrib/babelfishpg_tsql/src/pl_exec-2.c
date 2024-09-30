@@ -3759,7 +3759,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
 		{
 			if (stmt->privileges & permissions[i])
-				exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, permissions[i]);
+				exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, permissions[i], false);
 		}
 
 		if (stmt->is_grant)
