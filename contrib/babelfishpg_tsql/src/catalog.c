@@ -3943,7 +3943,7 @@ update_db_owner(const char *new_owner_name, const char *db_name)
  * default privileges on all the schemas where the schema owner is not dbo/db_owner.
  */
 static void
-alter_default_privilege_for_db(const char *dbname)
+alter_default_privilege_for_db(char *dbname)
 {
 	SysScanDesc scan;
 	Relation	bbf_schema_rel;
@@ -3979,8 +3979,8 @@ alter_default_privilege_for_db(const char *dbname)
 		const char	*schema_name;
 		const char	*grantee;
 		int			current_permission;
-		const char	*schema_owner;
-		const char	*physical_schema;
+		char		*schema_owner;
+		char		*physical_schema;
 		const char	*dbo_user;
 		const char	*db_owner;
 		int			i;
@@ -3989,9 +3989,9 @@ alter_default_privilege_for_db(const char *dbname)
 		grantee = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_grantee, dsc, &isnull));
 		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
 
-		physical_schema = get_physical_schema_name_by_mode((char *) dbname, schema_name, baseline_mode);
-		dbo_user = get_dbo_role_name_by_mode((char *)dbname, baseline_mode);
-		db_owner = get_db_owner_name_by_mode((char *) dbname, baseline_mode);
+		physical_schema = get_physical_schema_name_by_mode(dbname, schema_name, baseline_mode);
+		dbo_user = get_dbo_role_name_by_mode(dbname, baseline_mode);
+		db_owner = get_db_owner_name_by_mode(dbname, baseline_mode);
 		schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
 
 		/* If schema owner is other that dbo or db_owner user, only then execute ALTER DEFAULT PRIVILEGES. */
@@ -4002,15 +4002,19 @@ alter_default_privilege_for_db(const char *dbname)
 			{
 				if ((current_permission & permissions[i]) &&  permissions[i] != ACL_EXECUTE)
 				{
-					const char	*alter_query = NULL;
-					const char	*grant_query = NULL;
+					char	*alter_query = NULL;
+					char	*grant_query = NULL;
 					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
-					exec_utility_cmd_helper((char *)alter_query);
+					exec_utility_cmd_helper(alter_query);
 					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
-					exec_utility_cmd_helper((char *) grant_query);
+					exec_utility_cmd_helper(grant_query);
+					pfree(alter_query);
+					pfree(grant_query);
 				}
 			}
 		}
+		pfree(physical_schema);
+		pfree(schema_owner);
 		tuple_bbf_schema = systable_getnext(scan);
 	}
 	
@@ -4036,9 +4040,10 @@ alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
 	{
 		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
 												 db_rel->rd_att, &is_null);
-		const char *db_name = TextDatumGetCString(db_name_datum);
+		char *db_name = TextDatumGetCString(db_name_datum);
 
 		alter_default_privilege_for_db(db_name);
+		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
 	table_endscan(scan);
