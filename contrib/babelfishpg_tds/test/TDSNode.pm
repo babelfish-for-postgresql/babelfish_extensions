@@ -65,7 +65,7 @@ sub init_tsql {
 
 	if (!defined($migration_mode) or ($migration_mode eq ""))
 	{
-		$migration_mode = "multi-db";
+		$migration_mode = "single-db";
 	}
 
 	$self->{_tsql_master_role} = $role;
