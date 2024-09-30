@@ -2137,6 +2137,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 		/* Map the logical role name to its physical name in the database. */
 		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
+		pfree(physical_role_name);
 
 		/* Check if the user, group or role already exists */
 		if (role_oid)
@@ -2193,7 +2194,6 @@ sp_addrole(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-	pfree(physical_role_name);
 	PG_RETURN_VOID();
 }
 
@@ -2281,6 +2281,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 		/* Map the logical role name to its physical name in the database. */
 		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
+		pfree(physical_role_name);
 
 		/* Check if the role does not exists */
 		if (role_oid == InvalidOid || !is_role(role_oid))
@@ -2332,7 +2333,6 @@ sp_droprole(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-	pfree(physical_role_name);
 	PG_RETURN_VOID();
 }
 

@@ -846,7 +846,7 @@ user_id(PG_FUNCTION_ARGS)
     }
 
     auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(user_name));
-	pfree(user_name);
+    pfree(user_name);
 
     if (!HeapTupleIsValid(auth_tuple))
 	    PG_RETURN_NULL();

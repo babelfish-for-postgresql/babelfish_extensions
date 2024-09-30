@@ -1342,6 +1342,8 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 						errmsg("User or role \"%s\" does not exist", new_user_name)));
 	}
 
+	pfree(new_user_name);
+
 	return result;
 }
 
