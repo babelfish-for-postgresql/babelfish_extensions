@@ -33,7 +33,7 @@ if [ ! $1 ]; then
     echo "      run pg_upgrade from SOURCE_WS to TARGET_WS"
     echo ""
     echo "  test normal [MIGRATION_MODE] [TEST_BASE_DIR]"
-    echo "      run a normal JDBC test, default migration mode and test dir are single-db and input, respectively"
+    echo "      run a normal JDBC test, default migration mode and test dir are multi-db and input, respectively"
     echo ""
     echo "  test TEST_MODE MIGRATION_MODE TEST_BASE_DIR"
     echo "      run a prepare/verify JDBC test using a schedule file in TEST_BASE_DIR"
