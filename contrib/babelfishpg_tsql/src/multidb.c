@@ -1034,9 +1034,10 @@ static void
 rewrite_role_name(RoleSpec *role)
 {
 	char	   *cur_db = get_cur_db_name();
+	char	   *temp_rolename = get_physical_user_name(cur_db, role->rolename, false, false);
 
-	role->rolename = get_physical_user_name(cur_db, role->rolename, false, false);
-
+	pfree(role->rolename);
+	role->rolename = temp_rolename;
 	pfree(cur_db);
 }
 

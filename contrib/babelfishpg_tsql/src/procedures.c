@@ -2607,6 +2607,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Map the logical member name to its physical name in the database. */
+		pfree(physical_name);
 		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
