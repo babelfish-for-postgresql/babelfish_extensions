@@ -554,5 +554,4 @@ space
 binary-datatype-operators
 cast-varchar-to-time
 xml_exist-before-16_5
-
-
+GRANT_SCHEMA-before-15_9-16_5

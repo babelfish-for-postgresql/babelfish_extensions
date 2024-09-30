@@ -10489,6 +10489,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
+-- This is a temporary procedure which is called during upgrade to alter
+-- default privileges on all the schemas where the schema owner is not dbo/db_owner
+CREATE OR REPLACE PROCEDURE sys.babelfish_alter_default_privilege_on_schema()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'alter_default_privilege_on_schema';
+
+CALL sys.babelfish_alter_default_privilege_on_schema();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_alter_default_privilege_on_schema();
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
