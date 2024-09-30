@@ -1739,7 +1739,7 @@ int
 SELECT CONCAT('Hi ', (SELECT col FROM test_like_for_AI_prepare_t1_ci WHERE col LIKE 'ca_e'));
 GO
 ~~START~~
-text
+nvarchar
 Hi café
 ~~END~~
 
@@ -4349,7 +4349,7 @@ int
 SELECT CONCAT('Hi ', (SELECT col FROM test_like_for_AI_prepare_t1_cs WHERE col LIKE 'ca_e'));
 GO
 ~~START~~
-text
+nvarchar
 Hi café
 ~~END~~
 
