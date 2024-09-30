@@ -980,7 +980,6 @@ END AS TABLE_TYPE,
 CAST(NULL AS varchar(254)) AS remarks
 FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, sys.schemas AS t3
 WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','v','m') 
-AND has_schema_privilege(t1.relnamespace, 'USAGE')
 AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
 
@@ -1650,8 +1649,7 @@ LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
 LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
 , sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
 , sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
-WHERE has_schema_privilege(s1.schema_id, 'USAGE')
-AND X.indislive ;
+WHERE X.indislive ;
 
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
 
@@ -2009,7 +2007,6 @@ FROM pg_catalog.pg_proc p
 
 INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
 INNER JOIN sys.databases d ON d.database_id = sys.db_id()
-WHERE has_schema_privilege(s1.schema_id, 'USAGE')
 
 UNION 
 
