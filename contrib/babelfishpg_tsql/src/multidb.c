@@ -1394,7 +1394,7 @@ get_dbo_role_name(const char *dbname)
 }
 
 char *
-get_db_owner_name_by_mode(const char *dbname)
+get_db_owner_name_by_mode(const char *dbname, MigrationMode	mode)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 

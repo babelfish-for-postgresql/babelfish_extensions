@@ -5961,7 +5961,7 @@ alter_default_privilege_for_db(char *dbname)
 				Anum_bbf_schema_perms_object_type,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(OBJ_SCHEMA));
 
