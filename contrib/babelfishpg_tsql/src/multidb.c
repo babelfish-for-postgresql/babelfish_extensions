@@ -1368,13 +1368,13 @@ get_dbo_schema_name(const char *dbname)
 }
 
 char *
-get_dbo_role_name(const char *dbname)
+get_dbo_role_name_by_mode(const char *dbname, MigrationMode mode)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
 	Assert(dbname != NULL);
 
-	if (SINGLE_DB == get_migration_mode() && 0 != strcmp(dbname, "master") 
+	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master") 
 	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
@@ -1388,13 +1388,19 @@ get_dbo_role_name(const char *dbname)
 }
 
 char *
-get_db_owner_name(const char *dbname)
+get_dbo_role_name(const char *dbname)
+{
+	return get_dbo_role_name_by_mode(dbname, get_migration_mode());
+}
+
+char *
+get_db_owner_name_by_mode(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
 	Assert(dbname != NULL);
 
-	if (SINGLE_DB == get_migration_mode() && 0 != strcmp(dbname, "master") 
+	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master") 
 	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_owner");
@@ -1405,6 +1411,12 @@ get_db_owner_name(const char *dbname)
 		truncate_identifier(name, strlen(name), false);
 	}
 	return name;
+}
+
+char *
+get_db_owner_name(const char *dbname)
+{
+	return get_db_owner_name_by_mode(dbname, get_migration_mode());
 }
 
 char *

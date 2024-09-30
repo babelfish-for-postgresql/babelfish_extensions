@@ -5934,3 +5934,115 @@ clean_up_bbf_partition_metadata(int16 dbid)
 	systable_endscan(scan);
 	table_close(rel, RowExclusiveLock);
 }
+/* 
+ * This is a temporary procedure which is called during upgrade to alter
+ * default privileges on all the schemas where the schema owner is not dbo/db_owner.
+ */
+static void
+alter_default_privilege_for_db(char *dbname)
+{
+	SysScanDesc scan;
+	Relation	bbf_schema_rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple_bbf_schema;
+	ScanKeyData scanKey[2];
+	int16		dbid = get_db_id(dbname);
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
+									AccessShareLock);
+	dsc = RelationGetDescr(bbf_schema_rel);
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_schema_perms_object_type,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ,
+				CStringGetTextDatum(OBJ_SCHEMA));
+
+	scan = systable_beginscan(bbf_schema_rel, get_bbf_schema_perms_idx_oid(),
+							true, NULL, 2, scanKey);
+	tuple_bbf_schema = systable_getnext(scan);
+
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		bool		isnull;
+		const char	*schema_name;
+		const char	*grantee;
+		int			current_permission;
+		char		*schema_owner;
+		char		*physical_schema;
+		const char	*dbo_user;
+		const char	*db_owner;
+		int			i;
+
+		schema_name = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_schema_name, dsc, &isnull));
+		grantee = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_grantee, dsc, &isnull));
+		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
+
+		physical_schema = get_physical_schema_name_by_mode(dbname, schema_name, baseline_mode);
+		dbo_user = get_dbo_role_name_by_mode(dbname, baseline_mode);
+		db_owner = get_db_owner_name_by_mode(dbname, baseline_mode);
+		schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
+
+		/* If schema owner is other that dbo or db_owner user, only then execute ALTER DEFAULT PRIVILEGES. */
+		if ((strcmp(schema_owner, dbo_user) != 0) && (strcmp(schema_owner, db_owner) != 0))
+		{
+			/* For each permission, grant alter default privileges explicitly. */
+			for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
+			{
+				if ((current_permission & permissions[i]) &&  permissions[i] != ACL_EXECUTE)
+				{
+					char	*alter_query = NULL;
+					char	*grant_query = NULL;
+					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
+					exec_utility_cmd_helper(alter_query);
+					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
+					exec_utility_cmd_helper(grant_query);
+					pfree(alter_query);
+					pfree(grant_query);
+				}
+			}
+		}
+		pfree(physical_schema);
+		pfree(schema_owner);
+		tuple_bbf_schema = systable_getnext(scan);
+	}
+	
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, AccessShareLock);
+}
+
+
+PG_FUNCTION_INFO_V1(alter_default_privilege_on_schema);
+Datum
+alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
+{
+	Relation	db_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+												 db_rel->rd_att, &is_null);
+		char *db_name = TextDatumGetCString(db_name_datum);
+
+		alter_default_privilege_for_db(db_name);
+		pfree(db_name);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
