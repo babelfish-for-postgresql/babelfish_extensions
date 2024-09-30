@@ -547,6 +547,8 @@ reverse-before-15_8-or-16_4
 string_agg-before-15_9-or-16_5
 getdate-before-15_9-or-16_5
 stuff-before-15_8-or-16_4
+concat-before-15_9-or-16_5
+concat_ws-before-15_9-or-16_5
 BABEL-3401
 babel_4328_datetime
 babel_4328_datetime2

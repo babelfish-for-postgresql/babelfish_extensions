@@ -126,7 +126,7 @@ BEGIN
   IF lower("@option_name") like 'babelfishpg_tsql.%' collate "C" THEN
     SELECT "@option_name" INTO normalized_name;
   ELSE
-    SELECT concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
+    SELECT pg_catalog.concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
   END IF;
 
   IF lower("@option_scope") = 'server' THEN
