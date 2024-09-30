@@ -28,52 +28,85 @@ go
 select * from getutcdate_dep_view
 go
 
+-- all the tests have datetime difference spillover correction to avoid flakiness.
 declare @x datetime2 = sysdatetime()
 select set_config('timezone', 'US/Pacific', false);
 declare @y datetime2 = sysdatetime()
 select set_config('timezone', 'UTC', false);
-select DATEDIFF(MINUTE, @y, @x)
+DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+IF @diff = 420 or @diff = 419
+    SELECT 1;
+ELSE
+    SELECT 0;
 go
 
 declare @x datetime2 = sysdatetimeoffset()
 select set_config('timezone', 'US/Pacific', false);
 declare @y datetime2 = sysdatetimeoffset()
 select set_config('timezone', 'UTC', false);
-select DATEDIFF(MINUTE, @y, @x)
+DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+IF @diff = 420 or @diff = 419
+    SELECT 1;
+ELSE
+    SELECT 0;
 go
 
 declare @x datetime2 = getdate()
 select set_config('timezone', 'US/Pacific', false);
 declare @y datetime2 = getdate()
 select set_config('timezone', 'UTC', false);
-select DATEDIFF(MINUTE, @y, @x)
+DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+IF @diff = 420 or @diff = 419
+    SELECT 1;
+ELSE
+    SELECT 0;
 go
 
 declare @x datetime2 = CURRENT_TIMESTAMP
 select set_config('timezone', 'US/Pacific', false);
 declare @y datetime2 = CURRENT_TIMESTAMP
 select set_config('timezone', 'UTC', false);
-select DATEDIFF(MINUTE, @y, @x)
+DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+IF @diff = 420 or @diff = 419
+    SELECT 1;
+ELSE
+    SELECT 0;
 go
 
 declare @x datetime2 = sysdatetime() AT TIME ZONE 'Pacific Standard Time'
 declare @y datetime2 = sysdatetime() AT TIME ZONE 'UTC'
-select DATEDIFF(MINUTE, @y, @x)
+DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+IF @diff = 0 or @diff = -1
+    SELECT 1;
+ELSE
+    SELECT 0;
 go
 
 declare @x datetime2 = sysdatetimeoffset() AT TIME ZONE 'Pacific Standard Time'
 declare @y datetime2 = sysdatetimeoffset() AT TIME ZONE 'UTC'
-select DATEDIFF(MINUTE, @y, @x)
+DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+IF @diff = -420 or @diff = -421
+    SELECT 1;
+ELSE
+    SELECT 0;
 go
 
 declare @x datetime2 = getdate() AT TIME ZONE 'Pacific Standard Time'
 declare @y datetime2 = getdate() AT TIME ZONE 'UTC'
-select DATEDIFF(MINUTE, @y, @x)
+DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+IF @diff = 0 or @diff = -1
+    SELECT 1;
+ELSE
+    SELECT 0;
 go
 
 declare @x datetime2 = CURRENT_TIMESTAMP AT TIME ZONE 'Pacific Standard Time'
 declare @y datetime2 = CURRENT_TIMESTAMP AT TIME ZONE 'UTC'
-select DATEDIFF(MINUTE, @y, @x)
+DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
+IF @diff = 0 or @diff = -1
+    SELECT 1;
+ELSE
+    SELECT 0;
 go
 
 EXEC dbo.GetSysDatetimeDiff;
@@ -93,25 +126,25 @@ go
 
 declare @x datetime2 = SYSDATETIME();
 select set_config('timezone', 'US/Pacific', false);
-select dbo.GetSysDatetimeDiffFunc(@x)
+select dbo.GetSysDatetimeDiffFunc(@x, -420, 1)
 select set_config('timezone', 'UTC', false);
 go
 
 declare @x datetime2 = sysdatetimeoffset();
 select set_config('timezone', 'US/Pacific', false);
-select dbo.GetSysDatetimeOffsetDiffFunc(@x)
+select dbo.GetSysDatetimeOffsetDiffFunc(@x, -420, 1)
 select set_config('timezone', 'UTC', false);
 go
 
 declare @x datetime2 = getdate();
 select set_config('timezone', 'US/Pacific', false);
-select dbo.GetDateDiffFunc(@x)
+select dbo.GetDateDiffFunc(@x, -420, 1)
 select set_config('timezone', 'UTC', false);
 go
 
 declare @x datetime2 = CURRENT_TIMESTAMP;
 select set_config('timezone', 'US/Pacific', false);
-select dbo.GetCurrTimestampDiffFunc(@x)
+select dbo.GetCurrTimestampDiffFunc(@x, -420, 1)
 select set_config('timezone', 'UTC', false);
 go
 
@@ -123,68 +156,68 @@ go
 
 -- psql
 SET timezone = '+05:30';
-select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
-select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
-select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
-select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), 330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), 330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(CURRENT_TIMESTAMP AS sys.datetime2), CAST(CURRENT_TIMESTAMP AS sys.datetime2) AT TIME ZONE 'UTC'), 330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(sys.sysdatetimeoffset() AS sys.datetime2), CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC'), 330, 1);
 GO
 
 SET timezone = DEFAULT;
-select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
-select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
-select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
-select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), 0, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), 0, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(CURRENT_TIMESTAMP AS sys.datetime2), CAST(CURRENT_TIMESTAMP AS sys.datetime2) AT TIME ZONE 'UTC'), 0, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(sys.sysdatetimeoffset() AS sys.datetime2), CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC'), 0, 1);
 GO
 
 SET timezone = 'Asia/Kolkata';
-select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
-select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
-select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
-select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(CURRENT_TIMESTAMP AS sys.datetime2), CAST(CURRENT_TIMESTAMP AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(sys.sysdatetimeoffset() AS sys.datetime2), CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
 GO
 
 SET timezone = +5.5;
-select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
-select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
-select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
-select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(CURRENT_TIMESTAMP AS sys.datetime2), CAST(CURRENT_TIMESTAMP AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(sys.sysdatetimeoffset() AS sys.datetime2), CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
 GO
 
 SET TIME ZONE '+05:30';
-select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
-select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
-select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
-select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), 330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), 330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(CURRENT_TIMESTAMP AS sys.datetime2), CAST(CURRENT_TIMESTAMP AS sys.datetime2) AT TIME ZONE 'UTC'), 330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(sys.sysdatetimeoffset() AS sys.datetime2), CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC'), 330, 1);
 GO
 
 SET TIME ZONE DEFAULT;
-select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
-select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
-select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
-select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), 0, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), 0, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(CURRENT_TIMESTAMP AS sys.datetime2), CAST(CURRENT_TIMESTAMP AS sys.datetime2) AT TIME ZONE 'UTC'), 0, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(sys.sysdatetimeoffset() AS sys.datetime2), CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC'), 0, 1);
 GO
 
 SET TIME ZONE +5.5;
-select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
-select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
-select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
-select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(CURRENT_TIMESTAMP AS sys.datetime2), CAST(CURRENT_TIMESTAMP AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(sys.sysdatetimeoffset() AS sys.datetime2), CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
 GO
 
 SET TIME ZONE 'Asia/Kolkata';
-select sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
-select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
-select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
-select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(CURRENT_TIMESTAMP AS sys.datetime2), CAST(CURRENT_TIMESTAMP AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(sys.sysdatetimeoffset() AS sys.datetime2), CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
 GO
 
 SET timezone = DEFAULT;
 BEGIN; 
 SET LOCAL TIME ZONE 'Asia/Kolkata';
-SELECT sys.SYSDATETIME() - sys.SYSDATETIME() AT TIME ZONE 'UTC';
-select sys.getdate() - sys.getdate() AT TIME ZONE 'UTC';
-select CURRENT_TIMESTAMP - CURRENT_TIMESTAMP AT TIME ZONE 'UTC';
-select CAST(sys.sysdatetimeoffset() AS sys.datetime2) - CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC';
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(CURRENT_TIMESTAMP AS sys.datetime2), CAST(CURRENT_TIMESTAMP AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
+select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', CAST(sys.sysdatetimeoffset() AS sys.datetime2), CAST(sys.sysdatetimeoffset() AS sys.datetime2) AT TIME ZONE 'UTC'), -330, 1);
 COMMIT;
 GO
 
@@ -192,9 +225,9 @@ SELECT * from master_dbo.datetimediffView;
 GO
 
 SET TIME ZONE 'Asia/Kolkata';
-select master_dbo.GetSysDatetimeOffsetDiffFunc(CAST(sys.sysdatetimeoffset() AS sys.datetime2));
-select master_dbo.GetSysDatetimeDiffFunc(sys.SYSDATETIME());
-select master_dbo.GetDateDiffFunc(sys.getdate());
-select master_dbo.GetCurrTimestampDiffFunc(CAST(CURRENT_TIMESTAMP AS sys.datetime2));
+select master_dbo.GetSysDatetimeOffsetDiffFunc(CAST(sys.sysdatetimeoffset() AS sys.datetime2), 0, 1);
+select master_dbo.GetSysDatetimeDiffFunc(sys.SYSDATETIME(), 0, 1);
+select master_dbo.GetDateDiffFunc(sys.getdate(), 0, 1);
+select master_dbo.GetCurrTimestampDiffFunc(CAST(CURRENT_TIMESTAMP AS sys.datetime2), 0, 1);
 SET timezone = DEFAULT;
 GO
