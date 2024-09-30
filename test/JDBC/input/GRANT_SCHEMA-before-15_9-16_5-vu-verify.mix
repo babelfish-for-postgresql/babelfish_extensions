@@ -1,4 +1,21 @@
 -- tsql user=babel_5172_l2 password=123
+-- new tables/views created by babel_5172_u1 should be accessible
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t5;
+go
+
+select * from babel_5172_s1.v5;
+go
+
+exec babel_5172_s1.p5;
+go
+
+select babel_5172_s1.f5();
+go
+
+-- tsql user=babel_5172_l2 password=123
 -- objects created by dbo should be accessible
 use babel_5172_db;
 go
@@ -88,7 +105,6 @@ go
 select babel_5172_s1.f3();
 go
 
--- objects (tables and views) created by babel_5172_u1 will not be accessible
 select * from babel_5172_s1.t4;
 go
 

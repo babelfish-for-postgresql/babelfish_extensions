@@ -4015,31 +4015,13 @@ alter_default_privilege_for_db(const char *dbname)
 				{
 					PG_TRY();
 					{
-						const char	*query = NULL;
-						List		*res;
-						AlterDefaultPrivilegesStmt	*alterdefpriv;
+						const char	*alter_query = NULL;
+						const char	*grant_query = NULL;
 						PlannedStmt	*wrapper;
-						query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
-						res = raw_parser(query, RAW_PARSE_DEFAULT);
-						alterdefpriv = (AlterDefaultPrivilegesStmt *) parsetree_nth_stmt(res, 0);
-
-						/* need to make a wrapper PlannedStmt */
-						wrapper = makeNode(PlannedStmt);
-						wrapper->commandType = CMD_UTILITY;
-						wrapper->canSetTag = false;
-						wrapper->utilityStmt = (Node *) alterdefpriv;
-						wrapper->stmt_location = 0;
-						wrapper->stmt_len = 1;
-
-						/* do this step */
-						ProcessUtility(wrapper,
-									"(ALTER DEFAULT STATEMENT )",
-									false,
-									PROCESS_UTILITY_SUBCOMMAND,
-									NULL,
-									NULL,
-									None_Receiver,
-									NULL);
+						alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
+						exec_utility_cmd_helper(alter_query);
+						grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
+						exec_utility_cmd_helper(grant_query);
 					}
 					PG_CATCH();
 					{
