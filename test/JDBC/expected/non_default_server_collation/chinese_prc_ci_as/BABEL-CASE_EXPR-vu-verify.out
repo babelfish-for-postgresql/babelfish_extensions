@@ -5366,3 +5366,81 @@ nvarchar
   abc🙂defghi🙂🙂    
 ~~END~~
 
+
+SELECT CASE 'abcd' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+END AS RESULT
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE japanese_ci_as
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+END AS RESULT
+GO
+~~START~~
+varchar
+  abc?defghi??    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE japanese_ci_as
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+END AS RESULT
+GO
+~~START~~
+varchar
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE ARABIC_CI_AS
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE ARABIC_CI_AS
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE ARABIC_CI_AS
+END AS RESULT
+GO
+~~START~~
+varchar
+  abc?defghi??    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+END AS RESULT
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
