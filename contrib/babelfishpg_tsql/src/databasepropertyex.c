@@ -210,7 +210,7 @@ databasepropertyex(PG_FUNCTION_ARGS)
 	{
 		const char *ret = "READ_WRITE";
 
-		if (strcmp(GetConfigOption("transaction_read_only", true, false), "on") == 0) 
+		if (strcmp(GetConfigOption("transaction_read_only", true, false), "on") == 0 && IS_TDS_CLIENT()) 
 		{
 			ret = "READ_ONLY";
 		}
