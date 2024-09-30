@@ -7,7 +7,6 @@
  */
 
 #include "postgres.h"
-#include "varatt.h"
 
 #include "access/htup_details.h"
 #include "access/genam.h"
@@ -324,6 +323,10 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bytea", "pg_catalog", "text", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "datetimeoffset", "pg_catalog", "text", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "time", "pg_catalog", "text", NULL, 'i', 'i'},
+/*  date/time -> string via I/O */
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "time", "sys", "varchar", NULL, 'i', 'i'},
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "date", "sys", "varchar", NULL, 'i', 'i'},
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "datetimeoffset", "sys", "varchar", NULL, 'i', 'i'},
 };
 
 #define TOTAL_TSQL_CAST_COUNT (sizeof(tsql_cast_raw_infos)/sizeof(tsql_cast_raw_infos[0]))
@@ -398,15 +401,16 @@ typedef struct tsql_special_function
 {
 	const char             *nsp;                              /* namespace of special function */
 	const char             *funcname;                         /* name of special function */
-	const char             *formatted_funcname;				  /* formatted name of special function */
-	int                     nargs;                            /* number of arguments of special function */
-	tsql_valid_arg_type_t   valid_arg_types[SFUNC_MAX_ARGS];  /* list for storing details of all the valid types supported for each arguments */
+	const char             *formatted_funcname;               /* formatted name of special function */
+	bool                    is_variadic;                      /* need to handle variadic functions differently */
+	int                     nargs;                            /* number of arguments of special function (for variadic function number of fixed arguments will be stored) */
+	tsql_valid_arg_type_t   valid_arg_types[SFUNC_MAX_ARGS];  /* list for storing details of all the valid types supported for each arguments (for variadic function valid types of only fixed arguments will be stored) */
 } tsql_special_function_t;
 
 tsql_special_function_t tsql_special_function_list[] = 
 {
-	{"sys", "replace", "replace", 3, {{8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
-	{"sys", "string_agg", "string_agg", 2, 
+	{"sys", "replace", "replace", false, 3, {{8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","text","ntext","binary","varbinary"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
+	{"sys", "string_agg", "string_agg", false, 2, 
 		{
 			{19, 
 				{"char","varchar","nchar","nvarchar","text","ntext","int","bigint","smallint","tinyint","numeric","float","real","bit","decimal","smallmoney","money","datetime","datetime2"}, 
@@ -417,9 +421,11 @@ tsql_special_function_t tsql_special_function_list[] =
 			}
 		}
 	},
-	{"sys", "stuff", "stuff", 4, {{8, {"char","varchar","nchar","nvarchar","binary","varbinary","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"tinyint","smallint","int","bigint"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}} , {4, {"tinyint","smallint","int","bigint"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","binary","varbinary","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
-	{"sys", "translate", "translate", 3, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}} , {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
-	{"sys", "trim", "Trim", 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
+	{"sys", "stuff", "stuff", false, 4, {{8, {"char","varchar","nchar","nvarchar","binary","varbinary","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {4, {"tinyint","smallint","int","bigint"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}} , {4, {"tinyint","smallint","int","bigint"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {8, {"char","varchar","nchar","nvarchar","binary","varbinary","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
+	{"sys", "translate", "translate", false, 3, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}} , {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
+	{"sys", "trim", "Trim", false, 2, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}, {6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}},
+	{"sys", "concat", "concat", true, 0, {}},
+	{"sys", "concat_ws", "concat_ws", true, 1, {{6, {"char","varchar","nchar","nvarchar","text","ntext"}, {InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid, InvalidOid}}}}
 };
 
 static bool		inited_tsql_special_function_list = false;
@@ -1043,11 +1049,51 @@ init_special_function_list()
 }
 
 /*
+ * For variadic function, validate the input argument data types.
+ */
+static bool
+validate_variadic_special_function_args(char *func_name, List* fargs, int nargs, int nfixed_args, Oid *input_typeids)
+{
+	Oid		input_type_id, base_type_id;
+	Oid		sys_varcharoid = get_sys_varcharoid();
+
+	if ((strlen(func_name) == 6 && strncmp(func_name, "concat", 6) == 0) ||
+		 (strlen(func_name) == 9 && strncmp(func_name, "concat_ws", 9) == 0))
+	{
+		for (int i = nfixed_args; i < nargs; i++)
+		{
+			if (input_typeids[i] == UNKNOWNOID)
+			{
+				Node *arg = (Node *) lfirst(list_nth_cell(fargs, i));
+				if (IsA(arg, Const) && ((Const *)arg)->constisnull)
+					continue;
+				else
+					input_type_id = sys_varcharoid;
+			}
+			else
+				input_type_id = input_typeids[i];
+
+			base_type_id = get_immediate_base_type_of_UDT_internal(input_type_id);
+			if (OidIsValid(base_type_id))
+				input_type_id = base_type_id;
+
+			/* Check if the input type is implicitly castable to varchar. */
+			if (!can_coerce_type(1, &input_type_id, &sys_varcharoid, COERCION_IMPLICIT))
+				ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						errmsg("Implicit conversion from data type %s to varchar is not allowed.", format_type_be(input_typeids[i]))));
+		}
+		return true;
+	}
+	return false;
+}
+
+/*
  * For a given function details, validate whether it is in special function list
  * and also validate the input argument data types.
  */
 bool
-validate_special_function(char *func_nsname, char *func_name, List* fargs, int nargs, Oid *input_typeids)
+validate_special_function(char *func_nsname, char *func_name, List* fargs, int nargs, Oid *input_typeids, bool num_args_match)
 {
 	tsql_special_function_t    *special_func;
 	bool                        type_match;
@@ -1074,10 +1120,11 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 
 	/* Get Special function details */
 	special_func = NULL;
+
 	for (int i = 0; i < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; i++)
 	{
 		if (strcmp(func_name, tsql_special_function_list[i].funcname) == 0
-			&& nargs == tsql_special_function_list[i].nargs)
+			&& (tsql_special_function_list[i].is_variadic || nargs == tsql_special_function_list[i].nargs))
 		{
 			special_func = &tsql_special_function_list[i];
 			break;
@@ -1128,6 +1175,26 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 		return false;
 	}		
 
+	/* if the function is not variadic and number of args don't match, no need for special handling */
+	if (!(special_func->is_variadic || num_args_match))
+		return false;
+
+	/* For variadic function add check on number of arguments */
+	if (special_func->is_variadic)
+	{
+		/* PG has limitation for max number of args = 100. */
+		if ((strlen(func_name) == 6 && strncmp(func_name, "concat", 6) == 0)
+			&& (nargs < 2 || nargs > 100))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						errmsg("The concat function requires 2 to 100 arguments.")));
+		else if ((strlen(func_name) == 9 && strncmp(func_name, "concat_ws", 9) == 0)
+				&& (nargs < 3 || nargs > 100))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						errmsg("The concat_ws function requires 3 to 100 arguments.")));
+	}
+
 	sys_varcharoid = get_sys_varcharoid();
 
 	/* Report error in case of invalid argument datatype */
@@ -1172,6 +1239,10 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 				 		 format_type_be(input_type_id), i+1, special_func->formatted_funcname)));
 		}
 	}
+
+	/* Report error in case of invalid argument datatype of variadic arguments */
+	if (special_func->is_variadic)
+		return validate_variadic_special_function_args(func_name, fargs, nargs, special_func->nargs, input_typeids);
 
 	/* 
 	 * For string_agg function, 
@@ -1228,7 +1299,7 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
-	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids);
+	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);
 
 	/* Return NULL if function is not a special function */
 	if (!is_func_validated)
@@ -1332,6 +1403,34 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 		else
 		{
 			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");			
+		}
+	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name, "concat_ws", 9) == 0)
+	{
+		expr_result_type = get_sys_varcharoid();
+		for (int i = 0; i < nargs; i++)
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(input_typeids[i]))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+				break;
+			}
+		}
+	}
+	else if (strlen(proc_name) == 6 && strncmp(proc_name, "concat", 6) == 0)
+	{
+		expr_result_type = get_sys_varcharoid();
+		for (int i = 0; i < nargs; i++)
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(input_typeids[i]))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+				break;
+			}
 		}
 	}
 
