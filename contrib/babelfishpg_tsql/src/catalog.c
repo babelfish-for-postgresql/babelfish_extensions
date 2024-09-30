@@ -4017,11 +4017,10 @@ alter_default_privilege_for_db(const char *dbname)
 					{
 						const char	*alter_query = NULL;
 						const char	*grant_query = NULL;
-						PlannedStmt	*wrapper;
 						alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
-						exec_utility_cmd_helper(alter_query);
+						exec_utility_cmd_helper((char *)alter_query);
 						grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
-						exec_utility_cmd_helper(grant_query);
+						exec_utility_cmd_helper((char *) grant_query);
 					}
 					PG_CATCH();
 					{
