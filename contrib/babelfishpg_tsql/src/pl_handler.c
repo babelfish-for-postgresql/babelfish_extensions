@@ -2420,11 +2420,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					Oid					oldoid;
 					Acl					*proacl;
 					bool				isSameProc;
-					ObjectAddress 		address;
+					ObjectAddress 		address, tbltyp, originalFunc;
 					CreateFunctionStmt	*cfs;
 					ListCell 			*option;
 					int 				origname_location = -1;
 					bool 				with_recompile = false;
+					Node                *tbltypStmt = NULL;
 					ListCell            *parameter;
 
 					cfs = makeNode(CreateFunctionStmt);
@@ -2482,6 +2483,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								pfree(defel);
 								stmt->objtype = OBJECT_FUNCTION;
 							}
+							else if (strcmp(defel->defname, "tbltypStmt") == 0)
+							{
+								 tbltypStmt = defel->arg;
+							}
 						}
 
 						/* make a CreateFunctionStmt to pass into CreateFunction() */
@@ -2500,6 +2505,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 
 						pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc, cfs->is_procedure);
+						originalFunc.objectId = oldoid;
+						originalFunc.classId = ProcedureRelationId;
+						originalFunc.objectSubId = 0;
 						if(get_bbf_function_tuple_from_proctuple(SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid))) == NULL)
 						{
 							/* Detect PSQL functions and throw error */
@@ -2513,13 +2521,49 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							 * Postgres does not allow us to create functions with different return types
 							 * so we need to delete and recreate them 
 							 */
-							RemoveFunctionById(oldoid);
+							performDeletion(&originalFunc, DROP_RESTRICT, 0);
 							isSameProc = false;
 							CommandCounterIncrement();
 						}
 						else if (!isSameProc) /* i.e. different signature */
 						{
-							RemoveFunctionById(oldoid);
+							performDeletion(&originalFunc, DROP_RESTRICT, 0);
+						}
+
+						if(tbltypStmt)
+						{
+							PlannedStmt *wrapper;
+
+							/*
+							 * Process create stmt
+							 */
+							wrapper = makeNode(PlannedStmt);
+							wrapper->commandType = CMD_UTILITY;
+							wrapper->canSetTag = false;
+							wrapper->utilityStmt = tbltypStmt;
+							wrapper->stmt_location = pstmt->stmt_location;
+							wrapper->stmt_len = pstmt->stmt_len;
+
+							ProcessUtility(wrapper,
+										queryString,
+										false,
+										PROCESS_UTILITY_SUBCOMMAND,
+										params,
+										NULL,
+										None_Receiver,
+										NULL);
+
+							/* Need CCI between commands */
+							CommandCounterIncrement();
+
+							/*
+							 * Update dependency on oldoid
+							 */
+							tbltyp.classId = TypeRelationId;
+							tbltyp.objectId = typenameTypeId(pstate,
+															cfs->returnType);
+							tbltyp.objectSubId = 0;
+							recordDependencyOn(&tbltyp, &originalFunc, DEPENDENCY_INTERNAL);
 						}
 
 						/* if this is the same procedure, it will update the existing one */

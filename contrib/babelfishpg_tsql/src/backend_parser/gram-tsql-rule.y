@@ -4156,6 +4156,75 @@ tsql_AlterFunctionStmt:
 					n->actions = list_make4(lang, body, location, ret); // piggy-back on actions to just put the new proc body instead
 					$$ = (Node *)n;
 				}
+			| TSQL_ALTER FUNCTION func_name tsql_createfunc_args
+              RETURNS param_name TABLE '(' OptTableElementList ')' opt_as tokens_remaining
+                {
+                    CreateStmt *n1;
+                    ObjectWithArgs *owa;
+                    AlterFunctionStmt *n;
+                    char *tbltyp_name;
+                    List *tbltyp;
+                    FunctionParameter *out_param;
+
+                    DefElem *lang;
+                    DefElem *body;
+                    DefElem *tbltypStmt;
+                    DefElem *location;
+                    DefElem *ret;
+                    TypeName *returnType;
+
+                    n1 = makeNode(CreateStmt);
+                    owa = makeNode(ObjectWithArgs);
+                    n = makeNode(AlterFunctionStmt);
+                    tbltyp_name = psprintf("%s_%s", $6, strVal(llast($3)));
+                    tbltyp = list_copy($3);
+                    lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
+                    body = makeDefElem("as", (Node *) list_make1(makeString($12)), @12);
+                    tbltypStmt = makeDefElem("tbltypStmt", (Node *) n1, @1);
+                    location = makeDefElem("location", (Node *) makeInteger(@3), @3);
+
+                    if (sql_dialect != SQL_DIALECT_TSQL)
+                        ereport(ERROR,
+                                (errcode(ERRCODE_SYNTAX_ERROR),
+                                 errmsg("This syntax is only valid when babelfishpg_tsql.sql_dialect is TSQL"),
+                                 parser_errposition(@1)));
+
+                    tbltyp = list_truncate(tbltyp, list_length(tbltyp) - 1);
+                    tbltyp = lappend(tbltyp, makeString(downcase_truncate_identifier(tbltyp_name, strlen(tbltyp_name), true)));
+                    n1->relation = makeRangeVarFromAnyName(tbltyp, @3, yyscanner);
+                    n1->tableElts = $9;
+                    n1->inhRelations = NIL;
+                    n1->partspec = NULL;
+                    n1->ofTypename = NULL;
+                    n1->constraints = NIL;
+                    n1->options = NIL;
+                    n1->oncommit = ONCOMMIT_NOOP;
+                    n1->tablespacename = NULL;
+                    n1->if_not_exists = false;
+                    n1->tsql_tabletype = true;
+
+                    /* Add a param for the output table variable */
+                    out_param = makeNode(FunctionParameter);
+                    out_param->name = $6;
+                    out_param->argType = makeTypeNameFromNameList(tbltyp);
+                    out_param->mode = FUNC_PARAM_TABLE;
+                    out_param->defexpr = NULL;
+
+                    returnType = out_param->argType;
+                    returnType->setof = true;
+                    returnType->location = @7;
+                    ret = makeDefElem("return", (Node *) returnType, @7);
+
+                    owa->objname = $3;
+                    owa->objargs = lappend(extractArgTypes($4), out_param->argType);
+                    owa->objfuncargs = lappend($4, out_param);
+
+                    n->objtype = OBJECT_PROCEDURE; /* Set as proc to avoid psql alter func impl */
+                    n->func = owa;
+                    n->actions = list_make5(lang, body, location, tbltypStmt, ret);
+
+                    $$ = (Node *)n;
+                }
 		;
 
 /*
