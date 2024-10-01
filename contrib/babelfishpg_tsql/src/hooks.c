@@ -154,7 +154,7 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
-					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
+					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc, ObjectAddress *address);
 
 /*****************************************
  * 			Executor Hooks
@@ -195,6 +195,7 @@ static void revoke_func_permission_from_public(Oid objectId);
  * 			Planner Hook
  *****************************************/
 static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -435,6 +436,8 @@ InstallExtendedHooks(void)
 
 	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
 	ExecFuncProc_AclCheck_hook = pltsql_ExecFuncProc_AclCheck;
+	
+	pltsql_get_object_identity_event_trigger_hook = pltsql_get_object_identity_event_trigger;
 }
 
 void
@@ -506,6 +509,7 @@ UninstallExtendedHooks(void)
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
+	pltsql_get_object_identity_event_trigger_hook = NULL;
 }
 
 /*****************************************
@@ -2387,24 +2391,24 @@ pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argname
 	{
 		const char *arg_str = (max_nargs < 2) ? "argument" : "arguments";
 
+		if (!proc_call)
+		{
+			/* deconstruct the names list */
+			DeconstructQualifiedName(names, &schemaname, &funcname);
+
+			/* 
+			 * Check whether function is an special function or not, and 
+			 * report appropriate error if applicable 
+			 */
+			validate_special_function(schemaname, funcname, fargs, nargs, input_typeids, found);
+		}
+		
 		/*
 		 * Found the proc/func having the same number of arguments. possibly
 		 * data-type mistmatch.
 		 */
 		if (found)
 		{
-			if (!proc_call)
-			{
-				/* deconstruct the names list */
-				DeconstructQualifiedName(names, &schemaname, &funcname);
-
-				/* 
-				 * Check whether function is an special function or not, and 
-				 * report appropriate error if applicable 
-				 */
-				validate_special_function(schemaname, funcname, fargs, nargs, input_typeids);
-			}
-
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.", obj_type, NameListToString(names))),
@@ -5025,4 +5029,42 @@ unique_constraint_nulls_ordering(ConstrType constraint_type, SortByDir ordering)
 	}
 
 	return SORTBY_NULLS_DEFAULT;
+}
+
+/*
+ * Postgres event triggers can call pg_event_trigger_ddl_commands
+ * which in turn does a syscache lookup for the object that fired
+ * the event trigger. If the event is create babelfish temp table
+ * or table variable then the syscahe lookup will fail since ENR
+ * sys table scan is only allowed when dialect is TSQL but when
+ * executing pg_event_trigger_ddl_commands() dialect will be PSQL.
+ * As a fix we will temporarily switch the dialect to TSQL when
+ * doing a syscahe lookup inside pg_event_trigger_ddl_commands()
+ */
+static char*
+pltsql_get_object_identity_event_trigger(ObjectAddress* address)
+{
+    char *identity = NULL;
+    if (getObjectClass(address) == OCLASS_CLASS)
+    {
+        int save_nestlevel = 0;
+        save_nestlevel = pltsql_new_guc_nest_level();
+        PG_TRY();
+        {
+            set_config_option("babelfishpg_tsql.sql_dialect", "tsql",                                       
+                GUC_CONTEXT_CONFIG,     \
+                PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+            identity = getObjectIdentity(address,true);
+        }
+        PG_FINALLY();
+        {
+            pltsql_revert_guc(save_nestlevel);
+        }
+        PG_END_TRY();
+    }
+    else
+    {
+        identity = getObjectIdentity(address,true); 
+    }
+    return identity;
 }

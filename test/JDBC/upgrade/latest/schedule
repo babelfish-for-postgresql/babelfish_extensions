@@ -188,6 +188,7 @@ BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
 SP_TABLES-dep
+SP_TABLES-cross-db
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -555,6 +556,8 @@ replicate
 reverse
 string_agg
 getdate
+concat
+concat_ws
 sys_sequences
 sys_partition_functions
 sys_partition_schemes

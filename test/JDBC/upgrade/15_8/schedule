@@ -553,6 +553,8 @@ replicate
 reverse
 string_agg-before-15_9-or-16_5
 getdate-before-15_9-or-16_5
+concat-before-15_9-or-16_5
+concat_ws-before-15_9-or-16_5
 sys_sequences
 sys_partition_functions
 sys_partition_schemes
@@ -561,3 +563,4 @@ alter-procedure-15_8-or-16_4
 binary-datatype-operators
 cast-varchar-to-time
 BABEL-5119
+GRANT_SCHEMA-before-15_9-16_5

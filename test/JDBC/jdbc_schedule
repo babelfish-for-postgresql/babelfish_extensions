@@ -42,6 +42,9 @@ ignore#!#sys-table_types-before-dep-vu-cleanup
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-prepare
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-verify
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-cleanup
+ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-prepare
+ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-verify
+ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-cleanup
 ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
 
@@ -358,3 +361,9 @@ ignore#!#getdate-before-15_9-or-16_5-vu-verify
 ignore#!#string_agg-before-14_5-vu-prepare
 ignore#!#string_agg-before-14_5-vu-verify
 ignore#!#string_agg-before-14_5-vu-cleanup
+ignore#!#concat-before-15_9-or-16_5-vu-prepare
+ignore#!#concat-before-15_9-or-16_5-vu-verify
+ignore#!#concat-before-15_9-or-16_5-vu-cleanup
+ignore#!#concat_ws-before-15_9-or-16_5-vu-prepare
+ignore#!#concat_ws-before-15_9-or-16_5-vu-verify
+ignore#!#concat_ws-before-15_9-or-16_5-vu-cleanup

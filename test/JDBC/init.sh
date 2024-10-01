@@ -30,6 +30,7 @@ GRANT ALL ON SCHEMA sys to jdbc_user;
 ALTER USER jdbc_user CREATEDB;
 \c jdbc_testdb
 ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 SELECT pg_reload_conf();
 \c jdbc_testdb
 show babelfishpg_tsql.database_name;
@@ -51,6 +52,7 @@ GRANT ALL ON SCHEMA sys to jdbc_user;
 ALTER USER jdbc_user CREATEDB;
 \c jdbc_testdb
 ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 ALTER SYSTEM SET parallel_setup_cost = 0;
 ALTER SYSTEM SET parallel_tuple_cost = 0;
 ALTER SYSTEM SET min_parallel_index_scan_size = 0;
