@@ -47,7 +47,7 @@ go
 select IIF(rv = NULL, 'null', 'not-null') from testrowversion_t1;
 go
 ~~START~~
-text
+varchar
 not-null
 not-null
 ~~END~~
@@ -60,7 +60,7 @@ select case when x.b = y.rv then 'equal' else 'not-equal' end
 				from mycte x inner join testrowversion_t1 y on x.a = y.id;
 go
 ~~START~~
-text
+varchar
 equal
 equal
 ~~END~~
@@ -71,7 +71,7 @@ select case when x.rv = y.rv then 'equal' else 'not-equal' end
 				from testrowversion_v1 x inner join testrowversion_t1 y on x.id = y.id;
 go
 ~~START~~
-text
+varchar
 equal
 equal
 ~~END~~
@@ -85,7 +85,7 @@ select case when f.rv = t.rv then 'equal' else 'not-equal' end
                 from testrowversion_tvf1(1) f inner join testrowversion_t1 t on f.id = t.id;
 go
 ~~START~~
-text
+varchar
 equal
 equal
 ~~END~~
@@ -108,7 +108,7 @@ go
 ~~ROW COUNT: 1~~
 
 ~~START~~
-text
+varchar
 ok
 ~~END~~
 
@@ -120,7 +120,7 @@ select case when x.rv = y.rv then 'equal' else 'not-equal' end
                 from testrowversion_t1 x inner join testrowversion_t2 y on x.id = y.id;
 go
 ~~START~~
-text
+varchar
 equal
 equal
 ~~END~~
@@ -169,7 +169,7 @@ go
 ~~ROW COUNT: 1~~
 
 ~~START~~
-text
+varchar
 ok
 ~~END~~
 
@@ -179,7 +179,7 @@ select case when dbts_after_insert > prev_dbts then 'increasing' else 'not incre
     where prev_dbts is not null;
 go
 ~~START~~
-text
+varchar
 not increasing
 not increasing
 ~~END~~

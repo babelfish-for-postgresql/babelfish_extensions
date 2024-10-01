@@ -5,7 +5,7 @@ select
     concat('[', c5n, ']') as c5n_concat,
     '[' + c5n + ']' as c5n_to_text_concat,
     concat('[', cast(c5n as varchar), ']') as c5n_to_varchar_concat,
-    concat('[', cast(c5n as pg_catalog.name), ']') as c5n_to_name_concat
+    pg_catalog.concat('[', cast(c5n as pg_catalog.name), ']') as c5n_to_name_concat
 from babel_1994_vu_prepare_t1;
 go
 

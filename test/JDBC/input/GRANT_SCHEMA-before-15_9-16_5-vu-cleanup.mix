@@ -1,0 +1,105 @@
+-- tsql
+-- drop objects
+use babel_5172_db
+go
+
+drop table babel_5172_s1.t1
+go
+
+drop table babel_5172_s1.t2
+go
+
+drop table babel_5172_s1.t3
+go
+
+drop table babel_5172_s1.t4
+go
+
+drop table babel_5172_s1.t5
+go
+
+drop view babel_5172_s1.v1
+go
+
+drop view babel_5172_s1.v2
+go
+
+drop view babel_5172_s1.v3
+go
+
+drop view babel_5172_s1.v4
+go
+
+drop view babel_5172_s1.v5
+go
+
+drop procedure babel_5172_s1.p1
+go
+
+drop procedure babel_5172_s1.p2
+go
+
+drop procedure babel_5172_s1.p3
+go
+
+drop procedure babel_5172_s1.p4
+go
+
+drop procedure babel_5172_s1.p5
+go
+
+drop function babel_5172_s1.f1
+go
+
+drop function babel_5172_s1.f2
+go
+
+drop function babel_5172_s1.f3
+go
+
+drop function babel_5172_s1.f4
+go
+
+drop function babel_5172_s1.f5
+go
+
+drop schema babel_5172_s1;
+go
+
+drop user babel_5172_u1;
+go
+
+drop user babel_5172_u2;
+go
+
+use master
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_5172_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_5172_l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+drop login babel_5172_l1;
+go
+
+drop login babel_5172_l2;
+go
+
+drop database babel_5172_db
+go

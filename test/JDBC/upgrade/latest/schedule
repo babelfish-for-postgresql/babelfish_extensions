@@ -563,6 +563,8 @@ string_agg_within
 reverse
 string_agg
 getdate
+concat
+concat_ws
 sys_sequences
 replicate
 space
@@ -575,4 +577,5 @@ xml_exist
 test_db_collation
 BABEL-5119
 BABEL-5129
+BABEL-CASE_EXPR
 
