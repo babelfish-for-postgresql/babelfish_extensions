@@ -1,4 +1,7 @@
 #Q#select db_name();
 #D#nvarchar
 master
+#Q#select current_user;
+#D#varchar
+dbo
 #Q#drop database db1;
