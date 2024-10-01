@@ -188,6 +188,7 @@ BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
 SP_TABLES-dep
+SP_TABLES-cross-db
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -561,12 +562,19 @@ BABEL-5071
 string_agg_within
 reverse
 string_agg
+getdate
+concat
+concat_ws
 sys_sequences
 replicate
 space
 SELECT_INTO_TEST
 binary-datatype-operators
 securityadmin_role
+sys_dm_os_sys_info
 cast-varchar-to-time
+xml_exist
+test_db_collation
 BABEL-5119
+BABEL-5129
 

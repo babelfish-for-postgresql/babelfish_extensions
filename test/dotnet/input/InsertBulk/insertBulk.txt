@@ -296,6 +296,169 @@ Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
 
+# identity test in case of check constraints off and KeepIdentity is on
+create table sourceTable(c1 int identity, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable ON
+INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable OFF
+create table destinationTable(c1 int identity, c2 CHAR(1024), check (c1 < 500))
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+create table sourceTable1(c1 int identity, c2 CHAR(1024))
+ set IDENTITY_INSERT sourceTable1 ON
+INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
+INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
+ set IDENTITY_INSERT sourceTable1 OFF
+traninsertbulk#!#sourceTable1#!#destinationTable#!#keepIdentity
+Select count(c1) from sourceTable
+select count(c1) from sourceTable1
+select count(c1) from destinationTable
+select Ident_CURRENT('sourceTable')
+select Ident_CURRENT('sourceTable1')
+select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table sourceTable1
+drop table destinationTable
+
+# identity test when IDENTITY_INSERT destinationTable is ON inside the same connection which does the insert bulk without keepIdentity
+Create table sourceTable(a int identity, b int)
+Create table destinationTable(a int identity(1, 2), b int)
+insert into sourceTable values (1)
+insert into sourceTable values (2)
+ set IDENTITY_INSERT destinationTable ON
+traninsertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when IDENTITY_INSERT destinationTable is ON inside the same connection which does the insert bulk with keepIdentity
+Create table sourceTable(a int identity, b int)
+Create table destinationTable(a int identity(1, 2), b int)
+insert into sourceTable values (1)
+insert into sourceTable values (2)
+ set IDENTITY_INSERT destinationTable ON
+traninsertbulk#!#sourceTable#!#destinationTable#!#keepIdentity
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when both tables have positive increment value and we insert less than seed value
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, -4)
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when both tables have positive increment value and we insert more than seed value
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, 4)
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when source table has negative increment value and we insert more than seed value
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity)
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, 2)
+insert into sourceTable (a ,b) values (2, 4)
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when source table has negative increment value and we insert less than seed value
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity)
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -2)
+insert into sourceTable (a ,b) values (2, 4)
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when both tables have negative increment value and we insert more than seed value
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity(-1, -1))
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, 2)
+insert into sourceTable (a ,b) values (2, 4)
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when both tables have negative increment value and we insert less than seed value
+Create table sourceTable(a int, b int identity(-1, -1))
+Create table destinationTable(a int, b int identity(-1, -1))
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -2)
+insert into sourceTable (a ,b) values (2, 4)
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when destination table has negative increment value and we insert less than seed value
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity(-1, -1))
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, -4)
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
+# identity test when destination table has negative increment value and we insert more than seed value
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity(-1, -1))
+ set IDENTITY_INSERT sourceTable ON
+insert into sourceTable (a, b) values (1, -1)
+insert into sourceTable (a ,b) values (2, 4)
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+Select Ident_CURRENT('sourceTable')
+Select Ident_CURRENT('destinationTable')
+drop table sourceTable
+drop table destinationTable
+
 # trigger
 create table t_rcv (a int)
 create table t_rcv2 (b int)

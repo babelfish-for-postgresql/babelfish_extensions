@@ -1,4 +1,4 @@
--- sla 16000
+-- sla 20000
 create database db1;
 go
 

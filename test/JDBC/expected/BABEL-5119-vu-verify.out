@@ -67,43 +67,43 @@ babel5119_p3
 ~~END~~
 
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#guest#!#BABEL5119_t4#!#BASE TABLE
-master#!#guest#!#BABEL5119_t5#!#BASE TABLE
-master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
+babel5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
+babel5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
+babel5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
+babel5119_db#!#dbo#!#babel5119_v1#!#VIEW
+babel5119_db#!#dbo#!#babel5119_v2#!#VIEW
+babel5119_db#!#dbo#!#babel5119_v3#!#VIEW
 ~~END~~
 
 
-SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-BABEL5119_t4#!#a
-BABEL5119_t5#!#a
-BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
+BABEL5119_t1#!#a
+BABEL5119_t2#!#a
+BABEL5119_t3#!#a
+babel5119_v1#!#?column?
+babel5119_v2#!#?column?
+babel5119_v3#!#?column?
 ~~END~~
 
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW BABEL5119_v4 AS SELECT 1
-babel5119_v5#!#CREATE VIEW BABEL5119_v5 AS SELECT 1
-babel5119_v6#!#CREATE VIEW BABEL5119_v6 AS SELECT 1
+babel5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1
+babel5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1
+babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1
 ~~END~~
 
 
@@ -137,7 +137,7 @@ GO
 
 
 CREATE TABLE #babel5119_tmp_table_3(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_3 SELECT TABLE_NAME FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_3 SELECT TABLE_NAME FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 ~~ROW COUNT: 6~~
 
@@ -185,43 +185,43 @@ babel5119_p6
 ~~END~~
 
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-babel5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
-babel5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
-babel5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
-babel5119_db#!#dbo#!#babel5119_v1#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v2#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v3#!#VIEW
+master#!#guest#!#BABEL5119_t4#!#BASE TABLE
+master#!#guest#!#BABEL5119_t5#!#BASE TABLE
+master#!#guest#!#BABEL5119_t6#!#BASE TABLE
+master#!#guest#!#babel5119_v4#!#VIEW
+master#!#guest#!#babel5119_v5#!#VIEW
+master#!#guest#!#babel5119_v6#!#VIEW
 ~~END~~
 
 
-SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-BABEL5119_t1#!#a
-BABEL5119_t2#!#a
-BABEL5119_t3#!#a
-babel5119_v1#!#?column?
-babel5119_v2#!#?column?
-babel5119_v3#!#?column?
+BABEL5119_t4#!#a
+BABEL5119_t5#!#a
+BABEL5119_t6#!#a
+babel5119_v4#!#?column?
+babel5119_v5#!#?column?
+babel5119_v6#!#?column?
 ~~END~~
 
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1
-babel5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1
-babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1
+babel5119_v4#!#CREATE VIEW BABEL5119_v4 AS SELECT 1
+babel5119_v5#!#CREATE VIEW BABEL5119_v5 AS SELECT 1
+babel5119_v6#!#CREATE VIEW BABEL5119_v6 AS SELECT 1
 ~~END~~
 
 
@@ -255,7 +255,7 @@ GO
 
 
 CREATE TABLE #babel5119_tmp_table_6(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_6 SELECT TABLE_NAME FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_6 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 ~~ROW COUNT: 6~~
 
@@ -307,43 +307,43 @@ babel5119_p3
 ~~END~~
 
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#guest#!#BABEL5119_t4#!#BASE TABLE
-master#!#guest#!#BABEL5119_t5#!#BASE TABLE
-master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
+babel5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
+babel5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
+babel5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
+babel5119_db#!#dbo#!#babel5119_v1#!#VIEW
+babel5119_db#!#dbo#!#babel5119_v2#!#VIEW
+babel5119_db#!#dbo#!#babel5119_v3#!#VIEW
 ~~END~~
 
 
-SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-BABEL5119_t4#!#a
-BABEL5119_t5#!#a
-BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
+BABEL5119_t1#!#a
+BABEL5119_t2#!#a
+BABEL5119_t3#!#a
+babel5119_v1#!#?column?
+babel5119_v2#!#?column?
+babel5119_v3#!#?column?
 ~~END~~
 
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW BABEL5119_v4 AS SELECT 1
-babel5119_v5#!#CREATE VIEW BABEL5119_v5 AS SELECT 1
-babel5119_v6#!#CREATE VIEW BABEL5119_v6 AS SELECT 1
+babel5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1
+babel5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1
+babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1
 ~~END~~
 
 
@@ -377,7 +377,7 @@ GO
 
 
 CREATE TABLE #babel5119_tmp_table_9(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_9 SELECT TABLE_NAME FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_9 SELECT TABLE_NAME FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 ~~ROW COUNT: 6~~
 
@@ -425,43 +425,43 @@ babel5119_p6
 ~~END~~
 
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-babel5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
-babel5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
-babel5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
-babel5119_db#!#dbo#!#babel5119_v1#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v2#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v3#!#VIEW
+master#!#guest#!#BABEL5119_t4#!#BASE TABLE
+master#!#guest#!#BABEL5119_t5#!#BASE TABLE
+master#!#guest#!#BABEL5119_t6#!#BASE TABLE
+master#!#guest#!#babel5119_v4#!#VIEW
+master#!#guest#!#babel5119_v5#!#VIEW
+master#!#guest#!#babel5119_v6#!#VIEW
 ~~END~~
 
 
-SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-BABEL5119_t1#!#a
-BABEL5119_t2#!#a
-BABEL5119_t3#!#a
-babel5119_v1#!#?column?
-babel5119_v2#!#?column?
-babel5119_v3#!#?column?
+BABEL5119_t4#!#a
+BABEL5119_t5#!#a
+BABEL5119_t6#!#a
+babel5119_v4#!#?column?
+babel5119_v5#!#?column?
+babel5119_v6#!#?column?
 ~~END~~
 
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1
-babel5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1
-babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1
+babel5119_v4#!#CREATE VIEW BABEL5119_v4 AS SELECT 1
+babel5119_v5#!#CREATE VIEW BABEL5119_v5 AS SELECT 1
+babel5119_v6#!#CREATE VIEW BABEL5119_v6 AS SELECT 1
 ~~END~~
 
 
@@ -495,7 +495,7 @@ GO
 
 
 CREATE TABLE #babel5119_tmp_table_12(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_12 SELECT TABLE_NAME FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_12 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 ~~ROW COUNT: 6~~
 
@@ -540,8 +540,8 @@ GO
 ~~ERROR (Message: The server principal "login_babel5119_2" is not able to access the database "babel5119_db" under the current security context)~~
 
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~ERROR (Code: 33557097)~~
@@ -549,7 +549,7 @@ GO
 ~~ERROR (Message: The server principal "login_babel5119_2" is not able to access the database "babel5119_db" under the current security context)~~
 
 
-SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM BABEL5119_db.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~ERROR (Code: 33557097)~~
@@ -557,7 +557,7 @@ GO
 ~~ERROR (Message: The server principal "login_babel5119_2" is not able to access the database "babel5119_db" under the current security context)~~
 
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM BABEL5119_db.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~ERROR (Code: 33557097)~~
@@ -598,7 +598,7 @@ GO
 
 
 CREATE TABLE #babel5119_tmp_table_15(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_15 SELECT TABLE_NAME FROM BABEL5119_db.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_15 SELECT TABLE_NAME FROM BABEL5119_db.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -643,8 +643,8 @@ babel5119_p6
 ~~END~~
 
 
--- Checking crossdb for information_schema_tsql
-SELECT * FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+-- Checking crossdb for information_schema
+SELECT * FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
@@ -658,7 +658,7 @@ master#!#guest#!#babel5119_v6#!#VIEW
 ~~END~~
 
 
-SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema_tsql.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, COLUMN_NAME FROM master.information_schema.columns WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
@@ -672,7 +672,7 @@ babel5119_v6#!#?column?
 ~~END~~
 
 
-SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema_tsql.views WHERE TABLE_NAME LIKE 'BABEL5119%'
+SELECT TABLE_NAME, VIEW_DEFINITION FROM master.information_schema.views WHERE TABLE_NAME LIKE 'BABEL5119%'
 ORDER BY TABLE_NAME
 GO
 ~~START~~
@@ -697,7 +697,7 @@ GO
 
 
 CREATE TABLE #babel5119_tmp_table_18(name VARCHAR(MAX))
-INSERT INTO #babel5119_tmp_table_18 SELECT TABLE_NAME FROM master.information_schema_tsql.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
+INSERT INTO #babel5119_tmp_table_18 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
 ~~ROW COUNT: 6~~
 

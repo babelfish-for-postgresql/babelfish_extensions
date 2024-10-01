@@ -1,0 +1,79 @@
+exec sysdatetime_dep_proc
+go
+~~START~~
+int
+65536
+~~END~~
+
+
+exec sysdatetimeoffset_dep_proc
+go
+~~START~~
+int
+65536
+~~END~~
+
+
+exec sysutcdatetime_dep_proc
+go
+~~START~~
+int
+65536
+~~END~~
+
+
+exec getdate_dep_proc
+go
+~~START~~
+int
+65536
+~~END~~
+
+
+exec getutcdate_dep_proc
+go
+~~START~~
+int
+65536
+~~END~~
+
+
+Select * from sysdatetime_dep_view
+go
+~~START~~
+int
+65536
+~~END~~
+
+
+select * from sysdatetimeoffset_dep_view
+go
+~~START~~
+int
+65536
+~~END~~
+
+
+select * from sysutcdatetime_dep_view
+go
+~~START~~
+int
+65536
+~~END~~
+
+
+select * from getdate_dep_view
+go
+~~START~~
+int
+65536
+~~END~~
+
+
+select * from getutcdate_dep_view
+go
+~~START~~
+int
+65536
+~~END~~
+

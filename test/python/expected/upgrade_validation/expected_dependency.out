@@ -1,5 +1,4 @@
 Could not find dependencies on
-Collation sys.bbf_unicode_cp1250_ci_ai
 Collation sys.bbf_unicode_cp1250_cs_ai
 Collation sys.bbf_unicode_cp1251_ci_ai
 Collation sys.bbf_unicode_cp1251_cs_ai
@@ -15,7 +14,6 @@ Collation sys.bbf_unicode_cp1255_cs_ai
 Collation sys.bbf_unicode_cp1256_ci_ai
 Collation sys.bbf_unicode_cp1256_ci_as
 Collation sys.bbf_unicode_cp1256_cs_ai
-Collation sys.bbf_unicode_cp1257_ci_ai
 Collation sys.bbf_unicode_cp1257_ci_as
 Collation sys.bbf_unicode_cp1257_cs_ai
 Collation sys.bbf_unicode_cp1258_ci_ai
@@ -42,7 +40,6 @@ Collation sys.estonian_ci_as
 Collation sys.estonian_cs_as
 Collation sys.finnish_swedish_ci_as
 Collation sys.finnish_swedish_cs_as
-Collation sys.french_ci_ai
 Collation sys.french_ci_as
 Collation sys.greek_ci_ai
 Collation sys.hebrew_ci_ai
@@ -51,15 +48,12 @@ Collation sys.japanese_ci_ai
 Collation sys.japanese_cs_as
 Collation sys.korean_wansung_ci_ai
 Collation sys.korean_wansung_ci_as
-Collation sys.modern_spanish_ci_ai
 Collation sys.modern_spanish_ci_as
 Collation sys.mongolian_ci_ai
 Collation sys.mongolian_cs_as
-Collation sys.polish_ci_ai
 Collation sys.polish_cs_as
 Collation sys.thai_ci_ai
 Collation sys.thai_ci_as
-Collation sys.traditional_spanish_ci_ai
 Collation sys.traditional_spanish_ci_as
 Collation sys.turkish_ci_ai
 Collation sys.turkish_cs_as
@@ -221,7 +215,6 @@ Function sys.bbf_get_current_physical_schema_name(text)
 Function sys.bbf_get_immediate_base_type_of_udt(oid)
 Function sys.bbf_is_member_of_role_nosuper(oid,oid)
 Function sys.bbf_is_shared_schema(text)
-Function sys.bbf_pivot()
 Function sys.bbf_string_agg_finalfn_nvarchar(internal)
 Function sys.bbf_string_agg_finalfn_varchar(internal)
 Function sys.bbf_varbinary(sys.geography)
@@ -477,8 +470,6 @@ Function sys.get_host_os()
 Function sys.get_icu_major_version()
 Function sys.get_icu_minor_version()
 Function sys.get_valid_srids()
-Function sys.getdate()
-Function sys.getutcdate()
 Function sys.has_dbaccess(sys.sysname)
 Function sys.hashbpchar(sys.bpchar)
 Function sys.hashbytes(character varying,character varying)
@@ -609,7 +600,6 @@ Function sys.smalldatetime2bpchar(sys.smalldatetime)
 Function sys.smalldatetime2char(sys.smalldatetime)
 Function sys.smalldatetime2date(sys.smalldatetime)
 Function sys.smalldatetime2datetimeoffset(sys.smalldatetime)
-Function sys.smalldatetime2sysvarchar(sys.smalldatetime)
 Function sys.smalldatetime2time(sys.smalldatetime)
 Function sys.smalldatetime2timestamptz(sys.smalldatetime)
 Function sys.smalldatetime2varchar(sys.smalldatetime)
@@ -638,7 +628,6 @@ Function sys.sp_releaseapplock_function(character varying,character varying,char
 Function sys.sp_special_columns_length_helper(text,integer,smallint,bigint)
 Function sys.sp_special_columns_precision_helper(text,integer,smallint,bigint)
 Function sys.sp_special_columns_scale_helper(text,integer)
-Function sys.sp_tables_internal(sys.nvarchar,sys.nvarchar,sys.sysname,sys."varchar",sys."bit")
 Function sys.sql_variant_property(sys.sql_variant,sys."varchar")
 Function sys.sqlvariant_bbfbinary(sys.sql_variant)
 Function sys.sqlvariant_bigint(sys.sql_variant)
@@ -687,10 +676,7 @@ Function sys.suser_name()
 Function sys.suser_name_internal(oid)
 Function sys.suser_sid()
 Function sys.suser_sname()
-Function sys.sysdatetime()
-Function sys.sysdatetimeoffset()
 Function sys.systypes_precision_helper(text,smallint)
-Function sys.sysutcdatetime()
 Function sys.text(sys.geography)
 Function sys.text(sys.geometry)
 Function sys.text_to_name(text)
@@ -869,9 +855,6 @@ Operator sys.<(smallint,sys.fixeddecimal)
 Operator sys.<(sys."bit",integer)
 Operator sys.<(sys."bit",sys."bit")
 Operator sys.<(sys.bbf_varbinary,sys.bbf_varbinary)
-Operator sys.<(sys.datetime,sys.datetime)
-Operator sys.<(sys.datetime2,sys.datetime2)
-Operator sys.<(sys.datetimeoffset,sys.datetimeoffset)
 Operator sys.<(sys.fixeddecimal,bigint)
 Operator sys.<(sys.fixeddecimal,integer)
 Operator sys.<(sys.fixeddecimal,numeric)
@@ -928,9 +911,6 @@ Operator sys.=(integer,sys.fixeddecimal)
 Operator sys.=(numeric,sys.fixeddecimal)
 Operator sys.=(smallint,sys.fixeddecimal)
 Operator sys.=(sys."bit",sys."bit")
-Operator sys.=(sys.datetime,sys.datetime)
-Operator sys.=(sys.datetime2,sys.datetime2)
-Operator sys.=(sys.datetimeoffset,sys.datetimeoffset)
 Operator sys.=(sys.fixeddecimal,bigint)
 Operator sys.=(sys.fixeddecimal,integer)
 Operator sys.=(sys.fixeddecimal,numeric)

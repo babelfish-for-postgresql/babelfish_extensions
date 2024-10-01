@@ -11,6 +11,7 @@ Could not find tests for function sys.babelfish_try_cast_floor_int
 Could not find tests for function sys.babelfish_try_cast_floor_smallint
 Could not find tests for function sys.babelfish_try_cast_to_any
 Could not find tests for function sys.bbf_pivot
+Could not find tests for function sys.bbf_xmlexist
 Could not find tests for function sys.columns_internal
 Could not find tests for function sys.date_bucket_internal_helper
 Could not find tests for function sys.dateadd_internal
@@ -42,7 +43,6 @@ Could not find tests for function sys.sp_releaseapplock_function
 Could not find tests for function sys.sp_special_columns_length_helper
 Could not find tests for function sys.sp_special_columns_precision_helper
 Could not find tests for function sys.sp_special_columns_scale_helper
-Could not find tests for function sys.sp_tables_internal
 Could not find tests for function sys.suser_id_internal
 Could not find tests for function sys.suser_name_internal
 Could not find tests for function sys.systypes_precision_helper
@@ -94,12 +94,10 @@ Could not find upgrade tests for function assemblyproperty
 Could not find upgrade tests for function bbf_string_agg_finalfn_nvarchar
 Could not find upgrade tests for function bbf_string_agg_finalfn_varchar
 Could not find upgrade tests for function connectionproperty
-Could not find upgrade tests for function databasepropertyex
 Could not find upgrade tests for function pltsql_call_handler
 Could not find upgrade tests for function pltsql_inline_handler
 Could not find upgrade tests for function pltsql_validator
 Could not find upgrade tests for function serverproperty
-Could not find upgrade tests for function sessionproperty
 Could not find upgrade tests for function sys.babelfish_runtime_error
 Could not find upgrade tests for function sys.babelfish_timezone_mapping
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_bigint
@@ -107,6 +105,7 @@ Could not find upgrade tests for function sys.babelfish_try_cast_floor_int
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_smallint
 Could not find upgrade tests for function sys.babelfish_try_cast_to_any
 Could not find upgrade tests for function sys.bbf_pivot
+Could not find upgrade tests for function sys.bbf_xmlexist
 Could not find upgrade tests for function sys.ceiling
 Could not find upgrade tests for function sys.columns_internal
 Could not find upgrade tests for function sys.cursor_rows
@@ -157,7 +156,6 @@ Could not find upgrade tests for function sys.sp_releaseapplock_function
 Could not find upgrade tests for function sys.sp_special_columns_length_helper
 Could not find upgrade tests for function sys.sp_special_columns_precision_helper
 Could not find upgrade tests for function sys.sp_special_columns_scale_helper
-Could not find upgrade tests for function sys.sp_tables_internal
 Could not find upgrade tests for function sys.suser_id_internal
 Could not find upgrade tests for function sys.suser_name_internal
 Could not find upgrade tests for function sys.systypes_precision_helper
@@ -193,6 +191,7 @@ Could not find upgrade tests for procedure sys.sp_cursor_list
 Could not find upgrade tests for procedure sys.sp_describe_cursor
 Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_prepare
+Could not find upgrade tests for procedure sys.sp_reset_connection
 Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
 Could not find upgrade tests for table sys.babelfish_configurations

@@ -414,7 +414,7 @@ triggers_with_transaction
 datetimeoffset-timezone-before-15_3
 BABEL-4046
 table_constraint_wo_comma-before-15_6-or-16_2
-getdate
+getdate-before-15_9-or-16_5
 BABEL_4330-before-15_8-or-16_4
 AUTO_ANALYZE-before-15-5-or-14-10
 cast_eliminate
@@ -449,7 +449,10 @@ reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 string_agg-before-15_9-or-16_5
+concat-before-15_9-or-16_5
+concat_ws-before-15_9-or-16_5
 space
 binary-datatype-operators
 cast-varchar-to-time
+xml_exist-before-16_5
 

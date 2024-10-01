@@ -26,10 +26,127 @@ GO
 SELECT * FROM #t1
 GO
 
+-- should throw error due to generated column
 ALTER TABLE #t1 DROP COLUMN a
 GO
 
 SELECT * FROM #t1
+GO
+
+-- BABEL-5273 ALTER COLUMN to another type
+ALTER TABLE #t1 ALTER COLUMN b CHAR(5)
+GO
+
+INSERT INTO #t1 (b) VALUES ('hello')
+GO
+
+SELECT * FROM #t1
+GO
+
+-- should fail due to possible truncation
+ALTER TABLE #t1 ALTER COLUMN b CHAR(4)
+GO
+
+DELETE FROM #t1 WHERE b = 'hello'
+GO
+
+-- try all other TSQL types
+ALTER TABLE #t1 ALTER COLUMN b TINYINT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b SMALLINT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b INT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b BIGINT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b BIT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b DECIMAL
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b NUMERIC
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b MONEY
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b SMALLMONEY
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b FLOAT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b REAL
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b DATE
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b TIME
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b DATETIME2
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b DATETIMEOFFSET
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b DATETIME
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b SMALLDATETIME
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b CHAR
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b VARCHAR
+GO
+
+-- TODO: fix this, it should work and not raise a syntax error
+ALTER TABLE #t1 ALTER COLUMN b TEXT
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b NCHAR
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b NVARCHAR
+GO
+
+ALTER TABLE #t1 ALTER COLUMN b NTEXT
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b BINARY
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b VARBINARY
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b IMAGE
+GO
+
+-- TODO: should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b GEOGRAPHY
+GO
+
+-- should raise error due to incompatible types
+ALTER TABLE #t1 ALTER COLUMN b GEOMETRY
+GO
+
+-- TODO: fix this, it should work and not raise a syntax error
+ALTER TABLE #t1 ALTER COLUMN b XML
 GO
 
 ALTER TABLE #t1 DROP COLUMN b

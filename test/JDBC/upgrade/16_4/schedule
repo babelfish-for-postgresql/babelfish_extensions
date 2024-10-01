@@ -508,7 +508,7 @@ sys_certificates
 sys_database_permissions
 #BABEL-4279
 BABEL-4484
-pivot
+pivot-before-15_9-or-16_5
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
 TestDatatypeAggSort
@@ -562,7 +562,11 @@ reverse
 sys_sequences
 replicate
 string_agg-before-15_9-or-16_5
+getdate-before-15_9-or-16_5
+concat-before-15_9-or-16_5
+concat_ws-before-15_9-or-16_5
 space
 binary-datatype-operators
 cast-varchar-to-time
+xml_exist-before-16_5
 BABEL-5119

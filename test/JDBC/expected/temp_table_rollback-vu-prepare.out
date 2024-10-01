@@ -64,3 +64,33 @@ BEGIN
     INSERT INTO @tv VALUES (1)
 END
 GO
+
+CREATE PROCEDURE tv_tt_no_error AS
+BEGIN
+    DECLARE @tv TABLE (a int)
+    CREATE TABLE #t1 (a int)
+    INSERT INTO temp_tab_rollback_mytab VALUES (1)
+    INSERT INTO @tv VALUES (1)
+    INSERT INTO #t1 VALUES (1)
+END
+GO
+
+CREATE PROCEDURE tv_mapped_error AS 
+BEGIN 
+    BEGIN TRAN 
+        CREATE TABLE #t1 (a INT, b AS a + 1) 
+        INSERT INTO #t1 (a) VALUES (1) 
+        ALTER TABLE #t1 ADD CONSTRAINT constraint1 DEFAULT 1 FOR b 
+    COMMIT TRAN 
+END
+GO
+
+CREATE PROCEDURE tv_unmapped_error AS 
+BEGIN 
+    BEGIN TRAN 
+        CREATE TABLE #t1 (a INT, b AS a + 1) 
+        INSERT INTO #t1 (a) VALUES (1) 
+        SELECT * FROM t2 
+    COMMIT TRAN 
+END
+GO

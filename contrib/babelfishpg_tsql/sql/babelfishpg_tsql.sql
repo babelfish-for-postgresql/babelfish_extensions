@@ -908,66 +908,8 @@ CAST(NULL AS varchar(254)) AS remarks
 FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, sys.schemas AS t3
 WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','p','v','m') 
 AND t1.relispartition = false
-AND has_schema_privilege(t1.relnamespace, 'USAGE')
 AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
-	in_table_name sys.nvarchar(384) = NULL,
-	in_table_owner sys.nvarchar(384) = NULL, 
-	in_table_qualifier sys.sysname = NULL,
-	in_table_type sys.varchar(100) = NULL,
-	in_fusepattern sys.bit = '1')
-	RETURNS TABLE (
-		out_table_qualifier sys.sysname,
-		out_table_owner sys.sysname,
-		out_table_name sys.sysname,
-		out_table_type sys.varchar(32),
-		out_remarks sys.varchar(254)
-	)
-	AS $$
-		DECLARE opt_table sys.varchar(16) = '';
-		DECLARE opt_view sys.varchar(16) = '';
-		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
-	BEGIN
-		IF upper(cs_as_in_table_type) LIKE '%''TABLE''%' THEN
-			opt_table = 'TABLE';
-		END IF;
-		IF upper(cs_as_in_table_type) LIKE '%''VIEW''%' THEN
-			opt_view = 'VIEW';
-		END IF;
-		IF in_fusepattern = 1 THEN
-			RETURN query
-			SELECT 
-			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
-			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
-			CAST(table_name AS sys.sysname) AS TABLE_NAME,
-			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
-			CAST(remarks AS sys.varchar(254)) AS REMARKS
-			FROM sys.sp_tables_view
-			WHERE (in_table_name IS NULL OR table_name LIKE in_table_name collate sys.database_default)
-			AND (in_table_owner IS NULL OR table_owner LIKE in_table_owner collate sys.database_default)
-			AND (in_table_qualifier IS NULL OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
-			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
-			ORDER BY table_qualifier, table_owner, table_name;
-		ELSE 
-			RETURN query
-			SELECT 
-			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
-			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
-			CAST(table_name AS sys.sysname) AS TABLE_NAME,
-			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
-			CAST(remarks AS sys.varchar(254)) AS REMARKS
-			FROM sys.sp_tables_view
-			WHERE (in_table_name IS NULL OR table_name = in_table_name collate sys.database_default)
-			AND (in_table_owner IS NULL OR table_owner = in_table_owner collate sys.database_default)
-			AND (in_table_qualifier IS NULL OR table_qualifier = in_table_qualifier collate sys.database_default)
-			AND (cs_as_in_table_type IS NULL OR table_type = opt_table OR table_type = opt_view)
-			ORDER BY table_qualifier, table_owner, table_name;
-		END IF;
-	END;
-$$
-LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_tables (
     "@table_name" sys.nvarchar(384) = NULL,
@@ -977,6 +919,9 @@ CREATE OR REPLACE PROCEDURE sys.sp_tables (
     "@fusepattern" sys.bit = '1')
 AS $$
 BEGIN
+
+	-- Temporary variable to hold the current database name
+	DECLARE @current_db_name sys.sysname;
 
 	-- Handle special case: Enumerate all databases when name and owner are blank but qualifier is '%'
 	IF (@table_qualifier = '%' AND @table_owner = '' AND @table_name = '')
@@ -992,18 +937,47 @@ BEGIN
 		RETURN;
 	END;
 
-	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	SELECT @current_db_name = sys.db_name();
+
+	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(@current_db_name))
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 	END
 	
-	SELECT
-	CAST(out_table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
-	CAST(out_table_owner AS sys.sysname) AS TABLE_OWNER,
-	CAST(out_table_name AS sys.sysname) AS TABLE_NAME,
-	CAST(out_table_type AS sys.varchar(32)) AS TABLE_TYPE,
-	CAST(out_remarks AS sys.varchar(254)) AS REMARKS
-	FROM sys.sp_tables_internal(@table_name, @table_owner, @table_qualifier, CAST(@table_type AS varchar(100)), @fusepattern);
+	IF (@fusepattern = 1)
+		SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			remarks AS REMARKS
+		FROM sys.sp_tables_view 
+		WHERE (@table_name IS NULL OR table_name LIKE @table_name collate database_default)
+		AND (@table_owner IS NULL OR table_owner LIKE @table_owner collate database_default)
+		AND (@table_qualifier IS NULL OR table_qualifier LIKE @table_qualifier collate database_default)
+		AND (
+			@table_type IS NULL OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
+		)
+		ORDER BY TABLE_QUALIFIER, TABLE_OWNER, TABLE_NAME;
+	ELSE
+		SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			remarks AS REMARKS
+		FROM sys.sp_tables_view
+		WHERE (@table_name IS NULL OR table_name = @table_name collate database_default)
+		AND (@table_owner IS NULL OR table_owner = @table_owner collate database_default)
+		AND (@table_qualifier IS NULL OR table_qualifier = @table_qualifier collate database_default)
+		AND (
+			@table_type IS NULL OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
+		)
+		ORDER BY TABLE_QUALIFIER, TABLE_OWNER, TABLE_NAME;
 END;
 $$
 LANGUAGE 'pltsql';
@@ -1482,9 +1456,9 @@ CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
 
 CASE -- cases for when they are of type identity. 
 	WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
-	THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
+	THEN CAST(PG_CATALOG.CONCAT(t1.name, '() identity') AS sys.sysname)
 	WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
-	THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
+	THEN CAST(PG_CATALOG.CONCAT(t1.name, ' identity') AS sys.sysname)
 	ELSE CAST(t1.name AS sys.sysname)
 END AS TYPE_NAME,
 
@@ -1524,8 +1498,7 @@ LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
 LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
 , sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
 , sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
-WHERE has_schema_privilege(s1.schema_id, 'USAGE')
-AND X.indislive ;
+WHERE X.indislive ;
 
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
 
@@ -1869,8 +1842,8 @@ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
-	WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
-	ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
+	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(p.proname, ';1') AS sys.nvarchar(134))
+	ELSE CAST(PG_CATALOG.concat(p.proname, ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -1883,7 +1856,6 @@ FROM pg_catalog.pg_proc p
 
 INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
 INNER JOIN sys.databases d ON d.database_id = sys.db_id()
-WHERE has_schema_privilege(s1.schema_id, 'USAGE')
 
 UNION 
 
@@ -1891,8 +1863,8 @@ SELECT CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default 
 CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
 
 CASE 
-	WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
-	ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
+	WHEN prokind = 'p' THEN cast(PG_CATALOG.concat(proname, ';1') AS sys.nvarchar(134))
+	ELSE cast(PG_CATALOG.concat(proname, ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -2477,8 +2449,8 @@ CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be
 , CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
 , CAST(
 CASE
-  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
-  ELSE CONCAT(ss.proname, ';0')
+  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(ss.proname, ';1')
+  ELSE PG_CATALOG.CONCAT(ss.proname, ';0')
 END
 AS sys.nvarchar(134)) AS PROCEDURE_NAME
 , CAST(
@@ -3613,7 +3585,7 @@ BEGIN
                     	ELSE NULL END AS int) AS [SS_DATETIME_PRECISION]
    	FROM sys.sp_sproc_columns_view v
    	LEFT OUTER JOIN sys.all_parameters AS p 
-	ON v.column_name = p.name AND p.object_id = object_id(CONCAT(@procedure_schema, '.', @procedure_name))
+	ON v.column_name = p.name AND p.object_id = object_id(PG_CATALOG.CONCAT(@procedure_schema, '.', @procedure_name))
    	WHERE v.original_procedure_name = @procedure_name
     	AND v.procedure_owner = @procedure_schema
 	AND (@parameter_name IS NULL OR column_name = @parameter_name)

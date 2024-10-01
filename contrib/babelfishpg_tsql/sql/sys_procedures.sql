@@ -126,7 +126,7 @@ BEGIN
   IF lower("@option_name") like 'babelfishpg_tsql.%' collate "C" THEN
     SELECT "@option_name" INTO normalized_name;
   ELSE
-    SELECT concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
+    SELECT pg_catalog.concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
   END IF;
 
   IF PG_CATALOG.lower("@option_scope") = 'server' THEN
@@ -329,3 +329,7 @@ GRANT EXECUTE ON PROCEDURE sys.sp_dropextendedproperty TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.sp_enum_oledb_providers()
 AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_enum_oledb_providers() TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
+AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
