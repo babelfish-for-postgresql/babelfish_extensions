@@ -2188,7 +2188,7 @@ int
 SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -2213,7 +2213,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -2239,7 +2239,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -4792,7 +4792,7 @@ int
 SELECT col, CASE WHEN col LIKE 'ch%' THEN 'Prefix Match' ELSE 'No Match' END AS match_status FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -4817,7 +4817,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -4843,7 +4843,7 @@ SELECT col,
 FROM test_like_for_AI_prepare_t1_ci;
 GO
 ~~START~~
-nvarchar#!#text
+nvarchar#!#varchar
 café#!#No Match
 jalapeño#!#No Match
 résumé#!#No Match
@@ -5474,7 +5474,7 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.337 ms
+Babelfish T-SQL Batch Parsing Time: 0.326 ms
 ~~END~~
 
 
@@ -5504,7 +5504,7 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.121 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -5519,7 +5519,7 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -5534,7 +5534,7 @@ Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a918
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.103 ms
 ~~END~~
 
 
@@ -5550,7 +5550,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.135 ms
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
 ~~END~~
 
 
@@ -5565,7 +5565,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 
@@ -5580,7 +5580,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.105 ms
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
 ~~END~~
 
 
@@ -5595,7 +5595,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
 ~~END~~
 
 
@@ -5610,7 +5610,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
 ~~END~~
 
 

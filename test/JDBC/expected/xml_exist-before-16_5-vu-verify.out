@@ -656,7 +656,7 @@ SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child1') = 1 THEN 'The Child1 elemen
 FROM babel_5222_xml_exist_t2;
 GO
 ~~START~~
-int#!#text
+int#!#varchar
 1#!#The Child1 element exists
 2#!#The Child1 element does not exist
 3#!#The Child1 element exists
@@ -667,7 +667,7 @@ SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child2') = 1 THEN 'The Child2 elemen
 FROM babel_5222_xml_exist_t2 ORDER BY Id;
 GO
 ~~START~~
-int#!#text
+int#!#varchar
 1#!#The Child2 element does not exist
 2#!#The Child2 element exists
 3#!#The Child2 element exists

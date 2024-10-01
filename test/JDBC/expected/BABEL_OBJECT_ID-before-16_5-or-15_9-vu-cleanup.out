@@ -1,0 +1,76 @@
+-- tsql
+
+USE babel_object_id_db;
+GO
+
+REVOKE ALL ON babel_object_id_schema2.babel_object_id_db_t2 FROM babel_object_id_user2;
+GO
+
+DROP TABLE babel_object_id_schema2.babel_object_id_db_t2;
+GO
+
+DROP SCHEMA babel_object_id_schema2;
+GO
+
+DROP USER babel_object_id_user2
+GO
+
+DROP TABLE babel_object_id_db_t1;
+GO
+
+USE master;
+GO
+
+DROP LOGIN babel_object_id_login2;
+GO
+
+DROP USER babel_object_id_master_user1
+GO
+
+DROP LOGIN babel_object_id_login1;
+GO
+
+DROP DATABASE babel_object_id_db;
+GO
+
+DROP TABLE [babel_object_id_schema .with .dot_and_spaces]."babel_object_id_t3 .with .dot_and_spaces";
+GO
+
+DROP SCHEMA [babel_object_id_schema .with .dot_and_spaces]
+GO
+
+DROP TYPE babel_object_id_type
+GO
+
+DROP TABLE [babel_object_id_t2 .with .dot_an_spaces]
+GO
+
+DROP VIEW babel_object_id_v1_view
+GO
+
+DROP VIEW babel_object_id_func1_view
+GO
+
+DROP VIEW babel_object_id_trg_view
+GO
+
+DROP VIEW babel_object_id_t1_view
+GO
+
+DROP VIEW babel_object_id_proc1_view
+GO
+
+DROP VIEW babel_object_id_v1
+GO
+
+DROP FUNCTION babel_object_id_func1
+GO
+
+DROP PROCEDURE babel_object_id_proc1
+GO
+
+DROP TRIGGER babel_object_id_trg
+GO
+
+DROP TABLE babel_object_id_t1
+GO
