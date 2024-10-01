@@ -9,7 +9,7 @@ go
 Alter server role securityadmin add member securityadmin_login1
 go
 
-select * from securityadmin_show_role_mem
+select * from securityadmin_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%securityadmin_%'
 go
 ~~START~~
 varchar#!#varchar
@@ -293,41 +293,14 @@ go
 -- limited rows should get displayed
 SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
 FROM sys.server_principals 
-WHERE name =  'jdbc_user';
+WHERE name in ('jdbc_user', 'sysadmin', 'public', 'securityadmin') ORDER BY name;
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#bit
 jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1#!#0
-~~END~~
-
-
-SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
-FROM sys.server_principals 
-WHERE name =  'sysadmin';
-GO
-~~START~~
-varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#bit
-sysadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
-~~END~~
-
-
-SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
-FROM sys.server_principals 
-WHERE name =  'public';
-GO
-~~START~~
-varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#bit
 public#!#R#!#SERVER_ROLE#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0
-~~END~~
-
-
-SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
-FROM sys.server_principals 
-WHERE name =  'securityadmin';
-GO
-~~START~~
-varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#bit
 securityadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
+sysadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
 ~~END~~
 
 
@@ -390,7 +363,6 @@ int
 -- terminate-tsql-conn user=securityadmin_login1 password=123
 
 -- psql
-SET client_min_messages = 'error';
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
 GO
 
@@ -1165,7 +1137,7 @@ go
 ALTER SERVER ROLE sysadmin ADD MEMBER securityadmin_restrict_new_login;
 GO
 
-select * from securityadmin_show_role_mem
+select * from securityadmin_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%securityadmin_%'
 go
 ~~START~~
 varchar#!#varchar
@@ -1178,7 +1150,7 @@ sysadmin#!#securityadmin_restrict_new_login
 -- terminate-tsql-conn
 
 -- tsql user=securityadmin_restrict_new_login password=12345678
-select * from securityadmin_show_role_mem
+select * from securityadmin_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%securityadmin_%'
 go
 ~~START~~
 varchar#!#varchar
@@ -1200,6 +1172,22 @@ select bbf_is_member_of_role_nosuper(suser_id(), suser_id('sysadmin'))
 go
 ~~START~~
 bit
+1
+~~END~~
+
+
+select is_srvrolemember ('sysadmin')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select is_srvrolemember ('securityadmin')
+go
+~~START~~
+int
 1
 ~~END~~
 
@@ -1237,6 +1225,10 @@ GO
 
 -- terminate-tsql-conn user=securityadmin_restrict_new_login password=12345678
 
+-- psql
+create role securityadmin_restrict_new_pg_role
+go
+
 -- psql user=securityadmin_restrict_new_login password=12345678
 -- a tsql login should not be able to alter/grant/drop securityadmin from pg port
 ALTER ROLE securityadmin NOCREATEROLE;
@@ -1272,6 +1264,14 @@ GO
 
 
 GRANT securityadmin TO securityadmin_restrict_new_login;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT securityadmin TO securityadmin_restrict_new_pg_role
 GO
 ~~ERROR (Code: 0)~~
 
@@ -1343,7 +1343,44 @@ GO
     Server SQLState: 42501)~~
 
 
+-- try granting object ownership to securityadmin
+ALTER schema master_securityadmin_scm1 owner to securityadmin;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
+    Server SQLState: 42501)~~
+
+
+ALTER table master_dbo.securityadmin_tb1 owner to securityadmin;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
+    Server SQLState: 42501)~~
+
+
+ALTER procedure master_dbo.securityadmin_proc1 owner to securityadmin;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
+    Server SQLState: 42501)~~
+
+
+ALTER function master_dbo.securityadmin_func1 owner to securityadmin;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be able to SET ROLE "securityadmin"
+    Server SQLState: 42501)~~
+
+
 -- psql
+-- drop role
+drop role securityadmin_restrict_new_pg_role
+go
+
 -- normal PG user
 CREATE USER securityadmin_restrictions_pg_user WITH LOGIN CREATEROLE PASSWORD '12345678' inherit;
 go

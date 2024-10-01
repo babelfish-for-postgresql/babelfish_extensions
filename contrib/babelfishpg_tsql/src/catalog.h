@@ -322,6 +322,16 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define OBJ_FUNCTION "f"
 #define NUMBER_OF_PERMISSIONS 6
 
+/* check if rolename is sysadmin */
+#define IS_ROLENAME_SYSADMIN(rolname) \
+	(strlen(rolname) == 8 && \
+	strncmp(rolname, BABELFISH_SYSADMIN, 8) == 0)
+
+/* check if rolename is securityadmin */
+#define IS_ROLENAME_SECURITYADMIN(rolname) \
+	(strlen(rolname) == 13 && \
+	strncmp(rolname, BABELFISH_SECURITYADMIN, 13) == 0)
+
 extern int permissions[];
 
 extern Oid bbf_schema_perms_oid;

@@ -3128,7 +3128,7 @@ tsql_alter_server_role:
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
 			
-			is_server_role_supported ($4, @4, yyscanner);
+			check_server_role_and_throw_if_unsupported($4, @4, yyscanner);
 
 			ap->priv_name = $4;
 			n->is_grant = true;
@@ -3143,7 +3143,7 @@ tsql_alter_server_role:
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
 			
-			is_server_role_supported ($4, @4, yyscanner);
+			check_server_role_and_throw_if_unsupported($4, @4, yyscanner);
 
 			ap->priv_name = $4;
 			n->is_grant = false;

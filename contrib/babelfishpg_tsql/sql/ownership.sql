@@ -286,7 +286,6 @@ BEGIN
 	END IF;
 
 	EXECUTE format('CREATE ROLE securityadmin CREATEROLE INHERIT PASSWORD NULL');
-	EXECUTE format('GRANT CONNECT ON DATABASE %s TO securityadmin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('CREATE ROLE bbf_role_admin CREATEDB CREATEROLE INHERIT PASSWORD NULL');
 	EXECUTE format('GRANT CREATE ON DATABASE %s TO bbf_role_admin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('GRANT %I to bbf_role_admin WITH ADMIN TRUE;', sa_name);
@@ -509,10 +508,7 @@ CAST('SERVER ROLE' AS sys.nvarchar(128)) AS type,
 CAST ('GRANT OR DENY' as sys.nvarchar(128)) as usage
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
 WHERE Ext.type = 'R'
-AND Ext.orig_loginname = 'sysadmin'
-AND bbf_is_member_of_role_nosuper(sys.suser_id(), sys.suser_id('sysadmin'))
-OR Ext.orig_loginname = 'securityadmin'
-AND bbf_is_member_of_role_nosuper(sys.suser_id(), sys.suser_id('securityadmin'));
+AND bbf_is_member_of_role_nosuper(sys.suser_id(), sys.suser_id(Ext.orig_loginname));
 
 GRANT SELECT ON sys.login_token TO PUBLIC;
 

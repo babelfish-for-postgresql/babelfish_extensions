@@ -1685,23 +1685,14 @@ is_alter_server_stmt(GrantRoleStmt *stmt)
 	 * server role
 	 */
 
-	bool is_sysadmin = 0;
-
 	if (list_length(stmt->granted_roles) == 1)
 	{
 		RoleSpec   *spec = (RoleSpec *) linitial(stmt->granted_roles);
-		int     	rolename_len = strlen(spec->rolename);
-
-		if (rolename_len == 8 && strncmp(spec->rolename, BABELFISH_SYSADMIN, 8) == 0)
-			is_sysadmin = true;
 
 		/* only supported server roles */
-		if (is_sysadmin || (rolename_len == 13 && strncmp(spec->rolename, BABELFISH_SECURITYADMIN, 13) == 0))
+		if (IS_ROLENAME_SYSADMIN(spec->rolename) || IS_ROLENAME_SECURITYADMIN(spec->rolename))
 			return true;
 	}
-	/* if granted role is sysadmin and has one and only one grantee  */
-	if (is_sysadmin && list_length(stmt->grantee_roles) != 1)
-		return false;
 
 	return false;
 }

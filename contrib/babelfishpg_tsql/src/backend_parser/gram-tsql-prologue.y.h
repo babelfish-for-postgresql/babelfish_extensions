@@ -90,4 +90,4 @@ static Node *tsql_update_output_into_cte_transformation(WithClause *opt_with_cla
 static List *get_transformed_output_list(List *tsql_output_clause);
 static bool returning_list_has_column_name(List *existing_colnames, char *current_colname);
 static void tsql_index_nulls_order(List *indexParams, const char *accessMethod);
-static void is_server_role_supported (const char* serverrole, int position, core_yyscan_t yyscanner);
+static void check_server_role_and_throw_if_unsupported(const char* serverrole, int position, core_yyscan_t yyscanner);

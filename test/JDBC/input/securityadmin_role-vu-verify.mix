@@ -9,7 +9,7 @@ go
 Alter server role securityadmin add member securityadmin_login1
 go
 
-select * from securityadmin_show_role_mem
+select * from securityadmin_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%securityadmin_%'
 go
 
 -- should error out
@@ -187,22 +187,7 @@ go
 -- limited rows should get displayed
 SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
 FROM sys.server_principals 
-WHERE name =  'jdbc_user';
-GO
-
-SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
-FROM sys.server_principals 
-WHERE name =  'sysadmin';
-GO
-
-SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
-FROM sys.server_principals 
-WHERE name =  'public';
-GO
-
-SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
-FROM sys.server_principals 
-WHERE name =  'securityadmin';
+WHERE name in ('jdbc_user', 'sysadmin', 'public', 'securityadmin') ORDER BY name;
 GO
 
 SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
@@ -230,7 +215,6 @@ go
 -- terminate-tsql-conn user=securityadmin_login1 password=123
 
 -- psql
-SET client_min_messages = 'error';
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
 GO
 
@@ -677,19 +661,25 @@ go
 ALTER SERVER ROLE sysadmin ADD MEMBER securityadmin_restrict_new_login;
 GO
 
-select * from securityadmin_show_role_mem
+select * from securityadmin_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%securityadmin_%'
 go
 
 -- terminate-tsql-conn
 
 -- tsql user=securityadmin_restrict_new_login password=12345678
-select * from securityadmin_show_role_mem
+select * from securityadmin_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%securityadmin_%'
 go
 
 select bbf_is_member_of_role_nosuper(suser_id(), suser_id('securityadmin'))
 go
 
 select bbf_is_member_of_role_nosuper(suser_id(), suser_id('sysadmin'))
+go
+
+select is_srvrolemember ('sysadmin')
+go
+
+select is_srvrolemember ('securityadmin')
 go
 
 select current_user, db_name()
@@ -712,6 +702,10 @@ GO
 
 -- terminate-tsql-conn user=securityadmin_restrict_new_login password=12345678
 
+-- psql
+create role securityadmin_restrict_new_pg_role
+go
+
 -- psql user=securityadmin_restrict_new_login password=12345678
 -- a tsql login should not be able to alter/grant/drop securityadmin from pg port
 ALTER ROLE securityadmin NOCREATEROLE;
@@ -727,6 +721,9 @@ ALTER ROLE securityadmin WITH CONNECTION LIMIT 1;
 GO
 
 GRANT securityadmin TO securityadmin_restrict_new_login;
+GO
+
+GRANT securityadmin TO securityadmin_restrict_new_pg_role
 GO
 
 GRANT sysadmin TO securityadmin
@@ -753,7 +750,24 @@ GO
 SET ROLE securityadmin;
 GO
 
+-- try granting object ownership to securityadmin
+ALTER schema master_securityadmin_scm1 owner to securityadmin;
+go
+
+ALTER table master_dbo.securityadmin_tb1 owner to securityadmin;
+go
+
+ALTER procedure master_dbo.securityadmin_proc1 owner to securityadmin;
+go
+
+ALTER function master_dbo.securityadmin_func1 owner to securityadmin;
+go
+
 -- psql
+-- drop role
+drop role securityadmin_restrict_new_pg_role
+go
+
 -- normal PG user
 CREATE USER securityadmin_restrictions_pg_user WITH LOGIN CREATEROLE PASSWORD '12345678' inherit;
 go

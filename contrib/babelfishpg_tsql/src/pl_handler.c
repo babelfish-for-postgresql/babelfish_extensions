@@ -3724,7 +3724,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					initStringInfo(&query);
 					
 					/* If sysadmin, provide attribute for role and database priv */
-					if (strlen(rolspec->rolename) == 8 && strncmp(rolspec->rolename, BABELFISH_SYSADMIN, 8) == 0)
+					if (IS_ROLENAME_SYSADMIN(rolspec->rolename))
 					{
 						if (grant_role->is_grant)
 							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
