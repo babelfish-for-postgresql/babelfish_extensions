@@ -3867,7 +3867,7 @@ FROM (
     SELECT p.oid, p.proallargtypes
     FROM pg_proc p
     INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p.pronamespace::regnamespace::name
-    INNER JOIN sys.babelfish_function_ext f ON p.proname = f.funcname AND sch.nspname = f.nspname
+    WHERE p.prolang = (SELECT oid FROM pg_language WHERE lanname = 'pltsql') and p.prokind = 'p'
 ) p2
 WHERE p1.oid = p2.oid;
 
