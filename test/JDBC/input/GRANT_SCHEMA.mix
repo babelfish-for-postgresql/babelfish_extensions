@@ -3307,3 +3307,343 @@ GO
 
 grant execute on xyz.babel_4344_p to public;
 GO
+
+-- tsql
+-- create database, login, users
+create database babel_5172_db
+go
+
+use babel_5172_db
+go
+
+create login babel_5172_l1 with password = '123'
+go
+
+create user babel_5172_u1 for login babel_5172_l1;
+go
+
+create login babel_5172_l2 with password = '123';
+go
+
+create user babel_5172_u2 for login babel_5172_l2;
+go
+
+-- create schema with authorization
+create schema babel_5172_s1 authorization babel_5172_u1
+go
+
+-- create objects with dbo user
+create table babel_5172_s1.t1(a int);
+go
+
+create view babel_5172_s1.v1 as select 1;
+go
+
+create proc babel_5172_s1.p1 as select 1;
+go
+
+create function babel_5172_s1.f1() returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+use master
+go
+
+-- tsql user=babel_5172_l1 password=123
+-- create objects with babel_5172_u1 user
+use babel_5172_db
+go
+
+create table babel_5172_s1.t2(a int);
+go
+
+create view babel_5172_s1.v2 as select 1;
+go
+
+create proc babel_5172_s1.p2 as select 1;
+go
+
+create function babel_5172_s1.f2() returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+use master
+go
+
+-- tsql user=babel_5172_l1 password=123
+-- create objects with babel_5172_u1 user
+use babel_5172_db
+go
+
+-- grant select privilege on the schema with user babel_5172_u1
+grant select, execute on schema::babel_5172_s1 to babel_5172_u2;
+go
+
+use master;
+go
+
+-- tsql user=babel_5172_l2 password=123
+-- objects created by dbo should be accessible
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t1;
+go
+
+select * from babel_5172_s1.v1;
+go
+
+exec babel_5172_s1.p1;
+go
+
+select babel_5172_s1.f1();
+go
+
+-- objects created by babel_5172_u1 should be accessible
+select * from babel_5172_s1.t2;
+go
+
+select * from babel_5172_s1.v2;
+go
+
+exec babel_5172_s1.p2;
+go
+
+select babel_5172_s1.f2();
+go
+
+use master
+go
+
+-- tsql
+-- create new objects using dbo
+use babel_5172_db
+go
+
+create table babel_5172_s1.t3(a int);
+go
+
+create view babel_5172_s1.v3 as select 1;
+go
+
+create proc babel_5172_s1.p3 as select 1;
+go
+
+create function babel_5172_s1.f3() returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+use master
+go
+
+-- tsql user=babel_5172_l1 password=123
+-- create new objects using babel_5172_u1 user
+use babel_5172_db
+go
+
+create table babel_5172_s1.t4(a int);
+go
+
+create view babel_5172_s1.v4 as select 1;
+go
+
+create proc babel_5172_s1.p4 as select 1;
+go
+
+create function babel_5172_s1.f4() returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+use master;
+go
+
+-- tsql user=babel_5172_l2 password=123
+-- new objects created by dbo should be accessible
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t3;
+go
+
+select * from babel_5172_s1.v3;
+go
+
+exec babel_5172_s1.p3;
+go
+
+select babel_5172_s1.f3();
+go
+
+-- objects created by babel_5172_u1 should be accessible
+select * from babel_5172_s1.t4;
+go
+
+select * from babel_5172_s1.v4;
+go
+
+exec babel_5172_s1.p4;
+go
+
+select babel_5172_s1.f4();
+go
+
+use master
+go
+
+-- tsql user=babel_5172_l1 password=123
+-- revoke privilege from the schema
+use babel_5172_db;
+go
+
+-- revoke select privilege on the schema with user babel_5172_u1
+revoke select, execute on schema::babel_5172_s1 from babel_5172_u2;
+go
+
+use master;
+go
+
+-- tsql user=babel_5172_l2 password=123
+-- no objects should be accessible, since schema privilege is revoked
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t1;
+go
+
+select * from babel_5172_s1.v1;
+go
+
+exec babel_5172_s1.p1;
+go
+
+select babel_5172_s1.f1();
+go
+
+select * from babel_5172_s1.t2;
+go
+
+select * from babel_5172_s1.v2;
+go
+
+exec babel_5172_s1.p2;
+go
+
+select babel_5172_s1.f2();
+go
+
+select * from babel_5172_s1.t3;
+go
+
+select * from babel_5172_s1.v3;
+go
+
+exec babel_5172_s1.p3;
+go
+
+select babel_5172_s1.f3();
+go
+
+select * from babel_5172_s1.t4;
+go
+
+select * from babel_5172_s1.v4;
+go
+
+exec babel_5172_s1.p4;
+go
+
+select babel_5172_s1.f4();
+go
+
+use master
+go
+
+-- tsql
+-- drop objects
+use babel_5172_db
+go
+
+drop table babel_5172_s1.t1
+go
+
+drop table babel_5172_s1.t2
+go
+
+drop table babel_5172_s1.t3
+go
+
+drop table babel_5172_s1.t4
+go
+
+drop view babel_5172_s1.v1
+go
+
+drop view babel_5172_s1.v2
+go
+
+drop view babel_5172_s1.v3
+go
+
+drop view babel_5172_s1.v4
+go
+
+drop procedure babel_5172_s1.p1
+go
+
+drop procedure babel_5172_s1.p2
+go
+
+drop procedure babel_5172_s1.p3
+go
+
+drop procedure babel_5172_s1.p4
+go
+
+drop function babel_5172_s1.f1
+go
+
+drop function babel_5172_s1.f2
+go
+
+drop function babel_5172_s1.f3
+go
+
+drop function babel_5172_s1.f4
+go
+
+drop schema babel_5172_s1;
+go
+
+drop user babel_5172_u1;
+go
+
+drop user babel_5172_u2;
+go
+
+use master
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_5172_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_5172_l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+drop login babel_5172_l1;
+go
+
+drop login babel_5172_l2;
+go
+
+drop database babel_5172_db
+go

@@ -84,7 +84,7 @@ GO
 select choose (choose (1, 2, 3), 'a', 'b', 'c');
 GO
 ~~START~~
-text
+varchar
 b
 ~~END~~
 

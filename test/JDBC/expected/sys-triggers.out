@@ -39,7 +39,7 @@ select case when object_id([name]) = object_id then 'equal' else 'not equal' end
 from sys.triggers where [name] = 'trig2'
 go
 ~~START~~
-text
+varchar
 equal
 ~~END~~
 
@@ -169,7 +169,7 @@ select case when object_id([name]) = object_id then 'equal' else 'not equal' end
 from sys.triggers where [name] = 'trig2'
 go
 ~~START~~
-text
+varchar
 equal
 ~~END~~
 

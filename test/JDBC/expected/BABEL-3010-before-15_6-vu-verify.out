@@ -16,7 +16,7 @@ FROM sys.sysobjects
        WHERE name LIKE '%%babel_3010_vu_prepare%%' ORDER BY name;
 GO
 ~~START~~
-varchar#!#char#!#text#!#text
+varchar#!#char#!#varchar#!#varchar
 @tab_babel_3010_vu_prepare#!#TT#!#Valid create date!#!#Valid ref date!
 babel_3010_vu_prepare_f1#!#FN#!#Valid create date!#!#Valid ref date!
 babel_3010_vu_prepare_f1#!#FN#!#Valid create date!#!#Valid ref date!

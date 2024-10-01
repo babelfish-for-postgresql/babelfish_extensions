@@ -464,6 +464,33 @@ ROLLBACK
 SELECT * FROM temp_tab_rollback_mytab
 GO
 
+BEGIN TRAN
+INSERT INTO temp_tab_rollback_mytab VALUES (2)
+EXEC tv_tt_no_error
+SELECT * FROM temp_tab_rollback_mytab
+DROP TABLE temp_tab_rollback_mytab
+ROLLBACK
+GO
+
+SELECT * FROM temp_tab_rollback_mytab
+GO
+
+BEGIN TRAN
+INSERT INTO temp_tab_rollback_mytab VALUES (2)
+CREATE TABLE #outer_table (a int)
+INSERT INTO #outer_table VALUES (1)
+EXEC tv_tt_no_error
+SELECT * FROM temp_tab_rollback_mytab
+DROP TABLE temp_tab_rollback_mytab
+ROLLBACK
+GO
+
+SELECT * FROM temp_tab_rollback_mytab
+GO
+
+SELECT * FROM #outer_table
+GO
+
 DROP TABLE temp_tab_rollback_mytab
 GO
 
@@ -539,6 +566,43 @@ GO
 DROP TABLE #temp_table
 DROP TABLE perm_table
 DROP TABLE #temp_table_nonenr
+GO
+
+-- Mixed rollback with mapped and unmapped errors
+CREATE TABLE temp_table_rollback_t6 (a int)
+GO
+
+BEGIN TRY 
+    BEGIN TRAN 
+        DROP TABLE temp_table_rollback_t6 
+        EXEC tv_mapped_error 
+    ROLLBACK 
+END TRY 
+BEGIN CATCH 
+    ROLLBACK 
+END CATCH
+GO
+
+SELECT @@trancount
+SELECT * FROM temp_table_rollback_t6
+GO
+
+BEGIN TRY 
+    BEGIN TRAN 
+        DROP TABLE temp_table_rollback_t6 
+        EXEC tv_unmapped_error 
+    ROLLBACK 
+END TRY 
+BEGIN CATCH 
+    ROLLBACK 
+END CATCH
+GO
+
+SELECT @@trancount
+SELECT * FROM temp_table_rollback_t6
+GO
+
+DROP TABLE temp_table_rollback_t6
 GO
 
 ---------------------------------------------------------------------------
