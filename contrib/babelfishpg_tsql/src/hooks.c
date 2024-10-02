@@ -4800,7 +4800,7 @@ pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg)
 static EphemeralNamedRelation
 pltsql_get_tsql_enr_from_oid(const Oid oid)
 {
-	return temp_oid_buffer_size > 0 ? OidBelongsToENRTempTable(oid) : NULL;
+	return temp_oid_buffer_size > 0 ? GetENRTempTableWithOid(oid) : NULL;
 }
 
 /*
