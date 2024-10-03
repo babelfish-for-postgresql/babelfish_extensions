@@ -33,3 +33,22 @@ GO
 CREATE FUNCTION f1() RETURNS INT AS BEGIN return 1; END
 GO
 
+-- psql
+
+-- CREATE HELPER PROCEDURE TO EXECUTE SQL FROM PSQL ENDPOINT INDDEPENDANT OF migration_mode
+CREATE OR REPLACE PROCEDURE run_sql_migration_mode_safe(sql_string TEXT, rolname TEXT, dbname TEXT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    new_rolname TEXT := rolname;
+BEGIN
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        new_rolname := CONCAT(dbname, '_', rolname);
+    END IF;
+    EXECUTE format(sql_string, new_rolname);
+END;
+$$;
+GO
+
+CREATE ROLE r1;
+GO

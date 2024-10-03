@@ -22,6 +22,13 @@ CREATE USER babel_5136_db_accessadmin_user FOR LOGIN babel_5136_db_accessadmin_l
 GO
 ALTER ROLE db_accessadmin ADD MEMBER babel_5136_db_accessadmin_user
 GO
+-- Cannot add login as member of db_accessadmin
+ALTER ROLE db_accessadmin ADD MEMBER babel_5136_l1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "babel_5136_babel_5136_l1" does not exist)~~
+
 -- MEMBERS OF db_accessadmin WILL ALWAYS HAVE CONNECT PRIVILEGES
 REVOKE CONNECT FROM babel_5136_db_accessadmin_user
 GO
@@ -40,26 +47,6 @@ GO
 
 -- tsql user=babel_5136_db_accessadmin_l1 password=12345678
 -- Check all allowed operations
-USE master
-GO
-
-SELECT current_user
-GO
-~~START~~
-varchar
-babel_5136_user_master
-~~END~~
-
-
--- should not be a member of db_accessadmin in master database
-SELECT IS_ROLEMEMBER('db_accessadmin')
-GO
-~~START~~
-int
-0
-~~END~~
-
-
 USE babel_5136
 GO
 
@@ -80,14 +67,6 @@ int
 ~~END~~
 
 
--- db_accessadmin can not add/drop members to db_accessadmin
-ALTER ROLE db_accessadmin ADD MEMBER babel_5136_u1
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot alter the role 'db_accessadmin', because it does not exist or you do not have permission.)~~
-
-
 -- CREATE DROP A NEW USER
 CREATE USER babel_5136_u2 FOR LOGIN babel_5136_l2
 GO
@@ -100,16 +79,9 @@ GO
 CREATE USER babel_5136_u1 FOR LOGIN babel_5136_l1
 GO
 
--- ALTER USER and THEN DROP IT
+-- ALTER EXISTING USER and THEN DROP IT
 ALTER USER babel_5136_u1 WITH DEFAULT_SCHEMA = dbo
 GO
--- NOT SUPPORTED CURRENTLY IN BABELFISH
-ALTER USER babel_5136_u1 WITH DEFAULT_LANGUAGE = English
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near "DEFAULT_LANGUAGE")~~
-
 ALTER USER babel_5136_u1 WITH NAME = babel_5136_u1_new_name
 GO
 -- NOT SUPPORTED CURRENTLY IN BABELFISH
@@ -119,14 +91,14 @@ GO
 
 ~~ERROR (Message: syntax error near '<EOF>' at line 3 and character position 0)~~
 
--- db_accessadmin should not be able to ALTER LOGIN MAPPING
-ALTER USER babel_5136_u1_new_name WITH LOGIN = babel_5136_l3
+DROP USER babel_5136_u1_new_name
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Current user does not have privileges to change login)~~
-
-ALTER USER babel_5136_u1_new_name WITH NAME = babel_5136_u1
+CREATE USER babel_5136_u1_new_name FOR LOGIN babel_5136_l1
+GO
+-- ALTER NEW USER and THEN DROP IT
+CREATE USER babel_5136_u2 FOR LOGIN babel_5136_l2
+GO
+ALTER USER babel_5136_u2 WITH NAME = babel_5136_u1
 GO
 
 -- CREATE SCHEMA should be allowed db_accessadmin
@@ -159,5 +131,204 @@ GO
 
 ~~ERROR (Message: Cannot drop the user 'dbo'.)~~
 
--- terminate-tsql-conn user=babel_5136_db_accessadmin_l1 password=12345678
+DROP ROLE db_owner
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Cannot drop the role 'db_owner'.)~~
+
+DROP ROLE db_accessadmin
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_accessadmin'.)~~
+
+DROP USER guest
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User 'guest' cannot be dropped, it can only be disabled. The user is already disabled in the current database.)~~
+
+
+-- db_accessadmin can not add/drop members to any other role
+ALTER ROLE db_accessadmin ADD MEMBER babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_accessadmin', because it does not exist or you do not have permission.)~~
+
+ALTER ROLE db_owner ADD MEMBER babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Adding members to db_owner is not currently supported in Babelfish)~~
+
+ALTER ROLE babel_5136_r1 ADD MEMBER babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login babel_5136_db_accessadmin_l1 does not have permission to alter role babel_5136_babel_5136_r1)~~
+
+
+-- should not be able to alter users login mapping or rename members of db_owner
+ALTER USER babel_5136_u1_new_name WITH LOGIN = babel_5136_l3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change login)~~
+
+ALTER USER dbo WITH LOGIN = babel_5136_l3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the user dbo)~~
+
+ALTER USER dbo WITH NAME = dbo_should_not_be_renamed
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the user dbo)~~
+
+ALTER USER dbo WITH DEFAULT_SCHEMA = dbo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the user dbo)~~
+
+GRANT CONNECT TO babel_5136_u1_new_name
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Grantor does not have GRANT permission.)~~
+
+GRANT CONNECT TO dbo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Grantor does not have GRANT permission.)~~
+
+REVOKE CONNECT FROM babel_5136_u1_new_name
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Grantor does not have GRANT permission.)~~
+
+REVOKE CONNECT FROM dbo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Grantor does not have GRANT permission.)~~
+
+
+-- NO OTHER DDLs SHOULD BE ALLOWED
+CREATE TABLE babel_5136_t1 (id INT)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema babel_5136_dbo)~~
+
+CREATE PROCEDURE babel_5136_p1 AS SELECT 1
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'babel_5136_p1' already exists with the same name)~~
+
+CREATE FUNCTION f1() RETURNS INT AS BEGIN RETURN 1 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'f1' already exists with the same name)~~
+
+CREATE DATABASE new_database
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to create database)~~
+
+
+-- In master database the current login should not have db_accessadmin privilege
+-- Since db_accessadmin is database level role
+USE master
+GO
+
+SELECT current_user
+GO
+~~START~~
+varchar
+babel_5136_user_master
+~~END~~
+
+
+-- should not be a member of db_accessadmin in master database
+SELECT IS_ROLEMEMBER('db_accessadmin')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Should not be able to do any activity in master database
+CREATE USER babel_5136_u2 FOR LOGIN babel_5136_l2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+DROP USER babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'babel_5136_u1', because it does not exist or you do not have permission.)~~
+
+DROP ROLE babel_5136_r1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'babel_5136_r1', because it does not exist or you do not have permission.)~~
+
+CREATE ROLE babel_5136_r2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+CREATE TABLE babel_5136_t1 (id INT)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+CREATE PROCEDURE babel_5136_p2 AS SELECT 1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+CREATE FUNCTION babel_5136_f2() RETURNS INT AS BEGIN RETURN 1 END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+CREATE SCHEMA babel_5136_s1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for database jdbc_testdb)~~
+
+CREATE SCHEMA babel_5136_s1 AUTHORIZATION babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for database jdbc_testdb)~~
+
+CREATE DATABASE new_database
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to create database)~~
+
+
+
+-- terminate-tsql-conn user=babel_5136_db_accessadmin_l1 password=12345678

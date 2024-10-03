@@ -23,6 +23,9 @@ CREATE USER babel_5136_db_accessadmin_user FOR LOGIN babel_5136_db_accessadmin_l
 GO
 ALTER ROLE db_accessadmin ADD MEMBER babel_5136_db_accessadmin_user
 GO
+-- Cannot add login as member of db_accessadmin
+ALTER ROLE db_accessadmin ADD MEMBER babel_5136_l1
+GO
 -- MEMBERS OF db_accessadmin WILL ALWAYS HAVE CONNECT PRIVILEGES
 REVOKE CONNECT FROM babel_5136_db_accessadmin_user
 GO
@@ -37,16 +40,6 @@ GO
 
 -- Check all allowed operations
 -- tsql user=babel_5136_db_accessadmin_l1 password=12345678
-USE master
-GO
-
-SELECT current_user
-GO
-
--- should not be a member of db_accessadmin in master database
-SELECT IS_ROLEMEMBER('db_accessadmin')
-GO
-
 USE babel_5136
 GO
 
@@ -55,10 +48,6 @@ GO
 
 -- should be a member of db_accessadmin in babel_5136 database
 SELECT IS_ROLEMEMBER('db_accessadmin')
-GO
-
--- db_accessadmin can not add/drop members to db_accessadmin
-ALTER ROLE db_accessadmin ADD MEMBER babel_5136_u1
 GO
 
 -- CREATE DROP A NEW USER
@@ -73,21 +62,22 @@ GO
 CREATE USER babel_5136_u1 FOR LOGIN babel_5136_l1
 GO
 
--- ALTER USER and THEN DROP IT
+-- ALTER EXISTING USER and THEN DROP IT
 ALTER USER babel_5136_u1 WITH DEFAULT_SCHEMA = dbo
-GO
--- NOT SUPPORTED CURRENTLY IN BABELFISH
-ALTER USER babel_5136_u1 WITH DEFAULT_LANGUAGE = English
 GO
 ALTER USER babel_5136_u1 WITH NAME = babel_5136_u1_new_name
 GO
 -- NOT SUPPORTED CURRENTLY IN BABELFISH
 ALTER USER babel_5136_u1_new_name WITH PASSWORD = 'shouldfail'
 GO
--- db_accessadmin should not be able to ALTER LOGIN MAPPING
-ALTER USER babel_5136_u1_new_name WITH LOGIN = babel_5136_l3
+DROP USER babel_5136_u1_new_name
 GO
-ALTER USER babel_5136_u1_new_name WITH NAME = babel_5136_u1
+CREATE USER babel_5136_u1_new_name FOR LOGIN babel_5136_l1
+GO
+-- ALTER NEW USER and THEN DROP IT
+CREATE USER babel_5136_u2 FOR LOGIN babel_5136_l2
+GO
+ALTER USER babel_5136_u2 WITH NAME = babel_5136_u1
 GO
 
 -- CREATE SCHEMA should be allowed db_accessadmin
@@ -108,5 +98,82 @@ GO
 -- Should be restricted
 DROP USER dbo
 GO
--- terminate-tsql-conn user=babel_5136_db_accessadmin_l1 password=12345678
+DROP ROLE db_owner
+GO
+DROP ROLE db_accessadmin
+GO
+DROP USER guest
+GO
 
+-- db_accessadmin can not add/drop members to any other role
+ALTER ROLE db_accessadmin ADD MEMBER babel_5136_u1
+GO
+ALTER ROLE db_owner ADD MEMBER babel_5136_u1
+GO
+ALTER ROLE babel_5136_r1 ADD MEMBER babel_5136_u1
+GO
+
+-- should not be able to alter users login mapping or rename members of db_owner
+ALTER USER babel_5136_u1_new_name WITH LOGIN = babel_5136_l3
+GO
+ALTER USER dbo WITH LOGIN = babel_5136_l3
+GO
+ALTER USER dbo WITH NAME = dbo_should_not_be_renamed
+GO
+ALTER USER dbo WITH DEFAULT_SCHEMA = dbo
+GO
+GRANT CONNECT TO babel_5136_u1_new_name
+GO
+GRANT CONNECT TO dbo
+GO
+REVOKE CONNECT FROM babel_5136_u1_new_name
+GO
+REVOKE CONNECT FROM dbo
+GO
+
+-- NO OTHER DDLs SHOULD BE ALLOWED
+CREATE TABLE babel_5136_t1 (id INT)
+GO
+CREATE PROCEDURE babel_5136_p1 AS SELECT 1
+GO
+CREATE FUNCTION f1() RETURNS INT AS BEGIN RETURN 1 END
+GO
+CREATE DATABASE new_database
+GO
+
+-- In master database the current login should not have db_accessadmin privilege
+-- Since db_accessadmin is database level role
+USE master
+GO
+
+SELECT current_user
+GO
+
+-- should not be a member of db_accessadmin in master database
+SELECT IS_ROLEMEMBER('db_accessadmin')
+GO
+
+-- Should not be able to do any activity in master database
+CREATE USER babel_5136_u2 FOR LOGIN babel_5136_l2
+GO
+DROP USER babel_5136_u1
+GO
+DROP ROLE babel_5136_r1
+GO
+CREATE ROLE babel_5136_r2
+GO
+CREATE TABLE babel_5136_t1 (id INT)
+GO
+CREATE PROCEDURE babel_5136_p2 AS SELECT 1
+GO
+CREATE FUNCTION babel_5136_f2() RETURNS INT AS BEGIN RETURN 1 END
+GO
+CREATE SCHEMA babel_5136_s1
+GO
+CREATE SCHEMA babel_5136_s1 AUTHORIZATION babel_5136_u1
+GO
+CREATE DATABASE new_database
+GO
+
+
+-- terminate-tsql-conn user=babel_5136_db_accessadmin_l1 password=12345678
