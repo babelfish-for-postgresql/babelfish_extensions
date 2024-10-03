@@ -2869,13 +2869,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *db_owner_name;
+						char *db_owner_name;
 
 						db_owner_name = get_db_owner_name(get_cur_db_name());
 						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									 errmsg("User does not have permission to perform this action.")));
+
+						pfree(db_owner_name);
 						/*
 						 * check whether sql user name and role name contains
 						 * '\' or not
@@ -3132,7 +3134,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *dbo_name;
+						char	   *dbo_name;
 						char	   *db_name;
 						char	   *user_name;
 						char	   *cur_user;
@@ -3212,6 +3214,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						set_session_properties(db_name);
 						pfree(cur_user);
 						pfree(db_name);
+						pfree(dbo_name);
 
 						return;
 					}
@@ -3260,18 +3263,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								foreach(item, stmt->roles)
 								{
-									RoleSpec   *rolspec = lfirst(item);
-									char	   *user_name;
-									const char *db_principal_type = drop_user ? "user" : "role";
-									const char *db_owner_name;
-									int			role_oid;
-									int			rolename_len;
+									RoleSpec	*rolspec = lfirst(item);
+									char		*user_name;
+									const char	*db_principal_type = drop_user ? "user" : "role";
+									char		*db_owner_name;
+									int		role_oid;
+									int		rolename_len;
 									bool		is_tsql_db_principal = false;
 									bool		is_psql_db_principal = false;
-									Oid			dbowner;
+									Oid		dbowner;
 
-									user_name = get_physical_user_name(db_name, rolspec->rolename);
-									
+									user_name = get_physical_user_name(db_name, rolspec->rolename, true);
 									db_owner_name = get_db_owner_name(db_name);
 									dbowner = get_role_oid(db_owner_name, false);
 									role_oid = get_role_oid(user_name, true);
@@ -3327,6 +3329,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 														 errmsg("Cannot disable access to the guest user in master or tempdb.")));
 
 											alter_user_can_connect(false, rolspec->rolename, db_name);
+
+											pfree(db_owner_name);
+											
 											return;
 										}
 										else
@@ -3337,6 +3342,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 
 									pfree(rolspec->rolename);
+									pfree(db_owner_name);
+
 									rolspec->rolename = user_name;
 								}
 							}
