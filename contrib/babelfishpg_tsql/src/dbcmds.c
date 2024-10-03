@@ -57,6 +57,7 @@ static void add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname);
 static Oid	do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
+//static void grant_datareader_datawriter(const char *db_datareader, const char *db_datawriter);
 
 
 static Oid
@@ -111,6 +112,8 @@ gen_createdb_subcmds(const char *dbname, const char *owner,
 
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
+	appendStringInfo(&query, "GRANT dummy TO dummy; ");
+	appendStringInfo(&query, "GRANT dummy TO dummy; ");
 	appendStringInfo(&query, "CREATE ROLE dummy CREATEROLE INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
@@ -140,13 +143,13 @@ gen_createdb_subcmds(const char *dbname, const char *owner,
 	if (guest)
 	{
 		if (!owner_is_sa)
-			expected_stmt_num = list_length(logins) > 0 ? 12 : 11;
+			expected_stmt_num = list_length(logins) > 0 ? 14 : 13;
 		else
-			expected_stmt_num = list_length(logins) > 0 ? 11 : 10;
+			expected_stmt_num = list_length(logins) > 0 ? 13 : 12;
 	}
 	else
 	{
-		expected_stmt_num = 8;
+		expected_stmt_num = 10;
 
 		if (!owner_is_sa)
 			expected_stmt_num++;
@@ -164,6 +167,14 @@ gen_createdb_subcmds(const char *dbname, const char *owner,
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, db_datawriter, NULL, NULL);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node("pg_read_all_data")),
+							list_make1(make_rolespec_node(db_datareader)));
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node("pg_write_all_data")),
+							list_make1(make_rolespec_node(db_datawriter)));
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, db_owner, NULL, NULL);
@@ -640,9 +651,9 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 			wrapper->stmt_location = 0;
 			stmt_number++;
 			if (list_length(parsetree_list) == stmt_number)
-				wrapper->stmt_len = 21;
+				wrapper->stmt_len = 23;
 			else
-				wrapper->stmt_len = 20;
+				wrapper->stmt_len = 22;
 
 			/* do this step */
 			ProcessUtility(wrapper,
@@ -670,6 +681,9 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		set_cur_db(old_dbid, old_dbname);
 	}
 	PG_END_TRY();
+
+	//grant reade and write permissions.
+	//grant_datareader_datawriter(db_datareader, db_datawriter);
 
 	pfree(dbo_role);
 }
@@ -1243,6 +1257,326 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 			dbname = text_to_cstring(&(bbf_db->name));
 
 			create_schema_if_not_exists(bbf_db->dbid, dbname, "guest", "guest");
+
+			tuple = heap_getnext(scan, ForwardScanDirection);
+		}
+		table_endscan(scan);
+		table_close(sysdatabase_rel, RowExclusiveLock);
+
+		creating_extension = creating_extension_backup;
+		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_FINALLY();
+	{
+		creating_extension = creating_extension_backup;
+		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_END_TRY();
+
+	PG_RETURN_INT32(0);
+}
+
+/* Grant permissions on all the existing objects to db_datareader/db_datawriter. */
+/*static void
+grant_datareader_datawriter(const char *db_datareader, const char *db_datawriter)
+{
+	char	*reader_query = NULL;
+	char	*writer_query = NULL;
+	Oid 		save_userid;
+	int 		save_sec_context;
+	Oid     	prev_current_user = InvalidOid;
+	prev_current_user = GetUserId();
+
+	PG_TRY();
+	{
+		prev_current_user = GetUserId();*/
+
+		/*
+		 * We have checked for all permissions.
+		 * Now change context to admin to perform the renames.
+		 */
+		/*SetCurrentRoleId(get_bbf_role_admin_oid(), true);
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+		reader_query = psprintf("GRANT pg_read_all_data TO %s", db_datareader);
+		exec_utility_cmd_helper(reader_query);
+		writer_query = psprintf("GRANT pg_write_all_data TO %s", db_datawriter);
+		exec_utility_cmd_helper(writer_query);
+		pfree(reader_query);
+		pfree(writer_query);
+
+	}
+	PG_CATCH();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		SetCurrentRoleId(prev_current_user, true);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	SetUserIdAndSecContext(save_userid, save_sec_context);
+	SetCurrentRoleId(prev_current_user, true);
+
+}*/
+
+/* Grant permissions on all the existing objects to db_datareader/db_datawriter. */
+static void
+grant_permissions_to_datareader_datawriter(const uint16 dbid,
+										const char *db_datareader,
+										const char *db_datawriter)
+{
+	Relation		namespace_rel;
+	ScanKeyData		key;
+	HeapTuple		tuple;
+	TableScanDesc	tblscan;
+
+	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
+
+	ScanKeyInit(&key,
+				Anum_namespace_ext_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	tblscan = table_beginscan_catalog(namespace_rel, 1, &key);
+
+	tuple = heap_getnext(tblscan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		char	*reader_query = NULL;
+		char	*writer_query = NULL;
+
+		reader_query = psprintf("GRANT pg_read_all_data TO %s", db_datareader);
+		exec_utility_cmd_helper(reader_query);
+		writer_query = psprintf("GRANT pg_write_all_data TO %s", db_datawriter);
+		exec_utility_cmd_helper(writer_query);
+		pfree(reader_query);
+		pfree(writer_query);
+
+		tuple = heap_getnext(tblscan, ForwardScanDirection);
+	}
+
+	/* Cleanup. */
+	table_endscan(tblscan);
+	table_close(namespace_rel, RowExclusiveLock);
+}
+
+static bool
+entry_exists_in_bbf_auth_ext(const char *rolname)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData 		key;
+	SysScanDesc		scan;
+	NameData   		*user_name;
+	bool			catalog_entry_exists = false;
+
+	if (!rolname)
+		return NULL;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	user_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(user_name->data, NAMEDATALEN, "%s", rolname);
+	ScanKeyInit(&key,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(user_name));
+
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+				get_authid_user_ext_idx_oid(),
+				true, NULL, 1, &key);
+
+	tuple_user_ext = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple_user_ext))
+		catalog_entry_exists = true;
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
+	return catalog_entry_exists;
+}
+
+static void
+create_db_roles_if_not_exists(const uint16 dbid,
+							const char *dbname)
+{
+	StringInfoData		query;
+	Oid			datdba;
+	const char		*prev_current_user;
+	uint16			old_dbid;
+	const char		*old_dbname;
+	const char		*db_datareader;
+	const char 		*db_datawriter;
+	ListCell		*parsetree_item;
+	List			*stmt_list;
+	Node			*stmts;
+	int			i=0;
+
+	/*
+	 * During upgrade, the migration mode is reset to single-db so we cannot
+	 * call get_physical_user_name() directly. Detect whether the original
+	 * migration was single-db or multi-db.
+	 */
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+
+	db_datareader = get_physical_user_name_by_mode((char *) dbname, "db_datareader", true, baseline_mode);
+	db_datawriter = get_physical_user_name_by_mode((char *) dbname, "db_datawriter", true, baseline_mode);
+
+	/*
+	 * database roles prepends dbname based on single-db or multi-db. If for
+	 * some reason database roles exist, then that is a bigger problem.
+	 * The roles should be manually cleaned up before the upgrade.
+	 */
+	if (OidIsValid(get_role_oid(db_datareader, true)))
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("role \"%s\" already exists. Please drop the role and restart upgrade.", db_datareader)));
+		return;
+	}
+
+	if (OidIsValid(get_role_oid(db_datawriter, true)))
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("role \"%s\" already exists. Please drop the role and restart upgrade.", db_datawriter)));
+		return;
+	}
+
+	datdba = get_role_oid("sysadmin", false);
+	check_can_set_role(GetSessionUserId(), datdba);
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
+	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	Assert(list_length(stmt_list) == 2);
+
+	/* Set current user to session user for create permissions */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+
+	old_dbid = get_cur_db_id();
+	old_dbname = get_cur_db_name();
+	set_cur_db(dbid, dbname);
+
+	PG_TRY();
+	{
+		/* Replace dummy elements in parsetree with real values */
+    	stmts = parsetree_nth_stmt(stmt_list, i++);
+    	update_CreateRoleStmt(stmts, db_datareader, NULL, NULL);
+
+    	stmts = parsetree_nth_stmt(stmt_list, i++);
+    	update_CreateRoleStmt(stmts, db_datawriter, NULL, NULL);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, stmt_list)
+		{
+			Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 0;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						"(CREATE DATABASE ROLES) ",
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+		}
+
+		/* make sure later steps can see the object created here */
+		CommandCounterIncrement();
+
+		/* Add entries to the catalog if not exists. */
+		if (!entry_exists_in_bbf_auth_ext(db_datareader))
+			add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
+		if (!entry_exists_in_bbf_auth_ext(db_datawriter))
+			add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
+
+
+		/* Grant permissions on all the schemas in a database to db_datareader/db_datawriter */
+		grant_permissions_to_datareader_datawriter(dbid, db_datareader, db_datawriter);
+	}
+	PG_FINALLY();
+	{
+		bbf_set_current_user(prev_current_user);
+		set_cur_db(old_dbid, old_dbname);
+	}
+	PG_END_TRY();
+
+	bbf_set_current_user(prev_current_user);
+	set_cur_db(old_dbid, old_dbname);
+
+}
+
+/*
+* This function is only being used for the purpose of the upgrade script to create
+* database roles db_datareader and db_datawriter for each database if the database
+* does not have the roles yet.
+*/
+PG_FUNCTION_INFO_V1(create_database_roles_for_all_dbs);
+Datum
+create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
+{
+	Relation	sysdatabase_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	const char *sql_dialect_value_old;
+	const char *tsql_dialect = "tsql";
+	Form_sysdatabases bbf_db;
+	const char *dbname;
+	bool		creating_extension_backup = creating_extension;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"create_database_roles_for_all_dbs()")));
+
+	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		/*
+		 * Since this is part of upgrade script, PG assumes we would like to
+		 * set the babelfish extension depend on this new schema. This is not
+		 * true so we tell PG not to set any dependency for us. Check
+		 * recordDependencyOnCurrentExtension() for more information.
+		 */
+		creating_extension = false;
+
+		sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+		scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+
+		while (HeapTupleIsValid(tuple))
+		{
+			bbf_db = (Form_sysdatabases) GETSTRUCT(tuple);
+			dbname = text_to_cstring(&(bbf_db->name));
+
+			create_db_roles_if_not_exists(bbf_db->dbid, dbname);
 
 			tuple = heap_getnext(scan, ForwardScanDirection);
 		}

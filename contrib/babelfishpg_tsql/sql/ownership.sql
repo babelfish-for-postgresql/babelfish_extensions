@@ -290,6 +290,8 @@ BEGIN
 	EXECUTE format('GRANT %I to bbf_role_admin WITH ADMIN TRUE;', sa_name);
 	EXECUTE format('CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE %I', sa_name);
 	EXECUTE format('GRANT sysadmin TO bbf_role_admin WITH ADMIN TRUE');
+  EXECUTE format('GRANT pg_read_all_data TO bbf_role_admin WITH ADMIN TRUE');
+  EXECUTE format('GRANT pg_write_all_data TO bbf_role_admin WITH ADMIN TRUE');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_function_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_scheme_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_db_seq TO sysadmin WITH GRANT OPTION');

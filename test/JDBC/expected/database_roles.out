@@ -170,58 +170,50 @@ int
 
 select * from after_t1; -- allowed
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table after_t1)~~
+~~START~~
+int
+~~END~~
 
 
 select * from before_t1; -- allowed
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table before_t1)~~
-
-
-insert into after_t1 values(1); -- allowed
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table after_t1)~~
+~~START~~
+int
+~~END~~
 
 
 insert into after_t1 values(1); -- allowed
 go
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: permission denied for table after_t1)~~
+
+insert into after_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
 
 
 select * from s1.after_t1; -- allowed
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table after_t1)~~
+~~START~~
+int
+~~END~~
 
 
 select * from s1.before_t1; -- allowed
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table before_t1)~~
-
-
-insert into s1.after_t1 values(1); -- allowed
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table after_t1)~~
+~~START~~
+int
+~~END~~
 
 
 insert into s1.after_t1 values(1); -- allowed
 go
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: permission denied for table after_t1)~~
+
+insert into s1.after_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
 
 
 -- tsql
@@ -410,30 +402,28 @@ int
 
 select * from after_t1; -- allowed
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table after_t1)~~
+~~START~~
+int
+1
+1
+~~END~~
 
 
 select * from before_t1; -- allowed
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table before_t1)~~
-
-
-insert into after_t1 values(1); -- allowed
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table after_t1)~~
+~~START~~
+int
+~~END~~
 
 
 insert into after_t1 values(1); -- allowed
 go
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: permission denied for table after_t1)~~
+
+insert into after_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
 
 
 -- tsql
