@@ -1456,7 +1456,7 @@ get_db_accessadmin_role_name(const char *dbname)
 Oid
 get_db_accessadmin_oid(const char *dbname, bool missing_ok)
 {
-	char *db_accessadmin_name = get_db_owner_name(dbname);
+	char *db_accessadmin_name = get_db_accessadmin_role_name(dbname);
 	Oid  db_accessadmin_oid = get_role_oid(db_accessadmin_name, missing_ok);
 	pfree(db_accessadmin_name);
 	

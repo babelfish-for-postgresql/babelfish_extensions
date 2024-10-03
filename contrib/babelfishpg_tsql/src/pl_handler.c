@@ -3402,7 +3402,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 
 									/* If user is dbo or role is db_owner, restrict dropping */
-									if (IS_BBF_BUILT_IN_DB(rolspec->rolename))
+									if (IS_FIXED_DB_PRINCIPAL(rolspec->rolename))
 										ereport(ERROR,
 												(errcode(ERRCODE_CHECK_VIOLATION),
 												 errmsg("Cannot drop the %s '%s'.", db_principal_type, rolspec->rolename)));
