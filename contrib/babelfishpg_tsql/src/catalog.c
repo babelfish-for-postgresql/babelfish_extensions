@@ -5011,6 +5011,7 @@ user_exists_for_db(const char *db_name, const char *user_name)
 			user_exists = true;
 		
 		pfree(db_name_from_cache);
+		ReleaseSysCache(tuple_cache);
 	}
 
 	return user_exists;

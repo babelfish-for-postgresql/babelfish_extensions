@@ -1,6 +1,20 @@
 SELECT * FROM sys.configurations;
 GO
 
+-- Verify the sql variant of the all the rows in sys.configurations
+SELECT count(*) FROM sys.configurations 
+WHERE 
+        SQL_VARIANT_PROPERTY(configuration_id, 'BaseType') != 'int' OR
+        SQL_VARIANT_PROPERTY(name, 'BaseType') != 'nvarchar' OR
+        SQL_VARIANT_PROPERTY(value, 'BaseType') != 'int' OR
+        SQL_VARIANT_PROPERTY(minimum, 'BaseType') != 'int' OR
+        SQL_VARIANT_PROPERTY(maximum, 'BaseType') != 'int' OR
+        SQL_VARIANT_PROPERTY(value_in_use, 'BaseType') != 'int' OR
+        SQL_VARIANT_PROPERTY(description, 'BaseType') != 'nvarchar' OR
+        SQL_VARIANT_PROPERTY(is_dynamic, 'BaseType') != 'bit' OR
+        SQL_VARIANT_PROPERTY(is_advanced, 'BaseType') != 'bit';
+GO
+
 SELECT * FROM sys.syscurconfigs;
 GO
 
