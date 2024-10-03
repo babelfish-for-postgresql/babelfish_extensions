@@ -998,7 +998,6 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
 		Datum datum;
-		char *db_accessadmin = get_db_accessadmin_role_name(db_name);
 		bool user_can_connect;
 		bool isnull;
 
@@ -1009,7 +1008,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 
 		/* db_accessadmin members should always have connect permissions */
 		if (user_can_connect == 1 ||
-			(has_privs_of_role(get_role_oid(login, false), get_role_oid(db_accessadmin, false))))
+			(has_privs_of_role(get_role_oid(login, false), get_db_accessadmin_oid(db_name, false))))
 		{
 			datum = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_rolname,
 							 RelationGetDescr(bbf_authid_user_ext_rel), &isnull);
@@ -1017,7 +1016,6 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 
 			user_name = pstrdup(DatumGetCString(datum));
 		}
-		pfree(db_accessadmin);
 	}
 
 	table_endscan(scan);
@@ -4977,10 +4975,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 			char *old_role_name;
 			char *new_role_name;
 
-			if (SINGLE_DB == get_migration_mode() &&
-				((strlen(role) == 3 && strncmp(role, "dbo", 3) == 0) ||
-				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0) ||
-				(strlen(role) == 14 && strncmp(role, DB_ACCESSADMIN, 14) == 0)))
+			if (SINGLE_DB == get_migration_mode() && IS_FIXED_DB_PRINCIPAL(role))
 				continue;
 
 			old_role_name = get_physical_user_name(old_db_name, role, true, true);

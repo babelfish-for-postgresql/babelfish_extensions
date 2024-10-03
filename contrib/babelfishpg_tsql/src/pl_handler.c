@@ -2927,11 +2927,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (isuser || isrole)
 					{
 						char *current_db_name = get_cur_db_name();
-						char *db_owner_name = get_db_owner_name(current_db_name);
-						char *db_accessadmin_role = get_db_accessadmin_role_name(current_db_name);
 
-						if (has_privs_of_role(GetUserId(), get_role_oid(db_owner_name, false)) ||
-						    (isuser && has_privs_of_role(GetUserId(), get_role_oid(db_accessadmin_role, false))))
+						if (has_privs_of_role(GetUserId(), get_db_owner_oid(current_db_name, false)) ||
+						    (isuser && has_privs_of_role(GetUserId(), get_db_accessadmin_oid(current_db_name, false))))
 						{
 							/*
 							 * members of db_owner can create roles and users
@@ -2945,8 +2943,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 errmsg("User does not have permission to perform this action.")));
 						}
 
-						pfree(db_owner_name);
-						pfree(db_accessadmin_role);
 						pfree(current_db_name);
 					}
 
@@ -3224,8 +3220,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						bool 		is_member_of_db_accessadmin = false;
 						int 		save_sec_context;
 						Oid 		save_userid;
-						Oid 		db_owner = get_role_oid(get_db_owner_name(db_name), false);
-						Oid 		db_accessadmin = get_role_oid(get_db_accessadmin_role_name(db_name), false);
+						Oid 		db_owner = get_db_owner_oid(db_name, false);
+						Oid 		db_accessadmin = get_db_accessadmin_oid(db_name, false);
 						Oid 		user_oid = get_role_oid(stmt->role->rolename, false);
 
 						/* db principal being altered should be a user or role in the current active logical database */
@@ -3380,12 +3376,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (db_name != NULL && strcmp(db_name, "") != 0)
 							{
-								char 	*db_owner_name = get_db_owner_name(db_name);
-								char 	*db_accessadmin_name = get_db_accessadmin_role_name(db_name);
-								Oid		db_owner = get_role_oid(db_owner_name, false);
-								Oid		db_accessadmin = get_role_oid(db_accessadmin_name, false);
-								pfree(db_owner_name);
-								pfree(db_accessadmin_name);
+								Oid		db_owner = get_db_owner_oid(db_name, false);
+								Oid		db_accessadmin = get_db_accessadmin_oid(db_name, false);
 
 								foreach(item, stmt->roles)
 								{
@@ -3393,7 +3385,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									char	   *user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
 									const char *db_principal_type = drop_user ? "user" : "role";
 									int			role_oid = get_role_oid(user_name, true);
-									int			rolename_len = strlen(rolspec->rolename);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
 									    (drop_user && is_database_principal(role_oid, true) != BBF_USER) ||      /* Found but not a user in current logical db */
@@ -3411,9 +3402,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 
 									/* If user is dbo or role is db_owner, restrict dropping */
-									if ((drop_user && rolename_len == 3 && strncmp(rolspec->rolename, "dbo", 3) == 0) ||
-										(drop_role && rolename_len == 8 && strncmp(rolspec->rolename, "db_owner", 8) == 0) ||
-										(drop_role && rolename_len == 14 && strncmp(rolspec->rolename, DB_ACCESSADMIN, 14) == 0))
+									if (IS_BBF_BUILT_IN_DB(rolspec->rolename))
 										ereport(ERROR,
 												(errcode(ERRCODE_CHECK_VIOLATION),
 												 errmsg("Cannot drop the %s '%s'.", db_principal_type, rolspec->rolename)));
@@ -3631,7 +3620,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (rolspec && strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
 					{
-						Oid       db_accessadmin = get_role_oid(get_db_accessadmin_role_name(get_cur_db_name()), false);
+						Oid       db_accessadmin = get_db_accessadmin_oid(get_cur_db_name(), false);
 
 						owner_oid = get_rolespec_oid(rolspec, true);
 						/*

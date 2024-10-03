@@ -263,9 +263,7 @@ rewrite_object_refs(Node *stmt)
 				principal_name = grantee->rolename;
 
 				/* Forbidden the use of some special principals */
-				if (strcmp(principal_name, "dbo") == 0 ||
-					strcmp(principal_name, "db_owner") == 0 ||
-					strcmp(principal_name, DB_ACCESSADMIN) == 0)
+				if (IS_FIXED_DB_PRINCIPAL(principal_name))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("Cannot use the special principal '%s'", principal_name)));
@@ -388,10 +386,8 @@ rewrite_object_refs(Node *stmt)
 
 						user_name = alter_role->role->rolename;
 						/* TODO: allow ALTER ROLE db_owner */
-						if (strcmp(user_name, "dbo") == 0 ||
-							strcmp(user_name, "db_owner") == 0 ||
-							strcmp(user_name, "guest") == 0 ||
-							strcmp(user_name, DB_ACCESSADMIN) == 0)
+						if (IS_FIXED_DB_PRINCIPAL(user_name) ||
+							strcmp(user_name, "guest") == 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									 errmsg("Cannot alter the user %s", user_name)));
@@ -1312,13 +1308,9 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 	if (SINGLE_DB == get_migration_mode())
 	{
 		/* check that db_name is not "master", "tempdb", or "msdb" */
-		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
-			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
-			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
+		if (IS_BBF_BUILT_IN_DB(db_name))
 		{
-			if (((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
-				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0) ||
-				(strlen(user_name) == 14 && strncmp(user_name, DB_ACCESSADMIN, 14) == 0)) 
+			if (IS_FIXED_DB_PRINCIPAL(user_name)
 				&& (suppress_role_error || user_exists_for_db(db_name, new_user_name)))
 			{
 				return new_user_name;
@@ -1357,8 +1349,7 @@ get_dbo_schema_name(const char *dbname)
 
 	Assert(dbname != NULL);
 
-	if (SINGLE_DB == get_migration_mode() && 0 != strcmp(dbname, "master") 
-	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
+	if (SINGLE_DB == get_migration_mode() && !IS_BBF_BUILT_IN_DB(dbname))
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
 	}
@@ -1377,8 +1368,7 @@ get_dbo_role_name_by_mode(const char *dbname, MigrationMode mode)
 
 	Assert(dbname != NULL);
 
-	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master") 
-	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
+	if (SINGLE_DB == mode && !IS_BBF_BUILT_IN_DB(dbname))
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
 	}
@@ -1403,8 +1393,7 @@ get_db_owner_name_by_mode(const char *dbname, MigrationMode	mode)
 
 	Assert(dbname != NULL);
 
-	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master") 
-	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
+	if (SINGLE_DB == mode && !IS_BBF_BUILT_IN_DB(dbname))
 	{	
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_owner");
 	}
@@ -1420,6 +1409,16 @@ char *
 get_db_owner_name(const char *dbname)
 {
 	return get_db_owner_name_by_mode(dbname, get_migration_mode());
+}
+
+Oid
+get_db_owner_oid(const char *dbname, bool missing_ok)
+{
+	char *db_owner_name = get_db_owner_name(dbname);
+	Oid  db_owner_oid = get_role_oid(db_owner_name, missing_ok);
+	pfree(db_owner_name);
+	
+	return db_owner_oid;
 }
 
 char *
@@ -1452,6 +1451,16 @@ get_db_accessadmin_role_name(const char *dbname)
 
 	truncate_identifier(name, strlen(name), false);
 	return name;
+}
+
+Oid
+get_db_accessadmin_oid(const char *dbname, bool missing_ok)
+{
+	char *db_accessadmin_name = get_db_owner_name(dbname);
+	Oid  db_accessadmin_oid = get_role_oid(db_accessadmin_name, missing_ok);
+	pfree(db_accessadmin_name);
+	
+	return db_accessadmin_oid;
 }
 
 char *

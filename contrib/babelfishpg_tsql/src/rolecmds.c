@@ -1791,7 +1791,6 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	const char *grantee_name;
 	const char *original_user_name;
 	const char *db_name = get_cur_db_name();
-	const char *db_owner = get_db_owner_name(db_name);
 	RoleSpec   *granted_spec;
 	RoleSpec   *grantee_spec;
 
@@ -1817,7 +1816,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 
 	/* only members of db_owner can alter drop members of fixed db roles */
 	if (strcmp(original_user_name, DB_ACCESSADMIN) == 0 &&
-	    !has_privs_of_role(GetUserId(), get_role_oid(db_owner, false)))
+	    !has_privs_of_role(GetUserId(), get_db_owner_oid(db_name, false)))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", original_user_name)));
