@@ -10574,8 +10574,14 @@ CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
 AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
 
-EXECUTE format('GRANT pg_read_all_data TO bbf_role_admin WITH ADMIN TRUE');
-EXECUTE format('GRANT pg_write_all_data TO bbf_role_admin WITH ADMIN TRUE');
+DO
+LANGUAGE plpgsql
+$$
+BEGIN
+    EXECUTE format('GRANT pg_read_all_data TO bbf_role_admin WITH ADMIN TRUE');
+    EXECUTE format('GRANT pg_write_all_data TO bbf_role_admin WITH ADMIN TRUE');
+END;
+$$;
 
 CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
 LANGUAGE C
