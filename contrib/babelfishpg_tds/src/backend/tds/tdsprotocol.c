@@ -100,7 +100,6 @@ TdsDiscardAll()
 
 	/* Closing portals might run user-defined code, so do that first. */
 	PortalHashTableDeleteAll();
-	SetPGVariable("session_authorization", NIL, false);
 	ResetAllOptions();
 	DropAllPreparedStatements();
 	Async_UnlistenAll();

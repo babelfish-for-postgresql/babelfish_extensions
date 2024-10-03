@@ -275,6 +275,73 @@ WHERE Base.type in ('S', 'U');
 
 GRANT SELECT ON sys.syslogins TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.configurations
+AS
+SELECT  configuration_id, 
+        name,
+        value,
+        minimum,
+        maximum,
+        value_in_use,
+        description,
+        is_dynamic, 
+        is_advanced 
+FROM sys.babelfish_configurations
+UNION ALL
+SELECT 
+CAST(103 as INT) AS configuration_id,
+CAST('user connections' AS SYS.NVARCHAR(35)) AS name,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value,
+CAST(CAST(s.min_val AS INT) AS sys.sql_variant) AS minimum,
+CAST(CAST(s.max_val AS INT) AS sys.sql_variant) AS maximum,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value_in_use,
+CAST(s.short_desc AS sys.nvarchar(255)) AS description,
+CAST(CAST(0 AS sys.BIT) AS sys.BIT) AS is_dynamic,
+CAST(CAST(1 AS sys.BIT) AS sys.BIT) AS is_advanced
+FROM pg_catalog.pg_settings s where name = 'max_connections'
+UNION ALL
+SELECT 
+CAST(505 as INT) AS configuration_id,
+CAST('network packet size (B)' AS SYS.NVARCHAR(35)) AS name,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value,
+CAST(CAST(s.min_val AS INT) AS sys.sql_variant) AS minimum,
+CAST(CAST(s.max_val AS INT) AS sys.sql_variant) AS maximum,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value_in_use,
+CAST(s.short_desc AS sys.nvarchar(255)) AS description,
+CAST(CAST(1 AS sys.BIT) AS sys.BIT) AS is_dynamic,
+CAST(CAST(1 AS sys.BIT) AS sys.BIT) AS is_advanced
+FROM pg_catalog.pg_settings s where name = 'babelfishpg_tds.tds_default_packet_size'
+ORDER BY configuration_id;
+GRANT SELECT ON sys.configurations TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.syscurconfigs
+AS
+SELECT  c.value,
+        c.configuration_id AS config,
+        COALESCE(b.comment_syscurconfigs, c.description) AS comment,
+        CASE
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        END AS status
+FROM sys.configurations c LEFT JOIN sys.babelfish_configurations b ON c.configuration_id = b.configuration_id;
+GRANT SELECT ON sys.syscurconfigs TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sysconfigures
+AS
+SELECT  c.value_in_use AS value,
+        c.configuration_id AS config,
+        COALESCE(b.comment_sysconfigures, c.description) AS comment,
+        CASE
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        END AS status
+FROM sys.configurations c LEFT JOIN sys.babelfish_configurations b ON c.configuration_id = b.configuration_id;
+GRANT SELECT ON sys.sysconfigures TO PUBLIC;
+
 -- Assigning dbo role to the db_owner login
 DO $$
 DECLARE
@@ -10643,6 +10710,17 @@ BEGIN
     RETURN (PG_CATALOG.ARRAY_TO_STRING(args, seperator));
 END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+-- This is a temporary procedure which is called during upgrade to alter
+-- default privileges on all the schemas where the schema owner is not dbo/db_owner
+CREATE OR REPLACE PROCEDURE sys.babelfish_alter_default_privilege_on_schema()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'alter_default_privilege_on_schema';
+
+CALL sys.babelfish_alter_default_privilege_on_schema();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_alter_default_privilege_on_schema();
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

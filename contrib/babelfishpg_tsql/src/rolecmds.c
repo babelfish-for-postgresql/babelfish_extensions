@@ -521,13 +521,16 @@ grant_guests_to_login(const char *login)
 												 &is_null);
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
-		const char *guest_name = NULL;
+		char	   *guest_name = NULL;
 
 		if (guest_role_exists_for_db(db_name))
 			guest_name = get_guest_role_name(db_name);
 
 		if (guest_name)
+		{
 			guests = lappend(guests, make_accesspriv_node(guest_name));
+			pfree(guest_name);
+		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
@@ -590,7 +593,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	Node	   *stmt;
 	PlannedStmt *wrapper;
 
-	const char *dbo_role_name = get_dbo_role_name(db_name);
+	char 	   *dbo_role_name = get_dbo_role_name(db_name);
 
 	/*
 	 * If login i.e old_owner/new_owner is master user 
@@ -650,6 +653,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	CommandCounterIncrement();
 
 	pfree(query.data);
+	pfree(dbo_role_name);
 }
 
 static List *
@@ -838,7 +842,7 @@ user_id(PG_FUNCTION_ARGS)
 	if (!db_name)
 		PG_RETURN_NULL();
 
-        user_name = get_physical_user_name(db_name, user_input, false);
+        user_name = get_physical_user_name(db_name, user_input, false, true);
 
         if (!user_name)
             PG_RETURN_NULL();
@@ -855,6 +859,7 @@ user_id(PG_FUNCTION_ARGS)
     }
 
     auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(user_name));
+    pfree(user_name);
 
     if (!HeapTupleIsValid(auth_tuple))
 	    PG_RETURN_NULL();
@@ -1332,10 +1337,10 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 	while (HeapTupleIsValid(tuple))
 	{
 		Datum		db_name_datum;
-		const char *db_name;
-		const char *dbo_role;
-		const char *db_owner_role;
-		const char *guest;
+		const char	*db_name;
+		char 		*dbo_role;
+		char 		*db_owner_role;
+		char 		*guest;
 
 		db_name_datum = heap_getattr(tuple,
 									 Anum_sysdatabases_name,
@@ -1352,9 +1357,13 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		{
 			dbo_list = lappend(dbo_list, make_rolespec_node(dbo_role));
 			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true, false);
+			pfree(dbo_role);
 		}
 		if (db_owner_role)
+		{
 			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true, false);
+			pfree(db_owner_role);
+		}
 		if (guest)
 		{
 			/*
@@ -1365,6 +1374,8 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true, false);
 			else
 				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false, false);
+				
+			pfree(guest);
 		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
@@ -1532,7 +1543,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	/* update user name */
 	if (new_user_name)
 	{
-		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name, false);
+		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name, false, true);
 		namestrcpy(&physical_name_namedata, physical_name);
 
 		new_record_user_ext[USER_EXT_ROLNAME] = NameGetDatum(&physical_name_namedata);
@@ -1625,6 +1636,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 					   NULL);
 
 		pfree(query.data);
+		pfree(physical_name);
 	}
 }
 
@@ -1883,9 +1895,10 @@ role_id(PG_FUNCTION_ARGS)
 	if (!get_cur_db_name())
 		PG_RETURN_NULL();
 
-	role_name = get_physical_user_name(get_cur_db_name(), user_input, false);
+	role_name = get_physical_user_name(get_cur_db_name(), user_input, false, true);
 
 	result = get_role_oid(role_name, true);
+	pfree(role_name);
 
 	if (result == InvalidOid)
 		PG_RETURN_NULL();
@@ -1905,14 +1918,14 @@ is_rolemember(PG_FUNCTION_ARGS)
 	Oid			cur_user_oid = GetUserId();
 	Oid			db_owner_oid;
 	Oid			dbo_role_oid;
-	char	   *role;
-	char	   *dc_role;
-	char	   *dc_principal = NULL;
-	char	   *physical_role_name;
-	char	   *physical_principal_name;
-	char	   *cur_db_name;
-	const char *db_owner_name;
-	const char *dbo_role_name;
+	char			*role;
+	char			*dc_role;
+	char			*dc_principal = NULL;
+	char			*physical_role_name;
+	char			*physical_principal_name;
+	char			*cur_db_name;
+	char			*db_owner_name;
+	char			*dbo_role_name;
 	int			idx;
 
 	if (PG_ARGISNULL(0))
@@ -1924,8 +1937,9 @@ is_rolemember(PG_FUNCTION_ARGS)
 	while (idx > 0 && isspace((unsigned char) role[idx - 1]))
 		role[--idx] = '\0';
 	dc_role = downcase_identifier(role, strlen(role), false, false);
-	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role, false);
+	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role, false, true);
 	role_oid = get_role_oid(physical_role_name, true);
+	pfree(physical_role_name);
 
 	/* If principal name is NULL, take current user instead */
 	if (PG_ARGISNULL(1))
@@ -1939,8 +1953,9 @@ is_rolemember(PG_FUNCTION_ARGS)
 		while (idx > 0 && isspace((unsigned char) principal[idx - 1]))
 			principal[--idx] = '\0';
 		dc_principal = downcase_identifier(principal, strlen(principal), false, false);
-		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal, false);
+		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal, false, true);
 		principal_oid = get_role_oid(physical_principal_name, true);
+		pfree(physical_principal_name);
 	}
 
 	/* Return 1 if given role is PUBLIC */
@@ -1977,6 +1992,10 @@ is_rolemember(PG_FUNCTION_ARGS)
 	dbo_role_name = get_dbo_role_name(cur_db_name);
 	db_owner_oid = get_role_oid(db_owner_name, false);
 	dbo_role_oid = get_role_oid(dbo_role_name, false);
+	
+	pfree(db_owner_name);
+	pfree(dbo_role_name);
+
 	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid))
 		PG_RETURN_INT32(0);
 	else if (is_member_of_role_nosuper(principal_oid, role_oid))

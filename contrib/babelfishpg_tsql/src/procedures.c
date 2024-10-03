@@ -1705,12 +1705,11 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	char	   *tempq = "CREATE OR REPLACE PROCEDURE %s.xp_qv(IN SYS.NVARCHAR(256), IN SYS.NVARCHAR(256))"
 	"AS \'babelfishpg_tsql\', \'xp_qv_internal\' LANGUAGE C";
 
-	const char *dbo_scm = get_dbo_schema_name("master");
-
-	if (dbo_scm == NULL)
-		elog(ERROR, "Failed to retrieve dbo schema name");
+	char	   *dbo_scm = get_dbo_schema_name("master");
 
 	query = psprintf(tempq, dbo_scm);
+
+	pfree(dbo_scm);
 
 	PG_TRY();
 	{
@@ -1795,13 +1794,12 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	char	   *tempq2 = "CREATE OR REPLACE PROCEDURE %s.xp_instance_regread(IN p1 sys.nvarchar(512), IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param sys.nvarchar(512))"
 	"AS \'babelfishpg_tsql\', \'xp_instance_regread_internal\' LANGUAGE C";
 
-	const char *dbo_scm = get_dbo_schema_name("master");
-
-	if (dbo_scm == NULL)
-		elog(ERROR, "Failed to retrieve dbo schema name");
+	char	   *dbo_scm = get_dbo_schema_name("master");
 
 	query = psprintf(tempq, dbo_scm);
 	query2 = psprintf(tempq2, dbo_scm);
+
+	pfree(dbo_scm);
 
 	PG_TRY();
 	{
@@ -2137,8 +2135,9 @@ sp_addrole(PG_FUNCTION_ARGS)
 							errmsg("'%s' is not a valid name because it contains invalid characters.", rolname)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
+		pfree(physical_role_name);
 
 		/* Check if the user, group or role already exists */
 		if (role_oid)
@@ -2280,8 +2279,9 @@ sp_droprole(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
+		pfree(physical_role_name);
 
 		/* Check if the role does not exists */
 		if (role_oid == InvalidOid || !is_role(role_oid))
@@ -2430,7 +2430,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot make a role a member of itself.")));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false);
+		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false, true);
 		member_oid = get_role_oid(physical_member_name, true);
 
 		/*
@@ -2443,7 +2443,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("User or role '%s' does not exist in this database.", membername)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists and given role name is an role */
@@ -2502,6 +2502,8 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	pfree(physical_member_name);
+	pfree(physical_role_name);
 	PG_RETURN_VOID();
 }
 
@@ -2595,7 +2597,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/* Throw an error id the given role name doesn't exist or isn't a role */
@@ -2605,7 +2607,8 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false);
+		pfree(physical_name);
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/*
@@ -2661,6 +2664,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	pfree(physical_name);
 	PG_RETURN_VOID();
 }
 
@@ -3412,7 +3416,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		if (!strcmp(logical_schema_name, ""))
 		{
 			const char *user = get_user_for_database(db_name);
-			const char *guest_role_name = get_guest_role_name(db_name);
+			char	   *guest_role_name = get_guest_role_name(db_name);
 
 			if (!user)
 				ereport(ERROR,
@@ -3430,6 +3434,8 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 				physical_schema_name = get_physical_schema_name(db_name, logical_schema_name);
 				pfree(logical_schema_name);
 			}
+			
+			pfree(guest_role_name);
 		}
 		else
 		{
