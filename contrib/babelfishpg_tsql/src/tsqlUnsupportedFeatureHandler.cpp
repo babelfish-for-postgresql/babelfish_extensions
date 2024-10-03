@@ -204,14 +204,9 @@ protected:
 		antlrcpp::Any visitId(TSqlParser::IdContext *ctx) override;
 
 		// methods call (XML, hierachy, spatial)
+		antlrcpp::Any visitXml_func_arg(TSqlParser::Xml_func_argContext *ctx) override;
 		antlrcpp::Any visitXml_nodes_method(TSqlParser::Xml_nodes_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_NODES, "XML NODES", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_value_method(TSqlParser::Xml_value_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_VALUE, "XML VALUE", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_query_method(TSqlParser::Xml_query_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_exist_method(TSqlParser::Xml_exist_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_EXIST, "XML EXIST", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitXml_modify_method(TSqlParser::Xml_modify_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_value_call(TSqlParser::Xml_value_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_VALUE, "XML VALUE", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_query_call(TSqlParser::Xml_query_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_exist_call(TSqlParser::Xml_exist_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_EXIST, "XML EXIST", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitXml_modify_call(TSqlParser::Xml_modify_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitHierarchyid_methods(TSqlParser::Hierarchyid_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_HIERARCHYID_METHOD, "HIERARCHYID methods", getLineAndPos(ctx)); return visitChildren(ctx); }
 		#ifndef ENABLE_SPATIAL_TYPES
@@ -1294,9 +1289,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 
 		if (sctx->STATISTICS())
 			handle(INSTR_UNSUPPORTED_TSQL_OPTION_STATISTICS, sctx->STATISTICS(), &st_escape_hatch_session_settings);
-
-		if (sctx->xml_modify_method())
-			handle(INSTR_UNSUPPORTED_TSQL_OPTION_XML_METHOD, "xml modify method", getLineAndPos(sctx));
 	}
 
 	return visitChildren(ctx);
@@ -1518,6 +1510,17 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitId(TSqlParser::IdContext *
 		handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_IDENTITY, "$IDENTITY", getLineAndPos(ctx));
 	if (ctx->DOLLAR_ROWGUID())
 		handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_ROWGUID, "$ROWGUID", getLineAndPos(ctx));
+	return visitChildren(ctx);
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitXml_func_arg(TSqlParser::Xml_func_argContext *ctx)
+{
+	if (ctx->VALUE())
+		handle(INSTR_UNSUPPORTED_TSQL_XML_VALUE, "XML VALUE", getLineAndPos(ctx));
+	else if (ctx->QUERY())
+		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx));
+	else if (ctx->MODIFY())
+		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML MODIFY", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 

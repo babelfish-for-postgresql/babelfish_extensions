@@ -240,14 +240,16 @@ ${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "CREATE EXTENSION IF N
 ${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "GRANT ALL ON SCHEMA sys to babelfish_user;"
 ${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "ALTER USER babelfish_user CREATEDB;"
 ${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';"
+${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
 ${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "SELECT pg_reload_conf();"
 ```
 
 
-By default, the `migration_mode` is `single-db`. To deploy in `multi-db` mode, you need to modify the Babelfish configuration file before initializing the database:
+The recommended `migration_mode` is `multi-db`. To run in `single-db` mode, you need to modify the Babelfish configuration file before initializing the database:
 
 ```sh
-${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "ALTER DATABASE babelfish_db SET babelfishpg_tsql.migration_mode = 'multi-db';"
+${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';"
+${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "SELECT pg_reload_conf();"
 ```
 
 > For more information about the `migration_mode`, see [Single vs. multiple instances](https://babelfishpg.org/docs/installation/single-multiple/) and [Choosing a migration mode](https://babelfishpg.org/docs/installation/single-multiple/#choosing-a-migration-mode).

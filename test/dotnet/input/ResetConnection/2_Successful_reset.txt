@@ -1,2 +1,3 @@
 select db_name();
+select current_user;
 drop database db1;

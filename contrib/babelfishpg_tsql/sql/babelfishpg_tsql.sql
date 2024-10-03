@@ -908,7 +908,6 @@ CAST(NULL AS varchar(254)) AS remarks
 FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, sys.schemas AS t3
 WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','p','v','m') 
 AND t1.relispartition = false
-AND has_schema_privilege(t1.relnamespace, 'USAGE')
 AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
 
@@ -1457,9 +1456,9 @@ CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
 
 CASE -- cases for when they are of type identity. 
 	WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
-	THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
+	THEN CAST(PG_CATALOG.CONCAT(t1.name, '() identity') AS sys.sysname)
 	WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
-	THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
+	THEN CAST(PG_CATALOG.CONCAT(t1.name, ' identity') AS sys.sysname)
 	ELSE CAST(t1.name AS sys.sysname)
 END AS TYPE_NAME,
 
@@ -1499,8 +1498,7 @@ LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
 LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
 , sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
 , sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
-WHERE has_schema_privilege(s1.schema_id, 'USAGE')
-AND X.indislive ;
+WHERE X.indislive ;
 
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
 
@@ -1844,8 +1842,8 @@ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
-	WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
-	ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
+	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(p.proname, ';1') AS sys.nvarchar(134))
+	ELSE CAST(PG_CATALOG.concat(p.proname, ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -1858,7 +1856,6 @@ FROM pg_catalog.pg_proc p
 
 INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
 INNER JOIN sys.databases d ON d.database_id = sys.db_id()
-WHERE has_schema_privilege(s1.schema_id, 'USAGE')
 
 UNION 
 
@@ -1866,8 +1863,8 @@ SELECT CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default 
 CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
 
 CASE 
-	WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
-	ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
+	WHEN prokind = 'p' THEN cast(PG_CATALOG.concat(proname, ';1') AS sys.nvarchar(134))
+	ELSE cast(PG_CATALOG.concat(proname, ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -2451,8 +2448,8 @@ CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be
 , CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
 , CAST(
 CASE
-  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
-  ELSE CONCAT(ss.proname, ';0')
+  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(ss.proname, ';1')
+  ELSE PG_CATALOG.CONCAT(ss.proname, ';0')
 END
 AS sys.nvarchar(134)) AS PROCEDURE_NAME
 , CAST(
@@ -3587,7 +3584,7 @@ BEGIN
                     	ELSE NULL END AS int) AS [SS_DATETIME_PRECISION]
    	FROM sys.sp_sproc_columns_view v
    	LEFT OUTER JOIN sys.all_parameters AS p 
-	ON v.column_name = p.name AND p.object_id = object_id(CONCAT(@procedure_schema, '.', @procedure_name))
+	ON v.column_name = p.name AND p.object_id = object_id(PG_CATALOG.CONCAT(@procedure_schema, '.', @procedure_name))
    	WHERE v.original_procedure_name = @procedure_name
     	AND v.procedure_owner = @procedure_schema
 	AND (@parameter_name IS NULL OR column_name = @parameter_name)

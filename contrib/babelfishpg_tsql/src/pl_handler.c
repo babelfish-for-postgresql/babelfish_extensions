@@ -2926,9 +2926,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *current_db_name = get_cur_db_name();
-						const char *db_owner_name = get_db_owner_name(current_db_name);
-						const char *db_accessadmin_role = get_db_accessadmin_role_name(current_db_name);
+						char *current_db_name = get_cur_db_name();
+						char *db_owner_name = get_db_owner_name(current_db_name);
+						char *db_accessadmin_role = get_db_accessadmin_role_name(current_db_name);
 
 						if (has_privs_of_role(GetUserId(), get_role_oid(db_owner_name, false)) ||
 						    (isuser && has_privs_of_role(GetUserId(), get_role_oid(db_accessadmin_role, false))))
@@ -2945,6 +2945,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 errmsg("User does not have permission to perform this action.")));
 						}
 
+						pfree(db_owner_name);
+						pfree(db_accessadmin_role);
+						pfree(current_db_name);
 					}
 
 					/*
@@ -3377,13 +3380,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (db_name != NULL && strcmp(db_name, "") != 0)
 							{
-								Oid		db_owner = get_role_oid(get_db_owner_name(db_name), false);
-								Oid		db_accessadmin = get_role_oid(get_db_accessadmin_role_name(db_name), false);
+								char 	*db_owner_name = get_db_owner_name(db_name);
+								char 	*db_accessadmin_name = get_db_accessadmin_role_name(db_name);
+								Oid		db_owner = get_role_oid(db_owner_name, false);
+								Oid		db_accessadmin = get_role_oid(db_accessadmin_name, false);
+								pfree(db_owner_name);
+								pfree(db_accessadmin_name);
 
 								foreach(item, stmt->roles)
 								{
 									RoleSpec   *rolspec = lfirst(item);
-									char	   *user_name = get_physical_user_name(db_name, rolspec->rolename, false);
+									char	   *user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
 									const char *db_principal_type = drop_user ? "user" : "role";
 									int			role_oid = get_role_oid(user_name, true);
 									int			rolename_len = strlen(rolspec->rolename);
@@ -3451,6 +3458,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 														 errmsg("Cannot disable access to the guest user in master or tempdb.")));
 
 											alter_user_can_connect(false, rolspec->rolename, db_name);
+											
 											return;
 										}
 										else
@@ -3461,6 +3469,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 
 									pfree(rolspec->rolename);
+
 									rolspec->rolename = user_name;
 								}
 							}
@@ -3703,7 +3712,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
 						{
 							/* Execute the GRANT SCHEMA subcommands. */
-							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
+							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i], true);
 						}
 					}
 					return;
