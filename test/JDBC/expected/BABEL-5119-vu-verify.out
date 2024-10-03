@@ -748,7 +748,7 @@ GO
 CREATE SCHEMA S1;
 GO
 
-SELECT u.orig_username, SUBSTRING(a.datacl, CHARINDEX('/', a.datacl), CHARINDEX('/', a.datacl) - CHARINDEX('=', a.datacl))
+SELECT u.orig_username, SUBSTRING(a.datacl, strpos(a.datacl, '='), strpos(a.datacl, '/') - strpos(a.datacl, '='))
     FROM (
         SELECT CAST(unnest(datacl) AS TEXT) AS datacl FROM pg_database WHERE datname = CURRENT_DATABASE()
     ) AS a
@@ -758,7 +758,7 @@ SELECT u.orig_username, SUBSTRING(a.datacl, CHARINDEX('/', a.datacl), CHARINDEX(
 GO
 ~~START~~
 nvarchar#!#varchar
-dbo#!#/jdb
+dbo#!#=CTc
 ~~END~~
 
 -- terminate-tsql-conn database=BABEL5119_db
