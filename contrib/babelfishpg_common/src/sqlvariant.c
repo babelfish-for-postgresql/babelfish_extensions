@@ -293,17 +293,23 @@ do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
 			tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 			if (!HeapTupleIsValid(tp))
 				elog(ERROR, "cache lookup failed for function %u", funcid);
+
 			procstruct = (Form_pg_proc) GETSTRUCT(tp);
 			nargs = procstruct->pronargs;
 			Assert(nargs < 2 || procstruct->proargtypes.values[1] == INT4OID);
 			Assert(nargs < 3 || procstruct->proargtypes.values[2] == BOOLOID);
 
-			if(nargs == 1)
-				return OidFunctionCall1Coll(funcid, coll, value);
-			if(nargs == 2)
-				return OidFunctionCall2Coll(funcid, coll, value, (Datum) typmod);
-
-			return OidFunctionCall3Coll(funcid, coll, value, (Datum) typmod, (Datum) ccontext == COERCION_EXPLICIT);
+            switch (nargs) 
+			{
+                case 1:
+                    return OidFunctionCall1Coll(funcid, coll, value);
+                case 2:
+                    return OidFunctionCall2Coll(funcid, coll, value, (Datum) typmod);
+                case 3:
+                    return OidFunctionCall3Coll(funcid, coll, value, (Datum) typmod, (Datum) (ccontext == COERCION_EXPLICIT));
+                default:
+                    elog(ERROR, "Unsupported number of arguments (%d) for function %u", nargs, funcid);
+    		}
 			break;
 		case COERCION_PATH_COERCEVIAIO:
 			*cast_by_relabel = false;
