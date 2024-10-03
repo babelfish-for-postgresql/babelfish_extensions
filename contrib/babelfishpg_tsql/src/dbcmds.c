@@ -271,7 +271,7 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (IS_FIXED_DB_PRINCIPAL(user_name))
+		if (!IS_FIXED_DB_PRINCIPAL(user_name))
 		{
 			appendStringInfo(&query, "DROP OWNED BY dummy CASCADE; ");
 			appendStringInfo(&query, "DROP ROLE dummy; ");

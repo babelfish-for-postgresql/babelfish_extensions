@@ -1815,7 +1815,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	Assert(original_user_name);
 
 	/* only members of db_owner can alter drop members of fixed db roles */
-	if (strcmp(original_user_name, DB_ACCESSADMIN) == 0 &&
+	if (IS_FIXED_DB_PRINCIPAL(original_user_name) &&
 	    !has_privs_of_role(GetUserId(), get_db_owner_oid(db_name, false)))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

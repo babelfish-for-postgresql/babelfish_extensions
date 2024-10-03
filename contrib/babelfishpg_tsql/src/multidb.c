@@ -1308,7 +1308,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 	if (SINGLE_DB == get_migration_mode())
 	{
 		/* check that db_name is not "master", "tempdb", or "msdb" */
-		if (IS_BBF_BUILT_IN_DB(db_name))
+		if (!IS_BBF_BUILT_IN_DB(db_name))
 		{
 			if (IS_FIXED_DB_PRINCIPAL(user_name)
 				&& (suppress_role_error || user_exists_for_db(db_name, new_user_name)))

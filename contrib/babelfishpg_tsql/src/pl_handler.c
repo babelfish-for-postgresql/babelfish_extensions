@@ -3381,10 +3381,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 								foreach(item, stmt->roles)
 								{
-									RoleSpec   *rolspec = lfirst(item);
-									char	   *user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
-									const char *db_principal_type = drop_user ? "user" : "role";
-									int			role_oid = get_role_oid(user_name, true);
+									RoleSpec	*rolspec = lfirst(item);
+									char		*user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
+									const char	*db_principal_type = drop_user ? "user" : "role";
+									int		role_oid = get_role_oid(user_name, true);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
 									    (drop_user && is_database_principal(role_oid, true) != BBF_USER) ||      /* Found but not a user in current logical db */
