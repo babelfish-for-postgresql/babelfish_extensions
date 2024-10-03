@@ -3028,8 +3028,7 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 	{
 		char	   *grantee_name = (char *) lfirst(lc);
 
-		if (strcmp(grantee_name, "dbo") == 0 || strcmp(grantee_name, "db_owner") == 0
-			|| strcmp(grantee_name, login) == 0)
+		if (IS_FIXED_DB_PRINCIPAL(grantee_name) || strcmp(grantee_name, login) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Cannot grant or revoke permissions to dbo, db_owner or yourself.")));
