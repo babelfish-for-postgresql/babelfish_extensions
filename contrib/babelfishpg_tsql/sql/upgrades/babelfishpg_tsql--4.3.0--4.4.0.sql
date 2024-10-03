@@ -10596,6 +10596,48 @@ FROM (
 ) p2
 WHERE p1.oid = p2.oid;
 
+
+UPDATE pg_proc p1
+SET probin = (
+    SELECT (
+        jsonb_set(
+            probin::jsonb,
+            '{typmod_array}',
+            to_jsonb(
+                (
+                    SELECT jsonb_agg(
+                        CASE
+                            WHEN p2.proallargtypes is null AND p2.proargtypes[b-1] is not null THEN
+                                CASE
+                                    WHEN a::varchar = '-8000' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid) THEN '-1'
+                                    WHEN a::varchar = '-1' AND p2.proargtypes[b-1] = ('sys.smalldatetime'::regtype)::oid THEN '0'
+                                    WHEN a::varchar = '-1' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.binary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.bpchar'::regtype)::oid) THEN '1'
+                                    ELSE a::varchar
+                                END
+                            WHEN p2.proallargtypes is null AND p2.prorettype is not null THEN
+                                CASE
+                                    WHEN a::varchar = '-8000' AND (p2.prorettype = ('sys.varchar'::regtype)::oid OR p2.prorettype = ('sys.nvarchar'::regtype)::oid OR p2.prorettype = ('sys.varbinary'::regtype)::oid) THEN '-1'
+                                    WHEN a::varchar = '-1' AND p2.prorettype = ('sys.smalldatetime'::regtype)::oid THEN '0'
+                                    WHEN a::varchar = '-1' AND (p2.prorettype = ('sys.varchar'::regtype)::oid OR p2.prorettype = ('sys.nvarchar'::regtype)::oid OR p2.prorettype = ('sys.varbinary'::regtype)::oid OR p2.prorettype = ('sys.nchar'::regtype)::oid OR p2.prorettype = ('sys.binary'::regtype)::oid OR p2.prorettype = ('sys.bpchar'::regtype)::oid) THEN '1'
+                                    ELSE a::varchar
+                                END
+                            ELSE a::varchar
+                        END
+                    )
+                    FROM jsonb_array_elements_text(probin::jsonb->'typmod_array')  WITH ORDINALITY AS elem(a,b)
+                )
+            )
+        )::text
+    )
+)
+FROM (
+    SELECT p.oid, p.proargtypes, p.prorettype, p.proallargtypes
+    FROM pg_proc p
+    INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p.pronamespace::regnamespace::name
+    WHERE p.prolang = (SELECT oid FROM pg_language WHERE lanname = 'pltsql') and p.prokind = 'f'
+) p2
+WHERE p1.oid = p2.oid;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
