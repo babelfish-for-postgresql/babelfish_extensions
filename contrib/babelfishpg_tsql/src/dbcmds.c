@@ -271,7 +271,7 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (!IS_FIXED_DB_PRINCIPAL(user_name))
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
 		{
 			appendStringInfo(&query, "DROP OWNED BY dummy CASCADE; ");
 			appendStringInfo(&query, "DROP ROLE dummy; ");
@@ -305,7 +305,7 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (!IS_FIXED_DB_PRINCIPAL(user_name))
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
 		{
 			stmt = parsetree_nth_stmt(stmt_list, i++);
 			update_DropOwnedStmt(stmt, list_make1(user_name));
