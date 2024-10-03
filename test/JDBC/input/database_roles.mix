@@ -286,13 +286,13 @@ go
 create database db1;
 go
 
-select rolname, login_name, orig_username, database_name, default_schema_name from babelfish_authid_user_ext where database_name = 'db1';
+select rolname, login_name, orig_username, database_name, default_schema_name from babelfish_authid_user_ext where database_name = 'db1' order by rolname;
 go
 
 drop database db1;
 go
 
-select rolname, login_name, orig_username, database_name, default_schema_name from babelfish_authid_user_ext where database_name = 'db1';
+select rolname, login_name, orig_username, database_name, default_schema_name from babelfish_authid_user_ext where database_name = 'db1' order by rolname;
 go
 
 -- psql user=l1 password=123

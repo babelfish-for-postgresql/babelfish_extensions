@@ -1315,7 +1315,9 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
 		{
 			if (((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
-				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0)) 
+				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0) ||
+				(strlen(user_name) == 13 && strncmp(user_name, "db_datareader", 13) == 0) ||
+				(strlen(user_name) == 13 && strncmp(user_name, "db_datawriter", 13) == 0))
 				&& (suppress_role_error || user_exists_for_db(db_name, new_user_name)))
 			{
 				return new_user_name;
@@ -1429,7 +1431,7 @@ get_db_datareader_name_by_mode(const char *dbname, MigrationMode mode)
 	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master")
 	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
 	{
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "_db_datareader");
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_datareader");
 	}
 	else
 	{
@@ -1455,7 +1457,7 @@ get_db_datawriter_name_by_mode(const char *dbname, MigrationMode mode)
 	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master")
 	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
 	{
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "_db_datawriter");
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_datawriter");
 	}
 	else
 	{
