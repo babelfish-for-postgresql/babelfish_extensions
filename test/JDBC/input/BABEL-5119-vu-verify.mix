@@ -366,7 +366,7 @@ GO
 -- terminate-tsql-conn user=login_babel5119_2 password=12345678
 
 -- tsql database=BABEL5119_db
-CREATE SCHEMA S1;
+CREATE SCHEMA BABEL5119_schema;
 GO
 
 SELECT u.orig_username, SUBSTRING(a.datacl, strpos(a.datacl, '='), strpos(a.datacl, '/') - strpos(a.datacl, '='))
