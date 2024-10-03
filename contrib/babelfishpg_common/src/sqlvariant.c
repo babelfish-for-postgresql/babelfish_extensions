@@ -18,6 +18,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_operator.h"
 #include "commands/dbcommands.h"
@@ -277,7 +278,10 @@ do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
 	CoercionPathType path;
 	Oid			typioparam;
 	bool		isVarlena;
-
+	
+	HeapTuple tp;
+	Form_pg_proc procstruct;
+	int nargs = 0;
 	path = find_coercion_pathway(target_type, source_type, ccontext, &funcid);
 
 
@@ -285,6 +289,20 @@ do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
 	{
 		case COERCION_PATH_FUNC:
 			*cast_by_relabel = false;
+
+			tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+			if (!HeapTupleIsValid(tp))
+				elog(ERROR, "cache lookup failed for function %u", funcid);
+			procstruct = (Form_pg_proc) GETSTRUCT(tp);
+			nargs = procstruct->pronargs;
+			Assert(nargs < 2 || procstruct->proargtypes.values[1] == INT4OID);
+			Assert(nargs < 3 || procstruct->proargtypes.values[2] == BOOLOID);
+
+			if(nargs == 1)
+				return OidFunctionCall1Coll(funcid, coll, value);
+			if(nargs == 2)
+				return OidFunctionCall2Coll(funcid, coll, value, (Datum) typmod);
+
 			return OidFunctionCall3Coll(funcid, coll, value, (Datum) typmod, (Datum) ccontext == COERCION_EXPLICIT);
 			break;
 		case COERCION_PATH_COERCEVIAIO:
