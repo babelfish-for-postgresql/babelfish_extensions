@@ -1374,9 +1374,9 @@ get_dbo_role_name_by_mode(const char *dbname, MigrationMode mode)
 
 	Assert(dbname != NULL);
 
-	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master") 
+	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master")
 	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
-	{	
+	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
 	}
 	else
@@ -1417,6 +1417,58 @@ char *
 get_db_owner_name(const char *dbname)
 {
 	return get_db_owner_name_by_mode(dbname, get_migration_mode());
+}
+
+char *
+get_db_datareader_name_by_mode(const char *dbname, MigrationMode mode)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master")
+	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "_db_datareader");
+	}
+	else
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_datareader", dbname);
+		truncate_identifier(name, strlen(name), false);
+	}
+	return name;
+}
+
+char *
+get_db_datareader_name(const char *dbname)
+{
+	return get_db_datareader_name_by_mode(dbname, get_migration_mode());
+}
+
+char *
+get_db_datawriter_name_by_mode(const char *dbname, MigrationMode mode)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master")
+	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "_db_datawriter");
+	}
+	else
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_datawriter", dbname);
+		truncate_identifier(name, strlen(name), false);
+	}
+	return name;
+}
+
+char *
+get_db_datawriter_name(const char *dbname)
+{
+	return get_db_datawriter_name_by_mode(dbname, get_migration_mode());
 }
 
 char *

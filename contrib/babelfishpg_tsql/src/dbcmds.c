@@ -48,7 +48,9 @@ Oid sys_babelfish_db_seq_oid = InvalidOid;
 
 static Oid get_sys_babelfish_db_seq_oid(void);
 static List *gen_createdb_subcmds(const char *dbname,
-								  const char *owner);
+								  const char *owner,
+								  const char *db_datareader,
+								  const char *db_datawriter);
 static List *gen_dropdb_subcmds(const char *dbname,
 								List *db_users);
 static void add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname);
@@ -75,7 +77,9 @@ get_sys_babelfish_db_seq_oid()
  * Generate subcmds for CREATE DATABASE. Note 'guest' can be NULL.
  */
 static List *
-gen_createdb_subcmds(const char *dbname, const char *owner)
+gen_createdb_subcmds(const char *dbname, const char *owner,
+					const char *db_datareader,
+					const char *db_datawriter)
 {
 	StringInfoData query;
 	List           *res;
@@ -105,6 +109,8 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	 */
 	initStringInfo(&query);
 
+	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
+	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy CREATEROLE INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
@@ -134,13 +140,13 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	if (guest)
 	{
 		if (!owner_is_sa)
-			expected_stmt_num = list_length(logins) > 0 ? 10 : 9;	
+			expected_stmt_num = list_length(logins) > 0 ? 12 : 11;
 		else
-			expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
+			expected_stmt_num = list_length(logins) > 0 ? 11 : 10;
 	}
 	else
 	{
-		expected_stmt_num = 6;
+		expected_stmt_num = 8;
 
 		if (!owner_is_sa)
 			expected_stmt_num++;
@@ -153,6 +159,12 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 						expected_stmt_num, list_length(res))));
 
 	/* Replace dummy elements in parsetree with real values */
+	stmt = parsetree_nth_stmt(res, i++);
+	update_CreateRoleStmt(stmt, db_datareader, NULL, NULL);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_CreateRoleStmt(stmt, db_datawriter, NULL, NULL);
+
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, db_owner, NULL, NULL);
 
@@ -203,16 +215,22 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 static void
 add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 {
-	const char     *dbo;
-	const char     *db_owner;
-	const char     *guest;
+	const char		*dbo;
+	const char		*db_owner;
+	const char		*guest;
+	const char		*db_datareader;
+	const char		*db_datawriter;
 
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
 	guest = get_guest_role_name(dbname);
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
 
 	add_to_bbf_authid_user_ext(dbo, "dbo", dbname, "dbo", NULL, false, true, false);
 	add_to_bbf_authid_user_ext(db_owner, "db_owner", dbname, NULL, NULL, true, true, false);
+	add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
+	add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
 
 	/*
 	 * For master, tempdb and msdb databases, the guest user will be
@@ -234,17 +252,21 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	List	   *stmt_list;
 	ListCell   *elem;
 	Node	   *stmt;
-	int         expected_stmts = 6;
+	int         expected_stmts = 8;
 	int         i = 0;
 	const char *dbo;
 	const char *db_owner;
 	const char *schema;
 	const char *guest_schema;
+	const char *db_datareader;
+	const char *db_datawriter;
 
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
 	schema = get_dbo_schema_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "DROP SCHEMA dummy CASCADE; ");
@@ -254,7 +276,7 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0 && strcmp(user_name, db_datareader) != 0 && strcmp(user_name, db_datawriter) != 0)
 		{
 			appendStringInfo(&query, "DROP OWNED BY dummy CASCADE; ");
 			appendStringInfo(&query, "DROP ROLE dummy; ");
@@ -264,6 +286,8 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	/* Then drop db_owner and dbo in that order */
 	appendStringInfo(&query, "DROP OWNED BY dummy, dummy CASCADE; ");
 	appendStringInfo(&query, "REVOKE CREATE, CONNECT, TEMPORARY ON DATABASE dummy FROM dummy; ");
+	appendStringInfo(&query, "DROP ROLE dummy; ");
+	appendStringInfo(&query, "DROP ROLE dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
 
@@ -285,7 +309,7 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0 && strcmp(user_name, db_datareader) != 0 && strcmp(user_name, db_datawriter) != 0)
 		{
 			stmt = parsetree_nth_stmt(stmt_list, i++);
 			update_DropOwnedStmt(stmt, list_make1(user_name));
@@ -305,6 +329,11 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	update_DropRoleStmt(stmt, db_owner);
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, dbo);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropRoleStmt(stmt, db_datareader);
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropRoleStmt(stmt, db_datawriter);
 
 	return stmt_list;
 }
@@ -469,6 +498,8 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	const char  *old_createrole_self_grant;
 	ListCell    *option;
 	const char  *database_collation_name = NULL;
+	const char *db_datareader;
+	const char *db_datawriter;
 
 	/* Check options */
 	foreach(option, options)
@@ -564,7 +595,10 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	/* Advance cmd counter to make the database visible */
 	CommandCounterIncrement();
 
-	parsetree_list = gen_createdb_subcmds(dbname, owner);
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
+
+	parsetree_list = gen_createdb_subcmds(dbname, owner, db_datareader, db_datawriter);
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	old_createrole_self_grant = pstrdup(GetConfigOption("createrole_self_grant", false, true));
@@ -606,9 +640,9 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 			wrapper->stmt_location = 0;
 			stmt_number++;
 			if (list_length(parsetree_list) == stmt_number)
-				wrapper->stmt_len = 19;
+				wrapper->stmt_len = 21;
 			else
-				wrapper->stmt_len = 18;
+				wrapper->stmt_len = 20;
 
 			/* do this step */
 			ProcessUtility(wrapper,
