@@ -508,7 +508,7 @@ CAST('SERVER ROLE' AS sys.nvarchar(128)) AS type,
 CAST ('GRANT OR DENY' as sys.nvarchar(128)) as usage
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
 WHERE Ext.type = 'R'
-AND bbf_is_member_of_role_nosuper(sys.suser_id(), sys.suser_id(Ext.orig_loginname));
+AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid);
 
 GRANT SELECT ON sys.login_token TO PUBLIC;
 

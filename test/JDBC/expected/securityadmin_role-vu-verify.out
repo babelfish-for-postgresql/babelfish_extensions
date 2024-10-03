@@ -730,7 +730,7 @@ go
 
 
 -- DMLS on object permission denied
-Alter user securityadmin_l2 with DEFAULT_SCHEMA=securityadmin_scm1
+Alter user no_securityadmin_user1 with DEFAULT_SCHEMA=securityadmin_scm1
 go
 ~~ERROR (Code: 33557097)~~
 
