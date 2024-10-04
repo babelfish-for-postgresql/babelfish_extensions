@@ -9,6 +9,9 @@
     -- ALTER default_schema for any user in database
     -- RENAME user execpt for members of db_owner
     -- CREATE SCHEMA for self or other users in database
+-- bbf dump does not dump password so reset the password
+ALTER LOGIN babel_5136_l1 WITH PASSWORD = '12345678'
+GO
 -- CREATE A USER WITH db_accessadmin privilege in DATABASE babel_5136
 USE master
 GO
