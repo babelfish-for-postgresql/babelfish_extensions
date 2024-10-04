@@ -254,7 +254,7 @@ rewrite_object_refs(Node *stmt)
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("Cannot use the special principal '%s'", principal_name)));
 
-				physical_principal_name = get_physical_user_name(db_name, principal_name, false, false);
+				physical_principal_name = get_physical_user_name(db_name, principal_name, false, true);
 
 				/* Forbidden ALTER ROLE db_owner ADD/DROP MEMBER if MEMBER is a T-SQL database role */
 				if ((strcmp(role_name, "db_owner") == 0) && is_role(get_role_oid(physical_principal_name, true)))

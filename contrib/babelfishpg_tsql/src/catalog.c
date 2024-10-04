@@ -1042,7 +1042,7 @@ get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_o
 	ScanKeyData key;
 	TableScanDesc scan;
 	List	   *db_users_list = NIL;
-	Oid			dbo_oid = get_role_oid(dbo_name, false);
+	Oid		dbo_oid = get_role_oid(dbo_name, false);
 
 	if (!db_name)
 		return NULL;
@@ -1062,7 +1062,7 @@ get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_o
 	{
 		char	   *user_name;
 		Form_authid_user_ext userform;
-		Oid			user_oid;
+		Oid	    user_oid;
 
 		userform = (Form_authid_user_ext) GETSTRUCT(tuple);
 		user_name = pstrdup(NameStr(userform->rolname));
@@ -3124,7 +3124,7 @@ get_login_for_user(Oid user_id, const char *physical_schema_name)
 static void
 create_guest_role_for_db(const char *dbname)
 {
-	char *guest = get_guest_role_name(dbname);
+	char	   *guest = get_guest_role_name(dbname);
 	const char *db_owner_role = get_db_owner_role_name(dbname);
 	List	   *logins = NIL;
 	List	   *res;

@@ -1585,14 +1585,14 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 
 	if (new_user_name)
 	{
-		StringInfoData query;
-		List	   *parsetree_list;
-		ListCell   *parsetree_item;
-		Node	   *n;
+		StringInfoData	query;
+		List		*parsetree_list;
+		ListCell	*parsetree_item;
+		Node		*n;
 
-		Oid db_owner_id, old_username_id;
-		char*	old_obj_rolname = NULL;
-		char*	new_obj_rolname = NULL;
+		Oid 	db_owner_id, old_username_id;
+		char	*old_obj_rolname = NULL;
+		char	*new_obj_rolname = NULL;
 		bool	is_db_owner_member = false;
 
 		initStringInfo(&query);
@@ -2614,17 +2614,17 @@ get_obj_role(const char *rolname)
 static List
 *gen_alter_dbowner_add_subcmds(const char *rolname, const char* dbname)
 {
-	StringInfoData query;
+	StringInfoData	query;
 	List		*stmt_list;
 	Node		*stmt;
-	int			expected_stmts = 7;
-	int			i = 0;
-	int			schemas = 0;
+	int		expected_stmts = 7;
+	int		i = 0;
+	int		schemas = 0;
 	const char	*db_owner_role = get_db_owner_role_name(dbname);
 	char		*rolname_obj = get_obj_role(rolname);
 	HeapTuple	tuple;
-	SysScanDesc sscan;
-	ScanKeyData skey;
+	SysScanDesc	sscan;
+	ScanKeyData	skey;
 	Relation	rel;
 
 	initStringInfo(&query);
@@ -2639,12 +2639,11 @@ static List
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(get_role_oid(rolname, false)));
 
-	sscan = systable_beginscan(rel, InvalidOid, false,
-							   NULL, 1, &skey);
+	sscan = systable_beginscan(rel, InvalidOid, false, NULL, 1, &skey);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
-		char	   *schema_name;
+		char		  *schema_name;
 		Form_pg_namespace namespaceform;
 
 		namespaceform = (Form_pg_namespace) GETSTRUCT(tuple);
@@ -2743,7 +2742,7 @@ static List
 
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
-		char	   *schema_name;
+		char		  *schema_name;
 		Form_pg_namespace namespaceform;
 
 		namespaceform = (Form_pg_namespace) GETSTRUCT(tuple);
@@ -2821,7 +2820,7 @@ exec_alter_dbowner_subcmds(GrantRoleStmt *stmt)
 	/* Run all subcommands */
 	foreach(parsetree_item, parsetree_list)
 	{
-		Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+		Node	    *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 		PlannedStmt *wrapper;
 
 		/* need to make a wrapper PlannedStmt */
@@ -2861,13 +2860,13 @@ is_grantee_role_db_owner(GrantRoleStmt *stmt)
 void
 change_object_owner_if_db_owner()
 {
-	Oid				dbo_id = InvalidOid;
+	Oid		dbo_id = InvalidOid;
 	StringInfoData	query;
-	char			*rolname = NULL;
-	char 			*obj_rolname = NULL;
-	Oid				role_oid = GetUserId();
-	List			*parsetree_list;
-	Node			*n;
+	char		*rolname = NULL;
+	char 		*obj_rolname = NULL;
+	Oid		role_oid = GetUserId();
+	List		*parsetree_list;
+	Node		*n;
 	PlannedStmt 	*wrapper;
 
 	/* TSQL specific behavior */
@@ -2934,14 +2933,14 @@ PG_FUNCTION_INFO_V1(bbf_is_role_member);
 Datum
 bbf_is_role_member(PG_FUNCTION_ARGS)
 {
-	char*		username;
-	char*		rolename;
+	char	*username;
+	char	*rolename;
 
-	Oid			db_owner_id;
-	Oid			username_id;
-	Oid			rolename_id;
+	Oid	db_owner_id;
+	Oid	username_id;
+	Oid	rolename_id;
 
-	char*		dbname = get_cur_db_name();
+	char	*dbname = get_cur_db_name();
 
 	username = NameStr(*PG_GETARG_NAME(0));
 	rolename = NameStr(*PG_GETARG_NAME(1));
@@ -2970,17 +2969,17 @@ bbf_is_role_member(PG_FUNCTION_ARGS)
 static void
 drop_db_owner_related_roles(Oid roleid, const char* rolname)
 {
-	Oid		db_owner_id;
+	Oid	db_owner_id;
 	char	*obj_rolname = NULL;
 
 	db_owner_id = get_role_oid(get_db_owner_name(get_cur_db_name()), false);
 
 	if (is_member_of_role(roleid, db_owner_id) && (roleid != InvalidOid))
 	{
-		StringInfoData query;
+		StringInfoData	query;
 		List		*parsetree_list;
 		Node		*n;
-		PlannedStmt *wrapper;
+		PlannedStmt	*wrapper;
 
 		initStringInfo(&query);
 		appendStringInfo(&query, "DROP ROLE dummy; ");
