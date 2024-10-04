@@ -73,6 +73,7 @@ typedef ResetConnectionData *ResetConnection;
 TdsRequestCtrlData *TdsRequestCtrl = NULL;
 
 ResetConnection resetCon = NULL;
+bool resetTdsConnectionFlag = false;
 
 /* Local functions */
 static void ResetTDSConnection(void);
@@ -99,7 +100,6 @@ TdsDiscardAll()
 
 	/* Closing portals might run user-defined code, so do that first. */
 	PortalHashTableDeleteAll();
-	SetPGVariable("session_authorization", NIL, false);
 	ResetAllOptions();
 	DropAllPreparedStatements();
 	Async_UnlistenAll();
@@ -154,13 +154,32 @@ ResetTDSConnection(void)
 	TdsResetCache();
 	TdsResponseReset();
 	TdsResetBcpOffset();
-	SetConfigOption("default_transaction_isolation", isolationOld,
-					PGC_BACKEND, PGC_S_CLIENT);
-
+	/* Retore previous isolation level when not called by sys.sp_reset_connection. */
+	if (!resetTdsConnectionFlag)
+	{
+		SetConfigOption("default_transaction_isolation", isolationOld,
+						PGC_BACKEND, PGC_S_CLIENT);
+	}
 	tvp_lookup_list = NIL;
 
-	/* send an environement change token */
-	TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+	/* Send an environement change token is its not called via sys.sp_reset_connection procedure. */
+	if (!resetTdsConnectionFlag)
+	{
+		TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+	}
+}
+
+/*
+ * SetResetTDSConnectionFlag - Sets reset tds connection flag
+ */
+void SetResetTDSConnectionFlag()
+{
+	resetTdsConnectionFlag = true;	
+}
+
+bool GetResetTDSConnectionFlag()
+{
+	return resetTdsConnectionFlag;	
 }
 
 /*
@@ -274,7 +293,16 @@ GetTDSRequest(bool *resetProtocol)
 			resetCon->messageType = messageType;
 			resetCon->status = (status & ~TDS_PACKET_HEADER_STATUS_RESETCON);
 
+			/*
+			 * Set resetTdsConnectionFlag to true so that we avoid
+			 * sending any env change token for the USE DB command
+			 * which will get executed.
+			 */
+			resetTdsConnectionFlag = true;
+			TdsSetDbContext();
+			resetTdsConnectionFlag = false;
 			ResetTDSConnection();
+
 			TdsErrorContext->err_text = "Fetching TDS Request";
 			*resetProtocol = true;
 			return NULL;
@@ -662,6 +690,17 @@ TdsSocketBackend(void)
 				case TDS_REQUEST_PHASE_FLUSH:
 					{
 						TdsErrorContext->phase = "TDS_REQUEST_PHASE_FLUSH";
+
+						if (resetTdsConnectionFlag)
+						{
+							/*
+							 * We must set the Db Context before resetting TDS state,
+							 * becasue we need the existing TDS state to flush any errors
+							 * along with the reset.
+							 */
+							TdsSetDbContext();
+						}
+
 						/* Send the response now */
 						TdsFlush();
 
@@ -673,6 +712,12 @@ TdsSocketBackend(void)
 
 						/* Ready to fetch the next request */
 						TdsRequestCtrl->phase = TDS_REQUEST_PHASE_FETCH;
+
+						if (resetTdsConnectionFlag)
+						{
+							ResetTDSConnection();
+							resetTdsConnectionFlag = false;
+						}
 
 						break;
 					}

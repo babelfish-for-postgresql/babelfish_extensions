@@ -1,0 +1,5446 @@
+SELECT CASE 1
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+ntext
+Registration Card - Standard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+بطاقة التسجيل - قياسية                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+登録カード–標準                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 4
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 5
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 6
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+ntext
+Registration Card - Standard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+بطاقة التسجيل - قياسية                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+登録カード–標準                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 4
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 5
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 6
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+   WHEN 5 THEN COL5
+   WHEN 6 THEN COL6
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+ntext
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+nvarchar
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+nvarchar
+Registration Card - Standard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+بطاقة التسجيل - قياسية                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+登録カード–標準                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+nvarchar
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 4
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+nvarchar
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+nvarchar
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+nvarchar
+Registration Card - Standard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+بطاقة التسجيل - قياسية                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+登録カード–標準                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+nvarchar
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 4
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+   WHEN 3 THEN COL3
+   WHEN 4 THEN COL4
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+nvarchar
+Registration Card - Standard
+بطاقة التسجيل - قياسية
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+nchar
+Registration Card - Standard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+بطاقة التسجيل - قياسية                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+登録カード–標準                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+nchar
+Registration Card - Standard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+بطاقة التسجيل - قياسية                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+登録カード–標準                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+END AS RESULT FROM BABEL_5103_T1
+GO
+~~START~~
+nchar
+Registration Card - Standard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+بطاقة التسجيل - قياسية                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+登録カード–標準                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN COL1 
+   WHEN 2 THEN COL2
+END AS RESULT FROM BABEL_5103_V1
+GO
+~~START~~
+nchar
+Registration Card - Standard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+بطاقة التسجيل - قياسية                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+登録カード–標準                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+~~END~~
+
+
+-- Function call
+SELECT BABEL_5103_F1('REGULAR');
+GO
+~~START~~
+nvarchar
+REGULAR
+~~END~~
+
+
+SELECT BABEL_5103_F1(N'登録カード–標準');
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT BABEL_5103_F1(N'بطاقة التسجيل - قياسية');
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+-- selecting from view
+SELECT * FROM BABEL_5103_V2
+GO
+~~START~~
+varchar
+?????–??
+~~END~~
+
+
+-- single branch
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+char
+char                                                                                                
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+char                                                                                                
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char
+~~END~~
+
+
+-- single branch with multibyte character
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+char
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+char
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+登録カード–標準                                                                                            
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+?????–??
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+-- multiple branch without NULL one being NVARCHAR
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char1                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char1                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+-- multiple branch without NULL one being VARCHAR
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+?????–??
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+登録カード–標準                                                                                            
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char1                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+char1                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+登録カード–標準                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+-- multiple branch without NULL one being CHAR
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS Char(100))
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS CHAR(100))
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS CHAR(100))
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS Char(100))
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS CHAR(100))
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS CHAR(100))
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+char1                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+登録カード–標準                                                                                            
+~~END~~
+
+
+-- multiple branch without NULL one being NCHAR
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NCHAR(100))
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS NCHAR(100))
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS NCHAR(100))
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+-- multiple branch without NULL one being TEXT
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS TEXT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS TEXT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS TEXT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS TEXT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+-- multiple branch with one being string literal
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS Char(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS TEXT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS Char(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS Char(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS Char(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS TEXT)
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+abc
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char                                                                                                
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS Char(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS TEXT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS Char(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS Char(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS Char(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS TEXT)
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+登録カード–標準                                                                                            
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+登録カード–標準                                                                                            
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS Char(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS TEXT)
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS Char(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS TEXT)
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS Char(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 3
+   WHEN 1 THEN N'登録カード–標準'
+   WHEN 2 THEN CAST('char0' AS TEXT)
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+-- multiple branches one being NULL
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+char
+char                                                                                                
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+char                                                                                                
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS Char(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS TEXT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS Char(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+????? ??????? - ??????                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية                                                                              
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS Char(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+?????–??                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準                                                                                            
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+登録カード–標準
+~~END~~
+
+
+-- NULL tests
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+char
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NVARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS VARCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS Char(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS CHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS NCHAR(100))
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST('char0' AS TEXT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS Char(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+   WHEN 3 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NVARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS Char(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN NULL
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+   WHEN 3 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+<NULL>
+~~END~~
+
+
+-- other datatypes then string 
+SELECT CASE 1
+   WHEN 1 THEN CAST(123 AS INT)
+   WHEN 2 THEN CAST(456 AS DECIMAL(10, 2))
+END AS RESULT
+GO
+~~START~~
+numeric
+123
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(123.456 AS FLOAT)
+   WHEN 2 THEN CAST(789.123 AS NUMERIC(10, 3))
+END AS RESULT
+GO
+~~START~~
+float
+123.456
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(123 AS SMALLINT)
+   WHEN 2 THEN CAST(456789123 AS BIGINT)
+END AS RESULT
+GO
+~~START~~
+bigint
+123
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(123 AS SMALLINT)
+   WHEN 2 THEN CAST(456 AS DECIMAL(10, 2))
+END AS RESULT
+GO
+~~START~~
+numeric
+123
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(123.456 AS BIGINT)
+   WHEN 2 THEN CAST(789.123 AS NUMERIC(10, 3))
+END AS RESULT
+GO
+~~START~~
+numeric
+123.00000000
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(123 AS SMALLINT)
+   WHEN 2 THEN CAST(456789123 AS BIGINT)
+END AS RESULT
+GO
+~~START~~
+bigint
+123
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('2024-01-01' AS DATE)
+   WHEN 2 THEN CAST('2024-09-27 12:34:56' AS DATETIME)
+END AS RESULT
+GO
+~~START~~
+datetime
+2024-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('12:34:56' AS TIME)
+   WHEN 2 THEN CAST('2024-09-27 12:34:56.1234567' AS DATETIME2(7))
+END AS RESULT
+GO
+~~START~~
+datetime2
+1900-01-01 12:34:56.0000000
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(1 AS BIT)
+   WHEN 2 THEN CAST(0 AS BIT)
+END AS RESULT
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(0x123456 AS BINARY(3))
+   WHEN 2 THEN CAST(0xABCDEF AS VARBINARY(6))
+END AS RESULT
+GO
+~~START~~
+varbinary
+123456
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(1000.00 AS MONEY)
+   WHEN 2 THEN CAST(100.00 AS SMALLMONEY)
+END AS RESULT
+GO
+~~START~~
+money
+1000.0000
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(123 AS INT)
+   WHEN 2 THEN CAST(456 AS DECIMAL(10, 2))
+END AS RESULT
+GO
+~~START~~
+numeric
+456.00
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(123.456 AS FLOAT)
+   WHEN 2 THEN CAST(789.123 AS NUMERIC(10, 3))
+END AS RESULT
+GO
+~~START~~
+float
+789.123
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(123 AS SMALLINT)
+   WHEN 2 THEN CAST(456789123 AS BIGINT)
+END AS RESULT
+GO
+~~START~~
+bigint
+456789123
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(123 AS SMALLINT)
+   WHEN 2 THEN CAST(456 AS DECIMAL(10, 2))
+END AS RESULT
+GO
+~~START~~
+numeric
+456.00
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(123.456 AS BIGINT)
+   WHEN 2 THEN CAST(789.123 AS NUMERIC(10, 3))
+END AS RESULT
+GO
+~~START~~
+numeric
+789.123
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(123 AS SMALLINT)
+   WHEN 2 THEN CAST(456789123 AS BIGINT)
+END AS RESULT
+GO
+~~START~~
+bigint
+456789123
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('2024-01-01' AS DATE)
+   WHEN 2 THEN CAST('2024-09-27 12:34:56' AS DATETIME)
+END AS RESULT
+GO
+~~START~~
+datetime
+2024-09-27 12:34:56.0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('12:34:56' AS TIME)
+   WHEN 2 THEN CAST('2024-09-27 12:34:56.1234567' AS DATETIME2(7))
+END AS RESULT
+GO
+~~START~~
+datetime2
+2024-09-27 12:34:56.1234570
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(1 AS BIT)
+   WHEN 2 THEN CAST(0 AS BIT)
+END AS RESULT
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(0x123456 AS BINARY(3))
+   WHEN 2 THEN CAST(0xABCDEF AS VARBINARY(6))
+END AS RESULT
+GO
+~~START~~
+varbinary
+ABCDEF
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(1000.00 AS MONEY)
+   WHEN 2 THEN CAST(100.00 AS SMALLMONEY)
+END AS RESULT
+GO
+~~START~~
+money
+100.0000
+~~END~~
+
+
+
+-- Collation tests
+-- FIX ME: Following test cases shows behaviour mismatch,
+-- When we compare N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+-- with N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS  for CASE expression,
+-- Gives 'true' (as used in PG), whereas it should give 'false' (as in TSQL).
+SELECT CASE 'abcd' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  比尔·拉莫斯    
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  比尔·拉莫斯    
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  比尔·拉莫斯    
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  比尔·拉莫斯    
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  比尔·拉莫斯    
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  比尔·拉莫斯    
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  比尔·拉莫斯    
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  比尔·拉莫斯    
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN CAST('abcd' AS VARCHAR(100))
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  比尔·拉莫斯    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  比尔·拉莫斯    ' AS VARCHAR(100))
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  比尔·拉莫斯    
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    '
+END AS RESULT
+GO
+~~START~~
+nvarchar
+بطاقة التسجيل - قياسية
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    '
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية'
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN CAST(N'  abc🙂defghi🙂🙂    ' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+  abc🙂defghi🙂🙂    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+END AS RESULT
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE japanese_ci_as
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+END AS RESULT
+GO
+~~START~~
+varchar
+  abc?defghi??    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd'
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abcd
+~~END~~
+
+
+SELECT CASE N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE japanese_ci_as
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE japanese_ci_as
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE japanese_ci_as
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE japanese_ci_as
+END AS RESULT
+GO
+~~START~~
+varchar
+????? ??????? - ??????
+~~END~~
+
+
+SELECT CASE N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE ARABIC_CI_AS
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE ARABIC_CI_AS
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE ARABIC_CI_AS
+END AS RESULT
+GO
+~~START~~
+varchar
+  abc?defghi??    
+~~END~~
+
+
+SELECT CASE 'abcd' COLLATE ARABIC_CI_AS
+   WHEN 'abcd' COLLATE japanese_ci_as THEN 'abcd' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS THEN N'  比尔·拉莫斯    ' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'بطاقة التسجيل - قياسية' COLLATE ARABIC_CI_AS THEN N'بطاقة التسجيل - قياسية' COLLATE CHINESE_PRC_CI_AS
+   WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
+END AS RESULT
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+

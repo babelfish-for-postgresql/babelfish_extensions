@@ -2924,13 +2924,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *db_owner_name;
+						char *db_owner_name;
 
 						db_owner_name = get_db_owner_name(get_cur_db_name());
 						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									 errmsg("User does not have permission to perform this action.")));
+
+						pfree(db_owner_name);
 					}
 
 					/*
@@ -3210,7 +3212,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *dbo_name;
+						char	   *dbo_name;
 						const char *db_owner_name;
 						char	   *db_name;
 						char	   *user_name;
@@ -3296,6 +3298,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						set_session_properties(db_name);
 						pfree(cur_user);
 						pfree(db_name);
+						pfree(dbo_name);
 
 						return;
 					}
@@ -3344,17 +3347,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								foreach(item, stmt->roles)
 								{
-									RoleSpec   *rolspec = lfirst(item);
-									char	   *user_name;
-									const char *db_principal_type = drop_user ? "user" : "role";
-									const char *db_owner_name;
-									int			role_oid;
-									int			rolename_len;
+									RoleSpec	*rolspec = lfirst(item);
+									char		*user_name;
+									const char	*db_principal_type = drop_user ? "user" : "role";
+									char		*db_owner_name;
+									int		role_oid;
+									int		rolename_len;
 									bool		is_tsql_db_principal = false;
 									bool		is_psql_db_principal = false;
-									Oid			dbowner;
+									Oid		dbowner;
 
-									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
+									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
 									db_owner_name = get_db_owner_name(db_name);
 									dbowner = get_role_oid(db_owner_name, false);
 									role_oid = get_role_oid(user_name, true);
@@ -3410,6 +3413,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 														 errmsg("Cannot disable access to the guest user in master or tempdb.")));
 
 											alter_user_can_connect(false, rolspec->rolename, db_name);
+
+											pfree(db_owner_name);
+											
 											return;
 										}
 										else
@@ -3420,6 +3426,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 
 									pfree(rolspec->rolename);
+									pfree(db_owner_name);
+
 									rolspec->rolename = user_name;
 								}
 							}
@@ -3619,7 +3627,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
 						{
 							/* Execute the GRANT SCHEMA subcommands. */
-							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
+							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i], true);
 						}
 					}
 					return;
@@ -6385,6 +6393,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				/** Add alter table add identity node after Select Into statement */
 				altstmt = makeNode(AlterTableStmt);
 				altstmt->relation = into->rel;
+				altstmt->objtype = OBJECT_TABLE;
 				altstmt->cmds = NIL;
 
 				constraint = makeNode(Constraint);
@@ -6446,12 +6455,10 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 }
 
 void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv,
-								 ParamListInfo params, QueryCompletion *qc)
+								 ParamListInfo params, QueryCompletion *qc, ObjectAddress *address)
 {
 
 	Node *parsetree = pstmt->utilityStmt;
-	ObjectAddress address;
-	ObjectAddress secondaryObject = InvalidObjectAddress;
 	List *stmts;
 	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
@@ -6460,8 +6467,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		stmts = list_delete_first(stmts);
 		if (IsA(stmt, CreateTableAsStmt))
 		{
-			address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
-			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
+			*address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
 		}
 		else
 		{
