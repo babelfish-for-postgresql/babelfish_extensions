@@ -2588,26 +2588,56 @@ static List
 *gen_alter_dbowner_add_subcmds(const char *rolname, const char* dbname)
 {
 	StringInfoData query;
-	List	   *stmt_list;
-	Node	   *stmt;
+	List		*stmt_list;
+	Node		*stmt;
 	int			expected_stmts = 7;
 	int			i = 0;
-	const char *db_owner_role = get_db_owner_role_name(dbname);
-	StringInfoData rolname_obj;
+	int			schemas = 0;
+	const char	*db_owner_role = get_db_owner_role_name(dbname);
+	char		*rolname_obj = get_obj_role(rolname);
+	HeapTuple	tuple;
+	SysScanDesc sscan;
+	ScanKeyData skey;
+	Relation	rel;
 
 	initStringInfo(&query);
-	initStringInfo(&rolname_obj);
-
-	appendStringInfoString(&rolname_obj, rolname);
-	appendStringInfoString(&rolname_obj, "_obj");
 
 	appendStringInfoString(&query, "CREATE ROLE dummy; ");
 	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+
+	rel = table_open(NamespaceRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey,
+				Anum_pg_namespace_nspowner,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(get_role_oid(rolname, false)));
+
+	sscan = systable_beginscan(rel, InvalidOid, false,
+							   NULL, 1, &skey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
+	{
+		char	   *schema_name;
+		Form_pg_namespace namespaceform;
+
+		namespaceform = (Form_pg_namespace) GETSTRUCT(tuple);
+		schema_name = pstrdup(NameStr(namespaceform->nspname));
+
+		appendStringInfo(&query, "ALTER SCHEMA %s OWNER TO %s; ", schema_name, rolname_obj);
+
+		schemas++;
+	}
+
+	systable_endscan(sscan);
+	table_close(rel, AccessShareLock);
+
 	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy; ");
 	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
 	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
 	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
 	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+
+	expected_stmts += schemas;
 
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 	if (list_length(stmt_list) != expected_stmts)
@@ -2618,16 +2648,18 @@ static List
 
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_CreateRoleStmt(stmt, rolname_obj.data, NULL, NULL);
+	update_CreateRoleStmt(stmt, rolname_obj, NULL, NULL);
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_GrantRoleStmtByName(stmt, rolname_obj.data, db_owner_role);
+	update_GrantRoleStmtByName(stmt, rolname_obj, db_owner_role);
+
+	i += schemas;
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_ReassignOwnedStmt(stmt, rolname, rolname_obj.data);
+	update_ReassignOwnedStmt(stmt, rolname, rolname_obj);
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_GrantRoleStmtByName(stmt, rolname_obj.data, rolname);
+	update_GrantRoleStmtByName(stmt, rolname_obj, rolname);
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_GrantRoleStmtByName(stmt, rolname, db_owner_role);
@@ -2639,7 +2671,9 @@ static List
 	update_GrantRoleStmtByName(stmt, get_dbo_role_name(dbname), rolname);
 
 	pfree(query.data);
-	pfree(rolname_obj.data);
+
+	if (rolname_obj)
+		pfree(rolname_obj);
 
 	return stmt_list;
 }
@@ -2651,25 +2685,55 @@ static List
 *gen_alter_dbowner_drop_subcmds(const char *rolname, const char* dbname)
 {
 	StringInfoData query;
-	List	   *stmt_list;
-	Node	   *stmt;
+	List		*stmt_list;
+	Node		*stmt;
 	int			expected_stmts = 6;
 	int			i = 0;
-	const char *db_owner_role = get_db_owner_role_name(dbname);
-	StringInfoData rolname_obj;
+	int			schemas = 0;
+	const char	*db_owner_role = get_db_owner_role_name(dbname);
+	char		*rolname_obj = get_obj_role(rolname);
+	HeapTuple	tuple;
+	SysScanDesc sscan;
+	ScanKeyData skey;
+	Relation	rel;
 
 	initStringInfo(&query);
-	initStringInfo(&rolname_obj);
-
-	appendStringInfoString(&rolname_obj, rolname);
-	appendStringInfoString(&rolname_obj, "_obj");
 
 	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
 	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
 	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
 	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
+
+	rel = table_open(NamespaceRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey,
+				Anum_pg_namespace_nspowner,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(get_role_oid(rolname_obj, false)));
+
+	sscan = systable_beginscan(rel, InvalidOid, false,
+							   NULL, 1, &skey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
+	{
+		char	   *schema_name;
+		Form_pg_namespace namespaceform;
+
+		namespaceform = (Form_pg_namespace) GETSTRUCT(tuple);
+		schema_name = pstrdup(NameStr(namespaceform->nspname));
+
+		appendStringInfo(&query, "ALTER SCHEMA %s OWNER TO %s; ", schema_name, rolname);
+
+		schemas++;
+	}
+
+	systable_endscan(sscan);
+	table_close(rel, AccessShareLock);
+
 	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy; ");
 	appendStringInfoString(&query, "DROP ROLE dummy; ");
+
+	expected_stmts += schemas;
 
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 	if (list_length(stmt_list) != expected_stmts)
@@ -2689,16 +2753,20 @@ static List
 	update_GrantRoleStmtByName(stmt, rolname, db_owner_role);
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_GrantRoleStmtByName(stmt, rolname_obj.data, rolname);
+	update_GrantRoleStmtByName(stmt, rolname_obj, rolname);
+
+	i += schemas;
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_ReassignOwnedStmt(stmt, rolname_obj.data, rolname);
+	update_ReassignOwnedStmt(stmt, rolname_obj, rolname);
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_DropRoleStmt(stmt, rolname_obj.data);
+	update_DropRoleStmt(stmt, rolname_obj);
 
 	pfree(query.data);
-	pfree(rolname_obj.data);
+
+	if (rolname_obj)
+		pfree(rolname_obj);
 
 	return stmt_list;
 }
@@ -2766,11 +2834,14 @@ is_grantee_role_db_owner(GrantRoleStmt *stmt)
 void
 change_object_owner_if_db_owner()
 {
-	Oid dbo_id = InvalidOid;
-	char* query;
-	char *rolname = NULL;
-	int			rc = 0;
-	Oid role_oid = GetUserId();
+	Oid				dbo_id = InvalidOid;
+	StringInfoData	query;
+	char			*rolname = NULL;
+	char 			*obj_rolname = NULL;
+	Oid				role_oid = GetUserId();
+	List			*parsetree_list;
+	Node			*n;
+	PlannedStmt 	*wrapper;
 
 	/* TSQL specific behavior */
 	if (sql_dialect != SQL_DIALECT_TSQL)
@@ -2792,27 +2863,44 @@ change_object_owner_if_db_owner()
 	if (!is_member_of_role(role_oid, get_role_oid(get_db_owner_name(get_cur_db_name()), true)))
 		return;
 
-	query = psprintf("REASSIGN OWNED BY \"%s\" TO \"%s_obj\";", rolname, rolname);
+	obj_rolname = get_obj_role(rolname);
 
-	PG_TRY();
-	{
-		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+	initStringInfo(&query);
+	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy");
 
-		if ((rc = SPI_execute(query, false, 0)) < 0)
-			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("Expected 1 statement but got %d statements after parsing",
+						list_length(parsetree_list))));
 
-		pfree(query);
-	}
-	PG_CATCH();
-	{
-		pfree(query);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	/* Update the dummy statement with real values */
+	n = parsetree_nth_stmt(parsetree_list, 0);
+	update_ReassignOwnedStmt(n, rolname, obj_rolname);
+
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = n;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 0;
+
+	/* do this step */
+	ProcessUtility(wrapper,
+					"(REASSIGN OWNED )",
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+
+	pfree(query.data);
+
+	if (obj_rolname)
+		pfree(obj_rolname);
 }
 
 PG_FUNCTION_INFO_V1(bbf_is_role_member);
