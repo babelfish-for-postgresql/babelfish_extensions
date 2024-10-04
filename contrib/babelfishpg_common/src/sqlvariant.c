@@ -300,7 +300,7 @@ do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
 			Assert(nargs < 3 || procstruct->proargtypes.values[2] == BOOLOID);
 
             switch (nargs) 
-			{
+            {
                 case 1:
                     return OidFunctionCall1Coll(funcid, coll, value);
                 case 2:
@@ -309,7 +309,7 @@ do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
                     return OidFunctionCall3Coll(funcid, coll, value, (Datum) typmod, (Datum) (ccontext == COERCION_EXPLICIT));
                 default:
                     elog(ERROR, "Unsupported number of arguments (%d) for function %u", nargs, funcid);
-    		}
+            }
 			break;
 		case COERCION_PATH_COERCEVIAIO:
 			*cast_by_relabel = false;
