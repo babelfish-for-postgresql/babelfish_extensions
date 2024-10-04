@@ -9655,6 +9655,47 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+-- convertion to binary
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_binary(
+    IN input_value TEXT,
+    IN style NUMERIC
+) RETURNS sys.varbinary 
+AS 
+$BODY$
+DECLARE
+    result bytea; 
+BEGIN
+    IF style IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF style = 0 THEN
+        result := CAST(input_value AS bytea);
+    
+    ELSIF style = 1 THEN
+        -- Handle hexadecimal conversion
+        IF (left(input_value, 2) = '0x' AND length(input_value) % 2 = 0) OR input_value IS NULL THEN
+            result := decode(substring(input_value from 3), 'hex');
+        ELSE
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        END IF;
+    ELSIF style = 2 THEN
+        IF left(input_value, 2) = '0x' THEN
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        ELSE
+            result := decode((input_value), 'hex');
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
+    END IF;
+
+    RETURN CAST(result AS sys.varbinary);
+
+END;
+$BODY$ 
+LANGUAGE plpgsql
+STABLE;
+
 -- convertion to varchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg TEXT,
