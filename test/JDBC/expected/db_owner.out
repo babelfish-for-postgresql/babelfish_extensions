@@ -1025,6 +1025,8 @@ select rolname from pg_authid where rolname like 'db_owner_test_db_%'
 go
 ~~START~~
 name
+db_owner_test_db_db_owner
+db_owner_test_db_dbo
 db_owner_test_db_guest
 db_owner_test_db_db_owner_test_db_u1
 db_owner_test_db_db_owner_test_db_u1_obj
@@ -1048,6 +1050,8 @@ select rolname from pg_authid where rolname like 'db_owner_test_db_%'
 go
 ~~START~~
 name
+db_owner_test_db_db_owner
+db_owner_test_db_dbo
 db_owner_test_db_guest
 ~~END~~
 

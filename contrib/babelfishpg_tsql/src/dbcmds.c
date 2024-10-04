@@ -656,6 +656,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	int                save_sec_context;
 	bool               is_set_userid = false;
 	Oid                save_userid;
+	Oid                prev_current_user_id;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
