@@ -279,3 +279,14 @@ SELECT * FROM babelfishpg_unit.babelfishpg_unit_run_tests();
       mvn test
       ```
 For detailed instructions on how to write, add, and run tests in JDBC test framework, refer [to the online instructions](../test/JDBC/README.md).
+
+# BabelFish in Docker
+To use docker for babelfish, postgresql_modified_for_babelfish, babelfish_extensions, and Dockerfile should be in the same workspace.
+- ```builddocker```  Build docker image environment for babelfish
+- ```rundocker```  Run docker container for babelfish
+- ```execdocker``` Launch a terminal within babelfish container
+- ```buildpg```  Build postgresql_modified_for_babelfish + Restart db
+- ```buildbbf```  Build babelfish_extensions + Restart db
+- ```buildall``` Build postgresql_modified_for_babelfish + Build babelfish_extensions + Restart db
+- ```initdb``` Init data directory + Modify postgresql.conf + Restart db
+- ```initbbf``` Execute babelfish_extensions/test/JDBC/init.sh
