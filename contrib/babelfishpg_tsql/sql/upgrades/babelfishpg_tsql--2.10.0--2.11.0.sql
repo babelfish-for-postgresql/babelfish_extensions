@@ -10,14 +10,12 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
-
+CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
+AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
-CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
-AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
-GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
