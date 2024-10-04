@@ -333,9 +333,6 @@ assign_identity_insert(const char *newval, void *extra)
 		char	   *input_string = pstrdup(newval);
 		char	   *id_insert_rel_name = NULL;
 		char	   *id_insert_schema_name = NULL;
-		char	   *cur_db_name;
-
-		cur_db_name = get_cur_db_name();
 
 		/* Check if IDENTITY_INSERT is valid and get names. If not, reset it. */
 		if (tsql_identity_insert.valid)
@@ -366,10 +363,7 @@ assign_identity_insert(const char *newval, void *extra)
 		{
 			schema_name = (char *) lthird(elemlist);
 
-			if (cur_db_name)
-				schema_name = get_physical_schema_name(cur_db_name,
-													   schema_name);
-
+			/* schema_name would already be physical schema name */
 			schema_oid = LookupExplicitNamespace(schema_name, true);
 			if (!OidIsValid(schema_oid))
 				ereport(ERROR,
