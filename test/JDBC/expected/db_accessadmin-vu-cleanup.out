@@ -25,7 +25,5 @@ DROP FUNCTION f1
 GO
 
 -- psql
-DROP ROLE r1;
-GO
 DROP PROCEDURE run_sql_migration_mode_safe
 GO

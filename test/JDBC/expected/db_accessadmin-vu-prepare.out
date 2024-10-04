@@ -49,6 +49,3 @@ BEGIN
 END;
 $$;
 GO
-
-CREATE ROLE r1;
-GO
