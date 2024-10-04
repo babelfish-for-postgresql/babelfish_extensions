@@ -41,6 +41,13 @@ jobs:
         if: always()
         run: sudo snap install yq
 
+      - name: Setup upterm session
+        if: always()
+        uses: lhotari/action-upterm@v1
+        timeout-minutes: 120
+        with:
+          limit-access-to-actor: true
+
       - name: Read Base Version and Final Version
         id: read-base-and-final-version
         if: always() && steps.install-yq.outcome == 'success'

@@ -23,7 +23,3 @@ DROP PROC babel_5136_p1
 GO
 DROP FUNCTION f1
 GO
-
--- psql
-DROP PROCEDURE run_sql_migration_mode_safe
-GO
