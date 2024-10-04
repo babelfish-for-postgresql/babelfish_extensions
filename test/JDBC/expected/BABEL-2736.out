@@ -407,9 +407,61 @@ binary
 ~~END~~
 
 
+-- Invalid style
+SELECT CONVERT(BINARY(10), '0904D00034', 3);
+Go
+~~START~~
+binary
+~~ERROR (Code: 9809)~~
+
+~~ERROR (Message: The style 3 is not supported for conversions from varchar to varbinary.)~~
 
 
--- Test cases for varbinary
+-- Length greater than maximum allowed length (8000)
+SELECT CONVERT(BINARY(8001), '0904D00034', 2)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '8001' exceeds the maximum allowed (8000) for 'binary' datatype.)~~
+
+
+-- Minimum length (1 byte) for BINARY
+SELECT CONVERT(BINARY(1), 'A', 0);
+Go
+~~START~~
+binary
+41
+~~END~~
+
+
+-- Minimum length (1 byte) for VARBINARY
+SELECT CONVERT(VARBINARY(1), 'A', 0);
+Go
+~~START~~
+varbinary
+41
+~~END~~
+
+
+-- Negative length for BINARY
+SELECT CONVERT(BINARY(-5), '0904D00034', 0);
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 2 and character position 21)~~
+
+
+-- Zero length for BINARY
+SELECT CONVERT(BINARY(0), '0904D00034', 0);
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: length for type varbinary must be at least 1)~~
+
+
+
+
+-- Varbinary
 -- 1. Testing style 0 (default, ASCII conversion):
 -- even length string
 SELECT CONVERT(VARBINARY(10), '0904D00034', 0);
@@ -618,4 +670,12 @@ varbinary
 ~~ERROR (Code: 9809)~~
 
 ~~ERROR (Message: The style 3 is not supported for conversions from varchar to varbinary.)~~
+
+
+-- Length greater than maximum allowed length (8000)
+SELECT CONVERT(VARBINARY(8001), '0904D00034', 2)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '8001' exceeds the maximum allowed (8000) for 'varbinary' datatype.)~~
 

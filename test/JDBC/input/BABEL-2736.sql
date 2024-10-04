@@ -184,7 +184,31 @@ Go
 SELECT CONVERT(BINARY(5), '     ', 2)
 Go
 
--- Test cases for varbinary
+-- Invalid style
+SELECT CONVERT(BINARY(10), '0904D00034', 3);
+Go
+
+-- Length greater than maximum allowed length (8000)
+SELECT CONVERT(BINARY(8001), '0904D00034', 2)
+Go
+
+-- Minimum length (1 byte) for BINARY
+SELECT CONVERT(BINARY(1), 'A', 0);
+Go
+
+-- Minimum length (1 byte) for VARBINARY
+SELECT CONVERT(VARBINARY(1), 'A', 0);
+Go
+
+-- Negative length for BINARY
+SELECT CONVERT(BINARY(-5), '0904D00034', 0);
+Go
+
+-- Zero length for BINARY
+SELECT CONVERT(BINARY(0), '0904D00034', 0);
+Go
+
+-- Varbinary
 
 -- 1. Testing style 0 (default, ASCII conversion):
 
@@ -278,4 +302,8 @@ Go
 
 -- Invalid style
 SELECT CONVERT(VARBINARY(10), '0904D00034', 3);
+Go
+
+-- Length greater than maximum allowed length (8000)
+SELECT CONVERT(VARBINARY(8001), '0904D00034', 2)
 Go
