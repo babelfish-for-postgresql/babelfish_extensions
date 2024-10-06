@@ -1,3 +1,10 @@
+-- tsql
+create database db_owner_main_db
+go
+use db_owner_main_db
+go
+grant connect to guest
+go
 create login l1 with password = '123'
 go
 create user u1 for login l1
@@ -25,6 +32,8 @@ create role r2
 go
 
 -- tsql user=l1 password=123
+use db_owner_main_db
+go
 select is_member('db_owner')
 go
 create table s1.t1 (a int)
@@ -35,6 +44,8 @@ create procedure s1.p1 as select 21
 go
 
 -- tsql user=l2 password=123
+use db_owner_main_db
+go
 select is_member('db_owner')
 go
 create table s2.t2 (a int)
@@ -103,7 +114,7 @@ go
 
 -- psql
 select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
-where grantee IN ('master_guest', 'master_u1', 'master_u2') order by permission;
+where grantee IN ('db_owner_main_db_guest', 'db_owner_main_db_u1', 'db_owner_main_db_u2') order by permission;
 GO
 
 -- tsql user=l1 password=123
@@ -130,12 +141,12 @@ go
 
 -- psql
 select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
-where grantee IN ('master_guest', 'master_u1', 'master_u2') order by permission;
+where grantee IN ('db_owner_main_db_guest', 'db_owner_main_db_u1', 'db_owner_main_db_u2') order by permission;
 GO
 
 -- CASE : ALTER ANY USER
 -- tsql user=l1 password=123
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'db_owner_main_db_new_%'
 go
 alter user u1 with default_schema = s1
 go
@@ -147,7 +158,7 @@ alter user u2 with login = temp
 go
 alter user u2 with name = new_u2
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'db_owner_main_db_new_%'
 go
 select sys.user_name(), sys.suser_name(), is_member('db_owner')
 go
@@ -161,13 +172,13 @@ alter user new_u1 with login = temp
 go
 select sys.user_name(), sys.suser_name(), is_member('db_owner')
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+select database_name, rolname, login_name, default_schema_name, default_language_name from sys.babelfish_authid_user_ext where rolname like 'db_owner_main_db_new_%'
 go
 alter user new_u1 with login = l1
 go
 alter user new_u1 with name = u1
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'db_owner_main_db_new_%'
 go
 select name from sys.database_principals order by name
 go
@@ -183,11 +194,13 @@ go
 -- terminate-tsql-conn user=l1 password=123
 
 -- tsql user=l1 password=123
+use db_owner_main_db
+go
 select sys.user_name(), is_member('db_owner')
 go
 alter user new_u1 with name = u1
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'master_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'db_owner_main_db_new_%'
 go
 select name from sys.database_principals order by name
 go
@@ -226,16 +239,16 @@ select name from sys.database_principals order by name
 go
 
 -- psql
--- Procedure/function owners should be master_u1_obj
+-- Procedure/function owners should be db_owner_main_db_u1_obj
 SELECT proname,
        proowner::regrole
 FROM pg_proc
-WHERE pronamespace::regnamespace::text = 'master_s1'
-OR pronamespace::regnamespace::text = 'master_s3'
+WHERE pronamespace::regnamespace::text = 'db_owner_main_db_s1'
+OR pronamespace::regnamespace::text = 'db_owner_main_db_s3'
 ORDER BY proname;
 GO
 
--- Table owners should be master_u1_obj
+-- Table owners should be db_owner_main_db_u1_obj
 SELECT
     n.nspname AS schema,
     c.relname AS table,
@@ -251,12 +264,12 @@ SELECT
     pg_catalog.pg_get_userbyid(c.relowner) AS owner
 FROM pg_catalog.pg_class c
 LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-WHERE (n.nspname = 'master_s1' OR n.nspname = 'master_s3')
+WHERE (n.nspname = 'db_owner_main_db_s1' OR n.nspname = 'db_owner_main_db_s3')
 AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
 ORDER BY n.nspname, c.relkind, c.relname;
 GO
 
--- Schema owners should be master_u1_obj
+-- Schema owners should be db_owner_main_db_u1_obj
 SELECT
     r.rolname AS schema_owner,
     ns.nspname
@@ -267,9 +280,9 @@ JOIN
 ON
     ns.nspowner = r.oid
 WHERE
-    ns.nspname = 'master_s1'
+    ns.nspname = 'db_owner_main_db_s1'
 OR
-    ns.nspname = 'master_s3'
+    ns.nspname = 'db_owner_main_db_s3'
 ORDER BY ns.nspname;
 GO
 
@@ -353,16 +366,16 @@ drop role r2
 go
 
 -- psql
--- Procedure/function owners should be master_u1
+-- Procedure/function owners should be db_owner_main_db_u1
 SELECT proname,
        proowner::regrole
 FROM pg_proc
-WHERE pronamespace::regnamespace::text = 'master_s1'
-OR pronamespace::regnamespace::text = 'master_s3'
+WHERE pronamespace::regnamespace::text = 'db_owner_main_db_s1'
+OR pronamespace::regnamespace::text = 'db_owner_main_db_s3'
 ORDER BY proname;
 GO
 
--- Table owners should be master_u1
+-- Table owners should be db_owner_main_db_u1
 SELECT
     n.nspname AS schema,
     c.relname AS table,
@@ -378,12 +391,12 @@ SELECT
     pg_catalog.pg_get_userbyid(c.relowner) AS owner
 FROM pg_catalog.pg_class c
 LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-WHERE (n.nspname = 'master_s1' OR n.nspname = 'master_s3')
+WHERE (n.nspname = 'db_owner_main_db_s1' OR n.nspname = 'db_owner_main_db_s3')
 AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
 ORDER BY n.nspname, c.relkind, c.relname;
 GO
 
--- Schema owners should be master_u1
+-- Schema owners should be db_owner_main_db_u1
 SELECT
     r.rolname AS schema_owner,
     ns.nspname
@@ -394,9 +407,9 @@ JOIN
 ON
     ns.nspowner = r.oid
 WHERE
-    ns.nspname = 'master_s1'
+    ns.nspname = 'db_owner_main_db_s1'
 OR
-    ns.nspname = 'master_s3'
+    ns.nspname = 'db_owner_main_db_s3'
 ORDER BY ns.nspname;
 GO
 
@@ -495,7 +508,7 @@ create user db_owner_test_db_u1 for login l1
 go
 alter role db_owner add member db_owner_test_db_u1
 go
-use master
+use db_owner_main_db
 go
 
 -- tsql user=l1 password=123
@@ -535,7 +548,7 @@ alter role db_owner add member db_owner_test_db_u2
 go
 select is_rolemember('db_owner', 'db_owner_test_db_u1'), is_rolemember('db_owner', 'db_owner_test_db_u2')
 go
-use master
+use db_owner_main_db
 go
 
 -- psql
@@ -550,7 +563,7 @@ GO
 
 -- Check if dropping user, also drops the linked "_obj" role
 -- psql
-select rolname from pg_authid where rolname like 'db_owner_test_db_%'
+select rolname from pg_authid where rolname like 'db_owner_test_db_%' order by rolname;
 go
 
 -- tsql
@@ -560,11 +573,11 @@ drop user db_owner_test_db_u1
 go
 drop user db_owner_test_db_u2
 go
-use master
+use db_owner_main_db
 go
 
 -- psql
-select rolname from pg_authid where rolname like 'db_owner_test_db_%'
+select rolname from pg_authid where rolname like 'db_owner_test_db_%' order by rolname;
 go
 
 -- tsql
@@ -577,4 +590,10 @@ go
 drop login l2
 go
 drop login temp
+go
+revoke connect from guest
+go
+use master
+go
+drop database db_owner_main_db
 go
