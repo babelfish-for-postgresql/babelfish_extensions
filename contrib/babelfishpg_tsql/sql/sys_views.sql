@@ -72,7 +72,6 @@ left join tt_internal tt on t.oid = tt.typrelid
 where tt.typrelid is null
 and (t.relkind = 'r' or t.relkind = 'p')
 and t.relispartition = false
-and has_schema_privilege(t.relnamespace, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.tables TO PUBLIC;
 
@@ -132,7 +131,6 @@ left join sys.shipped_objects_not_in_sys nis on (nis.name = t.relname and nis.sc
 left outer join sys.babelfish_view_def vd on t.relname::sys.sysname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
 where t.relkind = 'v'
 and nis.name is null
-and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.views TO PUBLIC;
 
@@ -427,8 +425,8 @@ select CAST(c.oid as int) as object_id
   , case when a.attnotnull then CAST(0 as sys.bit) else CAST(1 as sys.bit) end as is_nullable
   , CAST(0 as sys.bit) as is_ansi_padded
   , CAST(0 as sys.bit) as is_rowguidcol
-  , CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit) as is_identity
-  , CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit) as is_computed
+  , CAST(a.attidentity <> ''::"char" AS sys.bit) as is_identity
+  , CAST(a.attgenerated <> ''::"char" AS sys.bit) as is_computed
   , CAST(0 as sys.bit) as is_filestream
   , CAST(0 as sys.bit) as is_replicated
   , CAST(0 as sys.bit) as is_non_sql_subscribed
@@ -456,7 +454,6 @@ and (s.nspname = 'sys' or ext.nspname is not null)
 -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 and c.relkind in ('r', 'v', 'm', 'f', 'p')
 and c.relispartition = false
-and has_schema_privilege(s.oid, 'USAGE')
 and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
@@ -540,10 +537,10 @@ BEGIN
 			CAST(a.attcollation AS int),
 			CAST(a.attnum AS smallint),
 			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
-			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(t.typname in ('bpchar', 'nchar', 'binary') AS sys.bit),
 			CAST(0 AS sys.bit),
-			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
-			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(a.attidentity <> ''::"char" AS sys.bit),
+			CAST(a.attgenerated <> ''::"char" AS sys.bit),
 			CAST(0 AS sys.bit),
 			CAST(0 AS sys.bit),
 			CAST(0 AS sys.bit),
@@ -581,7 +578,6 @@ BEGIN
 		-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 		AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
 		AND c.relispartition = false
-		AND has_schema_privilege(sch.schema_id, 'USAGE')
 		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 		union all
 		-- system tables information
@@ -618,10 +614,10 @@ BEGIN
 			CAST(a.attcollation AS int),
 			CAST(a.attnum AS smallint),
 			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
-			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(t.typname in ('bpchar', 'nchar', 'binary') AS sys.bit),
 			CAST(0 AS sys.bit),
-			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
-			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(a.attidentity <> ''::"char" AS sys.bit),
+			CAST(a.attgenerated <> ''::"char" AS sys.bit),
 			CAST(0 AS sys.bit),
 			CAST(0 AS sys.bit),
 			CAST(0 AS sys.bit),
@@ -656,7 +652,6 @@ BEGIN
 		WHERE NOT a.attisdropped
 		AND a.attnum > 0
 		AND c.relkind = 'r'
-		AND has_schema_privilege(nsp.oid, 'USAGE')
 		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 END;
 $$
@@ -712,8 +707,7 @@ SELECT DISTINCT
   ,CAST((UNNEST(c.confkey)) AS INT) AS referenced_column_id
 FROM pg_constraint c
 WHERE c.contype = 'f'
-AND (c.connamespace IN (SELECT schema_id FROM sys.schemas))
-AND has_schema_privilege(c.connamespace, 'USAGE');
+AND (c.connamespace IN (SELECT schema_id FROM sys.schemas));
 GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
 
 CREATE OR replace view sys.foreign_keys AS
@@ -774,8 +768,7 @@ SELECT
 , CAST(1 AS sys.BIT) AS is_system_named
 FROM pg_constraint c
 INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
-WHERE has_schema_privilege(sch.schema_id, 'USAGE')
-AND c.contype = 'f';
+WHERE c.contype = 'f';
 GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 
 CREATE OR replace view sys.identity_columns AS
@@ -844,10 +837,10 @@ select
   , cast(I.relname as sys.sysname) as name
   , cast(case when X.indisclustered then 1 else 2 end as sys.tinyint) as type
   , cast(case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as sys.nvarchar(60)) as type_desc
-  , cast(case when X.indisunique then 1 else 0 end as sys.bit) as is_unique
+  , cast(X.indisunique as sys.bit) as is_unique
   , cast(case when ps.scheme_id is null then 1 else ps.scheme_id end as int) as data_space_id
   , cast(0 as sys.bit) as ignore_dup_key
-  , cast(case when X.indisprimary then 1 else 0 end as sys.bit) as is_primary_key
+  , cast(X.indisprimary as sys.bit) as is_primary_key
   , cast(case when const.oid is null then 0 else 1 end as sys.bit) as is_unique_constraint
   , cast(0 as sys.tinyint) as fill_factor
   , cast(case when X.indpred is null then 0 else 1 end as sys.bit) as is_padded
@@ -871,9 +864,9 @@ left join sys.babelfish_partition_depend pd on
 left join sys.babelfish_partition_scheme ps on (ps.partition_scheme_name = pd.partition_scheme_name and ps.dbid = sys.db_id())
 -- check if index is a unique constraint
 left join pg_constraint const on const.conindid = I.oid and const.contype = 'u'
-where has_schema_privilege(I.relnamespace, 'USAGE')
+where 
 -- index is active
-and X.indislive 
+X.indislive 
 -- filter to get all the objects that belong to sys or babelfish schemas
 and (nsp.nspname = 'sys' or ext.nspname is not null)
 
@@ -910,7 +903,6 @@ where (t.relkind = 'r' or t.relkind = 'p')
 and t.relispartition = false
 -- filter to get all the objects that belong to sys or babelfish schemas
 and (nsp.nspname = 'sys' or ext.nspname is not null)
-and has_schema_privilege(t.relnamespace, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 order by object_id, type_desc;
 GRANT SELECT ON sys.indexes TO PUBLIC;
@@ -943,8 +935,8 @@ SELECT
   , CAST(1 as sys.BIT) as is_system_named
 FROM pg_constraint c
 INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
-WHERE has_schema_privilege(sch.schema_id, 'USAGE')
-AND c.contype IN ('p', 'u');
+WHERE 
+c.contype IN ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 create or replace view sys.procedures as
@@ -985,8 +977,8 @@ from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
 and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and format_type(p.prorettype, null) <> 'trigger'
+where 
+format_type(p.prorettype, null) <> 'trigger'
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
@@ -1002,8 +994,7 @@ from pg_constraint c
 inner join pg_attribute a_con on a_con.attrelid = c.conrelid and a_con.attnum = any(c.conkey)
 inner join pg_attribute a_conf on a_conf.attrelid = c.confrelid and a_conf.attnum = any(c.confkey)
 where c.contype = 'f'
-and (c.connamespace in (select schema_id from sys.schemas))
-and has_schema_privilege(c.connamespace, 'USAGE');
+and (c.connamespace in (select schema_id from sys.schemas));
 GRANT SELECT ON sys.sysforeignkeys TO PUBLIC;
 
 create or replace view  sys.sysindexes as
@@ -1164,7 +1155,7 @@ select cast(t.typname as sys.sysname) as name
     END as is_assembly_type
   , CAST(0 as int) as default_object_id
   , CAST(0 as int) as rule_object_id
-  , case when tt.typrelid is not null then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_table_type
+  , CAST(tt.typrelid is not null AS sys.bit) as is_table_type
 from pg_type t
 join sys.schemas sch on t.typnamespace = sch.schema_id
 left join type_code_list ti on t.typname = ti.pg_type_name
@@ -1216,9 +1207,9 @@ SELECT name
   , CAST(0 as smallint) as reserved
   , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
   , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
-  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
-            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
-          else 0 end) as sys.bit) as variable
+  , CAST((coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+            in ('nvarchar', 'varchar', 'sysname', 'varbinary'))  
+          as sys.bit) as variable
   , CAST(is_nullable as sys.bit) as allownulls
   , CAST(system_type_id as int) as type
   , CAST(null as sys.varchar(255)) as printfmt
@@ -1259,7 +1250,6 @@ from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
 inner join sys.tables tab on d.adrelid = tab.object_id
 WHERE a.atthasdef = 't' and a.attgenerated = ''
-AND has_schema_privilege(tab.schema_id, 'USAGE')
 AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
@@ -1285,8 +1275,8 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(0 as sys.bit) as is_system_named
 FROM pg_catalog.pg_constraint as c
 INNER JOIN sys.schemas s on c.connamespace = s.schema_id
-WHERE has_schema_privilege(s.schema_id, 'USAGE')
-AND c.contype = 'c' and c.conrelid != 0;
+WHERE 
+c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
 create or replace view sys.all_objects as
@@ -1331,7 +1321,6 @@ where t.relpersistence in ('p', 'u', 't')
 and t.relkind = 'r'
 and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
 and tt.typrelid is null
-and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
  
 union all
@@ -1359,7 +1348,6 @@ and t.relispartition = false
 and s.nspname <> 'sys' and nis.name is null
 and ext.nspname is not null
 and tt.typrelid is null
-and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
  
 union all
@@ -1382,7 +1370,6 @@ left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.db
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'V'
 where t.relkind = 'v'
 and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
-and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- Details of user defined views
@@ -1405,7 +1392,6 @@ left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.sch
 where t.relkind = 'v'
 and s.nspname <> 'sys' and nis.name is null
 and ext.nspname is not null
-and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system foreign key constraints
@@ -1419,16 +1405,15 @@ select
   , 'FOREIGN_KEY_CONSTRAINT'
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit ) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_constraint c
 inner join pg_namespace s on s.oid = c.connamespace
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'F'
-where has_schema_privilege(s.oid, 'USAGE')
-and c.contype = 'f'
+where 
+c.contype = 'f'
 and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of user defined and system primary key constraints
@@ -1442,16 +1427,15 @@ select
   , 'PRIMARY_KEY_CONSTRAINT' as type_desc
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_constraint c
 inner join pg_namespace s on s.oid = c.connamespace
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'PK'
-where has_schema_privilege(s.oid, 'USAGE')
-and c.contype = 'p'
+where 
+c.contype = 'p'
 and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of system defined procedures
@@ -1526,7 +1510,6 @@ and nis.type = (case p.prokind
         end
     end)
 where (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
-and has_schema_privilege(s.oid, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
 and p.proname != 'pltsql_call_handler'
  
@@ -1604,7 +1587,6 @@ and nis.type = (case p.prokind
     end)
 where s.nspname <> 'sys' and nis.name is null
 and ext.nspname is not null
-and has_schema_privilege(s.oid, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
  
 union all
@@ -1619,8 +1601,7 @@ select
   , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_catalog.pg_attrdef d
@@ -1631,7 +1612,6 @@ left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.db
 left join sys.shipped_objects_not_in_sys nis on nis.name = ('DF_' || o.relname || '_' || d.oid) and nis.schemaid = s.oid and nis.type = 'D'
 where a.atthasdef = 't' and a.attgenerated = ''
 and (s.nspname = 'sys' or ext.nspname is not null)
-and has_schema_privilege(s.oid, 'USAGE')
 and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 union all
 -- details of all check constraints
@@ -1645,16 +1625,15 @@ select
   , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
   , null::sys.datetime as create_date
   , null::sys.datetime as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_catalog.pg_constraint as c
 inner join pg_namespace s on s.oid = c.connamespace
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'C'
-where has_schema_privilege(s.oid, 'USAGE')
-and c.contype = 'c' and c.conrelid != 0
+where 
+c.contype = 'c' and c.conrelid != 0
 and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of user defined and system defined sequence objects
@@ -1668,8 +1647,7 @@ select
   , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((s.nspname = 'sys' or nis.name is not null) as sys.bit ) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class p
@@ -1678,7 +1656,6 @@ left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.db
 left join sys.shipped_objects_not_in_sys nis on nis.name = p.relname and nis.schemaid = s.oid and nis.type = 'SO'
 where p.relkind = 'S'
 and (s.nspname = 'sys' or ext.nspname is not null)
-and has_schema_privilege(s.oid, 'USAGE')
 union all
 -- details of user defined table types
 select
@@ -1691,8 +1668,7 @@ select
   , 'TABLE_TYPE'::varchar(60) as type_desc
   , null::timestamp as create_date
   , null::timestamp as modify_date
-  , CAST (case when (tt.schema_id::regnamespace::text = 'sys' or nis.name is not null) then 1
-         else 0 end as sys.bit ) as is_ms_shipped
+  , CAST ((tt.schema_id::regnamespace::text = 'sys' or nis.name is not null) as sys.bit ) as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
 from sys.table_types tt
@@ -1721,10 +1697,10 @@ SELECT
   , CAST('VIEW'as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
-  , CAST(case when (c.relnamespace::regnamespace::text = 'sys') then 1
-	when c.relname in (select name from sys.shipped_objects_not_in_sys nis
-		where nis.name = c.relname and nis.schemaid = c.relnamespace and nis.type = 'V') then 1
-	else 0 end as sys.bit) AS is_ms_shipped
+  , CAST(((c.relnamespace::regnamespace::text = 'sys') or 
+    c.relname in (select name from sys.shipped_objects_not_in_sys nis
+  	where nis.name = c.relname and nis.schemaid = c.relnamespace and nis.type = 'V')) 
+    as sys.bit) AS is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(0 as sys.BIT) AS is_replicated
@@ -1764,13 +1740,7 @@ SELECT
   CAST(f.create_date as sys.datetime) AS create_date,
   CAST(f.create_date as sys.datetime) AS modify_date,
   CAST(0 as sys.bit) AS is_ms_shipped,
-  CAST(
-      CASE WHEN tr.tgenabled = 'D'
-      THEN 1
-      ELSE 0
-      END
-      AS sys.bit
-  )	AS is_disabled,
+  CAST(tr.tgenabled = 'D' AS sys.bit)	AS is_disabled,
   CAST(0 as sys.bit) AS is_not_for_replication,
   CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
 FROM pg_proc p
@@ -1778,8 +1748,8 @@ inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join pg_trigger tr on tr.tgfoid = p.oid
 left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
 and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and has_function_privilege(p.oid, 'EXECUTE')
+where 
+has_function_privilege(p.oid, 'EXECUTE')
 and p.prokind = 'f'
 and format_type(p.prorettype, null) = 'trigger';
 GRANT SELECT ON sys.triggers TO PUBLIC;
@@ -1923,7 +1893,6 @@ select
 from pg_class p
 inner join sys.schemas s on s.schema_id = p.relnamespace
 and p.relkind = 'S'
-and has_schema_privilege(s.schema_id, 'USAGE')
 union all
 select
     CAST(('TT_' || tt.name collate "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
@@ -2002,13 +1971,8 @@ SELECT
   , CAST(0 as sys.bit)  AS is_schema_bound
   , CAST(0 as sys.bit)  AS uses_database_collation
   , CAST(0 as sys.bit)  AS is_recompiled
-  , CAST(
-      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN
-        CASE WHEN p.proisstrict THEN 1
-        ELSE 0 
-        END
-      ELSE 0
-      END
+  , CAST(ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') 
+        AND p.proisstrict 
     AS sys.bit) as null_on_null_input
   , null::integer as execute_as_principal_id
   , CAST(0 as sys.bit) as uses_native_compilation
@@ -2192,11 +2156,8 @@ SELECT
     CAST(CASE
             WHEN i.indoption[a.index_column_id-1] & 1 = 1 THEN 1
             ELSE 0 
-         END AS SYS.BIT) AS is_descending_key,
-    CAST(CASE
-            WHEN a.index_column_id > i.indnkeyatts THEN 1
-            ELSE 0
-         END AS SYS.BIT) AS is_included_column
+        END AS SYS.BIT) AS is_descending_key,
+    CAST((a.index_column_id > i.indnkeyatts) AS SYS.BIT) AS is_included_column
 FROM
     pg_index i
     INNER JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
@@ -2205,7 +2166,6 @@ FROM
     LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
     LEFT JOIN unnest(i.indkey) WITH ORDINALITY AS a(attnum, index_column_id) ON true
 WHERE
-    has_schema_privilege(c.relnamespace, 'USAGE') AND
     has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER') AND
     (nsp.nspname = 'sys' OR ext.nspname is not null) AND
     i.indislive
@@ -2230,7 +2190,6 @@ FROM
     INNER JOIN pg_partitioned_table ppt ON ppt.partrelid = tbl.oid
     LEFT JOIN unnest(ppt.partattrs) WITH ORDINALITY AS a(attnum, ordinal_position) ON true
 WHERE
-    has_schema_privilege(tbl.relnamespace, 'USAGE') AND
     has_table_privilege(tbl.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER') AND
     i.indislive
 UNION ALL
@@ -2252,7 +2211,6 @@ FROM
     LEFT JOIN unnest(ppt.partattrs) WITH ORDINALITY AS a(attnum, ordinal_position) ON true
 WHERE
     t.relkind = 'p'
-    AND has_schema_privilege(t.relnamespace, 'USAGE')
     AND has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.index_columns TO PUBLIC;
 
@@ -2292,8 +2250,7 @@ left join information_schema.parameters params
 left join pg_collation coll on coll.collname = params.collation_name
 /* assuming routine.specific_name is constructed by concatenating procedure name and oid */
 left join pg_proc pgproc on routine.specific_name = nameconcatoid(pgproc.proname, pgproc.oid)
-left join sys.schemas sch on sch.schema_id = pgproc.pronamespace
-where has_schema_privilege(sch.schema_id, 'USAGE');
+left join sys.schemas sch on sch.schema_id = pgproc.pronamespace;
 END;
 $$
 LANGUAGE plpgsql STABLE;
@@ -2390,7 +2347,7 @@ create or replace view sys.dm_exec_sessions
     , null::bigint as "reads"
     , null::bigint as "writes"
     , null::bigint as logical_reads
-    , case when a.client_port > 0 then 1::sys.bit else 0::sys.bit end as is_user_process
+    , CAST(a.client_port > 0 as sys.bit) as is_user_process
     , d.textsize as text_size
     , d.language::sys.nvarchar(128) as language
     , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
@@ -2452,43 +2409,68 @@ create or replace view sys.dm_exec_connections
 CREATE OR REPLACE VIEW sys.configurations
 AS
 SELECT  configuration_id, 
-        name, 
-        value, 
-        minimum, 
-        maximum, 
-        value_in_use, 
-        description, 
+        name,
+        value,
+        minimum,
+        maximum,
+        value_in_use,
+        description,
         is_dynamic, 
         is_advanced 
-FROM sys.babelfish_configurations;
+FROM sys.babelfish_configurations
+UNION ALL
+SELECT 
+CAST(103 as INT) AS configuration_id,
+CAST('user connections' AS SYS.NVARCHAR(35)) AS name,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value,
+CAST(CAST(s.min_val AS INT) AS sys.sql_variant) AS minimum,
+CAST(CAST(s.max_val AS INT) AS sys.sql_variant) AS maximum,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value_in_use,
+CAST(s.short_desc AS sys.nvarchar(255)) AS description,
+CAST(CAST(0 AS sys.BIT) AS sys.BIT) AS is_dynamic,
+CAST(CAST(1 AS sys.BIT) AS sys.BIT) AS is_advanced
+FROM pg_catalog.pg_settings s where name = 'max_connections'
+UNION ALL
+SELECT 
+CAST(505 as INT) AS configuration_id,
+CAST('network packet size (B)' AS SYS.NVARCHAR(35)) AS name,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value,
+CAST(CAST(s.min_val AS INT) AS sys.sql_variant) AS minimum,
+CAST(CAST(s.max_val AS INT) AS sys.sql_variant) AS maximum,
+CAST(CAST(s.setting AS INT) AS sys.sql_variant) AS value_in_use,
+CAST(s.short_desc AS sys.nvarchar(255)) AS description,
+CAST(CAST(1 AS sys.BIT) AS sys.BIT) AS is_dynamic,
+CAST(CAST(1 AS sys.BIT) AS sys.BIT) AS is_advanced
+FROM pg_catalog.pg_settings s where name = 'babelfishpg_tds.tds_default_packet_size'
+ORDER BY configuration_id;
 GRANT SELECT ON sys.configurations TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.syscurconfigs
 AS
-SELECT  value,
-        configuration_id AS config,
-        comment_syscurconfigs AS comment,
+SELECT  c.value,
+        c.configuration_id AS config,
+        COALESCE(b.comment_syscurconfigs, c.description) AS comment,
         CASE
-        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 0 THEN CAST(0 as smallint)
-        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 1 THEN CAST(1 as smallint)
-        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 0 THEN CAST(2 as smallint)
-        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 1 THEN CAST(3 as smallint)
         END AS status
-FROM sys.babelfish_configurations;
+FROM sys.configurations c LEFT JOIN sys.babelfish_configurations b ON c.configuration_id = b.configuration_id;
 GRANT SELECT ON sys.syscurconfigs TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sysconfigures
 AS
-SELECT  value_in_use AS value,
-        configuration_id AS config,
-        comment_sysconfigures AS comment,
+SELECT  c.value_in_use AS value,
+        c.configuration_id AS config,
+        COALESCE(b.comment_sysconfigures, c.description) AS comment,
         CASE
-        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 0 THEN CAST(0 as smallint)
-        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 1 THEN CAST(1 as smallint)
-        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 0 THEN CAST(2 as smallint)
-        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 0 AND CAST(c.is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(c.is_advanced as int) = 1 AND CAST(c.is_dynamic as int) = 1 THEN CAST(3 as smallint)
         END AS status
-FROM sys.babelfish_configurations;
+FROM sys.configurations c LEFT JOIN sys.babelfish_configurations b ON c.configuration_id = b.configuration_id;
 GRANT SELECT ON sys.sysconfigures TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.syslanguages
@@ -3305,7 +3287,6 @@ FROM information_schema.triggers tr
 JOIN pg_catalog.pg_namespace np ON tr.event_object_schema = np.nspname COLLATE sys.database_default
 JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_default AND pc.relnamespace = np.oid
 JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
-AND has_schema_privilege(pc.relnamespace, 'USAGE')
 AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.events TO PUBLIC;
 
@@ -3360,7 +3341,6 @@ LEFT JOIN tt_internal tt on t.oid = tt.typrelid
 WHERE tt.typrelid is null
 AND t.relkind = 'r'
 AND t.relispartition = false
-AND has_schema_privilege(t.relnamespace, 'USAGE')
 AND has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 
 UNION ALL
@@ -3383,7 +3363,6 @@ INNER JOIN pg_class t on t.oid = idx.indrelid and t.relkind = 'r' and t.relispar
 INNER JOIN pg_namespace nsp on t.relnamespace = nsp.oid
 INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
 where idx.indislive
-and has_schema_privilege(t.relnamespace, 'USAGE')
 
 UNION ALL
 -- entries for partitions of partitioned tables
@@ -3403,8 +3382,8 @@ FROM pg_inherits pgi
 INNER JOIN pg_class ctbl on (ctbl.oid = pgi.inhrelid and ctbl.relkind = 'r' and ctbl.relispartition)
 INNER JOIN pg_namespace nsp on ctbl.relnamespace = nsp.oid
 INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
-WHERE has_schema_privilege(ctbl.relnamespace, 'USAGE')
-AND has_table_privilege(ctbl.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+WHERE 
+has_table_privilege(ctbl.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 
 UNION ALL
 -- entries for partitions of partitioned indexes
@@ -3426,8 +3405,7 @@ INNER JOIN index_id_map pidx on pidx.indexrelid = pgi.inhparent
 INNER JOIN pg_class ctbl on (ctbl.oid = cidx.indrelid and ctbl.relkind = 'r' and ctbl.relispartition)
 INNER JOIN pg_namespace nsp on ctbl.relnamespace = nsp.oid
 INNER JOIN sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
-WHERE cidx.indislive
-AND has_schema_privilege(ctbl.relnamespace, 'USAGE');
+WHERE cidx.indislive;
 GRANT SELECT ON sys.partitions TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.servers
@@ -3601,3 +3579,44 @@ AS SELECT
 FROM sys.objects so
 WHERE FALSE;
 GRANT SELECT ON sys.sequences TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.dm_os_sys_info 
+AS SELECT 
+  CAST(0 AS BIGINT) AS cpu_ticks,
+  CAST(ROUND(EXTRACT(EPOCH FROM NOW()) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
+  CAST(0 AS INT) AS cpu_count,
+  CAST(0 AS INT) AS hyperthread_ratio,
+  CAST(0 AS BIGINT) AS physical_memory_kb,
+  CAST(0 AS BIGINT) AS virtual_memory_kb,
+  CAST(0 AS BIGINT) AS committed_kb,
+  CAST(0 AS BIGINT) AS committed_target_kb,
+  CAST(0 AS BIGINT) AS visible_target_kb,
+  CAST(0 AS INT) AS stack_size_in_bytes,
+  CAST(0 AS BIGINT) AS os_quantum,
+  CAST(0 AS INT) AS os_error_mode,
+  CAST(0 AS INT) AS os_priority_class,
+  CAST(0 AS INT) AS max_workers_count,
+  CAST(0 AS INT) AS scheduler_count,
+  CAST(0 AS INT) AS scheduler_total_count,
+  CAST(0 AS INT) AS deadlock_monitor_serial_number,
+  CAST(ROUND(EXTRACT(EPOCH FROM pg_postmaster_start_time()) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
+  CAST(pg_postmaster_start_time() AS sys.DATETIME) AS sqlserver_start_time,
+  CAST(0 AS INT) AS affinity_type,
+  CAST(NULL AS sys.NVARCHAR(60)) AS affinity_type_desc,
+  CAST(0 AS BIGINT) AS process_kernel_time_ms,
+  CAST(0 AS BIGINT) AS process_user_time_ms,
+  CAST(0 AS INT) AS time_source,
+  CAST(NULL AS sys.NVARCHAR(60)) AS time_source_desc,
+  CAST(0 AS INT) AS virtual_machine_type,
+  CAST('NONE' AS sys.NVARCHAR(60)) AS virtual_machine_type_desc,
+  CAST(0 AS INT) AS softnuma_configuration,
+  CAST('OFF' AS sys.NVARCHAR(60)) AS softnuma_configuration_desc,
+  CAST(NULL AS sys.NVARCHAR(3072)) AS process_physical_affinity,
+  CAST(0 AS INT) AS sql_memory_model,
+  CAST(NULL AS sys.NVARCHAR(60)) AS sql_memory_model_desc,
+  CAST(0 AS INT) AS socket_count,
+  CAST(0 AS INT) AS cores_per_socket,
+  CAST(0 AS INT) AS numa_node_count,
+  CAST(0 AS INT) AS container_type,
+  CAST(NULL AS sys.NVARCHAR(60)) AS container_type_desc;
+GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;

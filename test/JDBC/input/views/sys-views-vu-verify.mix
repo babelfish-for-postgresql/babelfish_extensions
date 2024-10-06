@@ -1,3 +1,5 @@
+-- single_db_mode_expected
+-- tsql
 USE sys_views_vu_prepare_db1
 GO
 
@@ -47,4 +49,57 @@ SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'sys_views_vu_prepare
 GO
 
 SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'sys_views_vu_prepare_t2';
+GO
+
+USE master ;
+GO
+
+create login sys_views_login_l1 WITH PASSWORD = '12345678';
+GO
+
+create user sys_views_user_u1 for login sys_views_login_l1;
+GO
+
+CREATE schema sys_views_vu_prepare_s1;
+GO
+
+USE sys_views_vu_prepare_db1
+GO
+
+create user sys_views_user_u2 for login sys_views_login_l1;
+GO
+
+CREATE DATABASE sys_views_vu_prepare_db2;
+GO
+
+USE sys_views_vu_prepare_db2
+GO
+
+CREATE schema sys_views_vu_prepare_s3;
+GO
+
+create user sys_views_user_u3 for login sys_views_login_l1;
+GO
+
+USE master;
+GO
+
+-- checking to make sure that all tsql users have USAGE privilege on tsql schemas.
+-- psql
+SELECT n.nspname, r.rolname, has_schema_privilege(r.rolname, n.nspname, 'USAGE')
+FROM sys.babelfish_namespace_ext n 
+INNER JOIN  sys.babelfish_sysdatabases db on n.dbid = db.dbid
+CROSS JOIN  sys.babelfish_authid_user_ext r
+WHERE db.name in ('master', 'tempdb', 'msdb', 'sys_views_vu_prepare_db1', 'sys_views_vu_prepare_db2')
+and r.database_name in ('master', 'tempdb', 'msdb', 'sys_views_vu_prepare_db1', 'sys_views_vu_prepare_db2')
+and n.orig_name in ('dbo', 'guest', 'sys_views_vu_prepare_s1', 'sys_views_vu_prepare_s2', 'sys_views_vu_prepare_s3')
+and r.orig_username in ('dbo', 'dbo_owner', 'guest', 'sys_views_user_u1', 'sys_views_user_u2', 'sys_views_user_u3')
+ORDER by n.nspname, r.rolname;
+GO
+
+-- tsql
+USE master;
+GO
+
+DROP DATABASE sys_views_vu_prepare_db2;
 GO

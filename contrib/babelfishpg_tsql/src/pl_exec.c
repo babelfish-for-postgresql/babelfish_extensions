@@ -10227,7 +10227,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 	char	   *cur_dbname = get_cur_db_name();
 	char	   *new_search_path;
 	char	   *physical_schema;
-	const char *dbo_schema;
+	char	   *dbo_schema = NULL;
 
 	top_es_entry = exec_state_call_stack->next;
 
@@ -10291,7 +10291,10 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 				(void) set_config_option("search_path", new_search_path,
 										 PGC_USERSET, PGC_S_SESSION,
 										 GUC_ACTION_SAVE, true, 0, false);
+										 
 				pfree(new_search_path);
+				pfree(dbo_schema);
+					
 				return true;
 			}
 			else if (top_es_entry->estate->db_name != NULL && stmt->is_ddl)
@@ -10343,6 +10346,8 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 											 PGC_USERSET, PGC_S_SESSION,
 											 GUC_ACTION_SAVE, true, 0, false);
 					pfree(new_search_path);
+					pfree(dbo_schema);
+					
 					return true;
 				}
 			}
@@ -10374,10 +10379,13 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
 		pfree(new_search_path);
+		pfree(dbo_schema);
+			
 		return true;
 	}
 	
 	pfree(cur_dbname);
+	
 	return false;
 }
 
