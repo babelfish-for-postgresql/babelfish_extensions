@@ -1,85 +1,73 @@
--- tsql
-create database dbowner__main_db
-go
-use dbowner__main_db
-go
-grant connect to guest
-go
-create login dbowner__l1 with password = '123'
-go
-create user dbowner__u1 for login dbowner__l1
-go
-create login dbowner__l2 with password = '123'
-go
-create login dbowner__temp with password = '123'
-go
-create user dbowner__u2 for login dbowner__l2
-go
-create schema dbowner__s1 authorization dbowner__u1
-go
-create schema dbowner__s2 authorization dbowner__u2
-go
-create table dbo.dbowner__t0 (x int)
-go
-create function dbo.dbowner__f0() returns int as begin return 10 end
-go
-create procedure dbo.dbowner__p0 as select 20
-go
-
-create role dbowner__r1
-go
-create role dbowner__r2
-go
-
 -- tsql user=dbowner__l1 password=123
 use dbowner__main_db
 go
 select is_member('db_owner')
 go
-create table dbowner__s1.dbowner__t1 (a int)
-go
-create function dbowner__s1.dbowner__f1() returns int as begin return 11 end
-go
-create procedure dbowner__s1.dbowner__p1 as select 21
-go
+~~START~~
+int
+1
+~~END~~
 
--- tsql user=dbowner__l2 password=123
-use dbowner__main_db
-go
-select is_member('db_owner')
-go
-create table dbowner__s2.dbowner__t2 (a int)
-go
-create function dbowner__s2.dbowner__f2() returns int as begin return 12 end
-go
-create procedure dbowner__s2.dbowner__p2 as select 22
-go
-
--- tsql
-alter role db_owner add member dbowner__u1
-go
-
--- tsql user=dbowner__l1 password=123
-select is_member('db_owner')
-go
 select * from dbo.dbowner__t0
 go
+~~START~~
+int
+~~END~~
+
 select dbo.dbowner__f0()
 go
+~~START~~
+int
+10
+~~END~~
+
 exec dbo.dbowner__p0
 go
+~~START~~
+int
+20
+~~END~~
+
 select * from dbowner__s1.dbowner__t1
 go
+~~START~~
+int
+~~END~~
+
 select dbowner__s1.dbowner__f1()
 go
+~~START~~
+int
+11
+~~END~~
+
 exec dbowner__s1.dbowner__p1
 go
+~~START~~
+int
+21
+~~END~~
+
 select * from dbowner__s2.dbowner__t2
 go
+~~START~~
+int
+~~END~~
+
 select dbowner__s2.dbowner__f2()
 go
+~~START~~
+int
+12
+~~END~~
+
 exec dbowner__s2.dbowner__p2
 go
+~~START~~
+int
+22
+~~END~~
+
 create table dbowner__s1.dbowner__t11 (a int)
 go
 create schema dbowner__s3 authorization dbowner__u1
@@ -116,6 +104,20 @@ go
 select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
 where grantee IN ('dbowner__main_db_guest', 'dbowner__main_db_dbowner__u1', 'dbowner__main_db_dbowner__u2') order by permission;
 GO
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
+dbowner__s1#!#dbowner__t1#!#1#!#dbowner__main_db_dbowner__u2#!#<NULL>
+dbowner__s2#!#ALL#!#1#!#dbowner__main_db_guest#!#<NULL>
+dbowner__s1#!#ALL#!#2#!#dbowner__main_db_dbowner__u2#!#<NULL>
+dbo#!#dbowner__t0#!#2#!#dbowner__main_db_dbowner__u2#!#<NULL>
+dbowner__s3#!#ALL#!#4#!#dbowner__main_db_dbowner__u2#!#<NULL>
+dbowner__s2#!#dbowner__t2#!#4#!#dbowner__main_db_dbowner__u1#!#<NULL>
+dbowner__s3#!#dbowner__t3#!#8#!#dbowner__main_db_dbowner__u2#!#<NULL>
+dbo#!#ALL#!#8#!#dbowner__main_db_dbowner__u2#!#<NULL>
+dbowner__s3#!#dbowner__p3#!#128#!#dbowner__main_db_dbowner__u1#!#<NULL>
+dbowner__s1#!#dbowner__f1#!#128#!#dbowner__main_db_dbowner__u1#!#<NULL>
+~~END~~
+
 
 -- tsql user=dbowner__l1 password=123
 revoke select on schema::dbowner__s1 to dbowner__u2
@@ -143,11 +145,19 @@ go
 select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
 where grantee IN ('dbowner__main_db_guest', 'dbowner__main_db_dbowner__u1', 'dbowner__main_db_dbowner__u2') order by permission;
 GO
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
+~~END~~
 
--- CASE : ALTER ANY USER
+
 -- tsql user=dbowner__l1 password=123
+-- CASE : ALTER ANY USER
 select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
 go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+~~END~~
+
 alter user dbowner__u1 with default_schema = dbowner__s1
 go
 alter user dbowner__u1 with name = new_dbowner__u1
@@ -160,8 +170,19 @@ alter user dbowner__u2 with name = new_dbowner__u2
 go
 select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
 go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+dbowner__main_db_new_dbowner__u1#!#dbowner__l1#!#dbowner__s1#!#English
+dbowner__main_db_new_dbowner__u2#!#dbowner__temp#!#dbo#!#English
+~~END~~
+
 select sys.user_name(), sys.suser_name(), is_member('db_owner')
 go
+~~START~~
+nvarchar#!#nvarchar#!#int
+new_dbowner__u1#!#dbowner__l1#!#1
+~~END~~
+
 alter user new_dbowner__u2 with default_schema = dbo
 go
 alter user new_dbowner__u2 with login = dbowner__l2
@@ -172,18 +193,53 @@ alter user new_dbowner__u1 with login = dbowner__temp
 go
 select sys.user_name(), sys.suser_name(), is_member('db_owner')
 go
+~~START~~
+nvarchar#!#nvarchar#!#int
+guest#!#dbowner__l1#!#0
+~~END~~
+
 select database_name, rolname, login_name, default_schema_name, default_language_name from sys.babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
 go
+~~START~~
+nvarchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
+dbowner__main_db#!#dbowner__main_db_new_dbowner__u1#!#dbowner__temp#!#dbowner__s1#!#English
+~~END~~
+
 alter user new_dbowner__u1 with login = dbowner__l1
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change login)~~
+
 alter user new_dbowner__u1 with name = dbowner__u1
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change user name)~~
+
 select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
 go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+dbowner__main_db_new_dbowner__u1#!#dbowner__temp#!#dbowner__s1#!#English
+~~END~~
+
 select name from sys.database_principals order by name
 go
+~~START~~
+varchar
+db_owner
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
 
 -- tsql
+use dbowner__main_db
+go
 alter role db_owner drop member new_dbowner__u1
 go
 alter role db_owner add member new_dbowner__u1
@@ -198,45 +254,140 @@ use dbowner__main_db
 go
 select sys.user_name(), is_member('db_owner')
 go
+~~START~~
+nvarchar#!#int
+new_dbowner__u1#!#1
+~~END~~
+
 alter user new_dbowner__u1 with name = dbowner__u1
 go
 select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
 go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+~~END~~
+
 select name from sys.database_principals order by name
 go
+~~START~~
+varchar
+db_owner
+dbo
+dbowner__r1
+dbowner__r2
+dbowner__u1
+dbowner__u2
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
 
 -- tsql user=dbowner__l2 password=123
+use dbowner__main_db
+go
 select is_member('db_owner')
 go
+~~START~~
+int
+0
+~~END~~
+
 select * from dbo.dbowner__t0
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbowner__t0)~~
+
 select dbo.dbowner__f0()
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbowner__f0)~~
+
 exec dbo.dbowner__p0
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure dbowner__p0)~~
+
 select * from dbowner__s1.dbowner__t1
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbowner__t1)~~
+
 select dbowner__s1.dbowner__f1()
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbowner__f1)~~
+
 exec dbowner__s1.dbowner__p1
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure dbowner__p1)~~
+
 select * from dbowner__s2.dbowner__t2
 go
+~~START~~
+int
+~~END~~
+
 select dbowner__s2.dbowner__f2()
 go
+~~START~~
+int
+12
+~~END~~
+
 exec dbowner__s2.dbowner__p2
 go
+~~START~~
+int
+22
+~~END~~
+
 select * from dbowner__s1.dbowner__t11
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbowner__t11)~~
+
 select * from dbowner__s3.dbowner__t3
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbowner__t3)~~
+
 select dbowner__s3.dbowner__f3()
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbowner__f3)~~
+
 exec dbowner__s3.dbowner__p3
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure dbowner__p3)~~
+
 
 select name from sys.database_principals order by name
 go
+~~START~~
+varchar
+db_owner
+dbo
+dbowner__u2
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
 
 -- psql
 -- Procedure/function owners should be dbowner__main_db_dbowner__u1_obj
@@ -247,6 +398,14 @@ WHERE pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s1'
 OR pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s3'
 ORDER BY proname;
 GO
+~~START~~
+name#!#regrole
+dbowner__f1#!#dbowner__main_db_dbowner__u1_obj
+dbowner__f3#!#dbowner__main_db_dbowner__u1_obj
+dbowner__p1#!#dbowner__main_db_dbowner__u1_obj
+dbowner__p3#!#dbowner__main_db_dbowner__u1_obj
+~~END~~
+
 
 -- Table owners should be dbowner__main_db_dbowner__u1_obj
 SELECT
@@ -268,6 +427,13 @@ WHERE (n.nspname = 'dbowner__main_db_dbowner__s1' OR n.nspname = 'dbowner__main_
 AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
 ORDER BY n.nspname, c.relkind, c.relname;
 GO
+~~START~~
+name#!#name#!#text#!#name
+dbowner__main_db_dbowner__s1#!#dbowner__t1#!#table#!#dbowner__main_db_dbowner__u1_obj
+dbowner__main_db_dbowner__s1#!#dbowner__t11#!#table#!#dbowner__main_db_dbowner__u1_obj
+dbowner__main_db_dbowner__s3#!#dbowner__t3#!#table#!#dbowner__main_db_dbowner__u1_obj
+~~END~~
+
 
 -- Schema owners should be dbowner__main_db_dbowner__u1_obj
 SELECT
@@ -285,37 +451,117 @@ OR
     ns.nspname = 'dbowner__main_db_dbowner__s3'
 ORDER BY ns.nspname;
 GO
+~~START~~
+name#!#name
+dbowner__main_db_dbowner__u1_obj#!#dbowner__main_db_dbowner__s1
+dbowner__main_db_dbowner__u1_obj#!#dbowner__main_db_dbowner__s3
+~~END~~
+
 
 -- tsql
 select * from dbo.dbowner__t0
 go
+~~START~~
+int
+~~END~~
+
 select dbo.dbowner__f0()
 go
+~~START~~
+int
+10
+~~END~~
+
 exec dbo.dbowner__p0
 go
+~~START~~
+int
+20
+~~END~~
+
 select * from dbowner__s1.dbowner__t1
 go
+~~START~~
+int
+~~END~~
+
 select dbowner__s1.dbowner__f1()
 go
+~~START~~
+int
+11
+~~END~~
+
 exec dbowner__s1.dbowner__p1
 go
+~~START~~
+int
+21
+~~END~~
+
 select * from dbowner__s2.dbowner__t2
 go
+~~START~~
+int
+~~END~~
+
 select dbowner__s2.dbowner__f2()
 go
+~~START~~
+int
+12
+~~END~~
+
 exec dbowner__s2.dbowner__p2
 go
+~~START~~
+int
+22
+~~END~~
+
 select * from dbowner__s1.dbowner__t11
 go
+~~START~~
+int
+~~END~~
+
 select * from dbowner__s3.dbowner__t3
 go
+~~START~~
+int
+~~END~~
+
 select dbowner__s3.dbowner__f3()
 go
+~~START~~
+int
+13
+~~END~~
+
 exec dbowner__s3.dbowner__p3
 go
+~~START~~
+int
+23
+~~END~~
+
 
 select name from sys.database_principals order by name
 go
+~~START~~
+varchar
+db_owner
+dbo
+dbowner__r1
+dbowner__r2
+dbowner__u1
+dbowner__u2
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
 
 alter role db_owner drop member dbowner__u1
 go
@@ -323,47 +569,136 @@ go
 -- tsql user=dbowner__l1 password=123
 select is_member('db_owner')
 go
+~~START~~
+int
+0
+~~END~~
+
 select * from dbo.dbowner__t0
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbowner__t0)~~
+
 select dbo.dbowner__f0()
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbowner__f0)~~
+
 exec dbo.dbowner__p0
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure dbowner__p0)~~
+
 select * from dbowner__s1.dbowner__t1
 go
+~~START~~
+int
+~~END~~
+
 select dbowner__s1.dbowner__f1()
 go
+~~START~~
+int
+11
+~~END~~
+
 exec dbowner__s1.dbowner__p1
 go
+~~START~~
+int
+21
+~~END~~
+
 select * from dbowner__s2.dbowner__t2
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbowner__t2)~~
+
 select dbowner__s2.dbowner__f2()
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbowner__f2)~~
+
 exec dbowner__s2.dbowner__p2
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure dbowner__p2)~~
+
 select * from dbowner__s1.dbowner__t11
 go
+~~START~~
+int
+~~END~~
+
 select * from dbowner__s3.dbowner__t3
 go
+~~START~~
+int
+~~END~~
+
 select dbowner__s3.dbowner__f3()
 go
+~~START~~
+int
+13
+~~END~~
+
 exec dbowner__s3.dbowner__p3
 go
+~~START~~
+int
+23
+~~END~~
+
 
 create role dbowner__r3
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
 create role dbowner__r4
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
 create user dbowner__temp for login dbowner__temp
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
 alter role dbowner__r1 add member dbowner__u2
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login dbowner__l1 does not have permission to alter role dbowner__main_db_dbowner__r1)~~
+
 drop user dbowner__u2
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'dbowner__u2', because it does not exist or you do not have permission.)~~
+
 drop role dbowner__r1
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'dbowner__r1', because it does not exist or you do not have permission.)~~
+
 drop role dbowner__r2
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'dbowner__r2', because it does not exist or you do not have permission.)~~
+
 
 -- psql
 -- Procedure/function owners should be dbowner__main_db_dbowner__u1
@@ -374,6 +709,14 @@ WHERE pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s1'
 OR pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s3'
 ORDER BY proname;
 GO
+~~START~~
+name#!#regrole
+dbowner__f1#!#dbowner__main_db_dbowner__u1
+dbowner__f3#!#dbowner__main_db_dbowner__u1
+dbowner__p1#!#dbowner__main_db_dbowner__u1
+dbowner__p3#!#dbowner__main_db_dbowner__u1
+~~END~~
+
 
 -- Table owners should be dbowner__main_db_dbowner__u1
 SELECT
@@ -395,6 +738,13 @@ WHERE (n.nspname = 'dbowner__main_db_dbowner__s1' OR n.nspname = 'dbowner__main_
 AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
 ORDER BY n.nspname, c.relkind, c.relname;
 GO
+~~START~~
+name#!#name#!#text#!#name
+dbowner__main_db_dbowner__s1#!#dbowner__t1#!#table#!#dbowner__main_db_dbowner__u1
+dbowner__main_db_dbowner__s1#!#dbowner__t11#!#table#!#dbowner__main_db_dbowner__u1
+dbowner__main_db_dbowner__s3#!#dbowner__t3#!#table#!#dbowner__main_db_dbowner__u1
+~~END~~
+
 
 -- Schema owners should be dbowner__main_db_dbowner__u1
 SELECT
@@ -412,6 +762,12 @@ OR
     ns.nspname = 'dbowner__main_db_dbowner__s3'
 ORDER BY ns.nspname;
 GO
+~~START~~
+name#!#name
+dbowner__main_db_dbowner__u1#!#dbowner__main_db_dbowner__s1
+dbowner__main_db_dbowner__u1#!#dbowner__main_db_dbowner__s3
+~~END~~
+
 
 -- tsql
 alter role db_owner add member dbowner__u1
@@ -422,13 +778,28 @@ go
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
 WHERE sys.suser_name(usesysid) = 'dbowner__l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
+~~START~~
+bool
+t
+~~END~~
+
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql user=dbowner__l1 password=123
 select is_member('db_owner')
 go
+~~START~~
+int
+1
+~~END~~
+
 
 create role dbowner__r3
 go
@@ -497,9 +868,14 @@ go
 -- tsql user=dbowner__l1 password=123
 select is_member('db_owner')
 go
+~~START~~
+int
+0
+~~END~~
 
--- Check if db_owner can drop the database
+
 -- tsql
+-- Check if db_owner can drop the database
 create database dbowner__test_db
 go
 use dbowner__test_db
@@ -514,13 +890,23 @@ go
 -- tsql user=dbowner__l1 password=123
 select sys.user_name()
 go
+~~START~~
+nvarchar
+dbowner__u1
+~~END~~
+
 select is_member('db_owner')
 go
+~~START~~
+int
+0
+~~END~~
+
 drop database dbowner__test_db
 go
 
--- Check if there can be multiple db_owners
 -- tsql
+-- Check if there can be multiple db_owners
 create database dbowner__test_db
 go
 use dbowner__test_db
@@ -532,12 +918,17 @@ go
 use master
 go
 
--- Add another user but as db_owner
 -- tsql user=dbowner__l1 password=123
+-- Add another user but as db_owner
 use dbowner__test_db
 go
 select is_member('db_owner')
 go
+~~START~~
+int
+1
+~~END~~
+
 create user dbowner__test_db_dbowner__u2 for login dbowner__l2
 go
 
@@ -548,6 +939,11 @@ alter role db_owner add member dbowner__test_db_dbowner__u2
 go
 select is_rolemember('db_owner', 'dbowner__test_db_dbowner__u1'), is_rolemember('db_owner', 'dbowner__test_db_dbowner__u2')
 go
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
 use dbowner__main_db
 go
 
@@ -556,15 +952,36 @@ go
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
 WHERE sys.suser_name(usesysid) = 'dbowner__l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
+~~START~~
+bool
+t
+~~END~~
+
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
+~~START~~
+void
+
+~~END~~
 
 
--- Check if dropping user, also drops the linked "_obj" role
+
 -- psql
+-- Check if dropping user, also drops the linked "_obj" role
 select rolname from pg_authid where rolname like 'dbowner__test_db_%' order by rolname;
 go
+~~START~~
+name
+dbowner__test_db_db_owner
+dbowner__test_db_dbo
+dbowner__test_db_dbowner__test_db_dbowner__u1
+dbowner__test_db_dbowner__test_db_dbowner__u1_obj
+dbowner__test_db_dbowner__test_db_dbowner__u2
+dbowner__test_db_dbowner__test_db_dbowner__u2_obj
+dbowner__test_db_guest
+~~END~~
+
 
 -- tsql
 use dbowner__test_db
@@ -579,21 +996,10 @@ go
 -- psql
 select rolname from pg_authid where rolname like 'dbowner__test_db_%' order by rolname;
 go
+~~START~~
+name
+dbowner__test_db_db_owner
+dbowner__test_db_dbo
+dbowner__test_db_guest
+~~END~~
 
--- tsql
-drop database dbowner__test_db
-go
-drop user dbowner__u1
-go
-drop login dbowner__l1
-go
-drop login dbowner__l2
-go
-drop login dbowner__temp
-go
-revoke connect from guest
-go
-use master
-go
-drop database dbowner__main_db
-go
