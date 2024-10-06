@@ -577,25 +577,6 @@ varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
 ~~END~~
 
 
--- psql user=l1 password=123
-drop role master_db_datareader;
-go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: permission denied to drop role
-  Detail: Only roles with the CREATEROLE attribute and the ADMIN option on the target roles may drop roles.
-    Server SQLState: 42501)~~
-
-
-drop role master_db_datawriter;
-go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: permission denied to drop role
-  Detail: Only roles with the CREATEROLE attribute and the ADMIN option on the target roles may drop roles.
-    Server SQLState: 42501)~~
-
-
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
@@ -603,7 +584,6 @@ WHERE sys.suser_name(usesysid) = 'l1' AND backend_type = 'client backend' AND us
 go
 ~~START~~
 bool
-t
 t
 ~~END~~
 

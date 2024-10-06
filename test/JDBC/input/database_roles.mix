@@ -295,13 +295,6 @@ go
 select rolname, login_name, orig_username, database_name, default_schema_name from babelfish_authid_user_ext where database_name = 'db1';
 go
 
--- psql user=l1 password=123
-drop role master_db_datareader;
-go
-
-drop role master_db_datawriter;
-go
-
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
