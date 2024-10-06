@@ -4022,7 +4022,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				char		*dbname = get_cur_db_name();
 				const char	*db_datareader = get_db_datareader_name(dbname);
 				const char	*db_datawriter = get_db_datawriter_name(dbname);
-				const char *current_user = GetUserNameFromId(GetUserId(), false);
+				char *current_user = GetUserNameFromId(GetUserId(), false);
 				/* Ignore when GRANT statement has no specific named object. */
 				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
 					break;

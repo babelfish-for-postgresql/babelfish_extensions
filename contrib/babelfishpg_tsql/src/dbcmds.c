@@ -1468,8 +1468,8 @@ create_db_roles_if_not_exists(const uint16 dbid,
 	 */
 	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 
-	db_datareader = get_physical_user_name_by_mode((char *) dbname, "db_datareader", true, baseline_mode);
-	db_datawriter = get_physical_user_name_by_mode((char *) dbname, "db_datawriter", true, baseline_mode);
+	db_datareader = get_db_datareader_name_by_mode(dbname, baseline_mode);
+	db_datawriter = get_db_datawriter_name_by_mode(dbname, baseline_mode);
 
 	/*
 	 * database roles prepends dbname based on single-db or multi-db. If for
@@ -1552,7 +1552,6 @@ create_db_roles_if_not_exists(const uint16 dbid,
 			add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
 		if (!entry_exists_in_bbf_auth_ext(db_datawriter))
 			add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
-
 
 		/* Grant permissions on all the schemas in a database to db_datareader/db_datawriter */
 		grant_permissions_to_datareader_datawriter(dbid, db_datareader, db_datawriter);
