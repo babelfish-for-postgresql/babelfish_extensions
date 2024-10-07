@@ -10609,19 +10609,19 @@ SET probin = (
                         CASE
                             WHEN p2.proallargtypes is null AND p2.proargtypes[b-1] is not null THEN
                                 CASE
-                                    WHEN a::varchar = '-8000' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid) THEN '-1'
-                                    WHEN a::varchar = '-1' AND p2.proargtypes[b-1] = ('sys.smalldatetime'::regtype)::oid THEN '0'
-                                    WHEN a::varchar = '-1' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.binary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.bpchar'::regtype)::oid) THEN '1'
-                                    ELSE a::varchar
+                                    WHEN a::text = '-8000' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid) THEN '-1'
+                                    WHEN a::text = '-1' AND p2.proargtypes[b-1] = ('sys.smalldatetime'::regtype)::oid THEN '0'
+                                    WHEN a::text = '-1' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.binary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.bpchar'::regtype)::oid) THEN '1'
+                                    ELSE a::text
                                 END
                             WHEN p2.proallargtypes is null AND p2.prorettype is not null THEN
                                 CASE
-                                    WHEN a::varchar = '-8000' AND (p2.prorettype = ('sys.varchar'::regtype)::oid OR p2.prorettype = ('sys.nvarchar'::regtype)::oid OR p2.prorettype = ('sys.varbinary'::regtype)::oid) THEN '-1'
-                                    WHEN a::varchar = '-1' AND p2.prorettype = ('sys.smalldatetime'::regtype)::oid THEN '0'
-                                    WHEN a::varchar = '-1' AND (p2.prorettype = ('sys.varchar'::regtype)::oid OR p2.prorettype = ('sys.nvarchar'::regtype)::oid OR p2.prorettype = ('sys.varbinary'::regtype)::oid OR p2.prorettype = ('sys.nchar'::regtype)::oid OR p2.prorettype = ('sys.binary'::regtype)::oid OR p2.prorettype = ('sys.bpchar'::regtype)::oid) THEN '1'
-                                    ELSE a::varchar
+                                    WHEN a::text = '-8000' AND (p2.prorettype = ('sys.varchar'::regtype)::oid OR p2.prorettype = ('sys.nvarchar'::regtype)::oid OR p2.prorettype = ('sys.varbinary'::regtype)::oid) THEN '-1'
+                                    WHEN a::text = '-1' AND p2.prorettype = ('sys.smalldatetime'::regtype)::oid THEN '0'
+                                    WHEN a::text = '-1' AND (p2.prorettype = ('sys.varchar'::regtype)::oid OR p2.prorettype = ('sys.nvarchar'::regtype)::oid OR p2.prorettype = ('sys.varbinary'::regtype)::oid OR p2.prorettype = ('sys.nchar'::regtype)::oid OR p2.prorettype = ('sys.binary'::regtype)::oid OR p2.prorettype = ('sys.bpchar'::regtype)::oid) THEN '1'
+                                    ELSE a::text
                                 END
-                            ELSE a::varchar
+                            ELSE a::text
                         END
                     )
                     FROM jsonb_array_elements_text(probin::jsonb->'typmod_array')  WITH ORDINALITY AS elem(a,b)
