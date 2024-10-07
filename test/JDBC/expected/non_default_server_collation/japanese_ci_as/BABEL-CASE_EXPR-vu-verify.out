@@ -11469,7 +11469,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: CASE/WHEN could not convert type BABEL_CASE_EXPR_TEST_UDT3 to double precision)~~
+~~ERROR (Message: CASE/WHEN could not convert type babel_case_expr_test_udt3 to double precision)~~
 
 
 SELECT CASE 2
@@ -11523,7 +11523,7 @@ END AS RESULT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: CASE/WHEN could not convert type BABEL_CASE_EXPR_TEST_UDT3 to double precision)~~
+~~ERROR (Message: CASE/WHEN could not convert type babel_case_expr_test_udt3 to double precision)~~
 
 
 SELECT CASE 2
