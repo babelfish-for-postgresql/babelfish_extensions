@@ -1004,75 +1004,6 @@ get_immediate_base_type_of_UDT_internal(Oid typeid)
 	return base_type;
 }
 
-/*
- * get_immediate_base_typmod_of_UDT_internal()
- * This function returns typmod of the Immediate base type for UDT.
- * is_UDT helps to know, weather the typeid is of UDT or not.
- * This function also includes special handling of sys.sysname,
- * that is a domain created from VARCHAR(128) in BBF.
- * By default, typmod of sysname is SYSNAME_TYPMOD
- */
-static int32
-get_immediate_base_typmod_of_UDT_internal(Oid typeid, bool *is_UDT)
-{
-	HeapTuple					tuple;
-	bool						isnull;
-	Datum						datum;
-	Datum                                           tsql_typename;
-	int32 						typmod;
-	Oid						UDTOid;
-	
-	LOCAL_FCINFO(fcinfo, 1);
-
-	if (!OidIsValid(typeid))
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("typeid is invalid!")));
-
-	/* if common_utility_plugin_ptr is not initialised */
-	if (common_utility_plugin_ptr == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Failed to find common utility plugin.")));
-
-	/* if tsql_typename is NULL it implies that inputTypId corresponds to UDT */
-	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-	fcinfo->args[0].value = ObjectIdGetDatum(typeid);
-	fcinfo->args[0].isnull = false;
-	tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
-    
-	UDTOid = get_immediate_base_type_of_UDT_internal(typeid);
-
-	if ((UDTOid && (*common_utility_plugin_ptr->is_tsql_sysname_datatype) (UDTOid)) ||
-	    (typeid && (*common_utility_plugin_ptr->is_tsql_sysname_datatype) (typeid)))
-	{
-		*is_UDT = true;
-		return SYSNAME_TYPMOD;
-	}
-
-	/* if given type is not an UDT then return InvalidOid */
-	if (tsql_typename)
-	{
-		*is_UDT = false;
-		return -1;
-	}
-		
-	/* Get immediate base type id of given type id */
-	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeid));
-	if (!HeapTupleIsValid(tuple))
-	{
-		*is_UDT = false;
-		return -1;
-	}
-		
-	datum = SysCacheGetAttr(TYPEOID, tuple, Anum_pg_type_typtypmod, &isnull);
-	ReleaseSysCache(tuple);
-
-	typmod = DatumGetInt32(datum);
-        *is_UDT = true;
-	return typmod;
-}
-
 Datum
 get_immediate_base_type_of_UDT(PG_FUNCTION_ARGS)
 {
@@ -2026,12 +1957,11 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
 	 * or NVARCHAR is present, let engine handle finding the type.
 	 * But if it is CASE expr then it will also check for text and ntext.
-     */
+         */
 	foreach(lc, exprs)
 	{
-		Node	        *expr = (Node *) lfirst(lc);
+		Node            *expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
-                
                 if (is_case_expr)
                 {
                         Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
@@ -2193,13 +2123,19 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	/* If resulting type is a length, need to be max of length types */
 	foreach(lc, exprs)
 	{
-		bool  is_UDT;
 		Node *expr = (Node*) lfirst(lc);
 		int32 typmod = exprTypmod(expr);
-                int32 UDTtypmod = get_immediate_base_typmod_of_UDT_internal(exprType(expr), &is_UDT);
-
-		if (is_UDT)
-			typmod = UDTtypmod + VARHDRSZ;
+		int32 base_typmod = -1;
+		Oid   type = exprType(expr);
+		Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
+        /* 
+                 * Handling for UDT and sysname, If the base_type is
+                 * different from type then That means branch of CASE
+                 * Expression is of UDT or sysname. typmod for UDT and
+                 * sysname is assigned in this condition.
+                 */
+		if (base_type != type && base_typmod != -1)
+			typmod = base_typmod;
 
 		if (is_tsql_str_const(expr))
 			typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
