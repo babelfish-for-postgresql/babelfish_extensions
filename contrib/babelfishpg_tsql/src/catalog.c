@@ -851,16 +851,17 @@ get_authid_login_ext_idx_oid(void)
 /*
  * Check if role is a bbf db principal. Returns BBF_ROLE if it is
  * a db role, returns BBF_USER if it is db user else returns 0
- * Looks only in current bbf db when current_db_only is set to true
  */
 
 const int
-is_database_principal(Oid role_oid, bool current_db_only)
+get_db_principal_kind(Oid role_oid, const char *db_name)
 {
 	char    	result = 0;
 	bool    	isnull;
 	HeapTuple	tuple;
 	char    	*rolname;
+
+	Assert(OidIsValid(role_oid) && db_name);
 
 	rolname = GetUserNameFromId(role_oid, false);
 	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(rolname));
@@ -869,29 +870,22 @@ is_database_principal(Oid role_oid, bool current_db_only)
 	if (HeapTupleIsValid(tuple))
 	{
 		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		char *type_str = bpchar_to_cstring(&type);
+		Datum datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									  Anum_bbf_authid_user_ext_database_name,
+									  &isnull);
+		char *type_str;
+		char *db_name_cstring;
 
-		if (current_db_only)
-		{
-			Datum db_name = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
-												Anum_bbf_authid_user_ext_database_name, &isnull);
-			char *db_name_cstring;
-			char *current_db_name;
+		Assert(!isnull);
 
-			Assert(!isnull);
-			db_name_cstring = TextDatumGetCString(db_name);
-			current_db_name = get_cur_db_name();
+		type_str = bpchar_to_cstring(&type);
+		db_name_cstring = TextDatumGetCString(datum);
 
-			if (strcmp(db_name_cstring, current_db_name) == 0)
-				result = (strcmp(type_str, "R") == 0) ? BBF_ROLE : BBF_USER;
-
-			pfree(db_name_cstring);
-			pfree(current_db_name);
-		}
-		else
+		if (strcmp(db_name_cstring, db_name) == 0)
 			result = (strcmp(type_str, "R") == 0) ? BBF_ROLE : BBF_USER;
 
 		pfree(type_str);
+		pfree(db_name_cstring);
 		ReleaseSysCache(tuple);
 	}
 
@@ -923,44 +917,44 @@ get_authid_user_ext_idx_oid(void)
  * Looks only in current bbf db when current_db_only is set to true
  */
 char *
-get_authid_user_ext_original_name(const char *physical_role_name, bool current_db_only)
+get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name)
 {
 	char*    	orig_username = NULL;
 	bool    	isnull;
 	HeapTuple	tuple;
 
-	Assert(physical_role_name != NULL && strlen(physical_role_name) != 0);
+	Assert(physical_role_name && strlen(physical_role_name) != 0);
 
 	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(physical_role_name));
 
 	if (HeapTupleIsValid(tuple))
 	{
-		Datum orig_username_datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
-												Anum_bbf_authid_user_ext_orig_username, &isnull);
+		Datum datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									  Anum_bbf_authid_user_ext_database_name, &isnull);
+		char *db_name_cstring;
+
 		Assert(!isnull);
 
-		if (current_db_only)
+		db_name_cstring = TextDatumGetCString(datum);
+
+		if (strcmp(db_name_cstring, db_name) == 0)
 		{
-			Datum db_name = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
-												Anum_bbf_authid_user_ext_database_name, &isnull);
-			char *db_name_cstring;
-			char *current_db_name;
-
+			datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									Anum_bbf_authid_user_ext_orig_username, &isnull);
 			Assert(!isnull);
-			db_name_cstring = TextDatumGetCString(db_name);
-			current_db_name = get_cur_db_name();
 
-			if (strcmp(db_name_cstring, current_db_name) == 0)
-				orig_username = TextDatumGetCString(orig_username_datum);
-
-			pfree(db_name_cstring);
-			pfree(current_db_name);
+			orig_username = TextDatumGetCString(datum);
 		}
-		else
-			orig_username = TextDatumGetCString(orig_username_datum);
+
+		pfree(db_name_cstring);
 
 		ReleaseSysCache(tuple);
 	}
+
+	if (orig_username == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Could not find original name for db principal %s in database %s", physical_role_name, db_name)));
 
 	return orig_username;
 }

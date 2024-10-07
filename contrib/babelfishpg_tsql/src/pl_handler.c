@@ -3225,8 +3225,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						Oid 		user_oid = get_role_oid(stmt->role->rolename, false);
 
 						/* db principal being altered should be a user or role in the current active logical database */
-						if ((isuser && is_database_principal(user_oid, true) != BBF_USER) ||
-						    (isrole && is_database_principal(user_oid, true) != BBF_ROLE))
+						if ((isuser && get_db_principal_kind(user_oid, db_name) != BBF_USER) ||
+						    (isrole && get_db_principal_kind(user_oid, db_name) != BBF_ROLE))
 							ereport(ERROR,
 									(errcode(ERRCODE_CHECK_VIOLATION),
 										errmsg("Cannot alter the %s '%s', because it does not exist or you do not have permission.", isuser ? "user" : "role", stmt->role->rolename)));
@@ -3387,8 +3387,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									int		role_oid = get_role_oid(user_name, true);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
-									    (drop_user && is_database_principal(role_oid, true) != BBF_USER) ||      /* Found but not a user in current logical db */
-									    (drop_role && is_database_principal(role_oid, true) != BBF_ROLE))        /* Found but not a role in current logical db */
+									    (drop_user && get_db_principal_kind(role_oid, db_name) != BBF_USER) ||      /* Found but not a user in current logical db */
+									    (drop_role && get_db_principal_kind(role_oid, db_name) != BBF_ROLE))        /* Found but not a role in current logical db */
 									{
 										if (stmt->missing_ok)
 										{
@@ -3521,9 +3521,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if (is_login(roleform->oid))
 							all_logins = true;
-						else if (is_database_principal(roleform->oid, false) == BBF_USER)
+						else if (get_db_principal_kind(roleform->oid, get_current_db_name()) == BBF_USER)
 							all_users = true;
-						else if (is_database_principal(roleform->oid, false) == BBF_ROLE)
+						else if (get_db_principal_kind(roleform->oid, get_current_db_name()) == BBF_ROLE)
 							all_roles = true;
 						else
 							other = true;
@@ -3620,7 +3620,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (rolspec && strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
 					{
-						Oid       db_accessadmin = get_db_accessadmin_oid(get_cur_db_name(), false);
+						const char *db_name = get_current_db_name();
+						Oid        db_accessadmin = get_db_accessadmin_oid(db_name, false);
 
 						owner_oid = get_rolespec_oid(rolspec, true);
 						/*
@@ -3630,7 +3631,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						*/
 						if (!member_can_set_role(GetUserId(), owner_oid) &&
 							has_privs_of_role(GetUserId(), db_accessadmin) &&
-							(is_database_principal(owner_oid, true)))
+							(get_db_principal_kind(owner_oid, db_name)))
 						{
 							create_schema->authrole = NULL;
 							alter_owner = true;

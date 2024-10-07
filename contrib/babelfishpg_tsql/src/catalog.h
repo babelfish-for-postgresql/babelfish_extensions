@@ -148,10 +148,10 @@ extern Oid	bbf_authid_user_ext_idx_oid;
 
 #define BBF_ROLE 1
 #define BBF_USER 2
-const int is_database_principal(Oid role_oid, bool current_db_only);
+const int get_db_principal_kind(Oid role_oid, const char *db_name);
 extern Oid	get_authid_user_ext_oid(void);
 extern Oid	get_authid_user_ext_idx_oid(void);
-extern char *get_authid_user_ext_original_name(const char *physical_role_name, bool current_db_only);
+extern char *get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name);
 extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
 extern char *get_authid_user_ext_schema_name(const char *db_name, const char *user_name);
 extern List *get_authid_user_ext_db_users(const char *db_name);
