@@ -214,6 +214,42 @@ gen_createdb_subcmds(const char *dbname, const char *owner,
 	return res;
 }
 
+static bool
+entry_exists_in_bbf_auth_ext(const char *rolname)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData 		key;
+	SysScanDesc		scan;
+	NameData   		*user_name;
+	bool			catalog_entry_exists = false;
+
+	if (!rolname)
+		return NULL;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 AccessShareLock);
+
+	user_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(user_name->data, NAMEDATALEN, "%s", rolname);
+	ScanKeyInit(&key,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(user_name));
+
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+				get_authid_user_ext_idx_oid(),
+				true, NULL, 1, &key);
+
+	tuple_user_ext = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple_user_ext))
+		catalog_entry_exists = true;
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
+	return catalog_entry_exists;
+}
+
 static void
 add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 {
@@ -231,8 +267,12 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 
 	add_to_bbf_authid_user_ext(dbo, "dbo", dbname, "dbo", NULL, false, true, false);
 	add_to_bbf_authid_user_ext(db_owner, "db_owner", dbname, NULL, NULL, true, true, false);
-	add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
-	add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
+	if (!entry_exists_in_bbf_auth_ext(db_datareader))
+		add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
+	if (!entry_exists_in_bbf_auth_ext(db_datawriter))
+		add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
+	//add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
+	//add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
 
 	/*
 	 * For master, tempdb and msdb databases, the guest user will be
@@ -1307,7 +1347,7 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		char		*schema_owner;
 		char		*dbo_user;
 		char		*db_owner;
-		bool		more_alter_query = false;
+		bool		owner_other_than_dbo = false;
 		MigrationMode	baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 
 		datum = heap_getattr(tuple, Anum_namespace_ext_namespace, namespace_rel_descr, &isNull);
@@ -1318,7 +1358,7 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 
 		/* If schema owner is other that dbo or db_owner user, only then execute ALTER DEFAULT PRIVILEGES. */
 		if ((strcmp(schema_owner, dbo_user) != 0) && (strcmp(schema_owner, db_owner) != 0))
-				more_alter_query = true;
+				owner_other_than_dbo = true;
 
 		initStringInfo(&query);
 		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
@@ -1326,7 +1366,7 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
 		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
 
-		if (more_alter_query)
+		if (owner_other_than_dbo)
 		{
 			/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
 			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
@@ -1336,10 +1376,10 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		}
 		else
 		{
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
 		}
 
 		stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
@@ -1354,7 +1394,7 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, privilege_to_string(ACL_DELETE));
 
-		if (more_alter_query)
+		if (owner_other_than_dbo)
 		{
 			stmts = parsetree_nth_stmt(stmt_list, i++);
 			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datareader, privilege_to_string(ACL_SELECT));
@@ -1368,13 +1408,13 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		else
 		{
 			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, NULL, NULL, db_datareader, privilege_to_string(ACL_SELECT));
+			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datareader, privilege_to_string(ACL_SELECT));
 			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, NULL, NULL, db_datawriter, privilege_to_string(ACL_INSERT));
+			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_INSERT));
 			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, NULL, NULL, db_datawriter, privilege_to_string(ACL_UPDATE));
+			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_UPDATE));
 			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, NULL, NULL, db_datawriter, privilege_to_string(ACL_DELETE));
+			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_DELETE));
 		}
 
 		/* Run all subcommands */
@@ -1407,42 +1447,6 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 	/* Cleanup. */
 	table_endscan(tblscan);
 	table_close(namespace_rel, RowExclusiveLock);
-}
-
-static bool
-entry_exists_in_bbf_auth_ext(const char *rolname)
-{
-	Relation		bbf_authid_user_ext_rel;
-	HeapTuple		tuple_user_ext;
-	ScanKeyData 		key;
-	SysScanDesc		scan;
-	NameData   		*user_name;
-	bool			catalog_entry_exists = false;
-
-	if (!rolname)
-		return NULL;
-
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
-
-	user_name = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(user_name->data, NAMEDATALEN, "%s", rolname);
-	ScanKeyInit(&key,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(user_name));
-
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-				get_authid_user_ext_idx_oid(),
-				true, NULL, 1, &key);
-
-	tuple_user_ext = systable_getnext(scan);
-	if (HeapTupleIsValid(tuple_user_ext))
-		catalog_entry_exists = true;
-
-	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, AccessShareLock);
-	return catalog_entry_exists;
 }
 
 static void
