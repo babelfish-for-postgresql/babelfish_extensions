@@ -1679,6 +1679,104 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
+SELECT
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
+CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
+CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
+	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
+	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t5.grantee
+WHERE ext.orig_username != 'db_datawriter' AND ext.orig_username != 'db_datareader';
+GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+    "@column_name" sys.nvarchar(384) = ''
+)
+AS $$
+BEGIN
+    IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+ 	
+	IF (COALESCE(@table_owner, '') = '')
+	BEGIN
+		
+		IF EXISTS ( 
+			SELECT * FROM sys.sp_column_privileges_view 
+			WHERE LOWER(@table_name) = LOWER(table_name) and LOWER(SCHEMA_NAME()) = LOWER(table_qualifier)
+			)
+		BEGIN 
+			SELECT 
+			TABLE_QUALIFIER,
+			TABLE_OWNER,
+			TABLE_NAME,
+			COLUMN_NAME,
+			GRANTOR,
+			GRANTEE,
+			PRIVILEGE,
+			IS_GRANTABLE
+			FROM sys.sp_column_privileges_view
+			WHERE LOWER(@table_name) = LOWER(table_name)
+				AND (LOWER(SCHEMA_NAME()) = LOWER(table_owner))
+				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@table_qualifier))
+				AND ((SELECT COALESCE(@column_name,'')) = '' OR LOWER(column_name) LIKE LOWER(@column_name))
+			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
+		END
+		ELSE
+		BEGIN
+			SELECT 
+			TABLE_QUALIFIER,
+			TABLE_OWNER,
+			TABLE_NAME,
+			COLUMN_NAME,
+			GRANTOR,
+			GRANTEE,
+			PRIVILEGE,
+			IS_GRANTABLE
+			FROM sys.sp_column_privileges_view
+			WHERE LOWER(@table_name) = LOWER(table_name)
+				AND (LOWER('dbo')= LOWER(table_owner))
+				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@table_qualifier))
+				AND ((SELECT COALESCE(@column_name,'')) = '' OR LOWER(column_name) LIKE LOWER(@column_name))
+			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
+		END
+	END
+	ELSE
+	BEGIN
+		SELECT 
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		COLUMN_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE
+		FROM sys.sp_column_privileges_view
+		WHERE LOWER(@table_name) = LOWER(table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@table_qualifier))
+			AND ((SELECT COALESCE(@column_name,'')) = '' OR LOWER(column_name) LIKE LOWER(@column_name))
+		ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
+	END
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
 SELECT DISTINCT
@@ -1705,7 +1803,57 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
 	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
-WHERE t4.privilege_type = 'DELETE'; 
+	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t4.grantee
+WHERE t4.privilege_type = 'DELETE' AND ext.orig_username != 'db_datawriter';
+GRANT SELECT on sys.sp_table_privileges_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
+	"@table_name" sys.nvarchar(384),
+	"@table_owner" sys.nvarchar(384) = '',
+	"@table_qualifier" sys.sysname = '',
+	"@fusepattern" sys.bit = 1
+)
+AS $$
+BEGIN
+	
+	IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	IF @fusepattern = 1
+	BEGIN
+		SELECT 
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE FROM sys.sp_table_privileges_view
+		WHERE LOWER(TABLE_NAME) LIKE LOWER(@table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) LIKE LOWER(@table_owner))
+		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
+	END
+	ELSE 
+	BEGIN
+		SELECT
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE FROM sys.sp_table_privileges_view
+		WHERE LOWER(TABLE_NAME) = LOWER(@table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) = LOWER(@table_owner))
+		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
+	END
+	
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_table_privileges TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT suser_name())
 RETURNS INTEGER AS
@@ -2106,14 +2254,6 @@ AND sc.out_is_identity::INTEGER = 1
 AND pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname) IS NOT NULL
 AND has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
 GRANT SELECT ON sys.identity_columns TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
-LANGUAGE C
-AS 'babelfishpg_tsql', 'create_database_roles_for_all_dbs';
-
-CALL sys.babel_create_database_roles();
-
-DROP PROCEDURE sys.babel_create_database_roles();
 
 CREATE OR REPLACE PROCEDURE sys.sp_tables (
     "@table_name" sys.nvarchar(384) = NULL,
@@ -10581,6 +10721,14 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
 AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'create_database_roles_for_all_dbs';
+
+CALL sys.babel_create_database_roles();
+
+DROP PROCEDURE sys.babel_create_database_roles();
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
