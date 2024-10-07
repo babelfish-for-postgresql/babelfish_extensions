@@ -4022,7 +4022,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				char		*dbname = get_cur_db_name();
 				const char	*db_datareader = get_db_datareader_name(dbname);
 				const char	*db_datawriter = get_db_datawriter_name(dbname);
-				char *current_user = GetUserNameFromId(GetUserId(), false);
+				//char *current_user = GetUserNameFromId(GetUserId(), false);
 				/* Ignore when GRANT statement has no specific named object. */
 				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
 					break;
@@ -4038,6 +4038,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * schema permission or adding catalog entry.
 					 */
 					RangeVar   *rv = (RangeVar *) linitial(grant->objects);
+					char *current_user = GetUserNameFromId(GetUserId(), false);
 					const char *logical_schema = NULL;
 					char	   *obj = rv->relname;
 					bool exec_pg_command = false;
@@ -4134,6 +4135,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
 				{
 					ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
+					char *current_user = GetUserNameFromId(GetUserId(), false);
 					ListCell   *lc;
 					ListCell	*lc1;
 					bool exec_pg_command = false;
