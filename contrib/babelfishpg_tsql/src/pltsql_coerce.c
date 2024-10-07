@@ -43,6 +43,10 @@
 #include <math.h>
 #include "pltsql.h"
 
+/* 
+ * This macro is to define typmod of sysname to 128 beacause
+ * sysname is created as CREATE DOMAIN sys.SYSNAME AS sys.VARCHAR(128);
+ */
 #define SYSNAME_TYPMOD 128
 
 /* Hooks for engine*/
@@ -1014,9 +1018,10 @@ get_immediate_base_typmod_of_UDT_internal(Oid typeid, bool *is_UDT)
 	HeapTuple					tuple;
 	bool						isnull;
 	Datum						datum;
-	Datum                       tsql_typename;
+	Datum                                           tsql_typename;
 	int32 						typmod;
-	Oid							UDTOid;
+	Oid						UDTOid;
+	
 	LOCAL_FCINFO(fcinfo, 1);
 
 	if (!OidIsValid(typeid))
@@ -1038,10 +1043,8 @@ get_immediate_base_typmod_of_UDT_internal(Oid typeid, bool *is_UDT)
     
 	UDTOid = get_immediate_base_type_of_UDT_internal(typeid);
 
-	if ((UDTOid && (*common_utility_plugin_ptr->is_tsql_sysname_datatype) (UDTOid)))
-		return SYSNAME_TYPMOD;
-
-	if ((typeid && (*common_utility_plugin_ptr->is_tsql_sysname_datatype) (typeid)))
+	if ((UDTOid && (*common_utility_plugin_ptr->is_tsql_sysname_datatype) (UDTOid)) ||
+	    (typeid && (*common_utility_plugin_ptr->is_tsql_sysname_datatype) (typeid)))
 	{
 		*is_UDT = true;
 		return SYSNAME_TYPMOD;
@@ -1066,7 +1069,7 @@ get_immediate_base_typmod_of_UDT_internal(Oid typeid, bool *is_UDT)
 	ReleaseSysCache(tuple);
 
 	typmod = DatumGetInt32(datum);
-    *is_UDT = true;
+        *is_UDT = true;
 	return typmod;
 }
 
@@ -2026,25 +2029,25 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
      */
 	foreach(lc, exprs)
 	{
-		Node	*expr = (Node *) lfirst(lc);
+		Node	        *expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
                 
-        if (is_case_expr)
-        {
-            Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
-            /*
-            * If any of the branch is of UDT we will find the baseType using
-            * get_immediate_base_type_of_UDT_internal(),
-            * (eg. suppose a UDT, XYZ is made from VARCHAR, baseType is set 
-            * to oid of varchar, that will be assigned to type.) and assign it
-            * to type for further computation.
-            */
-            if (baseType)
-			    type = baseType;
-            if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
-                type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
+                if (is_case_expr)
+                {
+                        Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
+                        /*
+                        * If any of the branch is of UDT we will find the baseType using
+                        * get_immediate_base_type_of_UDT_internal(),
+                        * (eg. suppose a UDT, XYZ is made from VARCHAR, baseType is set 
+                        * to oid of varchar, that will be assigned to type.) and assign it
+                        * to type for further computation.
+                        */
+                        if (baseType)
+                                        type = baseType;
+                        if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+                                type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
 
-    }
+                }
                 
 		if (expr_is_null(expr))
 			continue;
@@ -2190,12 +2193,12 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	/* If resulting type is a length, need to be max of length types */
 	foreach(lc, exprs)
 	{
+		bool  is_UDT;
 		Node *expr = (Node*) lfirst(lc);
 		int32 typmod = exprTypmod(expr);
-		bool  is_UDT;
-        int32  UDTtypmod = get_immediate_base_typmod_of_UDT_internal(exprType(expr), &is_UDT);
+                int32 UDTtypmod = get_immediate_base_typmod_of_UDT_internal(exprType(expr), &is_UDT);
 
-		if(is_UDT)
+		if (is_UDT)
 			typmod = UDTtypmod + VARHDRSZ;
 
 		if (is_tsql_str_const(expr))
