@@ -3106,3 +3106,2464 @@ SELECT CASE 'abcd' COLLATE ARABIC_CI_AS
    WHEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS THEN N'  abc🙂defghi🙂🙂    ' COLLATE CHINESE_PRC_CI_AS
 END AS RESULT
 GO
+
+--- SYS.SYSNAME tests
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN 'بطاقة التسجيل - قياسية'
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN 'abc'
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS sys.sysname)
+END AS RESULT
+GO
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS sys.sysname)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS sys.sysname)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS sys.sysname)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS sys.sysname)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS sys.sysname)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS sys.sysname)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS sys.sysname)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+--- UDT testing
+create type BABEL_5103_UDT from NVARCHAR(100);
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'بطاقة التسجيل - قياسية'
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'abc'
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+drop type BABEL_5103_UDT;
+go
+
+create type BABEL_5103_UDT from sys.sysname;
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'بطاقة التسجيل - قياسية'
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'abc'
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+drop type BABEL_5103_UDT;
+go
+
+
+create type BABEL_5103_UDT from VARCHAR(100);
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'بطاقة التسجيل - قياسية'
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'abc'
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+drop type BABEL_5103_UDT;
+go
+
+create type BABEL_5103_UDT from CHAR(100);
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'بطاقة التسجيل - قياسية'
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'abc'
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+drop type BABEL_5103_UDT;
+go
+
+create type BABEL_5103_UDT from NCHAR(100);
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'بطاقة التسجيل - قياسية'
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'abc'
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+drop type BABEL_5103_UDT;
+go
+
+create type BABEL_5103_UDT from TEXT;
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'بطاقة التسجيل - قياسية'
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'abc'
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+drop type BABEL_5103_UDT;
+go
+
+create type BABEL_5103_UDT from NTEXT;
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'بطاقة التسجيل - قياسية'
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN 'abc'
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'بطاقة التسجيل - قياسية' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'بطاقة التسجيل - قياسية' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN CAST(N'登録カード–標準' AS BABEL_5103_UDT)
+   WHEN 2 THEN CAST(N'登録カード–標準' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 1
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char' AS BABEL_5103_UDT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+
+SELECT CASE 2
+   WHEN 1 THEN 'abc'
+   WHEN 2 THEN CAST('char0' AS BABEL_5103_UDT)
+   WHEN 3 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+
+drop type BABEL_5103_UDT;
+go
