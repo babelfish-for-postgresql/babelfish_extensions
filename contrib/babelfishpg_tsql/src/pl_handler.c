@@ -4038,7 +4038,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * schema permission or adding catalog entry.
 					 */
 					RangeVar   *rv = (RangeVar *) linitial(grant->objects);
-					char *current_user = GetUserNameFromId(GetUserId(), false);
+					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					const char *logical_schema = NULL;
 					char	   *obj = rv->relname;
 					bool exec_pg_command = false;
@@ -4135,7 +4135,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
 				{
 					ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
-					char *current_user = GetUserNameFromId(GetUserId(), false);
+					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					ListCell   *lc;
 					ListCell	*lc1;
 					bool exec_pg_command = false;
