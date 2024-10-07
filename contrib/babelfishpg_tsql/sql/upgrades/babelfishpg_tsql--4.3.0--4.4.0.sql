@@ -10576,9 +10576,9 @@ SET probin = (
                 (
                     SELECT jsonb_agg(
                         CASE
-                            WHEN a::text = '-8000' AND (p2.proallargtypes[b] = ('sys.varchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.nvarchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.varbinary'::regtype)::oid) THEN '-1'
-                            WHEN a::text = '-1' AND p2.proallargtypes[b] = ('sys.smalldatetime'::regtype)::oid THEN '0'
-                            WHEN a::text = '-1' AND (p2.proallargtypes[b] = ('sys.varchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.nvarchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.varbinary'::regtype)::oid OR p2.proallargtypes[b] = ('sys.nchar'::regtype)::oid OR p2.proallargtypes[b] = ('sys.binary'::regtype)::oid OR p2.proallargtypes[b] = ('sys.bpchar'::regtype)::oid) THEN '1'
+                            WHEN a::text = '-8000' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid) THEN '-1'
+                            WHEN a::text = '-1' AND p2.proargtypes[b-1] = ('sys.smalldatetime'::regtype)::oid THEN '0'
+                            WHEN a::text = '-1' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.binary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.bpchar'::regtype)::oid) THEN '1'
                             ELSE a::text
                         END
                     )
@@ -10589,7 +10589,7 @@ SET probin = (
     )
 )
 FROM (
-    SELECT p.oid, p.proallargtypes
+    SELECT p.oid, p.proallargtypes, p.proargtypes
     FROM pg_proc p
     INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p.pronamespace::regnamespace::name
     WHERE p.prolang = (SELECT oid FROM pg_language WHERE lanname = 'pltsql') and p.prokind = 'p'
