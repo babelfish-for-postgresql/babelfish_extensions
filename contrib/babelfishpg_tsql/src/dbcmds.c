@@ -1346,19 +1346,12 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		ListCell	*parsetree_item;
 		char		*schema_owner;
 		char		*dbo_user;
-		char		*db_owner;
-		bool		owner_other_than_dbo = false;
 		MigrationMode	baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 
 		datum = heap_getattr(tuple, Anum_namespace_ext_namespace, namespace_rel_descr, &isNull);
 		schema_name = NameStr(*DatumGetName(datum));
 		schema_owner = GetUserNameFromId(get_owner_of_schema(schema_name), false);
 		dbo_user = get_dbo_role_name_by_mode(dbname, baseline_mode);
-		db_owner = get_db_owner_name_by_mode(dbname, baseline_mode);
-
-		/* If schema owner is other that dbo or db_owner user, only then execute ALTER DEFAULT PRIVILEGES. */
-		if ((strcmp(schema_owner, dbo_user) != 0) && (strcmp(schema_owner, db_owner) != 0))
-				owner_other_than_dbo = true;
 
 		initStringInfo(&query);
 		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
@@ -1366,21 +1359,11 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
 		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
 
-		if (owner_other_than_dbo)
-		{
-			/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-		}
-		else
-		{
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-		}
+		/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
+		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
 
 		stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
@@ -1394,28 +1377,14 @@ grant_permissions_to_datareader_datawriter(const uint16 dbid,
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, privilege_to_string(ACL_DELETE));
 
-		if (owner_other_than_dbo)
-		{
-			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datareader, privilege_to_string(ACL_SELECT));
-			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_INSERT));
-			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_UPDATE));
-			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_DELETE));
-		}
-		else
-		{
-			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datareader, privilege_to_string(ACL_SELECT));
-			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_INSERT));
-			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_UPDATE));
-			stmts = parsetree_nth_stmt(stmt_list, i++);
-			update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_DELETE));
-		}
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datareader, privilege_to_string(ACL_SELECT));
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_INSERT));
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_UPDATE));
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_DELETE));
 
 		/* Run all subcommands */
 		foreach(parsetree_item, stmt_list)
