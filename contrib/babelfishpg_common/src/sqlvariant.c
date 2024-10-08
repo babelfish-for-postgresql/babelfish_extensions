@@ -284,21 +284,20 @@ do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
 
 	switch (path)
 	{
-        case COERCION_PATH_FUNC:
-            *cast_by_relabel = false;
-            nargs = get_func_nargs(funcid);
-            switch (nargs) 
-            {
-                case 1:
-                    return OidFunctionCall1Coll(funcid, coll, value);
-                case 2:
-                    return OidFunctionCall2Coll(funcid, coll, value, (Datum) typmod);
-                case 3:
-                    return OidFunctionCall3Coll(funcid, coll, value, (Datum) typmod, (Datum) (ccontext == COERCION_EXPLICIT));
-                default:
-                    elog(ERROR, "Unsupported number of arguments (%d) for function %u", nargs, funcid);
-            }
-            break;
+		case COERCION_PATH_FUNC:
+		*cast_by_relabel = false;
+		nargs = get_func_nargs(funcid);
+		switch (nargs) 
+		{
+			case 1:
+			return OidFunctionCall1Coll(funcid, coll, value);
+			case 2:
+			return OidFunctionCall2Coll(funcid, coll, value, (Datum) typmod);
+			case 3:
+			return OidFunctionCall3Coll(funcid, coll, value, (Datum) typmod, (Datum) (ccontext == COERCION_EXPLICIT));
+			default:
+			elog(ERROR, "Unsupported number of arguments (%d) for function %u", nargs, funcid);
+		}
 		case COERCION_PATH_COERCEVIAIO:
 			*cast_by_relabel = false;
 			if (TypeCategory(source_type) == TYPCATEGORY_STRING)
