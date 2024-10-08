@@ -9665,10 +9665,6 @@ $BODY$
 DECLARE
     result bytea; 
 BEGIN
-    -- IF style IS NULL THEN
-    --     RETURN NULL;
-    -- END IF;
-
     IF style = 0 THEN
         result := CAST(input_value AS bytea);
     
@@ -9690,11 +9686,10 @@ BEGIN
     END IF;
 
     RETURN CAST(result AS sys.varbinary);
-
 END;
 $BODY$ 
 LANGUAGE plpgsql
-IMMUTABLE
+STABLE
 STRICT;
 
 -- convertion to varchar
