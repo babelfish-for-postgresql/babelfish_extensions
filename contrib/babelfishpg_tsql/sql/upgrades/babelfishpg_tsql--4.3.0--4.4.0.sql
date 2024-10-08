@@ -10556,7 +10556,7 @@ END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 -- convertion to binary
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_binary(
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
     IN input_value TEXT,
     IN style NUMERIC
 ) RETURNS sys.varbinary 
@@ -10565,10 +10565,6 @@ $BODY$
 DECLARE
     result bytea; 
 BEGIN
-    IF style IS NULL THEN
-        RETURN NULL;
-    END IF;
-
     IF style = 0 THEN
         result := CAST(input_value AS bytea);
     
@@ -10590,11 +10586,11 @@ BEGIN
     END IF;
 
     RETURN CAST(result AS sys.varbinary);
-
 END;
 $BODY$ 
 LANGUAGE plpgsql
-STABLE;
+STABLE
+STRICT;
 
 -- This is a temporary procedure which is called during upgrade to alter
 -- default privileges on all the schemas where the schema owner is not dbo/db_owner
