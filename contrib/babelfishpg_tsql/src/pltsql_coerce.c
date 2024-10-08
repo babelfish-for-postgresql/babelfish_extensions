@@ -1951,34 +1951,33 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	Node		*result_expr = (Node*) linitial(exprs);
 	Oid			result_type = InvalidOid;
 	ListCell	*lc;
-        bool             is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
+	bool		is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
 	 * or NVARCHAR is present, let engine handle finding the type.
 	 * But if it is CASE expr then it will also check for text and ntext.
-         */
+	 */
 	foreach(lc, exprs)
 	{
-		Node            *expr = (Node *) lfirst(lc);
+		Node		*expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
-                if (is_case_expr)
-                {
-                        Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
-                        /*
-                        * If any of the branch is of UDT we will find the baseType using
-                        * get_immediate_base_type_of_UDT_internal(),
-                        * (eg. suppose a UDT, XYZ is made from VARCHAR, baseType is set 
-                        * to oid of varchar, that will be assigned to type.) and assign it
-                        * to type for further computation.
-                        */
-                        if (baseType)
-                                        type = baseType;
-                        if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
-                                type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
+		if (is_case_expr)
+		{
+			Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
+			/*
+			* If any of the branch is of UDT we will find the baseType using
+			* get_immediate_base_type_of_UDT_internal(),
+			* (eg. suppose a UDT, XYZ is made from VARCHAR, baseType is set 
+			* to oid of varchar, that will be assigned to type.) and assign it
+			* to type for further computation.
+			*/
+			if (baseType)
+					type = baseType;
+ 			if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+					type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
+		}
 
-                }
-                
 		if (expr_is_null(expr))
 			continue;
 		else if (is_tsql_str_const(expr))
@@ -2125,17 +2124,29 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	{
 		Node *expr = (Node*) lfirst(lc);
 		int32 typmod = exprTypmod(expr);
-		int32 base_typmod = -1;
 		Oid   type = exprType(expr);
-		Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
-        /* 
-                 * Handling for UDT and sysname, If the base_type is
-                 * different from type then That means branch of CASE
-                 * Expression is of UDT or sysname. typmod for UDT and
-                 * sysname is assigned in this condition.
-                 */
-		if (base_type != type && base_typmod != -1)
-			typmod = base_typmod;
+		Oid   tsql_type = get_immediate_base_type_of_UDT_internal(type);
+
+		/* 
+		 * Handling for UDT, If the base_type is different
+		 * from type then That means branch of CASE Expression 
+ 		 * is of UDT. tsql_type will be Null if it is not UDT.
+		 */
+		if (tsql_type)
+		{
+			// Finding the typmod of base type of UDT using getBaseTypeAndTypmod()
+			int32 base_typmod = -1;
+			Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
+			
+			if (base_typmod == -1 && is_tsql_datatype_with_max_scale_expr_allowed(base_type))
+					return -1;
+			
+			typmod = base_typmod;	
+		}
+		
+		/* Handling for sysname, In CASE expression if one of the branch is of type sysname then return typmod as SYSNAME_TYPMOD */
+		if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+			typmod = SYSNAME_TYPMOD + VARHDRSZ;
 
 		if (is_tsql_str_const(expr))
 			typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;

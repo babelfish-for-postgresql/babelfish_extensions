@@ -12138,3 +12138,335 @@ float
 23.0
 ~~END~~
 
+
+-- UDT on varchar(max)
+create type BABEL_CASE_EXPR_TEST_UDT from varchar(max);
+go
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('abc' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN 'a'
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('abc' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN 'a'
+END AS RESULT
+GO
+~~START~~
+varchar
+a
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+varchar
+char1                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char1
+~~END~~
+
+
+drop type BABEL_CASE_EXPR_TEST_UDT;
+go
+
+-- UDT on nvarchar(max)
+create type BABEL_CASE_EXPR_TEST_UDT from nvarchar(max);
+go
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('abc' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN 'a'
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('abc' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN 'a'
+END AS RESULT
+GO
+~~START~~
+nvarchar
+a
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char1                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char1                                                                                               
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char1
+~~END~~
+
+
+drop type BABEL_CASE_EXPR_TEST_UDT;
+go
+
+-- With max typmod
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('char1' AS VARCHAR(MAX))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('char1' AS CHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
