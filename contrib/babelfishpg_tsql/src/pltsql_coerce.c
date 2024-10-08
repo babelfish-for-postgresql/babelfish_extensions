@@ -1972,7 +1972,7 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 			 * get_immediate_base_type_of_UDT_internal(), to find common type using TSQL precedence.
 			 * If type is not UDT then baseType will be NULL.
 			 */
-			if (baseType)
+			if (OidIsValid(baseType))
 					type = baseType;
 			
 			/* 
@@ -1980,7 +1980,7 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 			 * We need to assign type to "varchar" (As sysname is created from "varchar").
 			 */
  			if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
-					type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
+					type = get_sys_varcharoid();
 		}
 
 		if (expr_is_null(expr))
@@ -2137,7 +2137,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		 * By calculating typmod of its base type using getBaseTypeAndTypmod.
 		 * Other wise if tsql_type is NULL We don't need any handling for UDT.
 		 */
-		if (tsql_type)
+		if (OidIsValid(tsql_type))
 		{
 			/* Finding the typmod of base type of UDT using getBaseTypeAndTypmod() */
 			int32 base_typmod = -1;
