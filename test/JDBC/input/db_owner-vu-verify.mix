@@ -1,3 +1,11 @@
+-- tsql
+alter login dbowner__l1 with password = '123'
+go
+alter login dbowner__l2 with password = '123'
+go
+alter login dbowner__temp with password = '123'
+go
+
 -- CASE 1: Able to access all objects in its own database
 -- tsql user=dbowner__l1 password=123
 use dbowner__main_db
