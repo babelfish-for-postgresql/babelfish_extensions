@@ -12181,9 +12181,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+nchar
+char0                                                                                               
+~~END~~
 
 
 SELECT CASE 1
@@ -12246,9 +12247,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+nchar
+char1                                                                                               
+~~END~~
 
 
 SELECT CASE 2
@@ -12468,5 +12470,27 @@ GO
 ~~START~~
 ntext
 char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('char1' AS NCHAR(100))
+END AS RESULT
+GO
+~~START~~
+nchar
+char0                                                                                               
 ~~END~~
 
