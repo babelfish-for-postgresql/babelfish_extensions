@@ -1,3 +1,4 @@
+-- CASE 1: Able to access all objects in its own database
 -- tsql user=dbowner__l1 password=123
 use dbowner__main_db
 go
@@ -21,6 +22,8 @@ select dbowner__s2.dbowner__f2()
 go
 exec dbowner__s2.dbowner__p2
 go
+
+-- CASE 2: Able to create objects in its own database
 create table dbowner__s1.dbowner__t11 (a int)
 go
 create schema dbowner__s3 authorization dbowner__u1
@@ -32,6 +35,7 @@ go
 create procedure dbowner__s3.dbowner__p3 as select 23
 go
 
+-- CASE 3: Able to GRANT/REVOKE on SCHEMA/OBJECT
 grant select on schema::dbowner__s1 to dbowner__u2
 go
 grant insert on schema::dbowner__s2 to guest
@@ -85,9 +89,9 @@ select schema_name, object_name, permission, grantee, grantor from sys.babelfish
 where grantee IN ('dbowner__main_db_guest', 'dbowner__main_db_dbowner__u1', 'dbowner__main_db_dbowner__u2') order by permission;
 GO
 
--- CASE : ALTER ANY USER
+-- CASE 4: Able to ALTER ANY USER
 -- tsql user=dbowner__l1 password=123
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
 go
 alter user dbowner__u1 with default_schema = dbowner__s1
 go
@@ -99,7 +103,7 @@ alter user dbowner__u2 with login = dbowner__temp
 go
 alter user dbowner__u2 with name = new_dbowner__u2
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
 go
 select sys.user_name(), sys.suser_name(), is_member('db_owner')
 go
@@ -119,7 +123,7 @@ alter user new_dbowner__u1 with login = dbowner__l1
 go
 alter user new_dbowner__u1 with name = dbowner__u1
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
 go
 select name from sys.database_principals order by name
 go
@@ -143,7 +147,7 @@ select sys.user_name(), is_member('db_owner')
 go
 alter user new_dbowner__u1 with name = dbowner__u1
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
 go
 select name from sys.database_principals order by name
 go
@@ -262,6 +266,7 @@ go
 select name from sys.database_principals order by name
 go
 
+-- CASE 5: If removed from db_owner, user should lose access to objects in schemas except the ones it owns
 alter role db_owner drop member dbowner__u1
 go
 
@@ -295,6 +300,7 @@ go
 exec dbowner__s3.dbowner__p3
 go
 
+-- CASE 6: If removed from db_owner, user should lose access to create objects in schemas except the ones it owns
 create role dbowner__r3
 go
 create role dbowner__r4
@@ -375,6 +381,7 @@ GO
 select is_member('db_owner')
 go
 
+-- CASE 6: User member of db_owner should be able to drop all objects in its database
 create role dbowner__r3
 go
 create role dbowner__r4
@@ -443,7 +450,7 @@ go
 select is_member('db_owner')
 go
 
--- Check if db_owner can drop the database
+-- CASE 7: Check if db_owner can drop the database
 -- tsql
 create database dbowner__test_db
 go
@@ -464,7 +471,7 @@ go
 drop database dbowner__test_db
 go
 
--- Check if there can be multiple db_owners
+-- CASE 8: Check if there can be multiple db_owners
 -- tsql
 create database dbowner__test_db
 go
@@ -477,7 +484,7 @@ go
 use master
 go
 
--- Add another user but as db_owner
+-- CASE 9: Add another user but as db_owner
 -- tsql user=dbowner__l1 password=123
 use dbowner__test_db
 go

@@ -1,4 +1,5 @@
 -- tsql user=dbowner__l1 password=123
+-- CASE 1: Able to access all objects in its own database
 use dbowner__main_db
 go
 select is_member('db_owner')
@@ -68,6 +69,8 @@ int
 22
 ~~END~~
 
+
+-- CASE 2: Able to create objects in its own database
 create table dbowner__s1.dbowner__t11 (a int)
 go
 create schema dbowner__s3 authorization dbowner__u1
@@ -79,6 +82,7 @@ go
 create procedure dbowner__s3.dbowner__p3 as select 23
 go
 
+-- CASE 3: Able to GRANT/REVOKE on SCHEMA/OBJECT
 grant select on schema::dbowner__s1 to dbowner__u2
 go
 grant insert on schema::dbowner__s2 to guest
@@ -151,8 +155,8 @@ GO
 
 
 -- tsql user=dbowner__l1 password=123
--- CASE : ALTER ANY USER
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+-- CASE 4: Able to ALTER ANY USER
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
 go
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
@@ -168,7 +172,7 @@ alter user dbowner__u2 with login = dbowner__temp
 go
 alter user dbowner__u2 with name = new_dbowner__u2
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
 go
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
@@ -217,7 +221,7 @@ go
 
 ~~ERROR (Message: Current user does not have privileges to change user name)~~
 
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
 go
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
@@ -261,7 +265,7 @@ new_dbowner__u1#!#1
 
 alter user new_dbowner__u1 with name = dbowner__u1
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
 go
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
@@ -563,6 +567,7 @@ sys
 ~~END~~
 
 
+-- CASE 5: If removed from db_owner, user should lose access to objects in schemas except the ones it owns
 alter role db_owner drop member dbowner__u1
 go
 
@@ -657,6 +662,7 @@ int
 ~~END~~
 
 
+-- CASE 6: If removed from db_owner, user should lose access to create objects in schemas except the ones it owns
 create role dbowner__r3
 go
 ~~ERROR (Code: 33557097)~~
@@ -801,6 +807,7 @@ int
 ~~END~~
 
 
+-- CASE 6: User member of db_owner should be able to drop all objects in its database
 create role dbowner__r3
 go
 create role dbowner__r4
@@ -875,7 +882,7 @@ int
 
 
 -- tsql
--- Check if db_owner can drop the database
+-- CASE 7: Check if db_owner can drop the database
 create database dbowner__test_db
 go
 use dbowner__test_db
@@ -906,7 +913,7 @@ drop database dbowner__test_db
 go
 
 -- tsql
--- Check if there can be multiple db_owners
+-- CASE 8: Check if there can be multiple db_owners
 create database dbowner__test_db
 go
 use dbowner__test_db
@@ -919,7 +926,7 @@ use master
 go
 
 -- tsql user=dbowner__l1 password=123
--- Add another user but as db_owner
+-- CASE 9: Add another user but as db_owner
 use dbowner__test_db
 go
 select is_member('db_owner')
