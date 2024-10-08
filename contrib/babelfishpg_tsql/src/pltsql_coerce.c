@@ -1962,15 +1962,23 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	{
 		Node		*expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
+
 		if (is_case_expr)
 		{
 			Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
+
 			/*
-			 * If any of the branch is of UDT or SYSNAME, then we will find the baseType using
-			 * get_immediate_base_type_of_UDT_internal() to find common type using TSQL precedence.
+			 * If any of the branch is of UDT, then we will find the baseType using
+			 * get_immediate_base_type_of_UDT_internal(), to find common type using TSQL precedence.
+			 * If type is not UDT then baseType will be NULL.
 			 */
 			if (baseType)
 					type = baseType;
+			
+			/* 
+			 * If any of the branch is of sysname or UDT is made from sysname
+			 * We need to assign type to "varchar" (As sysname is created from "varchar").
+			 */
  			if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
 					type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
 		}
@@ -2125,9 +2133,9 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		Oid   tsql_type = get_immediate_base_type_of_UDT_internal(type);
 
 		/* 
-		 * Handling for UDT, If the base_type is different
-		 * from type then That means branch of CASE Expression 
- 		 * is of UDT. tsql_type will be Null if it is not UDT.
+		 * Handling for UDT, If tsql_type is not NULL that mean we need to handle typmod for UDT,
+		 * By calculating typmod of its base type using getBaseTypeAndTypmod.
+		 * Other wise if tsql_type is NULL We don't need any handling for UDT.
 		 */
 		if (tsql_type)
 		{
@@ -2143,7 +2151,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		
 		/* 
 		 * Handling for sysname, In CASE expression if one of the branch is 
-		 * of type sysname then return typmod as SYSNAME_TYPMOD 
+		 * of type sysname then set typmod as SYSNAME_TYPMOD (i.e. 128).
 		 */
 		if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
 			typmod = SYSNAME_TYPMOD + VARHDRSZ;
