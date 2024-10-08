@@ -956,6 +956,10 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		}
 	}
 
+	// /* Let local variable to evaluate dynamically */
+	// if (queryDesc->params && !queryDesc->params->paramFetch)
+	// 	queryDesc->params->paramFetch = (void *) pltsql_param_fetch;
+
 	if (prev_ExecutorStart)
 		prev_ExecutorStart(queryDesc, ef);
 	else

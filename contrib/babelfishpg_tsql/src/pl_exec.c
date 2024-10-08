@@ -60,9 +60,9 @@
 #include "err_handler.h"
 #include "iterative_exec.h"
 #include "guc.h"
+#include "hooks.h"
 #include "multidb.h"
 #include "session.h"
-#include "guc.h"
 #include "catalog.h"
 
 uint64		rowcount_var = 0;
@@ -4274,6 +4274,9 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	estate->paramLI->parserSetup = (ParserSetupHook) pltsql_parser_setup;
 	estate->paramLI->parserSetupArg = NULL; /* filled during use */
 	estate->paramLI->numParams = estate->ndatums;
+
+	//estate->dirty_vars = 0;
+
 	estate->use_shared_simple_eval_state = false;
 
 	/* set up for use of appropriate simple-expression EState and cast hash */
@@ -6800,6 +6803,7 @@ exec_assign_value(PLtsql_execstate *estate,
 		default:
 			elog(ERROR, "unrecognized dtype: %d", target->dtype);
 	}
+	//estate->dirty_vars = bms_add_member(estate->dirty_vars, target->dno);
 }
 
 /*
@@ -7870,12 +7874,14 @@ pltsql_param_fetch(ParamListInfo params,
 		}
 	}
 
+	/* Let extension to set value of param dynamically during execution */
+	prm->pflags = 0;
+
 	/* Return "no such parameter" if not ok */
 	if (!ok)
 	{
 		prm->value = (Datum) 0;
 		prm->isnull = true;
-		prm->pflags = 0;
 		prm->ptype = InvalidOid;
 		return prm;
 	}
@@ -7884,8 +7890,6 @@ pltsql_param_fetch(ParamListInfo params,
 	exec_eval_datum(estate, datum,
 					&prm->ptype, &prmtypmod,
 					&prm->value, &prm->isnull);
-	/* We can always mark params as "const" for executor's purposes */
-	prm->pflags = PARAM_FLAG_CONST;
 
 	/*
 	 * If it's a read/write expanded datum, convert reference to read-only,
@@ -7998,6 +8002,13 @@ pltsql_param_eval_var(ExprState *state, ExprEvalStep *op,
 	estate = (PLtsql_execstate *) params->paramFetchArg;
 	Assert(dno >= 0 && dno < estate->ndatums);
 
+	// if (bms_is_member(dno, estate->dirty_vars))
+	// {
+	// 	/* Fetch dynamic value of local variable if it is update during execution */
+
+	// }
+	// else
+	// {
 	/* now we can access the target datum */
 	var = (PLtsql_var *) estate->datums[dno];
 	Assert(var->dtype == PLTSQL_DTYPE_VAR);
@@ -10434,4 +10445,38 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 	}
 	PG_END_TRY();
+}
+
+PG_FUNCTION_INFO_V1(pltsql_assign_var);
+
+Datum
+pltsql_assign_var(PG_FUNCTION_ARGS)
+{
+	int dno = PG_GETARG_INT32(0);
+	Datum data = PG_GETARG_DATUM(1);
+	Oid valtype = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	bool isNull = PG_ARGISNULL(0);
+	int32 valtypmod = -1;
+	PLtsql_datum *target;
+	MemoryContext oldcontext;
+	//PLtsql_var *var;
+
+	PLtsql_execstate *estate = get_current_tsql_estate();
+	Assert(estate != NULL);
+
+	//PLtsql_datum *target = pltsql_Datums[dno];
+	oldcontext = MemoryContextSwitchTo(estate->datum_context);
+
+	target = estate->datums[dno];
+
+	//var = (PLtsql_var *)target;
+
+	/* we will reuse exec_assign_value function here provided in pl_exec.c */
+	// exec_assign_value(estate, target, datumCopy(data, var->datatype->typbyval, var->datatype->typlen), isNull, valtype, valtypmod);
+	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/* no need to return anything as output will not be returned to customers */
+	PG_RETURN_DATUM(data);
 }
