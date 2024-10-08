@@ -9674,13 +9674,13 @@ BEGIN
     
     ELSIF style = 1 THEN
         -- Handle hexadecimal conversion
-        IF (left(input_value, 2) = '0x' AND length(input_value) % 2 = 0) OR input_value IS NULL THEN
+        IF (left(input_value, 2) = '0x' COLLATE sys.database_default AND length(input_value) % 2 = 0) OR input_value IS NULL THEN
             result := decode(substring(input_value from 3), 'hex');
         ELSE
             RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
         END IF;
     ELSIF style = 2 THEN
-        IF left(input_value, 2) = '0x' THEN
+        IF left(input_value, 2) = '0x' COLLATE sys.database_default THEN
             RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
         ELSE
             result := decode((input_value), 'hex');
