@@ -226,7 +226,7 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 			Node	   *helperFuncCall;
 
 			args = list_make2(arg, style);
-			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_binary"), args, COERCE_EXPLICIT_CALL, location);
+			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), args, COERCE_EXPLICIT_CALL, location);
 
 			result = makeTypeCast(helperFuncCall, typename, location);
 		}
