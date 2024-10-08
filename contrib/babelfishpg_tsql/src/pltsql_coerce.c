@@ -1966,12 +1966,9 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 		{
 			Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
 			/*
-			* If any of the branch is of UDT we will find the baseType using
-			* get_immediate_base_type_of_UDT_internal(),
-			* (eg. suppose a UDT, XYZ is made from VARCHAR, baseType is set 
-			* to oid of varchar, that will be assigned to type.) and assign it
-			* to type for further computation.
-			*/
+			 * If any of the branch is of UDT or SYSNAME, then we will find the baseType using
+			 * get_immediate_base_type_of_UDT_internal() to find common type using TSQL precedence.
+			 */
 			if (baseType)
 					type = baseType;
  			if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
@@ -2134,7 +2131,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		 */
 		if (tsql_type)
 		{
-			// Finding the typmod of base type of UDT using getBaseTypeAndTypmod()
+			/* Finding the typmod of base type of UDT using getBaseTypeAndTypmod() */
 			int32 base_typmod = -1;
 			Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
 			
@@ -2144,7 +2141,10 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			typmod = base_typmod;	
 		}
 		
-		/* Handling for sysname, In CASE expression if one of the branch is of type sysname then return typmod as SYSNAME_TYPMOD */
+		/* 
+		 * Handling for sysname, In CASE expression if one of the branch is 
+		 * of type sysname then return typmod as SYSNAME_TYPMOD 
+		 */
 		if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
 			typmod = SYSNAME_TYPMOD + VARHDRSZ;
 
