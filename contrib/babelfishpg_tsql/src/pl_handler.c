@@ -3571,6 +3571,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							orig_schema = "dbo";
 					}
 
+					if (strcmp(queryString, "(CREATE SCHEMA )") == 0)
+						orig_schema = "guest";
+
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 											queryEnv, dest, qc);
