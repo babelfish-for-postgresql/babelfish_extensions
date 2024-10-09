@@ -424,6 +424,29 @@ uniqueidentifier
 0E984725-C51C-4BF4-9960-E1C80E27ABA0
 ~~END~~
 
+-- fixeddecimal
+select cast(cast(cast('123.45' as fixeddecimal) as sql_variant) as fixeddecimal);
+go
+~~START~~
+money
+123.4500
+~~END~~
+
+-- bbf_varbinary
+select cast(cast(cast('abc' AS bbf_varbinary(5)) AS sql_variant) as bbf_varbinary(5));
+go
+~~START~~
+varbinary
+616263
+~~END~~
+
+-- bbf_binary
+select cast(cast(cast('abc' AS bbf_binary(5)) AS sql_variant) as bbf_binary(5));
+go
+~~START~~
+binary
+6162630000
+~~END~~
 
 select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0wrong' as uniqueidentifier) 
                  as sql_variant) as uniqueidentifier);
@@ -1428,6 +1451,32 @@ sql_variant#!#sql_variant
 200.0000#!#300
 ~~END~~
 
+
+-- User defined data-type
+CREATE TYPE sqlvariant_type from NVARCHAR(100)
+GO
+Select CAST(CAST('2023-05-01' AS sqlvariant_type) AS sqlvariant_type)
+go
+~~START~~
+nvarchar
+2023-05-01
+~~END~~
+
+DROP TYPE IF EXISTS sqlvariant_type;
+go
+
+--  User defined data-type with multiple cast
+CREATE TYPE sqlvariant_type from SQL_VARIANT;
+GO
+Select CAST(CAST(CAST('2023-05-01' AS sqlvariant_type) AS sqlvariant_type) AS VARCHAR(2))
+go
+~~START~~
+varchar
+20
+~~END~~
+
+DROP TYPE IF EXISTS sqlvariant_type;
+go
 
 -- Clean up
 drop table t1;
