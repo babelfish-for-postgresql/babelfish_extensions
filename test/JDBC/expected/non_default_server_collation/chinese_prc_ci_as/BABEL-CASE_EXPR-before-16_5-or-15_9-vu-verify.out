@@ -12496,41 +12496,9 @@ char0
 
 
 -- Union testing: fixed typmod for max datatype
-SELECT CAST('char0' AS VARCHAR(MAX))
-Union
-SELECT CAST('char0' AS NCHAR(100))
+Select * from BABEL_5103_V3;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
-
-
-SELECT CAST('char0' AS NVARCHAR(MAX))
-Union
-SELECT CAST('char0' AS NCHAR(100))
-GO
-~~START~~
-nvarchar
-char0
-~~END~~
-
-
-SELECT CAST('char0' AS VARCHAR(MAX))
-Union
-SELECT CAST('char0' AS CHAR(100))
-GO
-~~START~~
-varchar
-char0
-~~END~~
-
-
-SELECT CAST('char0' AS NVARCHAR(MAX))
-Union
-SELECT CAST('char0' AS CHAR(100))
-GO
-~~START~~
-nvarchar
-char0
-~~END~~
 
