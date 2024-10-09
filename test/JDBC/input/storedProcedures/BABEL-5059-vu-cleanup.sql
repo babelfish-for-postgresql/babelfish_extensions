@@ -106,3 +106,34 @@ GO
 
 DROP PROCEDURE proc_test_main2;
 GO
+
+DROP PROCEDURE proc_test_1_udt;
+GO
+
+DROP PROCEDURE proc_test_2_udt;
+GO
+
+DROP PROCEDURE proc_test_3_udt;
+GO
+
+DROP PROCEDURE proc_test_4_udt;
+GO
+
+DROP procedure proc_test_5_udt;
+GO
+
+DROP TYPE nvchar_new;
+GO
+
+DROP TYPE nv_2_new;
+GO
+
+DROP TYPE vchar_new;
+GO
+
+DROP TYPE vchar_max_new;
+GO
+
+DROP TYPE binr_new;
+GO
+

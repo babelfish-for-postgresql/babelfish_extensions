@@ -117,3 +117,35 @@ GO
 
 CREATE PROCEDURE proc_test_main2 (@a varchar(max), @b varchar OUTPUT) AS BEGIN SET @b=@a; SELECT @b; END;
 GO
+
+-- UDT testing
+CREATE TYPE nvchar_new from nvarchar
+GO
+
+CREATE TYPE vchar_max_new from VARCHAR(max)
+GO
+
+CREATE TYPE nv_2_new from nvarchar(2)
+GO
+
+CREATE TYPE vchar_new from varchar
+GO
+
+CREATE TYPE binr_new from binary 
+GO
+
+CREATE PROCEDURE proc_test_1_udt (@a binr_new, @b binr_new OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
+GO
+
+CREATE PROCEDURE proc_test_2_udt (@a nvchar_new, @b nvchar_new OUTPUT) AS BEGIN SET @b=@a; SELECT @b; END;
+GO
+
+CREATE PROCEDURE proc_test_3_udt (@a vchar_new, @b vchar_new OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
+GO
+
+CREATE PROCEDURE proc_test_4_udt (@a vchar_max_new, @b vchar_max_new OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
+GO
+
+CREATE procedure proc_test_5_udt @a nv_2_new output as begin select @a; END;
+GO
+

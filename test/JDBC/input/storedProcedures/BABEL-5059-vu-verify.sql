@@ -135,3 +135,19 @@ GO
 
 Declare @a varchar; Declare @b varchar(max); SET @a = Replicate('A',9340);EXEC proc_test_main2 @a = @a , @b = @b OUT ;
 GO
+
+-- UDT testing
+Declare @a binr_new; Declare @b binr_new; SET @a = 0x01 ; EXEC proc_test_1_udt @a = @a , @b = @b OUT ;
+GO
+
+Declare @a nvchar_new; Declare @b nvchar_new; SET @a = 'abc' ; EXEC proc_test_2_udt @a = @a , @b = @b OUT ;
+GO
+
+Declare @a vchar_new; Declare @b vchar_new; SET @a = 'abc' ; EXEC proc_test_3_udt @a = @a , @b = @b OUT ;
+GO
+
+Declare @a vchar_max_new; Declare @b vchar_max_new; SET @a = Replicate('A',9340);EXEC proc_test_4_udt @a = @a , @b = @b OUT ;
+GO
+
+Declare @a nv_2_new; SET @a = 'SELECT * FROM sys.databases' ; EXEC proc_test_5_udt @a = @a OUT ;
+GO

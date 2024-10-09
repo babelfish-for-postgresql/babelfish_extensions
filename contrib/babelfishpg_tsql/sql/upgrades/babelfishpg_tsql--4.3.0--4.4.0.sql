@@ -10566,77 +10566,49 @@ CALL sys.babelfish_alter_default_privilege_on_schema();
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_alter_default_privilege_on_schema();
 
+-- To handle the typmod values for procedure and function
 UPDATE pg_proc p1
-SET probin = (
-    SELECT (
-        jsonb_set(
-            probin::jsonb,
-            '{typmod_array}',
-            to_jsonb(
-                (
-                    SELECT jsonb_agg(
-                        CASE
-                            WHEN a::text = '-8000' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid) THEN '-1'
-                            WHEN a::text = '-1' AND p2.proargtypes[b-1] = ('sys.smalldatetime'::regtype)::oid THEN '0'
-                            WHEN a::text = '-1' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.binary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.bpchar'::regtype)::oid) THEN '1'
-                            ELSE a::text
-                        END
-                    )
-                    FROM jsonb_array_elements_text(probin::jsonb->'typmod_array')  WITH ORDINALITY AS elem(a,b)
-                )
-            )
-        )::text
-    )
-)
-FROM (
-    SELECT p.oid, p.proallargtypes, p.proargtypes
-    FROM pg_proc p
-    INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p.pronamespace::regnamespace::name
-    WHERE p.prolang = (SELECT oid FROM pg_language WHERE lanname = 'pltsql') and p.prokind = 'p'
-) p2
-WHERE p1.oid = p2.oid;
-
-
-UPDATE pg_proc p1
-SET probin = (
-    SELECT (
-        jsonb_set(
-            probin::jsonb,
-            '{typmod_array}',
-            to_jsonb(
-                (
-                    SELECT jsonb_agg(
-                        CASE
-                            WHEN p2.proallargtypes is null AND p2.proargtypes[b-1] is not null THEN
+SET probin = 
+    CASE 
+        WHEN p1.probin::jsonb->'typmod_array' = '[]'::jsonb THEN p1.probin
+        ELSE (
+            SELECT (
+                jsonb_set(
+                    p1.probin::jsonb,
+                    '{typmod_array}',
+                    to_jsonb(
+                        (
+                            SELECT jsonb_agg(
                                 CASE
-                                    WHEN a::text = '-8000' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid) THEN '-1'
-                                    WHEN a::text = '-1' AND p2.proargtypes[b-1] = ('sys.smalldatetime'::regtype)::oid THEN '0'
-                                    WHEN a::text = '-1' AND (p2.proargtypes[b-1] = ('sys.varchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nvarchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.varbinary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.nchar'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.binary'::regtype)::oid OR p2.proargtypes[b-1] = ('sys.bpchar'::regtype)::oid) THEN '1'
+                                    WHEN p2.prokind = 'p' OR (p2.prokind = 'f' AND p2.proallargtypes IS NULL AND p2.proargtypes[b-1] IS NOT NULL) THEN
+                                        CASE
+                                            WHEN a::text = '-8000' AND p2.proargtypes[b-1]::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary') THEN '-1'
+                                            WHEN a::text = '-1' AND p2.proargtypes[b-1]::regtype::text = 'sys.smalldatetime' THEN '0'
+                                            WHEN a::text = '-1' AND p2.proargtypes[b-1]::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary', 'sys.nchar','sys.binary','sys.bpchar') THEN '1'
+                                            ELSE a::text
+                                        END
+                                    WHEN p2.prokind = 'f' AND p2.proallargtypes IS NULL AND p2.prorettype IS NOT NULL THEN
+                                        CASE
+                                            WHEN a::text = '-8000' AND p2.prorettype::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary') THEN '-1'
+                                            WHEN a::text = '-1' AND p2.prorettype::regtype::text = 'sys.smalldatetime' THEN '0'
+                                            WHEN a::text = '-1' AND p2.prorettype::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary', 'sys.nchar','sys.binary','sys.bpchar') THEN '1'
+                                            ELSE a::text
+                                        END
                                     ELSE a::text
                                 END
-                            WHEN p2.proallargtypes is null AND p2.prorettype is not null THEN
-                                CASE
-                                    WHEN a::text = '-8000' AND (p2.prorettype = ('sys.varchar'::regtype)::oid OR p2.prorettype = ('sys.nvarchar'::regtype)::oid OR p2.prorettype = ('sys.varbinary'::regtype)::oid) THEN '-1'
-                                    WHEN a::text = '-1' AND p2.prorettype = ('sys.smalldatetime'::regtype)::oid THEN '0'
-                                    WHEN a::text = '-1' AND (p2.prorettype = ('sys.varchar'::regtype)::oid OR p2.prorettype = ('sys.nvarchar'::regtype)::oid OR p2.prorettype = ('sys.varbinary'::regtype)::oid OR p2.prorettype = ('sys.nchar'::regtype)::oid OR p2.prorettype = ('sys.binary'::regtype)::oid OR p2.prorettype = ('sys.bpchar'::regtype)::oid) THEN '1'
-                                    ELSE a::text
-                                END
-                            ELSE a::text
-                        END
+                            )
+                            FROM jsonb_array_elements_text(p1.probin::jsonb->'typmod_array') WITH ORDINALITY AS elem(a,b)
+                        )
                     )
-                    FROM jsonb_array_elements_text(probin::jsonb->'typmod_array')  WITH ORDINALITY AS elem(a,b)
-                )
+                )::text
             )
-        )::text
-    )
-)
-FROM (
-    SELECT p.oid, p.proargtypes, p.prorettype, p.proallargtypes
-    FROM pg_proc p
-    INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p.pronamespace::regnamespace::name
-    WHERE p.prolang = (SELECT oid FROM pg_language WHERE lanname = 'pltsql') and p.prokind = 'f'
-) p2
-WHERE p1.oid = p2.oid;
+        )
+    END
+FROM pg_proc p2
+INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p2.pronamespace::regnamespace::name
+WHERE p2.prolang = (SELECT oid FROM pg_language WHERE lanname = 'pltsql')
+  AND p2.prokind IN ('p', 'f')
+  AND p1.oid = p2.oid;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
