@@ -3254,6 +3254,22 @@ class MyParserErrorListener: public antlr4::BaseErrorListener
 };
 
 /*
+ * handle_local_ids_for_expression - removes all the local_ids from local_id_positions of given expression.
+ * This is useful in case of local_id assignement as part of select elements for which we don't want to quote local_id.
+ */
+static void
+handle_local_ids_for_expression(TSqlParser::ExpressionContext *ectx)
+{
+	for(auto &it: local_id_positions)
+	{
+		if (it.first >= ectx->start->getStartIndex() && it.first <= ectx->stop->getStopIndex())
+		{
+			local_id_positions.erase(it.first);
+		}
+	}
+}
+
+/*
  * Necessary checks and mutations for query_specification.
  * @process_local_id_assignement indicates whether local_id assignement should be re-written or not. Passed false when we are handling
  * statement like create or alter function.
@@ -3366,6 +3382,8 @@ static void process_query_specification(
 			repl_text = psprintf("sys.pltsql_assign_var(%d, %s)",
 									nse->itemno,
 									::getFullText(elem->expression()).c_str());
+
+			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
 		}
 		else if(process_local_id_assignement && elem->LOCAL_ID() && elem->assignment_operator())
@@ -3416,6 +3434,7 @@ static void process_query_specification(
 									rewrite_assign_operator(anode),
 									::getFullText(elem->expression()).c_str());
 
+			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
 		}
 	}
