@@ -3611,10 +3611,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					CommandCounterIncrement();
 
 					/* Execute subcommands for database roles.*/
-					if (rolspec)
-						exec_database_roles_subcmds(create_schema->schemaname, rolspec->rolename);
-					else
-						exec_database_roles_subcmds(create_schema->schemaname, NULL);
+					if (strcmp(queryString, "(CREATE SCHEMA )") != 0)
+					{
+						if (rolspec)
+							exec_database_roles_subcmds(create_schema->schemaname, rolspec->rolename);
+						else
+							exec_database_roles_subcmds(create_schema->schemaname, NULL);
+					}
 
 					/* Grant ALL schema privileges to the user.*/
 					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)

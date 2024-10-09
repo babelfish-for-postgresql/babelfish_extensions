@@ -267,12 +267,8 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 
 	add_to_bbf_authid_user_ext(dbo, "dbo", dbname, "dbo", NULL, false, true, false);
 	add_to_bbf_authid_user_ext(db_owner, "db_owner", dbname, NULL, NULL, true, true, false);
-	if (!entry_exists_in_bbf_auth_ext(db_datareader))
-		add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
-	if (!entry_exists_in_bbf_auth_ext(db_datawriter))
-		add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
-	//add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
-	//add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
+	add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
+	add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
 
 	/*
 	 * For master, tempdb and msdb databases, the guest user will be
@@ -1211,7 +1207,7 @@ create_schema_if_not_exists(const uint16 dbid,
 		wrapper->stmt_len = 0;
 
 		ProcessUtility(wrapper,
-					   query.data,
+					   "(CREATE SCHEMA )",
 					   false,
 					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
