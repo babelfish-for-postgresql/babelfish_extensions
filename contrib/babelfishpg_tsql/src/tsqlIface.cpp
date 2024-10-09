@@ -177,7 +177,7 @@ TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Sele
 static bool is_top_level_query_specification(TSqlParser::Query_specificationContext *ctx);
 static bool is_quotation_needed_for_column_alias(TSqlParser::Column_aliasContext *ctx);
 static bool is_compiling_create_function();
-static void process_query_specification(TSqlParser::Query_specificationContext *qctx, PLtsql_expr_query_mutator *mutator);
+static void process_query_specification(TSqlParser::Query_specificationContext *qctx, PLtsql_expr_query_mutator *mutator, bool process_local_id_assignement);
 static void process_select_statement(TSqlParser::Select_statementContext *selectCtx, PLtsql_expr_query_mutator *mutator);
 static void process_select_statement_standalone(TSqlParser::Select_statement_standaloneContext *standaloneCtx, PLtsql_expr_query_mutator *mutator, tsqlBuilder &builder);
 template <class T> static std::string rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema, GetCtxFunc<T> getObject);
@@ -1353,7 +1353,7 @@ public:
 	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
 	{
 		if (mutator)
-			process_query_specification(ctx, mutator);
+			process_query_specification(ctx, mutator, false);
 	}
 
 	void exitTable_source_item(TSqlParser::Table_source_itemContext *ctx) override 
@@ -2715,7 +2715,7 @@ public:
 		}
 		has_identity_function = false;
 		if (statementMutator)
-			process_query_specification(ctx, statementMutator.get());
+			process_query_specification(ctx, statementMutator.get(), true);
 	}
 
 	void exitDrop_relational_or_xml_or_spatial_index(TSqlParser::Drop_relational_or_xml_or_spatial_indexContext *ctx) override
@@ -3254,11 +3254,14 @@ class MyParserErrorListener: public antlr4::BaseErrorListener
 };
 
 /*
- * Necessary checks and mutations for query_specification
+ * Necessary checks and mutations for query_specification.
+ * @process_local_id_assignement indicates whether local_id assignement should be re-written or not. Passed false when we are handling
+ * statement like create or alter function.
  */
 static void process_query_specification(
 	TSqlParser::Query_specificationContext *qctx,
-	PLtsql_expr_query_mutator *mutator)
+	PLtsql_expr_query_mutator *mutator,
+	bool process_local_id_assignement)
 {
 	Assert(qctx->select_list());
 	std::vector<TSqlParser::Select_list_elemContext *> select_elems = qctx->select_list()->select_list_elem();
@@ -3348,7 +3351,7 @@ static void process_query_specification(
 					mutator->add(column_alias_as->start->getStartIndex(), "", " AS ");
 			}
 		}
-		else if(elem->LOCAL_ID() && elem->EQUAL())
+		else if(process_local_id_assignement && elem->LOCAL_ID() && elem->EQUAL())
 		{
 			std::string var_str = ::getFullText(elem->LOCAL_ID());
 			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
@@ -3365,7 +3368,7 @@ static void process_query_specification(
 									::getFullText(elem->expression()).c_str());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
 		}
-		else if(elem->LOCAL_ID() && elem->assignment_operator())
+		else if(process_local_id_assignement && elem->LOCAL_ID() && elem->assignment_operator())
 		{
 			std::string var_str = ::getFullText(elem->LOCAL_ID());
 			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
