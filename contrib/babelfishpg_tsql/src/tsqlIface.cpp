@@ -3260,13 +3260,16 @@ class MyParserErrorListener: public antlr4::BaseErrorListener
 static void
 handle_local_ids_for_expression(TSqlParser::ExpressionContext *ectx)
 {
-	for(auto &it: local_id_positions)
+	std::vector<size_t> keysToRemove;
+	for(auto &it : local_id_positions)
 	{
 		if (it.first >= ectx->start->getStartIndex() && it.first <= ectx->stop->getStopIndex())
 		{
-			local_id_positions.erase(it.first);
+			keysToRemove.push_back(it.first);
 		}
 	}
+	for (const auto &key : keysToRemove) local_id_positions.erase(key);
+	keysToRemove.clear();
 }
 
 /*
