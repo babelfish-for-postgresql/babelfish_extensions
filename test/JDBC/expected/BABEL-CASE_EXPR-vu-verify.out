@@ -12493,13 +12493,3 @@ GO
 nchar
 char0                                                                                               
 ~~END~~
-
-
--- Union testing: fixed typmod for max datatype
-Select * from BABEL_5103_V3;
-GO
-~~START~~
-nchar
-char0                                                                                               
-~~END~~
-

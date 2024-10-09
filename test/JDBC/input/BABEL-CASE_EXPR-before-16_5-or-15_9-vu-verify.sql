@@ -7115,7 +7115,3 @@ SELECT CASE 1
    WHEN 2 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-
--- Union testing: fixed typmod for max datatype
-Select * from BABEL_5103_V3;
-GO

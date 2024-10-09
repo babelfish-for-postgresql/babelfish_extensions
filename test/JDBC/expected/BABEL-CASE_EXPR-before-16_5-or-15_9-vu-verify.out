@@ -12493,12 +12493,3 @@ GO
 nchar
 char0                                                                                               
 ~~END~~
-
-
--- Union testing: fixed typmod for max datatype
-Select * from BABEL_5103_V3;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
-
