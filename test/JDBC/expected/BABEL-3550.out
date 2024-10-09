@@ -21,7 +21,7 @@ SELECT @a = COUNT(*) FROM sys.dm_exec_connections;
 SELECT (CASE WHEN @a >= 0 THEN 'true' ELSE 'false' END) AS result
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 

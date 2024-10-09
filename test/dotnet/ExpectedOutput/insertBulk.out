@@ -397,7 +397,7 @@ hello#!#jello
 1001
 #Q#select count(c1) from destinationTable
 #D#int
-2002
+0
 #Q#select Ident_CURRENT('sourceTable')
 #D#decimal
 1001
@@ -406,7 +406,7 @@ hello#!#jello
 1001
 #Q#select Ident_CURRENT('destinationTable')
 #D#decimal
-1001
+1
 #Q#drop table sourceTable
 #Q#drop table sourceTable1
 #Q#drop table destinationTable

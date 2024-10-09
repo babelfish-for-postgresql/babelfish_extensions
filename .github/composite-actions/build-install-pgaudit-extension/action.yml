@@ -1,0 +1,28 @@
+name: 'Build and Install PgAudit'
+
+inputs:
+  install_dir:
+    description: 'Engine install directory'
+    required: no
+    default: psql
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build and Install PgAudit
+      run: |
+        cd ~
+        rm -rf pgaudit
+        git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
+        cd pgaudit
+        make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
+        cd ../psql
+        sudo sed -i "s/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'	# (change requires restart)/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements,pgaudit'/g" data/postgresql.conf
+        echo "everything set"
+
+        ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
+        sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE EXTENSION pgaudit;"
+        sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
+
+      shell: bash
+      
