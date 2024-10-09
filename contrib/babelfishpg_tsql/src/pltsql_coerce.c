@@ -2130,19 +2130,23 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		Node *expr = (Node*) lfirst(lc);
 		int32 typmod = exprTypmod(expr);
 		Oid   type = exprType(expr);
-		Oid   tsql_type = get_immediate_base_type_of_UDT_internal(type);
+		Oid   immediate_base_type = get_immediate_base_type_of_UDT_internal(type);
 
 		/* 
-		 * Handling for UDT, If tsql_type is not NULL that mean we need to handle typmod for UDT,
+		 * Handling for UDT, If immediate_base_type is not NULL that mean we need to handle typmod for UDT,
 		 * By calculating typmod of its base type using getBaseTypeAndTypmod.
-		 * Other wise if tsql_type is NULL We don't need any handling for UDT.
+		 * Other wise if immediate_base_type is NULL We don't need any handling for UDT.
 		 */
-		if (OidIsValid(tsql_type))
+		if (OidIsValid(immediate_base_type))
 		{
 			/* Finding the typmod of base type of UDT using getBaseTypeAndTypmod() */
 			int32 base_typmod = -1;
 			Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
 			
+			/* This conditon is for the datatype with MAX typmod.
+			 * -1 will only be returned if common_type is a datatype
+			 * that supports MAX typmod
+			 */
 			if (base_typmod == -1 && 
 				is_tsql_datatype_with_max_scale_expr_allowed(base_type) && 
 				is_tsql_datatype_with_max_scale_expr_allowed(common_type))
@@ -2161,6 +2165,10 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		if (is_tsql_str_const(expr))
 			typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
 
+		/* This conditon is for the datatype with MAX typmod.
+		 * -1 will only be returned if common_type is a datatype
+		 * that supports MAX typmod
+		 */
 		if (expr_is_var_max(expr) &&
 			is_tsql_datatype_with_max_scale_expr_allowed(common_type))
 			return -1;

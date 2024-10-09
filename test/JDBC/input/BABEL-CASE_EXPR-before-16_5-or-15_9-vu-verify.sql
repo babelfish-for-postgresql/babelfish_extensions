@@ -7115,3 +7115,24 @@ SELECT CASE 1
    WHEN 2 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
+
+-- Union testing: fixed typmod for max datatype
+SELECT CAST('char0' AS VARCHAR(MAX))
+Union
+SELECT CAST('char0' AS NCHAR(100))
+GO
+
+SELECT CAST('char0' AS NVARCHAR(MAX))
+Union
+SELECT CAST('char0' AS NCHAR(100))
+GO
+
+SELECT CAST('char0' AS VARCHAR(MAX))
+Union
+SELECT CAST('char0' AS CHAR(100))
+GO
+
+SELECT CAST('char0' AS NVARCHAR(MAX))
+Union
+SELECT CAST('char0' AS CHAR(100))
+GO

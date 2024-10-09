@@ -12494,3 +12494,44 @@ nchar
 char0                                                                                               
 ~~END~~
 
+
+-- Union testing: fixed typmod for max datatype
+SELECT CAST('char0' AS VARCHAR(MAX))
+Union
+SELECT CAST('char0' AS NCHAR(100))
+GO
+~~START~~
+nchar
+char0                                                                                               
+~~END~~
+
+
+SELECT CAST('char0' AS NVARCHAR(MAX))
+Union
+SELECT CAST('char0' AS NCHAR(100))
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CAST('char0' AS VARCHAR(MAX))
+Union
+SELECT CAST('char0' AS CHAR(100))
+GO
+~~START~~
+varchar
+char0
+~~END~~
+
+
+SELECT CAST('char0' AS NVARCHAR(MAX))
+Union
+SELECT CAST('char0' AS CHAR(100))
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
