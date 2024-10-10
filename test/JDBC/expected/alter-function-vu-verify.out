@@ -297,12 +297,77 @@ int#!#varchar#!#varchar
 ~~END~~
 
 
--- Confirm information schema is correctly updated with "CREATE FUNC [new definition]" 
+
+-- Create same multiline function on schema
+create function alter_func_prep_schema1.alter_func_f5() 
+returns @result TABLE([Id] int, [email] varchar(50), [Status] varchar(50)) as 
+begin 
+insert into @result select Id, email, NULL from alter_func_users update @result set Status = case when Id = 1 then 'Owner' else 'Normal' end 
+return 
+end
+go
+
+select * from alter_func_prep_schema1.alter_func_f5()
+go
+~~START~~
+int#!#varchar#!#varchar
+1#!#testemail#!#Owner
+2#!#testemail2#!#Normal
+3#!#testemail3#!#Normal
+~~END~~
+
+
+-- Alter function on schema
+alter function alter_func_prep_schema1.alter_func_f5() 
+returns @result TABLE(Name varchar(max)) as begin insert into @result values ('Grace Hopper') 
+return 
+end
+go
+
+select * from alter_func_prep_schema1.alter_func_f5()
+go
+~~START~~
+varchar
+Grace Hopper
+~~END~~
+
+
+-- Confirm information schema is correctly updated with "CREATE FUNC [new definition]"
+-- This case will return two rows: one for alter_func_prep_schema1.alter_func_f5() and one for alter_func_f5()
+-- This is expected and the ROUTINE_NAME should not include the schema name
 select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_func_f5';
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
 alter_func_f5#!#SQL#!#CREATE function alter_func_f5()<newline>returns @result TABLE([Id] int, [email] varchar(50), [Status] varchar(50)) as begin<newline>insert into @result select Id, email, NULL from alter_func_users<newline>update @result set Status =<newline>    case when Id = 1 then 'Owner'<newline>    else 'Normal'<newline>end<newline>return<newline>end
+alter_func_f5#!#SQL#!#CREATE function alter_func_prep_schema1.alter_func_f5() <newline>returns @result TABLE(Name varchar(max)) as begin insert into @result values ('Grace Hopper') <newline>return <newline>end
+~~END~~
+
+
+-- Alter function on schema with parameters
+alter function alter_func_prep_schema1.alter_func_f5(@name varchar(max)) 
+returns @result TABLE(Name varchar(max)) as begin insert into @result values (@name) 
+return 
+end
+go
+
+select * from alter_func_prep_schema1.alter_func_f5('Ada Lovelace')
+go
+~~START~~
+varchar
+Ada Lovelace
+~~END~~
+
+
+-- Confirm information schema is correctly updated with "CREATE FUNC [new definition]"
+-- This case will return two rows: one for alter_func_prep_schema1.alter_func_f5() and one for alter_func_f5()
+-- This is expected and the ROUTINE_NAME should not include the schema name
+select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_func_f5';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+alter_func_f5#!#SQL#!#CREATE function alter_func_f5()<newline>returns @result TABLE([Id] int, [email] varchar(50), [Status] varchar(50)) as begin<newline>insert into @result select Id, email, NULL from alter_func_users<newline>update @result set Status =<newline>    case when Id = 1 then 'Owner'<newline>    else 'Normal'<newline>end<newline>return<newline>end
+alter_func_f5#!#SQL#!#CREATE function alter_func_prep_schema1.alter_func_f5(@name varchar(max)) <newline>returns @result TABLE(Name varchar(max)) as begin insert into @result values (@name) <newline>return <newline>end
 ~~END~~
 
 

@@ -2533,6 +2533,33 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						if(tbltypStmt)
 						{
 							PlannedStmt *wrapper;
+							RangeVar* rv = ((CreateStmt*) tbltypStmt)->relation;
+
+							if(rv->schemaname != NULL)
+							{
+								List* cfs_rettype_names = cfs->returnType->names;
+								ListCell* x;
+								int i = 1;
+								int len = list_length(cfs->parameters);
+								char *physical_schema_name = get_physical_schema_name(get_cur_db_name(), rv->schemaname);
+
+								rv->schemaname = physical_schema_name;
+								cfs_rettype_names = list_delete_first(cfs_rettype_names);
+								cfs_rettype_names = lcons(makeString(physical_schema_name), cfs_rettype_names);
+
+
+								foreach(x, cfs->parameters)
+								{
+									if(i == len)
+									{
+										FunctionParameter *fp = (FunctionParameter *) lfirst(x);
+										TypeName *t = fp->argType;
+										t->names =  list_delete_first(t->names);
+										t->names = lcons(makeString(physical_schema_name), t->names);
+									}
+									i++;
+								}
+							}
 
 							/*
 							 * Process create stmt

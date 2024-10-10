@@ -39,3 +39,6 @@ go
 
 create function alter_func_f6(@p1 int, @p2 int=123, @p3 int) returns int as begin return @p1 + @p2 + @p3 end
 go
+
+create schema alter_func_prep_schema1
+go
