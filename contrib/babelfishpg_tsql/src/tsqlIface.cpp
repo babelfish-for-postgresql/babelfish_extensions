@@ -3332,6 +3332,11 @@ static void process_query_specification(
 			post_process_table_source(tctx, expr, baseCtx, is_freetext_predicate);
 	}
 
+	/* First add information of rewritten_query_fragment information to mutator */
+	add_rewritten_query_fragment_to_mutator(mutator);
+	mutator->run();
+	clear_rewritten_query_fragment();
+
 	/* handle special alias syntax and quote alias */
 	for (size_t i=0; i<select_elems.size(); ++i)
 	{
@@ -3391,10 +3396,10 @@ static void process_query_specification(
 									::getFullText(elem->expression()).c_str(),
 									tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
 
-			/* First add information of rewritten_query_fragment information to mutator */
-			add_rewritten_query_fragment_to_mutator(mutator);
-			mutator->run();
-			clear_rewritten_query_fragment();
+			// /* First add information of rewritten_query_fragment information to mutator */
+			// add_rewritten_query_fragment_to_mutator(mutator);
+			// mutator->run();
+			// clear_rewritten_query_fragment();
 
 			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
@@ -3451,10 +3456,10 @@ static void process_query_specification(
 									::getFullText(elem->expression()).c_str(),
 									tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
 
-			/* First add information of rewritten_query_fragment information to mutator */
-			add_rewritten_query_fragment_to_mutator(mutator);
-			mutator->run();
-			clear_rewritten_query_fragment();
+			// /* First add information of rewritten_query_fragment information to mutator */
+			// add_rewritten_query_fragment_to_mutator(mutator);
+			// mutator->run();
+			// clear_rewritten_query_fragment();
 
 			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
