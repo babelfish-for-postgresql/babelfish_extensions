@@ -48,6 +48,8 @@
  * sysname is created as CREATE DOMAIN sys.SYSNAME AS sys.VARCHAR(128);
  */
 #define SYSNAME_TYPMOD 128
+#define NCHAR_MAX_TYPMOD 4000
+#define BPCHAR_MAX_TYPMOD 8000
 
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
@@ -2143,14 +2145,23 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			int32 base_typmod = -1;
 			Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
 			
-			/* This conditon is for the datatype with MAX typmod.
+			/* 
+			 * This conditon is for the datatype with MAX typmod.
 			 * -1 will only be returned if common_type is a datatype
-			 * that supports MAX typmod
+			 * that supports MAX typmod. If common type is nchar(maxtypmod = 4000)
+			 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
+			 * return the MAX typmod for them.
 			 */
 			if (base_typmod == -1 && 
-				is_tsql_datatype_with_max_scale_expr_allowed(base_type) && 
-				is_tsql_datatype_with_max_scale_expr_allowed(common_type))
+				is_tsql_datatype_with_max_scale_expr_allowed(base_type))
+			{
+				if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
+					return BPCHAR_MAX_TYPMOD;
+				else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
+					return NCHAR_MAX_TYPMOD;
+				else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
 					return -1;
+			}
 			
 			typmod = base_typmod;	
 		}
@@ -2167,11 +2178,19 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 
 		/* This conditon is for the datatype with MAX typmod.
 		 * -1 will only be returned if common_type is a datatype
-		 * that supports MAX typmod
+		 * that supports MAX typmod.If common type is nchar(maxtypmod = 4000)
+		 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
+		 * return the MAX typmod for them.
 		 */
-		if (expr_is_var_max(expr) &&
-			is_tsql_datatype_with_max_scale_expr_allowed(common_type))
-			return -1;
+		if (expr_is_var_max(expr))
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
+				return BPCHAR_MAX_TYPMOD;
+			else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
+				return NCHAR_MAX_TYPMOD;
+			else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
+				return -1;
+		}
 
 		if (lc == list_head(exprs))
 			max_typmods = typmod;

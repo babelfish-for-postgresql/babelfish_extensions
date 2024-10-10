@@ -12183,7 +12183,7 @@ END AS RESULT
 GO
 ~~START~~
 nchar
-char0                                                                                               
+char0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 ~~END~~
 
 
@@ -12249,7 +12249,139 @@ END AS RESULT
 GO
 ~~START~~
 nchar
-char1                                                                                               
+char1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char1
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('abc' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN 'a'
+END AS RESULT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(1))
+END AS RESULT
+GO
+~~START~~
+varchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(1))
+END AS RESULT
+GO
+~~START~~
+varchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nchar
+char0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('abc' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN 'a'
+END AS RESULT
+GO
+~~START~~
+varchar
+a
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(1))
+END AS RESULT
+GO
+~~START~~
+varchar
+c
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(1))
+END AS RESULT
+GO
+~~START~~
+varchar
+c
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nchar
+c                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
 ~~END~~
 
 
@@ -12414,6 +12546,138 @@ char1
 ~~END~~
 
 
+SELECT CASE 1
+   WHEN 1 THEN CAST('abc' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN 'a'
+END AS RESULT
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char0
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char0
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('abc' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN 'a'
+END AS RESULT
+GO
+~~START~~
+nvarchar
+a
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS VARCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+c
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS CHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+c
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+c
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+char1
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('char0' AS BABEL_CASE_EXPR_TEST_UDT)
+   WHEN 2 THEN CAST('char1' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+char1
+~~END~~
+
+
 drop type BABEL_CASE_EXPR_TEST_UDT;
 go
 
@@ -12491,6 +12755,262 @@ END AS RESULT
 GO
 ~~START~~
 nchar
-char0                                                                                               
+char0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 ~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nchar
+ASDGASDKGJNASDLIUFAISDUFB                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS CHAR(1))
+END AS RESULT
+GO
+~~START~~
+varchar
+ASDGASDKGJNASDLIUFAISDUFB
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nchar
+N                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS CHAR(1))
+END AS RESULT
+GO
+~~START~~
+varchar
+N
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+ASDGASDKGJNASDLIUFAISDUFB
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS CHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+ASDGASDKGJNASDLIUFAISDUFB
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NCHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+N
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS CHAR(1))
+END AS RESULT
+GO
+~~START~~
+nvarchar
+N
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+ASDGASDKGJNASDLIUFAISDUFB
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+ASDGASDKGJNASDLIUFAISDUFB
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+NCHAR
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+NCHAR
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+ASDGASDKGJNASDLIUFAISDUFB
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+ASDGASDKGJNASDLIUFAISDUFB
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NTEXT)
+END AS RESULT
+GO
+~~START~~
+ntext
+NCHAR
+~~END~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS TEXT)
+END AS RESULT
+GO
+~~START~~
+text
+NCHAR
+~~END~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NCHAR(10000))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '10000' exceeds the maximum allowed (4000) for 'nchar' datatype.)~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS CHAR(10000))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '10000' exceeds the maximum allowed (8000) for 'bpchar' datatype.)~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NCHAR(10000))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '10000' exceeds the maximum allowed (4000) for 'nchar' datatype.)~~
+
+
+SELECT CASE 1
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS CHAR(10000))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '10000' exceeds the maximum allowed (8000) for 'bpchar' datatype.)~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NCHAR(10000))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '10000' exceeds the maximum allowed (4000) for 'nchar' datatype.)~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS VARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS CHAR(10000))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '10000' exceeds the maximum allowed (8000) for 'bpchar' datatype.)~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS NCHAR(10000))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '10000' exceeds the maximum allowed (4000) for 'nchar' datatype.)~~
+
+
+SELECT CASE 2
+   WHEN 1 THEN CAST('ASDGASDKGJNASDLIUFAISDUFB' AS NVARCHAR(MAX))
+   WHEN 2 THEN CAST('NCHAR' AS CHAR(10000))
+END AS RESULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size '10000' exceeds the maximum allowed (8000) for 'bpchar' datatype.)~~
 
