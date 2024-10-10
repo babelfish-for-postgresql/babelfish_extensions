@@ -2135,9 +2135,9 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		Oid   immediate_base_type = get_immediate_base_type_of_UDT_internal(type);
 
 		/* 
-		 * Handling for UDT, If immediate_base_type is not NULL that mean we need to handle typmod for UDT,
+		 * Handling for UDT, If immediate_base_type is Valid Oid that mean we need to handle typmod for UDT,
 		 * By calculating typmod of its base type using getBaseTypeAndTypmod.
-		 * Other wise if immediate_base_type is NULL We don't need any handling for UDT.
+		 * Other wise if immediate_base_type is not Valid Oid We don't need any handling for UDT.
 		 */
 		if (OidIsValid(immediate_base_type))
 		{
@@ -2150,15 +2150,14 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			 * -1 will only be returned if common_type is a datatype
 			 * that supports MAX typmod. If common type is nchar(maxtypmod = 4000)
 			 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
-			 * return the MAX typmod for them.
 			 */
 			if (base_typmod == -1 && 
 				is_tsql_datatype_with_max_scale_expr_allowed(base_type))
 			{
 				if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
-					return BPCHAR_MAX_TYPMOD;
+					return BPCHAR_MAX_TYPMOD + VARHDRSZ;
 				else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
-					return NCHAR_MAX_TYPMOD;
+					return NCHAR_MAX_TYPMOD + VARHDRSZ;
 				else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
 					return -1;
 			}
@@ -2180,14 +2179,13 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		 * -1 will only be returned if common_type is a datatype
 		 * that supports MAX typmod.If common type is nchar(maxtypmod = 4000)
 		 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
-		 * return the MAX typmod for them.
 		 */
 		if (expr_is_var_max(expr))
 		{
 			if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
-				return BPCHAR_MAX_TYPMOD;
+				return BPCHAR_MAX_TYPMOD + VARHDRSZ;
 			else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
-				return NCHAR_MAX_TYPMOD;
+				return NCHAR_MAX_TYPMOD + VARHDRSZ;
 			else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
 				return -1;
 		}
