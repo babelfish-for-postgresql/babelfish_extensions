@@ -3376,18 +3376,25 @@ static void process_query_specification(
 			std::string var_str = ::getFullText(elem->LOCAL_ID());
 			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
 			char *repl_text = NULL;
-			PLtsql_var *var = (PLtsql_var *) pltsql_Datums[nse->itemno];
+			PLtsql_var *var;
 
 			Assert(elem->expression());
 
 			if (!nse)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", var_str.c_str()), getLineAndPos(elem));
+			
+			var = (PLtsql_var *) pltsql_Datums[nse->itemno];
 
 			/* Rewrite @var = expr to @var=sys.pltsql_assign_var(dno, expr) */
 			repl_text = psprintf("sys.pltsql_assign_var(%d, cast(%s as %s))",
 									nse->itemno,
 									::getFullText(elem->expression()).c_str(),
 									tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
+
+			/* First add information of rewritten_query_fragment information to mutator */
+			add_rewritten_query_fragment_to_mutator(mutator);
+			mutator->run();
+			clear_rewritten_query_fragment();
 
 			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
@@ -3397,7 +3404,7 @@ static void process_query_specification(
 			std::string var_str = ::getFullText(elem->LOCAL_ID());
 			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
 			char *repl_text = NULL;
-			PLtsql_var *var = (PLtsql_var *) pltsql_Datums[nse->itemno];
+			PLtsql_var *var;
 			tree::TerminalNode *anode = nullptr;
 
 			if (elem->assignment_operator())
@@ -3428,6 +3435,8 @@ static void process_query_specification(
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 												format_errmsg("\"%s\" is not a known variable",
 												var_str.c_str()), getLineAndPos(elem));
+			
+			var = (PLtsql_var *) pltsql_Datums[nse->itemno];
 
 			/* 
 			 * Rewrite @var += expr to @var += sys.pltsql_assign_var(dno, "@var" + (expr)).
@@ -3441,6 +3450,11 @@ static void process_query_specification(
 									rewrite_assign_operator(anode),
 									::getFullText(elem->expression()).c_str(),
 									tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
+
+			/* First add information of rewritten_query_fragment information to mutator */
+			add_rewritten_query_fragment_to_mutator(mutator);
+			mutator->run();
+			clear_rewritten_query_fragment();
 
 			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
