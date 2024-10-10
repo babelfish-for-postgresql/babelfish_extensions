@@ -71,6 +71,8 @@ static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **whic
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
 
+extern	bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid);
+
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
 
