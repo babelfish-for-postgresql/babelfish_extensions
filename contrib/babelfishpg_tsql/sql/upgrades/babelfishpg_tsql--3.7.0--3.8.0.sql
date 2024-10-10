@@ -37,14 +37,38 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- Rename bbf_pivot for dependencies
+    ALTER FUNCTION sys.bbf_pivot() RENAME TO bbf_pivot_deprecated_in_3_8_0;
 
-ALTER FUNCTION sys.bbf_pivot() RENAME TO bbf_pivot_deprecated_in_4_4_0;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_pivot_deprecated_in_4_4_0');
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.bbf_pivot(IN src_sql TEXT, IN cat_sql TEXT, IN agg_func TEXT)
 RETURNS setof record
 AS 'babelfishpg_tsql', 'bbf_pivot'
 LANGUAGE C STABLE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- DROP bbf_pivot_deprecated_in_3_8_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_pivot_deprecated_in_3_8_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 -- Assigning dbo role to the db_owner login
 DO $$
@@ -9230,6 +9254,10 @@ DROP PROCEDURE sys.babelfish_alter_default_privilege_on_schema();
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_tables_internal_deprecated_in_3_8_0');
 
+CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
+AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
@@ -9239,7 +9267,3 @@ CALL sys.analyze_babelfish_catalogs();
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
-CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
-AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
-GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;

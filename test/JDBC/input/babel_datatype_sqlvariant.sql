@@ -198,7 +198,15 @@ go
 select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier) 
                  as sql_variant) as uniqueidentifier);
 go
-
+-- fixeddecimal
+select cast(cast(cast('123.45' as fixeddecimal) as sql_variant) as fixeddecimal);
+go
+-- bbf_varbinary
+select cast(cast(cast('abc' AS bbf_varbinary(5)) AS sql_variant) as bbf_varbinary(5));
+go
+-- bbf_binary
+select cast(cast(cast('abc' AS bbf_binary(5)) AS sql_variant) as bbf_binary(5));
+go
 select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0wrong' as uniqueidentifier) 
                  as sql_variant) as uniqueidentifier);
 go
@@ -678,6 +686,22 @@ go
 select * from t7 where a >= b order by 1,2;
 go
 select * from t7 where a <= b order by 1,2;
+go
+
+-- User defined data-type
+CREATE TYPE sqlvariant_type from NVARCHAR(100)
+GO
+Select CAST(CAST('2023-05-01' AS sqlvariant_type) AS sqlvariant_type)
+go
+DROP TYPE IF EXISTS sqlvariant_type;
+go
+
+--  User defined data-type with multiple cast
+CREATE TYPE sqlvariant_type from SQL_VARIANT;
+GO
+Select CAST(CAST(CAST('2023-05-01' AS sqlvariant_type) AS sqlvariant_type) AS VARCHAR(2))
+go
+DROP TYPE IF EXISTS sqlvariant_type;
 go
 
 -- Clean up

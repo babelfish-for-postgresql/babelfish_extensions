@@ -461,18 +461,18 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 static void
 create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid)
 {
-	int16		old_dbid;
-	char	   *old_dbname;
-	Oid			datdba;
-	Datum	   *new_record;
-	bool	   *new_record_nulls;
-	Relation	sysdatabase_rel;
-	HeapTuple	tuple;
-	List	   *parsetree_list;
-	ListCell   *parsetree_item;
-	const char *dbo_role;
-	NameData	default_collation;
-	NameData	owner_namedata;
+	int16       old_dbid;
+	char        *old_dbname;
+	Oid         datdba;
+	Datum       *new_record;
+	bool        *new_record_nulls;
+	Relation    sysdatabase_rel;
+	HeapTuple   tuple;
+	List        *parsetree_list;
+	ListCell    *parsetree_item;
+	char        *dbo_role;
+	NameData    default_collation;
+	NameData    owner_namedata;
 	const char *prev_current_user;
 	int			stmt_number = 0;
 	int 			save_sec_context;
@@ -620,23 +620,24 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);
+	pfree(dbo_role);
 }
 
 void
 drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 {
-	volatile Relation sysdatabase_rel;
-	HeapTuple	tuple;
-	Form_sysdatabases bbf_db;
-	int16		dbid;
-	const char *dbo_role;
-	List	   *db_users_list;
-	List	   *parsetree_list;
-	ListCell   *parsetree_item;
-	const char *prev_current_user;
-	int 		save_sec_context;
-	bool 		is_set_userid = false;
-	Oid 		save_userid;
+	volatile Relation   sysdatabase_rel;
+	HeapTuple           tuple;
+	Form_sysdatabases   bbf_db;
+	int16               dbid;
+	char               *dbo_role;
+	List               *db_users_list;
+	List               *parsetree_list;
+	ListCell           *parsetree_item;
+	const char         *prev_current_user;
+	int                save_sec_context;
+	bool               is_set_userid = false;
+	Oid                save_userid;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
@@ -785,6 +786,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	pfree(dbo_role);
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);
@@ -1042,8 +1045,8 @@ create_schema_if_not_exists(const uint16 dbid,
 	const char *prev_current_user;
 	uint16		old_dbid;
 	const char *old_dbname,
-			   *phys_schema_name,
-			   *phys_role;
+			   *phys_schema_name;
+	char	   *phys_role;
 
 	/*
 	 * During upgrade, the migration mode is reset to single-db so we cannot
@@ -1067,7 +1070,7 @@ create_schema_if_not_exists(const uint16 dbid,
 	 * some reason guest role does not exist, then that is a bigger problem.
 	 * We skip creating the guest schema entirely instead of crashing though.
 	 */
-	phys_role = get_physical_user_name((char *) dbname, (char *) owner_role);
+	phys_role = get_physical_user_name((char *) dbname, (char *) owner_role, true);
 	if (!OidIsValid(get_role_oid(phys_role, true)))
 	{
 		ereport(LOG,
@@ -1125,6 +1128,8 @@ create_schema_if_not_exists(const uint16 dbid,
 		set_cur_db(old_dbid, old_dbname);
 	}
 	PG_END_TRY();
+
+	pfree(phys_role);
 
 	bbf_set_current_user(prev_current_user);
 	set_cur_db(old_dbid, old_dbname);

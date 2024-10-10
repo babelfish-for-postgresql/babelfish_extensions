@@ -2498,7 +2498,7 @@ update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 bool
 guest_role_exists_for_db(const char *dbname)
 {
-	const char *guest_role = get_guest_role_name(dbname);
+	char		*guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
 	HeapTuple	tuple;
 
@@ -2509,6 +2509,8 @@ guest_role_exists_for_db(const char *dbname)
 		role_exists = true;
 		ReleaseSysCache(tuple);
 	}
+
+	pfree(guest_role);
 
 	return role_exists;
 }
@@ -2566,7 +2568,7 @@ get_login_for_user(Oid user_id, const char *physical_schema_name)
 static void
 create_guest_role_for_db(const char *dbname)
 {
-	const char *guest = get_guest_role_name(dbname);
+	char	   *guest = get_guest_role_name(dbname);
 	const char *db_owner_role = get_db_owner_role_name(dbname);
 	List	   *logins = NIL;
 	List	   *res;
@@ -2647,6 +2649,7 @@ create_guest_role_for_db(const char *dbname)
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);
+	pfree(guest);
 }
 
 /*
@@ -4050,3 +4053,37 @@ alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
 	table_close(db_rel, AccessShareLock);
 	PG_RETURN_INT32(0);
 }
+
+/*
+ * Returns true if the user/role exists in the sys.babelfish_authid_user_ext catalog,
+ * false otherwise.
+ */
+bool
+user_exists_for_db(const char *db_name, const char *user_name)
+{
+	HeapTuple		tuple_cache;
+	NameData		rolname;
+	bool			user_exists = false;
+
+	namestrcpy(&rolname, user_name);
+
+	tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
+
+	if (HeapTupleIsValid(tuple_cache))
+	{
+		bool isnull;
+		char *db_name_from_cache = TextDatumGetCString(SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple_cache,
+												 Anum_bbf_authid_user_ext_database_name, &isnull));
+
+		Assert(!isnull);
+
+		if (strcmp(db_name_from_cache, db_name) == 0)
+			user_exists = true;
+		
+		pfree(db_name_from_cache);
+		ReleaseSysCache(tuple_cache);
+	}
+
+	return user_exists;
+}
+
