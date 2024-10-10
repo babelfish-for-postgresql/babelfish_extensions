@@ -43,6 +43,7 @@ extern "C" {
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
 #include "parser/scansup.h"
+#include "utils/builtins.h"
 
 #include "guc.h"
 
@@ -3375,6 +3376,7 @@ static void process_query_specification(
 			std::string var_str = ::getFullText(elem->LOCAL_ID());
 			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
 			char *repl_text = NULL;
+			PLtsql_var *var = (PLtsql_var *) pltsql_Datums[nse->itemno];
 
 			Assert(elem->expression());
 
@@ -3382,9 +3384,10 @@ static void process_query_specification(
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", var_str.c_str()), getLineAndPos(elem));
 
 			/* Rewrite @var = expr to @var=sys.pltsql_assign_var(dno, expr) */
-			repl_text = psprintf("sys.pltsql_assign_var(%d, %s)",
+			repl_text = psprintf("sys.pltsql_assign_var(%d, cast(%s as %s))",
 									nse->itemno,
-									::getFullText(elem->expression()).c_str());
+									::getFullText(elem->expression()).c_str(),
+									tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
 
 			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
@@ -3394,6 +3397,7 @@ static void process_query_specification(
 			std::string var_str = ::getFullText(elem->LOCAL_ID());
 			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
 			char *repl_text = NULL;
+			PLtsql_var *var = (PLtsql_var *) pltsql_Datums[nse->itemno];
 			tree::TerminalNode *anode = nullptr;
 
 			if (elem->assignment_operator())
@@ -3431,11 +3435,12 @@ static void process_query_specification(
 			 * additional handling of assignment opetator will be done in process_execsql_destination_select
 			 * when we create target row.
 			 */
-			repl_text = psprintf("sys.pltsql_assign_var(%d, %s %s (%s))",
+			repl_text = psprintf("sys.pltsql_assign_var(%d, %s %s cast((%s) as %s))",
 									nse->itemno,
 									var_str.c_str(),
 									rewrite_assign_operator(anode),
-									::getFullText(elem->expression()).c_str());
+									::getFullText(elem->expression()).c_str(),
+									tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
 
 			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
@@ -6915,6 +6920,7 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 			{
 				std::string nameStr = ::getFullText(elem->LOCAL_ID());
 				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, nameStr.c_str(), nullptr, nullptr, nullptr);
+				PLtsql_var *var = (PLtsql_var *) pltsql_Datums[nse->itemno];
 
 				add_assignment_target_field(target, elem->LOCAL_ID(), returning_col_cnt);
 
@@ -6925,7 +6931,10 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 				if (elem->full_column_name())
 				{
 					/* "SET @a=col=expr" => "SET col=expr ... RETURNING col" */
-					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, %s)", nse->itemno, ::getFullText(elem->full_column_name()).c_str());
+					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
+										nse->itemno,
+										::getFullText(elem->full_column_name()).c_str(),
+										tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
 
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), uctx);
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->EQUAL(0), uctx);
@@ -6933,7 +6942,10 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 				else
 				{
 					/* "SET @a=expr, col=expr2" => "SET col=expr2 ... RETURNING expr" */
-					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, %s)", nse->itemno, ::getFullText(elem->expression()).c_str());
+					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
+										nse->itemno,
+										::getFullText(elem->expression()).c_str(),
+										tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
 
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), uctx);
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->EQUAL(0), uctx);

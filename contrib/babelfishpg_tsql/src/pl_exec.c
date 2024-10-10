@@ -10455,7 +10455,7 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	int dno = PG_GETARG_INT32(0);
 	Datum data = PG_GETARG_DATUM(1);
 	Oid valtype = get_fn_expr_argtype(fcinfo->flinfo, 1);
-	bool isNull = PG_ARGISNULL(0);
+	bool isNull = PG_ARGISNULL(1);
 	int32 valtypmod = -1;
 	PLtsql_datum *target;
 	MemoryContext oldcontext;
@@ -10478,5 +10478,8 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	/* no need to return anything as output will not be returned to customers */
+	if (isNull)
+		PG_RETURN_NULL();
+
 	PG_RETURN_DATUM(data);
 }

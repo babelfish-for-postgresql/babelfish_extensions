@@ -2293,4 +2293,9 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 extern bool validate_special_function(char *proc_nsname, char *proc_name,  List* fargs, int nargs, Oid *input_typeids, bool num_args_match);
 extern void init_special_function_list(void);
 
+/*
+ * Function in pltsql_ruleutils.c
+ */
+extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
+
 #endif							/* PLTSQL_H */
