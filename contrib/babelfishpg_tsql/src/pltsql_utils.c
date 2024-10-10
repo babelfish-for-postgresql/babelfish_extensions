@@ -411,6 +411,10 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
  * is_cast indicates if it's a CAST/CONVERT statement, if it's true the default
  * length of string and binary type will be set to 30.
  *
+ * is_procedure_or_func indicates if it's a procedure/function statement,
+ * if it's true the default length of string and binary type will be set to 1
+ * otherwise we will add VARHDRSZ to it.
+ *
  * If typmod is TSQLMaxTypmod (-8000), it means MAX is used in the
  * length field of VARCHAR, NVARCHAR or VARBINARY. Set typmod to -1,
  * by default -1 the engine will treat it as unlimited length.

@@ -10580,24 +10580,24 @@ SET probin =
                         (
                             SELECT jsonb_agg(
                                 CASE
-                                    WHEN p2.prokind = 'p' OR (p2.prokind = 'f' AND p2.proallargtypes IS NULL AND p2.proargtypes[b-1] IS NOT NULL) THEN
+                                    WHEN p2.prokind = 'p' OR (p2.prokind = 'f' AND p2.proallargtypes IS NULL AND p2.proargtypes[typ_index-1] IS NOT NULL) THEN
                                         CASE
-                                            WHEN a::text = '-8000' AND p2.proargtypes[b-1]::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary') THEN '-1'
-                                            WHEN a::text = '-1' AND p2.proargtypes[b-1]::regtype::text = 'sys.smalldatetime' THEN '0'
-                                            WHEN a::text = '-1' AND p2.proargtypes[b-1]::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary', 'sys.nchar','sys.binary','sys.bpchar') THEN '1'
-                                            ELSE a::text
+                                            WHEN typmod::text = '-8000' AND p2.proargtypes[typ_index-1]::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary') THEN '-1'
+                                            WHEN typmod::text = '-1' AND p2.proargtypes[typ_index-1]::regtype::text = 'sys.smalldatetime' THEN '0'
+                                            WHEN typmod::text = '-1' AND p2.proargtypes[typ_index-1]::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary', 'sys.nchar','sys.binary','sys.bpchar') THEN '1'
+                                            ELSE typmod::text
                                         END
                                     WHEN p2.prokind = 'f' AND p2.proallargtypes IS NULL AND p2.prorettype IS NOT NULL THEN
                                         CASE
-                                            WHEN a::text = '-8000' AND p2.prorettype::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary') THEN '-1'
-                                            WHEN a::text = '-1' AND p2.prorettype::regtype::text = 'sys.smalldatetime' THEN '0'
-                                            WHEN a::text = '-1' AND p2.prorettype::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary', 'sys.nchar','sys.binary','sys.bpchar') THEN '1'
-                                            ELSE a::text
+                                            WHEN typmod::text = '-8000' AND p2.prorettype::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary') THEN '-1'
+                                            WHEN typmod::text = '-1' AND p2.prorettype::regtype::text = 'sys.smalldatetime' THEN '0'
+                                            WHEN typmod::text = '-1' AND p2.prorettype::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary', 'sys.nchar','sys.binary','sys.bpchar') THEN '1'
+                                            ELSE typmod::text
                                         END
-                                    ELSE a::text
+                                    ELSE typmod::text
                                 END
                             )
-                            FROM jsonb_array_elements_text(p1.probin::jsonb->'typmod_array') WITH ORDINALITY AS elem(a,b)
+                            FROM jsonb_array_elements_text(p1.probin::jsonb->'typmod_array') WITH ORDINALITY AS elem(typmod,typ_index)
                         )
                     )
                 )::text
@@ -10606,8 +10606,8 @@ SET probin =
     END
 FROM pg_proc p2
 INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p2.pronamespace::regnamespace::name
-WHERE p2.prolang = (SELECT oid FROM pg_language WHERE lanname = 'pltsql')
-  AND p2.prokind IN ('p', 'f')
+INNER JOIN pg_language l ON p2.prolang = l.oid AND l.lanname = 'pltsql'
+WHERE p2.prokind IN ('p', 'f')
   AND p1.oid = p2.oid;
 
 -- Drops the temporary procedure used by the upgrade script.

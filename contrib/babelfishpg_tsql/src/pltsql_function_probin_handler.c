@@ -419,9 +419,9 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 		{
 			(*typmod_array_p)[i] = -1;
 
-			/**
-			 * For TSQL procedures and functions, default typmod for sys.(N)(VAR)(BP)CHAR, sys.(VAR)BINARY datatypes
-			 * should be handled differently 
+			/*
+			 * Handling default typmod value for sys.(N)(VAR)(BP)CHAR, sys.(VAR)BINARY datatypes 
+			 * for TSQL procedures and functions
 			 */
 			if (sql_dialect == SQL_DIALECT_TSQL)
 				pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, true);
@@ -441,9 +441,9 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 				else
 				{
 					(*typmod_array_p)[i] = ptr->val.ival.ival;
-				/**
-			 	* For TSQL procedures and functions, MAX typmod for sys.(N)(VAR)CHAR, sys.VARBINARY datatypes
-			 	* should be handled differently 
+				/*
+				* Handling MAX typmod value for sys.varchar/nvarchar/varbinary datatypes 
+				* for TSQL procedures and functions
 				*/
 					if (sql_dialect == SQL_DIALECT_TSQL)
 						pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, true);
@@ -476,9 +476,9 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 			else
 			{
 				(*typmod_array_p)[i] = ptr->val.ival.ival;
-				/**
-			 	* For TSQL functions,the return datatypes as sys.varchar/nvarchar/varbinary(MAX)
-			 	* should be handled differently 
+				/*
+				* Handling MAX typmod value for sys.varchar/nvarchar/varbinary return datatypes 
+				* for TSQL functions
 				*/
 
 				if (sql_dialect == SQL_DIALECT_TSQL)
@@ -490,9 +490,9 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 	else
 	{
 		(*typmod_array_p)[i] = -1;
-		/**
-		* For TSQL functions, default typmod for sys.(N)(VAR)(BP)CHAR, sys.(VAR)BINARY datatypes
-		* should be handled differently 
+		/*
+		* Handling default typmod value for sys.(N)(VAR)(BP)CHAR, sys.(VAR)BINARY return datatypes 
+		* for TSQL functions
 		*/
         if (sql_dialect == SQL_DIALECT_TSQL)
             pltsql_check_or_set_default_typmod(ret, &(*typmod_array_p)[i], false, true);
@@ -538,6 +538,12 @@ adjustTypmod(Oid oid, int typmod)
 	baseType = typeidType(oid);
 	typname = typeTypeName(baseType);
 	ReleaseSysCache(baseType);
+
+	if (strcmp(typname, "varchar") == 0 ||
+		strcmp(typname, "nvarchar") == 0 ||
+		strcmp(typname, "varbinary") == 0)
+		if (typmod == -1)
+			return 0;
 
 	if (strcmp(typname, "varchar") == 0
 		|| strcmp(typname, "varbinary") == 0
