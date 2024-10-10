@@ -219,7 +219,7 @@ forjson
 forjson-datatypes
 forjson-subquery
 forjson-nesting
-forjsonauto
+forjsonauto-before-16_5
 format
 format-dep
 forxml
