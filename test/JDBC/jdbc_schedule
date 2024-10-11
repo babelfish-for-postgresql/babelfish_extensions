@@ -427,4 +427,6 @@ ignore#!#xml_exist-before-16_5-vu-verify
 ignore#!#xml_exist-before-16_5-vu-cleanup
 ignore#!#BABEL-3166-before-16_5-or-15_9-vu-prepare
 ignore#!#BABEL-3166-before-16_5-or-15_9-vu-verify
-
+ignore#!#forjsonauto-before-16_5-vu-prepare
+ignore#!#forjsonauto-before-16_5-vu-verify
+ignore#!#forjsonauto-before-16_5-vu-cleanup

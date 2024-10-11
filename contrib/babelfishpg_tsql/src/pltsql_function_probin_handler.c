@@ -442,9 +442,9 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 				{
 					(*typmod_array_p)[i] = ptr->val.ival.ival;
 				/*
-				* Handling MAX typmod value for sys.varchar/nvarchar/varbinary datatypes 
-				* for TSQL procedures and functions
-				*/
+				 * Handling MAX typmod value for sys.varchar/nvarchar/varbinary datatypes 
+				 * for TSQL procedures and functions
+				 */
 					if (sql_dialect == SQL_DIALECT_TSQL)
 						pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, true);
 				}
@@ -477,9 +477,9 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 			{
 				(*typmod_array_p)[i] = ptr->val.ival.ival;
 				/*
-				* Handling MAX typmod value for sys.varchar/nvarchar/varbinary return datatypes 
-				* for TSQL functions
-				*/
+				 * Handling MAX typmod value for sys.varchar/nvarchar/varbinary return datatypes 
+				 * for TSQL functions
+				 */
 
 				if (sql_dialect == SQL_DIALECT_TSQL)
 					pltsql_check_or_set_default_typmod(ret, &(*typmod_array_p)[i], false, true);
@@ -491,9 +491,9 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 	{
 		(*typmod_array_p)[i] = -1;
 		/*
-		* Handling default typmod value for sys.(N)(VAR)(BP)CHAR, sys.(VAR)BINARY return datatypes 
-		* for TSQL functions
-		*/
+		 * Handling default typmod value for sys.(N)(VAR)(BP)CHAR, sys.(VAR)BINARY return datatypes 
+		 * for TSQL functions
+		 */
         if (sql_dialect == SQL_DIALECT_TSQL)
             pltsql_check_or_set_default_typmod(ret, &(*typmod_array_p)[i], false, true);
 		i++;
@@ -539,18 +539,13 @@ adjustTypmod(Oid oid, int typmod)
 	typname = typeTypeName(baseType);
 	ReleaseSysCache(baseType);
 
-	if (strcmp(typname, "varchar") == 0 ||
-		strcmp(typname, "nvarchar") == 0 ||
-		strcmp(typname, "varbinary") == 0)
-		if (typmod == -1)
-			return 0;
-
-	if (strcmp(typname, "varchar") == 0
+	if ((strcmp(typname, "varchar") == 0
 		|| strcmp(typname, "varbinary") == 0
 		|| strcmp(typname, "binary") == 0
 		|| strcmp(typname, "nvarchar") == 0
 		|| strcmp(typname, "nchar") == 0
 		|| strcmp(typname, "bpchar") == 0)
+		&& typmod != -1)
 		return VARHDRSZ;
 
 	return 0;
