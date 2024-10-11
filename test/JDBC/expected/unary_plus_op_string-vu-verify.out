@@ -90,6 +90,55 @@ varchar#!#varchar#!#varchar
 xy#!#xy#!#xy
 ~~END~~
 
+declare @v tinyint=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+int#!#int#!#int
+2#!#3#!#4
+~~END~~
+
+declare @v int=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+int#!#int#!#int
+2#!#3#!#4
+~~END~~
+
+declare @v bigint=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+bigint#!#bigint#!#bigint
+2#!#3#!#4
+~~END~~
+
+declare @v decimal(10,4)=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+numeric#!#numeric#!#numeric
+2.0000#!#3.0000#!#4.0000
+~~END~~
+
+declare @v money=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+money#!#money#!#money
+2.0000#!#3.0000#!#4.0000
+~~END~~
+
+declare @v datetime='2024-Jan-01 01:02:03' select  +@v, + (+@v), ++++(++(+++@v))
+go
+~~START~~
+datetime#!#datetime#!#datetime
+2024-01-01 01:02:03.0#!#2024-01-01 01:02:03.0#!#2024-01-01 01:02:03.0
+~~END~~
+
+declare @v datetime2='2024-Jan-01 01:02:03' select  +@v, + (+@v), ++++(++(+++@v))
+go
+~~START~~
+datetime2#!#datetime2#!#datetime2
+2024-01-01 01:02:03.0000000#!#2024-01-01 01:02:03.0000000#!#2024-01-01 01:02:03.0000000
+~~END~~
+
 select +'y'
 go
 ~~START~~
@@ -713,6 +762,21 @@ proc line 13 abc
 ~~START~~
 varchar
 proc line 14 abc
+~~END~~
+
+~~START~~
+int#!#int#!#int
+2#!#3#!#4
+~~END~~
+
+~~START~~
+datetime#!#datetime#!#datetime
+2024-01-01 01:02:03.0#!#2024-01-01 01:02:03.0#!#2024-01-01 01:02:03.0
+~~END~~
+
+~~START~~
+numeric#!#numeric#!#numeric
+2.0000#!#3.0000#!#4.0000
 ~~END~~
 
 ~~START~~

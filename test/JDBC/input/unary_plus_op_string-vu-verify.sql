@@ -33,6 +33,20 @@ declare @v varchar(10)='y' select 'x'+ @v, 'x' +@v, 'x' ++++++@v
 go
 declare @v varchar(10)='y' select 'x'+ (@v), 'x' + (+@v), 'x' ++++(++(+++@v))
 go
+declare @v tinyint=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+declare @v int=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+declare @v bigint=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+declare @v decimal(10,4)=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+declare @v money=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+declare @v datetime='2024-Jan-01 01:02:03' select  +@v, + (+@v), ++++(++(+++@v))
+go
+declare @v datetime2='2024-Jan-01 01:02:03' select  +@v, + (+@v), ++++(++(+++@v))
+go
 select +'y'
 go
 select +N'y'

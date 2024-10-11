@@ -21,6 +21,9 @@ go
 create procedure p1_unary_plus_op_string 
 as
 declare @v varchar(20) = ' test'
+declare @i int = 1
+declare @d datetime='2024-Jan-01 01:02:03' 
+declare @dc decimal(10,4)=1
 select 'proc '+'line1'
 select 'proc '++'line2'
 select 'proc '++N'line3'
@@ -43,7 +46,10 @@ select 'proc line10' where 'x' like (+@v)
 select 'proc line11' where 'x' like +(+(+@v))
 select 'proc line 12 ' ++ vc from t1_unary_plus_op_string order by 1  
 select 'proc line 13 ' ++(+vc) from t1_unary_plus_op_string order by 1
-select 'proc line 14 ' ++ [vc] from t1_unary_plus_op_string order by 1  
+select 'proc line 14 ' ++ [vc] from t1_unary_plus_op_string order by 1 
+select 1 + @i, 2 + (+@i), 3 ++++(++(+++@i)) 
+select +@d, + (+@d), ++++(++(+++@d))
+select 1 +@dc, 2 + (+@dc), 3 ++++(++(+++@dc))
 select 1 + -2 as expr1
 select 1 ++ -2 as expr2
 select 1 + ~2 as expr3
