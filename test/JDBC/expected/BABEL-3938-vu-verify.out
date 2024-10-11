@@ -49,7 +49,7 @@ varchar
 SELECT * FROM babel_3938_vu_prepare_view3
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -57,7 +57,7 @@ true
 SELECT * FROM babel_3938_vu_prepare_view4
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -65,7 +65,7 @@ true
 SELECT * FROM babel_3938_vu_prepare_view5
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -73,7 +73,7 @@ true
 SELECT * FROM babel_3938_vu_prepare_view6
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -81,7 +81,7 @@ true
 SELECT * FROM babel_3938_vu_prepare_view7
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 

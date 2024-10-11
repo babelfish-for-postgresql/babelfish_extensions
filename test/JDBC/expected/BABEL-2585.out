@@ -177,7 +177,7 @@ SET @default_db = sys.babelfish_get_login_default_db('jdbc_user');
 SELECT CASE WHEN @default_db = 'master' THEN 'correct' ELSE 'error' END;
 go
 ~~START~~
-text
+varchar
 correct
 ~~END~~
 

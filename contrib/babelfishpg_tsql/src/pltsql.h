@@ -2136,6 +2136,7 @@ extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
 extern Oid get_sysadmin_oid(void);
+extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 
 typedef struct
 {

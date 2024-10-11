@@ -43,6 +43,14 @@
 #include <math.h>
 #include "pltsql.h"
 
+/* 
+ * This macro is to define typmod of sysname to 128 beacause
+ * sysname is created as CREATE DOMAIN sys.SYSNAME AS sys.VARCHAR(128);
+ */
+#define SYSNAME_TYPMOD 128
+#define NCHAR_MAX_TYPMOD 4000
+#define BPCHAR_MAX_TYPMOD 8000
+
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
@@ -51,6 +59,7 @@ extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
 extern handle_constant_literals_hook_type handle_constant_literals_hook;
+extern set_common_typmod_case_expr_hook_type set_common_typmod_case_expr_hook;
 
 extern bool babelfish_dump_restore;
 
@@ -58,7 +67,7 @@ PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
 PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 
-static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr);
+static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
 
@@ -1580,13 +1589,24 @@ tsql_func_select_candidate(List *names,
 }
 
 static bool
-is_tsql_char_type_with_len(Oid type)
+is_tsql_char_type_with_len(Oid type, bool is_case_expr)
 {
+	bool		       result;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-	return utilptr->is_tsql_bpchar_datatype(type) ||
-			utilptr->is_tsql_nchar_datatype(type) ||
-			utilptr->is_tsql_varchar_datatype(type) ||
-			utilptr->is_tsql_nvarchar_datatype(type);
+	result =  utilptr->is_tsql_bpchar_datatype(type) ||
+			  utilptr->is_tsql_nchar_datatype(type) ||
+			  utilptr->is_tsql_varchar_datatype(type) ||
+			  utilptr->is_tsql_nvarchar_datatype(type);
+	
+	/* 
+         * For case expr we need to find common type based on TSQL's
+	 * precedence for text and ntext also.
+	 */
+	if(is_case_expr)
+		result |= utilptr->is_tsql_text_datatype(type) ||
+			  	  utilptr->is_tsql_ntext_datatype(type);
+
+	return result;
 }
 
 static Node *
@@ -1819,21 +1839,23 @@ static Oid
 tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
 				  				Node **which_expr)
 {
-	if (sql_dialect != SQL_DIALECT_TSQL)
+	int32  len;
+	if (sql_dialect != SQL_DIALECT_TSQL || !context)
 		return InvalidOid;
-
-	if (!context)
-		return InvalidOid;
-	else if (strncmp(context, "ISNULL", strlen("ISNULL")) == 0)
+    
+	len = strlen(context);
+	
+	if (len == 6 && strncmp(context, "ISNULL", 6) == 0)
 		return select_common_type_for_isnull(pstate, exprs);
-	else if(strncmp(context, "TSQL_COALESCE", strlen("TSQL_COALESCE")) == 0)
+	else if(len == 13 && strncmp(context, "TSQL_COALESCE", 13) == 0)
 		return select_common_type_for_coalesce_function(pstate, exprs);
-	else if (strncmp(context, "UNION", strlen("UNION")) == 0 || 
-			strncmp(context, "INTERSECT", strlen("INTERSECT")) == 0 ||
-			strncmp(context, "EXCEPT", strlen("EXCEPT")) == 0 ||
-			strncmp(context, "VALUES", strlen("VALUES")) == 0 ||
-			strncmp(context, "UNION/INTERSECT/EXCEPT", strlen("UNION/INTERSECT/EXCEPT")) == 0)
-		return select_common_type_setop(pstate, exprs, which_expr);
+	else if ((len == 5 && strncmp(context, "UNION", 5) == 0) || 
+            (len == 9 && strncmp(context, "INTERSECT", 9) == 0) ||
+            (len == 6 && strncmp(context, "EXCEPT", 6) == 0) ||
+            (len == 6 && strncmp(context, "VALUES", 6) == 0) ||
+            (len == 22 && strncmp(context, "UNION/INTERSECT/EXCEPT", 22) == 0) ||
+            (len == 4 && strncmp(context, "CASE", 4) == 0))
+		return select_common_type_setop(pstate, exprs, which_expr, context);
 
 	return InvalidOid;
 }
@@ -1883,25 +1905,48 @@ tsql_handle_constant_literals_hook(ParseState *pstate, Node *e)
  * output type based on TSQL's precedence rules
  */ 
 static Oid
-select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr)
+select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context)
 {
 	Node		*result_expr = (Node*) linitial(exprs);
 	Oid			result_type = InvalidOid;
 	ListCell	*lc;
+	bool		is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
-	 * or NVARCHAR is present, let engine handle finding the type. */
+	 * or NVARCHAR is present, let engine handle finding the type.
+	 * But if it is CASE expr then it will also check for text and ntext.
+	 */
 	foreach(lc, exprs)
 	{
-		Node	*expr = (Node *) lfirst(lc);
+		Node		*expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
+
+		if (is_case_expr)
+		{
+			Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
+
+			/*
+			 * If any of the branch is of UDT, then we will find the baseType using
+			 * get_immediate_base_type_of_UDT_internal(), to find common type using TSQL precedence.
+			 * If type is not UDT then baseType will be NULL.
+			 */
+			if (OidIsValid(baseType))
+					type = baseType;
+			
+			/* 
+			 * If any of the branch is of sysname or UDT is made from sysname
+			 * We need to assign type to "varchar" (As sysname is created from "varchar").
+			 */
+ 			if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+					type = get_sys_varcharoid();
+		}
 
 		if (expr_is_null(expr))
 			continue;
 		else if (is_tsql_str_const(expr))
 			type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
-		else if (!is_tsql_char_type_with_len(type))
+		else if ((!is_tsql_char_type_with_len(type, is_case_expr)))
 			return InvalidOid;
 		
 		if (tsql_has_higher_precedence(type, result_type) || result_type == InvalidOid)
@@ -2031,7 +2076,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return -1;
 
-	if (!is_tsql_char_type_with_len(common_type) &&
+	if (!is_tsql_char_type_with_len(common_type, false) &&
 			 !utilptr->is_tsql_binary_datatype(common_type) &&
 			 !utilptr->is_tsql_sys_binary_datatype(common_type) &&
 			 !utilptr->is_tsql_varbinary_datatype(common_type) &&
@@ -2043,12 +2088,64 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	{
 		Node *expr = (Node*) lfirst(lc);
 		int32 typmod = exprTypmod(expr);
+		Oid   type = exprType(expr);
+		Oid   immediate_base_type = get_immediate_base_type_of_UDT_internal(type);
+
+		/* 
+		 * Handling for UDT, If immediate_base_type is Valid Oid that mean we need to handle typmod for UDT,
+		 * By calculating typmod of its base type using getBaseTypeAndTypmod.
+		 * Other wise if immediate_base_type is not Valid Oid We don't need any handling for UDT.
+		 */
+		if (OidIsValid(immediate_base_type))
+		{
+			/* Finding the typmod of base type of UDT using getBaseTypeAndTypmod() */
+			int32 base_typmod = -1;
+			Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
+			
+			/* 
+			 * This conditon is for the datatype with MAX typmod.
+			 * -1 will only be returned if common_type is a datatype
+			 * that supports MAX typmod. If common type is nchar(maxtypmod = 4000)
+			 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
+			 */
+			if (base_typmod == -1 && 
+				is_tsql_datatype_with_max_scale_expr_allowed(base_type))
+			{
+				if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
+					return BPCHAR_MAX_TYPMOD + VARHDRSZ;
+				else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
+					return NCHAR_MAX_TYPMOD + VARHDRSZ;
+				else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
+					return -1;
+			}
+			
+			typmod = base_typmod;	
+		}
+		
+		/* 
+		 * Handling for sysname, In CASE expression if one of the branch is 
+		 * of type sysname then set typmod as SYSNAME_TYPMOD (i.e. 128).
+		 */
+		if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+			typmod = SYSNAME_TYPMOD + VARHDRSZ;
 
 		if (is_tsql_str_const(expr))
 			typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
 
+		/* This conditon is for the datatype with MAX typmod.
+		 * -1 will only be returned if common_type is a datatype
+		 * that supports MAX typmod.If common type is nchar(maxtypmod = 4000)
+		 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
+		 */
 		if (expr_is_var_max(expr))
-			return -1;
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
+				return BPCHAR_MAX_TYPMOD + VARHDRSZ;
+			else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
+				return NCHAR_MAX_TYPMOD + VARHDRSZ;
+			else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
+				return -1;
+		}
 
 		if (lc == list_head(exprs))
 			max_typmods = typmod;
@@ -2057,6 +2154,42 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	}
 
 	return max_typmods;
+}
+
+/* 
+ * For CASE expression, this function will set the typmod to all the CASE branches from coerce_type_typmod().
+ */
+static void
+tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr *newc)
+{
+        /* calculating common_typemod for case expr */
+        int32           typmod = select_common_typmod(pstate, exprs, newc->casetype);
+        ListCell       *l;
+        
+        newc->defresult = (Expr *) 
+                coerce_to_target_type(pstate,
+                                (Node *) newc->defresult, 
+                                newc->casetype, 
+                                newc->casetype, 
+                                typmod, 
+                                COERCION_IMPLICIT,
+				COERCE_IMPLICIT_CAST,
+                                -1);
+
+        foreach(l, newc->args)
+        {
+                CaseWhen   *w = (CaseWhen *) lfirst(l);
+
+                w->result = (Expr *)
+                        coerce_to_target_type(pstate,
+                                (Node *) w->result, 
+                                newc->casetype, 
+                                newc->casetype, 
+                                typmod, 
+                                COERCION_IMPLICIT,
+				COERCE_IMPLICIT_CAST,
+                                -1);
+        }
 }
 
 Datum
@@ -2078,6 +2211,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	select_common_type_hook = tsql_select_common_type_hook;
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
 	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
+	set_common_typmod_case_expr_hook = tsql_set_common_typmod_case_expr_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);

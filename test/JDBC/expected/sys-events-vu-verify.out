@@ -26,7 +26,7 @@ select o.name, case when o.object_id = e.object_id and o.object_id = object_id(o
 from sys.objects o join sys.events e on o.object_id = e.object_id where o.name = 'sys_events_vu_prepare_trig3';
 go
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 sys_events_vu_prepare_trig3#!#equal
 ~~END~~
 

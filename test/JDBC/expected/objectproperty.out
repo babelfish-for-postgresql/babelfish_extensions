@@ -31,7 +31,7 @@ SELECT CASE
 END
 GO
 ~~START~~
-text
+varchar
 SUCCESS
 ~~END~~
 
