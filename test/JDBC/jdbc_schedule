@@ -47,8 +47,6 @@ ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-verify
 ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-cleanup
 ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
-ignore#!#sys-systypes-before-16-2-vu-prepare
-ignore#!#sys-systypes-before-16-2-vu-verify
 ignore#!#BABEL-4078-before-16_5-or-15_9-vu-prepare
 ignore#!#BABEL-4078-before-16_5-or-15_9-vu-verify
 ignore#!#BABEL-4078-before-16_5-or-15_9-vu-cleanup
