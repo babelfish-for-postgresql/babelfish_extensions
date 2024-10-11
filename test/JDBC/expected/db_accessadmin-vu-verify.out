@@ -23,6 +23,25 @@ USE babel_5136
 GO
 CREATE USER babel_5136_db_accessadmin_user FOR LOGIN babel_5136_db_accessadmin_l1
 GO
+-- ADD DROP MEMBERS TO db_accessadmin USING dbo
+sp_addrolemember 'db_accessadmin', 'babel_5136_db_accessadmin_user'
+GO
+SELECT IS_ROLEMEMBER('db_accessadmin', 'babel_5136_db_accessadmin_user')
+GO
+~~START~~
+int
+1
+~~END~~
+
+sp_droprolemember 'db_accessadmin', 'babel_5136_db_accessadmin_user'
+GO
+SELECT IS_ROLEMEMBER('db_accessadmin', 'babel_5136_db_accessadmin_user')
+GO
+~~START~~
+int
+0
+~~END~~
+
 ALTER ROLE db_accessadmin ADD MEMBER babel_5136_db_accessadmin_user
 GO
 -- Cannot add login as member of db_accessadmin
@@ -32,9 +51,82 @@ GO
 
 ~~ERROR (Message: role "babel_5136_babel_5136_l1" does not exist)~~
 
+-- Cannot add fixed roles ass member of db_accessadmin
+ALTER ROLE db_accessadmin ADD MEMBER syadmin
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "babel_5136_syadmin" does not exist)~~
+
+ALTER ROLE db_accessadmin ADD MEMBER dbo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbo')~~
+
+ALTER ROLE db_accessadmin ADD MEMBER db_owner
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'db_owner')~~
+
+ALTER ROLE db_accessadmin ADD MEMBER db_accessadmin
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'db_accessadmin')~~
+
+ALTER ROLE db_accessadmin DROP MEMBER syadmin
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "babel_5136_syadmin" does not exist)~~
+
+ALTER ROLE db_accessadmin DROP MEMBER dbo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbo')~~
+
+ALTER ROLE db_accessadmin DROP MEMBER db_owner
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'db_owner')~~
+
+ALTER ROLE db_accessadmin DROP MEMBER db_accessadmin
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'db_accessadmin')~~
+
+
 -- MEMBERS OF db_accessadmin WILL ALWAYS HAVE CONNECT PRIVILEGES
 REVOKE CONNECT FROM babel_5136_db_accessadmin_user
 GO
+
+-- IS_ROLEMEMBER should show db_accessadmin as member of dbo but not of db_owner
+SELECT IS_ROLEMEMBER('db_accessadmin')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('db_accessadmin', 'dbo')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('db_accessadmin', 'db_owner')
+GO
+~~START~~
+int
+0
+~~END~~
+
 -- terminate-tsql-conn
 
 -- tsql user=babel_5136_l1 password=12345678 database=babel_5136
@@ -45,7 +137,7 @@ GO
 
 ~~ERROR (Message: Cannot alter the role 'db_accessadmin', because it does not exist or you do not have permission.)~~
 
--- terminate-tsql-conn
+-- terminate-tsql-conn user=babel_5136_l1 password=12345678 database=babel_5136
 
 
 -- tsql user=babel_5136_db_accessadmin_l1 password=12345678
@@ -81,7 +173,21 @@ DROP USER babel_5136_u1
 GO
 CREATE USER babel_5136_u1 FOR LOGIN babel_5136_l1
 GO
+-- terminate-tsql-conn user=babel_5136_db_accessadmin_l1 password=12345678
 
+-- tsql database=babel_5136
+SELECT current_user
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+ALTER ROLE babel_5136_r1 ADD MEMBER babel_5136_u1
+GO
+-- terminate-tsql-conn database=babel_5136
+
+-- tsql user=babel_5136_db_accessadmin_l1 password=12345678 database=babel_5136
 -- ALTER EXISTING USER and THEN DROP IT
 ALTER USER babel_5136_u1 WITH DEFAULT_SCHEMA = dbo
 GO
@@ -111,6 +217,36 @@ CREATE SCHEMA s2 AUTHORIZATION dbo
 GO
 CREATE SCHEMA s3 AUTHORIZATION babel_5136_u1
 GO
+
+-- Should be able to do GRANT/REVOKE on schema that it owns
+GRANT SELECT, INSERT, EXECUTE ON SCHEMA::s1 TO babel_5136_u1
+GO
+GRANT SELECT, INSERT, EXECUTE ON SCHEMA::s2 TO babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the schema "s2", because it does not exist or you do not have permission.)~~
+
+GRANT SELECT, INSERT, EXECUTE ON SCHEMA::s3 TO babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.)~~
+
+REVOKE SELECT, INSERT, EXECUTE ON SCHEMA::s1 TO babel_5136_u1
+GO
+REVOKE SELECT, INSERT, EXECUTE ON SCHEMA::s2 TO babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the schema "s2", because it does not exist or you do not have permission.)~~
+
+REVOKE SELECT, INSERT, EXECUTE ON SCHEMA::s3 TO babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.)~~
+
 -- Should only be able to drop schema that it owns
 DROP SCHEMA s1
 GO
@@ -172,6 +308,48 @@ GO
 
 ~~ERROR (Message: Current login babel_5136_db_accessadmin_l1 does not have permission to alter role babel_5136_babel_5136_r1)~~
 
+ALTER ROLE babel_5136_r1 DROP MEMBER babel_5136_u1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login babel_5136_db_accessadmin_l1 does not have permission to alter role babel_5136_babel_5136_r1)~~
+
+ALTER ROLE db_accessadmin DROP MEMBER 'babel_5136_db_accessadmin_user'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ''babel_5136_db_accessadmin_user'' at line 1 and character position 38)~~
+
+sp_addrolemember 'db_accessadmin', 'babel_5136_u1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_accessadmin', because it does not exist or you do not have permission.)~~
+
+sp_droprolemember 'db_accessadmin', 'babel_5136_db_accessadmin_user'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_accessadmin', because it does not exist or you do not have permission.)~~
+
+sp_addrolemember 'babel_5136_r1', 'babel_5136_u1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login babel_5136_db_accessadmin_l1 does not have permission to alter role babel_5136_babel_5136_r1)~~
+
+sp_droprolemember 'babel_5136_r1', 'babel_5136_u1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login babel_5136_db_accessadmin_l1 does not have permission to alter role babel_5136_babel_5136_r1)~~
+
+sp_droprolemember 'db_accessadmin', 'babel_5136_db_accessadmin_user'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_accessadmin', because it does not exist or you do not have permission.)~~
+
 
 -- should not be able to alter users login mapping or rename members of db_owner
 ALTER USER babel_5136_u1_new_name WITH LOGIN = babel_5136_l3
@@ -223,30 +401,44 @@ GO
 ~~ERROR (Message: Grantor does not have GRANT permission.)~~
 
 
+-- DMLs or EXECUTING FUNCTIONS SHOULD ALSO BE NOT ALLOWED
+EXEC babel_5136_p1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_5136_p1)~~
+
+SELECT * FROM babel_5136_t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5136_t1)~~
+
+SELECT babel_5136_f1()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5136_f1)~~
+
+
 -- NO OTHER DDLs SHOULD BE ALLOWED
-CREATE TABLE babel_5136_t1 (id INT)
+CREATE TABLE babel_5136_t2 (id INT)
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for schema babel_5136_dbo)~~
 
-CREATE PROCEDURE babel_5136_p1 AS SELECT 1
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: Function 'babel_5136_p1' already exists with the same name)~~
-
-CREATE FUNCTION f1() RETURNS INT AS BEGIN RETURN 1 END
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: Function 'f1' already exists with the same name)~~
-
-CREATE DATABASE new_database
+CREATE PROCEDURE babel_5136_p2 AS SELECT 1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied to create database)~~
+~~ERROR (Message: permission denied for schema babel_5136_dbo)~~
+
+CREATE FUNCTION babel_5136_f2() RETURNS INT AS BEGIN RETURN 1 END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema babel_5136_dbo)~~
 
 
 -- In master database the current login should not have db_accessadmin privilege
@@ -326,12 +518,26 @@ GO
 
 ~~ERROR (Message: permission denied for database jdbc_testdb)~~
 
-CREATE DATABASE new_database
+-- Should not be able to drop a database
+DROP DATABASE babel_5136
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of database babel_5136)~~
+
+-- terminate-tsql-conn user=babel_5136_db_accessadmin_l1 password=12345678 database=babel_5136
+
+-- tsql
+DROP DATABASE babel_5136
+GO
+-- terminate-tsql-conn
+
+-- tsql user=babel_5136_db_accessadmin_l1 password=12345678
+-- Should not be able to create a database
+CREATE DATABASE babel_5136
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied to create database)~~
-
-
 
 -- terminate-tsql-conn user=babel_5136_db_accessadmin_l1 password=12345678

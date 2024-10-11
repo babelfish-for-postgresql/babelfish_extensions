@@ -1994,7 +1994,8 @@ is_rolemember(PG_FUNCTION_ARGS)
 	pfree(db_owner_name);
 	pfree(dbo_role_name);
 
-	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid))
+	/* Fixed db principals cannot be member of other roles except dbo which is member of all fixed roles */
+	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid && !IS_FIXED_DB_PRINCIPAL(role)))
 		PG_RETURN_INT32(0);
 	else if (is_member_of_role_nosuper(principal_oid, role_oid))
 		PG_RETURN_INT32(1);

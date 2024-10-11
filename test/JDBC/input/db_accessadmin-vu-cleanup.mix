@@ -1,7 +1,7 @@
 -- tsql
 USE master
 GO
-DROP DATABASE babel_5136
+DROP DATABASE IF EXISTS babel_5136
 GO
 DROP LOGIN babel_5136_l1
 GO
