@@ -162,10 +162,19 @@ go
 create table db_roles_schema_1.before_t1(a int);
 go
 
+create view db_roles_schema_1.before_v1 as select 2;
+go
+
 create table db_roles_schema_2.before_created_by_dbo_t1(a int);
 go
 
+create view db_roles_schema_2.before_created_by_dbo_v1 as select 2;
+go
+
 create table before_t1(a int);
+go
+
+create view before_v1 as select 2;
 go
 
 use master;
@@ -176,6 +185,9 @@ use db_roles_db1;
 go
 
 create table db_roles_schema_2.before_created_by_u4_t1(a int);
+go
+
+create view db_roles_schema_2.before_created_by_u4_v1 as select 2;
 go
 
 use master;
@@ -207,6 +219,9 @@ go
 create table db_roles_schema_2.after_created_by_u4_t1(a int);
 go
 
+create view db_roles_schema_2.after_created_by_u4_v1 as select 1;
+go
+
 use master;
 go
 
@@ -217,10 +232,19 @@ go
 create table after_t1(a int);
 go
 
+create view after_v1 as select 2;
+go
+
 create table db_roles_schema_1.after_t1(a int);
 go
 
+create view db_roles_schema_1.after_v1 as select 2;
+go
+
 create table db_roles_schema_2.after_created_by_dbo_t1(a int);
+go
+
+create view db_roles_schema_2.after_created_by_dbo_v1 as select 2;
 go
 
 use master;
@@ -264,6 +288,15 @@ go
 
 -- tsql user=db_roles_l3 password=123
 use db_roles_db1
+go
+
+create schema db_roles_schema_3;
+go
+
+create table db_roles_schema_3.db_roles_t1(a int);
+go
+
+create view db_roles_schema_3.db_roles_v1 as select 2;
 go
 
 -- database owner can add other roles as a member of database roles
@@ -388,6 +421,14 @@ int
 ~~END~~
 
 
+select * from after_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
 insert into before_t1 values(1); -- allowed
 go
 ~~ROW COUNT: 1~~
@@ -407,6 +448,14 @@ select * from before_t1; -- allowed
 go
 ~~START~~
 int
+~~END~~
+
+
+select * from before_v1; -- allowed
+go
+~~START~~
+int
+2
 ~~END~~
 
 
@@ -432,6 +481,14 @@ int
 ~~END~~
 
 
+select * from db_roles_schema_1.after_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
 insert into db_roles_schema_1.before_t1 values(1); -- allowed
 go
 ~~ROW COUNT: 1~~
@@ -451,6 +508,14 @@ select * from db_roles_schema_2.before_created_by_dbo_t1; -- allowed
 go
 ~~START~~
 int
+~~END~~
+
+
+select * from db_roles_schema_2.before_created_by_dbo_v1; -- allowed
+go
+~~START~~
+int
+2
 ~~END~~
 
 
@@ -476,6 +541,14 @@ int
 ~~END~~
 
 
+select * from db_roles_schema_2.after_created_by_dbo_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
 insert into db_roles_schema_2.after_created_by_dbo_t1 values(1); -- allowed
 go
 ~~ROW COUNT: 1~~
@@ -495,6 +568,14 @@ select * from db_roles_schema_2.before_created_by_u4_t1; -- allowed
 go
 ~~START~~
 int
+~~END~~
+
+
+select * from db_roles_schema_2.before_created_by_u4_v1; -- allowed
+go
+~~START~~
+int
+2
 ~~END~~
 
 
@@ -520,6 +601,14 @@ int
 ~~END~~
 
 
+select * from db_roles_schema_2.after_created_by_u4_v1; -- allowed
+go
+~~START~~
+int
+1
+~~END~~
+
+
 insert into db_roles_schema_2.after_created_by_u4_t1 values(1); -- allowed
 go
 ~~ROW COUNT: 1~~
@@ -531,6 +620,37 @@ go
 
 
 delete from db_roles_schema_2.after_created_by_u4_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+-- objects created by the database owner should be accessible too.
+select * from db_roles_schema_3.db_roles_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_3.db_roles_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_3.db_roles_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_3.db_roles_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_3.db_roles_t1 where a = 2; -- allowed
 go
 ~~ROW COUNT: 1~~
 
@@ -652,11 +772,25 @@ go
 ~~ERROR (Message: permission denied for table after_t1)~~
 
 
+select * from after_v1;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v1)~~
+
+
 select * from before_t1; -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table before_t1)~~
+
+
+select * from before_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_v1)~~
 
 
 insert into before_t1 values(1); -- not allowed
@@ -715,6 +849,20 @@ go
 ~~ERROR (Message: permission denied for table before_t1)~~
 
 
+select * from db_roles_schema_1.after_v1;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v1)~~
+
+
+select * from db_roles_schema_1.before_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_v1)~~
+
+
 insert into db_roles_schema_1.before_t1 values(1); -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
@@ -764,6 +912,13 @@ go
 ~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
 
 
+select * from db_roles_schema_2.before_created_by_dbo_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_created_by_dbo_v1)~~
+
+
 insert into db_roles_schema_2.before_created_by_dbo_t1 values(1); -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
@@ -790,6 +945,13 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_created_by_dbo_v1)~~
 
 
 insert into db_roles_schema_2.after_created_by_dbo_t1 values(1); -- not allowed
@@ -820,6 +982,13 @@ go
 ~~ERROR (Message: permission denied for table before_created_by_u4_t1)~~
 
 
+select * from db_roles_schema_2.before_created_by_u4_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_created_by_u4_v1)~~
+
+
 insert into db_roles_schema_2.before_created_by_u4_t1 values(1); -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
@@ -848,6 +1017,13 @@ go
 ~~ERROR (Message: permission denied for table after_created_by_u4_t1)~~
 
 
+select * from db_roles_schema_2.after_created_by_u4_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_created_by_u4_v1)~~
+
+
 insert into db_roles_schema_2.after_created_by_u4_t1 values(1); -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
@@ -867,6 +1043,42 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table after_created_by_u4_t1)~~
+
+
+-- objects created by the database owner should not be accessible
+select * from db_roles_schema_3.db_roles_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table db_roles_t1)~~
+
+
+select * from db_roles_schema_3.db_roles_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view db_roles_v1)~~
+
+
+insert into db_roles_schema_3.db_roles_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table db_roles_t1)~~
+
+
+update db_roles_schema_3.db_roles_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table db_roles_t1)~~
+
+
+delete from db_roles_schema_3.db_roles_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table db_roles_t1)~~
 
 
 use master;
@@ -924,6 +1136,22 @@ select * from before_t1; -- allowed
 go
 ~~START~~
 int
+~~END~~
+
+
+select * from after_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select * from before_v1; -- allowed
+go
+~~START~~
+int
+2
 ~~END~~
 
 
@@ -993,6 +1221,22 @@ select * from before_t1; -- allowed
 go
 ~~START~~
 int
+~~END~~
+
+
+select * from after_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select * from before_v1; -- allowed
+go
+~~START~~
+int
+2
 ~~END~~
 
 
@@ -1150,6 +1394,20 @@ go
 ~~ERROR (Message: permission denied for table before_t1)~~
 
 
+select * from after_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v1)~~
+
+
+select * from before_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_v1)~~
+
+
 insert into before_t1 values(1); -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
@@ -1229,6 +1487,20 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table before_t1)~~
+
+
+select * from after_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v1)~~
+
+
+select * from before_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_v1)~~
 
 
 insert into before_t1 values(1); -- not allowed
@@ -1395,16 +1667,49 @@ go
 drop table db_roles_schema_2.after_created_by_u4_t1;
 go
 
+drop table db_roles_schema_3.db_roles_t1;
+go
+
+drop view db_roles_schema_1.before_v1;
+go
+
+drop view db_roles_schema_1.after_v1;
+go
+
+drop view db_roles_schema_2.before_created_by_dbo_v1;
+go
+
+drop view db_roles_schema_2.after_created_by_dbo_v1;
+go
+
+drop view db_roles_schema_2.before_created_by_u4_v1;
+go
+
+drop view db_roles_schema_2.after_created_by_u4_v1;
+go
+
+drop view db_roles_schema_3.db_roles_v1;
+go
+
 drop schema db_roles_schema_1;
 go
 
 drop schema db_roles_schema_2;
 go
 
+drop schema db_roles_schema_3;
+go
+
 drop table before_t1;
 go
 
 drop table after_t1;
+go
+
+drop view before_v1;
+go
+
+drop view after_v1;
 go
 
 drop user db_roles_u1;
