@@ -546,7 +546,6 @@ SELECT_INTO_TEST
 cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-5119
-BABEL-CASE_EXPR-before-16_5-or-15_9
+BABEL-CASE_EXPR
 datareader_datawriter
-
 
