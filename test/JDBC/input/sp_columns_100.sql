@@ -98,6 +98,12 @@ go
 create table test_escape_chars_sp_columns_100(a int);
 go
 
+CREATE SCHEMA source_test;
+CREATE TABLE source_test.testtable (id int primary key);
+CREATE TABLE source_test.test_table (id int primary key);
+CREATE TABLE source_test.test0table (id int primary key);
+GO
+
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 
@@ -120,10 +126,28 @@ GO
 EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL
 GO
 
+EXEC sys.sp_columns_100 @table_name='test_table', @table_owner='source_test';
+GO
+
+EXEC sys.sp_columns_100 @table_name='test\_table', @table_owner='source_test';
+GO
+
+EXEC sys.sp_columns_100 @table_name='test\_table', @table_owner='source\_test';
+GO
+
 drop table nums
 go
 
 drop table test_escape_chars_sp_columns_100;
+go
+
+drop table source_test.testtable;
+go
+drop table source_test.test_table;
+go
+drop table source_test.test0table;
+go
+drop schema source_test;
 go
 
 Use master
@@ -234,6 +258,12 @@ go
 create table test_escape_chars_sp_columns_100(a int);
 go
 
+CREATE SCHEMA source_test;
+CREATE TABLE source_test.testtable (id int primary key);
+CREATE TABLE source_test.test_table (id int primary key);
+CREATE TABLE source_test.test0table (id int primary key);
+GO
+
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 
@@ -256,7 +286,25 @@ GO
 EXEC sys.sp_columns_100 'test\_escape_chars\_sp_columns_100', 'dbo', NULL, NULL
 GO
 
+EXEC sys.sp_columns_100 @table_name='test_table', @table_owner='source_test';
+GO
+
+EXEC sys.sp_columns_100 @table_name='test\_table', @table_owner='source_test';
+GO
+
+EXEC sys.sp_columns_100 @table_name='test\_table', @table_owner='source\_test';
+GO
+
 drop table nums
+go
+
+drop table source_test.testtable;
+go
+drop table source_test.test_table;
+go
+drop table source_test.test0table;
+go
+drop schema source_test;
 go
 
 drop table test_escape_chars_sp_columns_100;
