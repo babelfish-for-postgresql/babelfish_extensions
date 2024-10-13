@@ -1178,66 +1178,6 @@ get_current_physical_schema_name(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(ret));
 }
 
-char *
-get_physical_user_name_by_mode(char *db_name, char *user_name, bool suppress_error, MigrationMode mode)
-{
-	char	   *new_user_name;
-	char	   *result;
-	int			len;
-
-	if (!user_name)
-		return NULL;
-
-	len = strlen(user_name);
-	if (len == 0)
-		return NULL;
-
-	if (!DbidIsValid(get_db_id(db_name)) && !suppress_error)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist.", db_name)));
-
-	/* Get a new copy */
-	len = len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND;
-	new_user_name = palloc0(len + 1);
-	strncpy(new_user_name, user_name, len);
-
-	/* Truncate to 64 bytes */
-	truncate_tsql_identifier(new_user_name);
-
-	/*
-	 * All role and user names are prefixed. Historically, dbo and
-	 * db_owner in single-db mode were unprefixed These are two exceptions to
-	 * the naming convention
-	 */
-	if (SINGLE_DB == mode)
-	{
-		/* check that db_name is not "master", "tempdb", or "msdb" */
-		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
-			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
-			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
-		{
-			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
-				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0) ||
-				(strlen(user_name) == 13 && strncmp(user_name, "db_datareader", 13) == 0) ||
-				(strlen(user_name) == 13 && strncmp(user_name, "db_datawriter", 13) == 0))
-			{
-				return new_user_name;
-			}
-		}
-	}
-
-	result = palloc0(MAX_BBF_NAMEDATALEND);
-
-	snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, new_user_name);
-
-	/* Truncate final result to 64 bytes */
-	truncate_tsql_identifier(result);
-
-	return result;
-}
-
-
 /* db_name is the logical db that user want to query against
  * retrieve the physical mapped schema for the query
  */
@@ -1333,7 +1273,7 @@ get_physical_schema_name(char *db_name, const char *schema_name)
  * Map the logical user name to its physical name in the database.
  */
 char *
-get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, bool suppress_role_error)
+get_physical_user_name_by_mode(char *db_name, char *user_name, bool suppress_db_error, bool suppress_role_error, MigrationMode mode)
 {
 	char	   *new_user_name;
 	char	   *result;
@@ -1366,7 +1306,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 	 * db_owner in single-db mode were unprefixed These are two exceptions to
 	 * the naming convention
 	 */
-	if (SINGLE_DB == get_migration_mode())
+	if (SINGLE_DB == mode)
 	{
 		/* check that db_name is not "master", "tempdb", or "msdb" */
 		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
@@ -1409,7 +1349,13 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 }
 
 char *
-get_dbo_schema_name(const char *dbname)
+get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, bool suppress_role_error)
+{
+	return get_physical_user_name_by_mode(db_name, user_name, suppress_db_error, suppress_role_error, get_migration_mode());
+}
+
+char *
+get_dbo_schema_name_by_mode(const char *dbname, MigrationMode mode)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
@@ -1428,25 +1374,10 @@ get_dbo_schema_name(const char *dbname)
 	return name;
 }
 
-const char *
-get_dbo_schema_name_by_mode(const char *dbname, MigrationMode mode)
+char *
+get_dbo_schema_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_dbo";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_dbo";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_dbo";
-	if (SINGLE_DB == mode)
-		return "dbo";
-	else
-	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
-		truncate_identifier(name, strlen(name), false);
-		return name;
-	}
+	return get_dbo_schema_name_by_mode(dbname, get_migration_mode());
 }
 
 char *
@@ -1495,55 +1426,53 @@ get_db_owner_name_by_mode(const char *dbname, MigrationMode	mode)
 	return name;
 }
 
-const char *
+char *
 get_db_datareader_name_by_mode(const char *dbname, MigrationMode mode)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_db_datareader";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_db_datareader";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_db_datareader";
-	if (SINGLE_DB == mode)
-		return "db_datareader";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master")
+	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_datareader");
+	}
 	else
 	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_datareader", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
-const char *
+char *
 get_db_datareader_name(const char *dbname)
 {
 	return get_db_datareader_name_by_mode(dbname, get_migration_mode());
 }
 
-const char *
+char *
 get_db_datawriter_name_by_mode(const char *dbname, MigrationMode mode)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_db_datawriter";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_db_datawriter";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_db_datawriter";
-	if (SINGLE_DB == mode)
-		return "db_datawriter";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == mode && 0 != strcmp(dbname, "master")
+	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_datawriter");
+	}
 	else
 	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_datawriter", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
-const char *
+char *
 get_db_datawriter_name(const char *dbname)
 {
 	return get_db_datawriter_name_by_mode(dbname, get_migration_mode());
