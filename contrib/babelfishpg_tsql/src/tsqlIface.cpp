@@ -2833,7 +2833,7 @@ public:
 	MyInputStream &stream; 
 	bool in_procedure_parameter = false;    
 	bool in_procedure_parameter_id = false;    
-	bool inCreateProcedure = false;
+	bool in_create_or_alter_procedure = false;
 
 	std::vector<int> double_quota_places;
 
@@ -2893,12 +2893,12 @@ public:
 
 	void enterCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
 	{
-                inCreateProcedure = true;
+                in_create_or_alter_procedure = true;
         }
 
-    void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
+        void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
 	{
-                inCreateProcedure = false; 
+                in_create_or_alter_procedure = false; 
         }
 
 	void enterComparison_operator(TSqlParser::Comparison_operatorContext *ctx) override
@@ -3028,7 +3028,7 @@ public:
 
 	// Make sure that we only adjust type names that match
 	// the ext_type and unscaled_type parser rules
-
+        
 	if (ctx->ext_type)
 	    nameContext = ctx->ext_type;
 	else if (ctx->unscaled_type)
@@ -3057,7 +3057,7 @@ public:
 	    Assert(str.front() == '[' || str.front() == '"');
 	    Assert(str.back() == ']' || str.back() == '"');
 
-	    if(!(inCreateProcedure ==  true && str.front() == '[' && str.back() == ']'))
+	    if(!(in_create_or_alter_procedure ==  true && str.front() == '[' && str.back() == ']'))
 	    {
 	        str.front() = ' ';
 	        str.back() = ' ';
