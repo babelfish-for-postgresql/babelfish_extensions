@@ -1696,7 +1696,6 @@ FROM pg_catalog.pg_class t1
 	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
 	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t5.grantee
 WHERE ext.orig_username != 'db_datawriter' AND ext.orig_username != 'db_datareader';
-GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
     "@table_name" sys.sysname,
@@ -1805,7 +1804,6 @@ FROM pg_catalog.pg_class t1
 	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
 	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t4.grantee
 WHERE t4.privilege_type = 'DELETE' AND ext.orig_username != 'db_datawriter';
-GRANT SELECT on sys.sp_table_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
 	"@table_name" sys.nvarchar(384),
@@ -10722,6 +10720,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_reset_connection()
 AS 'babelfishpg_tsql', 'sp_reset_connection_internal' LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
 
+-- Creates database roles in all the existing databases
 CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'create_database_roles_for_all_dbs';

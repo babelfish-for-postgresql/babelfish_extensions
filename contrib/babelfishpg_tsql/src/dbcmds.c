@@ -49,9 +49,7 @@ Oid sys_babelfish_db_seq_oid = InvalidOid;
 static Oid get_sys_babelfish_db_seq_oid(void);
 
 static List *gen_createdb_subcmds(const char *dbname,
-								  const char *owner,
-								  const char *db_datareader,
-								  const char *db_datawriter);
+								  const char *owner);
 static List *gen_dropdb_subcmds(const char *dbname,
 								List *db_users);
 static void add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname);
@@ -79,9 +77,7 @@ get_sys_babelfish_db_seq_oid()
  * Generate subcmds for CREATE DATABASE. Note 'guest' can be NULL.
  */
 static List *
-gen_createdb_subcmds(const char *dbname, const char *owner,
-					const char *db_datareader,
-					const char *db_datawriter)
+gen_createdb_subcmds(const char *dbname, const char *owner)
 {
 	StringInfoData query;
 	List           *res;
@@ -96,6 +92,8 @@ gen_createdb_subcmds(const char *dbname, const char *owner,
 	const char     *guest_schema;
 	Oid       	owner_oid;
 	bool     	owner_is_sa;
+	const char     *db_datareader;
+	const char     *db_datawriter;
 
 	schema = get_dbo_schema_name(dbname);
 	dbo = get_dbo_role_name(dbname);
@@ -104,6 +102,8 @@ gen_createdb_subcmds(const char *dbname, const char *owner,
 	guest_schema = get_guest_schema_name(dbname);
 	owner_oid = get_role_oid(owner, true);
 	owner_is_sa = role_is_sa(owner_oid);
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
 
 	/*
 	 * To avoid SQL injection, we generate statement parsetree with dummy
@@ -214,18 +214,18 @@ gen_createdb_subcmds(const char *dbname, const char *owner,
 	return res;
 }
 
+/*
+ * Checks if a particular rolname exists in catalog sys.babelfish_authid_user_ext
+ */
 static bool
 entry_exists_in_bbf_auth_ext(const char *rolname)
 {
-	Relation		bbf_authid_user_ext_rel;
-	HeapTuple		tuple_user_ext;
-	ScanKeyData 		key;
-	SysScanDesc		scan;
-	NameData   		*user_name;
-	bool			catalog_entry_exists = false;
-
-	if (!rolname)
-		return NULL;
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple_user_ext;
+	ScanKeyData	key;
+	SysScanDesc	scan;
+	NameData	*user_name;
+	bool		catalog_entry_exists = false;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 AccessShareLock);
@@ -253,9 +253,9 @@ entry_exists_in_bbf_auth_ext(const char *rolname)
 static void
 add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 {
-	const char		*dbo;
-	const char		*db_owner;
-	const char		*guest;
+	const char	*dbo;
+	const char	*db_owner;
+	const char	*guest;
 	const char	*db_datareader;
 	const char	*db_datawriter;
 
@@ -286,18 +286,18 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 static List *
 gen_dropdb_subcmds(const char *dbname, List *db_users)
 {
-	StringInfoData	query;
-	List			*stmt_list;
-	ListCell		*elem;
-	Node			*stmt;
-	int         	expected_stmts = 8;
-	int         	i = 0;
-	const char		*dbo;
-	const char		*db_owner;
-	const char		*db_datareader;
-	const char		*db_datawriter;
-	const char		*schema;
-	const char		*guest_schema;
+	StringInfoData query;
+	List	   *stmt_list;
+	ListCell   *elem;
+	Node	   *stmt;
+	int         expected_stmts = 6;
+	int         i = 0;
+	const char *dbo;
+	const char *db_owner;
+	const char *schema;
+	const char *guest_schema;
+	const char *db_datareader;
+	const char *db_datawriter;
 
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
@@ -526,9 +526,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	HeapTuple   tuple;
 	List        *parsetree_list;
 	ListCell    *parsetree_item;
-	char  *dbo_role;
-	const char	*db_datareader;
-	const char	*db_datawriter;
+	char        *dbo_role;
 	NameData    default_collation;
 	NameData    owner_namedata;
 	int         stmt_number = 0;
@@ -633,10 +631,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	/* Advance cmd counter to make the database visible */
 	CommandCounterIncrement();
 
-	db_datareader = get_db_datareader_name(dbname);
-	db_datawriter = get_db_datawriter_name(dbname);
-
-	parsetree_list = gen_createdb_subcmds(dbname, owner, db_datareader, db_datawriter);
+	parsetree_list = gen_createdb_subcmds(dbname, owner);
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	old_createrole_self_grant = pstrdup(GetConfigOption("createrole_self_grant", false, true));
@@ -805,7 +800,6 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		CommandCounterIncrement();
 
 		dbo_role = get_dbo_role_name(dbname);
-
 		/* Get a list of all the database's users */
 		db_users_list = get_authid_user_ext_db_users(dbname);
 
@@ -1307,15 +1301,15 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 
 /* Grant permissions on all the existing objects to db_datareader/db_datawriter. */
 static void
-grant_permissions_to_datareader_datawriter(const uint16 dbid,
-										const char *db_datareader,
-										const char *db_datawriter)
+grant_perms_to_dbreader_dbwriter(const uint16 dbid,
+				const char *db_datareader,
+				const char *db_datawriter)
 {
-	Relation		namespace_rel;
-	TupleDesc		namespace_rel_descr;
-	ScanKeyData		key;
-	HeapTuple		tuple;
-	TableScanDesc	tblscan;
+    Relation    namespace_rel;
+	TupleDesc   namespace_rel_descr;
+	ScanKeyData key;
+	HeapTuple   tuple;
+	TableScanDesc   tblscan;
 
 	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
 	namespace_rel_descr = RelationGetDescr(namespace_rel);
@@ -1418,8 +1412,8 @@ static void
 create_db_roles_if_not_exists(const uint16 dbid,
 							const char *dbname)
 {
-	StringInfoData		query;
-	Oid			datdba;
+	StringInfoData  query;
+	Oid     datdba;
 	const char		*prev_current_user;
 	uint16			old_dbid;
 	const char		*old_dbname;
@@ -1512,18 +1506,17 @@ create_db_roles_if_not_exists(const uint16 dbid,
 						None_Receiver,
 						NULL);
 		}
-
 		/* make sure later steps can see the object created here */
 		CommandCounterIncrement();
 
-		/* Add entries to the catalog if not exists. */
+		/* Grant permissions on all the schemas in a database to db_datareader/db_datawriter */
+		grant_perms_to_dbreader_dbwriter(dbid, db_datareader, db_datawriter);
+
+        /* Add entries to the catalog if not exists. */
 		if (!entry_exists_in_bbf_auth_ext(db_datareader))
 			add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
 		if (!entry_exists_in_bbf_auth_ext(db_datawriter))
 			add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
-
-		/* Grant permissions on all the schemas in a database to db_datareader/db_datawriter */
-		grant_permissions_to_datareader_datawriter(dbid, db_datareader, db_datawriter);
 	}
 	PG_FINALLY();
 	{
@@ -1531,10 +1524,8 @@ create_db_roles_if_not_exists(const uint16 dbid,
 		set_cur_db(old_dbid, old_dbname);
 	}
 	PG_END_TRY();
-
 	bbf_set_current_user(prev_current_user);
 	set_cur_db(old_dbid, old_dbname);
-
 }
 
 /*

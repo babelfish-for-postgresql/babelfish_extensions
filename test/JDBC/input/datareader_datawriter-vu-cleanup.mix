@@ -28,10 +28,16 @@ go
 drop table db_roles_schema_1.after_t1;
 go
 
+drop table db_roles_schema_1.after_t2;
+go
+
 drop table db_roles_schema_2.before_created_by_dbo_t1;
 go
 
 drop table db_roles_schema_2.after_created_by_dbo_t1;
+go
+
+drop table db_roles_schema_2.after_created_by_dbo_t2;
 go
 
 drop table db_roles_schema_2.before_created_by_u2_t1;
@@ -40,10 +46,16 @@ go
 drop table db_roles_schema_2.after_created_by_u2_t1;
 go
 
+drop table db_roles_schema_2.after_created_by_u2_t2;
+go
+
 drop view db_roles_schema_1.before_v1;
 go
 
 drop view db_roles_schema_1.after_v1;
+go
+
+drop view db_roles_schema_1.after_v2;
 go
 
 drop view db_roles_schema_2.before_created_by_dbo_v1;
@@ -52,10 +64,16 @@ go
 drop view db_roles_schema_2.after_created_by_dbo_v1;
 go
 
+drop view db_roles_schema_2.after_created_by_dbo_v2;
+go
+
 drop view db_roles_schema_2.before_created_by_u2_v1;
 go
 
 drop view db_roles_schema_2.after_created_by_u2_v1;
+go
+
+drop view db_roles_schema_2.after_created_by_u2_v2;
 go
 
 drop schema db_roles_schema_1;
