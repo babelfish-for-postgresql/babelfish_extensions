@@ -2898,7 +2898,7 @@ public:
 
     void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
 	{
-        inCreateProcedure = false;
+        inCreateProcedure = false; 
     }
 
 	void enterComparison_operator(TSqlParser::Comparison_operatorContext *ctx) override
