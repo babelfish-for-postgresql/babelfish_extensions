@@ -3036,15 +3036,15 @@ public:
 	    
 	    if (name->DOUBLE_QUOTE_ID())
 		terminal = name->DOUBLE_QUOTE_ID();
-	    else if (name->SQUARE_BRACKET_ID())
-		terminal = name->SQUARE_BRACKET_ID();
+	    // else if (name->SQUARE_BRACKET_ID())
+		// terminal = name->SQUARE_BRACKET_ID();
 	    else
 		return;
 	    
 	    std::string str = terminal->getSymbol()->getText();
 
-	    Assert(str.front() == '[' || str.front() == '"');
-	    Assert(str.back() == ']' || str.back() == '"');
+	    // Assert(str.front() == '[' || str.front() == '"');
+	    // Assert(str.back() == ']' || str.back() == '"');
 	    
 	    str.front() = ' ';
 	    str.back() = ' ';
@@ -3971,7 +3971,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	result->body = list_make1(init);
 	// create PLtsql_stmt_execsql to wrap all query string
 	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
-	execsql->original_query = pstrdup(sourceText);
+	execsql->original_query = pstrdup((makeTsqlExpr(ctx, false))->query);
 
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	result->body = lappend(result->body, execsql);
