@@ -3036,15 +3036,15 @@ public:
 	    
 	    if (name->DOUBLE_QUOTE_ID())
 		terminal = name->DOUBLE_QUOTE_ID();
-	    // else if (name->SQUARE_BRACKET_ID())
-		// terminal = name->SQUARE_BRACKET_ID();
+	    else if (name->SQUARE_BRACKET_ID())
+		terminal = name->SQUARE_BRACKET_ID();
 	    else
 		return;
 	    
 	    std::string str = terminal->getSymbol()->getText();
 
-	    // Assert(str.front() == '[' || str.front() == '"');
-	    // Assert(str.back() == ']' || str.back() == '"');
+	    Assert(str.front() == '[' || str.front() == '"');
+	    Assert(str.back() == ']' || str.back() == '"');
 	    
 	    str.front() = ' ';
 	    str.back() = ' ';
@@ -3525,10 +3525,6 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			unsupportedFeatureHandler->setThrowError(true);
 			unsupportedFeatureHandler->visit(tree);
 		}
-
-		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
-		antlr4::tree::ParseTreeWalker firstPass;
-		firstPass.walk(mutator.get(), tree);
 		// for batch-level statement (i.e. create procedure), we don't need to create actual PLtsql_stmt* by tsqlBuilder.
 		// We can just relay the query string to backend parser via one PLtsql_stmt_execsql.
 		TSqlParser::Tsql_fileContext *tsql_file = dynamic_cast<TSqlParser::Tsql_fileContext *>(tree);
@@ -3555,6 +3551,10 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 				pltsql_curr_compile_body_lineno = 0;
 			}
 		}
+
+		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
+		antlr4::tree::ParseTreeWalker firstPass;
+		firstPass.walk(mutator.get(), tree);
 
 		std::unique_ptr<tsqlBuilder> builder = std::make_unique<tsqlBuilder>(tree, parser.getRuleNames(), 
 			sourceStream, mutator.get()->double_quota_places);
