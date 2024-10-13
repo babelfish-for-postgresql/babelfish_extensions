@@ -5488,7 +5488,7 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 	 * This is required as Babelfish currently does not handle collation of String Const node correctly.
 	 * TODO: Fix the handling of the collation for String Const node.
 	 */
-	if (handle_pg_type && oid == DEFAULT_COLLATION_OID)
+	if (sql_dialect == SQL_DIALECT_TSQL && handle_pg_type && oid == DEFAULT_COLLATION_OID)
 	{
 		oid = CLUSTER_COLLATION_OID();
 	}
