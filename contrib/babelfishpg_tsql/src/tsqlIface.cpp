@@ -107,7 +107,7 @@ using GetTokenFunc = std::function <antlr4::tree::TerminalNode * (T)>;
 template <class T>
 using GetCtxFunc = std::function <ParserRuleContext * (T)>;
 
-void handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm, const char *sourceText);
+void handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm);
 bool handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *body);
 
 PLtsql_stmt_block *makeEmptyBlockStmt(int lineno);
@@ -2833,6 +2833,7 @@ public:
 	MyInputStream &stream; 
 	bool in_procedure_parameter = false;    
 	bool in_procedure_parameter_id = false;    
+	bool inCreateProcedure = false;
 
 	std::vector<int> double_quota_places;
 
@@ -2889,6 +2890,16 @@ public:
 		std::string result = Trees::getNodeText(t, this->ruleNames);
 		return result;
 	}
+
+	void enterCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
+	{
+        inCreateProcedure = true;
+    }
+
+    void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
+	{
+        inCreateProcedure = false;
+    }
 
 	void enterComparison_operator(TSqlParser::Comparison_operatorContext *ctx) override
 	{
@@ -3017,7 +3028,6 @@ public:
 
 	// Make sure that we only adjust type names that match
 	// the ext_type and unscaled_type parser rules
-	
 	if (ctx->ext_type)
 	    nameContext = ctx->ext_type;
 	else if (ctx->unscaled_type)
@@ -3045,11 +3055,13 @@ public:
 
 	    Assert(str.front() == '[' || str.front() == '"');
 	    Assert(str.back() == ']' || str.back() == '"');
-	    
+
+		if(!(inCreateProcedure ==  true && str.front() == '[' && str.back() == ']'))
+		{
 	    str.front() = ' ';
 	    str.back() = ' ';
-
 	    stream.setText(name->start->getStartIndex(), str.c_str());
+		}
 	}
     }
 
@@ -3496,7 +3508,6 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 	{
 		// TSqlParser::Tsql_fileContext *tree = parser.tsql_file();
 		tree::ParseTree *tree = nullptr;
-
 		/*
 		 * The semantic of "RETURN SELECT ..." depends on whether it is used in Inlined Table Value Function or not.
 		 * In ITVF, they should be interpeted as return a result tuple of SELECT statement.
@@ -3506,9 +3517,14 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 		 * If it is ITVF, we parsed it with func_body_return_select_body grammar.
 		 */
 		if (pltsql_curr_compile && pltsql_curr_compile->is_itvf) /* special path to itvf */
+		{
 			tree = parser.func_body_return_select_body();
+		}
+			
 		else /* normal path */
+		{
 			tree = parser.tsql_file();
+		}
 		parseTreeCreated = true;
 		if (pltsql_enable_antlr_detailed_log)
 			std::cout << tree->toStringTree(&parser, true) << std::endl;
@@ -3525,6 +3541,9 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			unsupportedFeatureHandler->setThrowError(true);
 			unsupportedFeatureHandler->visit(tree);
 		}
+		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
+		antlr4::tree::ParseTreeWalker firstPass;
+		firstPass.walk(mutator.get(), tree);
 		// for batch-level statement (i.e. create procedure), we don't need to create actual PLtsql_stmt* by tsqlBuilder.
 		// We can just relay the query string to backend parser via one PLtsql_stmt_execsql.
 		TSqlParser::Tsql_fileContext *tsql_file = dynamic_cast<TSqlParser::Tsql_fileContext *>(tree);
@@ -3534,7 +3553,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			 * and there should be exactly one batch_level_statement there
 			 */
 			auto ssm = std::make_unique<tsqlSelectStatementMutator>();
-			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get(), sourceText);
+			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get());
 
 			/* If PARSEONLY is enabled, replace with empty statement */
 			if (pltsql_parseonly)
@@ -3551,10 +3570,6 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 				pltsql_curr_compile_body_lineno = 0;
 			}
 		}
-
-		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
-		antlr4::tree::ParseTreeWalker firstPass;
-		firstPass.walk(mutator.get(), tree);
 
 		std::unique_ptr<tsqlBuilder> builder = std::make_unique<tsqlBuilder>(tree, parser.getRuleNames(), 
 			sourceStream, mutator.get()->double_quota_places);
@@ -3948,7 +3963,7 @@ get_start_token_of_batch_level_stmt_body(TSqlParser::Batch_level_statementContex
 }
 
 void
-handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm, const char *sourceText)
+handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm)
 {
 	// batch-level statment can be inputted in SQL batch only (by inline_handler) or has empty body. getLineNo() will not be affected by uninitialized pltsql_curr_compile_body_lineno.
 	Assert(pltsql_curr_compile->fn_oid == InvalidOid || ctx->SEMI());
