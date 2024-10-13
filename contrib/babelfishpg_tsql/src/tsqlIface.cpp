@@ -3273,6 +3273,23 @@ handle_local_ids_for_expression(TSqlParser::ExpressionContext *ectx)
 	keysToRemove.clear();
 }
 
+static void
+add_rewritten_query_fragment_for_select_expression(PLtsql_expr_query_mutator *mutator)
+{
+	std::vector<size_t> keysToRemove;
+	Assert(mutator);
+	TSqlParser::ExpressionContext *ectx = (TSqlParser::ExpressionContext *) mutator->ctx;
+	for (auto &entry : rewritten_query_fragment)
+	{
+		if (entry.first > ectx->stop->getStopIndex())
+			break;
+		mutator->add(entry.first, entry.second.first, entry.second.second);
+		keysToRemove.push_back(entry.first);
+	}
+	for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
+	keysToRemove.clear();
+}
+
 /*
  * Necessary checks and mutations for query_specification.
  * @process_local_id_assignement indicates whether local_id assignement should be re-written or not. Passed false when we are handling
@@ -3333,9 +3350,9 @@ static void process_query_specification(
 	}
 
 	/* First add information of rewritten_query_fragment information to mutator */
-	add_rewritten_query_fragment_to_mutator(mutator);
-	mutator->run();
-	clear_rewritten_query_fragment();
+	// add_rewritten_query_fragment_to_mutator(mutator);
+	// mutator->run();
+	// clear_rewritten_query_fragment();
 
 	/* handle special alias syntax and quote alias */
 	for (size_t i=0; i<select_elems.size(); ++i)
@@ -3384,6 +3401,10 @@ static void process_query_specification(
 			PLtsql_var *var;
 
 			Assert(elem->expression());
+			PLtsql_expr *elem_expr = makeTsqlExpr(elem->expression(), false);
+			PLtsql_expr_query_mutator expr_mutator(elem_expr, elem->expression());
+			add_rewritten_query_fragment_for_select_expression(&expr_mutator);
+			expr_mutator.run();
 
 			if (!nse)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", var_str.c_str()), getLineAndPos(elem));
@@ -3435,6 +3456,10 @@ static void process_query_specification(
 			}
 
 			Assert(elem->expression());
+			PLtsql_expr *elem_expr = makeTsqlExpr(elem->expression(), false);
+			PLtsql_expr_query_mutator expr_mutator(elem_expr, elem->expression());
+			add_rewritten_query_fragment_for_select_expression(&expr_mutator);
+			expr_mutator.run();
 
 			if (!nse)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
@@ -3453,7 +3478,7 @@ static void process_query_specification(
 									nse->itemno,
 									var_str.c_str(),
 									rewrite_assign_operator(anode),
-									::getFullText(elem->expression()).c_str(),
+									elem_expr->query,
 									tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
 
 			// /* First add information of rewritten_query_fragment information to mutator */
