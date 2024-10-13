@@ -2893,13 +2893,13 @@ public:
 
 	void enterCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
 	{
-        inCreateProcedure = true;
-    }
+                inCreateProcedure = true;
+        }
 
     void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
 	{
-        inCreateProcedure = false; 
-    }
+                inCreateProcedure = false; 
+        }
 
 	void enterComparison_operator(TSqlParser::Comparison_operatorContext *ctx) override
 	{
@@ -3028,6 +3028,7 @@ public:
 
 	// Make sure that we only adjust type names that match
 	// the ext_type and unscaled_type parser rules
+
 	if (ctx->ext_type)
 	    nameContext = ctx->ext_type;
 	else if (ctx->unscaled_type)
@@ -3056,12 +3057,12 @@ public:
 	    Assert(str.front() == '[' || str.front() == '"');
 	    Assert(str.back() == ']' || str.back() == '"');
 
-		if(!(inCreateProcedure ==  true && str.front() == '[' && str.back() == ']'))
-		{
-	    str.front() = ' ';
-	    str.back() = ' ';
-	    stream.setText(name->start->getStartIndex(), str.c_str());
-		}
+	    if(!(inCreateProcedure ==  true && str.front() == '[' && str.back() == ']'))
+	    {
+	        str.front() = ' ';
+	        str.back() = ' ';
+	        stream.setText(name->start->getStartIndex(), str.c_str());
+	    }
 	}
     }
 
@@ -3508,6 +3509,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 	{
 		// TSqlParser::Tsql_fileContext *tree = parser.tsql_file();
 		tree::ParseTree *tree = nullptr;
+
 		/*
 		 * The semantic of "RETURN SELECT ..." depends on whether it is used in Inlined Table Value Function or not.
 		 * In ITVF, they should be interpeted as return a result tuple of SELECT statement.
@@ -3517,14 +3519,9 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 		 * If it is ITVF, we parsed it with func_body_return_select_body grammar.
 		 */
 		if (pltsql_curr_compile && pltsql_curr_compile->is_itvf) /* special path to itvf */
-		{
 			tree = parser.func_body_return_select_body();
-		}
-			
 		else /* normal path */
-		{
 			tree = parser.tsql_file();
-		}
 		parseTreeCreated = true;
 		if (pltsql_enable_antlr_detailed_log)
 			std::cout << tree->toStringTree(&parser, true) << std::endl;
@@ -3541,6 +3538,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			unsupportedFeatureHandler->setThrowError(true);
 			unsupportedFeatureHandler->visit(tree);
 		}
+
 		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
 		antlr4::tree::ParseTreeWalker firstPass;
 		firstPass.walk(mutator.get(), tree);
