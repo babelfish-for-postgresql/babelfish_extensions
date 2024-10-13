@@ -47,13 +47,11 @@
 Oid sys_babelfish_db_seq_oid = InvalidOid;
 
 static Oid get_sys_babelfish_db_seq_oid(void);
-
 static List *gen_createdb_subcmds(const char *dbname,
 								  const char *owner);
 static List *gen_dropdb_subcmds(const char *dbname,
 								List *db_users);
 static void add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname);
-
 static Oid	do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
@@ -1332,7 +1330,7 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 		StringInfoData	query;
 		List		*stmt_list;
 		Node		*stmts;
-		int			i = 0;
+		int		i = 0;
 		ListCell	*parsetree_item;
 		char		*schema_owner;
 		char		*dbo_user;
@@ -1409,20 +1407,19 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 }
 
 static void
-create_db_roles_if_not_exists(const uint16 dbid,
-							const char *dbname)
+create_db_roles_if_not_exists(const uint16 dbid, const char *dbname)
 {
 	StringInfoData  query;
-	Oid     datdba;
-	const char		*prev_current_user;
-	uint16			old_dbid;
-	const char		*old_dbname;
-	const char		*db_datareader;
-	const char 		*db_datawriter;
-	ListCell		*parsetree_item;
-	List			*stmt_list;
-	Node			*stmts;
-	int			i=0;
+	Oid         datdba;
+	const char  *prev_current_user;
+	uint16      old_dbid;
+	const char  *old_dbname;
+	const char  *db_datareader;
+	const char  *db_datawriter;
+	ListCell    *parsetree_item;
+	List	    *stmt_list;
+	Node		*stmts;
+	int		i=0;
 
 	/*
 	 * During upgrade, the migration mode is reset to single-db so we cannot
@@ -1540,26 +1537,26 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 	Relation	sysdatabase_rel;
 	TableScanDesc scan;
 	HeapTuple	tuple;
-	const char *sql_dialect_value_old;
-	const char *tsql_dialect = "tsql";
+	//const char *sql_dialect_value_old;
+	//const char *tsql_dialect = "tsql";
 	Form_sysdatabases bbf_db;
 	const char *dbname;
-	bool		creating_extension_backup = creating_extension;
+	//bool		creating_extension_backup = creating_extension;
 
 	/* We only allow this to be called from an extension's SQL script. */
-	if (!creating_extension)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
-						"create_database_roles_for_all_dbs()")));
+	//if (!creating_extension)
+	//	ereport(ERROR,
+	//			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+	//			 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+	//					"create_database_roles_for_all_dbs()")));
 
-	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	//sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	PG_TRY();
 	{
-		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		//set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
+		//				  GUC_CONTEXT_CONFIG,
+		//				  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		/*
 		 * Since this is part of upgrade script, PG assumes we would like to
@@ -1567,7 +1564,7 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		 * true so we tell PG not to set any dependency for us. Check
 		 * recordDependencyOnCurrentExtension() for more information.
 		 */
-		creating_extension = false;
+		//creating_extension = false;
 
 		sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
 		scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
@@ -1585,17 +1582,17 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		table_endscan(scan);
 		table_close(sysdatabase_rel, RowExclusiveLock);
 
-		creating_extension = creating_extension_backup;
-		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		//creating_extension = creating_extension_backup;
+		//set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+		//				  GUC_CONTEXT_CONFIG,
+		//				  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_FINALLY();
 	{
-		creating_extension = creating_extension_backup;
-		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		//creating_extension = creating_extension_backup;
+		//set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+		//				  GUC_CONTEXT_CONFIG,
+		//				  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();
 
