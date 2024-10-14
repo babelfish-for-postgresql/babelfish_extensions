@@ -17,10 +17,16 @@ extern void rewrite_object_refs(Node *stmt);
 extern List* rewrite_plain_name(List *name); /* Value Strings */
 
 /* helper functions */
+extern char *get_db_datareader_name(const char *dbname);
+extern char *get_db_datawriter_name(const char *dbname);
+extern char *get_db_datareader_name_by_mode(const char *dbname, MigrationMode mode);
+extern char *get_db_datawriter_name_by_mode(const char *dbname, MigrationMode mode);
 extern char *get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, bool suppress_role_error);
+extern char *get_physical_user_name_by_mode(char *db_name, char *user_name, bool suppress_db_error, bool suppress_role_error,  MigrationMode mode);
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
 extern char *get_physical_schema_name_by_mode(char *db_name, const char *schema_name, MigrationMode mode);
 extern char *get_dbo_schema_name(const char *dbname);
+extern char *get_dbo_schema_name_by_mode(const char *dbname, MigrationMode mode);
 extern char *get_dbo_role_name(const char *dbname);
 extern char *get_dbo_role_name_by_mode(const char *dbname, MigrationMode mode);
 extern char *get_db_owner_name(const char *dbname);

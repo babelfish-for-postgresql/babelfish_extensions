@@ -2615,7 +2615,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_CreateRoleStmt:
 			{
-				if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
+				if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0 && strcmp(queryString, "(CREATE DATABASE ROLES) ") != 0)
 				{
 					CreateRoleStmt *stmt = (CreateRoleStmt *) parsetree;
 					List	   *login_options = NIL;
@@ -3356,7 +3356,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 									/* If user is dbo or role is db_owner, restrict dropping */
 									if ((drop_user && rolename_len == 3 && strncmp(rolspec->rolename, "dbo", 3) == 0) ||
-										(drop_role && rolename_len == 8 && strncmp(rolspec->rolename, "db_owner", 8) == 0))
+										(drop_role && rolename_len == 8 && strncmp(rolspec->rolename, "db_owner", 8) == 0) ||
+										(drop_role && rolename_len == 13 && strncmp(rolspec->rolename, "db_datareader", 13) == 0) ||
+										(drop_role && rolename_len == 13 && strncmp(rolspec->rolename, "db_datawriter", 13) == 0))
 										ereport(ERROR,
 												(errcode(ERRCODE_CHECK_VIOLATION),
 												 errmsg("Cannot drop the %s '%s'.", db_principal_type, rolspec->rolename)));
@@ -3563,11 +3565,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 						&& context == PROCESS_UTILITY_SUBCOMMAND)
 					{
-						if (pstmt->stmt_len == 19)
+						if (pstmt->stmt_len == 21)
 							orig_schema = "guest";
 						else
 							orig_schema = "dbo";
 					}
+
+					if (strcmp(queryString, "(CREATE SCHEMA )") == 0
+						&& context == PROCESS_UTILITY_SUBCOMMAND)
+						orig_schema = "guest";
 
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3607,6 +3613,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								   NULL);
 
 					CommandCounterIncrement();
+
+					/* Execute subcommands for database roles.*/
+					if (strcmp(queryString, "(CREATE SCHEMA )") != 0)
+					{
+						if (rolspec)
+							exec_database_roles_subcmds(create_schema->schemaname, rolspec->rolename);
+						else
+							exec_database_roles_subcmds(create_schema->schemaname, NULL);
+					}
+
 					/* Grant ALL schema privileges to the user.*/
 					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
 					{
@@ -3690,7 +3706,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 			}
 		case T_GrantRoleStmt:
-			if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
+			if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0 && strcmp(queryString, "(CREATE DATABASE ROLES) ") != 0)
 			{
 				GrantRoleStmt *grant_role = (GrantRoleStmt *) parsetree;
 				Oid 	save_userid;
@@ -4009,16 +4025,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_GrantStmt:
 			{
-				GrantStmt *grant = (GrantStmt *) parsetree;
-				char	   *dbname = get_cur_db_name();
-				const char *current_user = GetUserNameFromId(GetUserId(), false);
+				GrantStmt	*grant = (GrantStmt *) parsetree;
+				char		*dbname = get_cur_db_name();
+				const char	*db_datareader = get_db_datareader_name(dbname);
+				const char	*db_datawriter = get_db_datawriter_name(dbname);
 				/* Ignore when GRANT statement has no specific named object. */
 				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
 					break;
 				Assert(list_length(grant->objects) == 1);
 				if (grant->objtype == OBJECT_SCHEMA)
 						break;
-				else if (grant->objtype == OBJECT_TABLE && strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0)
+				else if (grant->objtype == OBJECT_TABLE && strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0 && strcmp(queryString, "(CREATE DATABASE ROLES) ") != 0)
 				{
 					/*
 					 * Ignore GRANT statements that are executed implicitly as a part of
@@ -4027,6 +4044,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * schema permission or adding catalog entry.
 					 */
 					RangeVar   *rv = (RangeVar *) linitial(grant->objects);
+					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					const char *logical_schema = NULL;
 					char	   *obj = rv->relname;
 					bool exec_pg_command = false;
@@ -4045,6 +4063,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/* Special database roles should throw an error. */
+								if (rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0))
+									ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+										errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 								add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true, NULL);
 							}
 						}
@@ -4053,6 +4075,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/* Special database roles should throw an error. */
+								if (rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0))
+									ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+										errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 								/*
 								 * 1. If permission on schema exists, don't revoke any permission from the object.
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
@@ -4077,6 +4103,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									/* Special database roles should throw an error. */
+									if (rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0))
+										ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+											errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 									add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
 								}
 							}
@@ -4089,6 +4119,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									/* Special database roles should throw an error. */
+									if (rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, db_datareader) == 0 || strcmp(rol_spec->rolename, db_datawriter) == 0))
+										ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+											errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 									/*
 									 * If permission on schema exists, don't revoke any permission from the object.
 									 */
@@ -4107,6 +4141,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
 				{
 					ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
+					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					ListCell   *lc;
 					ListCell	*lc1;
 					bool exec_pg_command = false;
@@ -4201,7 +4236,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-
 								/*
 								 * If permission on schema exists, don't revoke any permission from the object.
 								 */
