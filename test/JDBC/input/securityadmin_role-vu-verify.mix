@@ -76,6 +76,15 @@ go
 ALTER LOGIN [babel\securityadmin_l1] with default_database=securityadmin_db1;
 go
 
+-- make altering login member of securityadmin
+Alter server role securityadmin add member securityadmin_l2
+go
+
+-- alter securityadmin member login
+-- allowed
+alter login securityadmin_l2 with password = '123'
+go
+
 -- drop login should be allowed
 -- password based login
 drop login securityadmin_l2
@@ -357,6 +366,12 @@ go
 alter server role securityadmin add member securityadmin_login1
 go
 
+drop user no_securityadmin_user1
+go
+
+alter server role sysadmin add member no_securityadmin_login1
+go
+
 create user securityadmin_user1 for login securityadmin_login1
 go
 
@@ -372,9 +387,38 @@ go
 Alter server role securityadmin add member guest
 go
 
+-- alter sysadmin login should give permission denied
+-- login which is altered is member of sysadmin
+Alter login no_securityadmin_login1 with password ='123'
+go
+
 -- terminate-tsql-conn user=securityadmin_login1 password=123
 
 -- tsql
+-- make member of securityadmin as well
+alter server role securityadmin add member no_securityadmin_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+-- login which is altered is member of sysadmin and securityadmin both
+-- permission denied
+Alter login no_securityadmin_login1 with password ='123'
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+alter server role securityadmin drop member no_securityadmin_login1
+go
+
+alter server role sysadmin drop member no_securityadmin_login1
+go
+
+create user no_securityadmin_user1 for login no_securityadmin_login1
+go
+
 create role dummy_role
 go
 

@@ -3122,9 +3122,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						Oid 		save_userid;
 						int 		save_sec_context;
 						Oid 		securityadm_oid;
+						Oid 		role_oid;
 
 						datdba = get_sysadmin_oid();
 						securityadm_oid = get_securityadmin_oid();
+						role_oid = get_role_oid(stmt->role->rolename, true);
 
 						/*
 						 * Check if the current login has privileges to alter
@@ -3136,8 +3138,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "password") == 0)
 							{
-								if (get_role_oid(stmt->role->rolename, true) != GetSessionUserId() && (!is_member_of_role(GetSessionUserId(), datdba)
-																					&& !is_member_of_role(GetSessionUserId(), securityadm_oid)))
+								if (role_oid != GetSessionUserId() && (!is_member_of_role(GetSessionUserId(), datdba)
+											&& (!is_member_of_role(GetSessionUserId(), securityadm_oid) || is_member_of_role(role_oid, datdba))))
 									ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
@@ -3172,18 +3174,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							stmt->role->rolename = temp_login_name;
 						}
 
-						/*
-						 * Check if the current login has privileges to alter
-						 * login.
-						 */
-						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password &&
-														!has_privs_of_role(GetSessionUserId(), securityadm_oid))
-							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
+						role_oid = get_role_oid(stmt->role->rolename, true);
 
-						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
+						/*
+						 * Check if login is valid and the current login
+						 * has privileges to alter login.
+						 */
+						if (role_oid == InvalidOid)
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
 											errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
+
+						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password &&
+							(!has_privs_of_role(GetSessionUserId(), securityadm_oid) || is_member_of_role(role_oid, datdba)))
+							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
 						/*
 						 * We have performed all the permissions checks.
@@ -3525,10 +3529,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						int			role_oid = get_role_oid(role_name, true);
 
-						if (!OidIsValid(role_oid) ||
-							(!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && 
-							!is_member_of_role(GetSessionUserId(), securityadmin_oid)) ||
-							role_oid == get_bbf_role_admin_oid() || role_oid == securityadmin_oid)
+						if (!OidIsValid(role_oid) || role_oid == get_bbf_role_admin_oid()
+							|| role_oid == securityadmin_oid || role_oid == get_sysadmin_oid())
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
 											errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 
@@ -3744,8 +3746,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
 					}
 
-					/* Otherwise, provide attribute for role priv */
-					else
+					/* If securityadmin, provide attribute for role priv */
+					else if (IS_ROLENAME_SECURITYADMIN(rolspec->rolename))
 					{
 						if (grant_role->is_grant)
 							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole; ");
@@ -3753,6 +3755,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						/* If grantee role is member of sysadmin then don't revoke createrole */
 						else if (!has_privs_of_role(grantee_oid, get_sysadmin_oid()))
 							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole; ");
+					}
+
+					/* Otherwise, throw error */
+					else
+					{
+						ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("\"%s\" is not a supported fixed server role.", rolspec->rolename)));
 					}
 					
 					/*
@@ -3770,7 +3780,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
-						if (*query.data)
+						if (query.len)
 							exec_alter_role_cmd(query.data, spec);
 
 					}
@@ -3778,8 +3788,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						/* Clean up. Restore previous state. */
 						SetUserIdAndSecContext(save_userid, save_sec_context);
-						if (query.data)
-							pfree(query.data);
+						pfree(query.data);
 					}
 					PG_END_TRY();
 					return;
