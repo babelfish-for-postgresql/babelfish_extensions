@@ -48,7 +48,7 @@ get_cur_db_id(void)
 	return current_db_id;
 }
 
-/* same as get_current_db_name but reurn value is palloc'd */
+/* same as get_cuurent_pltsql_db_name but reurn value is palloc'd */
 char *
 get_cur_db_name(void)
 {
@@ -60,7 +60,7 @@ get_cur_db_name(void)
  * Callers should NOT pfree the return value
  */
 const char *
-get_current_db_name(void)
+get_cuurent_pltsql_db_name(void)
 {
 	return current_db_name;
 }

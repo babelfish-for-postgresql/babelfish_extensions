@@ -290,7 +290,7 @@ drop_bbf_roles(ObjectAccessType access,
 {
 	if (is_login(roleid))
 		drop_bbf_authid_login_ext(access, classId, roleid, subId, arg);
-	else if (get_db_principal_kind(roleid, get_current_db_name()))
+	else if (get_db_principal_kind(roleid, get_cuurent_pltsql_db_name()))
 		drop_bbf_authid_user_ext(access, classId, roleid, subId, arg);
 }
 
@@ -1775,7 +1775,7 @@ is_alter_role_stmt(GrantRoleStmt *stmt)
 		Oid			granted = get_role_oid(spec->rolename, true);
 
 		/* Check if the granted role is an existing database role */
-		if (granted == InvalidOid || get_db_principal_kind(granted, get_current_db_name()) != BBF_ROLE)
+		if (granted == InvalidOid || get_db_principal_kind(granted, get_cuurent_pltsql_db_name()) != BBF_ROLE)
 			return false;
 	}
 
@@ -1790,7 +1790,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	const char *granted_name;
 	const char *grantee_name;
 	const char *original_user_name;
-	const char *db_name = get_current_db_name();
+	const char *db_name = get_cuurent_pltsql_db_name();
 	RoleSpec   *granted_spec;
 	RoleSpec   *grantee_spec;
 

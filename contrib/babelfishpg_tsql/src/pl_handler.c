@@ -3521,9 +3521,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if (is_login(roleform->oid))
 							all_logins = true;
-						else if (get_db_principal_kind(roleform->oid, get_current_db_name()) == BBF_USER)
+						else if (get_db_principal_kind(roleform->oid, get_cuurent_pltsql_db_name()) == BBF_USER)
 							all_users = true;
-						else if (get_db_principal_kind(roleform->oid, get_current_db_name()) == BBF_ROLE)
+						else if (get_db_principal_kind(roleform->oid, get_cuurent_pltsql_db_name()) == BBF_ROLE)
 							all_roles = true;
 						else
 							other = true;
@@ -3620,7 +3620,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (rolspec && strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
 					{
-						const char *db_name = get_current_db_name();
+						const char *db_name = get_cuurent_pltsql_db_name();
 						Oid        db_accessadmin = get_db_accessadmin_oid(db_name, false);
 
 						owner_oid = get_rolespec_oid(rolspec, true);
