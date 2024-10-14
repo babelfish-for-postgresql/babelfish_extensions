@@ -3294,14 +3294,27 @@ static char *
 rewrite_assignment_expression(PLtsql_var *var, TSqlParser::ExpressionContext *ectx)
 {
 	char *new_expr = NULL;
+	char *type_str = tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN);
 	PLtsql_expr *elem_expr = makeTsqlExpr(ectx, false);
 	PLtsql_expr_query_mutator expr_mutator(elem_expr, ectx);
 	add_rewritten_query_fragment_for_select_expression(&expr_mutator);
 	expr_mutator.run();
 
+	Assert(type_str);
+	/*
+	 * Extra handling for type - If var->datatype->atttypmod = -1 and if "max" typmod is allowed for type (e.g., varchar, varbinary etc)
+	 * then append explicit (max). Check implementation of parse_datatype and tsql_format_type_extended for more details.
+	 */
+	if (var->datatype->atttypmod == -1 && is_tsql_datatype_with_max_scale_expr_allowed(var->datatype->typoid))
+	{
+		char *tmp = psprintf("%s(max)", type_str);
+		pfree(type_str);
+		type_str = tmp;
+	}
+
 	new_expr = psprintf("cast((%s) as %s)",
 						elem_expr->query,
-						tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
+						type_str);
 
 	return new_expr;
 }
