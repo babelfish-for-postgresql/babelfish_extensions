@@ -290,8 +290,8 @@ select object_name,length(definition) from sys.babelfish_view_def where object_n
 go
 ~~START~~
 varchar#!#int
-lview#!#4081
-nlview#!#4000
+lview#!#4140
+nlview#!#4058
 ~~END~~
 
 

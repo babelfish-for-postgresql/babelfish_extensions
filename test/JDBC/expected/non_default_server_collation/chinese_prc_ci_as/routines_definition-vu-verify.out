@@ -18,7 +18,7 @@ db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_func_itvf#!#db_routines_
 db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_func_opt#!#db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_func_opt#!#FUNCTION#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#SQL#!#CREATE FUNCTION routines_vu_prepare_test_func_opt (@test_func_opt_a varchar(10))<newline>RETURNS INT<newline> WITH RETURNS NULL ON NULL INPUT<newline>AS<newline>BEGIN<newline>        RETURN 2;<newline>END;<newline>#!#NO#!#READS#!#YES#!#YES#!#0#!#NO#!#NO
 db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_func_tvf#!#db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_func_tvf#!#FUNCTION#!#table#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#-- Multi statement Table valued Function<newline>CREATE FUNCTION routines_vu_prepare_test_func_tvf ()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;<newline>#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
 db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_nvar#!#db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_nvar#!#PROCEDURE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#create procedure routines_vu_prepare_test_nvar(@test_nvar_a nvarchar , @test_nvar_b int = 8)<newline>AS<newline>BEGIN<newline>        SELECT @test_nvar_b=8;<newline>END<newline>#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#-1#!#NO#!#NO
- ~~END~~
+~~END~~
 
 
 -- Test cross DB reference to ISC view routines
