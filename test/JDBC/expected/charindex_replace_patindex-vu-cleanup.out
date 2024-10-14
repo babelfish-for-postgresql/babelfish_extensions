@@ -1,0 +1,2 @@
+DROP DATABASE babel_5144_db
+GO

@@ -1,0 +1,529 @@
+USE babel_5144_db
+GO
+
+EXEC babel_5144_p @src = 'abcḍèĎÈdedEDEabcd', @from = 'de', @to = '##'
+GO
+~~START~~
+varchar
+running replace
+~~END~~
+
+~~START~~
+nvarchar
+abc##########abcd
+~~END~~
+
+~~START~~
+varchar
+running charindex
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+varchar
+running patindex
+~~END~~
+
+~~START~~
+bigint
+4
+~~END~~
+
+
+SELECT babel_5144_f1('abcḍèĎÈdedEDEabcd', 'de', '##')
+SELECT babel_5144_f2('abcḍèĎÈdedEDEabcd', 'de')
+SELECT babel_5144_f3('abcḍèĎÈdedEDEabcd')
+GO
+~~START~~
+nvarchar
+abc##########abcd
+~~END~~
+
+~~START~~
+nvarchar
+4
+~~END~~
+
+~~START~~
+nvarchar
+4
+~~END~~
+
+
+INSERT INTO babel_5144_t1 VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
+INSERT INTO babel_5144_t2 VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
+INSERT INTO babel_5144_t3(src, substr1, substr2) VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
+GO
+~~START~~
+varchar
+========== trigger start ==========
+~~END~~
+
+~~START~~
+nvarchar#!#int#!#bigint
+abc##########abcd#!#4#!#4
+abc##########abcd#!#4#!#4
+~~END~~
+
+~~START~~
+varchar
+========== trigger end   ==========
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- validate check constraint
+INSERT INTO babel_5144_t2 VALUES ('abcdabcd', 'de', 'de')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "babel_5144_t2" violates check constraint "babel_5144_t2_check")~~
+
+INSERT INTO babel_5144_t2 VALUES ('ḍèĎÈdedEDEabcd', 'de', '##')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "babel_5144_t2" violates check constraint "babel_5144_t2_check1")~~
+
+INSERT INTO babel_5144_t2 VALUES ('aaaaaabcd', 'ab', '##')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "babel_5144_t2" violates check constraint "babel_5144_t2_src_check")~~
+
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+SET BABELFISH_STATISTICS PROFILE ON;
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_seqscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
+Result (actual rows=1 loops=1)
+~~END~~
+
+
+SELECT * FROM babel_5144_t1 WHERE [replaced] = 'abc##########abcd'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#bigint
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_5144_t1 WHERE [replaced] = 'abc##########abcd'
+Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
+  Index Cond: ((replaced)::"varchar" = 'abc##########abcd'::"varchar")
+~~END~~
+
+SELECT * FROM babel_5144_t1 WHERE [charIndex] = 4;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#bigint
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_5144_t1 WHERE [charIndex] = 4
+Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
+  Index Cond: (charindex = 4)
+~~END~~
+
+SELECT * FROM babel_5144_t1 WHERE [patindex] = 4;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#bigint
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_5144_t1 WHERE [patindex] = 4
+Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
+  Index Cond: (patindex = 4)
+~~END~~
+
+
+SELECT [b].src, [c].[src], [a].[replaced], [b].[replaced], [c].[replaced] FROM 
+    (SELECT replace(src, substr1, substr2) AS [replaced] FROM babel_5144_t2) [a]
+    JOIN babel_5144_t1 [b] ON ([b].[replaced] = [a].[replaced])
+    JOIN babel_5144_t3 [c] ON ([c].[replaced] = [a].[replaced])
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#abc##########abcd#!#abc##########abcd#!#abc##########abcd
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#abc##########abcd#!#abc##########abcd#!#abc##########abcd
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#abc##########abcd#!#abc##########abcd#!#abc##########abcd
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#abc##########abcd#!#abc##########abcd#!#abc##########abcd
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#abc##########abcd#!#abc##########abcd#!#abc##########abcd
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#abc##########abcd#!#abc##########abcd#!#abc##########abcd
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#abc##########abcd#!#abc##########abcd#!#abc##########abcd
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#abc##########abcd#!#abc##########abcd#!#abc##########abcd
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT [b].src, [c].[src], [a].[replaced], [b].[replaced], [c].[replaced] FROM 
+    (SELECT sys.replace(src, substr1, substr2) AS [replaced] FROM babel_5144_t2) [a]
+    JOIN babel_5144_t1 [b] ON ([b].[replaced] = [a].[replaced])
+    JOIN babel_5144_t3 [c] ON ([c].[replaced] = [a].[replaced])
+Merge Join (actual rows=8 loops=1)
+  Merge Cond: ((c.replaced)::"varchar" = (b.replaced)::"varchar")
+  ->  Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 c (actual rows=2 loops=1)
+  ->  Materialize (actual rows=7 loops=1)
+        ->  Merge Join (actual rows=4 loops=1)
+              Merge Cond: ((b.replaced)::"varchar" = ((replace(babel_5144_t2.src, babel_5144_t2.substr1, babel_5144_t2.substr2))::"varchar"))
+              ->  Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 b (actual rows=2 loops=1)
+              ->  Sort (actual rows=3 loops=1)
+                    Sort Key: ((replace(babel_5144_t2.src, babel_5144_t2.substr1, babel_5144_t2.substr2))::"varchar") NULLS FIRST
+                    Sort Method: quicksort  Memory: 25kB
+                    ->  Seq Scan on babel_5144_t2 (actual rows=2 loops=1)
+~~END~~
+
+SELECT [b].src, [c].[src], [a].[charIndex], [b].[charIndex], [c].[charIndex] FROM 
+    (SELECT charindex(substr1, src) AS [charIndex] FROM babel_5144_t2) [a]
+    JOIN babel_5144_t1 [b] ON ([b].[charIndex] = [a].[charIndex])
+    JOIN babel_5144_t3 [c] ON ([c].[charIndex] = [a].[charIndex])
+GO
+~~START~~
+nvarchar#!#nvarchar#!#int#!#int#!#int
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: 
+SELECT
+CASE
+WHEN expressionToFind = '' THEN
+    0
+WHEN start_location <= 0 THEN
+ strpos(expressionToSearch, expressionToFind)
+ELSE
+ CASE
+ WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+  0
+ ELSE
+  strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
+ END
+END;
+
+Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT [b].src, [c].[src], [a].[charIndex], [b].[charIndex], [c].[charIndex] FROM 
+    (SELECT charindex(substr1, src) AS [charIndex] FROM babel_5144_t2) [a]
+    JOIN babel_5144_t1 [b] ON ([b].[charIndex] = [a].[charIndex])
+    JOIN babel_5144_t3 [c] ON ([c].[charIndex] = [a].[charIndex])
+Nested Loop (actual rows=8 loops=1)
+  ->  Nested Loop (actual rows=4 loops=1)
+        ->  Seq Scan on babel_5144_t2 (actual rows=2 loops=1)
+        ->  Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 b (actual rows=2 loops=2)
+              Index Cond: (charindex = charindex((babel_5144_t2.substr1)::text, (babel_5144_t2.src)::text, 0))
+  ->  Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 c (actual rows=2 loops=4)
+        Index Cond: (charindex = b.charindex)
+~~END~~
+
+SELECT [b].src, [c].[src], [a].[patindex], [b].[patindex], [c].[patindex] FROM 
+    (SELECT patindex('%de%', src) AS [patindex] FROM babel_5144_t2) [a]
+    JOIN babel_5144_t1 [b] ON ([b].[patindex] = [a].[patindex])
+    JOIN babel_5144_t3 [c] ON ([c].[patindex] = [a].[patindex])
+GO
+~~START~~
+nvarchar#!#nvarchar#!#bigint#!#bigint#!#int
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#abcḍèĎÈdedEDEabcd#!#4#!#4#!#4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT [b].src, [c].[src], [a].[patindex], [b].[patindex], [c].[patindex] FROM 
+    (SELECT patindex('%de%', src) AS [patindex] FROM babel_5144_t2) [a]
+    JOIN babel_5144_t1 [b] ON ([b].[patindex] = [a].[patindex])
+    JOIN babel_5144_t3 [c] ON ([c].[patindex] = [a].[patindex])
+Nested Loop (actual rows=8 loops=1)
+  ->  Nested Loop (actual rows=4 loops=1)
+        ->  Seq Scan on babel_5144_t2 (actual rows=2 loops=1)
+        ->  Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 b (actual rows=2 loops=2)
+              Index Cond: (patindex = patindex('%de%'::character varying COLLATE "default", (babel_5144_t2.src)::character varying))
+  ->  Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 c (actual rows=2 loops=4)
+        Index Cond: (patindex = b.patindex)
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SELECT * FROM babel_5144_v1
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#bigint#!#bigint#!#int
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+~~END~~
+
