@@ -12,7 +12,7 @@ GO
 
 INSERT INTO babel_5144_t1 VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
 INSERT INTO babel_5144_t2 VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
--- INSERT INTO babel_5144_t3(src, substr1, substr2) VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
+INSERT INTO babel_5144_t3(src, substr1, substr2) VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
 GO
 
 -- validate check constraint
@@ -41,6 +41,12 @@ GO
 SELECT * FROM babel_5144_t1 WHERE [charIndex] = 4;
 GO
 SELECT * FROM babel_5144_t1 WHERE [patindex] = 4;
+GO
+SELECT * FROM babel_5144_t3 WHERE [replaced] = 'abc##########abcd'
+GO
+SELECT * FROM babel_5144_t3 WHERE [charIndex] = 4;
+GO
+SELECT * FROM babel_5144_t3 WHERE [patindex] = 4;
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;

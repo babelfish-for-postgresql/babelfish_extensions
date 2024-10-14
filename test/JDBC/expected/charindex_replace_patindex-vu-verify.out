@@ -56,7 +56,7 @@ nvarchar
 
 INSERT INTO babel_5144_t1 VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
 INSERT INTO babel_5144_t2 VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
--- INSERT INTO babel_5144_t3(src, substr1, substr2) VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
+INSERT INTO babel_5144_t3(src, substr1, substr2) VALUES ('abcḍèĎÈdedEDEabcd', 'de', '##')
 GO
 ~~START~~
 varchar
@@ -73,6 +73,8 @@ abc##########abcd#!#4#!#4
 varchar
 ========== trigger end   ==========
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~
 
@@ -205,6 +207,51 @@ Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on
   Index Cond: (patindex = 4)
 ~~END~~
 
+SELECT * FROM babel_5144_t3 WHERE [replaced] = 'abc##########abcd'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_5144_t3 WHERE [replaced] = 'abc##########abcd'
+Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
+  Index Cond: ((replaced)::"varchar" = 'abc##########abcd'::"varchar")
+~~END~~
+
+SELECT * FROM babel_5144_t3 WHERE [charIndex] = 4;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_5144_t3 WHERE [charIndex] = 4
+Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
+  Index Cond: (charindex = 4)
+~~END~~
+
+SELECT * FROM babel_5144_t3 WHERE [patindex] = 4;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM babel_5144_t3 WHERE [patindex] = 4
+Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
+  Index Cond: (patindex = 4)
+~~END~~
+
 
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
@@ -212,10 +259,14 @@ GO
 SELECT * FROM babel_5144_v1
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#int#!#int#!#bigint#!#bigint
-abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4
-abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4
-abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4
-abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#bigint#!#bigint#!#int
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
 ~~END~~
 
