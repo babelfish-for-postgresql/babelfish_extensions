@@ -107,7 +107,7 @@ using GetTokenFunc = std::function <antlr4::tree::TerminalNode * (T)>;
 template <class T>
 using GetCtxFunc = std::function <ParserRuleContext * (T)>;
 
-void handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm);
+void handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm, const char *originalQuery);
 bool handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *body);
 
 PLtsql_stmt_block *makeEmptyBlockStmt(int lineno);
@@ -3057,12 +3057,12 @@ public:
 	    Assert(str.front() == '[' || str.front() == '"');
 	    Assert(str.back() == ']' || str.back() == '"');
 
-	    if(!(in_create_or_alter_procedure ==  true && str.front() == '[' && str.back() == ']'))
-	    {
-	        str.front() = ' ';
-	        str.back() = ' ';
-	        stream.setText(name->start->getStartIndex(), str.c_str());
-	    }
+	    // if(!(in_create_or_alter_procedure ==  true && str.front() == '[' && str.back() == ']'))
+	    // {
+	    //     str.front() = ' ';
+	    //     str.back() = ' ';
+	    //     stream.setText(name->start->getStartIndex(), str.c_str());
+	    // }
 	}
     }
 
@@ -3538,7 +3538,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			unsupportedFeatureHandler->setThrowError(true);
 			unsupportedFeatureHandler->visit(tree);
 		}
-
+		// std::string originalQuery = parser.getTokenStream()->getTokenSource()->getInputStream()->toString();
 		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
 		antlr4::tree::ParseTreeWalker firstPass;
 		firstPass.walk(mutator.get(), tree);
@@ -3551,7 +3551,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			 * and there should be exactly one batch_level_statement there
 			 */
 			auto ssm = std::make_unique<tsqlSelectStatementMutator>();
-			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get());
+			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get(),sourceText);
 
 			/* If PARSEONLY is enabled, replace with empty statement */
 			if (pltsql_parseonly)
@@ -3961,7 +3961,7 @@ get_start_token_of_batch_level_stmt_body(TSqlParser::Batch_level_statementContex
 }
 
 void
-handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm)
+handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm, const char *originalQuery)
 {
 	// batch-level statment can be inputted in SQL batch only (by inline_handler) or has empty body. getLineNo() will not be affected by uninitialized pltsql_curr_compile_body_lineno.
 	Assert(pltsql_curr_compile->fn_oid == InvalidOid || ctx->SEMI());
@@ -3984,7 +3984,18 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	result->body = list_make1(init);
 	// create PLtsql_stmt_execsql to wrap all query string
 	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
-	execsql->original_query = pstrdup((makeTsqlExpr(ctx, false))->query);
+	if(ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER())
+	{
+		int startIndex = ctx->create_or_alter_procedure()->ALTER()->getSymbol()->getStartIndex();
+		std::string result = originalQuery;
+		int endIndex = startIndex + 5;
+		result.replace(startIndex, endIndex - startIndex, "CREATE");
+		execsql->original_query = pstrdup(result.c_str());
+	}
+	else
+	{
+		execsql->original_query = pstrdup(originalQuery);
+	}
 
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	result->body = lappend(result->body, execsql);
