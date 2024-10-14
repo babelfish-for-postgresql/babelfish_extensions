@@ -3045,6 +3045,11 @@ public:
 
 	    Assert(str.front() == '[' || str.front() == '"');
 	    Assert(str.back() == ']' || str.back() == '"');
+
+		str.front() = ' ';
+	    str.back() = ' ';
+		
+	    stream.setText(name->start->getStartIndex(), str.c_str());
 	}
     }
 

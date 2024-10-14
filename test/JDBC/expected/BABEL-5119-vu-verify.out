@@ -169,6 +169,7 @@ GO
 ~~START~~
 varchar
 babel5119_v4
+babel5119_v4
 babel5119_v5
 babel5119_v6
 ~~END~~
@@ -194,6 +195,7 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#guest#!#BABEL5119_t4#!#BASE TABLE
 master#!#guest#!#BABEL5119_t5#!#BASE TABLE
 master#!#guest#!#BABEL5119_t6#!#BASE TABLE
+master#!#dbo#!#babel5119_v4#!#VIEW
 master#!#guest#!#babel5119_v4#!#VIEW
 master#!#guest#!#babel5119_v5#!#VIEW
 master#!#guest#!#babel5119_v6#!#VIEW
@@ -208,6 +210,7 @@ nvarchar#!#nvarchar
 BABEL5119_t4#!#a
 BABEL5119_t5#!#a
 BABEL5119_t6#!#a
+babel5119_v4#!#Column1
 babel5119_v4#!#?column?
 babel5119_v5#!#?column?
 babel5119_v6#!#?column?
@@ -219,6 +222,7 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
+babel5119_v4#!#CREATE VIEW BABEL5119_v4 AS SELECT 1 AS Column1<newline>
 babel5119_v4#!#CREATE VIEW BABEL5119_v4 AS SELECT 1<newline>
 babel5119_v5#!#CREATE VIEW BABEL5119_v5 AS SELECT 1<newline>
 babel5119_v6#!#CREATE VIEW BABEL5119_v6 AS SELECT 1<newline>
@@ -257,7 +261,7 @@ GO
 CREATE TABLE #babel5119_tmp_table_6(name VARCHAR(MAX))
 INSERT INTO #babel5119_tmp_table_6 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
-~~ROW COUNT: 6~~
+~~ROW COUNT: 7~~
 
 
 SELECT has_dbaccess(master.sys.databases.name) FROM master.sys.databases WHERE master.sys.databases.name='BABEL5119_db'

@@ -76,7 +76,7 @@ WHERE definition LIKE '%sys_sql_modules_vu_prepare_p1%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE PROC sys_sql_modules_vu_prepare_p1 AS<newline>SELECT 1#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE PROC sys_sql_modules_vu_prepare_p1 AS<newline>SELECT 1<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 

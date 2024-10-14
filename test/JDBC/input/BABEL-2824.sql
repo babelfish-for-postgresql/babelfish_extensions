@@ -5,8 +5,8 @@ CREATE TABLE [dbo].[smtableint](
     [c_id] [int] NOT NULL,
     [c_d_id] [tinyint] NOT NULL,
     [c_w_id] [int] NOT NULL,
-	[name1] [nvarchar](20),
-	[name2] [nvarchar](20)
+	[name1] [nvarchar(20)],
+	[name2] [nvarchar(25)]
 ) ON [PRIMARY]
 GO
 

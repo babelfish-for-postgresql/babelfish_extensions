@@ -106,6 +106,7 @@ GO
 ~~START~~
 nvarchar
 -- View<newline>CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2<newline>
+~~END~~
 
 
 -- Dependency Test

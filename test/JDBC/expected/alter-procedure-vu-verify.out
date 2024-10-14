@@ -101,7 +101,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-+alter_proc_p1#!#SQL#!#-- Test Case: Modify the procedure body, add a parameter, use "proc"<newline>--            instead of "procedure"<newline>       CREATE /* TEST COMMENT */ <newline>            PROC alter_proc_p1<newline>    @param INT<newline>AS<newline>    IF (@param = 1)<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END<newline>
+alter_proc_p1#!#SQL#!#-- Test Case: Modify the procedure body, add a parameter, use "proc"<newline>--            instead of "procedure"<newline>       CREATE /* TEST COMMENT */ <newline>            PROC alter_proc_p1<newline>    @param INT<newline>AS<newline>    IF (@param = 1)<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END<newline>
 ~~END~~
 
 

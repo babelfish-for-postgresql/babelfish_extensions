@@ -2527,7 +2527,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
 						/* Increase counter after bbf_func_ext modified in pltsql_store_func_default_positions*/
 						CommandCounterIncrement();
-						// bbf_func_ext_update_proc_definition(address.objectId);
 						pg_proc_update_oid_acl(address, oldoid, proacl);
 						if (!isSameProc) {
 						       /*
