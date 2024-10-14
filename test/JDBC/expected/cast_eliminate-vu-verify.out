@@ -6,8 +6,8 @@ GO
 ~~START~~
 text
 Query Text: SELECT 1 AS [C1] FROM cast_eliminate  WHERE (CAST(ROID AS BIGINT) = 1)
-Index Only Scan using cast_eliminate_pkey on cast_eliminate  (cost=0.15..8.17 rows=1 width=4)
-  Index Cond: (roid = 1)
+Seq Scan on cast_eliminate  (cost=0.00..48.25 rows=13 width=4)
+  Filter: ((roid)::bigint = 1)
 ~~END~~
 
 ~~START~~
@@ -21,8 +21,8 @@ GO
 ~~START~~
 text
 Query Text: SELECT 1 AS [C1] FROM cast_eliminate  WHERE (CAST(ROID AS int) = 1)
-Index Only Scan using cast_eliminate_pkey on cast_eliminate  (cost=0.15..8.17 rows=1 width=4)
-  Index Cond: (roid = 1)
+Seq Scan on cast_eliminate  (cost=0.00..48.25 rows=13 width=4)
+  Filter: ((roid)::bigint = 1)
 ~~END~~
 
 ~~START~~
@@ -36,8 +36,8 @@ GO
 ~~START~~
 text
 Query Text: SELECT 1 AS [C1] FROM cast_eliminate  WHERE (ROID = cast(1 as bigint))
-Index Only Scan using cast_eliminate_pkey on cast_eliminate  (cost=0.15..8.17 rows=1 width=4)
-  Index Cond: (roid = '1'::bigint)
+Seq Scan on cast_eliminate  (cost=0.00..48.25 rows=13 width=4)
+  Filter: ((roid)::bigint = 1)
 ~~END~~
 
 ~~START~~
@@ -51,8 +51,8 @@ GO
 ~~START~~
 text
 Query Text: SELECT 1 AS [C1] FROM cast_eliminate  WHERE (CAST(ROID AS BIGINT) = cast( 1 as bigint ))
-Index Only Scan using cast_eliminate_pkey on cast_eliminate  (cost=0.15..8.17 rows=1 width=4)
-  Index Cond: (roid = '1'::bigint)
+Seq Scan on cast_eliminate  (cost=0.00..48.25 rows=13 width=4)
+  Filter: ((roid)::bigint = 1)
 ~~END~~
 
 ~~START~~

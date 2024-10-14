@@ -16,7 +16,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_func_f1#!#SQL#!#CREATE function alter_func_f1() returns int begin return 2 end
+alter_func_f1#!#SQL#!#-- Test Case 1: Alter function body<newline>alter function alter_func_f1() returns int begin return 2 end<newline>
 ~~END~~
 
 
@@ -37,7 +37,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_func_f2#!#SQL#!#CREATE function alter_func_f2(@param2 varchar(10)) returns varchar(10) begin return @param2 end
+alter_func_f2#!#SQL#!#-- Test Case 2: Alter function parameters, body, and return type<newline>ALTER function alter_func_f2(@param2 varchar(10)) returns varchar(10) begin return @param2 end<newline>
 ~~END~~
 
 
@@ -96,7 +96,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_func_f2#!#SQL#!#CREATE function alter_func_f2(@param2 int) returns varchar(10) <newline>begin <newline>    if (@param2 = 1)<newline>    BEGIN<newline>        return @param2<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        return -1<newline>    END<newline>end
+alter_func_f2#!#SQL#!#-- Test Case 4: Alter parameter type and function body<newline>ALTER function alter_func_f2(@param2 int) returns varchar(10) <newline>begin <newline>    if (@param2 = 1)<newline>    BEGIN<newline>        return @param2<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        return -1<newline>    END<newline>end<newline>
 ~~END~~
 
 
@@ -167,7 +167,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_func_f2#!#SQL#!#CREATE function alter_func_f2(@param2 varchar(10)) returns varchar(10) begin return @param2 end
+alter_func_f2#!#SQL#!#ALTER function alter_func_f2(@param2 varchar(10)) returns varchar(10) begin return @param2 end<newline>
 ~~END~~
 
 

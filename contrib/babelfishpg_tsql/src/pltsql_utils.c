@@ -343,7 +343,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			address = CreateFunction(pstate, stmt);
 
 			/* Store function/procedure related metadata in babelfish catalog */
-			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location, with_recompile, -1);
+			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location, with_recompile);
 
 			if (tbltypStmt || restore_tsql_tabletype)
 			{

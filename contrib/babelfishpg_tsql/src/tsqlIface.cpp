@@ -2833,7 +2833,6 @@ public:
 	MyInputStream &stream; 
 	bool in_procedure_parameter = false;    
 	bool in_procedure_parameter_id = false;    
-	bool in_create_or_alter_procedure = false;
 
 	std::vector<int> double_quota_places;
 
@@ -2890,16 +2889,6 @@ public:
 		std::string result = Trees::getNodeText(t, this->ruleNames);
 		return result;
 	}
-
-	void enterCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
-	{
-                in_create_or_alter_procedure = true;
-        }
-
-        void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override 
-	{
-                in_create_or_alter_procedure = false; 
-        }
 
 	void enterComparison_operator(TSqlParser::Comparison_operatorContext *ctx) override
 	{
@@ -3056,13 +3045,6 @@ public:
 
 	    Assert(str.front() == '[' || str.front() == '"');
 	    Assert(str.back() == ']' || str.back() == '"');
-
-	    // if(!(in_create_or_alter_procedure ==  true && str.front() == '[' && str.back() == ']'))
-	    // {
-	    //     str.front() = ' ';
-	    //     str.back() = ' ';
-	    //     stream.setText(name->start->getStartIndex(), str.c_str());
-	    // }
 	}
     }
 
@@ -3538,7 +3520,6 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			unsupportedFeatureHandler->setThrowError(true);
 			unsupportedFeatureHandler->visit(tree);
 		}
-		// std::string originalQuery = parser.getTokenStream()->getTokenSource()->getInputStream()->toString();
 		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
 		antlr4::tree::ParseTreeWalker firstPass;
 		firstPass.walk(mutator.get(), tree);

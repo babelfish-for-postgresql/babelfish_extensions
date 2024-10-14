@@ -3438,7 +3438,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
  * Updates the existing catalog entry if it already exists.
  */
 void
-pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location, bool with_recompile, int alter_location)
+pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location, bool with_recompile)
 {
 	Relation	bbf_function_ext_rel;
 	TupleDesc	bbf_function_ext_rel_dsc;
@@ -3459,14 +3459,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	uint64		flag_values = 0,
 				flag_validity = 0;
 	char	   *original_query = get_original_query_string();
-	// StringInfoData infoSchemaStr;
-	// if(alter_location != -1)
-	// {
-	// 	original_query = (char *)queryString + alter_location;
-	// 	initStringInfo(&infoSchemaStr);
-	// 	appendStringInfoString(&infoSchemaStr, "CREATE");
-	// 	appendStringInfoString(&infoSchemaStr, original_query + 5);
-	// }
+
 	/* Disallow extended catalog lookup during restore */
 	if (babelfish_dump_restore)
 		return;
@@ -3592,9 +3585,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	 * Save the original query in the catalog.
 	 */
 	if (original_query)
-	{
 		new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(original_query);
-	}
 	else
 		new_record_nulls[Anum_bbf_function_ext_definition - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
