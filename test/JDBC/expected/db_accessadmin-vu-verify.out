@@ -105,7 +105,7 @@ GO
 REVOKE CONNECT FROM babel_5136_db_accessadmin_user
 GO
 
--- IS_ROLEMEMBER should show db_accessadmin as member of dbo but not of db_owner
+-- IS_ROLEMEMBER & IS_MEMBER should show db_accessadmin as member of dbo but not of db_owner
 SELECT IS_ROLEMEMBER('db_accessadmin')
 GO
 ~~START~~
@@ -121,6 +121,41 @@ int
 ~~END~~
 
 SELECT IS_ROLEMEMBER('db_accessadmin', 'db_owner')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_ROLEMEMBER('babel_5136_r1', 'dbo')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_MEMBER('db_accessadmin')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_MEMBER('dbo')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_MEMBER('db_owner')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_MEMBER('babel_5136_r1')
 GO
 ~~START~~
 int
