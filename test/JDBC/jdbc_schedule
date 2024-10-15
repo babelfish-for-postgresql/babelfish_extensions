@@ -446,4 +446,10 @@ ignore#!#sys-sql_modules_before_16_5-vu-cleanup
 ignore#!#sys-sql_modules-dep_before_16_5-vu-prepare
 ignore#!#sys-sql_modules-dep_before_16_5-vu-verify
 ignore#!#sys-sql_modules-dep_before_16_5-vu-cleanup
+ignore!#!babel-4475_before_16_5-vu-prepare
+ignore!#!babel-4475_before_16_5-vu-verify
+ignore!#!babel-4475_before_16_5-vu-cleanup
+ignore!#!BABEL-5119_before_16_5-vu-prepare
+ignore!#!BABEL-5119_before_16_5-vu-verify
+ignore!#!BABEL-5119_before_16_5-vu-cleanup
 

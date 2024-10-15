@@ -508,7 +508,7 @@ BABEL-4529
 sys_availability_groups
 sys_availability_replicas
 BABEL-730
-babel-4475
+babel-4475_before_16_5
 babel-4517
 BABEL-4815
 BABEL-4641
@@ -545,6 +545,6 @@ binary-datatype-operators
 SELECT_INTO_TEST
 cast-varchar-to-time
 xml_exist-before-16_5
-BABEL-5119
+BABEL-5119_before_16_5
 BABEL-CASE_EXPR
 
