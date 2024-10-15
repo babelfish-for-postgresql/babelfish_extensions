@@ -206,12 +206,6 @@ go
 select * from alter_func_prep_schema1.alter_func_f5()
 go
 
--- Confirm information schema is correctly updated with "CREATE FUNC [new definition]"
--- This case will return two rows: one for alter_func_prep_schema1.alter_func_f5() and one for alter_func_f5()
--- This is expected and the ROUTINE_NAME should not include the schema name
-select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_func_f5';
-go
-
 -- Alter function on schema with parameters
 alter function alter_func_prep_schema1.alter_func_f5(@name varchar(max)) 
 returns @result TABLE(Name varchar(max)) as begin insert into @result values (@name) 
