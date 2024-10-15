@@ -774,16 +774,13 @@ BEGIN
   select @a as a;
 END;
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: Function 'var_with_procedure' already exists with the same name)~~
-
 
 exec var_with_procedure 2.000;
 GO
-~~ERROR (Code: 8146)~~
-
-~~ERROR (Message: procedure var_with_procedure has no parameters and arguments were supplied.)~~
+~~START~~
+numeric
+100.4100
+~~END~~
 
 
 -- value of @out should remain 2.000
@@ -792,9 +789,10 @@ set @out = 2.000;
 exec var_with_procedure 2.000;
 select @out
 GO
-~~ERROR (Code: 8146)~~
-
-~~ERROR (Message: procedure var_with_procedure has no parameters and arguments were supplied.)~~
+~~START~~
+numeric
+100.4100
+~~END~~
 
 ~~START~~
 numeric
@@ -805,7 +803,7 @@ numeric
 drop procedure var_with_procedure;
 GO
 
-CREATE PROCEDURE var_with_procedure (@a numeric(10,4) OUTPUT, @b numeric(10,4) OUTPUT) AS
+CREATE PROCEDURE var_with_procedure_1 (@a numeric(10,4) OUTPUT, @b numeric(10,4) OUTPUT) AS
 BEGIN
   SET @a=100.41;
   SET @b=200.82;
@@ -813,7 +811,7 @@ BEGIN
 END;
 GO
 
-EXEC var_with_procedure 2.000, 3.000;
+EXEC var_with_procedure_1 2.000, 3.000;
 GO
 ~~START~~
 numeric
@@ -823,7 +821,7 @@ numeric
 
 -- value of @a should be 100
 DECLARE @a INT;
-EXEC var_with_procedure @a OUT, 3.000;
+EXEC var_with_procedure_1 @a OUT, 3.000;
 SELECT @a;
 GO
 ~~START~~
@@ -837,10 +835,10 @@ int
 ~~END~~
 
 
-drop procedure var_with_procedure;
+drop procedure var_with_procedure_1;
 GO
 
-CREATE PROCEDURE var_with_procedure
+CREATE PROCEDURE var_with_procedure_2
 AS
 BEGIN
   declare @a int
@@ -851,7 +849,10 @@ BEGIN
 END
 GO
 
-exec var_with_procedure
+exec var_with_procedure_2
+GO
+
+DROP PROCEDURE var_with_procedure_2
 GO
 
 -- insert testing with local variables

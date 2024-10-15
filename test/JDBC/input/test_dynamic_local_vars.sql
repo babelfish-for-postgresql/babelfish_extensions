@@ -449,7 +449,7 @@ GO
 drop procedure var_with_procedure;
 GO
 
-CREATE PROCEDURE var_with_procedure (@a numeric(10,4) OUTPUT, @b numeric(10,4) OUTPUT) AS
+CREATE PROCEDURE var_with_procedure_1 (@a numeric(10,4) OUTPUT, @b numeric(10,4) OUTPUT) AS
 BEGIN
   SET @a=100.41;
   SET @b=200.82;
@@ -457,19 +457,19 @@ BEGIN
 END;
 GO
 
-EXEC var_with_procedure 2.000, 3.000;
+EXEC var_with_procedure_1 2.000, 3.000;
 GO
 
 -- value of @a should be 100
 DECLARE @a INT;
-EXEC var_with_procedure @a OUT, 3.000;
+EXEC var_with_procedure_1 @a OUT, 3.000;
 SELECT @a;
 GO
 
-drop procedure var_with_procedure;
+drop procedure var_with_procedure_1;
 GO
 
-CREATE PROCEDURE var_with_procedure
+CREATE PROCEDURE var_with_procedure_2
 AS
 BEGIN
   declare @a int
@@ -480,7 +480,10 @@ BEGIN
 END
 GO
 
-exec var_with_procedure
+exec var_with_procedure_2
+GO
+
+DROP PROCEDURE var_with_procedure_2
 GO
 
 -- insert testing with local variables
