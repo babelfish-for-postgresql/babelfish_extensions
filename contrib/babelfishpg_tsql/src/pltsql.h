@@ -1981,6 +1981,10 @@ extern int	insert_bulk_kilobytes_per_batch;
 extern bool insert_bulk_keep_nulls;
 extern bool insert_bulk_check_constraints;
 
+/* FIXED DB PRINCIPALS */
+#define DB_DATAREADER "db_datareader"
+#define DB_DATAWRITER "db_datawriter"
+
 /**********************************************************************
  * Function declarations
  **********************************************************************/

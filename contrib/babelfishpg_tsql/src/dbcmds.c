@@ -1263,25 +1263,22 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 /*
  * Checks if a particular rolname exists in catalog sys.babelfish_authid_user_ext
  */
-static bool
+/*static bool
 entry_exists_in_bbf_auth_ext(const char *rolname)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
 	ScanKeyData	key;
 	SysScanDesc	scan;
-	NameData	*user_name;
 	bool		catalog_entry_exists = false;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 AccessShareLock);
 
-	user_name = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(user_name->data, NAMEDATALEN, "%s", rolname);
 	ScanKeyInit(&key,
 				Anum_bbf_authid_user_ext_rolname,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(user_name));
+				CStringGetDatum(rolname));
 
 	scan = systable_beginscan(bbf_authid_user_ext_rel,
 				get_authid_user_ext_idx_oid(),
@@ -1294,7 +1291,7 @@ entry_exists_in_bbf_auth_ext(const char *rolname)
 	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 	return catalog_entry_exists;
-}
+}*/
 
 /* Grant permissions on all the existing objects to db_datareader/db_datawriter. */
 static void
@@ -1302,11 +1299,13 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 				const char *db_datareader,
 				const char *db_datawriter)
 {
-    Relation    namespace_rel;
+	Relation    namespace_rel;
 	TupleDesc   namespace_rel_descr;
 	ScanKeyData key;
 	HeapTuple   tuple;
-	TableScanDesc   tblscan;
+	TableScanDesc	tblscan;
+	char		*dbname = get_db_name(dbid);
+	MigrationMode	baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 
 	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
 	namespace_rel_descr = RelationGetDescr(namespace_rel);
@@ -1325,7 +1324,6 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 		bool		isNull;
 		Datum		datum;
 		char		*schema_name;
-		char		*dbname = get_db_name(dbid);
 		StringInfoData	query;
 		List		*stmt_list;
 		Node		*stmts;
@@ -1333,7 +1331,6 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 		ListCell	*parsetree_item;
 		char		*schema_owner;
 		char		*dbo_user;
-		MigrationMode	baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 
 		datum = heap_getattr(tuple, Anum_namespace_ext_namespace, namespace_rel_descr, &isNull);
 		schema_name = NameStr(*DatumGetName(datum));
@@ -1341,37 +1338,25 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 		dbo_user = get_dbo_role_name_by_mode(dbname, baseline_mode);
 
 		initStringInfo(&query);
-		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
-		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
-		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
-		appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
+		appendStringInfo(&query, "GRANT SELECT ON ALL TABLES IN SCHEMA dummy TO dummy; ");
+		appendStringInfo(&query, "GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA dummy TO dummy; ");
 
 		/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
-		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
+		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
 
 		stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 		/* Replace dummy elements in parsetree with real values */
 		stmts = parsetree_nth_stmt(stmt_list, i++);
-		update_GrantStmt(stmts, schema_name, NULL, db_datareader, privilege_to_string(ACL_SELECT));
+		update_GrantStmt(stmts, schema_name, NULL, db_datareader, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);
-		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, privilege_to_string(ACL_INSERT));
-		stmts = parsetree_nth_stmt(stmt_list, i++);
-		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, privilege_to_string(ACL_UPDATE));
-		stmts = parsetree_nth_stmt(stmt_list, i++);
-		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, privilege_to_string(ACL_DELETE));
+		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, NULL);
 
 		stmts = parsetree_nth_stmt(stmt_list, i++);
-		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datareader, privilege_to_string(ACL_SELECT));
+		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datareader, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);
-		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_INSERT));
-		stmts = parsetree_nth_stmt(stmt_list, i++);
-		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_UPDATE));
-		stmts = parsetree_nth_stmt(stmt_list, i++);
-		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, privilege_to_string(ACL_DELETE));
+		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, NULL);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, stmt_list)
@@ -1389,7 +1374,7 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 
 			/* do this step */
 			ProcessUtility(wrapper,
-						"(CREATE DATABASE ROLES) ",
+						"(CREATE FIXED DATABASE ROLES) ",
 						false,
 						PROCESS_UTILITY_SUBCOMMAND,
 						NULL,
@@ -1397,29 +1382,31 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 						None_Receiver,
 						NULL);
 		}
+		pfree(schema_name);
+		pfree(schema_owner);
+		pfree(dbo_user);
 		tuple = heap_getnext(tblscan, ForwardScanDirection);
 	}
 
 	/* Cleanup. */
 	table_endscan(tblscan);
 	table_close(namespace_rel, RowExclusiveLock);
+	pfree(dbname);
 }
 
 static void
 create_db_roles_if_not_exists(const uint16 dbid,
 							const char *dbname)
 {
-	StringInfoData  query;
-	Oid     datdba;
-	const char		*prev_current_user;
-	uint16			old_dbid;
-	const char		*old_dbname;
+	StringInfoData		query;
 	const char		*db_datareader;
 	const char 		*db_datawriter;
 	ListCell		*parsetree_item;
 	List			*stmt_list;
 	Node			*stmts;
 	int			i=0;
+	Oid			save_userid;
+	int			save_sec_context;
 
 	/*
 	 * During upgrade, the migration mode is reset to single-db so we cannot
@@ -1452,9 +1439,6 @@ create_db_roles_if_not_exists(const uint16 dbid,
 		return;
 	}
 
-	datdba = get_role_oid("sysadmin", false);
-	check_can_set_role(GetSessionUserId(), datdba);
-
 	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
@@ -1462,22 +1446,19 @@ create_db_roles_if_not_exists(const uint16 dbid,
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 	Assert(list_length(stmt_list) == 2);
 
-	/* Set current user to session user for create permissions */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	bbf_set_current_user("sysadmin");
-
-	old_dbid = get_cur_db_id();
-	old_dbname = get_cur_db_name();
-	set_cur_db(dbid, dbname);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 
 	PG_TRY();
 	{
-		/* Replace dummy elements in parsetree with real values */
-    	stmts = parsetree_nth_stmt(stmt_list, i++);
-    	update_CreateRoleStmt(stmts, db_datareader, NULL, NULL);
+		SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-    	stmts = parsetree_nth_stmt(stmt_list, i++);
-    	update_CreateRoleStmt(stmts, db_datawriter, NULL, NULL);
+		/* Replace dummy elements in parsetree with real values */
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_CreateRoleStmt(stmts, db_datareader, NULL, NULL);
+
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_CreateRoleStmt(stmts, db_datawriter, NULL, NULL);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, stmt_list)
@@ -1495,7 +1476,7 @@ create_db_roles_if_not_exists(const uint16 dbid,
 
 			/* do this step */
 			ProcessUtility(wrapper,
-						"(CREATE DATABASE ROLES) ",
+						"(CREATE FIXED DATABASE ROLES) ",
 						false,
 						PROCESS_UTILITY_SUBCOMMAND,
 						NULL,
@@ -1509,20 +1490,18 @@ create_db_roles_if_not_exists(const uint16 dbid,
 		/* Grant permissions on all the schemas in a database to db_datareader/db_datawriter */
 		grant_perms_to_dbreader_dbwriter(dbid, db_datareader, db_datawriter);
 
-        /* Add entries to the catalog if not exists. */
-		if (!entry_exists_in_bbf_auth_ext(db_datareader))
-			add_to_bbf_authid_user_ext(db_datareader, "db_datareader", dbname, NULL, NULL, true, true, false);
-		if (!entry_exists_in_bbf_auth_ext(db_datawriter))
-			add_to_bbf_authid_user_ext(db_datawriter, "db_datawriter", dbname, NULL, NULL, true, true, false);
+		/* Add entries to the catalog if not exists. */
+		//if (!entry_exists_in_bbf_auth_ext(db_datareader))
+		add_to_bbf_authid_user_ext(db_datareader, DB_DATAREADER, dbname, NULL, NULL, true, true, false);
+		//if (!entry_exists_in_bbf_auth_ext(db_datawriter))
+		add_to_bbf_authid_user_ext(db_datawriter, DB_DATAWRITER, dbname, NULL, NULL, true, true, false);
 	}
 	PG_FINALLY();
 	{
-		bbf_set_current_user(prev_current_user);
-		set_cur_db(old_dbid, old_dbname);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		pfree(query.data);
 	}
 	PG_END_TRY();
-	bbf_set_current_user(prev_current_user);
-	set_cur_db(old_dbid, old_dbname);
 }
 
 /*
@@ -1581,11 +1560,6 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		}
 		table_endscan(scan);
 		table_close(sysdatabase_rel, RowExclusiveLock);
-
-		creating_extension = creating_extension_backup;
-		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_FINALLY();
 	{

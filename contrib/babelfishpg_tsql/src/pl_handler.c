@@ -2615,7 +2615,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_CreateRoleStmt:
 			{
-				if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0 && strcmp(queryString, "(CREATE DATABASE ROLES) ") != 0)
+				if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0 && strcmp(queryString, "(CREATE FIXED DATABASE ROLES) ") != 0)
 				{
 					CreateRoleStmt *stmt = (CreateRoleStmt *) parsetree;
 					List	   *login_options = NIL;
@@ -3704,7 +3704,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 			}
 		case T_GrantRoleStmt:
-			if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0 && strcmp(queryString, "(CREATE DATABASE ROLES) ") != 0)
+			if (sql_dialect == SQL_DIALECT_TSQL && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0 && strcmp(queryString, "(CREATE FIXED DATABASE ROLES) ") != 0)
 			{
 				GrantRoleStmt *grant_role = (GrantRoleStmt *) parsetree;
 				Oid 	save_userid;
@@ -4033,7 +4033,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				Assert(list_length(grant->objects) == 1);
 				if (grant->objtype == OBJECT_SCHEMA)
 						break;
-				else if (grant->objtype == OBJECT_TABLE && strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0 && strcmp(queryString, "(CREATE DATABASE ROLES) ") != 0)
+				else if (grant->objtype == OBJECT_TABLE && strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0 && strcmp(queryString, "(CREATE FIXED DATABASE ROLES) ") != 0)
 				{
 					/*
 					 * Ignore GRANT statements that are executed implicitly as a part of

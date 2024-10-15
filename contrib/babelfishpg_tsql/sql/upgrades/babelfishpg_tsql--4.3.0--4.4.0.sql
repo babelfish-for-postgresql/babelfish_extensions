@@ -10724,7 +10724,9 @@ GRANT EXECUTE ON PROCEDURE sys.sp_reset_connection() TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.babel_create_database_roles()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'create_database_roles_for_all_dbs';
+
 CALL sys.babel_create_database_roles();
+
 DROP PROCEDURE sys.babel_create_database_roles();
 
 -- After upgrade, always run analyze for all babelfish catalogs.
