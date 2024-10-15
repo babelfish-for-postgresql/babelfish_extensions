@@ -60,7 +60,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_proc'))
 GO
 ~~START~~
 nvarchar
--- Procedure<newline>CREATE PROC object_definition_proc<newline>AS<newline>SELECT 1;<newline>
+CREATE PROC object_definition_proc<newline>AS<newline>SELECT 1;
 ~~END~~
 
 
@@ -69,7 +69,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_fc1'))
 GO
 ~~START~~
 nvarchar
--- Scalar function<newline>CREATE FUNCTION object_definition_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;<newline>
+CREATE FUNCTION object_definition_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;
 ~~END~~
 
 
@@ -78,7 +78,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tr1'))
 GO
 ~~START~~
 nvarchar
--- DML trigger<newline>CREATE TRIGGER object_definition_tr1 ON object_definition_t1 INSTEAD OF INSERT<newline>AS<newline>BEGIN<newline>SELECT * FROM object_definition_t1;<newline>END<newline>
+CREATE TRIGGER object_definition_tr1 ON object_definition_t1 INSTEAD OF INSERT<newline>AS<newline>BEGIN<newline>SELECT * FROM object_definition_t1;<newline>END
 ~~END~~
 
 
@@ -87,7 +87,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_itvf'))
 GO
 ~~START~~
 nvarchar
--- Inline table-valued function<newline>CREATE FUNCTION object_definition_itvf()<newline>RETURNS table<newline>AS<newline>RETURN (SELECT 42 AS VALUE)<newline>
+CREATE FUNCTION object_definition_itvf()<newline>RETURNS table<newline>AS<newline>RETURN (SELECT 42 AS VALUE)
 ~~END~~
 
 
@@ -96,7 +96,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tvf'))
 GO
 ~~START~~
 nvarchar
--- Table-valued function<newline>CREATE FUNCTION object_definition_tvf()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;<newline>
+CREATE FUNCTION object_definition_tvf()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;
 ~~END~~
 
 
@@ -105,7 +105,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_sch.object_definition_v1')
 GO
 ~~START~~
 nvarchar
--- View<newline>CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2<newline>
+CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2
 ~~END~~
 
 
@@ -170,7 +170,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tvf'))
 GO
 ~~START~~
 nvarchar
--- Table-valued function<newline>CREATE FUNCTION object_definition_tvf()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;<newline>
+CREATE FUNCTION object_definition_tvf()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;
 ~~END~~
 
 
@@ -178,7 +178,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_sch.object_definition_v1')
 GO
 ~~START~~
 nvarchar
--- View<newline>CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2<newline>
+CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2
 ~~END~~
 
 
