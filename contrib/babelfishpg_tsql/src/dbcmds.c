@@ -1386,11 +1386,14 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
 			Datum 	datum;
-			bool 	is_null;
+			bool 	isnull;
 			char 	*db_name;
 
 			datum = heap_getattr(tuple, Anum_sysdatabases_name,
-											sysdatabase_rel->rd_att, &is_null);
+											sysdatabase_rel->rd_att, &isnull);
+
+			Assert(!isnull);
+
 			db_name = TextDatumGetCString(datum);
 
 			create_db_roles_if_not_exists(db_name, parsetree_list);

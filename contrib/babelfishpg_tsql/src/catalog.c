@@ -912,10 +912,7 @@ get_authid_user_ext_idx_oid(void)
 	return bbf_authid_user_ext_idx_oid;
 }
 
-/*
- * Returns palloc'd original name given the physical name of the db principal
- * Looks only in current bbf db when current_db_only is set to true
- */
+/* Returns palloc'd original name given the physical name of the db principal */
 char *
 get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name)
 {
@@ -924,6 +921,7 @@ get_authid_user_ext_original_name(const char *physical_role_name, const char *db
 	HeapTuple	tuple;
 
 	Assert(physical_role_name && strlen(physical_role_name) != 0);
+	Assert(db_name && strlen(db_name) != 0);
 
 	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(physical_role_name));
 
@@ -942,12 +940,10 @@ get_authid_user_ext_original_name(const char *physical_role_name, const char *db
 			datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
 									Anum_bbf_authid_user_ext_orig_username, &isnull);
 			Assert(!isnull);
-
 			orig_username = TextDatumGetCString(datum);
 		}
 
 		pfree(db_name_cstring);
-
 		ReleaseSysCache(tuple);
 	}
 
@@ -1005,9 +1001,8 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 			(has_privs_of_role(get_role_oid(login, false), get_db_accessadmin_oid(db_name, false))))
 		{
 			datum = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_rolname,
-							 RelationGetDescr(bbf_authid_user_ext_rel), &isnull);
+								 RelationGetDescr(bbf_authid_user_ext_rel), &isnull);
 			Assert(!isnull);
-
 			user_name = pstrdup(DatumGetCString(datum));
 		}
 	}
