@@ -1382,16 +1382,16 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 						None_Receiver,
 						NULL);
 		}
-		pfree(schema_name);
-		pfree(schema_owner);
-		pfree(dbo_user);
+		//pfree(schema_name);
+		//pfree(schema_owner);
+		//pfree(dbo_user);
 		tuple = heap_getnext(tblscan, ForwardScanDirection);
 	}
 
 	/* Cleanup. */
 	table_endscan(tblscan);
 	table_close(namespace_rel, RowExclusiveLock);
-	pfree(dbname);
+	//pfree(dbname);
 }
 
 static void
