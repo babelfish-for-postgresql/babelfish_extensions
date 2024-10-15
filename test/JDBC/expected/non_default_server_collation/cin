@@ -109,7 +109,7 @@ SELECT '|' + RIGHT(@inputString, 13) + '|'
 GO
 ~~START~~
 varchar
-|·???         |
+|比尔·拉莫斯   |
 ~~END~~
 
 
@@ -118,7 +118,7 @@ SELECT '|' + RIGHT(@inputString, 13) COLLATE CHINESE_PRC_CI_AS + '|'
 GO
 ~~START~~
 varchar
-|·???         |
+|比尔·拉莫斯   |
 ~~END~~
 
 
@@ -146,7 +146,7 @@ SELECT RIGHT(@inputString, 4)
 GO
 ~~START~~
 varchar
-·???
+·拉莫斯
 ~~END~~
 
 
@@ -285,7 +285,7 @@ SELECT '|' + RIGHT(@inputString, 13) + '|'
 GO
 ~~START~~
 nvarchar
-|·???         |
+|比尔·拉莫斯   |
 ~~END~~
 
 
@@ -360,8 +360,8 @@ efgh
 SELECT * FROM babel_4489_right_dep_view
 GO
 ~~START~~
-text
-ghi??
+nvarchar
+ghi🙂🙂
 ~~END~~
 
 
@@ -384,16 +384,16 @@ ghi🙂🙂
 SELECT * FROM babel_4489_right_itvf_func()
 GO
 ~~START~~
-text
-ghi??
+nvarchar
+ghi🙂🙂
 ~~END~~
 
 
 SELECT * FROM babel_4489_right_dep_view_1
 GO
 ~~START~~
-text
-??   
+nvarchar
+🙂🙂   
      
 ~~END~~
 
@@ -401,15 +401,15 @@ text
 SELECT * FROM babel_4489_right_dep_view_2
 GO
 ~~START~~
-text
-ghi??
+nvarchar
+ghi🙂🙂
 ~~END~~
 
 
 SELECT * FROM babel_4489_right_dep_view_3
 GO
 ~~START~~
-text
+varchar
      
 ~~END~~
 
@@ -417,7 +417,7 @@ text
 SELECT * FROM babel_4489_right_dep_view_4
 GO
 ~~START~~
-text
+varchar
 i    
 ~~END~~
 
@@ -425,15 +425,15 @@ i
 SELECT * FROM babel_4489_right_dep_view_5
 GO
 ~~START~~
-text
-42020
+varchar
+bcd  
 ~~END~~
 
 
 SELECT * FROM babel_4489_right_dep_view_6
 GO
 ~~START~~
-text
+varchar
 ghi??
 ~~END~~
 
@@ -441,8 +441,8 @@ ghi??
 SELECT * FROM babel_4489_right_dep_view_7
 GO
 ~~START~~
-text
-ghi??
+nvarchar
+ghi🙂🙂
 ~~END~~
 
 
