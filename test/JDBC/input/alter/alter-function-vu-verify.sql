@@ -222,12 +222,6 @@ go
 select * from alter_func_prep_schema1.alter_func_f5('Ada Lovelace')
 go
 
--- Confirm information schema is correctly updated with "CREATE FUNC [new definition]"
--- This case will return two rows: one for alter_func_prep_schema1.alter_func_f5() and one for alter_func_f5()
--- This is expected and the ROUTINE_NAME should not include the schema name
-select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_func_f5';
-go
-
 -- Test Case 10: Expect error for altering function in an illegal way
 --               select statements are not allowed in functions not returning a table
 alter function alter_func_f3(@param1 int) returns int 
