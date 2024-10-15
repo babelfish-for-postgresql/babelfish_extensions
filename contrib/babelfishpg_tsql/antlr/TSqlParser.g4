@@ -3808,6 +3808,7 @@ function_call
     | aggregate_windowed_function                      
     | analytic_windowed_function                       
     | spatial_proc_name_server_database_schema LR_BRACKET function_arg_list? RR_BRACKET 
+    | xml_proc_name_table_column LR_BRACKET expression_list? RR_BRACKET
     | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
     | built_in_functions                               
     | freetext_function                                
@@ -3938,43 +3939,15 @@ spatial_coloncolon_methods
     : data_type colon_colon function_call
     ;
 
-// this is no longer used:
-xml_data_type_methods
-    : xml_value_method
-    | xml_query_method
-    | xml_exist_method
-    | xml_modify_method
-    ;
-
 xml_methods
-    : xml_value_call
-    | xml_query_call
-    | xml_exist_call
-    | xml_modify_call
+    : xml_func_arg LR_BRACKET expression_list? RR_BRACKET
     ;
 
-xml_value_method
-    : (loc_id=LOCAL_ID | value_id=id | eventdata=EVENTDATA LR_BRACKET RR_BRACKET | query=xml_query_method | subquery)  DOT call=xml_value_call
-    ;
-
-xml_value_call
-    :  VALUE LR_BRACKET xquery=char_string COMMA sqltype=char_string RR_BRACKET
-    ;
-
-xml_query_method
-    : (loc_id=LOCAL_ID | value_id=id | table=full_object_name | subquery) DOT call=xml_query_call
-    ;
-
-xml_query_call
-    : QUERY LR_BRACKET xquery=char_string RR_BRACKET
-    ;
-
-xml_exist_method
-    : (loc_id=LOCAL_ID | value_id=id | subquery) DOT call=xml_exist_call
-    ;
-
-xml_exist_call
-    : EXIST LR_BRACKET xquery=char_string RR_BRACKET
+xml_func_arg
+    : EXIST
+    | VALUE
+    | QUERY
+    | MODIFY
     ;
 
 xml_modify_method
@@ -4416,6 +4389,7 @@ keyword
     | COMPRESSION
     | CONCAT
     | CONCAT_NULL_YIELDS_NULL
+    | CONCAT_WS
     | CONFIGURATION
     | CONNECT
     | CONNECTION
@@ -5218,6 +5192,10 @@ func_proc_name_database_schema
 
 spatial_proc_name_server_database_schema
     : ((schema=id? DOT)? table=id? DOT)? column=id DOT ( geospatial_func_no_arg | geospatial_func_arg )
+    ;
+
+xml_proc_name_table_column
+    : (table=id? DOT)? column=id DOT xml_func_arg
     ;
 
 func_proc_name_server_database_schema

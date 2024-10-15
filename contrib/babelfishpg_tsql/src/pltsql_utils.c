@@ -2,6 +2,7 @@
 #include "varatt.h"
 
 #include "catalog/namespace.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_trigger.h"
@@ -28,6 +29,7 @@
 #include "tcop/utility.h"
 
 #include "multidb.h"
+#include "session.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -46,7 +48,7 @@ extern bool babelfish_dump_restore;
 extern char *get_cur_db_name(void);
 extern char *construct_unique_index_name(char *index_name, char *relation_name); 
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
-extern const char *get_dbo_schema_name(const char *dbname);
+extern char *get_dbo_schema_name(const char *dbname);
 PG_FUNCTION_INFO_V1(split_identifier_internal);
 
 /* To cache oid of sys.varchar */
@@ -1111,8 +1113,8 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	}
 }
 
-static void
-update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv)
+void
+update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1, const char *role2, const char *grantee, const char *priv)
 {
 	AlterDefaultPrivilegesStmt *stmt = (AlterDefaultPrivilegesStmt *) n;
 	ListCell *lc;
@@ -1127,11 +1129,16 @@ update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grant
 
 	foreach(lc, stmt->options)
 	{
-		if (object)
+		DefElem    *defel = (DefElem *) lfirst(lc);
+
+		if (schema && defel->arg && strcmp(defel->defname, "schemas") == 0)
 		{
-			DefElem *tmp = (DefElem *) lfirst(lc);
-			tmp->defname = pstrdup("schemas");
-			tmp->arg = (Node *)list_make1(makeString((char *)object));
+			defel->arg = (Node *)list_make1(makeString((char *)schema));
+		}
+
+		else if (role1 && role2 && defel->arg && strcmp(defel->defname, "roles") == 0)
+		{
+			defel->arg = (Node *)list_make2(makeString((char *)role1), makeString((char *)role2));
 		}
 	}
 }
@@ -2230,13 +2237,30 @@ exec_alter_role_cmd(char *query_str, RoleSpec *role)
  * Helper function to generate GRANT on SCHEMA subcommands.
  */
 static List
-*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
+*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema)
 {
 	StringInfoData query;
 	List	   *stmt_list;
 	Node	   *stmt;
 	int			expected_stmts = 2;
 	int			i = 0;
+	bool		owner_other_than_dbo = false;
+	char 		*dbname = get_cur_db_name();
+	const char	*dbo_role = get_dbo_role_name(dbname);
+	const char	*db_owner_role = get_db_owner_name(dbname);
+	const char	*schema_owner = GetUserNameFromId(get_owner_of_schema(schema), false);
+
+	/*
+	 * Don't need multiple ALTER DEFAULT PRIVILEGE statements, if:
+	 * 1. It's a part of CREATE SCHEMA statement
+	 * 2. If the schema owner is dbo
+	 * 3. If the schema owner is db_owner (dbo_schema owner is a db_owner)
+	 */
+	if (!is_create_schema && (strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0))
+	{
+		owner_other_than_dbo = true;
+	}
+
 	initStringInfo(&query);
 	if (is_grant)
 	{
@@ -2259,7 +2283,14 @@ static List
 				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
 			else
 				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+			
+			if (owner_other_than_dbo)
+			{
+				/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
+				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+			}
+			else
+				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
 		}
 	}
 	else
@@ -2272,7 +2303,13 @@ static List
 		else
 		{
 			appendStringInfo(&query, "REVOKE dummy ON ALL TABLES IN SCHEMA dummy FROM dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
+			if (owner_other_than_dbo)
+			{
+				/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
+				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
+			}
+			else
+				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
 		}
 	}
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
@@ -2289,7 +2326,16 @@ static List
 	if (privilege == ACL_EXECUTE)
 		update_GrantStmt(stmt, schema, NULL, rolname, privilege_to_string(privilege));
 	else
-		update_AlterDefaultPrivilegesStmt(stmt, schema, rolname, privilege_to_string(privilege));
+	{
+		if (owner_other_than_dbo)
+		{
+			update_AlterDefaultPrivilegesStmt(stmt, schema, dbo_role, schema_owner, rolname, privilege_to_string(privilege));
+		}
+		else
+		{
+			update_AlterDefaultPrivilegesStmt(stmt, schema, NULL, NULL, rolname, privilege_to_string(privilege));
+		}
+	}
 
 	pfree(query.data);
 	return stmt_list;
@@ -2301,36 +2347,56 @@ static List
  * inputs are sanitized to prevent unexpected behaviour.
  */
 void
-exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
+exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema)
 {
 	List		*parsetree_list;
 	ListCell	*parsetree_item;
+	const char *dbo_role;
+	const char *dbname = get_cur_db_name();
+	Oid 			save_userid;
+	int 			save_sec_context;
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+	dbo_role = get_dbo_role_name_by_mode(dbname, baseline_mode);
 
-	parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege);
-	/* Run all subcommands */
-	foreach(parsetree_item, parsetree_list)
+	/* Need dbo user to execute the statements. */
+	PG_TRY();
 	{
-		Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-		PlannedStmt *wrapper;
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(get_role_oid(dbo_role, true),
+					save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege, is_create_schema);
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
 
-		/* need to make a wrapper PlannedStmt */
-		wrapper = makeNode(PlannedStmt);
-		wrapper->commandType = CMD_UTILITY;
-		wrapper->canSetTag = false;
-		wrapper->utilityStmt = stmt;
-		wrapper->stmt_location = 0;
-		wrapper->stmt_len = 0;
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 0;
 
-		/* do this step */
-		ProcessUtility(wrapper,
-					"(GRANT SCHEMA )",
-					false,
-					PROCESS_UTILITY_SUBCOMMAND,
-					NULL,
-					NULL,
-					None_Receiver,
-					NULL);
+			/* do this step */
+			ProcessUtility(wrapper,
+						"(GRANT SCHEMA )",
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+		}
 	}
+	PG_CATCH();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 AclMode
@@ -2400,4 +2466,28 @@ make_rolespec_node(const char *rolename)
 	n->rolename = pstrdup(rolename);
 
 	return n;
+}
+
+/* 
+ * Returns the oid of schema owner.
+ */
+Oid
+get_owner_of_schema(const char *schema)
+{
+	HeapTuple	tup;
+	Form_pg_namespace nspform;
+	Oid result;
+
+	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(schema));
+
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", schema)));
+
+	nspform = (Form_pg_namespace) GETSTRUCT(tup);
+	result = ((Oid) nspform->nspowner);
+	ReleaseSysCache(tup);
+
+	return result;
 }

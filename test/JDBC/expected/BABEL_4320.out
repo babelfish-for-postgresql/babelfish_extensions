@@ -86,7 +86,7 @@ CASE
 END
 GO
 ~~START~~
-text
+varchar
 TABLE DOES NOT EXIST
 ~~END~~
 
@@ -97,7 +97,7 @@ SELECT CASE
 END;
 GO
 ~~START~~
-text
+varchar
 TABLE EXISTS
 ~~END~~
 

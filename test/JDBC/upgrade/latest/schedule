@@ -188,6 +188,7 @@ BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_TABLES
 SP_TABLES-dep
+SP_TABLES-cross-db
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
@@ -496,6 +497,7 @@ set_tran_isolvl
 with_recompile
 alter_proc_recompile
 catalogs_dbo_sys_schema-upgrade
+unary_plus_op_string
 BABEL-4217
 Test_ISNULL
 BABEL-4270
@@ -562,6 +564,8 @@ string_agg_within
 reverse
 string_agg
 getdate
+concat
+concat_ws
 sys_sequences
 replicate
 space
@@ -569,7 +573,9 @@ SELECT_INTO_TEST
 binary-datatype-operators
 sys_dm_os_sys_info
 cast-varchar-to-time
+xml_exist
 test_db_collation
 BABEL-5119
 BABEL-5129
+BABEL-CASE_EXPR
 

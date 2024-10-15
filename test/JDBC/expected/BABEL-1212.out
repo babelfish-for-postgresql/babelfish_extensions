@@ -3,21 +3,21 @@ go
 select (case when OBJECT_ID('#tt') IS NOT NULL then 'true' else 'false' end) result;
 go
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
 select (case when OBJECT_ID('tempdb..#tt') IS NOT NULL then 'true' else 'false' end) result;
 go
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
 select (case when OBJECT_ID('tempdb..#tt2') IS NULL then 'true' else 'false' end) result;
 go
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
