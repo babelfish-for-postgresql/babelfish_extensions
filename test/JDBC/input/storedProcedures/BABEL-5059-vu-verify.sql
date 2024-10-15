@@ -1,3 +1,4 @@
+-- Procedure
 -- nvarchar
 Declare @a nvarchar; Declare @b nvarchar; SET @a = 'abc' ; EXEC babel_5059_proc_test_1 @a = @a , @b = @b OUT ;
 GO
@@ -127,6 +128,7 @@ GO
 
 Declare @a char(8000); Declare @b char(8000); SET @a = 'SELECT * FROM sys.databases' ; EXEC babel_5059_proc_test_30 @a = @a , @b = @b OUT ;
 GO
+
 Declare @a char(8000); Declare @b char(8000); SET @a = Replicate('A',9340); EXEC babel_5059_proc_test_30 @a = @a , @b = @b OUT ;
 GO
 
@@ -135,6 +137,9 @@ Declare @a smalldatetime; Declare @b varchar; SET @a = '2024-09-01 10:00' ; SET 
 GO
 
 Declare @a varchar(max); Declare @b varchar; SET @a = Replicate('A',9340);EXEC babel_5059_proc_test_main2 @a = @a , @b = @b OUT ;
+GO
+
+DECLARE @Statement nvarchar(max) EXEC babel_5059_proc_test_main3 @Statement OUTPUT
 GO
 
 -- UDT testing
@@ -210,4 +215,258 @@ SET @b = 'abc' EXEC babel_5059_proc_test_19_udt @a = @a , @b = @b OUT ;
 GO
 
 Declare @a babel_5059_vchar_max; Declare @b babel_5059_vchar; SET @a = Replicate('A',9340);EXEC babel_5059_proc_test_20_udt @a = @a , @b = @b OUT ;
+GO
+
+-- Function
+-- NVARCHAR
+SELECT babel_5059_f1(N'Nvchar Value');
+GO
+
+SELECT babel_5059_f2(N'Nvchar max value');
+GO
+
+SELECT babel_5059_f2(N'Nv😆cha王小明r hello');
+GO
+
+DECLARE @inputString NVARCHAR(20) = N' abc约翰defgh'
+SELECT babel_5059_f3(@inputString);
+GO
+
+-- VARCHAR
+SELECT babel_5059_f4('Varchar Value');
+GO
+
+SELECT babel_5059_f5('Varchar Max Value');
+GO
+
+SELECT babel_5059_f6('Varchar Limited');
+GO
+
+-- VARBINARY
+SELECT babel_5059_f7(CONVERT(VARBINARY, '0x121'));
+GO
+
+SELECT babel_5059_f8(CAST('Varbinary Max Value' AS VARBINARY(MAX)));
+GO
+
+SELECT babel_5059_f8(CONVERT(varbinary(max), Replicate('A',8000)));
+GO
+
+SELECT babel_5059_f9(CAST('Varbinary Limited' AS VARBINARY(20)));
+GO
+
+-- NCHAR
+SELECT babel_5059_f10(N'N');
+GO
+
+SELECT babel_5059_f10(N'约翰hello');
+GO
+
+SELECT babel_5059_f11(N'约翰helloworld123');
+GO
+
+-- CHAR
+SELECT babel_5059_f12('C');
+GO
+
+SELECT babel_5059_f13('helloworld');
+GO
+
+-- BINARY
+SELECT babel_5059_f14(CAST('Binary' AS BINARY));
+GO
+
+SELECT babel_5059_f14(0x01);
+GO
+
+SELECT babel_5059_f15(CAST('Binary Limited' AS BINARY(10)));
+GO
+
+SELECT babel_5059_f15(0x5465737442696E);
+GO
+
+-- SMALLDATETIME
+SELECT babel_5059_f16(CAST('2024-10-10 12:34:00' AS SMALLDATETIME));
+GO
+
+SELECT babel_5059_f16('2024-09-01 10:40:10.5453');
+GO
+
+-- DECIMAL
+SELECT babel_5059_f17(12345.6789);
+GO
+
+SELECT babel_5059_f18(12345678901234567890.123456789012345678);
+GO
+
+-- combination 
+-- VARCHAR, VARCHAR(20) -> VARCHAR
+SELECT babel_5059_f19('Hello', 'World');
+GO
+
+-- VARCHAR(MAX), VARCHAR(20) -> VARCHAR(MAX)
+SELECT babel_5059_f20('This is a long string', 'Short');
+GO
+
+-- VARCHAR, VARCHAR(MAX) -> VARCHAR(20)
+SELECT babel_5059_f21('Short String', 'This is a long string but it will be truncated to fit within the limit');
+GO
+
+-- VARCHAR(20), VARCHAR(20) -> VARCHAR(MAX)
+SELECT babel_5059_f22('FirstPart', 'SecondPart');
+GO
+
+-- VARCHAR(MAX), VARCHAR -> VARCHAR(20)
+SELECT babel_5059_f23('A very long string to test truncation', 'Short');
+GO
+
+-- VARBINARY(MAX) -> VARCHAR(MAX)
+SELECT babel_5059_f24(CAST('BinaryData' AS VARBINARY(MAX)));
+GO
+
+-- NCHAR(20) -> VARCHAR
+SELECT babel_5059_f25(N'Unicode Test');
+GO
+
+-- DECIMAL(10,2) -> VARCHAR(20)
+SELECT babel_5059_f26(12345.67);
+GO
+
+-- SMALLDATETIME -> VARCHAR
+SELECT babel_5059_f27(CAST('2024-10-14 15:30:00' AS SMALLDATETIME));
+GO
+
+-- VARBINARY(MAX), VARCHAR(MAX) -> VARCHAR(MAX)
+SELECT babel_5059_f28(CAST('BinaryData' AS VARBINARY(MAX)), 'TextData');
+GO
+
+-- VARCHAR(20), VARCHAR(MAX) -> NCHAR(20)
+SELECT babel_5059_f29('First Part', 'This is a longer part');
+GO
+
+-- VARCHAR, VARCHAR -> DECIMAL(10,2)
+SELECT babel_5059_f30('100.50', '200.75');
+GO
+
+-- VARBINARY(20) -> VARCHAR(MAX)
+SELECT babel_5059_f31(CAST('BinaryData' AS VARBINARY(20)));
+GO
+
+-- VARCHAR, CHAR(10) -> CHAR(10)
+SELECT babel_5059_f32('Input', 'FixedWidth');
+GO
+
+-- BINARY(20) -> CHAR(10)
+SELECT babel_5059_f33(CAST('BinaryInput' AS BINARY(20)));
+GO
+
+-- UDT
+-- VARCHAR types as input, VARCHAR(MAX) as output
+DECLARE @result1 babel_5059_vchar_max;
+EXEC @result1 = babel_5059_udt_f1 'varchar_test', 'vc', 'varchar_max_test';
+SELECT @result1 AS Result1;
+GO
+
+-- NVARCHAR types as input, NVARCHAR(MAX) as output
+DECLARE @result2 babel_5059_nv_max;
+EXEC @result2 = babel_5059_udt_f2 N'nvarchar_test', N'nv', N'nvarchar_max_test';
+SELECT @result2 AS Result2;
+GO
+
+-- VARBINARY types as input, VARBINARY(MAX) as output
+DECLARE @result3 babel_5059_varbinary_max;
+EXEC @result3 = babel_5059_udt_f3 0x1234, 0x56, 0x7890ABCD;
+SELECT @result3 AS Result3;
+GO
+
+-- NCHAR as input, NCHAR as output
+DECLARE @result4 babel_5059_nchar;
+EXEC @result4 = babel_5059_udt_f4 N'nc', N'xy';
+SELECT @result4 AS Result4;
+GO
+
+-- SMALLDATETIME as input, SMALLDATETIME as output
+DECLARE @result5 babel_5059_smalldatetime;
+EXEC @result5 = babel_5059_udt_f5 '2024-10-14T15:30:00';
+SELECT @result5 AS Result5;
+GO
+
+-- DECIMAL types as input, DECIMAL(10,2) as output
+DECLARE @result6 babel_5059_decimal_10_2;
+EXEC @result6 = babel_5059_udt_f6 12345.67, 9876.54;
+SELECT @result6 AS Result6;
+GO
+
+-- BINARY types as input, BINARY as output
+DECLARE @result7 babel_5059_binary;
+EXEC @result7 = babel_5059_udt_f7 0x12, 0x34;
+SELECT @result7 AS Result7;
+GO
+
+-- CHAR types as input, CHAR(2) as output
+DECLARE @result8 babel_5059_char_2;
+EXEC @result8 = babel_5059_udt_f8 'a', 'b';
+SELECT @result8 AS Result8;
+GO
+
+-- Mixed input types, VARBINARY(MAX) as output
+DECLARE @result9 babel_5059_varbinary_max;
+EXEC @result9 = babel_5059_udt_f9 'varchar_test', N'nchar_test', 0x123456;
+SELECT @result9 AS Result9;
+GO
+
+-- Mixed input types, DECIMAL(10,2) as output
+DECLARE @result10 babel_5059_decimal_10_2;
+EXEC @result10 = babel_5059_udt_f10 'varchar_test', N'nvarchar_test', 12345.67;
+SELECT @result10 AS Result10;
+GO
+
+-- Mixed input types, VARCHAR(MAX) as output
+DECLARE @result11 babel_5059_vchar_max;
+EXEC @result11 = babel_5059_udt_f11 0x1234, 'varchar_max_test';
+SELECT @result11 AS Result11;
+GO
+
+-- Mixed input types, NVARCHAR(MAX) as output
+DECLARE @result12 babel_5059_nv_max;
+EXEC @result12 = babel_5059_udt_f12 0x12, N'nvarchar_max_test';
+SELECT @result12 AS Result12;
+GO
+
+-- Mixed input types, CHAR as output
+DECLARE @result13 babel_5059_char;
+EXEC @result13 = babel_5059_udt_f13 12345.67, 'ch';
+SELECT @result13 AS Result13;
+GO
+
+DECLARE @result1 babel_5059_vchar_max; 
+EXEC @result1 = babel_5059_udt_f14 'varchar_test', 'vc', 'varchar_max_test';
+SELECT @result1 AS Result1;
+GO
+
+DECLARE @result1 babel_5059_vchar_max; 
+EXEC @result1 = babel_5059_udt_f15 'varchar_test', 'vc', 'varchar_max_test'; 
+SELECT @result1 AS Result1;
+GO
+
+DECLARE @result1 babel_5059_vchar; 
+EXEC @result1 = babel_5059_udt_f16 'varchar_test', 'vc', 'varchar_max_test'; 
+SELECT @result1 AS Result1;
+GO
+
+-- ITVF 
+SELECT babel_5059_itvf_func1()
+GO
+
+SELECT babel_5059_itvf_func2()
+GO
+
+SELECT babel_5059_vu_prepare_f3()
+GO
+
+-- MSTVF
+select * from babel_5059_vu_prepare_mstvf_1()
+GO
+
+select * from babel_5059_vu_prepare_mstvf_2(5)
 GO
