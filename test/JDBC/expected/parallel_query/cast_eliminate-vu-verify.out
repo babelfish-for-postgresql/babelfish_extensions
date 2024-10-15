@@ -143,3 +143,391 @@ text
 Babelfish T-SQL Batch Parsing Time: 0.206 ms
 ~~END~~
 
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE (CAST(ROID AS BIGINT) = 1) OR (CAST(ROID AS BIGINT) = 2)
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE (CAST(ROID AS BIGINT) = 1) OR (CAST(ROID AS BIGINT) = 2)
+Gather  (cost=8.32..13.67 rows=2 width=4)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on cast_eliminate  (cost=8.32..13.67 rows=2 width=4)
+        Recheck Cond: ((roid = 1) OR (roid = 2))
+        ->  BitmapOr  (cost=8.32..8.32 rows=2 width=0)
+              ->  Bitmap Index Scan on cast_eliminate_pkey  (cost=0.00..4.16 rows=1 width=0)
+                    Index Cond: (roid = 1)
+              ->  Bitmap Index Scan on cast_eliminate_pkey  (cost=0.00..4.16 rows=1 width=0)
+                    Index Cond: (roid = 2)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.534 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE (CAST(ROID AS BIGINT) = 1) AND (CAST(s_int AS BIGINT) = 2)
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE (CAST(ROID AS BIGINT) = 1) AND (CAST(s_int AS BIGINT) = 2)
+Gather  (cost=0.15..8.17 rows=1 width=4)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using cast_eliminate_pkey on cast_eliminate  (cost=0.15..8.17 rows=1 width=4)
+        Index Cond: (roid = 1)
+        Filter: (s_int = 2)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.416 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE 1 = (CAST(ROID AS BIGINT))
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE 1 = (CAST(ROID AS BIGINT))
+Gather  (cost=0.15..8.17 rows=1 width=4)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using cast_eliminate_pkey on cast_eliminate  (cost=0.15..8.17 rows=1 width=4)
+        Index Cond: (roid = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 23.849 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(ROID AS BIGINT) as INT) = 1
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(ROID AS BIGINT) as INT) = 1
+Gather  (cost=0.15..8.17 rows=1 width=4)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Only Scan using cast_eliminate_pkey on cast_eliminate  (cost=0.15..8.17 rows=1 width=4)
+        Index Cond: (roid = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 31.807 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(s_int AS INT) = 1
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(s_int AS INT) = 1
+Gather  (cost=0.00..17.82 rows=10 width=4)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on cast_eliminate  (cost=0.00..17.82 rows=3 width=4)
+        Filter: (s_int = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.670 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(s_int AS BIGINT) as INT) = 1
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(s_int AS BIGINT) as INT) = 1
+Gather  (cost=0.00..17.82 rows=10 width=4)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on cast_eliminate  (cost=0.00..17.82 rows=3 width=4)
+        Filter: (s_int = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.247 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(CAST(s_int AS BIGINT) as INT) as SMALLINT) = 1
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(CAST(s_int AS BIGINT) as INT) as SMALLINT) = 1
+Gather  (cost=0.00..17.82 rows=10 width=4)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on cast_eliminate  (cost=0.00..17.82 rows=3 width=4)
+        Filter: (s_int = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 31.192 ms
+~~END~~
+
+
+-- Bad case: cannot remove CAST if a column is typecasted into a type with less precision
+SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(ROID AS BIGINT) as SMALLINT) = 1
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(ROID AS BIGINT) as SMALLINT) = 1
+Gather  (cost=0.00..20.95 rows=10 width=4)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on cast_eliminate  (cost=0.00..20.95 rows=3 width=4)
+        Filter: (((roid)::bigint)::smallint = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.375 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(ROID AS SMALLINT) as BIGINT) = 1
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(ROID AS SMALLINT) as BIGINT) = 1
+Gather  (cost=0.00..20.95 rows=10 width=4)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on cast_eliminate  (cost=0.00..20.95 rows=3 width=4)
+        Filter: (((roid)::smallint)::bigint = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.598 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(b_int AS BIGINT) = 1
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(b_int AS BIGINT) = 1
+Gather  (cost=0.00..17.82 rows=10 width=4)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on cast_eliminate  (cost=0.00..17.82 rows=3 width=4)
+        Filter: (b_int = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.347 ms
+~~END~~
+
+
+-- Bad case: cannot remove CAST if a column is typecasted into a type with less precision
+SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(b_int AS INT) = 1
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(b_int AS INT) = 1
+Gather  (cost=0.00..19.39 rows=10 width=4)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on cast_eliminate  (cost=0.00..19.39 rows=3 width=4)
+        Filter: ((b_int)::integer = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.338 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(ROID AS BIGINT) as SMALLINT) = CAST(s_int AS INT)
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE CAST(CAST(ROID AS BIGINT) as SMALLINT) = CAST(s_int AS INT)
+Gather  (cost=0.00..20.95 rows=10 width=4)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on cast_eliminate  (cost=0.00..20.95 rows=3 width=4)
+        Filter: (((roid)::bigint)::smallint = s_int)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 10.246 ms
+~~END~~
+
+
+-- Other operators like >/</<=/>= are also supported
+SELECT 1 AS [C1] FROM cast_eliminate WHERE (CAST(ROID AS BIGINT) < 1) OR (CAST(ROID AS BIGINT) > 2)
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE (CAST(ROID AS BIGINT) < 1) OR (CAST(ROID AS BIGINT) > 2)
+Gather  (cost=0.00..19.39 rows=1078 width=4)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on cast_eliminate  (cost=0.00..19.39 rows=348 width=4)
+        Filter: ((roid < 1) OR (roid > 2))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.746 ms
+~~END~~
+
+
+SELECT 1 AS [C1] FROM cast_eliminate WHERE (CAST(ROID AS BIGINT) >= 1) AND (CAST(ROID AS BIGINT) <= 2)
+GO
+~~START~~
+text
+Query Text: SELECT 1 AS [C1] FROM cast_eliminate WHERE (CAST(ROID AS BIGINT) >= 1) AND (CAST(ROID AS BIGINT) <= 2)
+Gather  (cost=4.25..14.84 rows=10 width=4)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on cast_eliminate  (cost=4.25..14.84 rows=10 width=4)
+        Recheck Cond: ((roid >= 1) AND (roid <= 2))
+        ->  Bitmap Index Scan on cast_eliminate_pkey  (cost=0.00..4.25 rows=10 width=0)
+              Index Cond: ((roid >= 1) AND (roid <= 2))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.948 ms
+~~END~~
+
+
+set babelfish_showplan_all off
+GO
+
+-- Verify executions
+INSERT INTO cast_eliminate VALUES (1, 1, 1), (2, 2938, 2), (3, 32767, 9223372036854775807), (-2147483648, -32768, -9223372036854775808), (2147483647, 2393, 1111111111111111);
+GO
+~~ROW COUNT: 5~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.explain_costs', 'off'
+EXEC sp_babelfish_configure 'babelfishpg_tsql.explain_timing', 'off'
+EXEC sp_babelfish_configure 'babelfishpg_tsql.explain_summary', 'off'
+set BABELFISH_STATISTICS PROFILE on
+GO
+
+-- Operators like !=/<> cannot make use of index, so we don't bother to elimiate the unnecessary CAST
+SELECT * FROM cast_eliminate WHERE (CAST(CAST(ROID AS BIGINT) AS BIGINT) = 3 OR CAST(CAST(ROID AS INT) AS BIGINT) = 2147483647) AND CAST(CAST(s_int AS INT) AS BIGINT) != 32767
+GO
+~~START~~
+int#!#smallint#!#bigint
+2147483647#!#2393#!#1111111111111111
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM cast_eliminate WHERE (CAST(CAST(ROID AS BIGINT) AS BIGINT) = 3 OR CAST(CAST(ROID AS INT) AS BIGINT) = 2147483647) AND CAST(CAST(s_int AS INT) AS BIGINT) != 32767
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on cast_eliminate (actual rows=1 loops=1)
+        Recheck Cond: ((roid = 3) OR (roid = 2147483647))
+        Filter: (((s_int)::integer)::bigint <> 32767)
+        Rows Removed by Filter: 1
+        ->  BitmapOr (actual rows=0 loops=1)
+              ->  Bitmap Index Scan on cast_eliminate_pkey (actual rows=1 loops=1)
+                    Index Cond: (roid = 3)
+              ->  Bitmap Index Scan on cast_eliminate_pkey (actual rows=1 loops=1)
+                    Index Cond: (roid = 2147483647)
+~~END~~
+
+
+SELECT * FROM cast_eliminate WHERE CAST(CAST(s_int AS INT) AS BIGINT) >= 2394 AND CAST(CAST(ROID AS BIGINT) AS SMALLINT) >= 3
+GO
+~~START~~
+int#!#smallint#!#bigint
+3#!#32767#!#9223372036854775807
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM cast_eliminate WHERE CAST(CAST(s_int AS INT) AS BIGINT) >= 2394 AND CAST(CAST(ROID AS BIGINT) AS SMALLINT) >= 3
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on cast_eliminate (actual rows=0 loops=4)
+        Filter: ((s_int >= 2394) AND (((roid)::bigint)::smallint >= 3))
+        Rows Removed by Filter: 1
+~~END~~
+
+
+SELECT * FROM cast_eliminate WHERE -32768 = CAST(s_int AS INT);
+GO
+~~START~~
+int#!#smallint#!#bigint
+-2147483648#!#-32768#!#-9223372036854775808
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM cast_eliminate WHERE -32768 = CAST(s_int AS INT)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on cast_eliminate (actual rows=0 loops=4)
+        Filter: ('-32768'::integer = s_int)
+        Rows Removed by Filter: 1
+~~END~~
+
+
+SELECT * FROM cast_eliminate WHERE -32768 = CAST(CAST(s_int AS INT) AS BIGINT);
+GO
+~~START~~
+int#!#smallint#!#bigint
+-2147483648#!#-32768#!#-9223372036854775808
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM cast_eliminate WHERE -32768 = CAST(CAST(s_int AS INT) AS BIGINT)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on cast_eliminate (actual rows=0 loops=4)
+        Filter: ('-32768'::integer = s_int)
+        Rows Removed by Filter: 1
+~~END~~
+
+
+SELECT * FROM cast_eliminate WHERE -32768 < CAST(CAST(s_int AS INT) AS BIGINT) OR CAST(ROID AS BIGINT) = -2147483648
+GO
+~~START~~
+int#!#smallint#!#bigint
+1#!#1#!#1
+2#!#2938#!#2
+3#!#32767#!#9223372036854775807
+-2147483648#!#-32768#!#-9223372036854775808
+2147483647#!#2393#!#1111111111111111
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM cast_eliminate WHERE -32768 < CAST(CAST(s_int AS INT) AS BIGINT) OR CAST(ROID AS BIGINT) = -2147483648
+Gather (actual rows=5 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on cast_eliminate (actual rows=1 loops=4)
+        Filter: (('-32768'::integer < s_int) OR (roid = '-2147483648'::integer))
+~~END~~
+
+
+-- Throws an error due to overflow. If we wrongly eliminate the CAST function, the error won't be thrown
+SELECT * FROM cast_eliminate WHERE -32768 < CAST(CAST(s_int AS INT) AS BIGINT) OR -9223372036854775808 = CAST(CAST(b_int AS BIGINT) AS INT)
+GO
+~~START~~
+int#!#smallint#!#bigint
+1#!#1#!#1
+2#!#2938#!#2
+3#!#32767#!#9223372036854775807
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
