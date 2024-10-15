@@ -284,7 +284,7 @@ SELECT replicate(@inputString, 4)
 GO
 ~~START~~
 varchar
-abcdefghabcdefghabcdefghabcdefgh
+abcdefgh  abcdefgh  abcdefgh  abcdefgh  
 ~~END~~
 
 

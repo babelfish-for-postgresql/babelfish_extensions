@@ -2159,7 +2159,7 @@ select cast(cast(cast('a' AS varchar(10)) as binary(2)) as varchar(2));
 GO
 ~~START~~
 varchar
-a
+a 
 ~~END~~
 
 select cast(cast('ab' AS varchar(10)) as binary(2));
