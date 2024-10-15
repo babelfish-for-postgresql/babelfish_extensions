@@ -1260,39 +1260,6 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-/*
- * Checks if a particular rolname exists in catalog sys.babelfish_authid_user_ext
- */
-/*static bool
-entry_exists_in_bbf_auth_ext(const char *rolname)
-{
-	Relation	bbf_authid_user_ext_rel;
-	HeapTuple	tuple_user_ext;
-	ScanKeyData	key;
-	SysScanDesc	scan;
-	bool		catalog_entry_exists = false;
-
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 AccessShareLock);
-
-	ScanKeyInit(&key,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(rolname));
-
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-				get_authid_user_ext_idx_oid(),
-				true, NULL, 1, &key);
-
-	tuple_user_ext = systable_getnext(scan);
-	if (HeapTupleIsValid(tuple_user_ext))
-		catalog_entry_exists = true;
-
-	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, AccessShareLock);
-	return catalog_entry_exists;
-}*/
-
 /* Grant permissions on all the existing objects to db_datareader/db_datawriter. */
 static void
 grant_perms_to_dbreader_dbwriter(const uint16 dbid,
@@ -1382,16 +1349,13 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 						None_Receiver,
 						NULL);
 		}
-		//pfree(schema_name);
-		//pfree(schema_owner);
-		//pfree(dbo_user);
 		tuple = heap_getnext(tblscan, ForwardScanDirection);
 	}
 
 	/* Cleanup. */
 	table_endscan(tblscan);
 	table_close(namespace_rel, RowExclusiveLock);
-	//pfree(dbname);
+	pfree(dbname);
 }
 
 static void
@@ -1490,10 +1454,8 @@ create_db_roles_if_not_exists(const uint16 dbid,
 		/* Grant permissions on all the schemas in a database to db_datareader/db_datawriter */
 		grant_perms_to_dbreader_dbwriter(dbid, db_datareader, db_datawriter);
 
-		/* Add entries to the catalog if not exists. */
-		//if (!entry_exists_in_bbf_auth_ext(db_datareader))
+		/* Add entries to the catalog. */
 		add_to_bbf_authid_user_ext(db_datareader, DB_DATAREADER, dbname, NULL, NULL, true, true, false);
-		//if (!entry_exists_in_bbf_auth_ext(db_datawriter))
 		add_to_bbf_authid_user_ext(db_datawriter, DB_DATAWRITER, dbname, NULL, NULL, true, true, false);
 	}
 	PG_FINALLY();
