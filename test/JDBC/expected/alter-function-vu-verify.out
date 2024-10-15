@@ -16,7 +16,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_func_f1#!#SQL#!#-- Test Case 1: CREATE function body<newline>alter function alter_func_f1() returns int begin return 2 end<newline>
+alter_func_f1#!#SQL#!#-- Test Case 1: Alter function body<newline>CREATE function alter_func_f1() returns int begin return 2 end<newline>
 ~~END~~
 
 
