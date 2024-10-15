@@ -67,7 +67,7 @@ master#!#dbo#!#routines_fc6#!#master#!#dbo#!#routines_fc6#!#FUNCTION#!#char#!#1#
 master#!#routines_sc1#!#routines_test_dec#!#master#!#routines_sc1#!#routines_test_dec#!#FUNCTION#!#decimal#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#2#!#<NULL>#!#SQL#!#CREATE FUNCTION routines_sc1.routines_test_dec(<newline>    @test_dec_a SMALLINT, <newline>    @test_dec_b INT,<newline>    @test_dec_c INT,<newline>    @test_dec_d DEC(10,2),<newline>    @test_dec_e DEC(4,2)<newline>)<newline>RETURNS DEC(10,2)<newline>AS<newline>BEGIN<newline>    RETURN @test_dec_c * @test_dec_d * (1 - @test_dec_e);<newline>END;<newline>#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
 master#!#dbo#!#routines_test_num#!#master#!#dbo#!#routines_test_num#!#PROCEDURE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#create procedure routines_test_num(@test_num_a numeric(20,6) OUTPUT, @test_num_b time(5) OUTPUT, @test_num_c date OUTPUT, @test_num_d datetime OUTPUT)<newline>AS<newline>BEGIN<newline>	set @test_num_a = 65;<newline>	SELECT routines_test_dec(23,60.76,43.88);<newline>END;<newline>#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#-1#!#NO#!#NO
 master#!#dbo#!#routines_test_nvar#!#master#!#dbo#!#routines_test_nvar#!#PROCEDURE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#create procedure routines_test_nvar(@test_nvar_a nvarchar , @test_nvar_b int = 8)<newline>AS<newline>BEGIN<newline>        SELECT @test_nvar_b=8;<newline>END<newline>#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#-1#!#NO#!#NO
-+~~END~~
+~~END~~
 
 
 create database db_routines;

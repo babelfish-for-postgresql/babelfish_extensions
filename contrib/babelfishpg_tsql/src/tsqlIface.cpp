@@ -3046,7 +3046,7 @@ public:
 	    Assert(str.front() == '[' || str.front() == '"');
 	    Assert(str.back() == ']' || str.back() == '"');
 
-		str.front() = ' ';
+	    str.front() = ' ';
 	    str.back() = ' ';
 		
 	    stream.setText(name->start->getStartIndex(), str.c_str());
@@ -3582,7 +3582,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			 * and there should be exactly one batch_level_statement there
 			 */
 			auto ssm = std::make_unique<tsqlSelectStatementMutator>();
-			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get(),sourceText);
+			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get(), sourceText);
 
 			/* If PARSEONLY is enabled, replace with empty statement */
 			if (pltsql_parseonly)
@@ -4015,9 +4015,17 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	result->body = list_make1(init);
 	// create PLtsql_stmt_execsql to wrap all query string
 	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
-	if(ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER())
+	if((ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER()))
 	{
 		int startIndex = ctx->create_or_alter_procedure()->ALTER()->getSymbol()->getStartIndex();
+		std::string result = originalQuery;
+		int endIndex = startIndex + 5;
+		result.replace(startIndex, endIndex - startIndex, "CREATE");
+		execsql->original_query = pstrdup(result.c_str());
+	}
+	else if (ctx->create_or_alter_function() && ctx->create_or_alter_function()->ALTER())
+	{
+		int startIndex = ctx->create_or_alter_function()->ALTER()->getSymbol()->getStartIndex();
 		std::string result = originalQuery;
 		int endIndex = startIndex + 5;
 		result.replace(startIndex, endIndex - startIndex, "CREATE");

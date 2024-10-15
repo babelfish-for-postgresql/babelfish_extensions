@@ -161,7 +161,7 @@ BABEL_COL_NAME
 BABEL-LOGIN
 BABEL-LOGIN-USER-EXT
 BABEL-NEXT-VALUE-FOR
-BABEL_OBJECT_DEFINITION
+BABEL_OBJECT_DEFINITION_before_16_5
 BABEL_OBJECT_ID
 BABEL_OBJECT_NAME
 BABEL-PG-SYSTEM-FUNCTIONS
@@ -195,7 +195,7 @@ babel_trigger
 babel_try_parse
 BABEL-USER
 babel_varbinary_int4_div
-bbf_view_def
+bbf_view_def_before_16_5
 binary-index
 bitwise_not-operator
 case_insensitive_collation
@@ -254,7 +254,7 @@ objectpropertyex
 openjson
 openquery_upgrd_before_15_4
 orderby
-routines_definition
+routines_definition_before_16_5
 rowcount
 schema_resolution_func
 schema_resolution_proc
@@ -271,7 +271,7 @@ sys_all_objects
 sys_all_objects-dep
 sys-all_parameters
 sys-all_parameters-dep
-sys-all_sql_modules
+sys-all_sql_modules_before_16_5
 sys-all_views
 sys-assemblies
 sys-assembly_modules
@@ -367,7 +367,7 @@ sys-sp_statistics
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
-sys-sql_modules
+sys-sql_modules_before_16_5
 sys-stats
 sys-suser_sid
 sys-suser_sname
