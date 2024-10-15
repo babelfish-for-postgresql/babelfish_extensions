@@ -1265,6 +1265,79 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+static void
+create_db_roles_if_not_exists(const char *dbname, List *parsetree_list)
+{
+	Node           *stmt;
+	Oid            save_userid;
+	int            save_sec_context;
+	int            i = 0;
+	char           *db_owner;
+	char           *db_accessadmin;
+
+	db_owner = get_db_owner_name(dbname);
+	db_accessadmin = get_db_accessadmin_role_name(dbname);
+
+	if (OidIsValid(get_role_oid(db_accessadmin, true)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("role \"%s\" already exists. Please drop the role and restart upgrade.", db_accessadmin)));
+
+	stmt = parsetree_nth_stmt(parsetree_list, i++);
+	update_CreateRoleStmt(stmt, db_accessadmin, db_owner, NULL);
+
+	stmt = parsetree_nth_stmt(parsetree_list, i++);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	PG_TRY();
+	{
+		ListCell 	*parsetree_item;
+
+		SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
+		add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
+
+		foreach(parsetree_item, parsetree_list)
+		{
+			PlannedStmt 	*wrapper;
+
+			if (stmt->type == T_GrantStmt)
+			{
+				SetUserIdAndSecContext(get_role_oid("sysadmin", false), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+			}
+			else
+			{
+				SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+			}
+
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			wrapper->stmt_location = 0;
+
+			ProcessUtility(wrapper,
+						CREATE_FIXED_DB_ROLES,
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+
+			CommandCounterIncrement();
+		}
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		pfree(db_owner);
+		pfree(db_accessadmin);
+	}
+	PG_END_TRY();
+}
+
 
 /*
 * This function is only being used during upgrade to v4.4.0
@@ -1274,15 +1347,13 @@ PG_FUNCTION_INFO_V1(create_database_roles_for_all_dbs);
 Datum
 create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 {
-	Relation	sysdatabase_rel;
-	TableScanDesc scan;
-	HeapTuple	tuple;
-	Form_sysdatabases bbf_db;
-	StringInfoData query;
-	List        *parsetree_list;
-	char        *dbname;
-	int         pltsql_save_nestlevel;
-	int         save_nestlevel;
+	Relation          sysdatabase_rel;
+	TableScanDesc     scan;
+	HeapTuple         tuple;
+	StringInfoData    query;
+	List              *parsetree_list;
+	int               pltsql_save_nestlevel;
+	int               save_nestlevel;
 
 	if (!creating_extension)
 		ereport(ERROR,
@@ -1292,95 +1363,49 @@ create_database_roles_for_all_dbs(PG_FUNCTION_ARGS)
 
 	pltsql_save_nestlevel = pltsql_new_guc_nest_level();
 	save_nestlevel = NewGUCNestLevel();
-	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						GUC_CONTEXT_CONFIG,
-						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-	set_config_option("babelfishpg_tsql.migration_mode", physical_schema_name_exists("dbo") ? "single-db" : "multi-db",
-						GUC_CONTEXT_CONFIG,
-						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-	initStringInfo(&query);
-
-	appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
-	appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
-
-	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
-
-	sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
-	scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	PG_TRY();
 	{
-		Node           *stmt;
-		Oid            save_userid;
-		int            save_sec_context;
-		int            i = 0;
-		const char     *db_owner;
-		const char     *db_accessadmin;
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							GUC_CONTEXT_CONFIG,
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		set_config_option("babelfishpg_tsql.migration_mode", physical_schema_name_exists(DBO) ? "single-db" : "multi-db",
+							GUC_CONTEXT_CONFIG,
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		bbf_db = (Form_sysdatabases) GETSTRUCT(tuple);
-		dbname = text_to_cstring(&(bbf_db->name));
-		db_owner = get_db_owner_name(dbname);
-		db_accessadmin = get_db_accessadmin_role_name(dbname);
+		initStringInfo(&query);
 
-		stmt = parsetree_nth_stmt(parsetree_list, i++);
-		update_CreateRoleStmt(stmt, db_accessadmin, db_owner, NULL);
+		appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+		appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
 
-		stmt = parsetree_nth_stmt(parsetree_list, i++);
-		update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
+		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+		scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
 
-		PG_TRY();
+		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
-			ListCell *parsetree_item;
+			Datum 	datum;
+			bool 	is_null;
+			char 	*db_name;
 
-			SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
-			add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
+			datum = heap_getattr(tuple, Anum_sysdatabases_name,
+											sysdatabase_rel->rd_att, &is_null);
+			db_name = TextDatumGetCString(datum);
 
-			foreach(parsetree_item, parsetree_list)
-			{
-				PlannedStmt 	*wrapper;
+			create_db_roles_if_not_exists(db_name, parsetree_list);
 
-				if (stmt->type == T_GrantStmt)
-				{
-					SetUserIdAndSecContext(get_role_oid("sysadmin", false), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-				}
-				else
-				{
-					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-				}
-
-				wrapper = makeNode(PlannedStmt);
-				wrapper->commandType = CMD_UTILITY;
-				wrapper->canSetTag = false;
-				wrapper->utilityStmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-				wrapper->stmt_location = 0;
-
-				ProcessUtility(wrapper,
-							CREATE_FIXED_DB_ROLES,
-							false,
-							PROCESS_UTILITY_SUBCOMMAND,
-							NULL,
-							NULL,
-							None_Receiver,
-							NULL);
-
-				CommandCounterIncrement();
-			}
+			pfree(db_name);
 		}
-		PG_FINALLY();
-		{
-			SetUserIdAndSecContext(save_userid, save_sec_context);
-		}
-		PG_END_TRY();
-
-		pfree(dbname);
-
 	}
+	PG_FINALLY();
+	{
+		pltsql_revert_guc(pltsql_save_nestlevel);
+	}
+	PG_END_TRY();
+
 	pfree(query.data);
 	AtEOXact_GUC(false, save_nestlevel);
-	pltsql_revert_guc(pltsql_save_nestlevel);
 	table_endscan(scan);
 	table_close(sysdatabase_rel, RowExclusiveLock);
 
