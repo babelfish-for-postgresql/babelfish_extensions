@@ -1490,9 +1490,6 @@ typedef struct PLtsql_execstate
 	 */
 	ParamListInfo paramLI;
 
-	/* all the dirtied dnos referenced by this query */
-	// Bitmapset  *dirty_vars;
-
 	/* EState to use for "simple" expression evaluation */
 	EState	   *simple_eval_estate;
 	bool		use_shared_simple_eval_state;

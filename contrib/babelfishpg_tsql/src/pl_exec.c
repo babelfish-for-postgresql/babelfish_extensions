@@ -4274,9 +4274,6 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	estate->paramLI->parserSetup = (ParserSetupHook) pltsql_parser_setup;
 	estate->paramLI->parserSetupArg = NULL; /* filled during use */
 	estate->paramLI->numParams = estate->ndatums;
-
-	//estate->dirty_vars = 0;
-
 	estate->use_shared_simple_eval_state = false;
 
 	/* set up for use of appropriate simple-expression EState and cast hash */
@@ -6803,7 +6800,6 @@ exec_assign_value(PLtsql_execstate *estate,
 		default:
 			elog(ERROR, "unrecognized dtype: %d", target->dtype);
 	}
-	//estate->dirty_vars = bms_add_member(estate->dirty_vars, target->dno);
 }
 
 /*
@@ -8002,13 +7998,6 @@ pltsql_param_eval_var(ExprState *state, ExprEvalStep *op,
 	estate = (PLtsql_execstate *) params->paramFetchArg;
 	Assert(dno >= 0 && dno < estate->ndatums);
 
-	// if (bms_is_member(dno, estate->dirty_vars))
-	// {
-	// 	/* Fetch dynamic value of local variable if it is update during execution */
-
-	// }
-	// else
-	// {
 	/* now we can access the target datum */
 	var = (PLtsql_var *) estate->datums[dno];
 	Assert(var->dtype == PLTSQL_DTYPE_VAR);
@@ -10459,25 +10448,17 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 	int32 valtypmod = -1;
 	PLtsql_datum *target;
 	MemoryContext oldcontext;
-	//PLtsql_var *var;
 
 	PLtsql_execstate *estate = get_current_tsql_estate();
 	Assert(estate != NULL);
-
-	//PLtsql_datum *target = pltsql_Datums[dno];
 	oldcontext = MemoryContextSwitchTo(estate->datum_context);
-
 	target = estate->datums[dno];
 
-	//var = (PLtsql_var *)target;
-
 	/* we will reuse exec_assign_value function here provided in pl_exec.c */
-	// exec_assign_value(estate, target, datumCopy(data, var->datatype->typbyval, var->datatype->typlen), isNull, valtype, valtypmod);
 	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
 
 	MemoryContextSwitchTo(oldcontext);
 
-	/* no need to return anything as output will not be returned to customers */
 	if (isNull)
 		PG_RETURN_NULL();
 

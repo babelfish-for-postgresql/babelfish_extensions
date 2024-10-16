@@ -3273,6 +3273,11 @@ handle_local_ids_for_expression(TSqlParser::ExpressionContext *ectx)
 	keysToRemove.clear();
 }
 
+/*
+ * add_rewritten_query_fragment_for_select_expression - should be called from the context of
+ * variable assignment expression. It will add all the already re-written query fragments to
+ * expression().
+ */
 static void
 add_rewritten_query_fragment_for_select_expression(PLtsql_expr_query_mutator *mutator)
 {
@@ -3290,6 +3295,10 @@ add_rewritten_query_fragment_for_select_expression(PLtsql_expr_query_mutator *mu
 	keysToRemove.clear();
 }
 
+/*
+ * rewrite_assignment_expression - This will re-write assignment expression by adding already re-written fragments to it.
+ * It also add appropriate cast around expression needed by sys.pltsql_assign_var to assign value to var.
+ */
 static char *
 rewrite_assignment_expression(PLtsql_var *var, TSqlParser::ExpressionContext *ectx)
 {
@@ -3378,11 +3387,6 @@ static void process_query_specification(
 			post_process_table_source(tctx, expr, baseCtx, is_freetext_predicate);
 	}
 
-	/* First add information of rewritten_query_fragment information to mutator */
-	// add_rewritten_query_fragment_to_mutator(mutator);
-	// mutator->run();
-	// clear_rewritten_query_fragment();
-
 	/* handle special alias syntax and quote alias */
 	for (size_t i=0; i<select_elems.size(); ++i)
 	{
@@ -3427,33 +3431,16 @@ static void process_query_specification(
 			std::string var_str = ::getFullText(elem->LOCAL_ID());
 			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
 			char *repl_text = NULL;
-			// PLtsql_var *var;
 
 			Assert(elem->expression());
-			// PLtsql_expr *elem_expr = makeTsqlExpr(elem->expression(), false);
-			// PLtsql_expr_query_mutator expr_mutator(elem_expr, elem->expression());
-			// add_rewritten_query_fragment_for_select_expression(&expr_mutator);
-			// expr_mutator.run();
-
 			if (!nse)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", var_str.c_str()), getLineAndPos(elem));
-			
-			// var = (PLtsql_var *) pltsql_Datums[nse->itemno];
 
-			/* Rewrite @var = expr to @var=sys.pltsql_assign_var(dno, expr) */
+			/* Rewrite @var = expr to @var=sys.pltsql_assign_var(dno, cast((expr) as type)) */
 			repl_text = psprintf("sys.pltsql_assign_var(%d, %s)",
 									nse->itemno,
 									rewrite_assignment_expression((PLtsql_var *) pltsql_Datums[nse->itemno],
 																	elem->expression()));
-			// repl_text = psprintf("sys.pltsql_assign_var(%d, cast((%s) as %s))",
-			// 						nse->itemno,
-			// 						elem_expr->query,
-			// 						tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
-
-			// /* First add information of rewritten_query_fragment information to mutator */
-			// add_rewritten_query_fragment_to_mutator(mutator);
-			// mutator->run();
-			// clear_rewritten_query_fragment();
 
 			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
@@ -3463,7 +3450,6 @@ static void process_query_specification(
 			std::string var_str = ::getFullText(elem->LOCAL_ID());
 			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
 			char *repl_text = NULL;
-			// PLtsql_var *var;
 			tree::TerminalNode *anode = nullptr;
 
 			if (elem->assignment_operator())
@@ -3489,41 +3475,23 @@ static void process_query_specification(
 			}
 
 			Assert(elem->expression());
-			// PLtsql_expr *elem_expr = makeTsqlExpr(elem->expression(), false);
-			// PLtsql_expr_query_mutator expr_mutator(elem_expr, elem->expression());
-			// add_rewritten_query_fragment_for_select_expression(&expr_mutator);
-			// expr_mutator.run();
-
 			if (!nse)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 												format_errmsg("\"%s\" is not a known variable",
 												var_str.c_str()), getLineAndPos(elem));
-			
-			// var = (PLtsql_var *) pltsql_Datums[nse->itemno];
 
 			/* 
-			 * Rewrite @var += expr to @var += sys.pltsql_assign_var(dno, "@var" + (expr)).
+			 * Rewrite @var += expr to @var += sys.pltsql_assign_var(dno, "@var" + cast((expr) as type)).
 			 * Note that we only update expr with sys.pltsql_assign_var(dno, "@var" + (expr) here and
 			 * additional handling of assignment opetator will be done in process_execsql_destination_select
 			 * when we create target row.
 			 */
-			// repl_text = psprintf("sys.pltsql_assign_var(%d, %s %s cast((%s) as %s))",
-			// 						nse->itemno,
-			// 						var_str.c_str(),
-			// 						rewrite_assign_operator(anode),
-			// 						elem_expr->query,
-			// 						tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
-
 			repl_text = psprintf("sys.pltsql_assign_var(%d, %s %s %s)",
 									nse->itemno,
 									var_str.c_str(),
 									rewrite_assign_operator(anode),
 									rewrite_assignment_expression((PLtsql_var *) pltsql_Datums[nse->itemno],
 																	elem->expression()));
-			// /* First add information of rewritten_query_fragment information to mutator */
-			// add_rewritten_query_fragment_to_mutator(mutator);
-			// mutator->run();
-			// clear_rewritten_query_fragment();
 
 			handle_local_ids_for_expression(elem->expression());
 			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
@@ -7013,7 +6981,7 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 
 				if (elem->full_column_name())
 				{
-					/* "SET @a=col=expr" => "SET col=expr ... RETURNING col" */
+					/* "SET @a=col=expr" => "SET col=expr ... RETURNING sys.pltsql_assign_var(dno, cast(expr as type))" */
 					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
 										nse->itemno,
 										::getFullText(elem->full_column_name()).c_str(),
@@ -7024,7 +6992,7 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 				}
 				else
 				{
-					/* "SET @a=expr, col=expr2" => "SET col=expr2 ... RETURNING expr" */
+					/* "SET @a=expr, col=expr2" => "SET col=expr2 ... RETURNING sys.pltsql_assign_var(dno, cast(expr as type))" */
 					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
 										nse->itemno,
 										::getFullText(elem->expression()).c_str(),
