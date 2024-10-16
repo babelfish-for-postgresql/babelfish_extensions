@@ -10,7 +10,7 @@ go
 CREATE PARTITION SCHEME ps2_create_ptn_scheme_primary AS PARTITION pf1_create_ptn_scheme_primary ALL TO ("PRIMARY") ;
 GO
 
-CREATE PARTITION SCHEME ps3_create_ptn_scheme_primary AS PARTITION pf1_create_ptn_scheme_primary TO ('PRIMARY', "PRIMARY", [PRIMARY], 'primary', "primary", [primary]) ;
+CREATE PARTITION SCHEME ps3_create_ptn_scheme_primary AS PARTITION pf1_create_ptn_scheme_primary TO ('PRIMARY', "PRIMARY", [PRIMARY], 'primary', "primary", [primary], 'somename', "somename") ;
 GO
 
 SET QUOTED_IDENTIFIER OFF
