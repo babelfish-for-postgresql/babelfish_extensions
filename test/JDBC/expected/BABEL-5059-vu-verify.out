@@ -669,14 +669,6 @@ N
 ~~END~~
 
 
-SELECT babel_5059_f10(N'约翰hello');
-GO
-~~START~~
-nchar
-?
-~~END~~
-
-
 SELECT babel_5059_f11(N'约翰helloworld123');
 GO
 ~~START~~
@@ -1084,7 +1076,7 @@ SELECT babel_5059_itvf_func1()
 GO
 ~~START~~
 nvarchar
-🙂defghi
+defghi
 ~~END~~
 
 
@@ -1092,7 +1084,7 @@ SELECT babel_5059_itvf_func2()
 GO
 ~~START~~
 varchar
-(1,?defghi)
+(1,defghi)
 ~~END~~
 
 

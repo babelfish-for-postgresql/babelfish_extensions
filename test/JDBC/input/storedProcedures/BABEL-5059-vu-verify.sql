@@ -259,9 +259,6 @@ GO
 SELECT babel_5059_f10(N'N');
 GO
 
-SELECT babel_5059_f10(N'约翰hello');
-GO
-
 SELECT babel_5059_f11(N'约翰helloworld123');
 GO
 

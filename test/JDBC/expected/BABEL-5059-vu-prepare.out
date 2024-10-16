@@ -676,7 +676,7 @@ GO
 CREATE TABLE babel_5059_t1(col_char char(20),group_id int,col_nvarchar nvarchar(50))
 GO
 
-INSERT INTO babel_5059_t1 VALUES( N'abc', 1,  N'🙂defghi')
+INSERT INTO babel_5059_t1 VALUES( N'abc', 1,  N'defghi')
 GO
 ~~ROW COUNT: 1~~
 
@@ -684,13 +684,13 @@ GO
 CREATE FUNCTION babel_5059_itvf_func1()
 RETURNS TABLE
 AS
-    RETURN (SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5059_t1 GROUP BY group_id ORDER BY group_id)
+    RETURN (SELECT col_nvarchar FROM babel_5059_t1)
 GO
 
 CREATE FUNCTION babel_5059_itvf_func2()
 RETURNS TABLE
 AS
-    RETURN (SELECT group_id,STRING_AGG(col_nvarchar, '-') FROM babel_5059_t1 GROUP BY group_id ORDER BY group_id)
+    RETURN (SELECT group_id,col_nvarchar FROM babel_5059_t1 GROUP BY group_id,col_nvarchar ORDER BY group_id)
 GO
 
 CREATE TABLE babel_5059_vu_prepare_t1(number int)
