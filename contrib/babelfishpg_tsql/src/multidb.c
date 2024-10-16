@@ -1316,8 +1316,8 @@ get_physical_user_name_by_mode(char *db_name, char *user_name, bool suppress_db_
 		{
 			if (((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
 				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0) ||
-				(strlen(user_name) == 13 && strncmp(user_name, "db_datareader", 13) == 0) ||
-				(strlen(user_name) == 13 && strncmp(user_name, "db_datawriter", 13) == 0))
+				(strlen(user_name) == 13 && strncmp(user_name, DB_DATAREADER, 13) == 0) ||
+				(strlen(user_name) == 13 && strncmp(user_name, DB_DATAWRITER, 13) == 0))
 				&& (suppress_role_error || user_exists_for_db(db_name, new_user_name)))
 			{
 				return new_user_name;

@@ -1271,11 +1271,23 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 	ScanKeyData key;
 	HeapTuple   tuple;
 	TableScanDesc	tblscan;
+	StringInfoData	query;
+	List		*stmt_list;
 	char		*dbname = get_db_name(dbid);
 	MigrationMode	baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 
 	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
 	namespace_rel_descr = RelationGetDescr(namespace_rel);
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "GRANT SELECT ON ALL TABLES IN SCHEMA dummy TO dummy; ");
+	appendStringInfo(&query, "GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA dummy TO dummy; ");
+
+	/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	ScanKeyInit(&key,
 				Anum_namespace_ext_dbid,
@@ -1291,8 +1303,6 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 		bool		isNull;
 		Datum		datum;
 		char		*schema_name;
-		StringInfoData	query;
-		List		*stmt_list;
 		Node		*stmts;
 		int			i = 0;
 		ListCell	*parsetree_item;
@@ -1303,16 +1313,6 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 		schema_name = NameStr(*DatumGetName(datum));
 		schema_owner = GetUserNameFromId(get_owner_of_schema(schema_name), false);
 		dbo_user = get_dbo_role_name_by_mode(dbname, baseline_mode);
-
-		initStringInfo(&query);
-		appendStringInfo(&query, "GRANT SELECT ON ALL TABLES IN SCHEMA dummy TO dummy; ");
-		appendStringInfo(&query, "GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA dummy TO dummy; ");
-
-		/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
-		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
-		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
-
-		stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 		/* Replace dummy elements in parsetree with real values */
 		stmts = parsetree_nth_stmt(stmt_list, i++);
@@ -1356,6 +1356,7 @@ grant_perms_to_dbreader_dbwriter(const uint16 dbid,
 	table_endscan(tblscan);
 	table_close(namespace_rel, RowExclusiveLock);
 	pfree(dbname);
+	pfree(query.data);
 }
 
 static void
@@ -1389,7 +1390,7 @@ create_db_roles_if_not_exists(const uint16 dbid,
 	 */
 	if (OidIsValid(get_role_oid(db_datareader, true)))
 	{
-		ereport(LOG,
+		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("role \"%s\" already exists. Please drop the role and restart upgrade.", db_datareader)));
 		return;
@@ -1397,7 +1398,7 @@ create_db_roles_if_not_exists(const uint16 dbid,
 
 	if (OidIsValid(get_role_oid(db_datawriter, true)))
 	{
-		ereport(LOG,
+		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("role \"%s\" already exists. Please drop the role and restart upgrade.", db_datawriter)));
 		return;

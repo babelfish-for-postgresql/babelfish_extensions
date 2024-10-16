@@ -1695,7 +1695,7 @@ FROM pg_catalog.pg_class t1
 	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
 	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
 	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t5.grantee
-WHERE ext.orig_username != 'db_datawriter' AND ext.orig_username != 'db_datareader';
+WHERE ext.orig_username NOT IN ('db_datawriter', 'db_datareader');
 
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
     "@table_name" sys.sysname,

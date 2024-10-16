@@ -3357,8 +3357,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									/* If user is dbo or role is db_owner, restrict dropping */
 									if ((drop_user && rolename_len == 3 && strncmp(rolspec->rolename, "dbo", 3) == 0) ||
 										(drop_role && rolename_len == 8 && strncmp(rolspec->rolename, "db_owner", 8) == 0) ||
-										(drop_role && rolename_len == 13 && strncmp(rolspec->rolename, "db_datareader", 13) == 0) ||
-										(drop_role && rolename_len == 13 && strncmp(rolspec->rolename, "db_datawriter", 13) == 0))
+										(drop_role && rolename_len == 13 && strncmp(rolspec->rolename, DB_DATAREADER, 13) == 0) ||
+										(drop_role && rolename_len == 13 && strncmp(rolspec->rolename, DB_DATAWRITER, 13) == 0))
 										ereport(ERROR,
 												(errcode(ERRCODE_CHECK_VIOLATION),
 												 errmsg("Cannot drop the %s '%s'.", db_principal_type, rolspec->rolename)));

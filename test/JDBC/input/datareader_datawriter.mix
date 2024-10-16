@@ -48,6 +48,9 @@ go
 create database db_roles_db1;
 go
 
+create database db_roles_db2;
+go
+
 use db_roles_db1;
 go
 
@@ -114,6 +117,15 @@ go
 create view before_v1 as select 2;
 go
 
+use db_roles_db2;
+go
+
+create user db_roles_u1 for login db_roles_l1;
+go
+
+create table t1_in_db2(a int);
+go
+
 use master;
 go
 
@@ -144,6 +156,9 @@ alter role db_datareader add member db_roles_r1;
 go
 
 alter role db_datawriter add member db_roles_r1; 
+go
+
+select count(*) from sys.database_principals where name like '%db_roles%';
 go
 
 use master
@@ -414,6 +429,12 @@ go
 delete from db_roles_schema_2.after_created_by_u4_t1 where a = 2; -- allowed
 go
 
+select * from db_roles_db2.dbo.t1_in_db2; -- not allowed since the user in db2 doesn't have read privilege
+go
+
+insert into db_roles_db2.dbo.t1_in_db2 values(1); -- not allowed since the user in db2 doesn't have write privilege
+go
+
 -- objects created by the database owner should be accessible too.
 select * from db_roles_schema_3.db_roles_t1; -- allowed
 go
@@ -435,6 +456,15 @@ go
 
 -- tsql
 -- Basic membership check
+use db_roles_db2;
+go
+
+alter role db_datareader add member db_roles_u1;
+go
+
+alter role db_datawriter add member db_roles_u1;
+go
+
 use db_roles_db1;
 go
 
@@ -624,6 +654,12 @@ update db_roles_schema_3.db_roles_t1 set a = 2 where a = 1; -- not allowed
 go
 
 delete from db_roles_schema_3.db_roles_t1 where a = 2; -- not allowed
+go
+
+select * from db_roles_db2.dbo.t1_in_db2; -- allowed since the user in db2 has read privilege
+go
+
+insert into db_roles_db2.dbo.t1_in_db2 values(1); -- allowed since the user in db2 has write privilege
 go
 
 use master;
@@ -999,6 +1035,18 @@ go
 drop role db_roles_r1;
 go
 
+use db_roles_db2;
+go
+
+drop table t1_in_db2;
+go
+
+drop user db_roles_u1;
+go
+
+use master;
+go
+
 drop login db_roles_l1;
 go
 
@@ -1014,8 +1062,8 @@ go
 drop login db_roles_l5;
 go
 
-use master;
+drop database db_roles_db1;
 go
 
-drop database db_roles_db1;
+drop database db_roles_db2;
 go
