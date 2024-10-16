@@ -1177,7 +1177,7 @@ create_partition_scheme
 
 filegroup_type
     : PRIMARY_SQBRACKET // [PRIMARY] filegroup
-    | char_string       // 'PRIMARY' is supported
+    | char_string       // can be 'PRIMARY'
     | id                // user filegroup
     ;
 
