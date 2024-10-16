@@ -276,7 +276,7 @@ sys_all_objects
 sys_all_objects-dep
 sys-all_parameters
 sys-all_parameters-dep
-sys-all_sql_modules_before
+sys-all_sql_modules
 sys-all_sql_modules-dep_before
 sys-all_views
 sys-assemblies
