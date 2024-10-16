@@ -1122,7 +1122,7 @@ update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1
 	if (!IsA(stmt, AlterDefaultPrivilegesStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterDefaultPrivilegesStmt")));
 
-	if (grantee && priv && stmt->action)
+	if (grantee && stmt->action)
 	{
 		update_GrantStmt((Node *)(stmt->action), NULL, NULL, grantee, priv);
 	}
@@ -2490,4 +2490,87 @@ get_owner_of_schema(const char *schema)
 	ReleaseSysCache(tup);
 
 	return result;
+}
+
+/*
+ * exec_database_roles_subcmds:
+ * Alter default privileges on all the objects in a schema to the db_datareader/db_datareader while creating a schema.
+ */
+void
+exec_database_roles_subcmds(const char *schema, char *schema_owner)
+{
+	StringInfoData	query;
+	char		*db_datareader;
+	char		*db_datawriter;
+	char		*dbo_role;
+	char		*db_owner;
+	const char	*dbname = get_cur_db_name();
+	List		*stmt_list;
+	int		expected_stmts = 2;
+	ListCell	*parsetree_item;
+	Node		*stmts;
+	int		i=0;
+
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
+	dbo_role = get_dbo_role_name(dbname);
+	db_owner = get_db_owner_name(dbname);
+
+	/* If schema owner is not the dbo/db_owner role. */
+	if (schema_owner && strcmp(schema_owner, dbo_role) != 0 && strcmp(schema_owner, db_owner) != 0)
+	{
+		// do nothing
+	}
+	else
+	{
+		schema_owner = GetUserNameFromId(get_owner_of_schema(schema), false);
+	}
+
+	initStringInfo(&query);
+
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datareader, NULL);
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datawriter, NULL);
+
+	/* Run all subcommands */
+	foreach(parsetree_item, stmt_list)
+	{
+		Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+		PlannedStmt *wrapper;
+
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
+
+		/* do this step */
+		ProcessUtility(wrapper,
+					"(ALTER DEFAULT PRIVILEGES )",
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+	}
+	CommandCounterIncrement();
+	pfree(db_datareader);
+	pfree(db_datawriter);
+	pfree(dbo_role);
+	pfree(db_owner);
 }

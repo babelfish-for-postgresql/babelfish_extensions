@@ -1791,6 +1791,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	const char *grantee_name;
 	RoleSpec   *granted_spec;
 	RoleSpec   *grantee_spec;
+	const char *db_owner_name;
 
 	/* The grantee must be a db user or a user-defined db role */
 	grantee_spec = (RoleSpec *) linitial(stmt->grantee_roles);
@@ -1820,6 +1821,22 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Current login %s does not have permission to alter role %s",
 						GetUserNameFromId(GetSessionUserId(), true), granted_name)));
+	
+	/* Get the database owner. */
+	db_owner_name = get_owner_of_db(get_cur_db_name());
+
+	/*
+	 * Disallow ALTER ROLE if current login is not a member of sysadmin and
+	 * not the database owner.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)) &&
+		!has_privs_of_role(GetSessionUserId(),get_role_oid(db_owner_name, false)))
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("Cannot alter the role %s, because it does not exist or you do not have permission.",
+					granted_name)));
+	}
 }
 
 /*
