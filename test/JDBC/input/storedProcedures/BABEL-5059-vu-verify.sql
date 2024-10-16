@@ -259,7 +259,7 @@ GO
 SELECT babel_5059_f10(N'N');
 GO
 
-SELECT babel_5059_f11(N'约翰helloworld123');
+SELECT babel_5059_f11(N'helloworld123');
 GO
 
 -- CHAR
