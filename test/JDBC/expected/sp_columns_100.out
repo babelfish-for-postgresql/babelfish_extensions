@@ -171,6 +171,12 @@ go
 create table test_escape_chars_sp_columns_100(a int);
 go
 
+CREATE SCHEMA source_test;
+CREATE TABLE source_test.testtable (id int primary key);
+CREATE TABLE source_test.test_table (id int primary key);
+CREATE TABLE source_test.test0table (id int primary key);
+GO
+
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
@@ -227,10 +233,44 @@ sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10
 ~~END~~
 
 
+EXEC sys.sp_columns_100 @table_name='test_table', @table_owner='source_test';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#source_test#!#test_table#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+sp_cols#!#source_test#!#test0table#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 @table_name='test\_table', @table_owner='source_test';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#source_test#!#test_table#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 @table_name='test\_table', @table_owner='source\_test';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#source_test#!#test_table#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
 drop table nums
 go
 
 drop table test_escape_chars_sp_columns_100;
+go
+
+drop table source_test.testtable;
+go
+drop table source_test.test_table;
+go
+drop table source_test.test0table;
+go
+drop schema source_test;
 go
 
 Use master
@@ -438,6 +478,12 @@ go
 create table test_escape_chars_sp_columns_100(a int);
 go
 
+CREATE SCHEMA source_test;
+CREATE TABLE source_test.testtable (id int primary key);
+CREATE TABLE source_test.test_table (id int primary key);
+CREATE TABLE source_test.test0table (id int primary key);
+GO
+
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
@@ -494,7 +540,41 @@ sp_cols#!#dbo#!#test_escape_chars_sp_columns_100#!#a#!#4#!#int#!#10#!#4#!#0#!#10
 ~~END~~
 
 
+EXEC sys.sp_columns_100 @table_name='test_table', @table_owner='source_test';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#source_test#!#test_table#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+sp_cols#!#source_test#!#test0table#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 @table_name='test\_table', @table_owner='source_test';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#source_test#!#test_table#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
+EXEC sys.sp_columns_100 @table_name='test\_table', @table_owner='source\_test';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+sp_cols#!#source_test#!#test_table#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+
 drop table nums
+go
+
+drop table source_test.testtable;
+go
+drop table source_test.test_table;
+go
+drop table source_test.test0table;
+go
+drop schema source_test;
 go
 
 drop table test_escape_chars_sp_columns_100;

@@ -52,6 +52,9 @@ static void tsql_check_param_readonly(const char *paramname, TypeName *typename,
 static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause);
 static ResTarget *TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause);
 static RangeSubselect *TsqlForClauseSubselect(Node *selectstmt);
+static Node * buildTsqlMultiLineTvfNode(int create_loc, bool replace, List *func_name, int func_name_loc, 
+										List *tsql_createfunc_args, char *param_name, int table_loc, List *table_elts, 
+										char *tokens_remaining, int tokens_loc, bool alter, core_yyscan_t yyscanner);
 static Node *tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl);
 
 static Node *TsqlOpenJSONSimpleMakeFuncCall(Node *jsonExpr, Node *path);
