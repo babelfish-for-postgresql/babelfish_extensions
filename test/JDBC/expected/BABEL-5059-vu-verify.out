@@ -388,6 +388,71 @@ SELECT * FROM sys.databases
 
 
 
+-- DDL export test for procedure
+-- NVARCHAR
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_1';
+GO
+~~START~~
+nvarchar
+CREATE PROCEDURE babel_5059_proc_test_1 (@a NVARCHAR, @b NVARCHAR OUTPUT) AS BEGIN SET @b=@a; SELECT @b; END;
+~~END~~
+
+
+-- NVARCHAR(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_main3';
+GO
+~~START~~
+nvarchar
+CREATE PROCEDURE babel_5059_proc_test_main3 @Statement nvarchar(max) OUTPUT AS BEGIN<newline>SET @Statement = 'SELECT * FROM sys.databases'; <newline>SELECT @Statement;<newline>END;
+~~END~~
+
+
+-- VARCHAR(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_7';
+GO
+~~START~~
+nvarchar
+CREATE PROCEDURE babel_5059_proc_test_7 (@a VARCHAR(max), @b VARCHAR(max) OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
+~~END~~
+
+
+-- VARBINARY(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_12';
+GO
+~~START~~
+nvarchar
+CREATE PROCEDURE babel_5059_proc_test_12 (@a VARBINARY(MAX), @b VARBINARY(MAX) OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
+~~END~~
+
+
+-- NVARCHAR(MAX) using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_3_udt';
+GO
+~~START~~
+nvarchar
+CREATE PROCEDURE babel_5059_proc_test_3_udt @a babel_5059_nv_max output AS BEGIN SELECT @a; END;
+~~END~~
+
+
+-- VARCHAR(MAX) using UDT 
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_6_udt';
+GO
+~~START~~
+nvarchar
+CREATE PROCEDURE babel_5059_proc_test_6_udt (@a babel_5059_vchar_max, @b babel_5059_vchar_max OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
+~~END~~
+
+
+-- VARBINARY(MAX) using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_9_udt';
+GO
+~~START~~
+nvarchar
+CREATE PROCEDURE babel_5059_proc_test_9_udt @a babel_5059_varbinary_max OUTPUT AS BEGIN SELECT @a; END;
+~~END~~
+
+
+
 -- UDT testing
 -- nvarchar
 Declare @a babel_5059_nvchar; Declare @b babel_5059_nvchar; SET @a = 'abc' ; EXEC babel_5059_proc_test_1_udt @a = @a , @b = @b OUT ;
@@ -758,6 +823,71 @@ GO
 ~~START~~
 numeric
 12345678901234567890.123456789012345678
+~~END~~
+
+
+
+-- DDL export test for functions
+-- NVARCHAR -> NVARCHAR
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_f1';
+GO
+~~START~~
+nvarchar
+CREATE FUNCTION babel_5059_f1 (@p1 NVARCHAR) RETURNS NVARCHAR AS<newline>BEGIN<newline>    RETURN @p1<newline>END;
+~~END~~
+
+
+-- NVARCHAR(MAX) -> NVARCHAR(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_f2';
+GO
+~~START~~
+nvarchar
+CREATE FUNCTION babel_5059_f2 (@p1 NVARCHAR(MAX)) RETURNS NVARCHAR(MAX) AS<newline>BEGIN<newline>    RETURN @p1<newline>END;
+~~END~~
+
+
+-- VARCHAR(MAX), VARCHAR(20) -> VARCHAR(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_f20';
+GO
+~~START~~
+nvarchar
+CREATE FUNCTION babel_5059_f20 (@p1 VARCHAR(MAX), @p2 VARCHAR(20))<newline>RETURNS VARCHAR(MAX) AS<newline>BEGIN<newline>    RETURN @p1 + ' ' + @p2<newline>END;
+~~END~~
+
+
+-- VARBINARY(MAX) -> VARBINARY(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_f8';
+GO
+~~START~~
+nvarchar
+CREATE FUNCTION babel_5059_f8 (@p1 VARBINARY(MAX)) RETURNS VARBINARY(MAX) AS<newline>BEGIN<newline>    RETURN len(@p1)<newline>END;
+~~END~~
+
+
+--  VARCHAR, VARCHAR(2), VARCHAR(MAX) -> VARCHAR(MAX) using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_udt_f1';
+GO
+~~START~~
+nvarchar
+CREATE FUNCTION babel_5059_udt_f1 (<newline>    @p1 babel_5059_vchar,<newline>    @p2 babel_5059_vchar_2,<newline>    @p3 babel_5059_vchar_max<newline>) RETURNS babel_5059_vchar_max<newline>AS<newline>BEGIN<newline>    RETURN @p3<newline>END;
+~~END~~
+
+
+-- NVARCHAR types as input, NVARCHAR(MAX) as output using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_udt_f2';
+GO
+~~START~~
+nvarchar
+CREATE FUNCTION babel_5059_udt_f2 (<newline>    @p1 babel_5059_nvchar,<newline>    @p2 babel_5059_nv_2,<newline>    @p3 babel_5059_nv_max<newline>) RETURNS babel_5059_nv_max<newline>AS<newline>BEGIN<newline>    RETURN @p3 <newline>END;
+~~END~~
+
+
+-- VARBINARY types as input, VARBINARY(MAX) as output using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_udt_f3';
+GO
+~~START~~
+nvarchar
+CREATE FUNCTION babel_5059_udt_f3 (<newline>    @p1 babel_5059_varbinary,<newline>    @p2 babel_5059_varbinary_2,<newline>    @p3 babel_5059_varbinary_max<newline>) RETURNS babel_5059_varbinary_max<newline>AS<newline>BEGIN<newline>    RETURN @p3<newline>END;
 ~~END~~
 
 

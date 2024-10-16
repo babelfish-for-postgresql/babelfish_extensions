@@ -424,7 +424,7 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 			 * for TSQL procedures and functions
 			 */
 			if (sql_dialect == SQL_DIALECT_TSQL)
-				pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, true);
+				pltsql_check_or_set_default_typmod_helper(fp->argType, &(*typmod_array_p)[i], false, true);
 		}
 		else
 		{
@@ -446,7 +446,7 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 				 * for TSQL procedures and functions
 				 */
 					if (sql_dialect == SQL_DIALECT_TSQL)
-						pltsql_check_or_set_default_typmod(fp->argType, &(*typmod_array_p)[i], false, true);
+						pltsql_check_or_set_default_typmod_helper(fp->argType, &(*typmod_array_p)[i], false, true);
 				}
 				typmod_head = lnext(arg_typmod, typmod_head);
 			}
@@ -482,7 +482,7 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 				 */
 
 				if (sql_dialect == SQL_DIALECT_TSQL)
-					pltsql_check_or_set_default_typmod(ret, &(*typmod_array_p)[i], false, true);
+					pltsql_check_or_set_default_typmod_helper(ret, &(*typmod_array_p)[i], false, true);
 			}
 			typmod_head = lnext(ret->typmods, typmod_head);
 		}
@@ -494,8 +494,8 @@ buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len_
 		 * Handling default typmod value for sys.(N)(VAR)(BP)CHAR, sys.(VAR)BINARY return datatypes 
 		 * for TSQL functions
 		 */
-        if (sql_dialect == SQL_DIALECT_TSQL)
-            pltsql_check_or_set_default_typmod(ret, &(*typmod_array_p)[i], false, true);
+		if (sql_dialect == SQL_DIALECT_TSQL)
+			pltsql_check_or_set_default_typmod_helper(ret, &(*typmod_array_p)[i], false, true);
 		i++;
 	}
 }

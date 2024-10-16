@@ -142,6 +142,36 @@ GO
 DECLARE @Statement nvarchar(max) EXEC babel_5059_proc_test_main3 @Statement OUTPUT
 GO
 
+-- DDL export test for procedure
+
+-- NVARCHAR
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_1';
+GO
+
+-- NVARCHAR(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_main3';
+GO
+
+-- VARCHAR(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_7';
+GO
+
+-- VARBINARY(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_12';
+GO
+
+-- NVARCHAR(MAX) using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_3_udt';
+GO
+
+-- VARCHAR(MAX) using UDT 
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_6_udt';
+GO
+
+-- VARBINARY(MAX) using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_proc_test_9_udt';
+GO
+
 -- UDT testing
 -- nvarchar
 
@@ -294,6 +324,36 @@ SELECT babel_5059_f17(12345.6789);
 GO
 
 SELECT babel_5059_f18(12345678901234567890.123456789012345678);
+GO
+
+-- DDL export test for functions
+
+-- NVARCHAR -> NVARCHAR
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_f1';
+GO
+
+-- NVARCHAR(MAX) -> NVARCHAR(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_f2';
+GO
+
+-- VARCHAR(MAX), VARCHAR(20) -> VARCHAR(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_f20';
+GO
+
+-- VARBINARY(MAX) -> VARBINARY(MAX)
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_f8';
+GO
+
+--  VARCHAR, VARCHAR(2), VARCHAR(MAX) -> VARCHAR(MAX) using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_udt_f1';
+GO
+
+-- NVARCHAR types as input, NVARCHAR(MAX) as output using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_udt_f2';
+GO
+
+-- VARBINARY types as input, VARBINARY(MAX) as output using UDT
+SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA = 'dbo' AND SPECIFIC_NAME = 'babel_5059_udt_f3';
 GO
 
 -- combination 

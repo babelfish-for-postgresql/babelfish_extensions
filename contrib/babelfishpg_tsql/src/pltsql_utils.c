@@ -403,8 +403,8 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 }
 
 /*
- * Setup default typmod for sys types/domains when typmod isn't specified
- * (that is, typmod = -1).
+ * Helper function to setup default typmod for sys types/domains
+ * when typmod isn't specified (that is, typmod = -1).
  * We only care to do this in TSQL dialect, this means sys.varchar
  * defaults to sys.varchar(1) only in TSQL dialect.
  *
@@ -423,7 +423,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
  * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
  */
 void
-pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure_or_func)
+pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure_or_func)
 {
 	Assert(sql_dialect == SQL_DIALECT_TSQL);
 
@@ -521,6 +521,12 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 			}
 		}
 	}
+}
+
+void
+pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
+{
+    pltsql_check_or_set_default_typmod_helper(typeName, typmod, is_cast, false);
 }
 
 /*
