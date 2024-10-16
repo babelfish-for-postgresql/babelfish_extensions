@@ -221,11 +221,19 @@ go
 alter role db_datawriter add member db_roles_r1; 
 go
 
-select count(*) from sys.database_principals where name like '%db_roles%';
+select count(*) from sys.database_principals where name like '%db_datareader%';
 go
 ~~START~~
 int
-4
+1
+~~END~~
+
+
+select count(*) from sys.database_principals where name like '%db_datawriter%';
+go
+~~START~~
+int
+1
 ~~END~~
 
 
