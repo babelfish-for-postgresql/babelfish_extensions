@@ -10555,31 +10555,67 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
--- convertion to binary
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
-    IN input_value TEXT,
-    IN style NUMERIC
-) RETURNS sys.varbinary 
+-- -- convertion to binary
+-- CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
+--     IN input_value TEXT,
+--     IN style NUMERIC
+-- ) RETURNS sys.varbinary 
+-- AS 
+-- $BODY$
+-- DECLARE
+--     result bytea; 
+-- BEGIN
+--     IF style = 0 THEN
+--         result := CAST(input_value AS bytea);
+    
+--     ELSIF style = 1 THEN
+--         -- Handle hexadecimal conversion
+--         IF (left(input_value, 2) = '0x' COLLATE sys.database_default AND length(input_value) % 2 = 0) OR input_value IS NULL THEN
+--             result := decode(substring(input_value from 3), 'hex');
+--         ELSE
+--             RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+--         END IF;
+--     ELSIF style = 2 THEN
+--         IF left(input_value, 2) = '0x' COLLATE sys.database_default THEN
+--             RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+--         ELSE
+--             result := decode((input_value), 'hex');
+--         END IF;
+--     ELSE
+--         RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
+--     END IF;
+
+--     RETURN CAST(result AS sys.varbinary);
+-- END;
+-- $BODY$ 
+-- LANGUAGE plpgsql
+-- STABLE
+-- STRICT;
+
+-- Helper function to convert to binary or varbinary
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(
+    IN input_value sys.VARCHAR,
+    IN style NUMERIC DEFAULT 0) 
+RETURNS sys.varbinary 
 AS 
 $BODY$
 DECLARE
     result bytea; 
 BEGIN
     IF style = 0 THEN
-        result := CAST(input_value AS bytea);
-    
+        RETURN CAST(input_value AS sys.varbinary);
     ELSIF style = 1 THEN
         -- Handle hexadecimal conversion
-        IF (left(input_value, 2) = '0x' COLLATE sys.database_default AND length(input_value) % 2 = 0) OR input_value IS NULL THEN
+        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) OR input_value IS NULL THEN
             result := decode(substring(input_value from 3), 'hex');
         ELSE
             RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
         END IF;
     ELSIF style = 2 THEN
-        IF left(input_value, 2) = '0x' COLLATE sys.database_default THEN
+        IF PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" THEN
             RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
         ELSE
-            result := decode((input_value), 'hex');
+            result := decode(input_value, 'hex');
         END IF;
     ELSE
         RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
@@ -10589,7 +10625,7 @@ BEGIN
 END;
 $BODY$ 
 LANGUAGE plpgsql
-STABLE
+IMMUTABLE
 STRICT;
 
 -- This is a temporary procedure which is called during upgrade to alter
