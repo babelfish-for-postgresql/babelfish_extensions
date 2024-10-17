@@ -1,0 +1,63 @@
+-- tsql
+drop user securityadmin_user1
+go
+
+drop user no_securityadmin_user1
+go
+
+drop login securityadmin_login1
+go
+
+use securityadmin_db1
+go
+
+drop user no_securityadmin_user1
+go
+
+use master
+go
+
+drop login no_securityadmin_login1
+go
+
+drop database securityadmin_db1
+go
+
+drop schema securityadmin_scm1
+go
+
+drop view securityadmin_show_role_mem
+go
+
+drop TRIGGER securityadmin_tggr1
+go
+
+drop table securityadmin_tb1
+go
+
+drop view securityadmin_v1
+go
+
+drop function securityadmin_func1()
+go
+
+drop procedure securityadmin_proc1
+go
+
+drop procedure securityadmin_create_login_p1
+go
+
+drop procedure securityadmin_alter_login_p1
+go
+
+drop procedure securityadmin_drop_login_p1
+go
+
+drop procedure securityadmin_add_mem_p1
+go
+
+drop procedure securityadmin_drop_mem_p1
+go
+
+drop role securityadmin_rol
+go
