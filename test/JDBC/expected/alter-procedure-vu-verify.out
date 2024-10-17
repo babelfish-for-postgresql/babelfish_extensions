@@ -57,7 +57,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p1#!#SQL#!#CREATE       -- test comment<newline>    PROCEDURE alter_proc_p1<newline>AS<newline>    select * from alter_proc_orders
+alter_proc_p1#!#SQL#!#-- Test Case: Modify the procedure body, and check information_schema updated with spaces<newline>/* Leading comment not included: BABEL-5140 */ CREATE       -- test comment<newline>    PROCEDURE alter_proc_p1<newline>AS<newline>    select * from alter_proc_orders<newline>
 ~~END~~
 
 
@@ -101,7 +101,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p1#!#SQL#!#CREATE /* TEST COMMENT */ <newline>            PROC alter_proc_p1<newline>    @param INT<newline>AS<newline>    IF (@param = 1)<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END
+alter_proc_p1#!#SQL#!#-- Test Case: Modify the procedure body, add a parameter, use "proc"<newline>--            instead of "procedure"<newline>       CREATE /* TEST COMMENT */ <newline>            PROC alter_proc_p1<newline>    @param INT<newline>AS<newline>    IF (@param = 1)<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END<newline>
 ~~END~~
 
 
@@ -151,7 +151,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p1#!#SQL#!#CREATE PROCEDURE alter_proc_p1<newline>    @param date<newline>AS<newline>    IF (@param = '2020-01-01')<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END
+alter_proc_p1#!#SQL#!#-- Test Case: Alter the parameter type and procedure body<newline>CREATE PROCEDURE alter_proc_p1<newline>    @param date<newline>AS<newline>    IF (@param = '2020-01-01')<newline>    BEGIN<newline>        select * from alter_proc_users<newline>    END<newline>    ELSE<newline>    BEGIN<newline>        select * from alter_proc_orders<newline>    END<newline>
 ~~END~~
 
 
@@ -175,7 +175,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p2#!#SQL#!#CREATE procedure alter_proc_p2<newline>AS<newline>    exec alter_proc_p1 @param = '2020-01-01'
+alter_proc_p2#!#SQL#!#-- Test Case: Modify the procedure body to call another modified proc<newline>CREATE procedure alter_proc_p2<newline>AS<newline>    exec alter_proc_p1 @param = '2020-01-01'<newline>
 ~~END~~
 
 
@@ -237,7 +237,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p3#!#SQL#!#CREATE procedure alter_proc_p3 @z int as select 500 + @z
+alter_proc_p3#!#SQL#!#CREATE procedure alter_proc_p3 @z int as select 500 + @z<newline>
 ~~END~~
 
 
@@ -322,7 +322,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p4#!#SQL#!#CREATE <newline>/*<newline> * test comment 1<newline> */<newline>-- test comment 2<newline>procedure alter_proc_p4 as select 3
+alter_proc_p4#!#SQL#!#-- Test Case: confirm information_schema.routines is updated properly with comments<newline>CREATE <newline>/*<newline> * test comment 1<newline> */<newline>-- test comment 2<newline>procedure alter_proc_p4 as select 3<newline>
 ~~END~~
 
 
@@ -346,7 +346,7 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p4#!#SQL#!#CREATE <newline>-- test comment 1<newline>procedure alter_proc_p4 as select 4
+alter_proc_p4#!#SQL#!#-- Test Case: confirm information_schema.routines is updated properly with comments<newline>CREATE <newline>-- test comment 1<newline>procedure alter_proc_p4 as select 4<newline>
 ~~END~~
 
 
@@ -363,6 +363,6 @@ select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.ro
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-alter_proc_p4#!#SQL#!#CREATE <newline>-- test comment 1<newline>procedure alter_proc_p4 as select 4
+alter_proc_p4#!#SQL#!#-- Test Case: confirm information_schema.routines is updated properly with comments<newline>CREATE <newline>-- test comment 1<newline>procedure alter_proc_p4 as select 4<newline>
 ~~END~~
 
