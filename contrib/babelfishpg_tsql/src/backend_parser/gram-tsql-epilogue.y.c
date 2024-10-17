@@ -1805,6 +1805,87 @@ TsqlForClauseSubselect(Node *selectstmt)
 	return rss;
 }
 
+static Node *
+buildTsqlMultiLineTvfNode(int create_loc, bool replace, List *func_name, int func_name_loc, List *tsql_createfunc_args,
+							char *param_name, int table_loc, List *table_elts, char *tokens_remaining, int tokens_loc, bool alter, core_yyscan_t yyscanner)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+	{
+		CreateStmt *n1 = makeNode(CreateStmt);
+		CreateFunctionStmt *n2;
+		ObjectWithArgs *owa;
+		AlterFunctionStmt *n;
+		char *tbltyp_name = psprintf("%s_%s", param_name, strVal(llast(func_name)));
+		List *tbltyp = list_copy(func_name);
+		FunctionParameter *out_param = makeNode(FunctionParameter);
+
+		DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), create_loc);
+		DefElem *body = makeDefElem("as", (Node *) list_make1(makeString(tokens_remaining)), tokens_loc);
+		DefElem *tbltypStmt = makeDefElem("tbltypStmt", (Node *) n1, create_loc);
+		DefElem *location = makeDefElem("location", (Node *) makeInteger(func_name_loc), func_name_loc);
+		DefElem *ret;
+		TypeName *returnType;
+
+		tbltyp = list_truncate(tbltyp, list_length(tbltyp) - 1);
+		tbltyp = lappend(tbltyp, makeString(downcase_truncate_identifier(tbltyp_name, strlen(tbltyp_name), true)));
+		n1->relation = makeRangeVarFromAnyName(tbltyp, func_name_loc, yyscanner);
+		n1->tableElts = table_elts;
+		n1->inhRelations = NIL;
+		n1->partspec = NULL;
+		n1->ofTypename = NULL;
+		n1->constraints = NIL;
+		n1->options = NIL;
+		n1->oncommit = ONCOMMIT_NOOP;
+		n1->tablespacename = NULL;
+		n1->if_not_exists = false;
+		n1->tsql_tabletype = true;
+
+		out_param->name = param_name;
+		out_param->argType = makeTypeNameFromNameList(tbltyp);
+		out_param->mode = FUNC_PARAM_TABLE;
+		out_param->defexpr = NULL;
+
+		if(alter)
+		{
+			returnType = out_param->argType;
+			returnType->setof = true;
+			returnType->location = table_loc;
+			ret = makeDefElem("return", (Node *) returnType, table_loc);
+
+			owa = makeNode(ObjectWithArgs);
+			owa->objname = func_name;
+			owa->objargs = lappend(extractArgTypes(tsql_createfunc_args), out_param->argType);
+			owa->objfuncargs = lappend(tsql_createfunc_args, out_param);
+
+			n = makeNode(AlterFunctionStmt);
+			n->objtype = OBJECT_PROCEDURE; /* Set as proc to avoid psql alter func impl */
+			n->func = owa;
+			n->actions = list_make5(lang, body, location, tbltypStmt, ret);
+
+			return (Node *) n;
+		} 
+
+		TSQLInstrumentation(INSTR_TSQL_CREATE_FUNCTION_RETURNS_TABLE);
+		n2 = makeNode(CreateFunctionStmt);
+		n2->is_procedure = false;
+		n2->replace = replace;
+		n2->funcname = func_name;
+		n2->parameters = lappend(tsql_createfunc_args, out_param);
+		n2->returnType = makeTypeNameFromNameList(tbltyp);
+		n2->returnType->setof = true;
+		n2->returnType->location = table_loc;
+		n2->options = list_make4(lang, body, tbltypStmt, location);
+		return (Node *) n2;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("This syntax is only valid when babelfishpg_tsql.sql_dialect is TSQL"),
+					parser_errposition(create_loc)));
+	}
+}
+
 /* pivot select transformation*/
 static Node *
 tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl)
