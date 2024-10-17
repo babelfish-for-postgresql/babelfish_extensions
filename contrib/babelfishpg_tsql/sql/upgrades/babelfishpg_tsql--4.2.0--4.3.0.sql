@@ -357,11 +357,11 @@ CASE
 WHEN expressionToFind = '' THEN
     0
 WHEN start_location <= 0 THEN
-    strpos(expressionToSearch, expressionToFind)
+	strpos(expressionToSearch, expressionToFind)
 ELSE
-    CASE
-    WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
-        0
+	CASE
+	WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
+		0
 	ELSE
 		strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
 	END
