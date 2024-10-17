@@ -403,13 +403,17 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 }
 
 /*
- * Setup default typmod for sys types/domains when typmod isn't specified
- * (that is, typmod = -1).
+ * Helper function to setup default typmod for sys types/domains
+ * when typmod isn't specified (that is, typmod = -1).
  * We only care to do this in TSQL dialect, this means sys.varchar
  * defaults to sys.varchar(1) only in TSQL dialect.
  *
  * is_cast indicates if it's a CAST/CONVERT statement, if it's true the default
  * length of string and binary type will be set to 30.
+ *
+ * is_procedure_or_func indicates if it's a procedure/function statement,
+ * if it's true the default length of string and binary type will be set to 1
+ * otherwise we will add VARHDRSZ to it.
  *
  * If typmod is TSQLMaxTypmod (-8000), it means MAX is used in the
  * length field of VARCHAR, NVARCHAR or VARBINARY. Set typmod to -1,
@@ -419,7 +423,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
  * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
  */
 void
-pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
+pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure_or_func)
 {
 	Assert(sql_dialect == SQL_DIALECT_TSQL);
 
@@ -475,10 +479,13 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 						 * atttypmod is the declared length of the type plus
 						 * VARHDRSZ.
 						 */
-						*typmod = 30 + VARHDRSZ;
+						*typmod = 30;
 					else
 						/* Default length is 1 in the general case */
-						*typmod = 1 + VARHDRSZ;
+						*typmod = 1;
+
+					if (!is_procedure_or_func)
+						*typmod += VARHDRSZ;
 				}
 				else if (strcmp(typname, "smalldatetime") == 0)
 					*typmod = 0;
@@ -514,6 +521,12 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 			}
 		}
 	}
+}
+
+void
+pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
+{
+    pltsql_check_or_set_default_typmod_helper(typeName, typmod, is_cast, false);
 }
 
 /*
