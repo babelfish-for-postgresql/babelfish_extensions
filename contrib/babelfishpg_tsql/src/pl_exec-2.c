@@ -22,6 +22,7 @@
 
 #include "catalog.h"
 #include "dbcmds.h"
+#include "rolecmds.h"
 #include "pl_explain.h"
 #include "pltsql.h"
 #include "rolecmds.h"
@@ -3228,11 +3229,12 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
-	 * sysadmin, then it doesn't have the permission to GRANT/REVOKE.
+	 * sysadmin or securityadmin, then it doesn't have the permission to GRANT/REVOKE.
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 	datdba = get_role_oid("sysadmin", false);
-	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner)
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner
+					&& !is_member_of_role(GetSessionUserId(), get_securityadmin_oid()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Grantor does not have GRANT permission.")));

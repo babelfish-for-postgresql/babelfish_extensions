@@ -313,6 +313,8 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define Anum_bbf_schema_perms_grantor 8
 
 #define PUBLIC_ROLE_NAME "public"
+#define BABELFISH_SECURITYADMIN "securityadmin"
+#define BABELFISH_SYSADMIN "sysadmin"
 #define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
 #define ALL_PERMISSIONS_ON_RELATION 47 /* last 6 bits as 101111 represents ALL privileges on a relation. */
 #define ALL_PERMISSIONS_ON_FUNCTION 128 /* last 8 bits as 10000000 represents ALL privileges on a procedure/function. */
@@ -321,6 +323,16 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define OBJ_PROCEDURE "p"
 #define OBJ_FUNCTION "f"
 #define NUMBER_OF_PERMISSIONS 6
+
+/* check if rolename is sysadmin */
+#define IS_ROLENAME_SYSADMIN(rolname) \
+	(strlen(rolname) == 8 && \
+	strncmp(rolname, BABELFISH_SYSADMIN, 8) == 0)
+
+/* check if rolename is securityadmin */
+#define IS_ROLENAME_SECURITYADMIN(rolname) \
+	(strlen(rolname) == 13 && \
+	strncmp(rolname, BABELFISH_SECURITYADMIN, 13) == 0)
 
 extern int permissions[];
 

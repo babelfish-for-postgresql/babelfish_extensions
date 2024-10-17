@@ -939,14 +939,17 @@ is_babelfish_role(const char *role)
 	Oid			bbf_master_guest_oid;
 	Oid			bbf_tempdb_guest_oid;
 	Oid			bbf_msdb_guest_oid;
+	Oid			securityadmin_oid;
 
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
+	securityadmin_oid = get_role_oid(BABELFISH_SECURITYADMIN, true);  /* missing OK */
 
 	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid))
 		return false;
 
 	if (is_member_of_role(sysadmin_oid, role_oid) ||
+		is_member_of_role(securityadmin_oid, role_oid) ||
 		pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) /* check if it is bbf_role_admin */
 		return true;
 
@@ -1204,11 +1207,13 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 {
 	ListCell *item;
 	Oid bbf_role_admin_oid = InvalidOid;
+	Oid securityadmin_oid = InvalidOid;
 
 	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
 		return true;
 
 	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, false);
+	securityadmin_oid = get_role_oid(BABELFISH_SECURITYADMIN, false);
 
 	/*
 	 * Allow GRANT ROLE if current user is bbf_role_admin as we need
@@ -1218,7 +1223,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 	if (bbf_role_admin_oid == GetUserId())
 		return true;
 
-	/* Restrict roles to added as a member of bbf_role_admin */
+	/* Restrict roles to added as a member of bbf_role_admin/securityadmin */
 	foreach(item, grant_stmt->granted_roles)
 	{
 		AccessPriv *priv = (AccessPriv *) lfirst(item);
@@ -1229,18 +1234,18 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 			continue;
 
 		roleid = get_role_oid(rolename, false);
-		if (OidIsValid(roleid) && roleid == bbf_role_admin_oid)
+		if (OidIsValid(roleid) && (roleid == bbf_role_admin_oid || roleid == securityadmin_oid))
 			check_babelfish_alterrole_restictions(false);
 	}
 
-	/* Restrict grant to/from bbf_role_admin role */
+	/* Restrict grant to/from bbf_role_admin/securityadmin role */
 	foreach(item, grant_stmt->grantee_roles)
 	{
 		RoleSpec   *rolespec = lfirst_node(RoleSpec, item);
 		Oid			roleid;
 
 		roleid = get_rolespec_oid(rolespec, false);
-		if (OidIsValid(roleid) && roleid == bbf_role_admin_oid)
+		if (OidIsValid(roleid) && (roleid == bbf_role_admin_oid || roleid == securityadmin_oid))
 			check_babelfish_alterrole_restictions(false);
 	}
 

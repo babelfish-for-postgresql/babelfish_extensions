@@ -2146,8 +2146,8 @@ BEGIN
     ELSIF role = 'public' COLLATE sys.database_default THEN
     	RETURN 1;
 	
- 	ELSIF role = 'sysadmin' COLLATE sys.database_default THEN
-	  	has_role = pg_has_role(login::TEXT, role::TEXT, 'MEMBER');
+ 	ELSIF role = 'sysadmin' COLLATE sys.database_default OR role = 'securityadmin' COLLATE sys.database_default THEN
+	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER') OR pg_has_role(login::TEXT, 'sysadmin'::TEXT, 'MEMBER'));
 	    IF has_role THEN
 			RETURN 1;
 		ELSE
@@ -2156,9 +2156,7 @@ BEGIN
 	
     ELSIF role COLLATE sys.database_default IN (
             'serveradmin',
-            'securityadmin',
             'setupadmin',
-            'securityadmin',
             'processadmin',
             'dbcreator',
             'diskadmin',
@@ -2513,7 +2511,12 @@ CAST(
         ELSE 0
     END
 AS INT) AS sysadmin,
-CAST(0 AS INT) AS securityadmin,
+CAST(
+    CASE
+        WHEN is_srvrolemember('securityadmin', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS securityadmin,
 CAST(0 AS INT) AS serveradmin,
 CAST(0 AS INT) AS setupadmin,
 CAST(0 AS INT) AS processadmin,
