@@ -1,0 +1,83 @@
+DROP PROCEDURE babel_5186_errProc1_1
+DROP PROCEDURE babel_5186_errProc1_2
+DROP PROCEDURE babel_5186_errProc1_3
+DROP PROCEDURE babel_5186_errProc1_4
+GO
+
+DROP PROCEDURE babel_5186_errProc2_11
+DROP PROCEDURE babel_5186_errProc2_21
+DROP PROCEDURE babel_5186_errProc2_31
+DROP PROCEDURE babel_5186_errProc2_41
+GO
+
+DROP PROCEDURE babel_5186_errProc2_1
+DROP PROCEDURE babel_5186_errProc2_2
+DROP PROCEDURE babel_5186_errProc2_3
+DROP PROCEDURE babel_5186_errProc2_4
+GO
+
+DROP PROCEDURE babel_5186_errProc3_11
+DROP PROCEDURE babel_5186_errProc3_21
+DROP PROCEDURE babel_5186_errProc3_31
+DROP PROCEDURE babel_5186_errProc3_41
+GO
+
+DROP PROCEDURE babel_5186_errProc3_1
+DROP PROCEDURE babel_5186_errProc3_2
+DROP PROCEDURE babel_5186_errProc3_3
+DROP PROCEDURE babel_5186_errProc3_4
+GO
+
+DROP TABLE babel_5186_table_errTable
+GO
+
+DROP PROCEDURE babel_5186_1_errProc1_1
+DROP PROCEDURE babel_5186_1_errProc1_2
+DROP PROCEDURE babel_5186_1_errProc1_3
+DROP PROCEDURE babel_5186_1_errProc1_4
+GO
+
+DROP PROCEDURE babel_5186_1_errProc2_11
+DROP PROCEDURE babel_5186_1_errProc2_21
+DROP PROCEDURE babel_5186_1_errProc2_31
+DROP PROCEDURE babel_5186_1_errProc2_41
+GO
+
+DROP PROCEDURE babel_5186_1_errProc2_1
+DROP PROCEDURE babel_5186_1_errProc2_2
+DROP PROCEDURE babel_5186_1_errProc2_3
+DROP PROCEDURE babel_5186_1_errProc2_4
+GO
+
+DROP PROCEDURE babel_5186_1_errProc3_11
+DROP PROCEDURE babel_5186_1_errProc3_21
+DROP PROCEDURE babel_5186_1_errProc3_31
+DROP PROCEDURE babel_5186_1_errProc3_41
+GO
+
+DROP PROCEDURE babel_5186_1_errProc3_1
+DROP PROCEDURE babel_5186_1_errProc3_2
+DROP PROCEDURE babel_5186_1_errProc3_3
+DROP PROCEDURE babel_5186_1_errProc3_4
+GO
+
+DROP TABLE babel_5186_1_table_errTable
+GO
+
+DROP PROCEDURE babel_5186_try_catch_relation_err1
+GO
+
+DROP PROCEDURE babel_5186_try_catch_relation_err2
+GO
+
+DROP PROCEDURE babel_5186_try_catch_column_err1
+GO
+
+DROP PROCEDURE babel_5186_try_catch_column_err2
+GO
+
+DROP TABLE babel_5186_try_catch_table
+GO
+
+DROP TABLE babel_5186_1_try_catch_table
+GO

@@ -1087,6 +1087,20 @@ is_xact_abort_on_error(PLtsql_execstate *estate)
 	return false;
 }
 
+/*
+ * For Unmapped PostgreSQL errors: ERRCODE_UNDEFINED_COLUMN and ERRCODE_UNDEFINED_TABLE, 
+ * we will allow it to go to CATCH block of a TRY CATCH STATEMENT, if error is raised from lower level of execution
+ */
+static
+bool
+escape_last_unmapped_error(PLtsql_execstate *estate)
+{
+	if (!is_error_raising_batch(estate) && last_error_mapping_failed && (latest_pg_error_code == ERRCODE_UNDEFINED_TABLE || latest_pg_error_code == ERRCODE_UNDEFINED_COLUMN))
+		return true;
+	
+	return false;
+}
+
 /* Cases where transaction is no longer committable */
 static
 bool
@@ -1581,7 +1595,7 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 									 * error context */
 						}
 					}
-					if (last_error_mapping_failed || terminate_batch)
+					if (!escape_last_unmapped_error(estate) && (last_error_mapping_failed || terminate_batch))
 					{
 						elog(DEBUG1, "TSQL TXN Ignore catch block error mapping failed : %d", last_error_mapping_failed);
 						ReThrowError(estate->cur_error->error);
