@@ -1,0 +1,541 @@
+-- tsql
+alter login dbowner__l1 with password = '123'
+go
+alter login dbowner__l2 with password = '123'
+go
+alter login dbowner__temp with password = '123'
+go
+
+-- CASE 1: Able to access all objects in its own database
+-- tsql user=dbowner__l1 password=123
+use dbowner__main_db
+go
+select is_member('db_owner')
+go
+select * from dbo.dbowner__t0
+go
+select dbo.dbowner__f0()
+go
+exec dbo.dbowner__p0
+go
+select * from dbowner__s1.dbowner__t1
+go
+select dbowner__s1.dbowner__f1()
+go
+exec dbowner__s1.dbowner__p1
+go
+select * from dbowner__s2.dbowner__t2
+go
+select dbowner__s2.dbowner__f2()
+go
+exec dbowner__s2.dbowner__p2
+go
+
+-- CASE 2: Able to create objects in its own database
+create table dbowner__s1.dbowner__t11 (a int)
+go
+create schema dbowner__s3 authorization dbowner__u1
+go
+create table dbowner__s3.dbowner__t3 (a int)
+go
+create function dbowner__s3.dbowner__f3() returns int as begin return 13 end
+go
+create procedure dbowner__s3.dbowner__p3 as select 23
+go
+
+-- CASE 3: Able to GRANT/REVOKE on SCHEMA/OBJECT
+grant select on schema::dbowner__s1 to dbowner__u2
+go
+grant insert on schema::dbowner__s2 to guest
+go
+grant update on schema::dbowner__s3 to dbowner__u2
+go
+grant delete on schema::dbo to dbowner__u2
+go
+grant select on object::dbo.dbowner__t0 to dbowner__u2
+go
+grant insert on object::dbowner__s1.dbowner__t1 to dbowner__u2
+go
+grant update on object::dbowner__s2.dbowner__t2 to dbowner__u1
+go
+grant delete on object::dbowner__s3.dbowner__t3 to dbowner__u2
+go
+grant execute on object::dbowner__s1.dbowner__f1 to dbowner__u1
+go
+grant execute on object::dbowner__s3.dbowner__p3 to dbowner__u1
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
+where grantee IN ('dbowner__main_db_guest', 'dbowner__main_db_dbowner__u1', 'dbowner__main_db_dbowner__u2') order by permission;
+GO
+
+-- tsql user=dbowner__l1 password=123
+revoke select on schema::dbowner__s1 to dbowner__u2
+go
+revoke insert on schema::dbowner__s2 to guest
+go
+revoke update on schema::dbowner__s3 to dbowner__u2
+go
+revoke delete on schema::dbo to dbowner__u2
+go
+revoke select on object::dbo.dbowner__t0 to dbowner__u2
+go
+revoke insert on object::dbowner__s1.dbowner__t1 to dbowner__u2
+go
+revoke update on object::dbowner__s2.dbowner__t2 to dbowner__u1
+go
+revoke delete on object::dbowner__s3.dbowner__t3 to dbowner__u2
+go
+revoke execute on object::dbowner__s1.dbowner__f1 to dbowner__u1
+go
+revoke execute on object::dbowner__s3.dbowner__p3 to dbowner__u1
+go
+
+-- psql
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
+where grantee IN ('dbowner__main_db_guest', 'dbowner__main_db_dbowner__u1', 'dbowner__main_db_dbowner__u2') order by permission;
+GO
+
+-- CASE 4: Able to ALTER ANY USER
+-- tsql user=dbowner__l1 password=123
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
+go
+alter user dbowner__u1 with default_schema = dbowner__s1
+go
+alter user dbowner__u1 with name = new_dbowner__u1
+go
+alter user dbowner__u2 with default_schema = dbo
+go
+alter user dbowner__u2 with login = dbowner__temp
+go
+alter user dbowner__u2 with name = new_dbowner__u2
+go
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
+go
+select sys.user_name(), sys.suser_name(), is_member('db_owner')
+go
+alter user new_dbowner__u2 with default_schema = dbo
+go
+alter user new_dbowner__u2 with login = dbowner__l2
+go
+alter user new_dbowner__u2 with name = dbowner__u2
+go
+alter user new_dbowner__u1 with login = dbowner__temp
+go
+select sys.user_name(), sys.suser_name(), is_member('db_owner')
+go
+select database_name, rolname, login_name, default_schema_name, default_language_name from sys.babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+go
+alter user new_dbowner__u1 with login = dbowner__l1
+go
+alter user new_dbowner__u1 with name = dbowner__u1
+go
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
+go
+select name from sys.database_principals order by name
+go
+
+-- tsql
+use dbowner__main_db
+go
+alter role db_owner drop member new_dbowner__u1
+go
+alter role db_owner add member new_dbowner__u1
+go
+alter user new_dbowner__u1 with login = dbowner__l1
+go
+
+-- terminate-tsql-conn user=dbowner__l1 password=123
+
+-- tsql user=dbowner__l1 password=123
+use dbowner__main_db
+go
+select sys.user_name(), is_member('db_owner')
+go
+alter user new_dbowner__u1 with name = dbowner__u1
+go
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
+go
+select name from sys.database_principals order by name
+go
+
+-- tsql user=dbowner__l2 password=123
+use dbowner__main_db
+go
+select is_member('db_owner')
+go
+select * from dbo.dbowner__t0
+go
+select dbo.dbowner__f0()
+go
+exec dbo.dbowner__p0
+go
+select * from dbowner__s1.dbowner__t1
+go
+select dbowner__s1.dbowner__f1()
+go
+exec dbowner__s1.dbowner__p1
+go
+select * from dbowner__s2.dbowner__t2
+go
+select dbowner__s2.dbowner__f2()
+go
+exec dbowner__s2.dbowner__p2
+go
+select * from dbowner__s1.dbowner__t11
+go
+select * from dbowner__s3.dbowner__t3
+go
+select dbowner__s3.dbowner__f3()
+go
+exec dbowner__s3.dbowner__p3
+go
+
+select name from sys.database_principals order by name
+go
+
+-- psql
+-- Procedure/function owners should be dbowner__main_db_dbowner__u1_obj
+SELECT proname,
+       proowner::regrole
+FROM pg_proc
+WHERE pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s1'
+OR pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s3'
+ORDER BY proname;
+GO
+
+-- Table owners should be dbowner__main_db_dbowner__u1_obj
+SELECT
+    n.nspname AS schema,
+    c.relname AS table,
+    CASE c.relkind
+        WHEN 'r' THEN 'table'
+        WHEN 'v' THEN 'view'
+        WHEN 'm' THEN 'materialized view'
+        WHEN 'i' THEN 'index'
+        WHEN 'S' THEN 'sequence'
+        WHEN 's' THEN 'special'
+        WHEN 'f' THEN 'foreign table'
+    END AS type,
+    pg_catalog.pg_get_userbyid(c.relowner) AS owner
+FROM pg_catalog.pg_class c
+LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+WHERE (n.nspname = 'dbowner__main_db_dbowner__s1' OR n.nspname = 'dbowner__main_db_dbowner__s3')
+AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
+ORDER BY n.nspname, c.relkind, c.relname;
+GO
+
+-- Schema owners should be dbowner__main_db_dbowner__u1_obj
+SELECT
+    r.rolname AS schema_owner,
+    ns.nspname
+FROM
+    pg_namespace ns
+JOIN
+    pg_roles r 
+ON
+    ns.nspowner = r.oid
+WHERE
+    ns.nspname = 'dbowner__main_db_dbowner__s1'
+OR
+    ns.nspname = 'dbowner__main_db_dbowner__s3'
+ORDER BY ns.nspname;
+GO
+
+-- tsql
+select * from dbo.dbowner__t0
+go
+select dbo.dbowner__f0()
+go
+exec dbo.dbowner__p0
+go
+select * from dbowner__s1.dbowner__t1
+go
+select dbowner__s1.dbowner__f1()
+go
+exec dbowner__s1.dbowner__p1
+go
+select * from dbowner__s2.dbowner__t2
+go
+select dbowner__s2.dbowner__f2()
+go
+exec dbowner__s2.dbowner__p2
+go
+select * from dbowner__s1.dbowner__t11
+go
+select * from dbowner__s3.dbowner__t3
+go
+select dbowner__s3.dbowner__f3()
+go
+exec dbowner__s3.dbowner__p3
+go
+
+select name from sys.database_principals order by name
+go
+
+-- CASE 5: If removed from db_owner, user should lose access to objects in schemas except the ones it owns
+alter role db_owner drop member dbowner__u1
+go
+
+-- tsql user=dbowner__l1 password=123
+select is_member('db_owner')
+go
+select * from dbo.dbowner__t0
+go
+select dbo.dbowner__f0()
+go
+exec dbo.dbowner__p0
+go
+select * from dbowner__s1.dbowner__t1
+go
+select dbowner__s1.dbowner__f1()
+go
+exec dbowner__s1.dbowner__p1
+go
+select * from dbowner__s2.dbowner__t2
+go
+select dbowner__s2.dbowner__f2()
+go
+exec dbowner__s2.dbowner__p2
+go
+select * from dbowner__s1.dbowner__t11
+go
+select * from dbowner__s3.dbowner__t3
+go
+select dbowner__s3.dbowner__f3()
+go
+exec dbowner__s3.dbowner__p3
+go
+
+-- CASE 6: If removed from db_owner, user should lose access to create objects in schemas except the ones it owns
+create role dbowner__r3
+go
+create role dbowner__r4
+go
+create user dbowner__temp for login dbowner__temp
+go
+alter role dbowner__r1 add member dbowner__u2
+go
+drop user dbowner__u2
+go
+drop role dbowner__r1
+go
+drop role dbowner__r2
+go
+
+-- psql
+-- Procedure/function owners should be dbowner__main_db_dbowner__u1
+SELECT proname,
+       proowner::regrole
+FROM pg_proc
+WHERE pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s1'
+OR pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s3'
+ORDER BY proname;
+GO
+
+-- Table owners should be dbowner__main_db_dbowner__u1
+SELECT
+    n.nspname AS schema,
+    c.relname AS table,
+    CASE c.relkind
+        WHEN 'r' THEN 'table'
+        WHEN 'v' THEN 'view'
+        WHEN 'm' THEN 'materialized view'
+        WHEN 'i' THEN 'index'
+        WHEN 'S' THEN 'sequence'
+        WHEN 's' THEN 'special'
+        WHEN 'f' THEN 'foreign table'
+    END AS type,
+    pg_catalog.pg_get_userbyid(c.relowner) AS owner
+FROM pg_catalog.pg_class c
+LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+WHERE (n.nspname = 'dbowner__main_db_dbowner__s1' OR n.nspname = 'dbowner__main_db_dbowner__s3')
+AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
+ORDER BY n.nspname, c.relkind, c.relname;
+GO
+
+-- Schema owners should be dbowner__main_db_dbowner__u1
+SELECT
+    r.rolname AS schema_owner,
+    ns.nspname
+FROM
+    pg_namespace ns
+JOIN
+    pg_roles r 
+ON
+    ns.nspowner = r.oid
+WHERE
+    ns.nspname = 'dbowner__main_db_dbowner__s1'
+OR
+    ns.nspname = 'dbowner__main_db_dbowner__s3'
+ORDER BY ns.nspname;
+GO
+
+-- tsql
+alter role db_owner add member dbowner__u1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'dbowner__l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql user=dbowner__l1 password=123
+select is_member('db_owner')
+go
+
+-- CASE 6: User member of db_owner should be able to drop all objects in its database
+create role dbowner__r3
+go
+create role dbowner__r4
+go
+create user dbowner__temp for login dbowner__temp
+go
+alter role dbowner__r1 add member dbowner__temp
+go
+alter role dbowner__r3 add member dbowner__temp
+go
+alter role dbowner__r3 add member dbowner__r1
+go
+alter role dbowner__r4 add member dbowner__r2
+go
+drop user dbowner__temp
+go
+drop role dbowner__r1
+go
+drop role dbowner__r2
+go
+drop role dbowner__r3
+go
+drop role dbowner__r4
+go
+
+drop table dbo.dbowner__t0
+go
+drop function dbo.dbowner__f0
+go
+drop procedure dbo.dbowner__p0
+go
+drop table dbowner__s1.dbowner__t1
+go
+drop function dbowner__s1.dbowner__f1
+go
+drop procedure dbowner__s1.dbowner__p1
+go
+drop table dbowner__s2.dbowner__t2
+go
+drop function dbowner__s2.dbowner__f2
+go
+drop procedure dbowner__s2.dbowner__p2
+go
+drop table dbowner__s1.dbowner__t11
+go
+drop table dbowner__s3.dbowner__t3
+go
+drop function dbowner__s3.dbowner__f3
+go
+drop procedure dbowner__s3.dbowner__p3
+go
+drop schema dbowner__s1
+go
+drop schema dbowner__s2
+go
+drop schema dbowner__s3
+go
+drop user dbowner__u2
+go
+
+-- tsql
+alter role db_owner drop member dbowner__u1
+go
+
+-- tsql user=dbowner__l1 password=123
+select is_member('db_owner')
+go
+
+-- CASE 7: Check if db_owner can drop the database
+-- tsql
+create database dbowner__test_db
+go
+use dbowner__test_db
+go
+create user dbowner__test_db_dbowner__u1 for login dbowner__l1
+go
+alter role db_owner add member dbowner__test_db_dbowner__u1
+go
+use dbowner__main_db
+go
+
+-- tsql user=dbowner__l1 password=123
+select sys.user_name()
+go
+select is_member('db_owner')
+go
+drop database dbowner__test_db
+go
+
+-- CASE 8: Check if there can be multiple db_owners
+-- tsql
+create database dbowner__test_db
+go
+use dbowner__test_db
+go
+create user dbowner__test_db_dbowner__u1 for login dbowner__l1
+go
+alter role db_owner add member dbowner__test_db_dbowner__u1
+go
+use master
+go
+
+-- CASE 9: Add another user but as db_owner
+-- tsql user=dbowner__l1 password=123
+use dbowner__test_db
+go
+select is_member('db_owner')
+go
+create user dbowner__test_db_dbowner__u2 for login dbowner__l2
+go
+
+-- tsql
+use dbowner__test_db
+go
+alter role db_owner add member dbowner__test_db_dbowner__u2
+go
+select is_rolemember('db_owner', 'dbowner__test_db_dbowner__u1'), is_rolemember('db_owner', 'dbowner__test_db_dbowner__u2')
+go
+use dbowner__main_db
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'dbowner__l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+
+-- Check if dropping user, also drops the linked "_obj" role
+-- psql
+select rolname from pg_authid where rolname like 'dbowner__test_db_%' order by rolname;
+go
+
+-- tsql
+use dbowner__test_db
+go
+drop user dbowner__test_db_dbowner__u1
+go
+drop user dbowner__test_db_dbowner__u2
+go
+use dbowner__main_db
+go
+
+-- psql
+select rolname from pg_authid where rolname like 'dbowner__test_db_%' order by rolname;
+go

@@ -2491,3 +2491,26 @@ get_owner_of_schema(const char *schema)
 
 	return result;
 }
+
+void
+update_ReassignOwnedStmt(Node *n, const char* old_role, const char* new_role)
+{
+	ReassignOwnedStmt *stmt = (ReassignOwnedStmt *) n;
+	RoleSpec   *old_rolespec = make_rolespec_node(old_role);
+	RoleSpec   *new_rolespec = make_rolespec_node(new_role);
+
+	if (!IsA(stmt, ReassignOwnedStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a ReassignOwnedStmt")));
+
+	stmt->roles = list_make1(old_rolespec);
+	stmt->newrole = new_rolespec;
+}
+
+void
+update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grantee_role)
+{
+	AccessPriv	*granted_rolespec = make_accesspriv_node(granted_role);
+	RoleSpec	*grantee_rolespec = make_rolespec_node(grantee_role);
+
+	update_GrantRoleStmt(n, list_make1(granted_rolespec), list_make1(grantee_rolespec));
+}

@@ -3051,7 +3051,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								*/
 							stmt->options = list_concat(stmt->options,
 														user_options);
-							create_bbf_authid_user_ext(stmt, isuser, isuser, from_windows);
+
+							/*
+							 * If the role is created internally as part of ALTER ROLE
+							 * db_owner ADD MEMBER ... statement, we should not add this to
+							 * our babelfish catalog. These roles are meant to be internal
+							 * and not be visible to customer from Babelfish endpoint.
+							 */
+							if (strcmp(queryString, "(ALTER ROLE ADD )") != 0)
+								create_bbf_authid_user_ext(stmt, isuser, isuser, from_windows);
 						}
 
 					}
@@ -3276,6 +3284,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (isuser || isrole)
 					{
 						char	   *dbo_name;
+						const char *db_owner_name;
 						char	   *db_name;
 						char	   *user_name;
 						char	   *cur_user;
@@ -3283,6 +3292,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						db_name = get_cur_db_name();
 						dbo_name = get_dbo_role_name(db_name);
+						db_owner_name = get_db_owner_name(db_name);
 						user_name = stmt->role->rolename;
 						cur_user = GetUserNameFromId(GetUserId(), false);
 
@@ -3296,7 +3306,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if (strcmp(defel->defname, "default_schema") == 0)
 							{
 								if (strcmp(cur_user, dbo_name) != 0 &&
-									strcmp(cur_user, user_name) != 0)
+									strcmp(cur_user, user_name) != 0 &&
+									!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
 									ereport(ERROR,
 											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current user does not have privileges to change schema")));
@@ -3304,7 +3315,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							else if (strcmp(defel->defname, "rename") == 0)
 							{
 								if (strcmp(cur_user, dbo_name) != 0 &&
-									strcmp(cur_user, user_name) != 0)
+									strcmp(cur_user, user_name) != 0 &&
+									!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
 									ereport(ERROR,
 											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current user does not have privileges to change user name")));
@@ -3318,7 +3330,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if (strcmp(defel->defname, "rolemembers") == 0)
 							{
 								if (strcmp(cur_user, dbo_name) != 0 &&
-									strcmp(cur_user, user_name) != 0)
+									strcmp(cur_user, user_name) != 0 &&
+									!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
 									ereport(ERROR,
 											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current user does not have privileges to change login")));
@@ -3438,7 +3451,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 */
 									if ((!stmt->missing_ok && !is_tsql_db_principal) ||
 										!is_member_of_role(GetUserId(), dbowner) ||
-										(is_tsql_db_principal && !is_member_of_role(dbowner, role_oid)) || is_psql_db_principal)
+										(is_tsql_db_principal && !is_member_of_role(dbowner, role_oid) && !is_member_of_role(role_oid, dbowner)) || is_psql_db_principal)
 										ereport(ERROR,
 												(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 												 errmsg("Cannot drop the %s '%s', because it does not exist or you do not have permission.", db_principal_type, rolspec->rolename)));
@@ -3818,13 +3831,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 					PG_TRY();
 					{
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-												queryEnv, dest, qc);
+						if (is_grantee_role_db_owner(grant_role) && strcmp(queryString, "(ALTER ROLE ADD )") != 0)
+						{
+							exec_alter_dbowner_subcmds(grant_role);
+						}
 						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+						{
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
-
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+														queryEnv, dest, qc);
+						}
 					}
 					PG_FINALLY();
 					{
