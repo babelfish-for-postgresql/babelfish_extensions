@@ -69,6 +69,8 @@ name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext 
 text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
 text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
 text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
@@ -140,6 +142,8 @@ name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext mus
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
 text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}

@@ -1,0 +1,90 @@
+-- tsql
+create login securityadmin_login1 with password = '123'
+go
+
+create login no_securityadmin_login1 with password = '123'
+go
+
+create user securityadmin_user1 for login securityadmin_login1
+go
+
+create user no_securityadmin_user1 for login no_securityadmin_login1
+go
+
+-- tsql
+create role securityadmin_rol
+go
+
+create database securityadmin_db1
+go
+
+create schema securityadmin_scm1
+go
+
+CREATE VIEW securityadmin_show_role_mem AS
+SELECT 
+roles.name AS RolePrincipalName
+, members.name AS MemberPrincipalName
+FROM sys.server_role_members AS server_role_members
+INNER JOIN sys.server_principals AS roles
+    ON server_role_members.role_principal_id = roles.principal_id
+INNER JOIN sys.server_principals AS members 
+    ON server_role_members.member_principal_id = members.principal_id order by MemberPrincipalName;
+GO
+
+create table securityadmin_tb1(a int)
+go
+
+create view securityadmin_v1 as select 1;
+go
+
+create function securityadmin_func1() returns int as begin return 1 end;
+go
+
+create procedure securityadmin_proc1 as begin select 1; end
+go
+
+CREATE TRIGGER securityadmin_tggr1 on securityadmin_tb1 AFTER INSERT AS BEGIN END;
+go
+
+create procedure securityadmin_create_login_p1 as begin create login securityadmin_login_new with password ='123'; end
+go
+
+Grant execute on securityadmin_create_login_p1 to PUBLIC;
+go
+
+create procedure securityadmin_alter_login_p1 as begin alter login securityadmin_login_new with password ='1234'; end
+go
+
+Grant execute on securityadmin_alter_login_p1 to PUBLIC;
+go
+
+create procedure securityadmin_drop_login_p1 as begin drop login securityadmin_login_new; end
+go
+
+Grant execute on securityadmin_drop_login_p1 to PUBLIC;
+go
+
+create procedure securityadmin_add_mem_p1 as begin Alter server role securityadmin add member securityadmin_login_new; end
+go
+
+Grant execute on securityadmin_add_mem_p1 to PUBLIC;
+go
+
+create procedure securityadmin_drop_mem_p1 as begin Alter server role securityadmin drop member securityadmin_login_new; end
+go
+
+Grant execute on securityadmin_drop_mem_p1 to PUBLIC;
+go
+
+use securityadmin_db1
+go
+
+create user securityadmin_user1 for login securityadmin_login1
+go
+
+create user no_securityadmin_user1 for login no_securityadmin_login1
+go
+
+use master
+go

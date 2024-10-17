@@ -259,7 +259,7 @@ CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
 LANGUAGE plpgsql
 AS $$
 DECLARE
-	reserved_roles varchar[] := ARRAY['sysadmin', 'master_dbo', 'master_guest', 'master_db_owner', 'tempdb_dbo', 'tempdb_guest', 'tempdb_db_owner', 'msdb_dbo', 'msdb_guest', 'msdb_db_owner'];
+	reserved_roles varchar[] := ARRAY['sysadmin', 'securityadmin', 'master_dbo', 'master_guest', 'master_db_owner', 'tempdb_dbo', 'tempdb_guest', 'tempdb_db_owner', 'msdb_dbo', 'msdb_guest', 'msdb_db_owner'];
 	user_id  oid := -1;
 	db_name  name := NULL;
 	role_name varchar;
@@ -285,11 +285,13 @@ BEGIN
 		RAISE E'Could not initialize babelfish with given role name: % is not the DB owner of current database.', sa_name;
 	END IF;
 
+	EXECUTE format('CREATE ROLE securityadmin CREATEROLE INHERIT PASSWORD NULL');
 	EXECUTE format('CREATE ROLE bbf_role_admin CREATEDB CREATEROLE INHERIT PASSWORD NULL');
 	EXECUTE format('GRANT CREATE ON DATABASE %s TO bbf_role_admin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('GRANT %I to bbf_role_admin WITH ADMIN TRUE;', sa_name);
 	EXECUTE format('CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE %I', sa_name);
 	EXECUTE format('GRANT sysadmin TO bbf_role_admin WITH ADMIN TRUE');
+	EXECUTE format('GRANT securityadmin TO bbf_role_admin WITH ADMIN TRUE');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_function_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_scheme_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_db_seq TO sysadmin WITH GRANT OPTION');
@@ -299,6 +301,7 @@ BEGIN
 	CALL sys.babel_initialize_logins(sa_name);
 	CALL sys.babel_initialize_logins('sysadmin');
 	CALL sys.babel_initialize_logins('bbf_role_admin');
+	CALL sys.babel_initialize_logins('securityadmin');
 	CALL sys.babel_create_builtin_dbs(sa_name);
 	CALL sys.initialize_babel_extras();
 	-- run analyze for all babelfish catalog
@@ -320,6 +323,8 @@ BEGIN
 	DROP ROLE sysadmin;
 	DROP OWNED BY bbf_role_admin;
 	DROP ROLE bbf_role_admin;
+	DROP OWNED BY securityadmin;
+	DROP ROLE securityadmin;
 END
 $$;
 
@@ -365,7 +370,8 @@ CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS cr
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
-WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER') 
+  OR pg_has_role(suser_id(), 'securityadmin'::TEXT, 'MEMBER')
   OR Ext.orig_loginname = suser_name()
   OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
   OR Ext.type = 'R')
@@ -501,8 +507,8 @@ CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
 CAST('SERVER ROLE' AS sys.nvarchar(128)) AS type,
 CAST ('GRANT OR DENY' as sys.nvarchar(128)) as usage
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
-WHERE Ext.type = 'R' AND
-(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER'));
+WHERE Ext.type = 'R'
+AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid);
 
 GRANT SELECT ON sys.login_token TO PUBLIC;
 
