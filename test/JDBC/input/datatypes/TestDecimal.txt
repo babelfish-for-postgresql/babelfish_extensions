@@ -272,3 +272,6 @@ select in4 * in5 from testdecimal_tab;
 select in3 * in4 from testdecimal_tab;
 
 drop table testdecimal_tab;
+
+#BABEL-3066
+SELECT CAST(123456.25 AS real) AS value_as_real, CAST(CAST(123456.25 AS real) AS decimal(30,2)) AS value_casted_to_decimal_30_2;
