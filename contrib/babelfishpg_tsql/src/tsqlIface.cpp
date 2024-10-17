@@ -4000,23 +4000,21 @@ createHandlingForBatchLevelStatement(TSqlParser::Batch_level_statementContext *c
 	std::string originalQueryCopy = originalQuery;
 
 	if ((ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER()))
-		{
-			startIndex = ctx->create_or_alter_procedure()->ALTER()->getSymbol()->getStartIndex();
-			endIndex = startIndex + 5;
-			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
-			return pstrdup(originalQueryCopy.c_str());
-		}
-		else if (ctx->create_or_alter_function() && ctx->create_or_alter_function()->ALTER())
-		{
-			startIndex = ctx->create_or_alter_function()->ALTER()->getSymbol()->getStartIndex();
-			endIndex = startIndex + 5;
-			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
-			return pstrdup(originalQueryCopy.c_str());
-		}
-		else
-		{
-			return pstrdup(originalQueryCopy.c_str());
-		}
+	{
+		startIndex = ctx->create_or_alter_procedure()->ALTER()->getSymbol()->getStartIndex();
+		endIndex = startIndex + 5;
+		originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		return pstrdup(originalQueryCopy.c_str());
+	}
+	else if (ctx->create_or_alter_function() && ctx->create_or_alter_function()->ALTER())
+	{
+		startIndex = ctx->create_or_alter_function()->ALTER()->getSymbol()->getStartIndex();
+		endIndex = startIndex + 5;
+		originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		return pstrdup(originalQueryCopy.c_str());
+	}
+	else
+		return pstrdup(originalQueryCopy.c_str());
 }
 
 void
