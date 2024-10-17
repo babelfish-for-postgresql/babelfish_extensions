@@ -94,7 +94,7 @@ varchar
 
 ~~START~~
 nvarchar#!#int#!#bigint
-abcḍèĎÈ######abcd#!#8#!#8
+abc##########abcd#!#4#!#4
 ~~END~~
 
 ~~START~~

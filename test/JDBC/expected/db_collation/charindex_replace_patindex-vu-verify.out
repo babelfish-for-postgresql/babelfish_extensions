@@ -8,7 +8,7 @@ running replace
 
 ~~START~~
 nvarchar
-abcḍèĎÈ######abcd
+abc##########abcd
 ~~END~~
 
 ~~START~~
@@ -18,7 +18,7 @@ running charindex
 
 ~~START~~
 int
-8
+4
 ~~END~~
 
 ~~START~~
@@ -28,7 +28,7 @@ running patindex
 
 ~~START~~
 bigint
-8
+4
 ~~END~~
 
 
@@ -38,17 +38,17 @@ SELECT babel_5144_f3('abcḍèĎÈdedEDEabcd')
 GO
 ~~START~~
 nvarchar
-abcḍèĎÈ######abcd
+abc##########abcd
 ~~END~~
 
 ~~START~~
 nvarchar
-8
+4
 ~~END~~
 
 ~~START~~
 nvarchar
-8
+4
 ~~END~~
 
 
@@ -63,8 +63,8 @@ varchar
 
 ~~START~~
 nvarchar#!#int#!#bigint
-abcḍèĎÈ######abcd#!#8#!#8
-abcḍèĎÈ######abcd#!#8#!#8
+abc##########abcd#!#4#!#4
+abc##########abcd#!#4#!#4
 ~~END~~
 
 ~~START~~
@@ -164,27 +164,23 @@ SELECT * FROM babel_5144_t1 WHERE [replaced] = sys.replace('abcḍèĎÈdedEDEab
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#bigint
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t1 WHERE [replaced] = sys.replace('abc?è?ÈdedEDEabcd', 'de', '##')
-Gather (actual rows=2 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
-        Index Cond: ((replaced)::"varchar" = 'abc?è?È######abcd'::"varchar")
+Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
+  Index Cond: ((replaced)::"varchar" = 'abc##########abcd'::"varchar")
 ~~END~~
 
 SELECT * FROM babel_5144_t1 WHERE [charIndex] = sys.charindex('de', 'abcḍèĎÈdedEDEabcd');
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#bigint
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~END~~
 
 ~~START~~
@@ -205,60 +201,52 @@ ELSE
  END
 END;
 
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Result (actual rows=1 loops=1)
+Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t1 WHERE [charIndex] = sys.charindex('de', 'abc?è?ÈdedEDEabcd')
 Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
-  Index Cond: (charindex = 8)
+  Index Cond: (charindex = 4)
 ~~END~~
 
 SELECT * FROM babel_5144_t1 WHERE [patindex] = sys.patindex('%de%', 'abcḍèĎÈdedEDEabcd');
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#bigint
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t1 WHERE [patindex] = sys.patindex('%de%', 'abc?è?ÈdedEDEabcd')
 Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
-  Index Cond: (patindex = '8'::bigint)
+  Index Cond: (patindex = '4'::bigint)
 ~~END~~
 
 SELECT * FROM babel_5144_t3 WHERE [replaced] = sys.replace('abcḍèĎÈdedEDEabcd', 'de', '##');
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t3 WHERE [replaced] = sys.replace('abc?è?ÈdedEDEabcd', 'de', '##')
-Gather (actual rows=2 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
-        Index Cond: ((replaced)::"varchar" = 'abc?è?È######abcd'::"varchar")
+Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
+  Index Cond: ((replaced)::"varchar" = 'abc##########abcd'::"varchar")
 ~~END~~
 
 SELECT * FROM babel_5144_t3 WHERE [charIndex] = sys.charindex('de', 'abcḍèĎÈdedEDEabcd');
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~END~~
 
 ~~START~~
@@ -279,33 +267,29 @@ ELSE
  END
 END;
 
-Gather (actual rows=1 loops=1)
-  Workers Planned: 1
-  Workers Launched: 1
-  Single Copy: true
-  ->  Result (actual rows=1 loops=1)
+Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t3 WHERE [charIndex] = sys.charindex('de', 'abc?è?ÈdedEDEabcd')
 Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
-  Index Cond: (charindex = 8)
+  Index Cond: (charindex = 4)
 ~~END~~
 
 SELECT * FROM babel_5144_t3 WHERE [patindex] = sys.patindex('%de%', 'abcḍèĎÈdedEDEabcd');
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
-abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
+abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT * FROM babel_5144_t3 WHERE [patindex] = sys.patindex('%de%', 'abc?è?ÈdedEDEabcd')
 Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
-  Index Cond: (patindex = '8'::bigint)
+  Index Cond: (patindex = '4'::bigint)
 ~~END~~
 
 
@@ -316,13 +300,13 @@ SELECT * FROM babel_5144_v1
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#bigint#!#bigint#!#int
-abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#8#!#8#!#8#!#8#!#8#!#8
-abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#8#!#8#!#8#!#8#!#8#!#8
-abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#8#!#8#!#8#!#8#!#8#!#8
-abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#8#!#8#!#8#!#8#!#8#!#8
-abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#8#!#8#!#8#!#8#!#8#!#8
-abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#8#!#8#!#8#!#8#!#8#!#8
-abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#8#!#8#!#8#!#8#!#8#!#8
-abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#abcḍèĎÈ######abcd#!#8#!#8#!#8#!#8#!#8#!#8
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
+abc##########abcd#!#abc##########abcd#!#abc##########abcd#!#4#!#4#!#4#!#4#!#4#!#4
 ~~END~~
 

@@ -1,6 +1,4 @@
 -- parallel_query_expected
-USE babel_5144_db
-GO
 
 EXEC babel_5144_p @src = 'abcḍèĎÈdedEDEabcd', @from = 'de', @to = '##'
 GO
@@ -18,7 +16,7 @@ GO
 -- validate check constraint
 INSERT INTO babel_5144_t2 VALUES ('abcdabcd', 'de', 'de')
 GO
-INSERT INTO babel_5144_t2 VALUES ('ḍèĎÈdedEDEabcd', 'de', '##')
+INSERT INTO babel_5144_t2 VALUES ('deĎÈdedEDEabcd', 'de', '##')
 GO
 INSERT INTO babel_5144_t2 VALUES ('aaaaaabcd', 'ab', '##')
 GO
@@ -36,17 +34,17 @@ SELECT set_config('enable_seqscan', 'off', false);
 SELECT set_config('enable_bitmapscan', 'off', false);
 GO
 
-SELECT * FROM babel_5144_t1 WHERE [replaced] = 'abc##########abcd'
+SELECT * FROM babel_5144_t1 WHERE [replaced] = sys.replace('abcḍèĎÈdedEDEabcd', 'de', '##')
 GO
-SELECT * FROM babel_5144_t1 WHERE [charIndex] = 4;
+SELECT * FROM babel_5144_t1 WHERE [charIndex] = sys.charindex('de', 'abcḍèĎÈdedEDEabcd');
 GO
-SELECT * FROM babel_5144_t1 WHERE [patindex] = 4;
+SELECT * FROM babel_5144_t1 WHERE [patindex] = sys.patindex('%de%', 'abcḍèĎÈdedEDEabcd');
 GO
-SELECT * FROM babel_5144_t3 WHERE [replaced] = 'abc##########abcd'
+SELECT * FROM babel_5144_t3 WHERE [replaced] = sys.replace('abcḍèĎÈdedEDEabcd', 'de', '##');
 GO
-SELECT * FROM babel_5144_t3 WHERE [charIndex] = 4;
+SELECT * FROM babel_5144_t3 WHERE [charIndex] = sys.charindex('de', 'abcḍèĎÈdedEDEabcd');
 GO
-SELECT * FROM babel_5144_t3 WHERE [patindex] = 4;
+SELECT * FROM babel_5144_t3 WHERE [patindex] = sys.patindex('%de%', 'abcḍèĎÈdedEDEabcd');
 GO
 
 SET BABELFISH_STATISTICS PROFILE OFF;

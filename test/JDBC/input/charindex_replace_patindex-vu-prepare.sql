@@ -1,9 +1,5 @@
--- TEST MVU FOR PATINDEX, CHARINDEX, REPLACE FOR AI COLLATION
-CREATE DATABASE babel_5144_db COLLATE bbf_unicode_cp1_ci_ai
-GO
+-- TEST MVU FOR PATINDEX, CHARINDEX, REPLACE
 
-USE babel_5144_db
-GO
 
 CREATE PROCEDURE babel_5144_p (@src sys.NVARCHAR(100), @from sys.NVARCHAR(100), @to sys.NVARCHAR(100)) AS
 SELECT 'running replace'
@@ -59,7 +55,7 @@ CREATE TABLE babel_5144_t3 (src NVARCHAR(100),
                             [patindex] INT DEFAULT patindex(CAST('%de%' AS NVARCHAR) ,CAST('abcḍèĎÈdedEDEabcd' AS NVARCHAR)));
 GO
 
-/* INDEX on cumputed columns */
+/* INDEX on computed columns */
 CREATE INDEX babel_5144_idx1 ON babel_5144_t1 ([replaced], [charIndex], [patindex])
 GO
 CREATE INDEX babel_5144_idx3 ON babel_5144_t3 ([replaced], [charIndex], [patindex])
