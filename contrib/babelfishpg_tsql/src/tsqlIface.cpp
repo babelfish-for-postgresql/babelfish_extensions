@@ -3017,7 +3017,7 @@ public:
 
 	// Make sure that we only adjust type names that match
 	// the ext_type and unscaled_type parser rules
-        
+	
 	if (ctx->ext_type)
 	    nameContext = ctx->ext_type;
 	else if (ctx->unscaled_type)
@@ -3045,10 +3045,10 @@ public:
 
 	    Assert(str.front() == '[' || str.front() == '"');
 	    Assert(str.back() == ']' || str.back() == '"');
-
+	    
 	    str.front() = ' ';
 	    str.back() = ' ';
-		
+
 	    stream.setText(name->start->getStartIndex(), str.c_str());
 	}
     }
@@ -3570,6 +3570,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			unsupportedFeatureHandler->setThrowError(true);
 			unsupportedFeatureHandler->visit(tree);
 		}
+
 		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
 		antlr4::tree::ParseTreeWalker firstPass;
 		firstPass.walk(mutator.get(), tree);
@@ -3991,6 +3992,33 @@ get_start_token_of_batch_level_stmt_body(TSqlParser::Batch_level_statementContex
 	return nullptr;
 }
 
+char*
+createHandlingForBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, const char *originalQuery)
+{
+	int startIndex = -1;
+	int endIndex = -1;
+	std::string originalQueryCopy = originalQuery;
+
+	if ((ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER()))
+		{
+			startIndex = ctx->create_or_alter_procedure()->ALTER()->getSymbol()->getStartIndex();
+			endIndex = startIndex + 5;
+			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+			return pstrdup(originalQueryCopy.c_str());
+		}
+		else if (ctx->create_or_alter_function() && ctx->create_or_alter_function()->ALTER())
+		{
+			startIndex = ctx->create_or_alter_function()->ALTER()->getSymbol()->getStartIndex();
+			endIndex = startIndex + 5;
+			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+			return pstrdup(originalQueryCopy.c_str());
+		}
+		else
+		{
+			return pstrdup(originalQueryCopy.c_str());
+		}
+}
+
 void
 handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm, const char *originalQuery)
 {
@@ -4015,26 +4043,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	result->body = list_make1(init);
 	// create PLtsql_stmt_execsql to wrap all query string
 	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
-	if((ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER()))
-	{
-		int startIndex = ctx->create_or_alter_procedure()->ALTER()->getSymbol()->getStartIndex();
-		std::string result = originalQuery;
-		int endIndex = startIndex + 5;
-		result.replace(startIndex, endIndex - startIndex, "CREATE");
-		execsql->original_query = pstrdup(result.c_str());
-	}
-	else if (ctx->create_or_alter_function() && ctx->create_or_alter_function()->ALTER())
-	{
-		int startIndex = ctx->create_or_alter_function()->ALTER()->getSymbol()->getStartIndex();
-		std::string result = originalQuery;
-		int endIndex = startIndex + 5;
-		result.replace(startIndex, endIndex - startIndex, "CREATE");
-		execsql->original_query = pstrdup(result.c_str());
-	}
-	else
-	{
-		execsql->original_query = pstrdup(originalQuery);
-	}
+	execsql->original_query = createHandlingForBatchLevelStatement(ctx, originalQuery);
 
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	result->body = lappend(result->body, execsql);
