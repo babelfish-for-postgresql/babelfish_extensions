@@ -53,7 +53,7 @@ go
 select alter_func_f2(2)
 go
 
--- Confirm information schema is correctly updated with "CREATE FUNC [new definition]" 
+-- Confirm information schema is correctly updated with "CREATE FUNC [new definition]"
 select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_func_f2';
 go
 
@@ -131,13 +131,89 @@ as
     )
 go
 
--- Test Case 9: Expect error for attempting to alter multi statement tvf
--- Alter Func Multi-statement tvf support will be added after BABEL-5149 is resolved
+-- Test Case 9: Alter multi statement tvf
 alter function alter_func_f5()
 returns @result TABLE(Id int) as begin
 insert into @result values (2)
 return
 end
+go
+
+select Id from alter_func_f5()
+go
+
+-- Add column with different type
+alter function alter_func_f5()
+returns @result TABLE(Id int, Name varchar(max)) as begin
+insert into @result values (2, 'Grace Hopper')
+return
+end
+go
+
+select Id, Name from alter_func_f5()
+go
+
+-- Remove a column
+alter function alter_func_f5()
+returns @result TABLE(Name varchar(max)) as begin
+insert into @result values ('Grace Hopper')
+return
+end
+go
+
+-- Expect error for Id column not existing
+select Id, Name from alter_func_f5()
+go
+
+select Name from alter_func_f5()
+go
+
+-- Add column and update condition
+alter function alter_func_f5()
+returns @result TABLE([Id] int, [email] varchar(50), [Status] varchar(50)) as begin
+insert into @result select Id, email, NULL from alter_func_users
+update @result set Status =
+    case when Id = 1 then 'Owner'
+    else 'Normal'
+end
+return
+end
+go
+
+select * from alter_func_f5()
+go
+
+-- Create same multiline function on schema
+
+create function alter_func_prep_schema1.alter_func_f5() 
+returns @result TABLE([Id] int, [email] varchar(50), [Status] varchar(50)) as 
+begin 
+insert into @result select Id, email, NULL from alter_func_users update @result set Status = case when Id = 1 then 'Owner' else 'Normal' end 
+return 
+end
+go
+
+select * from alter_func_prep_schema1.alter_func_f5()
+go
+
+-- Alter function on schema
+alter function alter_func_prep_schema1.alter_func_f5() 
+returns @result TABLE(Name varchar(max)) as begin insert into @result values ('Grace Hopper') 
+return 
+end
+go
+
+select * from alter_func_prep_schema1.alter_func_f5()
+go
+
+-- Alter function on schema with parameters
+alter function alter_func_prep_schema1.alter_func_f5(@name varchar(max)) 
+returns @result TABLE(Name varchar(max)) as begin insert into @result values (@name) 
+return 
+end
+go
+
+select * from alter_func_prep_schema1.alter_func_f5('Ada Lovelace')
 go
 
 -- Test Case 10: Expect error for altering function in an illegal way
