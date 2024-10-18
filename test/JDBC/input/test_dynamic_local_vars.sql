@@ -635,11 +635,11 @@ GO
 
 CREATE SEQUENCE CountBy1  
     START WITH 1  
-    INCREMENT BY 1 ;  
-GO  
+    INCREMENT BY 1 ;
+GO
 
 -- NEXT VALUE FOR gets re-written by ANTLR
-DECLARE @myvar1 BIGINT = NEXT VALUE FOR CountBy1  
+DECLARE @myvar1 BIGINT = NEXT VALUE FOR CountBy1 ;
 DECLARE @myvar2 BIGINT ;  
 DECLARE @myvar3 BIGINT ;  
 select @myvar2 = NEXT VALUE FOR CountBy1 ;  
