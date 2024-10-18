@@ -188,6 +188,9 @@ SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'no_priv_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 go
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
 
 -- tsql
 drop login no_priv_login1
@@ -197,6 +200,10 @@ go
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'no_priv_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
 go
 
 -- tsql
@@ -242,6 +249,10 @@ go
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'restrict_user_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
 go
 
 -- tsql
