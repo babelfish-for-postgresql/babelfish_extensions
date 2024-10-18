@@ -126,6 +126,14 @@ GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
+--create procedure with multiline comment
+-- multiline comment with bracket around datatype
+CREATE PROCEDURE [dbo].[storeoriginalquery_procedure] AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (8000) END
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
 create function routines_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;
 
 GO
@@ -225,6 +233,14 @@ AS
 BEGIN
         RETURN @test_s_a;
 END;
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+--create function with multiline comment
+-- multiline comment  with bracket around datatype
+CREATE FUNCTION [dbo].[storeoriginalquery_function]() RETURNS [VARCHAR](8000) AS BEGIN DECLARE @storeOriginalQuery_var [VARCHAR](8000) RETURN @storeOriginalQuery_var END
 
 GO
 

@@ -194,3 +194,66 @@ nvarchar
 <NULL>
 ~~END~~
 
+
+-- Test  : Brackets around datatype for procedure
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_procedure';
+go
+~~START~~
+nvarchar
+CREATE PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (8000) END<newline>
+~~END~~
+
+-- Test  : Single Line comment for procedure
+ALTER PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_procedure';
+go
+~~START~~
+nvarchar
+-- Test  : Single Line comment for procedure<newline>CREATE PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END<newline>
+~~END~~
+
+
+-- Test  : Multi Line comment for procedure
+-- multiline comment line 1
+-- multiline comment line 2
+ALTER PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_procedure';
+go
+~~START~~
+nvarchar
+-- Test  : Multi Line comment for procedure<newline>-- multiline comment line 1<newline>-- multiline comment line 2<newline>CREATE PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END<newline>
+~~END~~
+
+-- Test  : Revise test 1,2,3 with functions
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
+go
+~~START~~
+nvarchar
+CREATE FUNCTION object_definition_function() RETURNS [VARCHAR](8000) AS BEGIN DECLARE @storeOriginalQuery_var [VARCHAR](8000) RETURN @storeOriginalQuery_var END<newline>
+~~END~~
+
+-- Test  : Single Line comment for function
+ALTER function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
+go
+~~START~~
+nvarchar
+-- Test  : Single Line comment for function<newline>CREATE function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END<newline>
+~~END~~
+
+
+-- Test  : Multi Line comment for function
+-- multiline comment line 1
+-- multiline comment line 2
+ALTER function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
+go
+~~START~~
+nvarchar
+-- Test  : Multi Line comment for function<newline>-- multiline comment line 1<newline>-- multiline comment line 2<newline>CREATE function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END<newline>
+~~END~~
+
