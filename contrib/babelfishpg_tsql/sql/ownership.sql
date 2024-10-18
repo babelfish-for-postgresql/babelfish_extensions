@@ -259,7 +259,11 @@ CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
 LANGUAGE plpgsql
 AS $$
 DECLARE
-	reserved_roles varchar[] := ARRAY['sysadmin', 'securityadmin', 'master_dbo', 'master_guest', 'master_db_owner', 'tempdb_dbo', 'tempdb_guest', 'tempdb_db_owner', 'msdb_dbo', 'msdb_guest', 'msdb_db_owner'];
+	reserved_roles varchar[] := ARRAY['sysadmin', 'securityadmin',
+                                    'master_dbo', 'master_guest', 'master_db_owner', 'master_db_accessadmin',
+                                    'tempdb_dbo', 'tempdb_guest', 'tempdb_db_owner',  'tempdb_db_accessadmin',
+                                    'msdb_dbo', 'msdb_guest', 'msdb_db_owner', 'msdb_db_accessadmin'];
+                                    
 	user_id  oid := -1;
 	db_name  name := NULL;
 	role_name varchar;
@@ -456,7 +460,7 @@ ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME()
-  AND (Ext.orig_username IN ('dbo', 'db_owner', 'guest') -- system users should always be visible
+  AND (Ext.orig_username IN ('dbo', 'db_owner', 'db_accessadmin', 'guest') -- system users should always be visible
   OR pg_has_role(Ext.rolname, 'MEMBER')) -- Current user should be able to see users it has permission of
 UNION ALL
 SELECT

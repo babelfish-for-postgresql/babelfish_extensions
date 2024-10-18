@@ -2244,6 +2244,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 			   *lowercase_rolname;
 	size_t		len;
 	char	   *physical_role_name;
+	char	   *db_name = get_cur_db_name();
 	Oid			role_oid;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
@@ -2279,15 +2280,17 @@ sp_droprole(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
+		physical_role_name = get_physical_user_name(db_name, lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
 		pfree(physical_role_name);
 
 		/* Check if the role does not exists */
-		if (role_oid == InvalidOid || !is_role(role_oid))
+		if (role_oid == InvalidOid || get_db_principal_kind(role_oid, db_name) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot drop the role '%s', because it does not exist or you do not have permission.", rolname)));
+
+		pfree(db_name);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -2380,6 +2383,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 	size_t		len;
 	char	   *physical_member_name;
 	char	   *physical_role_name;
+	char	   *db_name = get_cur_db_name();
 	Oid			role_oid,
 				member_oid;
 	List	   *parsetree_list;
@@ -2430,24 +2434,24 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot make a role a member of itself.")));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false, true);
+		physical_member_name = get_physical_user_name(db_name, lowercase_membername, false, true);
 		member_oid = get_role_oid(physical_member_name, true);
 
 		/*
 		 * Check if the user, group or role does not exists and given member
 		 * name is an role or user
 		 */
-		if (member_oid == InvalidOid || (!is_role(member_oid) && !is_user(member_oid)))
+		if (member_oid == InvalidOid || !get_db_principal_kind(member_oid, db_name))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("User or role '%s' does not exist in this database.", membername)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
+		physical_role_name = get_physical_user_name(db_name, lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists and given role name is an role */
-		if (role_oid == InvalidOid || !is_role(role_oid))
+		if (role_oid == InvalidOid || get_db_principal_kind(role_oid, db_name) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
@@ -2457,6 +2461,8 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("Cannot make a role a member of itself.")));
+
+		pfree(db_name);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -2554,6 +2560,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 			   *lowercase_membername;
 	size_t		len;
 	char	   *physical_name;
+	char	   *db_name= get_cur_db_name();
 	Oid			role_oid;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
@@ -2597,28 +2604,31 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
+		physical_name = get_physical_user_name(db_name, lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/* Throw an error id the given role name doesn't exist or isn't a role */
-		if (role_oid == InvalidOid || !is_role(role_oid))
+		if (role_oid == InvalidOid || get_db_principal_kind(role_oid, db_name) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Map the logical member name to its physical name in the database. */
 		pfree(physical_name);
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false, true);
+		physical_name = get_physical_user_name(db_name, lowercase_membername, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/*
 		 * Throw an error id the given member name doesn't exist or isn't a
 		 * role or user
 		 */
-		if (role_oid == InvalidOid || (!is_role(role_oid) && !is_user(role_oid)))
+		if (role_oid == InvalidOid || !get_db_principal_kind(role_oid, db_name))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot drop the principal '%s', because it does not exist or you do not have permission.", membername)));
+
+
+		pfree(db_name);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
