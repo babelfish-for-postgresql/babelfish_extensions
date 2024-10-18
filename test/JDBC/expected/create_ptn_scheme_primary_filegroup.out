@@ -1,3 +1,7 @@
+USE master
+go
+CREATE DATABASE create_ptn_schema_db
+go
 USE create_ptn_schema_db
 go
 
@@ -74,4 +78,9 @@ SET QUOTED_IDENTIFIER OFF
 go
 
 EXECUTE sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_storage_options', 'ignore'
+go
+
+USE master
+go
+DROP DATABASE create_ptn_schema_db
 go
