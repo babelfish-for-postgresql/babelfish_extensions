@@ -582,6 +582,7 @@ xml_exist
 test_db_collation
 BABEL-5119
 BABEL-5129
+db_accessadmin
 BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186

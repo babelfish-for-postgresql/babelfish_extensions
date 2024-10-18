@@ -50,14 +50,18 @@ GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
 db1_guest#!##!#guest#!#db1#!#guest
+db_accessadmin#!##!#db_accessadmin#!#db1#!#
 db_owner#!##!#db_owner#!#db1#!#
 dbo#!##!#dbo#!#db1#!#dbo
+master_db_accessadmin#!##!#db_accessadmin#!#master#!#
 master_db_owner#!##!#db_owner#!#master#!#
 master_dbo#!##!#dbo#!#master#!#dbo
 master_guest#!##!#guest#!#master#!#guest
+msdb_db_accessadmin#!##!#db_accessadmin#!#msdb#!#
 msdb_db_owner#!##!#db_owner#!#msdb#!#
 msdb_dbo#!##!#dbo#!#msdb#!#dbo
 msdb_guest#!##!#guest#!#msdb#!#guest
+tempdb_db_accessadmin#!##!#db_accessadmin#!#tempdb#!#
 tempdb_db_owner#!##!#db_owner#!#tempdb#!#
 tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
 tempdb_guest#!##!#guest#!#tempdb#!#guest
@@ -72,6 +76,7 @@ GO
 varchar#!#varchar
 guest#!#guest
 dbo#!#dbo
+db_accessadmin#!#
 db_owner#!#
 INFORMATION_SCHEMA#!#<NULL>
 public#!#<NULL>

@@ -3,6 +3,7 @@ GO
 ~~START~~
 varchar#!#nvarchar
 db_owner#!#DB Owners
+db_accessadmin#!#DB Access Administrators
 ~~END~~
 
 
@@ -18,7 +19,7 @@ SELECT dbo.test_sp_helpdbfixedrole_func()
 GO
 ~~START~~
 int
-1
+2
 ~~END~~
 
 
@@ -26,7 +27,7 @@ SELECT * FROM test_sp_helpdbfixedrole_view
 GO
 ~~START~~
 int
-1
+2
 ~~END~~
 
 

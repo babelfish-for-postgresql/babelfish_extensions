@@ -45,6 +45,7 @@ Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.
 Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.0.sql
 Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.0.sql
 Unexpected drop found for procedure babelfish_drop_deprecated_opclass in file babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for procedure sys.create_db_roles_during_upgrade in file babelfishpg_tsql--4.3.0--4.4.0.sql
 Unexpected drop found for procedure sys.babel_create_guest_schemas in file babelfishpg_tsql--2.3.0--2.4.0.sql
 Unexpected drop found for procedure sys.babel_create_guest_schemas in file babelfishpg_tsql--3.0.0--3.1.0.sql
 Unexpected drop found for procedure sys.babelfish_alter_default_privilege_on_schema in file babelfishpg_tsql--4.3.0--4.4.0.sql
