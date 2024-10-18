@@ -404,7 +404,7 @@ GO
 ~~START~~
 numeric#!#int
 <NULL>#!#1
-0#!#2
+0E-8#!#2
 ~~END~~
 
 
@@ -810,7 +810,7 @@ bit
 ~~START~~
 numeric#!#int
 <NULL>#!#1
-0#!#2
+0E-8#!#2
 ~~END~~
 
 
@@ -1027,6 +1027,8 @@ SET @point2 = 'Test_String';
 SELECT @point1.STEquals(@point2);
 SELECT @point1.STContains(@point2);
 go
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: parse error - invalid geometry)~~
@@ -1038,6 +1040,8 @@ SET @point2 = 'Test_String';
 SELECT @point1.STEquals(@point2);
 SELECT @point1.STContains(@point2);
 go
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: parse error - invalid geometry)~~

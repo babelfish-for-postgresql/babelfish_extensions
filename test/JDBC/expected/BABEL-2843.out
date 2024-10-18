@@ -225,7 +225,7 @@ Insert on babel_2843_t1  (cost=0.00..0.01 rows=0 width=0) (actual rows=0 loops=1
 text
 Query Text: select * from babel_2843_t1 where a1 = "@param"
 Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
-  Filter: (a1 = 1)
+  Filter: (a1 = $1)
   Rows Removed by Filter: 2
 ~~END~~
 
@@ -250,7 +250,7 @@ int#!#int
 text
 Query Text: select * from babel_2843_t1 where a1 = @param
 Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
-  Filter: (a1 = 2)
+  Filter: (a1 = $1)
   Rows Removed by Filter: 2
 ~~END~~
 
@@ -291,7 +291,7 @@ text
 Query Text: insert into "@tab" select * from babel_2843_t1 where a1 = "@param";
 Insert on "@tab_1"  (cost=0.00..38.25 rows=0 width=0) (actual rows=0 loops=1)
   ->  Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
-        Filter: (a1 = 1)
+        Filter: (a1 = $1)
         Rows Removed by Filter: 2
 ~~END~~
 
@@ -300,7 +300,7 @@ text
 Query Text: insert into "@tab" select * from babel_2843_t2 where a2 = "@param";
 Insert on "@tab_1"  (cost=0.00..38.25 rows=0 width=0) (actual rows=0 loops=1)
   ->  Seq Scan on babel_2843_t2  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
-        Filter: (a2 = 1)
+        Filter: (a2 = $1)
 ~~END~~
 
 ~~START~~
@@ -367,7 +367,7 @@ int#!#int
 text
 Query Text: select * from babel_2843_t1 where a1 = "@param"
 Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
-  Filter: (a1 = 2)
+  Filter: (a1 = $1)
   Rows Removed by Filter: 2
 ~~END~~
 
