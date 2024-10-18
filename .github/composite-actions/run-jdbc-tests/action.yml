@@ -25,6 +25,6 @@ runs:
             mvn test
             unset isSingleDbMode
           else
-            mvn test
+            mvn -B -ntp test
           fi
       shell: bash
