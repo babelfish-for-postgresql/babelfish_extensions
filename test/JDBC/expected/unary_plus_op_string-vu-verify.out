@@ -1,0 +1,871 @@
+insert t1_unary_plus_op_string values (1, 'abc')
+go
+~~ROW COUNT: 1~~
+
+
+set quoted_identifier off
+go
+select 'x'+'y'
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select 'x' + 'y'
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select 'x' + 
+/* comment*/
+'y'
+/*comment*/    + 
+   'z'
+go
+~~START~~
+varchar
+xyz
+~~END~~
+
+select 'x'++'y'
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select 'x'++++++++'y'
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select 'x'++N'y'
+go
+~~START~~
+nvarchar
+xy
+~~END~~
+
+select 'x'++++++++N'y'
+go
+~~START~~
+nvarchar
+xy
+~~END~~
+
+select 'x' ++++++++ 'y'
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select 'x' ++   ++ 
+/* comment*/  +  +
+'y'  ++ -- comment +
+/*comment*/    ++  +
+ ++  'z'
+go
+~~START~~
+varchar
+xyz
+~~END~~
+
+declare @v varchar(10)='y' select 'x'+ @v, 'x' +@v, 'x' ++++++@v
+go
+~~START~~
+varchar#!#varchar#!#varchar
+xy#!#xy#!#xy
+~~END~~
+
+declare @v varchar(10)='y' select 'x'+ (@v), 'x' + (+@v), 'x' ++++(++(+++@v))
+go
+~~START~~
+varchar#!#varchar#!#varchar
+xy#!#xy#!#xy
+~~END~~
+
+declare @v tinyint=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+int#!#int#!#int
+2#!#3#!#4
+~~END~~
+
+declare @v int=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+int#!#int#!#int
+2#!#3#!#4
+~~END~~
+
+declare @v bigint=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+bigint#!#bigint#!#bigint
+2#!#3#!#4
+~~END~~
+
+declare @v decimal(10,4)=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+numeric#!#numeric#!#numeric
+2.0000#!#3.0000#!#4.0000
+~~END~~
+
+declare @v money=1 select 1 +@v, 2 + (+@v), 3 ++++(++(+++@v))
+go
+~~START~~
+money#!#money#!#money
+2.0000#!#3.0000#!#4.0000
+~~END~~
+
+declare @v datetime='2024-Jan-01 01:02:03' select  +@v, + (+@v), ++++(++(+++@v))
+go
+~~START~~
+datetime#!#datetime#!#datetime
+2024-01-01 01:02:03.0#!#2024-01-01 01:02:03.0#!#2024-01-01 01:02:03.0
+~~END~~
+
+declare @v datetime2='2024-Jan-01 01:02:03' select  +@v, + (+@v), ++++(++(+++@v))
+go
+~~START~~
+datetime2#!#datetime2#!#datetime2
+2024-01-01 01:02:03.0000000#!#2024-01-01 01:02:03.0000000#!#2024-01-01 01:02:03.0000000
+~~END~~
+
+select +'y'
+go
+~~START~~
+varchar
+y
+~~END~~
+
+select +N'y'
+go
+~~START~~
+nvarchar
+y
+~~END~~
+
+select ((+'y')) 
+go
+~~START~~
+varchar
+y
+~~END~~
+
+select ((+N'y')) 
+go
+~~START~~
+nvarchar
+y
+~~END~~
+
+select ++++(++++++(+++++'y')) 
+go
+~~START~~
+varchar
+y
+~~END~~
+
+select 'x'+(+'y') 
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select 'x'+++((+++(+++'y')))
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select 'x'+++(
+(+++
+(+++
+'y')))
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+if 'x' <> + char(13) select 'true' else select 'false'
+go
+~~START~~
+varchar
+true
+~~END~~
+
+if 'x' <> +++ char(13) select 'true' else select 'false'
+go
+~~START~~
+varchar
+true
+~~END~~
+
+select len(+'x')
+go
+~~START~~
+int
+1
+~~END~~
+
+select len(+N'x')
+go
+~~START~~
+int
+1
+~~END~~
+
+select 'x' ++ substring('xyz', 2, 1)
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select 'x' +++++ substring(+'xyz', 2, 1)  
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select 'x' ++ case when len('a'+++ 'b')=2 then 'true' else 'false' end
+go
+~~START~~
+varchar
+xtrue
+~~END~~
+
+select 'x' ++ case when len(+'a'+++ 'b')=2 then +'true' else +++++'false' end
+go
+~~START~~
+varchar
+xtrue
+~~END~~
+
+declare @v varchar(10) = 'true'
+select 'x' ++ case when len(+'a'+++ 'b')=2 then +@v else 'false' end
+go
+~~START~~
+varchar
+xtrue
+~~END~~
+
+select 1 where 'x' in (+'x')
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 'x' like +'x'
+go
+~~START~~
+int
+1
+~~END~~
+
+declare @v varchar(10) = 'x'
+select 1 where 'x' like (+@v)
+go
+~~START~~
+int
+1
+~~END~~
+
+declare @v varchar(10) = 'x'
+select 1 where 'x' like +(+(+@v))
+go
+~~START~~
+int
+1
+~~END~~
+
+declare @v varchar(10) = 'x'
+if 'y' <> + @v select 'true' else select 'false'
+go
+~~START~~
+varchar
+true
+~~END~~
+
+declare @v varchar(10) = 'x'
+if 'y' <> +++ @v select 'true' else select 'false'
+set @v = 'x' ++ case when len('a'+++ 'b')=2 then 'true2' else 'false2' end
+select @v
+go
+~~START~~
+varchar
+true
+~~END~~
+
+~~START~~
+varchar
+xtrue2
+~~END~~
+
+select 'x' ++vc from t1_unary_plus_op_string order by 1
+go
+~~START~~
+varchar
+xabc
+~~END~~
+
+select 'x' ++(+vc) from t1_unary_plus_op_string order by 1
+go
+~~START~~
+varchar
+xabc
+~~END~~
+
+select +(select 'abc')
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+select ++++(select 'abc')
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+select +(+((select 'abc')))
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+
+/*double-quoted strings*/
+select "x"+"y"
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select "x" + "y"
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select "x" + 
+/* comment*/
+"y" 
+/*comment*/    + 
+   "z"
+go
+~~START~~
+varchar
+xyz
+~~END~~
+
+select "x"++"y"
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select "x"++++++++"y"
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select "x" ++++++++ "y"
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select "x" ++   ++ 
+/* comment*/  +  +
+"y"  ++ 
+/*comment*/    ++  +
+ ++  "z"
+go
+~~START~~
+varchar
+xyz
+~~END~~
+
+declare @v varchar(10)="y" select "x"+ @v, "x" +@v, "x" ++++++@v
+go
+~~START~~
+varchar#!#varchar#!#varchar
+xy#!#xy#!#xy
+~~END~~
+
+select +"y"
+go
+~~START~~
+varchar
+y
+~~END~~
+
+select ((+"y")) 
+go
+~~START~~
+varchar
+y
+~~END~~
+
+select ++++(++++++(+++++"y")) 
+go
+~~START~~
+varchar
+y
+~~END~~
+
+select 'x'+(+"y") 
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select "x"+++((+++(+++"y")))
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select "x"+++(
+(+++
+(+++
+"y")))
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+if "x" <> + char(13) select "true" else select "false"
+go
+~~START~~
+varchar
+true
+~~END~~
+
+if "x" <> +++ char(13) select "true" else select "false"
+go
+~~START~~
+varchar
+true
+~~END~~
+
+select len(+"x")
+go
+~~START~~
+int
+1
+~~END~~
+
+select "x" ++ substring("xyz", 2, 1)
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select "x" +++++ substring(+"xyz", 2, 1)  
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+select "x" ++ case when len("a"+++ "b")=2 then "true" else "false" end
+go
+~~START~~
+varchar
+xtrue
+~~END~~
+
+declare @v varchar(10) = "true"
+select "x" ++ case when len(+"a"+++ 'b')=2 then +@v else +"false" end
+go
+~~START~~
+varchar
+xtrue
+~~END~~
+
+select 1 where "x" in (+"x")
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where "x" like +"x"
+go
+~~START~~
+int
+1
+~~END~~
+
+declare @v varchar(10) = "x"
+if "y" <> +++ @v select "true" else select "false"
+set @v = "x" ++ case when len(++"a"+++N'b')=2 then "true2" else "false2" end
+select @v
+go
+~~START~~
+varchar
+true
+~~END~~
+
+~~START~~
+varchar
+xtrue2
+~~END~~
+
+select +(+((select "abc")))
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+
+/* double-quoted identifiers */
+set quoted_identifier on
+go
+select 'x' ++ "vc" from t1_unary_plus_op_string order by 1
+go
+~~START~~
+varchar
+xabc
+~~END~~
+
+select 'x' ++((+(++"vc"))) from t1_unary_plus_op_string order by 1
+go
+~~START~~
+varchar
+xabc
+~~END~~
+
+set quoted_identifier off
+go
+
+/* bracket-delimited identifiers */
+select 'x' ++ [vc] from t1_unary_plus_op_string order by 1
+go
+~~START~~
+varchar
+xabc
+~~END~~
+
+select 'x' ++ ((+(++[vc]))) from t1_unary_plus_op_string order by 1
+go
+~~START~~
+varchar
+xabc
+~~END~~
+
+
+/*numeric expressions should not be affected*/
+select 1 +-2
+go
+~~START~~
+int
+-1
+~~END~~
+
+select 1 + -2
+go
+~~START~~
+int
+-1
+~~END~~
+
+select 1 ++-2
+go
+~~START~~
+int
+-1
+~~END~~
+
+select 1 + + -2
+go
+~~START~~
+int
+-1
+~~END~~
+
+select 1 + ~2
+go
+~~START~~
+int
+-2
+~~END~~
+
+select 1 ++~2
+go
+~~START~~
+int
+-2
+~~END~~
+
+select 1 ++ ~2
+go
+~~START~~
+int
+-2
+~~END~~
+
+select 1 ++++ (++++ 2) 
+go
+~~START~~
+int
+3
+~~END~~
+
+select 1 ++++ (++++ ~2) 
+go
+~~START~~
+int
+-2
+~~END~~
+
+select 1 ++++ (++++ -2) 
+go
+~~START~~
+int
+-1
+~~END~~
+
+
+/* execute-immediate */
+execute('select ((+''y'')) ')
+go
+~~START~~
+varchar
+y
+~~END~~
+
+execute('select ''x''+++((+++(+++''y'')))')
+go
+~~START~~
+varchar
+xy
+~~END~~
+
+execute('select ''x'' ++vc from t1_unary_plus_op_string order by 1')
+go
+~~START~~
+varchar
+xabc
+~~END~~
+
+
+/* SQL objects */
+select * from v1_unary_plus_op_string
+go
+~~START~~
+nvarchar#!#int#!#int#!#int#!#int#!#int#!#int
+view value1value2value3#!#-1#!#-1#!#-2#!#-2#!#-1#!#-2
+~~END~~
+
+execute p1_unary_plus_op_string
+go
+~~START~~
+varchar
+proc line1
+~~END~~
+
+~~START~~
+varchar
+proc line2
+~~END~~
+
+~~START~~
+nvarchar
+proc line3
+~~END~~
+
+~~START~~
+varchar
+proc line4
+~~END~~
+
+~~START~~
+varchar
+proc line5
+~~END~~
+
+~~START~~
+varchar
+proc line6 test
+~~END~~
+
+~~START~~
+nvarchar
+proc line7 test
+~~END~~
+
+~~START~~
+varchar
+proc true
+~~END~~
+
+~~START~~
+varchar
+proc line8
+~~END~~
+
+~~START~~
+varchar
+proc line9
+~~END~~
+
+~~START~~
+varchar
+proc line10
+~~END~~
+
+~~START~~
+varchar
+proc line11
+~~END~~
+
+~~START~~
+varchar
+proc line 12 abc
+~~END~~
+
+~~START~~
+varchar
+proc line 13 abc
+~~END~~
+
+~~START~~
+varchar
+proc line 14 abc
+~~END~~
+
+~~START~~
+int#!#int#!#int
+2#!#3#!#4
+~~END~~
+
+~~START~~
+datetime#!#datetime#!#datetime
+2024-01-01 01:02:03.0#!#2024-01-01 01:02:03.0#!#2024-01-01 01:02:03.0
+~~END~~
+
+~~START~~
+numeric#!#numeric#!#numeric
+2.0000#!#3.0000#!#4.0000
+~~END~~
+
+~~START~~
+int
+-1
+~~END~~
+
+~~START~~
+int
+-1
+~~END~~
+
+~~START~~
+int
+-2
+~~END~~
+
+~~START~~
+int
+-2
+~~END~~
+
+~~START~~
+int
+-1
+~~END~~
+
+~~START~~
+int
+-2
+~~END~~
+
+~~START~~
+varchar
+execimm line1
+~~END~~
+
+~~START~~
+nvarchar
+execimm line2
+~~END~~
+
+~~START~~
+nvarchar
+execimm line3
+~~END~~
+
+select * from dbo.f1_unary_plus_op_string('test')
+go
+~~START~~
+varchar
+func value1value2test
+~~END~~
+
+
+/* the following should raise an error: unary operator other than '+' is invalid for a string in T-SQL */
+select  ~'y' 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: ~ unknown)~~
+
+select 'x' + ~'y' 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: ~ unknown)~~
+
+select 'x' ++ ~'y' 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: ~ unknown)~~
+
+select  -'y' 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: - unknown)~~
+
+select 'x' + -'y' 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: - unknown)~~
+
+select 'x' ++ -'y' 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: - unknown)~~
+
