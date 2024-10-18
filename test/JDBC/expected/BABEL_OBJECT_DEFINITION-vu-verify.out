@@ -60,7 +60,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_proc'))
 GO
 ~~START~~
 nvarchar
-CREATE PROC object_definition_proc<newline>AS<newline>SELECT 1;
+-- Procedure<newline>CREATE PROC object_definition_proc<newline>AS<newline>SELECT 1;<newline>
 ~~END~~
 
 
@@ -69,7 +69,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_fc1'))
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION object_definition_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;
+-- Scalar function<newline>CREATE FUNCTION object_definition_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;<newline>
 ~~END~~
 
 
@@ -78,7 +78,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tr1'))
 GO
 ~~START~~
 nvarchar
-CREATE TRIGGER object_definition_tr1 ON object_definition_t1 INSTEAD OF INSERT<newline>AS<newline>BEGIN<newline>SELECT * FROM object_definition_t1;<newline>END
+-- DML trigger<newline>CREATE TRIGGER object_definition_tr1 ON object_definition_t1 INSTEAD OF INSERT<newline>AS<newline>BEGIN<newline>SELECT * FROM object_definition_t1;<newline>END<newline>
 ~~END~~
 
 
@@ -87,7 +87,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_itvf'))
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION object_definition_itvf()<newline>RETURNS table<newline>AS<newline>RETURN (SELECT 42 AS VALUE)
+-- Inline table-valued function<newline>CREATE FUNCTION object_definition_itvf()<newline>RETURNS table<newline>AS<newline>RETURN (SELECT 42 AS VALUE)<newline>
 ~~END~~
 
 
@@ -96,7 +96,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tvf'))
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION object_definition_tvf()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;
+-- Table-valued function<newline>CREATE FUNCTION object_definition_tvf()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;<newline>
 ~~END~~
 
 
@@ -105,7 +105,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_sch.object_definition_v1')
 GO
 ~~START~~
 nvarchar
-CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2
+-- View<newline>CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2<newline>
 ~~END~~
 
 
@@ -170,7 +170,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tvf'))
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION object_definition_tvf()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;
+-- Table-valued function<newline>CREATE FUNCTION object_definition_tvf()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;<newline>
 ~~END~~
 
 
@@ -178,7 +178,7 @@ SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_sch.object_definition_v1')
 GO
 ~~START~~
 nvarchar
-CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2
+-- View<newline>CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2<newline>
 ~~END~~
 
 
@@ -192,5 +192,68 @@ GO
 ~~START~~
 nvarchar
 <NULL>
+~~END~~
+
+
+-- Test  : Brackets around datatype for procedure
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_procedure';
+go
+~~START~~
+nvarchar
+CREATE PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (8000) END<newline>
+~~END~~
+
+-- Test  : Single Line comment for procedure
+ALTER PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_procedure';
+go
+~~START~~
+nvarchar
+-- Test  : Single Line comment for procedure<newline>CREATE PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END<newline>
+~~END~~
+
+
+-- Test  : Multi Line comment for procedure
+-- multiline comment line 1
+-- multiline comment line 2
+ALTER PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_procedure';
+go
+~~START~~
+nvarchar
+-- Test  : Multi Line comment for procedure<newline>-- multiline comment line 1<newline>-- multiline comment line 2<newline>CREATE PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END<newline>
+~~END~~
+
+-- Test  : Revise test 1,2,3 with functions
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
+go
+~~START~~
+nvarchar
+CREATE FUNCTION object_definition_function() RETURNS [VARCHAR](8000) AS BEGIN DECLARE @storeOriginalQuery_var [VARCHAR](8000) RETURN @storeOriginalQuery_var END<newline>
+~~END~~
+
+-- Test  : Single Line comment for function
+ALTER function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
+go
+~~START~~
+nvarchar
+-- Test  : Single Line comment for function<newline>CREATE function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END<newline>
+~~END~~
+
+
+-- Test  : Multi Line comment for function
+-- multiline comment line 1
+-- multiline comment line 2
+ALTER function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
+go
+~~START~~
+nvarchar
+-- Test  : Multi Line comment for function<newline>-- multiline comment line 1<newline>-- multiline comment line 2<newline>CREATE function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END<newline>
 ~~END~~
 
