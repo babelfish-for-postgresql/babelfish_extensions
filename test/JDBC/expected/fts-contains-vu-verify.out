@@ -115,6 +115,8 @@ int#!#text
 
 EXEC fts_contains_vu_prepare_p1 'one|two'
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
@@ -143,6 +145,8 @@ int#!#text
 
 EXEC fts_contains_vu_prepare_p1 '"one&two"'
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
@@ -150,6 +154,8 @@ GO
 
 EXEC fts_contains_vu_prepare_p1 '"one~two"'
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Proximity term is not currently supported in Babelfish)~~
@@ -157,6 +163,8 @@ GO
 
 EXEC fts_contains_vu_prepare_p1 '"one|two"'
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
@@ -200,6 +208,8 @@ int#!#text
 -- Test for empty string input, should throw error
 EXEC fts_contains_vu_prepare_p1 ''
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Null or empty full-text predicate.)~~
@@ -208,6 +218,8 @@ GO
 -- Test for empty string input, should throw error
 EXEC fts_contains_vu_prepare_p1 '            '
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Null or empty full-text predicate.)~~
@@ -216,6 +228,8 @@ GO
 -- Test for empty string input, should throw error
 EXEC fts_contains_vu_prepare_p1 NULL
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Incorrect syntax near the keyword 'null')~~
@@ -567,6 +581,8 @@ GO
 -- Generation Term not supported
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Generation term is not currently supported in Babelfish)~~
@@ -575,6 +591,8 @@ GO
 -- Boolean operators not supported
 EXEC fts_contains_vu_prepare_p1 '"test" AND "love"';
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
@@ -582,6 +600,8 @@ GO
 
 EXEC fts_contains_vu_prepare_p1 'test AND love';
 GO
+~~START~~
+int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
