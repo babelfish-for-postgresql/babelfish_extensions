@@ -3207,7 +3207,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 		return;
 
 	/* Skip if it is for sysdatabases while creating logical database */
-	if (strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
+	if (strcmp(CREATE_LOGICAL_DATABASE, queryString) == 0)
 		return;
 
 	/* Fetch the object details from Relation */

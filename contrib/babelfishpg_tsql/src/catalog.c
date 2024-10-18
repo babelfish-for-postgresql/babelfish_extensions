@@ -449,13 +449,12 @@ get_one_user_db_name(void)
 		db_name = TextDatumGetCString(name);
 
 		/* check that db_name is not "master", "tempdb", or "msdb" */
-		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
-			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
-			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
+		if (!IS_BBF_BUILT_IN_DB(db_name))
 		{
 			user_db_name = db_name;
 			break;
 		}
+		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
 
@@ -847,74 +846,48 @@ get_authid_login_ext_idx_oid(void)
  *			USER EXT
  *****************************************/
 
-bool
-is_user(Oid role_oid)
+/*
+ * Check if role is a bbf db principal. Returns BBF_ROLE if it is
+ * a db role, returns BBF_USER if it is db user else returns 0
+ */
+
+const int
+get_db_principal_kind(Oid role_oid, const char *db_name)
 {
-	bool		is_user = true;
+	char    	result = 0;
+	bool    	isnull;
 	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
+	char    	*rolname;
 
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
+	Assert(OidIsValid(role_oid) && db_name);
 
-	if (!HeapTupleIsValid(tuple))
-		is_user = false;
-	else
+	rolname = GetUserNameFromId(role_oid, false);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(rolname));
+	pfree(rolname);
+
+	if (HeapTupleIsValid(tuple))
 	{
 		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		char *type_str = bpchar_to_cstring(&type);
+		Datum datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									  Anum_bbf_authid_user_ext_database_name,
+									  &isnull);
+		char *type_str;
+		char *db_name_cstring;
 
-		/*
-		 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
-		 * is "S" or "U" etc, we should drop the user
-		 */
-		if (strcmp(type_str, "R") == 0)
-			is_user = false;
+		Assert(!isnull);
+
+		type_str = bpchar_to_cstring(&type);
+		db_name_cstring = TextDatumGetCString(datum);
+
+		if (strcmp(db_name_cstring, db_name) == 0)
+			result = (strcmp(type_str, "R") == 0) ? BBF_ROLE : BBF_USER;
+
+		pfree(type_str);
+		pfree(db_name_cstring);
 		ReleaseSysCache(tuple);
 	}
 
-	ReleaseSysCache(authtuple);
-
-	return is_user;
-}
-
-bool
-is_role(Oid role_oid)
-{
-	bool		is_role = true;
-	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
-
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
-
-	if (!HeapTupleIsValid(tuple))
-		is_role = false;
-	else
-	{
-		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		char *type_str = bpchar_to_cstring(&type);
-
-		if (strcmp(type_str, "R") != 0)
-			is_role = false;
-		ReleaseSysCache(tuple);
-	}
-
-	ReleaseSysCache(authtuple);
-
-	return is_role;
+	return result;
 }
 
 Oid
@@ -935,6 +908,49 @@ get_authid_user_ext_idx_oid(void)
 														get_namespace_oid("sys", false));
 
 	return bbf_authid_user_ext_idx_oid;
+}
+
+/* Returns palloc'd original name given the physical name of the db principal */
+char *
+get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name)
+{
+	char*    	orig_username = NULL;
+	bool    	isnull;
+	HeapTuple	tuple;
+
+	Assert(physical_role_name && strlen(physical_role_name) != 0);
+	Assert(db_name && strlen(db_name) != 0);
+
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(physical_role_name));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Datum datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									  Anum_bbf_authid_user_ext_database_name, &isnull);
+		char *db_name_cstring;
+
+		Assert(!isnull);
+
+		db_name_cstring = TextDatumGetCString(datum);
+
+		if (strcmp(db_name_cstring, db_name) == 0)
+		{
+			datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									Anum_bbf_authid_user_ext_orig_username, &isnull);
+			Assert(!isnull);
+			orig_username = TextDatumGetCString(datum);
+		}
+
+		pfree(db_name_cstring);
+		ReleaseSysCache(tuple);
+	}
+
+	if (orig_username == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Could not find original name for db principal %s in database %s", physical_role_name, db_name)));
+
+	return orig_username;
 }
 
 char *
@@ -969,10 +985,24 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		Form_authid_user_ext userform;
+		Datum datum;
+		bool user_can_connect;
+		bool isnull;
 
-		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
-		user_name = pstrdup(NameStr(userform->rolname));
+		datum = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_user_can_connect,
+							 RelationGetDescr(bbf_authid_user_ext_rel), &isnull);
+		Assert(!isnull);
+		user_can_connect = DatumGetInt32(datum);
+
+		/* db_accessadmin members should always have connect permissions */
+		if (user_can_connect == 1 ||
+			(has_privs_of_role(get_role_oid(login, false), get_db_accessadmin_oid(db_name, false))))
+		{
+			datum = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_rolname,
+								 RelationGetDescr(bbf_authid_user_ext_rel), &isnull);
+			Assert(!isnull);
+			user_name = pstrdup(DatumGetCString(datum));
+		}
 	}
 
 	table_endscan(scan);
@@ -3195,7 +3225,7 @@ create_guest_role_for_db(const char *dbname)
 
 			/* do this step */
 			ProcessUtility(wrapper,
-						   "(CREATE LOGICAL DATABASE )",
+						   CREATE_LOGICAL_DATABASE,
 						   false,
 						   PROCESS_UTILITY_SUBCOMMAND,
 						   NULL,
@@ -4957,9 +4987,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 			char *old_role_name;
 			char *new_role_name;
 
-			if (SINGLE_DB == get_migration_mode() &&
-				((strlen(role) == 3 && strncmp(role, "dbo", 3) == 0) ||
-				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0)))
+			if (SINGLE_DB == get_migration_mode() && IS_FIXED_DB_PRINCIPAL(role))
 				continue;
 
 			old_role_name = get_physical_user_name(old_db_name, role, true, true);

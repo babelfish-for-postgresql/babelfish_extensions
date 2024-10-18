@@ -758,6 +758,7 @@ SELECT u.orig_username, SUBSTRING(a.datacl, strpos(a.datacl, '='), strpos(a.data
 GO
 ~~START~~
 nvarchar#!#varchar
+db_accessadmin#!#=C
 dbo#!#=CTc
 ~~END~~
 

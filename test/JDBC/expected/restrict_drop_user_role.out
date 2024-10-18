@@ -213,19 +213,35 @@ go
 -- both of the following statements should be executed successfully since user/role exists
 drop role if exists no_priv_user3;
 go
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the role 'no_priv_user3', because it does not exist or you do not have permission.)~~
+select count(*) from sys.database_principals where name like '%no_priv_%3';
+go
+~~START~~
+int
+2
+~~END~~
 
 
 drop user if exists no_priv_user3;
 go
 
+select count(*) from sys.database_principals where name like '%no_priv_%3';
+go
+~~START~~
+int
+1
+~~END~~
+
+
 drop user if exists no_priv_role3;
 go
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the user 'no_priv_role3', because it does not exist or you do not have permission.)~~
+select count(*) from sys.database_principals where name like '%no_priv_%3';
+go
+~~START~~
+int
+1
+~~END~~
 
 
 drop role if exists no_priv_role3;
@@ -263,17 +279,9 @@ go
 -- bbf_role_admin won't have privilege to drop non-babelfish roles
 drop user if exists pguser1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop the user 'pguser1', because it does not exist or you do not have permission.)~~
-
 
 drop role if exists pguser1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop the role 'pguser1', because it does not exist or you do not have permission.)~~
-
 
 -- psql
 drop role master_pguser1;
@@ -361,10 +369,6 @@ go
 
 drop user if exists user1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop the user 'user1', because it does not exist or you do not have permission.)~~
-
 
 use master
 go

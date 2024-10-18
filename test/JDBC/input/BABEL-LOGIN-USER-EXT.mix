@@ -81,7 +81,7 @@ go
 
 SELECT rolname, orig_username, login_name, database_name, default_schema_name
 FROM sys.babelfish_authid_user_ext
-WHERE orig_username = 'new_r1';
+WHERE orig_username = 'new_r1' or orig_username = 'r1';
 go
 
 ALTER USER r2 WITH DEFAULT_SCHEMA = NULL;
@@ -117,7 +117,7 @@ SELECT user_name(user_id());
 go
 
 -- tsql
-DROP USER new_r1;
+DROP USER r1;
 go
 
 -- psql
