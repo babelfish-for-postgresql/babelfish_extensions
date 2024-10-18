@@ -3993,7 +3993,7 @@ get_start_token_of_batch_level_stmt_body(TSqlParser::Batch_level_statementContex
 }
 
 char*
-createHandlingForBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, const char *originalQuery)
+storeOriginalQueryForBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, const char *originalQuery)
 {
 	int startIndex = -1;
 	int endIndex = -1;
@@ -4041,7 +4041,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	result->body = list_make1(init);
 	// create PLtsql_stmt_execsql to wrap all query string
 	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
-	execsql->original_query = createHandlingForBatchLevelStatement(ctx, originalQuery);
+	execsql->original_query = storeOriginalQueryForBatchLevelStatement(ctx, originalQuery);
 
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	result->body = lappend(result->body, execsql);
