@@ -363,6 +363,19 @@ select @i += (select @j = @j + id from local_var_tst)
 select @i
 GO
 
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int = 1
+declare @j int = 0
+select @j += id, @i = id + 1  from local_var_tst where id = @i
+select @j
+go
+
 DECLARE @ans INT
 SELECT @ans = AVG(id) FROM local_var_tst
 select @ans
