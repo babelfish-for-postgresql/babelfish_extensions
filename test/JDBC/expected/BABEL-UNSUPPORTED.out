@@ -1999,6 +1999,7 @@ GO
 ~~START~~
 text#!#text#!#text
 babelfishpg_tsql.enable_pg_hint#!#off#!#Loads and enables pg_hint_plan library
+babelfishpg_tsql.escape_hatch_allow_create_user_for_sysadmin#!#strict#!#escape hatch for sysadmin login's user creation
 babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
@@ -2067,6 +2068,7 @@ GO
 ~~START~~
 text#!#text#!#text
 babelfishpg_tsql.enable_pg_hint#!#off#!#Loads and enables pg_hint_plan library
+babelfishpg_tsql.escape_hatch_allow_create_user_for_sysadmin#!#strict#!#escape hatch for sysadmin login's user creation
 babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
@@ -2116,6 +2118,7 @@ GO
 ~~START~~
 text#!#text#!#text
 babelfishpg_tsql.enable_pg_hint#!#off#!#Loads and enables pg_hint_plan library
+babelfishpg_tsql.escape_hatch_allow_create_user_for_sysadmin#!#strict#!#escape hatch for sysadmin login's user creation
 babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
