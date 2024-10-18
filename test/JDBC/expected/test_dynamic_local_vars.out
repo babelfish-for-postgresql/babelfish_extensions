@@ -1110,30 +1110,27 @@ int
 DROP PARTITION FUNCTION RangePF1 
 GO
 
-
 CREATE SEQUENCE CountBy1  
     START WITH 1  
-    INCREMENT BY 1 ;  
-GO  
+    INCREMENT BY 1 ;
+GO
+
 -- NEXT VALUE FOR gets re-written by ANTLR
-DECLARE @myvar1 BIGINT = NEXT VALUE FOR CountBy1  
+DECLARE @myvar1 BIGINT = NEXT VALUE FOR CountBy1 ;
 DECLARE @myvar2 BIGINT ;  
 DECLARE @myvar3 BIGINT ;  
 select @myvar2 = NEXT VALUE FOR CountBy1 ;  
 SELECT @myvar3 = NEXT VALUE FOR CountBy1 ;  
 SELECT @myvar1 AS myvar1, @myvar2 AS myvar2, @myvar3 AS myvar3 ;  
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'DECLARE' at line 6 and character position 0)~~
+~~START~~
+bigint#!#bigint#!#bigint
+1#!#2#!#3
+~~END~~
 
 
 DROP SEQUENCE CountBy1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: sequence "countby1" does not exist)~~
-
 
 -- any @@ is also re-written by ANTLR
 declare @pid int = 0
