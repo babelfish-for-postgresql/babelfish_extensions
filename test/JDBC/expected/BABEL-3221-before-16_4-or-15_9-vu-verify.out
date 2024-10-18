@@ -1,0 +1,27 @@
+SELECT * FROM babel_3221_view;
+go
+~~START~~
+int#!#uniqueidentifier#!#money
+1#!#0E984725-C51C-4BF4-9960-E1C80E27ABA0#!#2.0000
+~~END~~
+
+
+SELECT * FROM babel_3221_view_2;
+go
+~~START~~
+text
+Y
+~~END~~
+
+
+DROP VIEW babel_3221_view;
+go
+
+DROP VIEW babel_3221_view_2;
+go
+
+DROP TABLE babel_3221_table_1;
+go
+
+DROP TABLE babel_3221_table_2;
+go

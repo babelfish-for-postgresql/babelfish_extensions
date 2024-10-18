@@ -2420,11 +2420,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					Oid					oldoid;
 					Acl					*proacl;
 					bool				isSameProc;
-					ObjectAddress 		address;
+					ObjectAddress 		address, tbltyp, originalFunc;
 					CreateFunctionStmt	*cfs;
 					ListCell 			*option;
 					int 				origname_location = -1;
 					bool 				with_recompile = false;
+					Node                *tbltypStmt = NULL;
 					ListCell            *parameter;
 
 					cfs = makeNode(CreateFunctionStmt);
@@ -2482,6 +2483,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								pfree(defel);
 								stmt->objtype = OBJECT_FUNCTION;
 							}
+							else if (strcmp(defel->defname, "tbltypStmt") == 0)
+							{
+								 tbltypStmt = defel->arg;
+							}
 						}
 
 						/* make a CreateFunctionStmt to pass into CreateFunction() */
@@ -2500,6 +2505,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 
 						pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc, cfs->is_procedure);
+						originalFunc.objectId = oldoid;
+						originalFunc.classId = ProcedureRelationId;
+						originalFunc.objectSubId = 0;
 						if(get_bbf_function_tuple_from_proctuple(SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid))) == NULL)
 						{
 							/* Detect PSQL functions and throw error */
@@ -2513,13 +2521,76 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							 * Postgres does not allow us to create functions with different return types
 							 * so we need to delete and recreate them 
 							 */
-							RemoveFunctionById(oldoid);
+							performDeletion(&originalFunc, DROP_RESTRICT, 0);
 							isSameProc = false;
 							CommandCounterIncrement();
 						}
 						else if (!isSameProc) /* i.e. different signature */
 						{
-							RemoveFunctionById(oldoid);
+							performDeletion(&originalFunc, DROP_RESTRICT, 0);
+						}
+
+						if(tbltypStmt)
+						{
+							PlannedStmt *wrapper;
+							RangeVar* rv = ((CreateStmt*) tbltypStmt)->relation;
+
+							if(rv->schemaname != NULL)
+							{
+								List* cfs_rettype_names = cfs->returnType->names;
+								ListCell* x;
+								int i = 1;
+								int len = list_length(cfs->parameters);
+								char *physical_schema_name = get_physical_schema_name(get_cur_db_name(), rv->schemaname);
+
+								rv->schemaname = physical_schema_name;
+								cfs_rettype_names = list_delete_first(cfs_rettype_names);
+								cfs_rettype_names = lcons(makeString(physical_schema_name), cfs_rettype_names);
+
+
+								foreach(x, cfs->parameters)
+								{
+									if(i == len)
+									{
+										FunctionParameter *fp = (FunctionParameter *) lfirst(x);
+										TypeName *t = fp->argType;
+										t->names =  list_delete_first(t->names);
+										t->names = lcons(makeString(physical_schema_name), t->names);
+									}
+									i++;
+								}
+							}
+
+							/*
+							 * Process create stmt
+							 */
+							wrapper = makeNode(PlannedStmt);
+							wrapper->commandType = CMD_UTILITY;
+							wrapper->canSetTag = false;
+							wrapper->utilityStmt = tbltypStmt;
+							wrapper->stmt_location = pstmt->stmt_location;
+							wrapper->stmt_len = pstmt->stmt_len;
+
+							ProcessUtility(wrapper,
+										queryString,
+										false,
+										PROCESS_UTILITY_SUBCOMMAND,
+										params,
+										NULL,
+										None_Receiver,
+										NULL);
+
+							/* Need CCI between commands */
+							CommandCounterIncrement();
+
+							/*
+							 * Update dependency on oldoid
+							 */
+							tbltyp.classId = TypeRelationId;
+							tbltyp.objectId = typenameTypeId(pstate,
+															cfs->returnType);
+							tbltyp.objectSubId = 0;
+							recordDependencyOn(&tbltyp, &originalFunc, DEPENDENCY_INTERNAL);
 						}
 
 						/* if this is the same procedure, it will update the existing one */
@@ -2924,13 +2995,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *db_owner_name;
+						char *db_owner_name;
 
 						db_owner_name = get_db_owner_name(get_cur_db_name());
 						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									 errmsg("User does not have permission to perform this action.")));
+
+						pfree(db_owner_name);
 					}
 
 					/*
@@ -3202,7 +3275,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *dbo_name;
+						char	   *dbo_name;
 						char	   *db_name;
 						char	   *user_name;
 						char	   *cur_user;
@@ -3283,6 +3356,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						set_session_properties(db_name);
 						pfree(cur_user);
 						pfree(db_name);
+						pfree(dbo_name);
 
 						return;
 					}
@@ -3331,17 +3405,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								foreach(item, stmt->roles)
 								{
-									RoleSpec   *rolspec = lfirst(item);
-									char	   *user_name;
-									const char *db_principal_type = drop_user ? "user" : "role";
-									const char *db_owner_name;
-									int			role_oid;
-									int			rolename_len;
+									RoleSpec	*rolspec = lfirst(item);
+									char		*user_name;
+									const char	*db_principal_type = drop_user ? "user" : "role";
+									char		*db_owner_name;
+									int		role_oid;
+									int		rolename_len;
 									bool		is_tsql_db_principal = false;
 									bool		is_psql_db_principal = false;
-									Oid			dbowner;
+									Oid		dbowner;
 
-									user_name = get_physical_user_name(db_name, rolspec->rolename, false);
+									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
 									db_owner_name = get_db_owner_name(db_name);
 									dbowner = get_role_oid(db_owner_name, false);
 									role_oid = get_role_oid(user_name, true);
@@ -3397,6 +3471,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 														 errmsg("Cannot disable access to the guest user in master or tempdb.")));
 
 											alter_user_can_connect(false, rolspec->rolename, db_name);
+
+											pfree(db_owner_name);
+											
 											return;
 										}
 										else
@@ -3407,6 +3484,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 
 									pfree(rolspec->rolename);
+									pfree(db_owner_name);
+
 									rolspec->rolename = user_name;
 								}
 							}
@@ -3606,7 +3685,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
 						{
 							/* Execute the GRANT SCHEMA subcommands. */
-							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
+							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i], true);
 						}
 					}
 					return;

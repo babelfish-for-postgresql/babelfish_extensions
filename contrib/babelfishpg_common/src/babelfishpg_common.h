@@ -41,6 +41,7 @@ typedef struct common_utility_plugin
 	bytea	   *(*convertIntToSQLVariantByteA) (int ret);
 	void	   *(*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
 	void	   *(*tsql_bpchar_input) (const char *s, size_t len, int32 atttypmod);
+	bool		(*is_tsql_sysname_datatype) (Oid oid);
 	bool		(*is_tsql_bpchar_datatype) (Oid oid);
 	bool		(*is_tsql_nchar_datatype) (Oid oid);
 	bool		(*is_tsql_varchar_datatype) (Oid oid);

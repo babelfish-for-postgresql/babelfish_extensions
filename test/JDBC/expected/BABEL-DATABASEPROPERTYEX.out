@@ -51,7 +51,7 @@ ONLINE
 SELECT (case when charindex(cast(databasepropertyex(N'master',N'Version') as nvarchar), version()) > 0 then 'true' else 'false' end) result
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 

@@ -74,6 +74,40 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+-- helper functions for XML EXIST(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(TEXT, ANYELEMENT)
+RETURNS sys.BIT
+AS
+$BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+    pltsql_quoted_identifier text;
+BEGIN
+    arg_datatype_oid := pg_typeof($2)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    IF (arg_datatype != 'xml') THEN
+        RAISE EXCEPTION 'Cannot call methods on %.', arg_datatype;
+    END IF;
+
+    pltsql_quoted_identifier := current_setting('babelfishpg_tsql.quoted_identifier');
+
+    IF (pltsql_quoted_identifier = 'off') THEN
+        RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
+    END IF;
+
+    RETURN xmlexists($1 passing by value $2);
+END
+$BODY$
+LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
+
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
     state INTERNAL,
@@ -498,7 +532,7 @@ BEGIN
 
     v_hr := v_hr * sign_flag;
 
-    v_string := CONCAT(input_expr_datetime2::pg_catalog.text , tz_offset);
+    v_string := PG_CATALOG.CONCAT(input_expr_datetime2::pg_catalog.text , tz_offset);
 
     BEGIN
     RETURN cast(v_string as sys.datetimeoffset);
@@ -578,7 +612,7 @@ BEGIN
     );
 
     
-        v_string := CONCAT(input_expr_datetime2::pg_catalog.text,v_sign,abs(hr)::SMALLINT::text,':',
+        v_string := PG_CATALOG.CONCAT(input_expr_datetime2::pg_catalog.text,v_sign,abs(hr)::SMALLINT::text,':',
                                                           abs(mi)::SMALLINT::text);
 
         BEGIN
@@ -1030,7 +1064,7 @@ BEGIN
             ELSE '-'
         END
     );
-    v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
+    v_string := PG_CATALOG.CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
                                                           abs(p_minute_offset)::SMALLINT::text);
     BEGIN
     RETURN cast(v_string AS sys.datetimeoffset);
@@ -1165,10 +1199,10 @@ BEGIN
         result := (SELECT input_expr_tmz AT TIME ZONE tz_name)::TEXT;
         tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
         if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
-            tz_diff := concat('+',tz_diff);
+            tz_diff := PG_CATALOG.concat('+',tz_diff);
         END IF;
         tz_offset := PG_CATALOG.left(tz_diff,6);
-        input_expr_tx := concat(input_expr_tx,tz_offset);
+        input_expr_tx := PG_CATALOG.concat(input_expr_tx,tz_offset);
         return cast(input_expr_tx as sys.datetimeoffset);
     ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
         input_expr_tx := input_expr::TEXT;
@@ -1176,10 +1210,10 @@ BEGIN
         result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
         tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
         if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
-            tz_diff := concat('+',tz_diff);
+            tz_diff := PG_CATALOG.concat('+',tz_diff);
         END IF;
         tz_offset := PG_CATALOG.left(tz_diff,6);
-        result := concat(result,tz_offset);
+        result := PG_CATALOG.concat(result,tz_offset);
         return cast(result as sys.datetimeoffset);
     ELSE
         RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
@@ -1302,7 +1336,7 @@ BEGIN
 
     isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
 
-    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,tz_offset);
+    v_string := PG_CATALOG.CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,tz_offset);
     p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
     
 
@@ -1423,7 +1457,7 @@ BEGIN
 
     isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
 
-    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,v_sign,abs(v_hr)::TEXT,':',abs(v_mi)::TEXT);
+    v_string := PG_CATALOG.CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,v_sign,abs(v_hr)::TEXT,':',abs(v_mi)::TEXT);
 
     p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
 
@@ -2996,7 +3030,7 @@ BEGIN
     END IF;
 
     -- Surround with double-quotes to handle names that contain periods/spaces
-    qualified_name := concat('"', pg_schema, '"."', object_name, '"');
+    qualified_name := PG_CATALOG.concat('"', pg_schema, '"."', object_name, '"');
 
     SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = pg_schema COLLATE sys.database_default;
 
@@ -4028,6 +4062,84 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+-- wrapper functions for concat --
+CREATE OR REPLACE FUNCTION sys.concat(VARIADIC args sys.VARCHAR[] DEFAULT '{}')
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len IS NULL OR arr_len < 2 OR arr_len > 100 THEN
+        RAISE EXCEPTION 'The concat function requires 2 to 100 arguments.';
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.concat(VARIADIC args sys.NVARCHAR[])
+RETURNS sys.NVARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len < 2 OR arr_len > 100 THEN
+        RAISE EXCEPTION 'The concat function requires 2 to 100 arguments.';
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+-- wrapper functions for concat_ws --
+CREATE OR REPLACE FUNCTION sys.concat_ws(seperator sys.VARCHAR DEFAULT '', VARIADIC args sys.VARCHAR[] DEFAULT '{}')
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len IS NULL OR arr_len < 2 OR arr_len > 99 THEN
+        RAISE EXCEPTION 'The concat_ws function requires 3 to 100 arguments.';
+    END IF;
+
+    IF seperator IS NULL THEN
+        RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, seperator));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.concat_ws(seperator sys.NVARCHAR, VARIADIC args sys.NVARCHAR[])
+RETURNS sys.NVARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len < 2 OR arr_len > 99 THEN
+        RAISE EXCEPTION 'The concat_ws function requires 3 to 100 arguments.';
+    END IF;
+
+    IF seperator IS NULL THEN
+        RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, seperator));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
 -- For getting host os from PG_VERSION_STR
 CREATE OR REPLACE FUNCTION sys.get_host_os()
 RETURNS sys.NVARCHAR
@@ -4175,7 +4287,7 @@ BEGIN
     -- To convert input jsonpath to the required jsonb_path format
     json_path_convert = regexp_replace(json_path COLLATE "C", '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
     json_path_convert = regexp_replace(json_path_convert COLLATE "C", '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
-    new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
+    new_jsonb_path = PG_CATALOG.CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
 
     key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
 
@@ -5003,7 +5115,7 @@ BEGIN
         ELSE
             -- trunceting origin to millisecond before passing it to date_bin() function. 
             -- store the difference between origin and trunceted origin to add it in the result of date_bin() function
-            date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
+            date_difference_interval := PG_CATALOG.concat(number, ' ', datepart)::INTERVAL;
             millisec_trunc_diff_interval := (origin::timestamp - date_trunc('millisecond', origin::timestamp))::interval;
             result_date = date_bin(date_difference_interval, date::timestamp, date_trunc('millisecond', origin::timestamp)) + millisec_trunc_diff_interval;
 
@@ -5022,7 +5134,7 @@ BEGIN
             timezone = sys.babelfish_get_datetimeoffset_tzoffset(date)::INTEGER;
             offset_string = PG_CATALOG.right(date::PG_CATALOG.TEXT, 6);
             result_date = result_date + make_interval(mins => timezone);
-            RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
+            RETURN PG_CATALOG.concat(result_date, ' ', offset_string)::sys.datetimeoffset;
         ELSE
             RETURN result_date;
         END IF;
@@ -5072,7 +5184,7 @@ BEGIN
         ELSE
             -- trunceting origin to millisecond before passing it to date_bin() function. 
             -- store the difference between origin and trunceted origin to add it in the result of date_bin() function
-            date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
+            date_difference_interval := PG_CATALOG.concat(number, ' ', datepart)::INTERVAL;
             result_date = date_bin(date_difference_interval, date::TIMESTAMP, origin::TIMESTAMP);
             -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result. 
             IF result_date + date_difference_interval <= date::TIMESTAMP THEN
@@ -5165,7 +5277,7 @@ BEGIN
             END CASE;
             -- concat offset_string to result_date in case of datetimeoffset before converting it to datetimeoffset datatype.
             IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
-                RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
+                RETURN PG_CATALOG.concat(result_date, ' ', offset_string)::sys.datetimeoffset;
             ELSE
                 RETURN result_date;
             END IF;
