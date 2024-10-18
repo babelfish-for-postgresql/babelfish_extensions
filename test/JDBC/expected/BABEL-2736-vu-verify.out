@@ -153,6 +153,404 @@ varbinary
 DROP FUNCTION BABEL_BINARY_vu_prepare_f5
 GO
 
+EXEC BABEL_BINARY_vu_prepare_p6
+GO
+~~START~~
+binary
+1234ABCD00
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p6
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p7
+GO
+~~START~~
+binary
+3132333441
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p7
+GO
+
+SELECT dbo.BABEL_BINARY_vu_prepare_f7()
+DROP FUNCTION BABEL_BINARY_vu_prepare_f7
+GO
+~~START~~
+varbinary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to varbinary)~~
+
+
+SELECT dbo.BABEL_BINARY_vu_prepare_f8()
+DROP FUNCTION BABEL_BINARY_vu_prepare_f8
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+SELECT dbo.BABEL_BINARY_vu_prepare_f9()
+DROP FUNCTION BABEL_BINARY_vu_prepare_f9
+GO
+~~START~~
+varbinary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+
+
+SELECT dbo.BABEL_BINARY_vu_prepare_f10()
+DROP FUNCTION BABEL_BINARY_vu_prepare_f10
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v5
+GO
+~~START~~
+binary
+1234ABCD00
+7879800000
+1234000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v5
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v6
+GO
+~~START~~
+binary
+3078313233
+3078373837
+3078313233
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v6
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v7
+GO
+~~START~~
+binary
+1234ABCD00
+7879800000
+1234000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v7
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v8_try
+GO
+~~START~~
+binary
+1234ABCD00
+7879800000
+1234000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v8_try
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v9_try
+GO
+~~START~~
+binary
+3078313233
+3078373837
+3078313233
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v9_try
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p8
+GO
+~~START~~
+binary
+1234ABCD00
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p8
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p9
+GO
+~~START~~
+binary
+1234ABCD00
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p9
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p10
+GO
+~~START~~
+binary#!#binary
+1234ABCD00#!#5678EF0000
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p10
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p11
+GO
+~~START~~
+binary#!#binary#!#binary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p11
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v10_try
+GO
+~~START~~
+binary
+1234ABCD00
+7879800000
+1234000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v10_try
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v11
+GO
+~~START~~
+binary
+1234ABCD00
+7879800000
+1234000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v11
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v12
+GO
+~~START~~
+binary
+3078313233
+3078373837
+3078313233
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v12
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v13
+GO
+~~START~~
+binary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v13
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v14_try
+GO
+~~START~~
+binary
+1234ABCD00
+7879800000
+1234000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v14_try
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v15_try
+GO
+~~START~~
+binary
+3078313233
+3078373837
+3078313233
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v15_try
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v16_try
+GO
+~~START~~
+binary
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v16_try
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v17
+GO
+~~START~~
+binary
+1234000000
+0000303900
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v17
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v18
+GO
+~~START~~
+binary
+1234000000
+0000303900
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v18
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v19
+GO
+~~START~~
+binary
+12340000000000000000
+00003039000000000000
+ABCDEF00000000000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v19
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v20
+GO
+~~START~~
+binary
+12340000000000000000
+00003039000000000000
+ABCDEF00000000000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v20
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v21
+GO
+~~START~~
+binary
+1234000000
+3136380000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v21
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v22
+GO
+~~START~~
+binary
+1234000000
+3136380000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v22
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v23
+GO
+~~START~~
+binary
+1234000000
+1234000000
+4142000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v23
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v24
+GO
+~~START~~
+binary
+1234000000
+1234000000
+4142000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v24
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v25
+GO
+~~START~~
+binary
+1234000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "decimal" to varbinary)~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v25
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v26
+GO
+~~START~~
+binary
+1234000000
+<NULL>
+ABCD000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v26
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v27
+GO
+~~START~~
+binary#!#binary#!#binary
+3078313233#!#1234000000#!#1234000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v27
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v28
+GO
+~~START~~
+binary#!#binary#!#binary
+3078313233#!#1234000000#!#1234000000
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v28
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v29
+GO
+~~START~~
+binary#!#binary#!#binary#!#binary
+0000303900#!#323032332D#!#48656C6C6F#!#1234ABCD00
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v29
+GO
+
+SELECT * FROM BABEL_BINARY_vu_prepare_v30
+GO
+~~START~~
+binary#!#binary#!#binary#!#binary
+0000303900#!#323032332D#!#48656C6C6F#!#1234ABCD00
+~~END~~
+
+DROP VIEW BABEL_BINARY_vu_prepare_v30
+GO
+
 
 -- Additional test cases
 -- 1. Testing style 0 (default, ASCII conversion):
