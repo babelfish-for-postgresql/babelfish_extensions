@@ -487,18 +487,6 @@ binary
 DROP VIEW BABEL_BINARY_vu_prepare_v24
 GO
 
-SELECT * FROM BABEL_BINARY_vu_prepare_v25
-GO
-~~START~~
-binary
-1234000000
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type "decimal" to varbinary)~~
-
-DROP VIEW BABEL_BINARY_vu_prepare_v25
-GO
-
 SELECT * FROM BABEL_BINARY_vu_prepare_v26
 GO
 ~~START~~
