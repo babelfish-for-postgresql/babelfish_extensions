@@ -108,11 +108,32 @@ abcḍèĎÈdedEDEabcd#!#de#!###
 ~~END~~
 
 
+-- need to store output of charindex other wise explain analyze prints the entire function text
+-- which could vary for version upgrade tests
+CREATE TABLE #table_5144_result_store (id INT);
+GO
+INSERT INTO #table_5144_result_store VALUES (sys.charindex('de', 'abcḍèĎÈdedEDEabcd'))
+GO
+~~ROW COUNT: 1~~
+
+
 SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
 GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
 ~~START~~
 text
 off
@@ -134,31 +155,7 @@ off
 ~~END~~
 
 SET BABELFISH_STATISTICS PROFILE ON;
-SELECT set_config('enable_seqscan', 'off', false);
-SELECT set_config('enable_bitmapscan', 'off', false);
 GO
-~~START~~
-text
-off
-~~END~~
-
-~~START~~
-text
-Query Text: SELECT set_config('enable_seqscan', 'off', false)
-Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-off
-~~END~~
-
-~~START~~
-text
-Query Text: SELECT set_config('enable_bitmapscan', 'off', false)
-Result (actual rows=1 loops=1)
-~~END~~
-
 
 SELECT * FROM babel_5144_t1 WHERE [replaced] = sys.replace('abcḍèĎÈdedEDEabcd', 'de', '##')
 GO
@@ -175,7 +172,7 @@ Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on
   Index Cond: ((replaced)::"varchar" = 'abc?è?È######abcd'::"varchar")
 ~~END~~
 
-SELECT * FROM babel_5144_t1 WHERE [charIndex] = sys.charindex('de', 'abcḍèĎÈdedEDEabcd');
+SELECT * FROM babel_5144_t1 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store);
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#bigint
@@ -185,30 +182,11 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
 
 ~~START~~
 text
-Query Text: 
-SELECT
-CASE
-WHEN expressionToFind = '' THEN
-    0
-WHEN start_location <= 0 THEN
-    strpos(expressionToSearch, expressionToFind)
-ELSE
-    CASE
-    WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
-        0
-    ELSE
-        strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
-    END
-END;
-
-Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Query Text: SELECT * FROM babel_5144_t1 WHERE [charIndex] = sys.charindex('de', 'abc?è?ÈdedEDEabcd')
+Query Text: SELECT * FROM babel_5144_t1 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store)
 Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
-  Index Cond: (charindex = 8)
+  Index Cond: (charindex = $0)
+  InitPlan 1 (returns $0)
+    ->  Seq Scan on "#table_5144_result_store" (actual rows=1 loops=1)
 ~~END~~
 
 SELECT * FROM babel_5144_t1 WHERE [patindex] = sys.patindex('%de%', 'abcḍèĎÈdedEDEabcd');
@@ -241,7 +219,7 @@ Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on
   Index Cond: ((replaced)::"varchar" = 'abc?è?È######abcd'::"varchar")
 ~~END~~
 
-SELECT * FROM babel_5144_t3 WHERE [charIndex] = sys.charindex('de', 'abcḍèĎÈdedEDEabcd');
+SELECT * FROM babel_5144_t3 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store);
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
@@ -251,30 +229,11 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abcḍèĎÈ######abcd#!#8#!#8
 
 ~~START~~
 text
-Query Text: 
-SELECT
-CASE
-WHEN expressionToFind = '' THEN
-    0
-WHEN start_location <= 0 THEN
-    strpos(expressionToSearch, expressionToFind)
-ELSE
-    CASE
-    WHEN strpos(substr(expressionToSearch, start_location), expressionToFind) = 0 THEN
-        0
-    ELSE
-        strpos(substr(expressionToSearch, start_location), expressionToFind) + start_location - 1
-    END
-END;
-
-Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Query Text: SELECT * FROM babel_5144_t3 WHERE [charIndex] = sys.charindex('de', 'abc?è?ÈdedEDEabcd')
+Query Text: SELECT * FROM babel_5144_t3 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store)
 Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
-  Index Cond: (charindex = 8)
+  Index Cond: (charindex = $0)
+  InitPlan 1 (returns $0)
+    ->  Seq Scan on "#table_5144_result_store" (actual rows=1 loops=1)
 ~~END~~
 
 SELECT * FROM babel_5144_t3 WHERE [patindex] = sys.patindex('%de%', 'abcḍèĎÈdedEDEabcd');
