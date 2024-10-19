@@ -65,7 +65,7 @@ jobs:
           sudo ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "select default_collation from sys.babelfish_sysdatabases where name = 'master';"
           cd test/JDBC/
           export isdbCollationMode=true
-          mvn test
+          mvn -B -ntp test
           unset isdbCollationMode
 
       - name: Start secondary server
@@ -96,7 +96,7 @@ jobs:
           cd test/JDBC/
           export isdbCollationMode=true
           export inputFilesPath=replication
-          mvn test
+          mvn -B -ntp test
           unset isdbCollationMode
 
       - name: Cleanup babelfish database
