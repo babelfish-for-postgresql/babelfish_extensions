@@ -13,10 +13,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "asdfasdfasdf" does not exist)~~
-
 
 
 BEGIN TRY
@@ -31,11 +27,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "asdfasdfasdf" does not exist
-~~END~~
-
 
 -- Error: relation \"%s\" does not exist
 -- Simple batch with try catch
@@ -51,10 +42,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 BEGIN TRY
     EXEC('SELECT * FROM non_existent_table;');
@@ -68,11 +55,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
 
 -- Error: relation \"%s\" does not exist
 -- Simple batch with transaction inside try-catch
@@ -89,18 +71,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -118,23 +91,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -156,18 +115,9 @@ BEGIN CATCH
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -187,23 +137,9 @@ BEGIN CATCH
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -223,16 +159,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-smallint
-0
-~~END~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
 
 BEGIN TRY
     SELECT xact_state();
@@ -247,16 +173,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-smallint
-0
-~~END~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
 
 -- Error: relation \"%s\" does not exist
 -- Transaction inside try-catch but not inside procedure
@@ -273,23 +189,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -307,23 +209,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -343,28 +231,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-smallint
-0
-~~END~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_3 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -382,28 +251,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-smallint
-0
-~~END~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_3 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -423,23 +273,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_3 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -457,23 +293,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_3 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -492,10 +314,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "name123" does not exist)~~
-
 
 BEGIN TRY
 		EXEC('select name123 from sys.database_principals;');
@@ -509,11 +327,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_column "name123" does not exist
-~~END~~
-
 
 -- Error: column \"%s\" does not exist
 -- Simple batch with try catch
@@ -529,10 +342,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 BEGIN TRY
     EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
@@ -546,11 +355,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
 
 -- Error: column \"%s\" does not exist
 -- Simple batch with transaction inside try-catch
@@ -567,18 +371,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -596,23 +391,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -632,16 +413,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-smallint
-0
-~~END~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
 
 BEGIN TRY
     SELECT xact_state();
@@ -656,16 +427,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-smallint
-0
-~~END~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
 
 -- Error: column \"%s\" does not exist
 -- Transaction inside try-catch but not inside procedure
@@ -682,23 +443,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -716,23 +463,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -752,28 +485,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-smallint
-0
-~~END~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_3 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -791,28 +505,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-smallint
-0
-~~END~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_3 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -832,23 +527,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_3 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -866,23 +547,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_3 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -895,23 +562,9 @@ INSERT INTO babel_5186_table_errTable VALUES (2);
 SELECT * FROM non_existent_table;
 INSERT INTO babel_5186_table_errTable VALUES (3);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_table_errTable
 GO
@@ -922,23 +575,9 @@ INSERT INTO babel_5186_table_errTable VALUES (2);
 EXEC('SELECT * FROM non_existent_table;');
 INSERT INTO babel_5186_table_errTable VALUES (3);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_table_errTable
 GO
@@ -949,23 +588,9 @@ INSERT INTO babel_5186_table_errTable VALUES (2);
 SELECT non_existent_column FROM babel_5186_try_catch_table;
 INSERT INTO babel_5186_table_errTable VALUES (3);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_table_errTable
 GO
@@ -976,23 +601,9 @@ INSERT INTO babel_5186_table_errTable VALUES (2);
 EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
 INSERT INTO babel_5186_table_errTable VALUES (3);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_table_errTable
 GO
@@ -1006,29 +617,12 @@ SELECT * FROM non_existent_table;
 INSERT INTO babel_5186_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1044,29 +638,12 @@ EXEC('SELECT * FROM non_existent_table;');
 INSERT INTO babel_5186_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1082,29 +659,12 @@ SELECT non_existent_column FROM babel_5186_try_catch_table;
 INSERT INTO babel_5186_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1120,29 +680,12 @@ EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
 INSERT INTO babel_5186_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1161,29 +704,12 @@ COMMIT TRAN;
 INSERT INTO babel_5186_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1201,29 +727,12 @@ COMMIT TRAN;
 INSERT INTO babel_5186_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1241,29 +750,12 @@ COMMIT TRAN;
 INSERT INTO babel_5186_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1281,29 +773,12 @@ COMMIT TRAN;
 INSERT INTO babel_5186_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1314,29 +789,12 @@ GO
 -- Simple procedure with transaction
 EXEC babel_5186_errProc1_1;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1346,29 +804,12 @@ GO
 
 EXEC babel_5186_errProc1_2
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1378,29 +819,12 @@ GO
 
 EXEC babel_5186_errProc1_3
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1410,29 +834,12 @@ GO
 
 EXEC babel_5186_errProc1_4
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1443,34 +850,12 @@ GO
 -- Nested procedure
 EXEC babel_5186_errProc2_11;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-4
-1
-2
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1480,34 +865,12 @@ GO
 
 EXEC babel_5186_errProc2_21
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-4
-1
-2
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1517,34 +880,12 @@ GO
 
 EXEC babel_5186_errProc2_31
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-4
-1
-2
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1554,34 +895,12 @@ GO
 
 EXEC babel_5186_errProc2_41
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-4
-1
-2
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1592,31 +911,12 @@ GO
 -- Nest procedure with transaction
 EXEC babel_5186_errProc3_11;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1626,31 +926,12 @@ GO
 
 EXEC babel_5186_errProc3_21
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1660,31 +941,12 @@ GO
 
 EXEC babel_5186_errProc3_31
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1694,31 +956,12 @@ GO
 
 EXEC babel_5186_errProc3_41
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1736,23 +979,9 @@ INSERT INTO babel_5186_1_table_errTable VALUES (2);
 SELECT * FROM non_existent_table;
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_1_table_errTable
 GO
@@ -1763,23 +992,9 @@ INSERT INTO babel_5186_1_table_errTable VALUES (2);
 EXEC('SELECT * FROM non_existent_table;');
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_1_table_errTable
 GO
@@ -1790,23 +1005,9 @@ INSERT INTO babel_5186_1_table_errTable VALUES (2);
 SELECT non_existent_column FROM babel_5186_1_try_catch_table;
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_1_table_errTable
 GO
@@ -1817,23 +1018,9 @@ INSERT INTO babel_5186_1_table_errTable VALUES (2);
 EXEC('SELECT non_existent_column FROM babel_5186_1_try_catch_table;');
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_1_table_errTable
 GO
@@ -1847,29 +1034,12 @@ SELECT * FROM non_existent_table;
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1885,29 +1055,12 @@ EXEC('SELECT * FROM non_existent_table;');
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1923,29 +1076,12 @@ SELECT non_existent_column FROM babel_5186_1_try_catch_table;
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -1961,29 +1097,12 @@ EXEC('SELECT non_existent_column FROM babel_5186_1_try_catch_table;');
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2002,29 +1121,12 @@ COMMIT TRAN;
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2042,29 +1144,12 @@ COMMIT TRAN;
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2082,32 +1167,15 @@ COMMIT TRAN;
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_1_table_errTable
 GO
@@ -2122,29 +1190,12 @@ COMMIT TRAN;
 INSERT INTO babel_5186_1_table_errTable VALUES (3);
 COMMIT TRAN;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2155,29 +1206,12 @@ GO
 -- Simple procedure with transaction
 EXEC babel_5186_1_errProc1_1;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2187,29 +1221,12 @@ GO
 
 EXEC babel_5186_1_errProc1_2
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2219,29 +1236,12 @@ GO
 
 EXEC babel_5186_1_errProc1_3
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2251,29 +1251,12 @@ GO
 
 EXEC babel_5186_1_errProc1_4
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2284,34 +1267,12 @@ GO
 -- Nested procedure
 EXEC babel_5186_1_errProc2_11;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-4
-1
-2
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2321,34 +1282,12 @@ GO
 
 EXEC babel_5186_1_errProc2_21
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-4
-1
-2
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2358,34 +1297,12 @@ GO
 
 EXEC babel_5186_1_errProc2_31
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-4
-1
-2
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2395,34 +1312,12 @@ GO
 
 EXEC babel_5186_1_errProc2_41
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-4
-1
-2
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2433,31 +1328,12 @@ GO
 -- Nest procedure with transaction
 EXEC babel_5186_1_errProc3_11;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2467,31 +1343,12 @@ GO
 
 EXEC babel_5186_1_errProc3_21
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2501,31 +1358,12 @@ GO
 
 EXEC babel_5186_1_errProc3_31
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2535,31 +1373,12 @@ GO
 
 EXEC babel_5186_1_errProc3_41
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_1_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2573,27 +1392,12 @@ INSERT INTO babel_5186_table_errTable VALUES(1)
 EXEC babel_5186_try_catch_relation_err_proc3;
 INSERT INTO babel_5186_table_errTable VALUES(2)
 GO
-~~ROW COUNT: 1~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 TRUNCATE TABLE babel_5186_table_errTable
 GO
 
@@ -2603,27 +1407,12 @@ INSERT INTO babel_5186_table_errTable VALUES(1)
 EXEC babel_5186_try_catch_column_err_proc3;
 INSERT INTO babel_5186_table_errTable VALUES(2)
 GO
-~~ROW COUNT: 1~~
-
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-1
-2
-~~END~~
-
 TRUNCATE TABLE babel_5186_table_errTable
 GO
 
@@ -2631,11 +1420,6 @@ GO
 -- proc (without try/catch) -> proc (with try/catch) -> proc (without try catch and throws error)
 EXEC babel_5186_try_catch_relation_err_proc4;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -2644,11 +1428,6 @@ GO
 -- proc (without try/catch) -> proc (with try/catch) -> proc (without try catch and throws error)
 EXEC babel_5186_try_catch_column_err_proc4;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -2657,40 +1436,15 @@ GO
 -- try/catch -> trigger (with try/catch)
 INSERT INTO babel_5186_table_relation_errTrig VALUES(4);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_relation_errTrig
 GO
-~~START~~
-int
-1
-2
-3
-~~END~~
-
 
 UPDATE babel_5186_table_relation_errTrig SET a = 5 WHERE a = 1;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM babel_5186_table_relation_errTrig
 GO
-~~START~~
-int
-2
-3
-5
-~~END~~
-
 TRUNCATE TABLE babel_5186_table_relation_errTrig
 GO
 
@@ -2698,40 +1452,15 @@ GO
 -- try/catch -> trigger (with try/catch)
 INSERT INTO babel_5186_table_column_errTrig VALUES(4);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_column_errTrig
 GO
-~~START~~
-int
-1
-2
-3
-~~END~~
-
 
 UPDATE babel_5186_table_column_errTrig SET a = 5 WHERE a = 1;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM babel_5186_table_column_errTrig
 GO
-~~START~~
-int
-2
-3
-5
-~~END~~
-
 TRUNCATE TABLE babel_5186_table_column_errTrig
 GO
 
@@ -2742,8 +1471,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
 
 BEGIN TRY
 	SELECT * FROM non_existent_table;
@@ -2758,25 +1485,12 @@ BEGIN CATCH
 	ROLLBACK TRAN;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2789,8 +1503,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
 
 BEGIN TRY
 	SELECT * FROM non_existent_table;
@@ -2805,25 +1517,12 @@ BEGIN CATCH
 	COMMIT TRAN;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2836,9 +1535,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	SELECT * FROM non_existent_table;
@@ -2850,29 +1546,17 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	INSERT INTO babel_5186_table_errTable VALUES(2);
 	UPDATE babel_5186_table_errTable SET a = 3 WHERE a = 1;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2885,9 +1569,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	SELECT * FROM non_existent_table;
@@ -2899,28 +1580,16 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	SELECT * FROM babel_5186_table_errTable;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2933,9 +1602,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	SELECT * FROM non_existent_table;
@@ -2947,28 +1613,16 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	SELECT 'Inside Catch Block';
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -2981,8 +1635,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
 
 BEGIN TRY
 	EXEC('SELECT * FROM non_existent_table;');
@@ -2997,26 +1649,12 @@ BEGIN CATCH
 	ROLLBACK TRAN;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -3029,8 +1667,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
 
 BEGIN TRY
 	EXEC('SELECT * FROM non_existent_table;');
@@ -3045,30 +1681,12 @@ BEGIN CATCH
 	COMMIT TRAN;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 3930)~~
-
-~~ERROR (Message: The current transaction cannot be committed and cannot support operations that write to the log file. Roll back the transaction.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -3081,9 +1699,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	EXEC('SELECT * FROM non_existent_table;');
@@ -3095,34 +1710,17 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	INSERT INTO babel_5186_table_errTable VALUES(2);
 	UPDATE babel_5186_table_errTable SET a = 3 WHERE a = 1;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 3930)~~
-
-~~ERROR (Message: The current transaction cannot be committed and cannot support operations that write to the log file. Roll back the transaction.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -3135,9 +1733,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	EXEC('SELECT * FROM non_existent_table;');
@@ -3149,38 +1744,16 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	SELECT * FROM babel_5186_table_errTable;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~START~~
-int
-1
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -3193,9 +1766,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	EXEC('SELECT * FROM non_existent_table;');
@@ -3207,38 +1777,16 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	SELECT 'Inside Catch Block';
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~START~~
-varchar
-Inside Catch Block
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -3260,10 +1808,6 @@ BEGIN CATCH
 	ROLLBACK TRAN;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 -- COMMIT in Catch block (error thrown from same level of execution)
 BEGIN TRY
@@ -3279,17 +1823,10 @@ BEGIN CATCH
 	COMMIT TRAN;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 -- DMLs in Catch block (error thrown from same level of execution)
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	SELECT * FROM non_existent_table;
@@ -3301,22 +1838,14 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	INSERT INTO babel_5186_table_errTable VALUES(2);
 	UPDATE babel_5186_table_errTable SET a = 3 WHERE a = 1;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-1
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_table_errTable
 GO
@@ -3324,9 +1853,6 @@ GO
 -- Table access in Catch block (error thrown from same level of execution)
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	SELECT * FROM non_existent_table;
@@ -3338,25 +1864,16 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	SELECT * FROM babel_5186_table_errTable;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-1
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_table_errTable
 GO
-
 
 -- Simple query in Catch block (error thrown from same level of execution)
 BEGIN TRY
@@ -3369,13 +1886,10 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	SELECT 'Inside Catch Block';
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 -- ROLLBACK in Catch block  (error thrown from lower level of execution)
 BEGIN TRY
@@ -3391,15 +1905,6 @@ BEGIN CATCH
 	ROLLBACK TRAN;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 3903)~~
-
-~~ERROR (Message: ROLLBACK can only be used in transaction blocks)~~
-
 
 -- COMMIT in Catch block (error thrown from lower level of execution)
 BEGIN TRY
@@ -3415,22 +1920,10 @@ BEGIN CATCH
 	COMMIT TRAN;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 3902)~~
-
-~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
-
 
 -- DMLs in Catch block (error thrown from lower level of execution)
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	EXEC('SELECT * FROM non_existent_table;');
@@ -3442,28 +1935,14 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	INSERT INTO babel_5186_table_errTable VALUES(2);
 	UPDATE babel_5186_table_errTable SET a = 3 WHERE a = 1;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-2
-3
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_table_errTable
 GO
@@ -3471,9 +1950,6 @@ GO
 -- Table access in Catch block (error thrown from lower level of execution)
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
-
 
 BEGIN TRY
 	EXEC('SELECT * FROM non_existent_table;');
@@ -3485,31 +1961,16 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	SELECT * FROM babel_5186_table_errTable;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~START~~
-int
-1
-~~END~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-1
-~~END~~
-
 
 TRUNCATE TABLE babel_5186_table_errTable
 GO
-
 
 -- Simple query in Catch block (error thrown from lower level of execution)
 BEGIN TRY
@@ -3522,19 +1983,10 @@ BEGIN CATCH
 				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
 				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
 	SELECT 'Inside Catch Block';
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~START~~
-varchar
-Inside Catch Block
-~~END~~
-
 
 -- Error: relation \"%s\" does not exist
 -- nested try catch blocks
@@ -3550,10 +2002,6 @@ BEGIN CATCH
 	SELECT 'first try/catch CATCH block';
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 BEGIN TRY
 	BEGIN TRY
@@ -3567,11 +2015,6 @@ BEGIN CATCH
 	SELECT 'first try/catch CATCH block';
 END CATCH;
 GO
-~~START~~
-varchar
-second try/catch CATCH block
-~~END~~
-
 
 BEGIN TRY
 	BEGIN TRY
@@ -3590,10 +2033,6 @@ BEGIN CATCH
 	SELECT 'first try/catch CATCH block';
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 BEGIN TRY
 	BEGIN TRY
@@ -3612,11 +2051,6 @@ BEGIN CATCH
 	SELECT 'first try/catch CATCH block';
 END CATCH;
 GO
-~~START~~
-varchar
-third try/catch CATCH block
-~~END~~
-
 
 -- Error: column \"%s\" does not exist
 -- nested try catch blocks
@@ -3632,10 +2066,6 @@ BEGIN CATCH
 	SELECT 'first try/catch CATCH block';
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 BEGIN TRY
 	BEGIN TRY
@@ -3649,11 +2079,6 @@ BEGIN CATCH
 	SELECT 'first try/catch CATCH block';
 END CATCH;
 GO
-~~START~~
-varchar
-second try/catch CATCH block
-~~END~~
-
 
 BEGIN TRY
 	BEGIN TRY
@@ -3672,10 +2097,6 @@ BEGIN CATCH
 	SELECT 'first try/catch CATCH block';
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 BEGIN TRY
 	BEGIN TRY
@@ -3694,11 +2115,6 @@ BEGIN CATCH
 	SELECT 'first try/catch CATCH block';
 END CATCH;
 GO
-~~START~~
-varchar
-third try/catch CATCH block
-~~END~~
-
 
 -- Error: relation \"%s\" does not exist
 -- Simple batch with try-catch inside transaction and rollback to save point when goes to catch
@@ -3707,8 +2123,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
 
 SAVE TRANSACTION savepoint1
 GO
@@ -3726,25 +2140,12 @@ BEGIN CATCH
 	ROLLBACK TRANSACTION savepoint1;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "non_existent_table" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -3758,8 +2159,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
 
 SAVE TRANSACTION savepoint2
 GO
@@ -3777,30 +2176,12 @@ BEGIN CATCH
 	ROLLBACK TRANSACTION savepoint2;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -3816,8 +2197,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1103)
 GO
-~~ROW COUNT: 1~~
-
 
 SAVE TRANSACTION savepoint3
 GO
@@ -3835,25 +2214,12 @@ BEGIN CATCH
 	ROLLBACK TRANSACTION savepoint3;
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "non_existent_column" does not exist)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -3867,8 +2233,6 @@ GO
 
 INSERT INTO babel_5186_table_errTable VALUES(1)
 GO
-~~ROW COUNT: 1~~
-
 
 SAVE TRANSACTION savepoint4
 GO
@@ -3886,30 +2250,12 @@ BEGIN CATCH
 	ROLLBACK TRANSACTION savepoint4;
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
-
 
 SELECT * FROM babel_5186_table_errTable
 GO
-~~START~~
-int
-~~END~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN
 GO
@@ -3932,10 +2278,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot find the database 'nosuchdb_db', because it does not exist or you do not have permission.)~~
-
 
 BEGIN TRY
     EXEC('ALTER AUTHORIZATION ON DATABASE::nosuchdb_db TO nosuchlogin;');
@@ -3949,10 +2291,6 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot find the database 'nosuchdb_db', because it does not exist or you do not have permission.)~~
-
 
 -- Error: Cannot find the database '%s', because it does not exist or you do not have permission.
 -- Simple batch with transaction inside try-catch
@@ -3969,18 +2307,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot find the database 'nosuchdb_db', because it does not exist or you do not have permission.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -3998,18 +2327,9 @@ BEGIN CATCH
 					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot find the database 'nosuchdb_db', because it does not exist or you do not have permission.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -4031,18 +2351,9 @@ BEGIN CATCH
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot find the database 'nosuchdb_db', because it does not exist or you do not have permission.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -4062,18 +2373,9 @@ BEGIN CATCH
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot find the database 'nosuchdb_db', because it does not exist or you do not have permission.)~~
-
 
 SELECT @@trancount
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -4110,11 +2412,6 @@ BEGIN CATCH
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_3 Error message_relation "non_existent_table" does not exist
-~~END~~
-
 
 BEGIN TRY
     EXEC dbo.babel_5186_column_err_pg_proc;
@@ -4128,8 +2425,3 @@ BEGIN CATCH
 				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
 END CATCH;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_3 Error message_relation "non_existent_table" does not exist
-~~END~~
-
