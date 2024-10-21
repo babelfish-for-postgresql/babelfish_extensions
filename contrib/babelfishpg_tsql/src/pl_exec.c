@@ -60,7 +60,6 @@
 #include "err_handler.h"
 #include "iterative_exec.h"
 #include "guc.h"
-#include "hooks.h"
 #include "multidb.h"
 #include "session.h"
 #include "catalog.h"
