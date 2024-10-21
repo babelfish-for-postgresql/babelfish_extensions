@@ -48,7 +48,7 @@
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
-            <version>8.2.2.jre8</version>
+            <version>11.2.3.jre17</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -81,7 +81,7 @@
     </build>
     <properties>
         <!-- specify which version of Java to build against-->
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 </project>
