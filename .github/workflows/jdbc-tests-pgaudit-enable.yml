@@ -76,16 +76,16 @@ jobs:
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-verify' JDBC/jdbc_schedule
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-cleanup' JDBC/jdbc_schedule
 
-      - name: Run Dotnet Tests
-        id: run-dotnet-tests
-        if: always() && steps.install-extensions.outcome == 'success'
-        uses: ./.github/composite-actions/install-and-run-dotnet
-
       - name: Run JDBC Tests
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'
         timeout-minutes: 60
         uses: ./.github/composite-actions/run-jdbc-tests
+
+      - name: Run Dotnet Tests
+        id: run-dotnet-tests
+        if: always() && steps.install-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-and-run-dotnet
 
       - name: Start secondary server
         id: start-secondary
