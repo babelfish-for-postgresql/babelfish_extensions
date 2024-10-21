@@ -13,6 +13,12 @@ select @i, @j
 GO
 
 declare @i int
+declare @j int = 0;
+select @i = 10, @j = @i + @j * 2
+select @i, @j
+GO
+
+declare @i int
 declare @j int
 select @i = 10, @j = @i + 10
 select @j += 10
@@ -55,12 +61,12 @@ BEGIN
         SET @IsEven = 0;
     
     IF @IsEven = 1
-        PRINT CAST(@Counter AS VARCHAR(2)) + ' is even';
+        SELECT CAST(@Counter AS VARCHAR(2)) + ' is even';
     ELSE
-        PRINT CAST(@Counter AS VARCHAR(2)) + ' is odd';
+        SELECT CAST(@Counter AS VARCHAR(2)) + ' is odd';
     
     SET @Counter = @Counter + 1;
-END
+END;
 GO
 
 declare @a numeric (10, 4);
@@ -91,6 +97,17 @@ GO
 
 declare @a varbinary(10)
 set @a = cast('test_bin' as varbinary)
+select @a
+GO
+
+declare @a varbinary
+declare @b varbinary
+select @a = cast('test_bin' as varbinary), @b = @a
+select @a, @b
+GO
+
+declare @a varbinary(max)
+select @a = cast('test_bin' as varbinary)
 select @a
 GO
 
@@ -224,6 +241,12 @@ GO
 DECLARE @a bit = 1
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @a |= @xml.exist('/artists/artist/@name')
+select @a
+GO
+
+DECLARE @a bit = 1
+DECLARE @xml XML;
+SELECT @xml  = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>', @a |= @xml.exist('/artists/artist/@name')
 select @a
 GO
 
@@ -420,6 +443,26 @@ END
 GO
 
 select var_inside_func()
+go
+
+drop function if exists var_inside_func
+go
+
+CREATE FUNCTION var_inside_func(@def int)
+RETURNS INT AS
+BEGIN
+    DECLARE @ans INT;
+    select @ans = @def;
+    SELECT @ans += id FROM local_var_tst
+    RETURN @ans
+END
+GO
+
+select var_inside_func(0)
+go
+
+declare @def int = 1;
+select var_inside_func(@def)
 go
 
 drop function if exists var_inside_func
