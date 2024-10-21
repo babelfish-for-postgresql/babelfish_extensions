@@ -200,14 +200,14 @@ ALTER ROLE db_owner ADD MEMBER test1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Adding members to db_owner is not currently supported in Babelfish)~~
+~~ERROR (Message: Adding database roles to db_owner is not currently supported in Babelfish)~~
 
 
 ALTER ROLE db_owner DROP MEMBER test1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Dropping members to db_owner is not currently supported in Babelfish)~~
+~~ERROR (Message: Dropping database roles from db_owner is not currently supported in Babelfish)~~
 
 
 CREATE USER test4
@@ -602,14 +602,14 @@ ALTER ROLE db_owner ADD MEMBER test1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Adding members to db_owner is not currently supported in Babelfish)~~
+~~ERROR (Message: Adding database roles to db_owner is not currently supported in Babelfish)~~
 
 
 ALTER ROLE db_owner DROP MEMBER test1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Dropping members to db_owner is not currently supported in Babelfish)~~
+~~ERROR (Message: Dropping database roles from db_owner is not currently supported in Babelfish)~~
 
 
 CREATE USER test4

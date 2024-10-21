@@ -1035,13 +1035,14 @@ get_authid_user_ext_schema_name(const char *db_name, const char *user)
 }
 
 List *
-get_authid_user_ext_db_users(const char *db_name)
+get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_owner_oid)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
 	ScanKeyData key;
 	TableScanDesc scan;
 	List	   *db_users_list = NIL;
+	Oid		dbo_oid = get_role_oid(dbo_name, false);
 
 	if (!db_name)
 		return NULL;
@@ -1061,11 +1062,24 @@ get_authid_user_ext_db_users(const char *db_name)
 	{
 		char	   *user_name;
 		Form_authid_user_ext userform;
+		Oid	    user_oid;
 
 		userform = (Form_authid_user_ext) GETSTRUCT(tuple);
 		user_name = pstrdup(NameStr(userform->rolname));
 		db_users_list = lappend(db_users_list, user_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
+
+		user_oid = get_role_oid(user_name, false);
+
+		/*
+		 * We also check if these users/roles are member of db_owner and
+		 * if they are, we append the linked internal role to the list.
+		 *
+		 * dbo user does not have any internal role associated with it
+		 * so we must skip it.
+		 */
+		if (is_member_of_role(user_oid, db_owner_oid) && (user_oid != dbo_oid) && (user_oid != db_owner_oid))
+			db_users_list = lappend(db_users_list, get_obj_role(user_name));
 	}
 
 	table_endscan(scan);
@@ -1895,7 +1909,6 @@ static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc r
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 static void create_guest_role_for_db(const char *dbname);
-static char *get_db_owner_role_name(const char *dbname);
 static void alter_guest_schema_for_db(const char *dbname);
 
 /* Helper function Rename BBF catalog update*/
@@ -3206,7 +3219,7 @@ create_guest_role_for_db(const char *dbname)
  * database from the catalog, it doesn't rely on the
  * migration mode GUC.
  */
-static char *
+char *
 get_db_owner_role_name(const char *dbname)
 {
 	Relation	bbf_authid_user_ext_rel;

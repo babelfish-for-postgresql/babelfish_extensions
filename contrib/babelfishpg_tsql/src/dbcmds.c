@@ -45,6 +45,7 @@
 #define NOT_FOUND -1
 
 Oid sys_babelfish_db_seq_oid = InvalidOid;
+bool is_create_bbf_builtin_dbs = false;
 
 static Oid get_sys_babelfish_db_seq_oid(void);
 static List *gen_createdb_subcmds(const char *dbname,
@@ -655,6 +656,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	int                save_sec_context;
 	bool               is_set_userid = false;
 	Oid                save_userid;
+	Oid                prev_current_user_id;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
@@ -700,17 +702,24 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 				 errmsg("Cannot drop database \"%s\" because it is currently in use", dbname)));
 
 	/* Set current user to session user for dropping permissions */
+	prev_current_user_id = GetSessionUserId();
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
 
 	bbf_set_current_user("sysadmin");
 
 	PG_TRY();
 	{
+		Oid			db_owner_oid;
+		const char *db_owner_role;
 		Oid			roleid = GetSessionUserId();
 		const char *login = GetUserNameFromId(roleid, false);
 		bool		login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 
-		if (!(has_privs_of_role(roleid, get_role_oid("sysadmin", false)) || login_is_db_owner))
+		db_owner_role = get_db_owner_name(dbname);
+		db_owner_oid = get_role_oid(db_owner_role, false);
+
+		/* If current login's associated user in database is member of db_owner role, allow it to drop the database */
+		if (!has_privs_of_role(prev_current_user_id, db_owner_oid) && (!(has_privs_of_role(roleid, get_role_oid("sysadmin", false)) || login_is_db_owner)))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   dbname);
 
@@ -734,7 +743,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 
 		dbo_role = get_dbo_role_name(dbname);
 		/* Get a list of all the database's users */
-		db_users_list = get_authid_user_ext_db_users(dbname);
+		db_users_list = get_authid_user_ext_db_users(dbname, dbo_role, db_owner_oid);
 
 		parsetree_list = gen_dropdb_subcmds(dbname, db_users_list);
 
@@ -828,6 +837,8 @@ create_builtin_dbs(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
+		is_create_bbf_builtin_dbs = true;
+
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -840,6 +851,8 @@ create_builtin_dbs(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
+		is_create_bbf_builtin_dbs = false;
+
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -847,6 +860,9 @@ create_builtin_dbs(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	is_create_bbf_builtin_dbs = false;
+
 	PG_RETURN_INT32(0);
 }
 

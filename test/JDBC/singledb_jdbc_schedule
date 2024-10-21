@@ -8,5 +8,8 @@ ignore#!#test_db_collation-vu-cleanup
 ignore#!#BABEL-CROSS-DB
 ignore#!#BABEL-SYS-DATABASES
 ignore#!#Test-sp_reset_connection
+ignore#!#db_owner-vu-prepare
+ignore#!#db_owner-vu-verify
+ignore#!#db_owner-vu-cleanup
 
 

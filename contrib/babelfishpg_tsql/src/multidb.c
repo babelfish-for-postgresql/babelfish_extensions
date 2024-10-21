@@ -235,21 +235,6 @@ rewrite_object_refs(Node *stmt)
 				granted = (AccessPriv *) linitial(grant_role->granted_roles);
 				role_name = granted->priv_name;
 
-				/* Forbidden ALTER ROLE db_owner ADD/DROP MEMBER */
-				if (strcmp(role_name, "db_owner") == 0)
-				{
-					if (grant_role->is_grant)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Adding members to db_owner is not currently supported "
-										"in Babelfish")));
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Dropping members to db_owner is not currently supported "
-										"in Babelfish")));
-				}
-
 				/*
 				 * Try to get physical granted role name, see if it's an
 				 * existing db role
@@ -269,11 +254,27 @@ rewrite_object_refs(Node *stmt)
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("Cannot use the special principal '%s'", principal_name)));
 
+				physical_principal_name = get_physical_user_name(db_name, principal_name, false, true);
+
+				/* Forbidden ALTER ROLE db_owner ADD/DROP MEMBER if MEMBER is a T-SQL database role */
+				if ((strcmp(role_name, "db_owner") == 0) && is_role(get_role_oid(physical_principal_name, true)))
+				{
+					if (grant_role->is_grant)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Adding database roles to db_owner is not currently supported "
+										"in Babelfish")));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Dropping database roles from db_owner is not currently supported "
+										"in Babelfish")));
+				}
+
 				/* Rewrite granted and grantee roles */
 				pfree(granted->priv_name);
 				granted->priv_name = physical_role_name;
 
-				physical_principal_name = get_physical_user_name(db_name, principal_name, false, true);
 				pfree(grantee->rolename);
 				grantee->rolename = physical_principal_name;
 
