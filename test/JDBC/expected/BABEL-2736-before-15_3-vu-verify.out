@@ -374,9 +374,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v19
 GO
 ~~START~~
 binary
-30783100000000000000
-00000000000030390000
-30784142434445460000
+30
+00
+30
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v19
@@ -433,8 +433,9 @@ GO
 ~~START~~
 binary
 30
-30
-41
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to "binary".)~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v24
 GO
@@ -533,8 +534,9 @@ SELECT * FROM BABEL_BINARY_vu_prepare_v30
 GO
 ~~START~~
 binary#!#binary#!#binary#!#binary
-00#!#32#!#48#!#30
-~~END~~
++~~ERROR (Code: 33557097)~~
++
++~~ERROR (Message: cannot cast type varbinary to "binary".)~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v30
 GO
