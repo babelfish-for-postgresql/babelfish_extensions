@@ -15,6 +15,7 @@ runs:
         rm -rf pgaudit
         git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
         cd pgaudit
+        # adding the patch to fix BABEL-4600 to test in Github
         sed -i '1517 s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
         make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
         cd ../psql
