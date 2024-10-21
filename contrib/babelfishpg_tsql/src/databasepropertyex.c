@@ -208,8 +208,9 @@ databasepropertyex(PG_FUNCTION_ARGS)
 	}
 	else if (strcasecmp(property, "Updateability") == 0)
 	{
-		const char *ret = "READ_WRITE";
-
+		const char *ret = NULL;
+		ret = strcmp(GetConfigOption("transaction_read_only", true, false), "on") == 0 && IS_TDS_CLIENT() ? "READ_ONLY" : "READ_WRITE";
+		ret = pnstrdup(ret, strlen(ret));
 		vch = (*common_utility_plugin_ptr->tsql_varchar_input) (ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "UserAccess") == 0)
