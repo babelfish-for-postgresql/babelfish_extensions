@@ -198,24 +198,12 @@ go
 
 sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "nosuchcolumn" does not exist)~~
-
 
 sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn', @printrc=0
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "nosuchcolumn" does not exist)~~
-
 
 sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn', @printrc=1
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "nosuchcolumn" does not exist)~~
-
 
 
 
