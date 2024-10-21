@@ -1089,7 +1089,8 @@ is_xact_abort_on_error(PLtsql_execstate *estate)
 
 /*
  * For Unmapped PostgreSQL errors: ERRCODE_UNDEFINED_COLUMN and ERRCODE_UNDEFINED_TABLE, 
- * we will allow it to go to CATCH block of a TRY CATCH STATEMENT, if error is raised from lower level of execution
+ * we will allow it to go to CATCH block of a TRY CATCH STATEMENT, 
+ * if error is raised from lower level of execution and CATCH block is not part of trigger.
  */
 static
 bool
@@ -1097,7 +1098,7 @@ ignore_catch_block_for_unmapped_error(PLtsql_execstate *estate)
 {
 	if (last_error_mapping_failed)
 	{
-		if (!is_error_raising_batch(estate) && (latest_pg_error_code == ERRCODE_UNDEFINED_TABLE || latest_pg_error_code == ERRCODE_UNDEFINED_COLUMN))
+		if (!is_part_of_pltsql_trigger(estate) && !is_error_raising_batch(estate) && (latest_pg_error_code == ERRCODE_UNDEFINED_TABLE || latest_pg_error_code == ERRCODE_UNDEFINED_COLUMN))
 			return false;
 		else
 			return true;

@@ -1433,35 +1433,142 @@ IF @@trancount > 0 ROLLBACK TRAN;
 GO
 
 -- Error: relation \"%s\" does not exist
--- try/catch -> trigger (with try/catch)
-INSERT INTO babel_5186_table_relation_errTrig VALUES(4);
+-- Triggers with try catch block on same level as trigger body statements
+INSERT INTO babel_5186_table_relation_errTrig1 VALUES(4);
 GO
 
-SELECT * FROM babel_5186_table_relation_errTrig
+SELECT * FROM babel_5186_table_relation_errTrig1
 GO
 
-UPDATE babel_5186_table_relation_errTrig SET a = 5 WHERE a = 1;
+UPDATE babel_5186_table_relation_errTrig1 SET a = 5 WHERE a = 1;
 GO
 
-SELECT * FROM babel_5186_table_relation_errTrig
-GO
-TRUNCATE TABLE babel_5186_table_relation_errTrig
+SELECT * FROM babel_5186_table_relation_errTrig1
 GO
 
--- Error: relation \"%s\" does not exist
--- try/catch -> trigger (with try/catch)
-INSERT INTO babel_5186_table_column_errTrig VALUES(4);
+TRUNCATE TABLE babel_5186_table_relation_errTrig1
 GO
 
-SELECT * FROM babel_5186_table_column_errTrig
+-- Triggers with try catch block on lower level than trigger body statements
+INSERT INTO babel_5186_table_relation_errTrig2 VALUES(4);
 GO
 
-UPDATE babel_5186_table_column_errTrig SET a = 5 WHERE a = 1;
+SELECT * FROM babel_5186_table_relation_errTrig2
 GO
 
-SELECT * FROM babel_5186_table_column_errTrig
+UPDATE babel_5186_table_relation_errTrig2 SET a = 5 WHERE a = 1;
 GO
-TRUNCATE TABLE babel_5186_table_column_errTrig
+
+SELECT * FROM babel_5186_table_relation_errTrig2
+GO
+
+TRUNCATE TABLE babel_5186_table_relation_errTrig2
+GO
+
+-- Triggers with try catch block on higher level than trigger body statements
+BEGIN TRY
+	INSERT INTO babel_5186_table_relation_errTrig3 VALUES(4);
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_relation_errTrig3
+GO
+
+BEGIN TRY
+	UPDATE babel_5186_table_relation_errTrig3 SET a = 5 WHERE a = 1;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_relation_errTrig3
+GO
+
+TRUNCATE TABLE babel_5186_table_relation_errTrig3
+GO
+
+
+-- Error: column \"%s\" does not exist
+-- Triggers with try catch block on same level as trigger body statements
+INSERT INTO babel_5186_table_column_errTrig1 VALUES(4);
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig1
+GO
+
+UPDATE babel_5186_table_column_errTrig1 SET a = 5 WHERE a = 1;
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig1
+GO
+
+TRUNCATE TABLE babel_5186_table_column_errTrig1
+GO
+
+-- Triggers with try catch block on lower level than trigger body statements
+INSERT INTO babel_5186_table_column_errTrig2 VALUES(4);
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig2
+GO
+
+UPDATE babel_5186_table_column_errTrig2 SET a = 5 WHERE a = 1;
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig2
+GO
+
+TRUNCATE TABLE babel_5186_table_column_errTrig2
+GO
+
+-- Triggers with try catch block on higher level than trigger body statements
+BEGIN TRY
+	INSERT INTO babel_5186_table_column_errTrig3 VALUES(4);
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig3
+GO
+
+BEGIN TRY
+	UPDATE babel_5186_table_column_errTrig3 SET a = 5 WHERE a = 1;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig3
+GO
+
+TRUNCATE TABLE babel_5186_table_column_errTrig3
 GO
 
 -- Error: relation \"%s\" does not exist (In an active transaction)

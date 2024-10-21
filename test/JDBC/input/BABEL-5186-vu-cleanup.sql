@@ -58,11 +58,29 @@ GO
 DROP TABLE babel_5186_table_errTable
 GO
 
-DROP TRIGGER babel_5186_try_catch_column_err_trig2
-DROP TRIGGER babel_5186_try_catch_column_err_trig1
+DROP TRIGGER babel_5186_try_catch_column_err_trig3_2
+DROP TRIGGER babel_5186_try_catch_column_err_trig3_1
 GO
 
-DROP TABLE babel_5186_table_column_errTrig
+DROP TABLE babel_5186_table_column_errTrig3
+GO
+
+DROP TRIGGER babel_5186_try_catch_column_err_trig2_2
+DROP TRIGGER babel_5186_try_catch_column_err_trig2_1
+GO
+
+DROP PROCEDURE babel_5186_proc_column_errTrig2_2
+DROP PROCEDURE babel_5186_proc_column_errTrig2_1
+GO
+
+DROP TABLE babel_5186_table_column_errTrig2
+GO
+
+DROP TRIGGER babel_5186_try_catch_column_err_trig1_2
+DROP TRIGGER babel_5186_try_catch_column_err_trig1_1
+GO
+
+DROP TABLE babel_5186_table_column_errTrig1
 GO
 
 DROP PROCEDURE babel_5186_try_catch_column_err_proc4
@@ -73,11 +91,29 @@ DROP PROCEDURE babel_5186_try_catch_column_err_proc1
 DROP TABLE babel_5186_try_catch_table
 GO
 
-DROP TRIGGER babel_5186_try_catch_relation_err_trig2
-DROP TRIGGER babel_5186_try_catch_relation_err_trig1
+DROP TRIGGER babel_5186_try_catch_relation_err_trig3_2
+DROP TRIGGER babel_5186_try_catch_relation_err_trig3_1
 GO
 
-DROP TABLE babel_5186_table_relation_errTrig
+DROP TABLE babel_5186_table_relation_errTrig3
+GO
+
+DROP TRIGGER babel_5186_try_catch_relation_err_trig2_2
+DROP TRIGGER babel_5186_try_catch_relation_err_trig2_1
+GO
+
+DROP PROCEDURE babel_5186_proc_relation_errTrig2_2
+DROP PROCEDURE babel_5186_proc_relation_errTrig2_1
+GO
+
+DROP TABLE babel_5186_table_relation_errTrig2
+GO
+
+DROP TRIGGER babel_5186_try_catch_relation_err_trig1_2
+DROP TRIGGER babel_5186_try_catch_relation_err_trig1_1
+GO
+
+DROP TABLE babel_5186_table_relation_errTrig1
 GO
 
 DROP PROCEDURE babel_5186_try_catch_relation_err_proc4

@@ -2654,15 +2654,15 @@ IF @@trancount > 0 ROLLBACK TRAN;
 GO
 
 -- Error: relation \"%s\" does not exist
--- try/catch -> trigger (with try/catch)
-INSERT INTO babel_5186_table_relation_errTrig VALUES(4);
+-- Triggers with try catch block on same level as trigger body statements
+INSERT INTO babel_5186_table_relation_errTrig1 VALUES(4);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "non_existent_table" does not exist)~~
 
 
-SELECT * FROM babel_5186_table_relation_errTrig
+SELECT * FROM babel_5186_table_relation_errTrig1
 GO
 ~~START~~
 int
@@ -2672,38 +2672,135 @@ int
 ~~END~~
 
 
-UPDATE babel_5186_table_relation_errTrig SET a = 5 WHERE a = 1;
+UPDATE babel_5186_table_relation_errTrig1 SET a = 5 WHERE a = 1;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: relation "non_existent_table" does not exist)~~
 
 
-SELECT * FROM babel_5186_table_relation_errTrig
+SELECT * FROM babel_5186_table_relation_errTrig1
 GO
 ~~START~~
 int
+1
 2
 3
-5
 ~~END~~
 
-TRUNCATE TABLE babel_5186_table_relation_errTrig
+
+TRUNCATE TABLE babel_5186_table_relation_errTrig1
 GO
 
--- Error: relation \"%s\" does not exist
--- try/catch -> trigger (with try/catch)
-INSERT INTO babel_5186_table_column_errTrig VALUES(4);
+-- Triggers with try catch block on lower level than trigger body statements
+INSERT INTO babel_5186_table_relation_errTrig2 VALUES(4);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "non_existent_table" does not exist)~~
+
+
+SELECT * FROM babel_5186_table_relation_errTrig2
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+UPDATE babel_5186_table_relation_errTrig2 SET a = 5 WHERE a = 1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "non_existent_table" does not exist)~~
+
+
+SELECT * FROM babel_5186_table_relation_errTrig2
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+TRUNCATE TABLE babel_5186_table_relation_errTrig2
+GO
+
+-- Triggers with try catch block on higher level than trigger body statements
+BEGIN TRY
+	INSERT INTO babel_5186_table_relation_errTrig3 VALUES(4);
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+~~START~~
+nvarchar
+Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_2 Error message_relation "non_existent_table" does not exist
+~~END~~
+
+
+SELECT * FROM babel_5186_table_relation_errTrig3
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+BEGIN TRY
+	UPDATE babel_5186_table_relation_errTrig3 SET a = 5 WHERE a = 1;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+~~START~~
+nvarchar
+Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_relation "non_existent_table" does not exist
+~~END~~
+
+
+SELECT * FROM babel_5186_table_relation_errTrig3
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+TRUNCATE TABLE babel_5186_table_relation_errTrig3
+GO
+
+
+-- Error: column \"%s\" does not exist
+-- Triggers with try catch block on same level as trigger body statements
+INSERT INTO babel_5186_table_column_errTrig1 VALUES(4);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: column "non_existent_column" does not exist)~~
 
 
-SELECT * FROM babel_5186_table_column_errTrig
+SELECT * FROM babel_5186_table_column_errTrig1
 GO
 ~~START~~
 int
@@ -2713,26 +2810,122 @@ int
 ~~END~~
 
 
-UPDATE babel_5186_table_column_errTrig SET a = 5 WHERE a = 1;
+UPDATE babel_5186_table_column_errTrig1 SET a = 5 WHERE a = 1;
 GO
-~~START~~
-nvarchar
-Severity_16 Error State_1 Xact State_-1 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: column "non_existent_column" does not exist)~~
 
 
-SELECT * FROM babel_5186_table_column_errTrig
+SELECT * FROM babel_5186_table_column_errTrig1
 GO
 ~~START~~
 int
+1
 2
 3
-5
 ~~END~~
 
-TRUNCATE TABLE babel_5186_table_column_errTrig
+
+TRUNCATE TABLE babel_5186_table_column_errTrig1
+GO
+
+-- Triggers with try catch block on lower level than trigger body statements
+INSERT INTO babel_5186_table_column_errTrig2 VALUES(4);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "non_existent_column" does not exist)~~
+
+
+SELECT * FROM babel_5186_table_column_errTrig2
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+UPDATE babel_5186_table_column_errTrig2 SET a = 5 WHERE a = 1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "non_existent_column" does not exist)~~
+
+
+SELECT * FROM babel_5186_table_column_errTrig2
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+TRUNCATE TABLE babel_5186_table_column_errTrig2
+GO
+
+-- Triggers with try catch block on higher level than trigger body statements
+BEGIN TRY
+	INSERT INTO babel_5186_table_column_errTrig3 VALUES(4);
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+~~START~~
+nvarchar
+Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_2 Error message_column "non_existent_column" does not exist
+~~END~~
+
+
+SELECT * FROM babel_5186_table_column_errTrig3
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+BEGIN TRY
+	UPDATE babel_5186_table_column_errTrig3 SET a = 5 WHERE a = 1;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+~~START~~
+nvarchar
+Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_1 Error message_column "non_existent_column" does not exist
+~~END~~
+
+
+SELECT * FROM babel_5186_table_column_errTrig3
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+TRUNCATE TABLE babel_5186_table_column_errTrig3
 GO
 
 -- Error: relation \"%s\" does not exist (In an active transaction)

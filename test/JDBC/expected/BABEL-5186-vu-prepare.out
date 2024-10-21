@@ -36,13 +36,13 @@ BEGIN
 END
 GO
 
--- Triggers with try catch block
-CREATE TABLE babel_5186_table_relation_errTrig (a int)
+-- Triggers with try catch block on same level as trigger body statements
+CREATE TABLE babel_5186_table_relation_errTrig1 (a int)
 GO
 
-INSERT INTO babel_5186_table_relation_errTrig VALUES(1);
-INSERT INTO babel_5186_table_relation_errTrig VALUES(2);
-INSERT INTO babel_5186_table_relation_errTrig VALUES(3);
+INSERT INTO babel_5186_table_relation_errTrig1 VALUES(1);
+INSERT INTO babel_5186_table_relation_errTrig1 VALUES(2);
+INSERT INTO babel_5186_table_relation_errTrig1 VALUES(3);
 GO
 ~~ROW COUNT: 1~~
 
@@ -51,8 +51,8 @@ GO
 ~~ROW COUNT: 1~~
 
 
-CREATE TRIGGER babel_5186_try_catch_relation_err_trig1
-ON babel_5186_table_relation_errTrig
+CREATE TRIGGER babel_5186_try_catch_relation_err_trig1_1
+ON babel_5186_table_relation_errTrig1
 AFTER INSERT
 AS
 BEGIN
@@ -70,8 +70,8 @@ BEGIN
 END;
 GO
 
-CREATE TRIGGER babel_5186_try_catch_relation_err_trig2
-ON babel_5186_table_relation_errTrig
+CREATE TRIGGER babel_5186_try_catch_relation_err_trig1_2
+ON babel_5186_table_relation_errTrig1
 AFTER UPDATE
 AS
 BEGIN
@@ -86,6 +86,106 @@ BEGIN
                     + ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
                     + ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
     END CATCH
+END;
+GO
+
+-- Triggers with try catch block on lower level than trigger body statements
+CREATE TABLE babel_5186_table_relation_errTrig2 (a int)
+GO
+
+INSERT INTO babel_5186_table_relation_errTrig2 VALUES(1);
+INSERT INTO babel_5186_table_relation_errTrig2 VALUES(2);
+INSERT INTO babel_5186_table_relation_errTrig2 VALUES(3);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE babel_5186_proc_relation_errTrig2_1
+AS
+BEGIN
+    BEGIN TRY
+        SELECT * FROM non_existent_table;
+    END TRY
+    BEGIN CATCH
+        SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+                    + ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+                    + ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+                    + ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+                    + ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+                    + ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE babel_5186_proc_relation_errTrig2_2
+AS
+BEGIN
+    BEGIN TRY
+        EXEC('SELECT * FROM non_existent_table;');
+    END TRY
+    BEGIN CATCH
+        SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+                    + ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+                    + ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+                    + ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+                    + ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+                    + ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+    END CATCH
+END
+GO
+
+CREATE TRIGGER babel_5186_try_catch_relation_err_trig2_1
+ON babel_5186_table_relation_errTrig2
+AFTER INSERT
+AS
+BEGIN
+    EXEC babel_5186_proc_relation_errTrig2_1;
+END;
+GO
+
+CREATE TRIGGER babel_5186_try_catch_relation_err_trig2_2
+ON babel_5186_table_relation_errTrig2
+AFTER UPDATE
+AS
+BEGIN
+    EXEC babel_5186_proc_relation_errTrig2_2;
+END;
+GO
+
+-- Triggers with try catch block on higher level than trigger body statements
+CREATE TABLE babel_5186_table_relation_errTrig3 (a int)
+GO
+
+INSERT INTO babel_5186_table_relation_errTrig3 VALUES(1);
+INSERT INTO babel_5186_table_relation_errTrig3 VALUES(2);
+INSERT INTO babel_5186_table_relation_errTrig3 VALUES(3);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE TRIGGER babel_5186_try_catch_relation_err_trig3_1
+ON babel_5186_table_relation_errTrig3
+AFTER INSERT
+AS
+BEGIN
+    SELECT * FROM non_existent_table;
+END;
+GO
+
+CREATE TRIGGER babel_5186_try_catch_relation_err_trig3_2
+ON babel_5186_table_relation_errTrig3
+AFTER UPDATE
+AS
+BEGIN
+    EXEC('SELECT * FROM non_existent_table;');
 END;
 GO
 
@@ -130,13 +230,13 @@ BEGIN
 END
 GO
 
--- Triggers with try catch block
-CREATE TABLE babel_5186_table_column_errTrig (a int)
+-- Triggers with try catch block on same level as trigger body statements
+CREATE TABLE babel_5186_table_column_errTrig1 (a int)
 GO
 
-INSERT INTO babel_5186_table_column_errTrig VALUES(1);
-INSERT INTO babel_5186_table_column_errTrig VALUES(2);
-INSERT INTO babel_5186_table_column_errTrig VALUES(3);
+INSERT INTO babel_5186_table_column_errTrig1 VALUES(1);
+INSERT INTO babel_5186_table_column_errTrig1 VALUES(2);
+INSERT INTO babel_5186_table_column_errTrig1 VALUES(3);
 GO
 ~~ROW COUNT: 1~~
 
@@ -145,8 +245,8 @@ GO
 ~~ROW COUNT: 1~~
 
 
-CREATE TRIGGER babel_5186_try_catch_column_err_trig1
-ON babel_5186_table_column_errTrig
+CREATE TRIGGER babel_5186_try_catch_column_err_trig1_1
+ON babel_5186_table_column_errTrig1
 AFTER INSERT
 AS
 BEGIN
@@ -164,8 +264,8 @@ BEGIN
 END;
 GO
 
-CREATE TRIGGER babel_5186_try_catch_column_err_trig2
-ON babel_5186_table_column_errTrig
+CREATE TRIGGER babel_5186_try_catch_column_err_trig1_2
+ON babel_5186_table_column_errTrig1
 AFTER UPDATE
 AS
 BEGIN
@@ -182,6 +282,107 @@ BEGIN
     END CATCH
 END;
 GO
+
+-- Triggers with try catch block on lower level than trigger body statements
+CREATE TABLE babel_5186_table_column_errTrig2 (a int)
+GO
+
+INSERT INTO babel_5186_table_column_errTrig2 VALUES(1);
+INSERT INTO babel_5186_table_column_errTrig2 VALUES(2);
+INSERT INTO babel_5186_table_column_errTrig2 VALUES(3);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE babel_5186_proc_column_errTrig2_1
+AS
+BEGIN
+    BEGIN TRY
+        SELECT non_existent_column FROM babel_5186_try_catch_table;
+    END TRY
+    BEGIN CATCH
+        SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+                    + ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+                    + ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+                    + ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+                    + ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+                    + ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE babel_5186_proc_column_errTrig2_2
+AS
+BEGIN
+    BEGIN TRY
+        EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
+    END TRY
+    BEGIN CATCH
+        SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+                    + ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+                    + ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+                    + ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+                    + ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+                    + ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+    END CATCH
+END
+GO
+
+CREATE TRIGGER babel_5186_try_catch_column_err_trig2_1
+ON babel_5186_table_column_errTrig2
+AFTER INSERT
+AS
+BEGIN
+    EXEC babel_5186_proc_column_errTrig2_1;
+END;
+GO
+
+CREATE TRIGGER babel_5186_try_catch_column_err_trig2_2
+ON babel_5186_table_column_errTrig2
+AFTER UPDATE
+AS
+BEGIN
+    EXEC babel_5186_proc_column_errTrig2_2;
+END;
+GO
+
+-- Triggers with try catch block on higher level than trigger body statements
+CREATE TABLE babel_5186_table_column_errTrig3 (a int)
+GO
+
+INSERT INTO babel_5186_table_column_errTrig3 VALUES(1);
+INSERT INTO babel_5186_table_column_errTrig3 VALUES(2);
+INSERT INTO babel_5186_table_column_errTrig3 VALUES(3);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE TRIGGER babel_5186_try_catch_column_err_trig3_1
+ON babel_5186_table_column_errTrig3
+AFTER INSERT
+AS
+BEGIN
+    SELECT non_existent_column FROM babel_5186_try_catch_table;
+END;
+GO
+
+CREATE TRIGGER babel_5186_try_catch_column_err_trig3_2
+ON babel_5186_table_column_errTrig3
+AFTER UPDATE
+AS
+BEGIN
+    EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
+END;
+GO
+
 
 CREATE TABLE babel_5186_table_errTable (a int)
 GO
