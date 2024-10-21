@@ -133,8 +133,6 @@ GO
 -- Test procedure p5 (invalid style - should cause an error)
 EXEC BABEL_BINARY_vu_prepare_p5
 GO
-~~START~~
-binary
 ~~ERROR (Code: 9809)~~
 
 ~~ERROR (Message: The style 3 is not supported for conversions from varchar to varbinary.)~~
@@ -539,6 +537,54 @@ binary#!#binary#!#binary#!#binary
 DROP VIEW BABEL_BINARY_vu_prepare_v30
 GO
 
+SELECT * FROM BABEL_BINARY_test_table_compcol
+GO
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#30783132333441424344
+0x787980#!#3078373837393830
+0x1234#!#307831323334
+~~END~~
+
+DROP TABLE BABEL_BINARY_test_table_compcol
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol1
+GO
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#30783132333441424344
+0x787980#!#3078373837393830
+0x1234#!#307831323334
+~~END~~
+
+DROP TABLE BABEL_BINARY_test_table_compcol1
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol2
+GO
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#1234ABCD
+0x787980#!#787980
+0x1234#!#1234
+~~END~~
+
+DROP TABLE BABEL_BINARY_test_table_compcol2
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol3
+GO
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#1234ABCD
+0x787980#!#787980
+0x1234#!#1234
+~~END~~
+
+DROP TABLE BABEL_BINARY_test_table_compcol3
+GO
+
 
 -- Additional test cases
 -- 1. Testing style 0 (default, ASCII conversion):
@@ -647,8 +693,6 @@ binary
 -- odd length string (should cause an error)
 SELECT CONVERT(BINARY(10), '0x0904D000341', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -657,8 +701,6 @@ binary
 -- string without '0x' prefix (should cause an error)
 SELECT CONVERT(BINARY(10), '0904D00034', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -667,8 +709,6 @@ binary
 -- string with '0x' prefix and odd length (should cause an error)
 SELECT CONVERT(BINARY(10), '0x0904D000341', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -677,8 +717,6 @@ binary
 -- non-hexadecimal string (should cause an error)
 SELECT CONVERT(BINARY(5), 'Hello', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -696,8 +734,6 @@ binary
 -- special characters in hexadecimal (should cause an error)
 SELECT CONVERT(BINARY(15), '0x0904D000341213440', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -706,8 +742,6 @@ binary
 -- non-hexadecimal characters after '0x' (should cause an error)
 SELECT CONVERT(BINARY(16), '0x0904D000341!@', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -716,8 +750,6 @@ binary
 -- odd number of hexadecimal digits (should cause an error)
 SELECT CONVERT(BINARY(5), '0x0904D0003', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -726,8 +758,6 @@ binary
 -- empty string (should cause an error)
 SELECT CONVERT(BINARY(5), '', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -749,8 +779,6 @@ binary
 -- odd length string (should cause an error)
 SELECT CONVERT(BINARY(10), '0904D000341', 2)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid hexadecimal data: odd number of digits)~~
@@ -759,8 +787,6 @@ binary
 -- string with '0x' prefix (should cause an error)
 SELECT CONVERT(BINARY(10), '0x0904D00034', 2)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -778,8 +804,6 @@ binary
 -- non-hexadecimal characters (should cause an error)
 SELECT CONVERT(BINARY(16), '0904D000341!@', 2)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid hexadecimal digit: "!")~~
@@ -858,8 +882,6 @@ binary
 -- Empty string (should cause an error)
 SELECT CONVERT(BINARY(5), '', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -934,8 +956,6 @@ binary
 
 SELECT CONVERT(BINARY(5), '     ', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -952,8 +972,6 @@ binary
 -- Invalid style
 SELECT CONVERT(BINARY(10), '0904D00034', 3);
 Go
-~~START~~
-binary
 ~~ERROR (Code: 9809)~~
 
 ~~ERROR (Message: The style 3 is not supported for conversions from varchar to varbinary.)~~
@@ -1082,8 +1100,6 @@ varbinary
 -- odd length string (should cause an error)
 SELECT CONVERT(VARBINARY(10), '0x0904D000341', 1);
 Go
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -1092,8 +1108,6 @@ varbinary
 -- string without '0x' prefix (should cause an error)
 SELECT CONVERT(VARBINARY(10), '0904D00034', 1);
 Go
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -1102,8 +1116,6 @@ varbinary
 -- non-hexadecimal string (should cause an error)
 SELECT CONVERT(VARBINARY(10), '0xHello', 1);
 Go
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -1123,8 +1135,6 @@ varbinary
 -- odd length string (should cause an error)
 SELECT CONVERT(VARBINARY(10), '0904D000341', 2);
 Go
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid hexadecimal data: odd number of digits)~~
@@ -1133,8 +1143,6 @@ varbinary
 -- string with '0x' prefix (should cause an error)
 SELECT CONVERT(VARBINARY(10), '0x0904D00034', 2);
 Go
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
@@ -1143,8 +1151,6 @@ varbinary
 -- non-hexadecimal characters (should cause an error)
 SELECT CONVERT(VARBINARY(16), '0904D000341!@', 2);
 Go
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid hexadecimal digit: "!")~~
@@ -1207,8 +1213,6 @@ varbinary
 -- Invalid style
 SELECT CONVERT(VARBINARY(10), '0904D00034', 3);
 Go
-~~START~~
-varbinary
 ~~ERROR (Code: 9809)~~
 
 ~~ERROR (Message: The style 3 is not supported for conversions from varchar to varbinary.)~~

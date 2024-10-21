@@ -10574,7 +10574,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;  
+IMMUTABLE;  
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg sys.VARCHAR,
                                                             IN try BOOL,
@@ -10591,7 +10591,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE; 
+IMMUTABLE; 
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_varbinary(IN arg sys.VARCHAR,                                                       
                                                                       IN p_style NUMERIC DEFAULT 0)
@@ -10606,7 +10606,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN arg anyelement,
                                                             IN p_style NUMERIC DEFAULT 0)
@@ -10625,7 +10625,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;  
+IMMUTABLE;  
 
 -- Helper function to convert to binary or varbinary
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(

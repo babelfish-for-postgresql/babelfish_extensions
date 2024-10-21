@@ -253,6 +253,26 @@ GO
 DROP VIEW BABEL_BINARY_vu_prepare_v30
 GO
 
+SELECT * FROM BABEL_BINARY_test_table_compcol
+GO
+DROP TABLE BABEL_BINARY_test_table_compcol
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol1
+GO
+DROP TABLE BABEL_BINARY_test_table_compcol1
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol2
+GO
+DROP TABLE BABEL_BINARY_test_table_compcol2
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol3
+GO
+DROP TABLE BABEL_BINARY_test_table_compcol3
+GO
+
 -- Additional test cases
 -- 1. Testing style 0 (default, ASCII conversion):
 

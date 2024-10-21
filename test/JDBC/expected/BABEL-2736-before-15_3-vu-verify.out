@@ -541,6 +541,53 @@ binary#!#binary#!#binary#!#binary
 DROP VIEW BABEL_BINARY_vu_prepare_v30
 GO
 
+SELECT * FROM BABEL_BINARY_test_table_compcol
+GO
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#30783132333441424344
+0x787980#!#3078373837393830
+0x1234#!#307831323334
+~~END~~
+
+DROP TABLE BABEL_BINARY_test_table_compcol
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol1
+GO
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#30783132333441424344
+0x787980#!#3078373837393830
+0x1234#!#307831323334
+~~END~~
+
+DROP TABLE BABEL_BINARY_test_table_compcol1
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol2
+GO
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#1234ABCD
+0x787980#!#787980
+0x1234#!#1234
+~~END~~
+
+DROP TABLE BABEL_BINARY_test_table_compcol2
+GO
+
+SELECT * FROM BABEL_BINARY_test_table_compcol3
+GO
+~~START~~
+varchar#!#varbinary
+0x1234ABCD#!#1234ABCD
+0x787980#!#787980
+0x1234#!#1234
+~~END~~
+
+DROP TABLE BABEL_BINARY_test_table_compcol3
+GO
 
 -- Additional test cases
 -- 1. Testing style 0 (default, ASCII conversion):
