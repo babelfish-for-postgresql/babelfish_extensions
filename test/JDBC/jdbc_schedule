@@ -425,3 +425,12 @@ ignore#!#concat_ws-before-15_9-or-16_5-vu-cleanup
 ignore#!#xml_exist-before-16_5-vu-prepare
 ignore#!#xml_exist-before-16_5-vu-verify
 ignore#!#xml_exist-before-16_5-vu-cleanup
+ignore#!#BABEL-3166-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-3166-before-16_5-or-15_9-vu-verify
+ignore#!#forjsonauto-before-16_5-vu-prepare
+ignore#!#forjsonauto-before-16_5-vu-verify
+ignore#!#forjsonauto-before-16_5-vu-cleanup
+ignore#!#BABEL-5059-before-14_7-or-15_2-vu-prepare
+ignore#!#BABEL-5059-before-14_7-or-15_2-vu-verify
+ignore#!#BABEL-5059-before-14_7-or-15_2-vu-cleanup
+

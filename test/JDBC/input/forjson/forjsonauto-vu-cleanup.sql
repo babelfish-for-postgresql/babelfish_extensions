@@ -85,7 +85,7 @@ GO
 DROP PROCEDURE forjson_vu_p_15
 GO
 
-DROP FUNCTION forjson_vu_f_1()
+DROP FUNCTION forjson_vu_f_2()
 GO
 
 drop trigger forjson_vu_trigger_1;
