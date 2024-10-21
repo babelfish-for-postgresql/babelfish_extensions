@@ -223,7 +223,7 @@ jobs:
           cd test/JDBC/
           # temporarily ignore test BABEL-2086
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
-          mvn test
+          mvn -B -ntp test
      
       - name: Upload Postgres log
         if: always() && steps.jdbc.outcome == 'failure'
