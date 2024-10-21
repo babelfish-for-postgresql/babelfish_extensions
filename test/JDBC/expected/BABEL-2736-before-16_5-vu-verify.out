@@ -363,8 +363,8 @@ GO
 ~~START~~
 binary
 30
-+00
-+41
+00
+41
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v18
@@ -435,6 +435,7 @@ binary
 30
 30
 41
+~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v24
 GO
