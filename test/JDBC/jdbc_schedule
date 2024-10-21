@@ -82,6 +82,9 @@ ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-cleanup
 ignore#!#BABEL-2736-before-16_5-vu-prepare
 ignore#!#BABEL-2736-before-16_5-vu-verify
 ignore#!#BABEL-2736-before-16_5-vu-cleanup
+ignore#!#BABEL-2736-before-14_3-or-14_5-vu-prepare
+ignore#!#BABEL-2736-before-14_3-or-14_5-vu-verify
+ignore#!#BABEL-2736-before-14_3-or-14_5-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
