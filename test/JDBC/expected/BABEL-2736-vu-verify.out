@@ -153,64 +153,6 @@ varbinary
 DROP FUNCTION BABEL_BINARY_vu_prepare_f5
 GO
 
-EXEC BABEL_BINARY_vu_prepare_p6
-GO
-~~START~~
-binary
-1234ABCD00
-~~END~~
-
-DROP PROCEDURE BABEL_BINARY_vu_prepare_p6
-GO
-
-EXEC BABEL_BINARY_vu_prepare_p7
-GO
-~~START~~
-binary
-3132333441
-~~END~~
-
-DROP PROCEDURE BABEL_BINARY_vu_prepare_p7
-GO
-
-SELECT dbo.BABEL_BINARY_vu_prepare_f7()
-DROP FUNCTION BABEL_BINARY_vu_prepare_f7
-GO
-~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type numeric to varbinary)~~
-
-
-SELECT dbo.BABEL_BINARY_vu_prepare_f8()
-DROP FUNCTION BABEL_BINARY_vu_prepare_f8
-GO
-~~START~~
-varbinary
-<NULL>
-~~END~~
-
-
-SELECT dbo.BABEL_BINARY_vu_prepare_f9()
-DROP FUNCTION BABEL_BINARY_vu_prepare_f9
-GO
-~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varchar to varbinary.)~~
-
-
-SELECT dbo.BABEL_BINARY_vu_prepare_f10()
-DROP FUNCTION BABEL_BINARY_vu_prepare_f10
-GO
-~~START~~
-varbinary
-<NULL>
-~~END~~
-
-
 SELECT * FROM BABEL_BINARY_vu_prepare_v5
 GO
 ~~START~~
@@ -269,46 +211,6 @@ binary
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v9_try
-GO
-
-EXEC BABEL_BINARY_vu_prepare_p8
-GO
-~~START~~
-binary
-1234ABCD00
-~~END~~
-
-DROP PROCEDURE BABEL_BINARY_vu_prepare_p8
-GO
-
-EXEC BABEL_BINARY_vu_prepare_p9
-GO
-~~START~~
-binary
-1234ABCD00
-~~END~~
-
-DROP PROCEDURE BABEL_BINARY_vu_prepare_p9
-GO
-
-EXEC BABEL_BINARY_vu_prepare_p10
-GO
-~~START~~
-binary#!#binary
-1234ABCD00#!#5678EF0000
-~~END~~
-
-DROP PROCEDURE BABEL_BINARY_vu_prepare_p10
-GO
-
-EXEC BABEL_BINARY_vu_prepare_p11
-GO
-~~START~~
-binary#!#binary#!#binary
-<NULL>#!#<NULL>#!#<NULL>
-~~END~~
-
-DROP PROCEDURE BABEL_BINARY_vu_prepare_p11
 GO
 
 SELECT * FROM BABEL_BINARY_vu_prepare_v10_try
@@ -392,6 +294,56 @@ binary
 ~~END~~
 
 DROP VIEW BABEL_BINARY_vu_prepare_v16_try
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p6
+GO
+~~START~~
+binary
+1234ABCD00
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p6
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p7
+GO
+~~START~~
+binary
+3132333441
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p7
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p8
+GO
+~~START~~
+binary
+1234ABCD00
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p8
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p9
+GO
+~~START~~
+binary
+1234ABCD00
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p9
+GO
+
+EXEC BABEL_BINARY_vu_prepare_p10
+GO
+~~START~~
+binary#!#binary
+1234ABCD00#!#5678EF0000
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p10
 GO
 
 SELECT * FROM BABEL_BINARY_vu_prepare_v17
@@ -499,6 +451,35 @@ ABCD000000
 DROP VIEW BABEL_BINARY_vu_prepare_v26
 GO
 
+EXEC BABEL_BINARY_vu_prepare_p11
+GO
+~~START~~
+binary#!#binary#!#binary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_BINARY_vu_prepare_p11
+GO
+
+SELECT dbo.BABEL_BINARY_vu_prepare_f7()
+DROP FUNCTION BABEL_BINARY_vu_prepare_f7
+GO
+~~START~~
+varbinary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to varbinary)~~
+
+
+SELECT dbo.BABEL_BINARY_vu_prepare_f8()
+DROP FUNCTION BABEL_BINARY_vu_prepare_f8
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
 SELECT * FROM BABEL_BINARY_vu_prepare_v27
 GO
 ~~START~~
@@ -518,6 +499,25 @@ binary#!#binary#!#binary
 
 DROP VIEW BABEL_BINARY_vu_prepare_v28
 GO
+
+SELECT dbo.BABEL_BINARY_vu_prepare_f9()
+DROP FUNCTION BABEL_BINARY_vu_prepare_f9
+GO
+~~START~~
+varbinary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varchar to varbinary.)~~
+
+
+SELECT dbo.BABEL_BINARY_vu_prepare_f10()
+DROP FUNCTION BABEL_BINARY_vu_prepare_f10
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
 
 SELECT * FROM BABEL_BINARY_vu_prepare_v29
 GO
