@@ -448,51 +448,62 @@ int
 ~~END~~
 
 
+SET QUOTED_IDENTIFIER OFF
+GO
+
 -- quoted identifiers
 declare @v varchar(20) = "ABC", @v2 varchar(20)="XYZ";
 select @v += "a""b''c'd", @v2 += "x""y''z";
 select @v, @v2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "abc" does not exist)~~
+~~START~~
+varchar#!#varchar
+ABCa"b''c'd#!#XYZx"y''z
+~~END~~
 
 
 declare @v varchar(20) = "ABC", @v2 varchar(20)="XYZ";
 select @v += "a""b''c'd", @v2 += @v + "x""y''z";
 select @v, @v2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "abc" does not exist)~~
+~~START~~
+varchar#!#varchar
+ABCa"b''c'd#!#XYZABCa"b''c'dx"y''z
+~~END~~
 
 
 declare @v varchar(20) = "ABC", @v2 varchar(20)="XYZ";
 select @v += reverse("a""b''c'd"), @v2 += @v + "x""y''z";
 select @v, @v2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "abc" does not exist)~~
+~~START~~
+varchar#!#varchar
+ABCd'c''b"a#!#XYZABCd'c''b"ax"y''z
+~~END~~
 
 
 declare @v varchar(20) = "ABC", @v2 varchar(20)="XYZ";
 select @v += reverse("a""b''c'd"), @v2 += @v + reverse("x""y''z");
 select @v, @v2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "abc" does not exist)~~
+~~START~~
+varchar#!#varchar
+ABCd'c''b"a#!#XYZABCd'c''b"az''y"x
+~~END~~
 
 
 declare @v varchar(20) = "ABC", @v2 varchar(20)="XYZ";
 select @v += reverse("a""b''c'd"), @v2 += REVERSE( @v + reverse("x""y''z"));
 select @v, @v2
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar#!#varchar
+ABCd'c''b"a#!#XYZx"y''za"b''c'dCBA
+~~END~~
 
-~~ERROR (Message: column "abc" does not exist)~~
 
+SET QUOTED_IDENTIFIER ON
+GO
 
 declare @v varchar(20) = 'ABC', @v2 varchar(20)='XYZ';
 select @v += 'abc', @v2 += 'xyz';

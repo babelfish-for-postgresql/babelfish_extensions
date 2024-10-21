@@ -196,6 +196,9 @@ select @a += ~@a
 select @a
 go
 
+SET QUOTED_IDENTIFIER OFF
+GO
+
 -- quoted identifiers
 declare @v varchar(20) = "ABC", @v2 varchar(20)="XYZ";
 select @v += "a""b''c'd", @v2 += "x""y''z";
@@ -220,6 +223,9 @@ GO
 declare @v varchar(20) = "ABC", @v2 varchar(20)="XYZ";
 select @v += reverse("a""b''c'd"), @v2 += REVERSE( @v + reverse("x""y''z"));
 select @v, @v2
+GO
+
+SET QUOTED_IDENTIFIER ON
 GO
 
 declare @v varchar(20) = 'ABC', @v2 varchar(20)='XYZ';
