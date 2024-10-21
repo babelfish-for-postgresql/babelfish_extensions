@@ -30,7 +30,7 @@ EXCEPTION
     when dependent_objects_still_exist then --if 'drop view' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
-    when undefined_function then --if 'Deprecated function doen't exsist'
+    when undefined_function then --if 'Deprecated function does not exist'
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
 end
