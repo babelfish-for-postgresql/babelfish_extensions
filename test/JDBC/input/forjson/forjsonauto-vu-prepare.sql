@@ -145,6 +145,13 @@ RETURN (select U.Id AS "users.userid", O.productId AS "өглөө", O.Id AS "pro
 END
 GO
 
+CREATE FUNCTION forjson_vu_f_2()
+RETURNS sys.NVARCHAR(4000) AS
+BEGIN
+RETURN (select U.Id AS "users.userid", O.productId AS "өглөө", O.Id AS "product.oid", P.price AS "product.price", S.totalSales AS "totalsales" FROM forjson_auto_vu_t_users U JOIN forjson_auto_vu_t_orders O ON (U.id = O.userid) JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) JOIN forjson_auto_vu_t_sales S ON (P.price = S.price) FOR JSON AUTO)
+END
+GO
+
 CREATE PROCEDURE forjson_vu_p_3 AS
 BEGIN
     with cte as (select 1 as Id), cte2 as (select 1 as Id) select U.Id, O.Id from cte U JOIN cte2 O on (U.Id = O.Id) for json auto

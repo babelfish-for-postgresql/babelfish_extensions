@@ -286,9 +286,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitKill_statement(TSqlParser:
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx)
 {
-	if (ctx->ALTER() && ctx->func_body_returns_table())
-    	handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION, "ALTER FUNCTION on multi-statement table valued functions", getLineAndPos(ctx->ALTER()));
-
 	std::vector<TSqlParser::Function_optionContext *> options;
 	if (ctx->func_body_returns_select())
 		options = ctx->func_body_returns_select()->function_option();
@@ -1087,6 +1084,14 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 		{
 			if(filegroup->id())
 				handle(INSTR_UNSUPPORTED_TSQL_FILEGROUP, "user filegroup", &st_escape_hatch_storage_options, getLineAndPos(ctx));
+				
+			if(filegroup->char_string())
+			{
+				std::string filegroup_name = getFullText(filegroup->char_string());
+				if ((!pg_strcasecmp(filegroup_name.c_str(), "'PRIMARY'") == 0) &&
+				    (!pg_strcasecmp(filegroup_name.c_str(), "\"PRIMARY\"") == 0))				    
+						handle(INSTR_UNSUPPORTED_TSQL_FILEGROUP, "user filegroup", &st_escape_hatch_storage_options, getLineAndPos(ctx));
+			}
 		}
 	}
 	if (ctx->create_partition_function() && !(ctx->create_partition_function()->RIGHT()))

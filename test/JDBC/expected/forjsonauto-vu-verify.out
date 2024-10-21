@@ -234,7 +234,7 @@ nvarchar
 ~~END~~
 
 
-SELECT forjson_vu_f_1()
+SELECT forjson_vu_f_2()
 GO
 ~~START~~
 nvarchar
