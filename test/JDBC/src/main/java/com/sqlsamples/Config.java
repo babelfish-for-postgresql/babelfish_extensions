@@ -125,7 +125,7 @@ public class Config {
     
     static String createSQLServerConnectionString(String URL, String port, String databaseName, String user, String password) {
         return "jdbc:sqlserver://" + URL + ":" + port + ";" + "databaseName="
-                + databaseName + ";" + "user=" + user + ";" + "password=" + password + ";" + "encrypt=false";
+                + databaseName + ";" + "user=" + user + ";" + "password=" + password;
     }
 
     static String createPostgreSQLConnectionString(String URL, String port, String databaseName, String user, String password) {
