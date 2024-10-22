@@ -554,12 +554,9 @@ GO
 
 SELECT * FROM BABEL_BINARY_test_table_compcol1
 GO
-~~START~~
-varchar#!#varbinary
-0x1234ABCD#!#30783132333441424344
-0x787980#!#3078373837393830
-0x1234#!#307831323334
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_binary_test_table_compcol1" does not exist)~~
 
 DROP TABLE BABEL_BINARY_test_table_compcol1
 GO
@@ -578,12 +575,9 @@ GO
 
 SELECT * FROM BABEL_BINARY_test_table_compcol3
 GO
-~~START~~
-varchar#!#varbinary
-0x1234ABCD#!#1234ABCD
-0x787980#!#787980
-0x1234#!#1234
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_binary_test_table_compcol3" does not exist)~~
 
 DROP TABLE BABEL_BINARY_test_table_compcol3
 GO

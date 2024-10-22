@@ -364,9 +364,15 @@ GO
 
 CREATE TABLE BABEL_BINARY_test_table_compcol1 (col1 VARCHAR(20), col2 AS TRY_CONVERT(VARBINARY(20), col1));
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
 INSERT INTO BABEL_BINARY_test_table_compcol1 (col1) VALUES ('0x1234ABCD'), ('0x787980'), ('0x1234');
 GO
-~~ROW COUNT: 3~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_binary_test_table_compcol1" does not exist)~~
 
 
 CREATE TABLE BABEL_BINARY_test_table_compcol2 (col1 VARCHAR(20), col2 AS CONVERT(VARBINARY(20), col1, 1));
@@ -378,7 +384,13 @@ GO
 
 CREATE TABLE BABEL_BINARY_test_table_compcol3 (col1 VARCHAR(20), col2 AS TRY_CONVERT(VARBINARY(20), col1, 1));
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
 INSERT INTO BABEL_BINARY_test_table_compcol3 (col1) VALUES ('0x1234ABCD'), ('0x787980'), ('0x1234');
 GO
-~~ROW COUNT: 3~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_binary_test_table_compcol3" does not exist)~~
 
