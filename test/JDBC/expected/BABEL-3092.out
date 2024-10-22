@@ -322,3 +322,45 @@ ON
 
 SET IMPLICIT_TRANSACTIONS OFF;
 GO
+
+-- BABEL-4816 will fix EXEC dynamic SQL with double quotes
+SET QUOTED_IDENTIFIER ON
+GO
+EXEC('SELECT * FROM t')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t" does not exist)~~
+
+EXEC("SELECT * FROM t")
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '"SELECT * FROM t"' at line 1 and character position 5)~~
+
+EXEC(@v)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@v" does not exist)~~
+
+SET QUOTED_IDENTIFIER OFF
+GO
+EXEC('SELECT * FROM t')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t" does not exist)~~
+
+EXEC("SELECT * FROM t")
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "select * from t" does not exist)~~
+
+EXEC(@v)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@v" does not exist)~~
+
