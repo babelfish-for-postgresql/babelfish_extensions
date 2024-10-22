@@ -589,6 +589,7 @@ GO
 ~~ERROR (Message: table "babel_binary_test_table_compcol3" does not exist)~~
 
 
+
 -- Additional test cases
 -- 1. Testing style 0 (default, ASCII conversion):
 -- even length string
