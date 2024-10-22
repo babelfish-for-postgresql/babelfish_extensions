@@ -61,6 +61,7 @@ CREATE TRIGGER [dbo].[babel_1654_vu_prepare_updemployeedatas] ON [dbo].[babel_16
 	select COLUMNS_UPDATED();
 	update babel_1654_vu_prepare_t set a = 'sss' , b = 'sss' where id = 1;
 	select COLUMNS_UPDATED();
+
 ALTER TABLE [dbo].[babel_1654_vu_prepare_employeedata] ENABLE TRIGGER [babel_1654_vu_prepare_updemployeedatas]
 GO
 
@@ -68,6 +69,7 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 CREATE TRIGGER babel_1654_vu_prepare_trig_t on babel_1654_vu_prepare_t after update as
 	select COLUMNS_UPDATED();
+
 ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ENABLE TRIGGER [babel_1654_vu_prepare_trig_t]
 GO
 

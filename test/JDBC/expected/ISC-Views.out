@@ -280,8 +280,8 @@ select * from information_schema.views where TABLE_NAME in ('vnums', 'vcnums')  
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#dbo#!#vcnums#!#create view vcnums as select * from nums with check option;#!#CASCADE#!#NO
-master#!#dbo#!#vnums#!#create view vnums as select * from nums;#!#NONE#!#NO
+master#!#dbo#!#vcnums#!#create view vcnums as select * from nums with check option;<newline>#!#CASCADE#!#NO
+master#!#dbo#!#vnums#!#-- Testing information_schema.views<newline>create view vnums as select * from nums;<newline>#!#NONE#!#NO
 ~~END~~
 
 
@@ -290,8 +290,8 @@ select object_name,length(definition) from sys.babelfish_view_def where object_n
 go
 ~~START~~
 varchar#!#int
-lview#!#4081
-nlview#!#4000
+lview#!#4140
+nlview#!#4058
 ~~END~~
 
 
@@ -346,7 +346,7 @@ select * from information_schema.views where TABLE_NAME = 'v1'  ORDER BY TABLE_N
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#sch1#!#v1#!#create view sch1.v1 as select 1;#!#NONE#!#NO
+master#!#sch1#!#v1#!#create view sch1.v1 as select 1;<newline>#!#NONE#!#NO
 ~~END~~
 
 
@@ -649,8 +649,8 @@ select * from information_schema.views where TABLE_NAME in ('vnums', 'vcnums')  
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#dbo#!#vcnums#!#create view vcnums as select * from nums with check option;#!#CASCADE#!#NO
-master#!#dbo#!#vnums#!#create view vnums as select * from nums;#!#NONE#!#NO
+master#!#dbo#!#vcnums#!#create view vcnums as select * from nums with check option;<newline>#!#CASCADE#!#NO
+master#!#dbo#!#vnums#!#-- Testing information_schema.views<newline>create view vnums as select * from nums;<newline>#!#NONE#!#NO
 ~~END~~
 
 
@@ -659,8 +659,8 @@ select object_name,length(definition) from sys.babelfish_view_def where object_n
 go
 ~~START~~
 varchar#!#int
-lview#!#4081
-nlview#!#4000
+lview#!#4140
+nlview#!#4058
 ~~END~~
 
 
@@ -715,7 +715,7 @@ select * from information_schema.views where TABLE_NAME = 'v1'  ORDER BY TABLE_N
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#sch1#!#v1#!#create view sch1.v1 as select 1;#!#NONE#!#NO
+master#!#sch1#!#v1#!#create view sch1.v1 as select 1;<newline>#!#NONE#!#NO
 ~~END~~
 
 

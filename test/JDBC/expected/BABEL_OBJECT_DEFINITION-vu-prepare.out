@@ -78,3 +78,12 @@ GO
 
 CREATE USER object_definition_user2 FOR LOGIN object_definition_login1;
 GO
+
+USE master;
+GO
+
+CREATE PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (8000) END
+GO
+
+CREATE FUNCTION object_definition_function() RETURNS [VARCHAR](8000) AS BEGIN DECLARE @storeOriginalQuery_var [VARCHAR](8000) RETURN @storeOriginalQuery_var END
+GO
