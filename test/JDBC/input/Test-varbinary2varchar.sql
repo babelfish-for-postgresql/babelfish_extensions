@@ -86,7 +86,7 @@ GO
 INSERT INTO babel_1940_t2 VALUES (CAST (0x00 AS VARCHAR))
 GO
 
-SELECT * FROM babel_1940_t2 WHERE a = '';
+SELECT * FROM babel_1940_t2;
 GO
 
 INSERT INTO babel_1940_t2 VALUES ('a'), ('b'), ('™'), ('ƀ'), ('ä');
@@ -96,11 +96,11 @@ GO
 SELECT CONVERT(VARBINARY(10), a) FROM babel_1940_t2
 GO
 
--- Truncate trailing null bytes
+-- Allow trailing null bytes
 SELECT CAST(CAST(0x616263 as BINARY(128)) as VARCHAR)
 GO
 
--- Block intermidiate null byte
+-- Allow intermidiate null byte
 SELECT CAST(CAST(0x610063 as BINARY(128)) as VARCHAR)
 GO
 
@@ -120,4 +120,10 @@ SELECT CAST(CAST(0x6161616161 AS BINARY(3)) AS VARBINARY(2))
 GO
 
 SELECT CAST(CAST(0x616263646566 AS VARBINARY(5)) AS BINARY(3))
+GO
+
+SELECT CONVERT(VARCHAR(MAX), HASHBYTES('SHA1', '  '))  -- two spaces
+GO
+
+SELECT CONVERT(VARCHAR(MAX), HASHBYTES('SHA1', 'VFkJHAD?6LiAUnLTVDzMgJxEXEkAHxez' + LOWER(' F w yBiaVeiY grGUUun?A 4yZAvOC IjLjciMfMShC khao hrVCD0DlWoewl9VLCnOEl!oREJd9hD2TsmPCf0BvDQqkor3TfZ')))
 GO

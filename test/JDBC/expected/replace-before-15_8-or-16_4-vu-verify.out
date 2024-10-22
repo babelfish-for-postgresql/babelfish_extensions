@@ -439,7 +439,7 @@ SELECT replace(@inputString, 0x6364, 0x737475)
 GO
 ~~START~~
 varchar
-abstuefg
+abstuefg   
 ~~END~~
 
 
@@ -448,8 +448,13 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-abstuefg
+abstu       efg   
 ~~END~~
+
+
+UPDATE babel_4836_replace_t4 SET a = 0x6162636465, b = 0x6263, c = 0x747576;
+GO
+~~ROW COUNT: 1~~
 
 
 -- with table column of type binary
@@ -457,7 +462,7 @@ SELECT replace(a, b, c) FROM babel_4836_replace_t4
 GO
 ~~START~~
 varchar
-atuvde
+atuv                 de                                             
 ~~END~~
 
 

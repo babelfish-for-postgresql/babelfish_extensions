@@ -2778,7 +2778,19 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 			   *buf = OutputFunctionCall(finfo, value);
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
-	len = strlen(buf);
+	/*
+	 * Get the actual length of varchar field from Bytea struct and use that length
+	 * instead of plain strlen since strlen calculates string upto first null character (\0)
+	 * even though the input string might contain more characters.
+	 */
+	if (pltsql_plugin_handler_ptr->is_tsql_varchar_or_char_datatype(col->pgTypeOid))
+	{
+		text	   *tunpacked = pg_detoast_datum_packed((text *) DatumGetPointer(value));
+
+		len = VARSIZE_ANY_EXHDR(tunpacked);
+	}
+	else
+		len = strlen(buf);
 
 	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 	maxLen = col->metaEntry.type2.maxSize;
