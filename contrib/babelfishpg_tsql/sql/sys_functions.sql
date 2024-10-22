@@ -1649,13 +1649,13 @@ begin
     return sys.patindex_ai_collations(pattern, expression);
   end if;
   if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
-    v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i');
+    v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
   else
     v_regexp_pattern := '#"' || pattern;
   end if;
 
   if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
-    v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i');
+    v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i'::pg_catalog.TEXT);
   else
    v_regexp_pattern := v_regexp_pattern || '#"';
   end if;
@@ -4539,9 +4539,9 @@ BEGIN
    elsif sys.is_collated_ai(input_string) then
        return pg_catalog.replace(input_string, pattern, replacement);
    elsif sys.is_collated_ci_as(input_string) then
-       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig'::pg_catalog.TEXT);
    else
-       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g'::pg_catalog.TEXT);
    end if;
 END
 $BODY$
@@ -4556,9 +4556,9 @@ BEGIN
    elsif sys.is_collated_ai(input_string) then
        return pg_catalog.replace(input_string, pattern, replacement);
    elsif sys.is_collated_ci_as(input_string) then
-       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig'::pg_catalog.TEXT);
    else
-       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g'::pg_catalog.TEXT);
    end if;
 END
 $BODY$
