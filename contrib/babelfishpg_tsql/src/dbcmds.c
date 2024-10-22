@@ -89,7 +89,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	const char     *guest;
 	const char     *guest_schema;
 	Oid       	owner_oid;
-	bool     	owner_is_sa;
+	bool     	owner_is_sa_or_superuser;
 
 	schema = get_dbo_schema_name(dbname);
 	dbo = get_dbo_role_name(dbname);
@@ -97,8 +97,9 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	guest = get_guest_role_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
 	owner_oid = get_role_oid(owner, true);
-	owner_is_sa = role_is_sa(owner_oid);
 
+	if (superuser_arg(owner_oid) || role_is_sa(owner_oid))
+		owner_is_sa_or_superuser = true;
 	/*
 	 * To avoid SQL injection, we generate statement parsetree with dummy
 	 * values and update them later
@@ -109,8 +110,8 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
 	
-	/* Only grant dbo to owner if owner is not master user  */
-	if (!owner_is_sa)
+	/* Only grant dbo to owner if owner is not master user or superuser  */
+	if (!owner_is_sa_or_superuser)
 		appendStringInfo(&query, "GRANT dummy TO dummy; ");
 
 	if (guest)
@@ -133,7 +134,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 
 	if (guest)
 	{
-		if (!owner_is_sa)
+		if (!owner_is_sa_or_superuser)
 			expected_stmt_num = list_length(logins) > 0 ? 10 : 9;	
 		else
 			expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
@@ -142,7 +143,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	{
 		expected_stmt_num = 6;
 
-		if (!owner_is_sa)
+		if (!owner_is_sa_or_superuser)
 			expected_stmt_num++;
 	}
 
@@ -162,7 +163,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
 
-	if (!owner_is_sa)
+	if (!owner_is_sa_or_superuser)
 	{
 		/* Grant dbo role to owner */
 		stmt = parsetree_nth_stmt(res, i++);
