@@ -142,7 +142,7 @@ babel_isnumeric
 BABEL-LOGIN
 BABEL-LOGIN-USER-EXT
 BABEL-NEXT-VALUE-FOR
-BABEL_OBJECT_DEFINITION
+BABEL_OBJECT_DEFINITION_before_16_5
 BABEL_OBJECT_ID-before-16_5-or-15_9
 BABEL_OBJECT_NAME
 BABEL-PG-SYSTEM-FUNCTIONS
@@ -175,7 +175,7 @@ BABEL-TABLEOPTIONS
 babel_trigger
 babel_try_parse
 BABEL-USER
-bbf_view_def
+bbf_view_def_before_16_5
 binary-index
 bitwise_not-operator
 case_insensitive_collation-before-16_5-or-15_9
@@ -225,7 +225,7 @@ newid_before_14_12_or_15_7_or_16_3
 objectpropertyex-before-16_5-or-15_9
 openjson
 orderby-before-15_3
-routines_definition
+routines_definition_before_16_5
 rowcount
 schema_resolution_func
 schema_resolution_proc
@@ -240,7 +240,7 @@ sys_all_objects
 sys_all_objects-dep
 sys-all_parameters
 sys-all_parameters-dep
-sys-all_sql_modules
+sys-all_sql_modules_before_16_5
 sys-sql_modules-before-15_7-or-14_12-dep
 sys-all_sql_modules-before-15_7-or-14_12-dep
 sys-all_views
@@ -333,7 +333,7 @@ sys-sp_statistics
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
-sys-sql_modules
+sys-sql_modules_before_16_5
 sys-stats
 sys-suser_sid
 sys-synonyms
@@ -437,7 +437,7 @@ BABEL-4672
 permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 GRANT_SCHEMA-before-15_7-16_3
-babel-4475
+babel-4475_before_16_5
 babel-4517
 BABEL-4516
 BABEL_3571-before-15-5
