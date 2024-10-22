@@ -394,7 +394,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE PROCEDURE babel_5059_proc_test_1 (@a NVARCHAR, @b NVARCHAR OUTPUT) AS BEGIN SET @b=@a; SELECT @b; END;
+-- Procedure<newline>-- nvarchar<newline>CREATE PROCEDURE babel_5059_proc_test_1 (@a NVARCHAR, @b NVARCHAR OUTPUT) AS BEGIN SET @b=@a; SELECT @b; END;<newline>
 ~~END~~
 
 
@@ -403,7 +403,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE PROCEDURE babel_5059_proc_test_main3 @Statement nvarchar(max) OUTPUT AS BEGIN<newline>SET @Statement = 'SELECT * FROM sys.databases'; <newline>SELECT @Statement;<newline>END;
+CREATE PROCEDURE babel_5059_proc_test_main3 @Statement nvarchar(max) OUTPUT AS BEGIN<newline>SET @Statement = 'SELECT * FROM sys.databases'; <newline>SELECT @Statement;<newline>END;<newline>
 ~~END~~
 
 
@@ -412,7 +412,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE PROCEDURE babel_5059_proc_test_7 (@a VARCHAR(max), @b VARCHAR(max) OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
+CREATE PROCEDURE babel_5059_proc_test_7 (@a VARCHAR(max), @b VARCHAR(max) OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;<newline>
 ~~END~~
 
 
@@ -421,7 +421,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE PROCEDURE babel_5059_proc_test_12 (@a VARBINARY(MAX), @b VARBINARY(MAX) OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
+CREATE PROCEDURE babel_5059_proc_test_12 (@a VARBINARY(MAX), @b VARBINARY(MAX) OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;<newline>
 ~~END~~
 
 
@@ -430,7 +430,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE PROCEDURE babel_5059_proc_test_3_udt @a babel_5059_nv_max output AS BEGIN SELECT @a; END;
+CREATE PROCEDURE babel_5059_proc_test_3_udt @a babel_5059_nv_max output AS BEGIN SELECT @a; END;<newline>
 ~~END~~
 
 
@@ -439,7 +439,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE PROCEDURE babel_5059_proc_test_6_udt (@a babel_5059_vchar_max, @b babel_5059_vchar_max OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;
+CREATE PROCEDURE babel_5059_proc_test_6_udt (@a babel_5059_vchar_max, @b babel_5059_vchar_max OUTPUT) AS BEGIN SET @b=@a; SELECT len(@b); END;<newline>
 ~~END~~
 
 
@@ -448,7 +448,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE PROCEDURE babel_5059_proc_test_9_udt @a babel_5059_varbinary_max OUTPUT AS BEGIN SELECT @a; END;
+CREATE PROCEDURE babel_5059_proc_test_9_udt @a babel_5059_varbinary_max OUTPUT AS BEGIN SELECT @a; END;<newline>
 ~~END~~
 
 
@@ -833,7 +833,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION babel_5059_f1 (@p1 NVARCHAR) RETURNS NVARCHAR AS<newline>BEGIN<newline>    RETURN @p1<newline>END;
+-- Functions<newline>-- NVARCHAR Variations<newline>CREATE FUNCTION babel_5059_f1 (@p1 NVARCHAR) RETURNS NVARCHAR AS<newline>BEGIN<newline>    RETURN @p1<newline>END;<newline>
 ~~END~~
 
 
@@ -842,7 +842,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION babel_5059_f2 (@p1 NVARCHAR(MAX)) RETURNS NVARCHAR(MAX) AS<newline>BEGIN<newline>    RETURN @p1<newline>END;
+CREATE FUNCTION babel_5059_f2 (@p1 NVARCHAR(MAX)) RETURNS NVARCHAR(MAX) AS<newline>BEGIN<newline>    RETURN @p1<newline>END;<newline>
 ~~END~~
 
 
@@ -851,7 +851,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION babel_5059_f20 (@p1 VARCHAR(MAX), @p2 VARCHAR(20))<newline>RETURNS VARCHAR(MAX) AS<newline>BEGIN<newline>    RETURN @p1 + ' ' + @p2<newline>END;
+-- Input as VARCHAR(MAX), Output as VARCHAR(MAX)<newline>CREATE FUNCTION babel_5059_f20 (@p1 VARCHAR(MAX), @p2 VARCHAR(20))<newline>RETURNS VARCHAR(MAX) AS<newline>BEGIN<newline>    RETURN @p1 + ' ' + @p2<newline>END;<newline>
 ~~END~~
 
 
@@ -860,7 +860,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION babel_5059_f8 (@p1 VARBINARY(MAX)) RETURNS VARBINARY(MAX) AS<newline>BEGIN<newline>    RETURN len(@p1)<newline>END;
+CREATE FUNCTION babel_5059_f8 (@p1 VARBINARY(MAX)) RETURNS VARBINARY(MAX) AS<newline>BEGIN<newline>    RETURN len(@p1)<newline>END;<newline>
 ~~END~~
 
 
@@ -869,7 +869,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION babel_5059_udt_f1 (<newline>    @p1 babel_5059_vchar,<newline>    @p2 babel_5059_vchar_2,<newline>    @p3 babel_5059_vchar_max<newline>) RETURNS babel_5059_vchar_max<newline>AS<newline>BEGIN<newline>    RETURN @p3<newline>END;
+-- UDT<newline>-- VARCHAR types as input, VARCHAR(MAX) as output<newline>CREATE FUNCTION babel_5059_udt_f1 (<newline>    @p1 babel_5059_vchar,<newline>    @p2 babel_5059_vchar_2,<newline>    @p3 babel_5059_vchar_max<newline>) RETURNS babel_5059_vchar_max<newline>AS<newline>BEGIN<newline>    RETURN @p3<newline>END;<newline>
 ~~END~~
 
 
@@ -878,7 +878,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION babel_5059_udt_f2 (<newline>    @p1 babel_5059_nvchar,<newline>    @p2 babel_5059_nv_2,<newline>    @p3 babel_5059_nv_max<newline>) RETURNS babel_5059_nv_max<newline>AS<newline>BEGIN<newline>    RETURN @p3 <newline>END;
+--  NVARCHAR types as input, NVARCHAR(MAX) as output<newline>CREATE FUNCTION babel_5059_udt_f2 (<newline>    @p1 babel_5059_nvchar,<newline>    @p2 babel_5059_nv_2,<newline>    @p3 babel_5059_nv_max<newline>) RETURNS babel_5059_nv_max<newline>AS<newline>BEGIN<newline>    RETURN @p3 <newline>END;<newline>
 ~~END~~
 
 
@@ -887,7 +887,7 @@ SELECT ROUTINE_DEFINITION from information_schema.routines WHERE SPECIFIC_SCHEMA
 GO
 ~~START~~
 nvarchar
-CREATE FUNCTION babel_5059_udt_f3 (<newline>    @p1 babel_5059_varbinary,<newline>    @p2 babel_5059_varbinary_2,<newline>    @p3 babel_5059_varbinary_max<newline>) RETURNS babel_5059_varbinary_max<newline>AS<newline>BEGIN<newline>    RETURN @p3<newline>END;
+-- VARBINARY types as input, VARBINARY(MAX) as output<newline>CREATE FUNCTION babel_5059_udt_f3 (<newline>    @p1 babel_5059_varbinary,<newline>    @p2 babel_5059_varbinary_2,<newline>    @p3 babel_5059_varbinary_max<newline>) RETURNS babel_5059_varbinary_max<newline>AS<newline>BEGIN<newline>    RETURN @p3<newline>END;<newline>
 ~~END~~
 
 

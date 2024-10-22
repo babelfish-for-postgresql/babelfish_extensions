@@ -10661,6 +10661,75 @@ LANGUAGE plpgsql
 IMMUTABLE
 STRICT;
 
+CREATE OR REPLACE FUNCTION sys.replace (input_string sys.VARCHAR, pattern sys.VARCHAR, replacement sys.VARCHAR)
+RETURNS sys.VARCHAR AS
+$BODY$
+BEGIN
+   if PG_CATALOG.length(pattern) = 0 then
+       return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
+   elsif sys.is_collated_ci_as(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig'::pg_catalog.TEXT);
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g'::pg_catalog.TEXT);
+   end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.replace (input_string sys.NVARCHAR, pattern sys.NVARCHAR, replacement sys.NVARCHAR)
+RETURNS sys.NVARCHAR AS
+$BODY$
+BEGIN
+   if PG_CATALOG.length(pattern) = 0 then
+       return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
+   elsif sys.is_collated_ci_as(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig'::pg_catalog.TEXT);
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g'::pg_catalog.TEXT);
+   end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
+$body$
+declare
+  v_find_result VARCHAR;
+  v_pos bigint;
+  v_regexp_pattern VARCHAR;
+begin
+  if pattern is null or expression is null then
+    return null;
+  end if;
+  if sys.is_collated_ai(expression) then
+    return sys.patindex_ai_collations(pattern, expression);
+  end if;
+  if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
+    v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
+  else
+    v_regexp_pattern := '#"' || pattern;
+  end if;
+
+  if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
+    v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i'::pg_catalog.TEXT);
+  else
+   v_regexp_pattern := v_regexp_pattern || '#"';
+  end if;
+  v_find_result := substring(expression, v_regexp_pattern, '#');
+  if v_find_result <> '' collate sys.database_default then
+    v_pos := strpos(expression, v_find_result);
+  else
+    v_pos := 0;
+  end if;
+  return v_pos;
+end;
+$body$
+language plpgsql immutable returns null on null input;
+
 -- This is a temporary procedure which is called during upgrade to alter
 -- default privileges on all the schemas where the schema owner is not dbo/db_owner
 CREATE OR REPLACE PROCEDURE sys.babelfish_alter_default_privilege_on_schema()
