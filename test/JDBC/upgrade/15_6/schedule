@@ -551,4 +551,5 @@ binary-datatype-operators
 cast-varchar-to-time
 BABEL-CASE_EXPR-before-16_5-or-15_9
 BABEL-5186
+BABEL-2736-before-16_5
 
