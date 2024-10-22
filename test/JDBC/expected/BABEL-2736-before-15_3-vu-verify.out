@@ -567,9 +567,11 @@ GO
 SELECT * FROM BABEL_BINARY_test_table_compcol2
 GO
 ~~START~~
+varchar#!#varbinary
 0x1234ABCD#!#30783132333441424344
 0x787980#!#3078373837393830
 0x1234#!#307831323334
+~~END~~
 
 DROP TABLE BABEL_BINARY_test_table_compcol2
 GO
@@ -582,12 +584,18 @@ GO
 
 DROP TABLE BABEL_BINARY_test_table_compcol3
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel_binary_test_table_compcol3" does not exist)~~
+
 
 -- Additional test cases
 -- 1. Testing style 0 (default, ASCII conversion):
 -- even length string
 SELECT CONVERT(BINARY(5), '0904D00034', 0)
 Go
+~~START~~
+binary
 3039303444
 ~~END~~
 
@@ -688,8 +696,6 @@ binary
 -- odd length string (should cause an error)
 SELECT CONVERT(BINARY(10), '0x0904D000341', 1)
 Go
-~~START~~
-binary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Error converting data type varchar to varbinary.)~~
