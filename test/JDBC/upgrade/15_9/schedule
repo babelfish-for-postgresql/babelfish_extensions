@@ -542,7 +542,6 @@ concat_ws
 space
 replace
 binary-datatype-operators
-BABEL-5059_before_16_5
 SELECT_INTO_TEST
 cast-varchar-to-time
 xml_exist-before-16_5
