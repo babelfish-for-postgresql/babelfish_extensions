@@ -424,7 +424,4 @@ ignore#!#babel-4475_before_16_5-vu-cleanup
 ignore#!#BABEL-5119_before_16_5-vu-prepare
 ignore#!#BABEL-5119_before_16_5-vu-verify
 ignore#!#BABEL-5119_before_16_5-vu-cleanup
-ignore#!#BABEL-5059_before_16_5-vu-prepare
-ignore#!#BABEL-5059_before_16_5-vu-verify
-ignore#!#BABEL-5059_before_16_5-vu-cleanup
 

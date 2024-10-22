@@ -371,7 +371,7 @@ sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
 sys-sql_modules_before_16_5
-sys-sql_modules-dep
+sys-sql_modules-dep_before_16_5
 sys-stats
 sys-suser_sid
 sys-suser_sname
