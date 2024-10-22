@@ -216,6 +216,16 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 		 */
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
+
+	else if (strcmp(typename_string, "binary") == 0 || strcmp(typename_string, "varbinary") == 0)
+	{
+			Node	   *helperFuncCall;
+			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), args, COERCE_EXPLICIT_CALL, location);
+
+			// add a type cast on top of the CONVERT helper function so typmod can be applied
+			result = makeTypeCast(helperFuncCall, typename, location);
+	}
+
 	else
 	{
 		if (try)
