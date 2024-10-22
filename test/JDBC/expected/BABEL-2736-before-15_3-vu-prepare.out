@@ -1,0 +1,396 @@
+-- View to test binary conversion with style 0 (default)
+CREATE VIEW BABEL_BINARY_vu_prepare_v1 AS 
+(SELECT CONVERT(BINARY(10), '0904D00034', 0));
+GO
+
+-- Procedure to test binary conversion with style 0 (default)
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p1 AS 
+(SELECT CONVERT(BINARY(10), '0904D00034', 0));
+GO
+
+-- Function to test binary conversion with style 0 (default)
+CREATE FUNCTION BABEL_BINARY_vu_prepare_f1()
+RETURNS VARBINARY(10) AS
+BEGIN
+    RETURN (SELECT CONVERT(BINARY(10), '0904D00034', 0));
+END
+GO
+
+-- View to test binary conversion with style 1 (with '0x' prefix)
+CREATE VIEW BABEL_BINARY_vu_prepare_v2 AS 
+(SELECT CONVERT(BINARY(10), '0x0904D00034', 1));
+GO
+
+-- Procedure to test binary conversion with style 1 (with '0x' prefix)
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p2 AS 
+(SELECT CONVERT(BINARY(10), '0x0904D00034', 1));
+GO
+
+-- Function to test binary conversion with style 1 (with '0x' prefix)
+CREATE FUNCTION BABEL_BINARY_vu_prepare_f2()
+RETURNS VARBINARY(10) AS
+BEGIN
+    RETURN (SELECT CONVERT(BINARY(10), '0x0904D00034', 1));
+END
+GO
+
+-- View to test binary conversion with style 2 
+CREATE VIEW BABEL_BINARY_vu_prepare_v3 AS 
+(SELECT CONVERT(BINARY(10), '0904D00034', 2));
+GO
+
+-- Procedure to test binary conversion with style 2 
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p3 AS 
+(SELECT CONVERT(BINARY(10), '0904D00034', 2));
+GO
+
+-- Function to test binary conversion with style 2 
+CREATE FUNCTION BABEL_BINARY_vu_prepare_f3()
+RETURNS VARBINARY(10) AS
+BEGIN
+    RETURN (SELECT CONVERT(BINARY(10), '0904D00034', 2));
+END
+GO
+
+-- View to test VARBINARY conversion
+CREATE VIEW BABEL_BINARY_vu_prepare_v4 AS 
+(SELECT CONVERT(VARBINARY(10), '0904D00034', 0));
+GO
+
+-- Procedure to test VARBINARY conversion
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p4 AS 
+(SELECT CONVERT(VARBINARY(10), '0904D00034', 0));
+GO
+
+-- Function to test VARBINARY conversion
+CREATE FUNCTION BABEL_BINARY_vu_prepare_f4()
+RETURNS VARBINARY(10) AS
+BEGIN
+    RETURN (SELECT CONVERT(VARBINARY(10), '0904D00034', 0));
+END
+GO
+
+-- Procedure to test invalid style (should cause an error)
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p5 AS 
+(SELECT CONVERT(BINARY(10), '0904D00034', 3));
+GO
+
+-- Function to test NULL input
+CREATE FUNCTION BABEL_BINARY_vu_prepare_f5()
+RETURNS VARBINARY(10) AS
+BEGIN
+    RETURN (SELECT CONVERT(BINARY(10), NULL, 0));
+END
+GO
+
+-- Test case for CONVERT with a column reference
+CREATE TABLE BABEL_BINARY_test_table1 (col1 VARCHAR(20));
+GO
+INSERT INTO BABEL_BINARY_test_table1 (col1) VALUES ('0x1234ABCD'), ('0x787980'), ('0x1234');
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v5 AS 
+(SELECT CONVERT(BINARY(5), col1, 1) FROM BABEL_BINARY_test_table1);
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v6 AS 
+(SELECT CONVERT(BINARY(5), col1, 0) FROM BABEL_BINARY_test_table1);
+GO
+
+CREATE TABLE BABEL_BINARY_test_table2 (col1 VARCHAR(20));
+GO
+INSERT INTO BABEL_BINARY_test_table2 (col1) VALUES ('1234ABCD'), ('787980'), ('1234');
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v7 AS 
+(SELECT CONVERT(BINARY(5), col1, 2) FROM BABEL_BINARY_test_table2);
+GO
+
+-- Test case for TRY_CONVERT with a column reference
+CREATE TABLE BABEL_BINARY_test_table3 (col1 VARCHAR(20));
+GO
+INSERT INTO BABEL_BINARY_test_table3 (col1) VALUES ('0x1234ABCD'), ('0x787980'), ('0x1234');
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v8_try AS 
+(SELECT TRY_CONVERT(BINARY(5), col1, 1) FROM BABEL_BINARY_test_table3);
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v9_try AS 
+(SELECT TRY_CONVERT(BINARY(5), col1, 0) FROM BABEL_BINARY_test_table3);
+GO
+
+CREATE TABLE BABEL_BINARY_test_table4 (col1 VARCHAR(20));
+GO
+INSERT INTO BABEL_BINARY_test_table4 (col1) VALUES ('1234ABCD'), ('787980'), ('1234');
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v10_try AS 
+(SELECT TRY_CONVERT(BINARY(5), col1, 2) FROM BABEL_BINARY_test_table4);
+GO
+
+
+
+-- Test case for CONVERT with CAST with different styles
+CREATE VIEW BABEL_BINARY_vu_prepare_v11 AS 
+(SELECT CONVERT(BINARY(5), CAST(col1 AS NVARCHAR(20)), 1) FROM BABEL_BINARY_test_table1);
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v12 AS 
+(SELECT CONVERT(BINARY(5), CAST(col1 AS NVARCHAR(20)), 0) FROM BABEL_BINARY_test_table1);
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v13 AS 
+(SELECT CONVERT(BINARY(5), CAST(col1 AS NVARCHAR(20)), 2) FROM BABEL_BINARY_test_table1);
+GO
+
+-- Test case for TRY_CONVERT with CAST with different styles
+CREATE VIEW BABEL_BINARY_vu_prepare_v14_try AS 
+(SELECT TRY_CONVERT(BINARY(5), CAST(col1 AS NVARCHAR(20)), 1) FROM BABEL_BINARY_test_table1);
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v15_try AS 
+(SELECT TRY_CONVERT(BINARY(5), CAST(col1 AS NVARCHAR(20)), 0) FROM BABEL_BINARY_test_table1);
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v16_try AS 
+(SELECT TRY_CONVERT(BINARY(5), CAST(col1 AS NVARCHAR(20)), 2) FROM BABEL_BINARY_test_table1);
+GO
+
+
+-- Test case for variable usage
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p6 AS 
+BEGIN
+    DECLARE @abc VARCHAR(30);
+    SET @abc = '0x1234ABCD';
+    SELECT CONVERT(BINARY(5), @abc, 1);
+END
+GO
+
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p7 AS 
+BEGIN
+    DECLARE @abc NVARCHAR(30);
+    SET @abc = '1234ABCD';
+    SELECT CONVERT(BINARY(5), @abc, 0);
+END
+GO
+
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p8 AS 
+BEGIN
+    DECLARE @abc CHAR(10);
+    SET @abc = '1234ABCD';
+    SELECT CONVERT(BINARY(5), @abc, 2);
+END
+GO
+
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p9 AS 
+BEGIN
+    DECLARE @abc VARCHAR(30);
+    SET @abc = '0x1234ABCD';
+    SELECT TRY_CONVERT(BINARY(5), @abc, 1);
+END
+GO
+
+-- Using multiple variables and conversions
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p10 AS 
+BEGIN
+    DECLARE @abc VARCHAR(30), @def NVARCHAR(30);
+    SET @abc = '0x1234ABCD';
+    SET @def = '5678EF';
+    SELECT 
+        CONVERT(BINARY(5), @abc, 1) AS ConvertResult,
+        TRY_CONVERT(BINARY(5), @def, 2) AS TryConvertResult;
+END
+GO
+
+-- Test case for UNION with different types
+CREATE VIEW BABEL_BINARY_vu_prepare_v17 AS 
+SELECT CONVERT(BINARY(5), '0x1234', 1)
+UNION ALL
+SELECT CONVERT(BINARY(5), 12345, 0)
+GO
+
+-- Using TRY_CONVERT
+CREATE VIEW BABEL_BINARY_vu_prepare_v18 AS 
+SELECT TRY_CONVERT(BINARY(5), '0x1234', 1)
+UNION ALL
+SELECT TRY_CONVERT(BINARY(5), 12345, 0)
+UNION ALL
+SELECT TRY_CONVERT(BINARY(5), 'ABCDE', 2)
+GO
+
+-- Using different output lengths
+CREATE VIEW BABEL_BINARY_vu_prepare_v19 AS 
+SELECT CONVERT(BINARY(3), '0x1234', 1)
+UNION ALL
+SELECT CONVERT(BINARY(8), 12345, 0)
+UNION ALL
+SELECT CONVERT(BINARY(10), '0xABCDEF', 1)
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v20 AS 
+SELECT TRY_CONVERT(BINARY(3), '0x1234', 1)
+UNION ALL
+SELECT TRY_CONVERT(BINARY(8), 12345, 0)
+UNION ALL
+SELECT TRY_CONVERT(BINARY(10), '0xABCDEF', 1)
+GO
+
+-- Using CAST and concatenation
+CREATE VIEW BABEL_BINARY_vu_prepare_v21 AS 
+SELECT CONVERT(BINARY(5), CAST('0x' + '1234' AS VARCHAR(10)), 1)
+UNION ALL
+SELECT CONVERT(BINARY(5), CAST(123 + 45 AS VARCHAR(10)), 0)
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v22 AS 
+SELECT TRY_CONVERT(BINARY(5), CAST('0x' + '1234' AS VARCHAR(10)), 1)
+UNION ALL
+SELECT TRY_CONVERT(BINARY(5), CAST(123 + 45 AS VARCHAR(10)), 0)
+GO
+
+-- Using subqueries and constants
+CREATE VIEW BABEL_BINARY_vu_prepare_v23 AS 
+SELECT CONVERT(BINARY(5), (SELECT '0x1234'), 1)
+UNION ALL
+SELECT CONVERT(BINARY(5), 0x1234, 0)
+UNION ALL
+SELECT CONVERT(BINARY(5), CHAR(65) + CHAR(66), 0)
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v24 AS 
+SELECT TRY_CONVERT(BINARY(5), (SELECT '0x1234'), 1)
+UNION ALL
+SELECT TRY_CONVERT(BINARY(5), 0x1234, 0)
+UNION ALL
+SELECT TRY_CONVERT(BINARY(5), CHAR(65) + CHAR(66), 0)
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v26 AS 
+SELECT TRY_CONVERT(BINARY(5), CAST('1234' AS NVARCHAR(10)), 2)
+UNION ALL
+SELECT TRY_CONVERT(BINARY(5), CAST(12345 AS DECIMAL(10,2)), 0)
+UNION ALL
+SELECT TRY_CONVERT(BINARY(5), LOWER('0xABCD'), 1)
+GO
+
+-- Test case for CONVERT with NULL in different positions
+CREATE PROCEDURE BABEL_BINARY_vu_prepare_p11 AS 
+BEGIN
+    DECLARE @nullVar VARCHAR(10) = NULL;
+    SELECT 
+        CONVERT(BINARY(5), NULL, 0) AS NullInput,
+        CONVERT(BINARY(5), '0x1234', NULL) AS NullStyle,
+        CONVERT(BINARY(5), @nullVar, 0) AS NullVariable;
+END
+GO
+
+-- Test case for CONVERT with decimal
+CREATE FUNCTION BABEL_BINARY_vu_prepare_f7()
+RETURNS VARBINARY(10) AS
+BEGIN
+    RETURN (SELECT CONVERT(BINARY(5), 123.45, 0));
+END
+GO
+
+CREATE FUNCTION BABEL_BINARY_vu_prepare_f8()
+RETURNS VARBINARY(10) AS
+BEGIN
+    RETURN (SELECT TRY_CONVERT(BINARY(5), 123.45, 0));
+END
+GO
+
+-- Test case for CONVERT with different styles
+CREATE VIEW BABEL_BINARY_vu_prepare_v27 AS 
+SELECT 
+    CONVERT(BINARY(5), '0x1234', 0) AS Style0,
+    CONVERT(BINARY(5), '0x1234', 1) AS Style1,
+    CONVERT(BINARY(5), '1234', 2) AS Style2;
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v28 AS 
+SELECT 
+    TRY_CONVERT(BINARY(5), '0x1234', 0) AS Style0,
+    TRY_CONVERT(BINARY(5), '0x1234', 1) AS Style1,
+    TRY_CONVERT(BINARY(5), '1234', 2) AS Style2;
+GO
+
+-- Test case for CONVERT with large binary and truncation
+CREATE FUNCTION BABEL_BINARY_vu_prepare_f9()
+RETURNS VARBINARY(10) AS
+BEGIN
+    RETURN (SELECT CONVERT(BINARY(5), '0x123456789ABCDEF', 1));
+END
+GO
+
+CREATE FUNCTION BABEL_BINARY_vu_prepare_f10()
+RETURNS VARBINARY(10) AS
+BEGIN
+    RETURN (SELECT TRY_CONVERT(BINARY(5), '0x123456789ABCDEF', 1));
+END
+GO
+
+-- Test case for CONVERT with different input types
+CREATE VIEW BABEL_BINARY_vu_prepare_v29 AS 
+SELECT 
+    CONVERT(BINARY(5), 12345, 0) AS IntInput,
+    CONVERT(BINARY(5), '2023-01-01', 0) AS DateInput,
+    CONVERT(BINARY(5), CAST('Hello, World!' AS NVARCHAR(20)), 0) AS NVarCharInput,
+    CONVERT(BINARY(5), CAST(0x1234ABCD AS VARBINARY(4)), 0) AS VarBinaryInput;
+GO
+
+CREATE VIEW BABEL_BINARY_vu_prepare_v30 AS 
+SELECT 
+    TRY_CONVERT(BINARY(5), 12345, 0) AS IntInput,
+    TRY_CONVERT(BINARY(5), '2023-01-01', 0) AS DateInput,
+    TRY_CONVERT(BINARY(5), CAST('Hello, World!' AS NVARCHAR(20)), 0) AS NVarCharInput,
+    TRY_CONVERT(BINARY(5), CAST(0x1234ABCD AS VARBINARY(4)), 0) AS VarBinaryInput;
+GO
+
+CREATE TABLE BABEL_BINARY_test_table_compcol (col1 VARCHAR(20), col2 AS CONVERT(VARBINARY(20), col1));
+GO
+INSERT INTO BABEL_BINARY_test_table_compcol (col1) VALUES ('0x1234ABCD'), ('0x787980'), ('0x1234');
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE BABEL_BINARY_test_table_compcol1 (col1 VARCHAR(20), col2 AS TRY_CONVERT(VARBINARY(20), col1));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+INSERT INTO BABEL_BINARY_test_table_compcol1 (col1) VALUES ('0x1234ABCD'), ('0x787980'), ('0x1234');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_binary_test_table_compcol1" does not exist)~~
+
+
+CREATE TABLE BABEL_BINARY_test_table_compcol2 (col1 VARCHAR(20), col2 AS CONVERT(VARBINARY(20), col1, 1));
+GO
+INSERT INTO BABEL_BINARY_test_table_compcol2 (col1) VALUES ('0x1234ABCD'), ('0x787980'), ('0x1234');
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE TABLE BABEL_BINARY_test_table_compcol3 (col1 VARCHAR(20), col2 AS TRY_CONVERT(VARBINARY(20), col1, 1));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+INSERT INTO BABEL_BINARY_test_table_compcol3 (col1) VALUES ('0x1234ABCD'), ('0x787980'), ('0x1234');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_binary_test_table_compcol3" does not exist)~~
+
