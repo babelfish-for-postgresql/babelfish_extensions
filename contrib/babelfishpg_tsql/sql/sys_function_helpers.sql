@@ -9656,8 +9656,8 @@ LANGUAGE plpgsql
 STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg anyelement,
-                                                            IN try BOOL,
-													        IN p_style NUMERIC DEFAULT 0)
+                                                                  IN try BOOL,
+                                                                  IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
 AS
 $BODY$
@@ -9677,8 +9677,8 @@ LANGUAGE plpgsql
 IMMUTABLE;  
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg sys.VARCHAR,
-                                                            IN try BOOL,
-													        IN p_style NUMERIC DEFAULT 0)
+                                                                  IN try BOOL,
+                                                                  IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
 AS
 $BODY$
@@ -9709,7 +9709,7 @@ LANGUAGE plpgsql
 IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN arg anyelement,
-                                                            IN p_style NUMERIC DEFAULT 0)
+                                                               IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
 AS
 $BODY$
@@ -9728,9 +9728,7 @@ LANGUAGE plpgsql
 IMMUTABLE;  
 
 -- Helper function to convert to binary or varbinary
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(
-    IN input_value sys.VARCHAR,
-    IN style NUMERIC DEFAULT 0) 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(IN input_value sys.VARCHAR, IN style NUMERIC DEFAULT 0) 
 RETURNS sys.varbinary 
 AS 
 $BODY$
@@ -9741,7 +9739,7 @@ BEGIN
         RETURN CAST(input_value AS sys.varbinary);
     ELSIF style = 1 THEN
         -- Handle hexadecimal conversion
-        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) OR input_value IS NULL THEN
+        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
             result := decode(substring(input_value from 3), 'hex');
         ELSE
             RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
