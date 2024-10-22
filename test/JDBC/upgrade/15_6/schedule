@@ -161,7 +161,7 @@ BABEL_COL_NAME
 BABEL-LOGIN
 BABEL-LOGIN-USER-EXT
 BABEL-NEXT-VALUE-FOR
-BABEL_OBJECT_DEFINITION_before_16_5
+BABEL_OBJECT_DEFINITION_before_16_5_or_15_9
 BABEL_OBJECT_ID-before-16_5-or-15_9
 BABEL_OBJECT_NAME
 BABEL-PG-SYSTEM-FUNCTIONS
@@ -195,7 +195,7 @@ babel_trigger
 babel_try_parse
 BABEL-USER
 babel_varbinary_int4_div
-bbf_view_def_before_16_5
+bbf_view_def_before_16_5_or_15_9
 binary-index
 bitwise_not-operator
 case_insensitive_collation-before-16_5-or-15_9
@@ -254,7 +254,7 @@ objectpropertyex-before-16_5-or-15_9
 openjson
 openquery_upgrd_before_15_4
 orderby
-routines_definition_before_16_5
+routines_definition_before_16_5_or_15_9
 rowcount
 schema_resolution_func
 schema_resolution_proc
@@ -271,8 +271,8 @@ sys_all_objects
 sys_all_objects-dep
 sys-all_parameters
 sys-all_parameters-dep
-sys-all_sql_modules_before_16_5
-sys-all_sql_modules-dep_before_16_5
+sys-all_sql_modules_before_16_5_or_15_9
+sys-all_sql_modules-dep_before_16_5_or_15_9
 sys-all_views
 sys-assemblies
 sys-assembly_modules
@@ -368,8 +368,8 @@ sys-sp_statistics
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
-sys-sql_modules_before_16_5
-sys-sql_modules-dep_before_16_5
+sys-sql_modules_before_16_5_or_15_9
+sys-sql_modules-dep_before_16_5_or_15_9
 sys-stats
 sys-suser_sid
 sys-suser_sname
@@ -510,7 +510,7 @@ BABEL-4529
 sys_availability_groups
 sys_availability_replicas
 BABEL-730
-babel-4475_before_16_5
+babel-4475_before_16_5_or_15_9
 babel-4517
 GRANT_SCHEMA-before-15_7-16_3
 upper_lower-before-15_8-or-16_4
@@ -545,7 +545,7 @@ concat-before-15_9-or-16_5
 concat_ws-before-15_9-or-16_5
 space
 binary-datatype-operators
-BABEL-5059_before_16_5
+BABEL-5059_before_16_5_or_15_9
 cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
