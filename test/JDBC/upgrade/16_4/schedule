@@ -67,7 +67,7 @@ BABEL-3118
 BABEL-3121
 BABEL-3144
 BABEL-3147
-BABEL-3166
+BABEL-3166-before-16_5-or-15_9
 BABEL-3192
 BABEL-3204
 BABEL-3213
@@ -219,7 +219,7 @@ forjson
 forjson-datatypes
 forjson-subquery
 forjson-nesting
-forjsonauto
+forjsonauto-before-16_5
 format
 format-dep
 forxml
@@ -567,8 +567,10 @@ concat-before-15_9-or-16_5
 concat_ws-before-15_9-or-16_5
 space
 binary-datatype-operators
+BABEL-5059
 cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-5119_before_16_5
 GRANT_SCHEMA-before-15_9-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
+BABEL-5186
