@@ -1,0 +1,47 @@
+-- tsql
+-- run as sysadmin
+use bbf_sysadmin_login_user_db
+go
+create user bbf_sysadmin_login_user
+go
+
+-- allow when escape hatch enabled
+exec sp_babelfish_configure 'escape_hatch_allow_create_user_for_sysadmin', 'ignore'
+go
+create user bbf_sysadmin_login_user
+go
+exec sp_babelfish_configure 'escape_hatch_allow_create_user_for_sysadmin', 'strict'
+go
+create user bbf_sysadmin_login_user
+go
+
+use master
+go
+
+-- tsql user=bbf_sysadmin_login_user password=123
+use bbf_sysadmin_login_user_db
+go
+select db_name(), suser_name(), user_name()
+go
+use master
+go
+
+-- tsql
+use bbf_sysadmin_login_user_db
+go
+drop user bbf_sysadmin_login_user
+go
+use master
+go
+drop database bbf_sysadmin_login_user_db
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'bbf_sysadmin_login_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
+drop login bbf_sysadmin_login_user
+go
