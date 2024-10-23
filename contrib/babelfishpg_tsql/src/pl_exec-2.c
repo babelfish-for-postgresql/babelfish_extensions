@@ -1472,21 +1472,21 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 	LOCAL_FCINFO(fcinfo, 1);
 
+	/*
+	 * First we evaluate the string expression. Its result is the
+	 * querystring we have to execute.
+	 */
+	query = exec_eval_expr(estate, stmt->expr, &isnull, &restype, &restypmod);
+	if (isnull)
+	{
+		/* No op in case of null */
+		return PLTSQL_RC_OK;
+	}
+	save_nestlevel = pltsql_new_guc_nest_level();
+	scope_level = pltsql_new_scope_identity_nest_level();
+
 	PG_TRY();
 	{
-		/*
-		 * First we evaluate the string expression. Its result is the
-		 * querystring we have to execute.
-		 */
-		query = exec_eval_expr(estate, stmt->expr, &isnull, &restype, &restypmod);
-		if (isnull)
-		{
-			/* No op in case of null */
-			return PLTSQL_RC_OK;
-		}
-		save_nestlevel = pltsql_new_guc_nest_level();
-		scope_level = pltsql_new_scope_identity_nest_level();
-
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
 
@@ -1511,12 +1511,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	PG_FINALLY();
 	{
 		/* Restore past settings */
+		pltsql_revert_guc(save_nestlevel);
+		pltsql_revert_last_scope_identity(scope_level);
+
 		cur_db_name = get_cur_db_name();
 		if (strcmp(cur_db_name, old_db_name) != 0)
 			set_session_properties(old_db_name);
-
-		pltsql_revert_guc(save_nestlevel);
-		pltsql_revert_last_scope_identity(scope_level);
 	}
 	PG_END_TRY();
 
