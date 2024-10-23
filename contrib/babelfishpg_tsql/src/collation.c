@@ -926,6 +926,8 @@ transform_likenode(Node *node)
 
 			if (coll_info_of_inputcollid.oid != InvalidOid)
 			{
+
+				
 				collidx_of_cs_as =
 					tsql_find_cs_as_collation_internal(
 													   tsql_find_collation_internal(coll_info_of_inputcollid.collname));
