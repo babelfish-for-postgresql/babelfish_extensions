@@ -1,0 +1,1914 @@
+-- tsql
+-- Error cases
+create role db_datareader; -- Error, this role already exists
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_db_datareader" already exists)~~
+
+
+create role db_datawriter; -- Error, this role already exists
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_db_datawriter" already exists)~~
+
+
+create table t1(a int);
+go
+create proc p1 as select 1;
+go
+
+-- grants not allowed on these special roles
+grant select on schema::dbo to db_datareader; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+grant execute on schema::dbo to db_datawriter; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+revoke select on schema::dbo from db_datareader; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+revoke execute on schema::dbo from db_datawriter; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+grant select on object::t1 to db_datareader; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+grant insert on object::t1 to db_datawriter; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+grant execute on object::p1 to db_datareader; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+revoke select on object::t1 to db_datareader; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+revoke insert on object::t1 to db_datawriter; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+revoke execute on object::p1 to db_datareader; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+grant all on object::t1 to db_datareader; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+revoke all on object::t1 to db_datareader; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+drop role db_datareader; -- Error, should not be dropped
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_datareader'.)~~
+
+
+drop role db_datawriter; -- Error, should not be dropped
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_datawriter'.)~~
+
+
+drop table t1;
+go
+drop proc p1;
+go
+
+-- create login, user and add members
+create database db_roles_db1;
+go
+
+use db_roles_db1;
+go
+
+create login db_roles_l1 with password = '123';
+go
+
+create login db_roles_l2 with password = '123';
+go
+
+create login db_roles_l3 with password = '123';
+go
+
+create login db_roles_l4 with password = '123';
+go
+
+create login db_roles_l5 with password = '123';
+go
+
+create user db_roles_u4 for login db_roles_l4;
+go
+
+create user db_roles_u5 for login db_roles_l5;
+go
+
+alter server role sysadmin add member db_roles_l2;
+go
+
+create user db_datareader for login db_roles_l1; -- Error, this role already exists
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "db_roles_db1_db_datareader" already exists)~~
+
+
+create user db_datawriter for login db_roles_l1; -- Error, this role already exists
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "db_roles_db1_db_datawriter" already exists)~~
+
+
+create user db_roles_u1 for login db_roles_l1;
+go
+
+create role db_roles_r1;
+go
+
+alter role db_roles_r1 add member db_roles_u5;
+go
+
+create schema db_roles_schema_1;
+go
+
+create schema db_roles_schema_2 authorization db_roles_u4;
+go
+
+create table db_roles_schema_1.before_t1(a int);
+go
+
+create view db_roles_schema_1.before_v1 as select 2;
+go
+
+create table db_roles_schema_2.before_created_by_dbo_t1(a int);
+go
+
+create view db_roles_schema_2.before_created_by_dbo_v1 as select 2;
+go
+
+create table before_t1(a int);
+go
+
+create view before_v1 as select 2;
+go
+
+use master;
+go
+
+create user db_roles_u1 for login db_roles_l1;
+go
+
+create table t1_in_master(a int);
+go
+
+-- tsql user=db_roles_l4 password=123
+use db_roles_db1;
+go
+
+create table db_roles_schema_2.before_created_by_u4_t1(a int);
+go
+
+create view db_roles_schema_2.before_created_by_u4_v1 as select 2;
+go
+
+use master;
+go
+
+-- tsql
+use db_roles_db1
+go
+
+alter role db_datareader add member db_roles_u1;
+go
+
+alter role db_datawriter add member db_roles_u1;
+go
+
+alter role db_datareader add member db_roles_r1; 
+go
+
+alter role db_datawriter add member db_roles_r1; 
+go
+
+select count(*) from sys.database_principals where name like '%db_datareader%';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from sys.database_principals where name like '%db_datawriter%';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- Test sp_helpuser
+CREATE TABLE #UserRoles(userName sys.SYSNAME, roleName sys.SYSNAME, loginName sys.SYSNAME NULL, defdb sys.SYSNAME NULL, defschema sys.SYSNAME, userid INT, sid sys.VARBINARY(85));
+go
+-- Insert the results of sp_helpuser into the temporary table
+INSERT INTO #UserRoles EXEC sp_helpuser;
+go
+~~ROW COUNT: 8~~
+
+-- Select the desired fields from the temporary table
+SELECT userName, roleName FROM #UserRoles WHERE roleName IN ('db_datareader', 'db_datawriter');
+go
+~~START~~
+varchar#!#varchar
+db_roles_r1#!#db_datareader
+db_roles_r1#!#db_datawriter
+db_roles_u1#!#db_datareader
+db_roles_u1#!#db_datawriter
+~~END~~
+
+-- Drop the temporary table
+DROP TABLE #UserRoles;
+go
+
+-- Test sp_helprole
+CREATE TABLE #UserRoles(RoleName sys.SYSNAME, RoleId integer, IsAppRole integer);
+go
+-- Insert the results of sp_helprole into the temporary table
+INSERT INTO #UserRoles EXEC sp_helprole;
+go
+~~ROW COUNT: 5~~
+
+-- Select the desired fields from the temporary table
+SELECT RoleName, IsAppRole FROM #UserRoles WHERE RoleName IN ('db_datareader', 'db_datawriter');
+go
+~~START~~
+varchar#!#int
+db_datareader#!#0
+db_datawriter#!#0
+~~END~~
+
+-- Drop the temporary table
+DROP TABLE #UserRoles;
+go
+
+-- Test sp_helprolemember
+CREATE TABLE #UserRoles(RoleName sys.SYSNAME, MemberName sys.SYSNAME, MemberSID sys.VARBINARY(85));
+go
+-- Insert the results of sp_helprolemember into the temporary table
+INSERT INTO #UserRoles EXEC sp_helprolemember;
+go
+~~ROW COUNT: 6~~
+
+-- Select the desired fields from the temporary table
+SELECT RoleName, MemberName FROM #UserRoles WHERE RoleName IN ('db_datareader', 'db_datawriter');
+go
+~~START~~
+varchar#!#varchar
+db_datareader#!#db_roles_r1
+db_datareader#!#db_roles_u1
+db_datawriter#!#db_roles_r1
+db_datawriter#!#db_roles_u1
+~~END~~
+
+-- Drop the temporary table
+DROP TABLE #UserRoles;
+go
+
+use master
+go
+
+-- tsql user=db_roles_l4 password=123
+use db_roles_db1;
+go
+
+create table db_roles_schema_2.after_created_by_u4_t1(a int);
+go
+
+create view db_roles_schema_2.after_created_by_u4_v1 as select 1;
+go
+
+use master;
+go
+
+-- tsql
+use db_roles_db1
+go
+
+create table after_t1(a int);
+go
+
+create view after_v1 as select 2;
+go
+
+create table db_roles_schema_1.after_t1(a int);
+go
+
+create view db_roles_schema_1.after_v1 as select 2;
+go
+
+create table db_roles_schema_2.after_created_by_dbo_t1(a int);
+go
+
+create view db_roles_schema_2.after_created_by_dbo_v1 as select 2;
+go
+
+use master;
+go
+
+-- tsql user=db_roles_l2 password=123
+-- member of sysadmin can add/drop user as a member of db_datareader/db_datawriter
+use db_roles_db1;
+go
+
+alter role db_datareader drop member db_roles_u1;
+go
+
+alter role db_datawriter drop member db_roles_u1;
+go
+
+alter role db_datareader add member db_roles_u1;
+go
+
+alter role db_datawriter add member db_roles_u1;
+go
+
+exec sp_droprolemember 'db_datareader', 'db_roles_u1';
+go
+
+exec sp_droprolemember 'db_datawriter', 'db_roles_u1';
+go
+
+exec sp_addrolemember 'db_datareader', 'db_roles_u1';
+go
+
+exec sp_addrolemember 'db_datawriter', 'db_roles_u1';
+go
+
+use master;
+go
+
+-- tsql
+alter authorization on database::db_roles_db1 to db_roles_l3;
+go
+
+-- tsql user=db_roles_l3 password=123
+use db_roles_db1
+go
+
+create schema db_roles_schema_3;
+go
+
+create table db_roles_schema_3.db_roles_t1(a int);
+go
+
+create view db_roles_schema_3.db_roles_v1 as select 2;
+go
+
+-- database owner can add other roles as a member of database roles
+alter role db_datareader drop member db_roles_u1;
+go
+
+alter role db_datawriter drop member db_roles_u1;
+go
+
+alter role db_datareader add member db_roles_u1; 
+go
+
+alter role db_datawriter add member db_roles_u1; 
+go
+
+exec sp_droprolemember 'db_datareader', 'db_roles_u1';
+go
+
+exec sp_droprolemember 'db_datawriter', 'db_roles_u1';
+go
+
+exec sp_addrolemember 'db_datareader', 'db_roles_u1';
+go
+
+exec sp_addrolemember 'db_datawriter', 'db_roles_u1';
+go
+
+-- remove select privilege on the schema and object, still the objects should be accessible
+revoke select on schema::db_roles_schema_1 from db_roles_u1;
+go
+
+revoke select on object::db_roles_schema_1.before_t1 from db_roles_u1;
+go
+
+use master;
+go
+
+-- tsql user=db_roles_l1 password=123
+use db_roles_db1
+go
+
+-- members of db_datareader/db_datawriter cannot add another role/user as its member
+alter role db_datareader drop member db_roles_r1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_datareader', because it does not exist or you do not have permission.)~~
+
+
+alter role db_datawriter drop member db_roles_r1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_datawriter', because it does not exist or you do not have permission.)~~
+
+
+alter role db_datareader add member db_roles_r1; 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_datareader', because it does not exist or you do not have permission.)~~
+
+
+alter role db_datawriter add member db_roles_r1; 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_datawriter', because it does not exist or you do not have permission.)~~
+
+
+exec sp_droprolemember 'db_datareader', 'db_roles_r1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_datareader', because it does not exist or you do not have permission.)~~
+
+
+exec sp_droprolemember 'db_datawriter', 'db_roles_r1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_datawriter', because it does not exist or you do not have permission.)~~
+
+
+exec sp_addrolemember 'db_datareader', 'db_roles_r1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_datareader', because it does not exist or you do not have permission.)~~
+
+
+exec sp_addrolemember 'db_datawriter', 'db_roles_r1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_datawriter', because it does not exist or you do not have permission.)~~
+
+
+-- Basic membership check
+SELECT IS_MEMBER('db_datareader')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- user is a member of db_datareader/db_datawriter, objects should be accessible
+-- objects created before and after adding the user to db roles should be accessible.
+select * from after_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from after_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into before_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update before_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from before_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from before_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from before_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into after_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update after_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from after_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_1.after_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_1.after_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_1.before_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_1.before_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_1.before_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.before_created_by_dbo_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.before_created_by_dbo_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_2.before_created_by_dbo_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.before_created_by_dbo_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.before_created_by_dbo_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_2.after_created_by_dbo_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.after_created_by_dbo_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.after_created_by_dbo_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.before_created_by_u4_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.before_created_by_u4_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_2.before_created_by_u4_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.before_created_by_u4_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.before_created_by_u4_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.after_created_by_u4_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.after_created_by_u4_v1; -- allowed
+go
+~~START~~
+int
+1
+~~END~~
+
+
+insert into db_roles_schema_2.after_created_by_u4_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.after_created_by_u4_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.after_created_by_u4_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from master.dbo.t1_in_master; -- not allowed since the user in master doesn't have read privilege
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1_in_master)~~
+
+
+insert into master.dbo.t1_in_master values(1); -- not allowed since the user in master doesn't have write privilege
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1_in_master)~~
+
+
+-- objects created by the database owner should be accessible too.
+select * from db_roles_schema_3.db_roles_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_3.db_roles_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_3.db_roles_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_3.db_roles_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_3.db_roles_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+use master;
+go
+
+-- tsql
+-- Basic membership check
+use db_roles_db1;
+go
+
+SELECT IS_ROLEMEMBER('db_datareader', 'db_roles_u1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'db_roles_u1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datareader', 'db_roles_r1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'db_roles_r1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+alter role db_datareader drop member db_roles_u1;
+go
+
+alter role db_datawriter drop member db_roles_u1;
+go
+
+alter role db_datareader drop member db_roles_r1;
+go
+
+-- Basic membership check
+SELECT IS_ROLEMEMBER('db_datareader', 'db_roles_u1')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'db_roles_u1')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datareader', 'db_roles_r1')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'db_roles_r1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+alter role db_datawriter drop member db_roles_r1;
+go
+
+use master;
+go
+
+alter role db_datareader add member db_roles_u1;
+go
+
+alter role db_datawriter add member db_roles_u1;
+go
+
+-- tsql user=db_roles_l1 password=123
+-- Basic membership check
+use db_roles_db1
+go
+
+SELECT IS_MEMBER('db_datareader')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- user is not a member of db_datareader/db_datawriter, objects should not be accessible
+select * from after_t1;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+select * from after_v1;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v1)~~
+
+
+select * from before_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+select * from before_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_v1)~~
+
+
+insert into before_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+update before_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+delete from before_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+insert into after_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+update after_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+delete from after_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+select * from db_roles_schema_1.after_t1;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+select * from db_roles_schema_1.before_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+select * from db_roles_schema_1.after_v1;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v1)~~
+
+
+select * from db_roles_schema_1.before_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_v1)~~
+
+
+insert into db_roles_schema_1.before_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+update db_roles_schema_1.before_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+delete from db_roles_schema_1.before_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+insert into db_roles_schema_1.after_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+update db_roles_schema_1.after_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+delete from db_roles_schema_1.after_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+select * from db_roles_schema_2.before_created_by_dbo_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
+
+
+select * from db_roles_schema_2.before_created_by_dbo_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_created_by_dbo_v1)~~
+
+
+insert into db_roles_schema_2.before_created_by_dbo_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
+
+
+update db_roles_schema_2.before_created_by_dbo_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
+
+
+delete from db_roles_schema_2.before_created_by_dbo_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_created_by_dbo_v1)~~
+
+
+insert into db_roles_schema_2.after_created_by_dbo_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+update db_roles_schema_2.after_created_by_dbo_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+delete from db_roles_schema_2.after_created_by_dbo_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+select * from db_roles_schema_2.before_created_by_u4_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_u4_t1)~~
+
+
+select * from db_roles_schema_2.before_created_by_u4_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_created_by_u4_v1)~~
+
+
+insert into db_roles_schema_2.before_created_by_u4_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_u4_t1)~~
+
+
+update db_roles_schema_2.before_created_by_u4_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_u4_t1)~~
+
+
+delete from db_roles_schema_2.before_created_by_u4_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_u4_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_u4_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u4_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_u4_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_created_by_u4_v1)~~
+
+
+insert into db_roles_schema_2.after_created_by_u4_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u4_t1)~~
+
+
+update db_roles_schema_2.after_created_by_u4_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u4_t1)~~
+
+
+delete from db_roles_schema_2.after_created_by_u4_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u4_t1)~~
+
+
+-- objects created by the database owner should not be accessible
+select * from db_roles_schema_3.db_roles_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table db_roles_t1)~~
+
+
+select * from db_roles_schema_3.db_roles_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view db_roles_v1)~~
+
+
+insert into db_roles_schema_3.db_roles_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table db_roles_t1)~~
+
+
+update db_roles_schema_3.db_roles_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table db_roles_t1)~~
+
+
+delete from db_roles_schema_3.db_roles_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table db_roles_t1)~~
+
+
+select * from master.dbo.t1_in_master; -- allowed since the user in master has read privilege
+go
+~~START~~
+int
+~~END~~
+
+
+insert into master.dbo.t1_in_master values(1); -- allowed since the user in master has write privilege
+go
+~~ROW COUNT: 1~~
+
+
+use master;
+go
+
+-- tsql
+use db_roles_db1;
+go
+
+exec sp_addrolemember 'db_datareader', 'db_roles_u1';
+go
+
+exec sp_addrolemember 'db_datawriter', 'db_roles_u1';
+go
+
+exec sp_addrolemember 'db_datareader', 'db_roles_r1';
+go
+
+exec sp_addrolemember 'db_datawriter', 'db_roles_r1';
+go
+
+use master;
+go
+
+-- tsql user=db_roles_l1 password=123
+-- Basic membership check
+use db_roles_db1
+go
+
+SELECT IS_MEMBER('db_datareader')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- user is a member of db_datareader/db_datawriter, objects should be accessible
+select * from after_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from before_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from after_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select * from before_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into before_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update before_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from before_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+insert into after_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update after_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from after_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+use master;
+go
+
+-- tsql user=db_roles_l5 password=123
+-- Basic membership check
+use db_roles_db1
+go
+
+SELECT IS_MEMBER('db_datareader')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- user is a member of role which is a member of db_datareader/db_datawriter, objects should be accessible
+select * from after_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from before_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from after_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select * from before_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into before_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update before_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from before_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+insert into after_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update after_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from after_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+use master;
+go
+
+-- tsql
+-- Basic membership check
+use db_roles_db1
+go
+
+SELECT IS_ROLEMEMBER('db_datareader', 'db_roles_u1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'db_roles_u1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datareader', 'db_roles_r1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'db_roles_r1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+exec sp_droprolemember 'db_datareader', 'db_roles_u1';
+go
+
+exec sp_droprolemember 'db_datareader', 'db_roles_r1';
+go
+
+-- Basic membership check
+SELECT IS_ROLEMEMBER('db_datareader', 'db_roles_u1')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'db_roles_u1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datareader', 'db_roles_r1')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'db_roles_r1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+use master;
+go
+
+-- tsql user=db_roles_l5 password=123
+-- Basic membership check
+use db_roles_db1
+go
+
+SELECT IS_MEMBER('db_datareader')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- user is a member of role which is not a member of db_datareader, objects should not be accessible
+select * from after_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+select * from before_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+select * from after_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v1)~~
+
+
+select * from before_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_v1)~~
+
+
+insert into after_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+use master
+go
+
+-- tsql
+use db_roles_db1
+go
+exec sp_droprolemember 'db_datawriter', 'db_roles_r1';
+go
+exec sp_droprolemember 'db_datawriter', 'db_roles_u1';
+go
+
+use master
+go
+
+-- tsql user=db_roles_l5 password=123
+-- user is a member of role which is not a member of db_datawriter, objects should not be accessible
+use db_roles_db1
+go
+insert into before_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+update before_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+delete from before_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+insert into after_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+update after_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+delete from after_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+use master;
+go
+
+-- tsql user=db_roles_l1 password=123
+-- Basic membership check
+use db_roles_db1
+go
+
+SELECT IS_MEMBER('db_datareader')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT IS_MEMBER('db_datawriter')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- user is not a member of db_datareader/db_datawriter, objects should not be accessible
+select * from after_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+select * from before_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+select * from after_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v1)~~
+
+
+select * from before_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_v1)~~
+
+
+insert into before_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+update before_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+delete from before_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+insert into after_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+update after_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+delete from after_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+use master;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'db_roles_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'db_roles_l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'db_roles_l3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'db_roles_l4' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'db_roles_l5' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+-- drop objects
+use db_roles_db1
+go
+
+drop table db_roles_schema_1.before_t1;
+go
+
+drop table db_roles_schema_1.after_t1;
+go
+
+drop table db_roles_schema_2.before_created_by_dbo_t1;
+go
+
+drop table db_roles_schema_2.after_created_by_dbo_t1;
+go
+
+drop table db_roles_schema_2.before_created_by_u4_t1;
+go
+
+drop table db_roles_schema_2.after_created_by_u4_t1;
+go
+
+drop table db_roles_schema_3.db_roles_t1;
+go
+
+drop view db_roles_schema_1.before_v1;
+go
+
+drop view db_roles_schema_1.after_v1;
+go
+
+drop view db_roles_schema_2.before_created_by_dbo_v1;
+go
+
+drop view db_roles_schema_2.after_created_by_dbo_v1;
+go
+
+drop view db_roles_schema_2.before_created_by_u4_v1;
+go
+
+drop view db_roles_schema_2.after_created_by_u4_v1;
+go
+
+drop view db_roles_schema_3.db_roles_v1;
+go
+
+drop schema db_roles_schema_1;
+go
+
+drop schema db_roles_schema_2;
+go
+
+drop schema db_roles_schema_3;
+go
+
+drop table before_t1;
+go
+
+drop table after_t1;
+go
+
+drop view before_v1;
+go
+
+drop view after_v1;
+go
+
+drop user db_roles_u1;
+go
+
+drop user db_roles_u4;
+go
+
+drop user db_roles_u5;
+go
+
+drop role db_roles_r1;
+go
+
+use master;
+go
+
+drop table t1_in_master;
+go
+
+drop user db_roles_u1;
+go
+
+drop login db_roles_l1;
+go
+
+drop login db_roles_l2;
+go
+
+drop login db_roles_l3;
+go
+
+drop login db_roles_l4;
+go
+
+drop login db_roles_l5;
+go
+
+drop database db_roles_db1;
+go

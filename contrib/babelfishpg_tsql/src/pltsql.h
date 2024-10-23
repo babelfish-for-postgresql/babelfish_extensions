@@ -1986,11 +1986,15 @@ extern bool insert_bulk_check_constraints;
 #define CREATE_LOGICAL_DATABASE "(CREATE LOGICAL DATABASE )"
 #define CREATE_GUEST_SCHEMAS_DURING_UPGRADE "(CREATE GUEST SCHEMAS DURING UPGRADE )"
 #define CREATE_FIXED_DB_ROLES "(CREATE FIXED DATABASE ROLES )"
+#define ALTER_DEFAULT_PRIVILEGES "(ALTER DEFAULT PRIVILEGES )"
+#define INTERNAL_GRANT_STATEMENT "(GRANT STATEMENT )"
 
 /* FIXED DB PRINCIPALS */
 #define DBO "dbo"
 #define DB_OWNER "db_owner"
 #define DB_ACCESSADMIN "db_accessadmin"
+#define DB_DATAREADER "db_datareader"
+#define DB_DATAWRITER "db_datawriter"
 
 #define IS_BBF_BUILT_IN_DB(dbname) \
     (strncmp(dbname, "master", 6) == 0 || \
@@ -1998,9 +2002,11 @@ extern bool insert_bulk_check_constraints;
      strncmp(dbname, "msdb", 4) == 0)
 
 #define IS_FIXED_DB_PRINCIPAL(rolname) \
-    (strncmp(rolname, DBO, 3) == 0 || \
-     strncmp(rolname, DB_OWNER, 8) == 0 || \
-     strncmp(rolname, DB_ACCESSADMIN, 14) == 0)
+	(strncmp(rolname, DBO, 3) == 0 || \
+	 strncmp(rolname, DB_OWNER, 8) == 0 || \
+	 strncmp(rolname, DB_ACCESSADMIN, 14) == 0 || \
+	 strncmp(rolname, DB_DATAREADER, 13) == 0 || \
+	 strncmp(rolname, DB_DATAWRITER, 13) == 0)
 
 /**********************************************************************
  * Function declarations
@@ -2084,6 +2090,7 @@ extern char *get_original_query_string(void);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
 extern Oid get_owner_of_schema(const char *schema);
+extern void exec_database_roles_subcmds(const char *physical_schema, char *schema_owner);
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -2198,6 +2205,7 @@ extern void update_ViewStmt(Node *n, const char *view_schema);
 extern void update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1, const char *role2, const char *grantee, const char *priv);
 extern AccessPriv *make_accesspriv_node(const char *priv_name);
 extern RoleSpec   *make_rolespec_node(const char *rolename);
+extern void throw_error_for_fixed_db_role(char *rolname, char *dbname);
 extern void pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure_or_func);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
 extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
