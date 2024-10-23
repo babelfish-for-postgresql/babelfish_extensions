@@ -1,0 +1,684 @@
+-- tsql
+-- bbf dump does not dump password so reset the password
+ALTER LOGIN db_roles_l2 WITH PASSWORD = '123'
+GO
+ALTER LOGIN db_roles_l1 WITH PASSWORD = '123'
+GO
+
+-- IS_ROLEMEMBER & IS_MEMBER should show db_datareader as member of dbo but not of db_owner
+SELECT IS_ROLEMEMBER('db_datareader')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('db_datareader', 'dbo')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('db_datareader', 'db_owner')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- IS_ROLEMEMBER & IS_MEMBER should show db_datawriter as member of dbo but not of db_owner
+SELECT IS_ROLEMEMBER('db_datawriter')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'dbo')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('db_datawriter', 'db_owner')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql user=db_roles_l2 password=123
+-- create objects after upgrade
+use db_roles_db1;
+go
+
+create table db_roles_schema_2.after_created_by_u2_t1(a int);
+go
+
+create view db_roles_schema_2.after_created_by_u2_v1 as select 1;
+go
+
+use master;
+go
+
+-- tsql
+use db_roles_db1
+go
+
+create table db_roles_schema_1.after_t1(a int);
+go
+
+create view db_roles_schema_1.after_v1 as select 2;
+go
+
+create table db_roles_schema_2.after_created_by_dbo_t1(a int);
+go
+
+create view db_roles_schema_2.after_created_by_dbo_v1 as select 2;
+go
+
+alter role db_datareader add member db_roles_u1;
+go
+
+alter role db_datawriter add member db_roles_u1;
+go
+
+create table db_roles_schema_1.after_t2(a int);
+go
+
+create view db_roles_schema_1.after_v2 as select 2;
+go
+
+create table db_roles_schema_2.after_created_by_dbo_t2(a int);
+go
+
+create view db_roles_schema_2.after_created_by_dbo_v2 as select 2;
+go
+
+use master
+go
+
+-- tsql user=db_roles_l2 password=123
+use db_roles_db1;
+go
+
+create table db_roles_schema_2.after_created_by_u2_t2(a int);
+go
+
+create view db_roles_schema_2.after_created_by_u2_v2 as select 1;
+go
+
+use master;
+go
+
+-- tsql user=db_roles_l1 password=123
+use db_roles_db1
+go
+
+-- user is a member of db_datareader/db_datawriter, objects should be accessible
+select * from db_roles_schema_1.after_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_1.after_t2; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_1.after_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select * from db_roles_schema_1.after_v2; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_1.before_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_1.before_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_1.before_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.before_created_by_dbo_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.before_created_by_dbo_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_2.before_created_by_dbo_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.before_created_by_dbo_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.before_created_by_dbo_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_2.after_created_by_dbo_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.after_created_by_dbo_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.after_created_by_dbo_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_t2; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_v2; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_2.after_created_by_dbo_t2 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.after_created_by_dbo_t2 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.after_created_by_dbo_t2 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.before_created_by_u2_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.before_created_by_u2_v1; -- allowed
+go
+~~START~~
+int
+2
+~~END~~
+
+
+insert into db_roles_schema_2.before_created_by_u2_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.before_created_by_u2_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.before_created_by_u2_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.after_created_by_u2_t2; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.after_created_by_u2_v2; -- allowed
+go
+~~START~~
+int
+1
+~~END~~
+
+
+insert into db_roles_schema_2.after_created_by_u2_t2 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.after_created_by_u2_t2 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.after_created_by_u2_t2 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+select * from db_roles_schema_2.after_created_by_u2_t1; -- allowed
+go
+~~START~~
+int
+~~END~~
+
+
+select * from db_roles_schema_2.after_created_by_u2_v1; -- allowed
+go
+~~START~~
+int
+1
+~~END~~
+
+
+insert into db_roles_schema_2.after_created_by_u2_t1 values(1); -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+update db_roles_schema_2.after_created_by_u2_t1 set a = 2 where a = 1; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+delete from db_roles_schema_2.after_created_by_u2_t1 where a = 2; -- allowed
+go
+~~ROW COUNT: 1~~
+
+
+use master;
+go
+
+-- tsql
+use db_roles_db1;
+go
+
+alter role db_datareader drop member db_roles_u1;
+go
+
+alter role db_datawriter drop member db_roles_u1;
+go
+
+use master;
+go
+
+-- tsql user=db_roles_l1 password=123
+use db_roles_db1;
+go
+
+select * from db_roles_schema_1.after_t1;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+select * from db_roles_schema_1.after_t2;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t2)~~
+
+
+select * from db_roles_schema_1.before_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+select * from db_roles_schema_1.after_v1;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v1)~~
+
+
+select * from db_roles_schema_1.after_v2;  -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_v2)~~
+
+
+select * from db_roles_schema_1.before_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_v1)~~
+
+
+insert into db_roles_schema_1.before_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+update db_roles_schema_1.before_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+delete from db_roles_schema_1.before_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_t1)~~
+
+
+insert into db_roles_schema_1.after_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+update db_roles_schema_1.after_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+delete from db_roles_schema_1.after_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t1)~~
+
+
+insert into db_roles_schema_1.after_t2 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t2)~~
+
+
+update db_roles_schema_1.after_t2 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t2)~~
+
+
+delete from db_roles_schema_1.after_t2 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_t2)~~
+
+
+select * from db_roles_schema_2.before_created_by_dbo_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
+
+
+select * from db_roles_schema_2.before_created_by_dbo_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_created_by_dbo_v1)~~
+
+
+insert into db_roles_schema_2.before_created_by_dbo_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
+
+
+update db_roles_schema_2.before_created_by_dbo_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
+
+
+delete from db_roles_schema_2.before_created_by_dbo_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_created_by_dbo_v1)~~
+
+
+insert into db_roles_schema_2.after_created_by_dbo_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+update db_roles_schema_2.after_created_by_dbo_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+delete from db_roles_schema_2.after_created_by_dbo_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_t2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t2)~~
+
+
+select * from db_roles_schema_2.after_created_by_dbo_v2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_created_by_dbo_v2)~~
+
+
+insert into db_roles_schema_2.after_created_by_dbo_t2 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t2)~~
+
+
+update db_roles_schema_2.after_created_by_dbo_t2 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t2)~~
+
+
+delete from db_roles_schema_2.after_created_by_dbo_t2 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_dbo_t2)~~
+
+
+select * from db_roles_schema_2.before_created_by_u2_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_u2_t1)~~
+
+
+select * from db_roles_schema_2.before_created_by_u2_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view before_created_by_u2_v1)~~
+
+
+insert into db_roles_schema_2.before_created_by_u2_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_u2_t1)~~
+
+
+update db_roles_schema_2.before_created_by_u2_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_u2_t1)~~
+
+
+delete from db_roles_schema_2.before_created_by_u2_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table before_created_by_u2_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_u2_t1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u2_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_u2_v1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_created_by_u2_v1)~~
+
+
+insert into db_roles_schema_2.after_created_by_u2_t1 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u2_t1)~~
+
+
+update db_roles_schema_2.after_created_by_u2_t1 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u2_t1)~~
+
+
+delete from db_roles_schema_2.after_created_by_u2_t1 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u2_t1)~~
+
+
+select * from db_roles_schema_2.after_created_by_u2_t2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u2_t2)~~
+
+
+select * from db_roles_schema_2.after_created_by_u2_v2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view after_created_by_u2_v2)~~
+
+
+insert into db_roles_schema_2.after_created_by_u2_t2 values(1); -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u2_t2)~~
+
+
+update db_roles_schema_2.after_created_by_u2_t2 set a = 2 where a = 1; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u2_t2)~~
+
+
+delete from db_roles_schema_2.after_created_by_u2_t2 where a = 2; -- not allowed
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table after_created_by_u2_t2)~~
+
+
+use master;
+go

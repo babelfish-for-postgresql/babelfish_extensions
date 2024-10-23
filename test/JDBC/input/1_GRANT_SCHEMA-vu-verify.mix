@@ -46,20 +46,6 @@ go
 select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' collate sys.database_default and grantee like '%babel_4768_u1' collate sys.database_default order by object_name;
 go
 
--- psql
--- This is needed so that MVU passes
-DO $$
-BEGIN 
-    IF EXISTS (SELECT 1 FROM
-information_schema.tables WHERE
-table_name = 'tbl_creation_should_succeed' AND
-table_schema = 'master_dbo') THEN
-        EXECUTE 'GRANT ALL ON
-master_dbo.tbl_creation_should_succeed TO master_dbo';
-    END IF;
-END $$;
-GO
-
 -- tsql
 REVOKE SELECT, EXECUTE ON SCHEMA::dbo FROM babel_4768_u1
 GO

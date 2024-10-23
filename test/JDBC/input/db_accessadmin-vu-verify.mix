@@ -38,7 +38,7 @@ GO
 -- Cannot add login as member of db_accessadmin
 ALTER ROLE db_accessadmin ADD MEMBER babel_5136_l1
 GO
--- Cannot add fixed roles ass member of db_accessadmin
+-- Cannot add fixed roles as member of db_accessadmin
 ALTER ROLE db_accessadmin ADD MEMBER syadmin
 GO
 ALTER ROLE db_accessadmin ADD MEMBER dbo
@@ -55,6 +55,15 @@ ALTER ROLE db_accessadmin DROP MEMBER db_owner
 GO
 ALTER ROLE db_accessadmin DROP MEMBER db_accessadmin
 GO
+-- Cannot GRANT/REVOKE on objects TO/FROM db_accessadmin
+GRANT ALL on object::t1 to db_accessadmin; -- Error, no grant on special roles
+go
+REVOKE ALL on object::t1 to db_accessadmin; -- Error, no grant on special roles
+go
+GRANT SELECT on object::t1 to db_accessadmin; -- Error, no grant on special roles
+go
+REVOKE EXECUTE on object::t1 to db_accessadmin; -- Error, no grant on special roles
+go
 
 -- MEMBERS OF db_accessadmin WILL ALWAYS HAVE CONNECT PRIVILEGES
 REVOKE CONNECT FROM babel_5136_db_accessadmin_user

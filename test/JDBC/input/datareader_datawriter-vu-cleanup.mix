@@ -1,0 +1,101 @@
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'db_roles_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'db_roles_l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+-- drop objects
+use db_roles_db1
+go
+
+drop table db_roles_schema_1.before_t1;
+go
+
+drop table db_roles_schema_1.after_t1;
+go
+
+drop table db_roles_schema_1.after_t2;
+go
+
+drop table db_roles_schema_2.before_created_by_dbo_t1;
+go
+
+drop table db_roles_schema_2.after_created_by_dbo_t1;
+go
+
+drop table db_roles_schema_2.after_created_by_dbo_t2;
+go
+
+drop table db_roles_schema_2.before_created_by_u2_t1;
+go
+
+drop table db_roles_schema_2.after_created_by_u2_t1;
+go
+
+drop table db_roles_schema_2.after_created_by_u2_t2;
+go
+
+drop view db_roles_schema_1.before_v1;
+go
+
+drop view db_roles_schema_1.after_v1;
+go
+
+drop view db_roles_schema_1.after_v2;
+go
+
+drop view db_roles_schema_2.before_created_by_dbo_v1;
+go
+
+drop view db_roles_schema_2.after_created_by_dbo_v1;
+go
+
+drop view db_roles_schema_2.after_created_by_dbo_v2;
+go
+
+drop view db_roles_schema_2.before_created_by_u2_v1;
+go
+
+drop view db_roles_schema_2.after_created_by_u2_v1;
+go
+
+drop view db_roles_schema_2.after_created_by_u2_v2;
+go
+
+drop schema db_roles_schema_1;
+go
+
+drop schema db_roles_schema_2;
+go
+
+drop user db_roles_u1;
+go
+
+drop user db_roles_u2;
+go
+
+drop login db_roles_l1;
+go
+
+drop login db_roles_l2;
+go
+
+use master;
+go
+
+drop database db_roles_db1;
+go

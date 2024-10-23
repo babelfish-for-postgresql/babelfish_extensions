@@ -1,0 +1,53 @@
+-- tsql
+-- create login, user and add members
+create database db_roles_db1;
+go
+
+use db_roles_db1;
+go
+
+create login db_roles_l1 with password = '123';
+go
+
+create login db_roles_l2 with password = '123';
+go
+
+create user db_roles_u1 for login db_roles_l1;
+go
+
+create user db_roles_u2 for login db_roles_l2;
+go
+
+create schema db_roles_schema_1;
+go
+
+create schema db_roles_schema_2 authorization db_roles_u2;
+go
+
+create table db_roles_schema_1.before_t1(a int);
+go
+
+create view db_roles_schema_1.before_v1 as select 2;
+go
+
+create table db_roles_schema_2.before_created_by_dbo_t1(a int);
+go
+
+create view db_roles_schema_2.before_created_by_dbo_v1 as select 2;
+go
+
+use master;
+go
+
+-- tsql user=db_roles_l2 password=123
+use db_roles_db1;
+go
+
+create table db_roles_schema_2.before_created_by_u2_t1(a int);
+go
+
+create view db_roles_schema_2.before_created_by_u2_v1 as select 2;
+go
+
+use master;
+go

@@ -3816,6 +3816,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						PG_END_TRY();
 					}
+					/* Execute subcommands for database roles.*/
+					if (strcmp(queryString, CREATE_GUEST_SCHEMAS_DURING_UPGRADE) != 0)
+					{
+						if (rolspec)
+							exec_database_roles_subcmds(create_schema->schemaname, rolspec->rolename);
+						else
+							exec_database_roles_subcmds(create_schema->schemaname, NULL);
+					}
 
 					/* Grant ALL schema privileges to the user.*/
 					if (rolspec && strcmp(queryString, CREATE_LOGICAL_DATABASE) != 0)
@@ -4301,16 +4309,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_GrantStmt:
 			{
-				GrantStmt *grant = (GrantStmt *) parsetree;
-				char	   *dbname = get_cur_db_name();
-				const char *current_user = GetUserNameFromId(GetUserId(), false);
+				GrantStmt	*grant = (GrantStmt *) parsetree;
+				char		*dbname = get_cur_db_name();
+				char		*db_datareader = get_db_datareader_name(dbname);
+				char		*db_datawriter = get_db_datawriter_name(dbname);
+				char		*db_accessadmin = get_db_accessadmin_role_name(dbname);
+
 				/* Ignore when GRANT statement has no specific named object. */
 				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
 					break;
 				Assert(list_length(grant->objects) == 1);
 				if (grant->objtype == OBJECT_SCHEMA)
 						break;
-				else if (grant->objtype == OBJECT_TABLE && strcmp(CREATE_LOGICAL_DATABASE, queryString) != 0)
+				else if (grant->objtype == OBJECT_TABLE && strcmp(CREATE_LOGICAL_DATABASE, queryString) != 0 && strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
 				{
 					/*
 					 * Ignore GRANT statements that are executed implicitly as a part of
@@ -4319,6 +4330,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * schema permission or adding catalog entry.
 					 */
 					RangeVar   *rv = (RangeVar *) linitial(grant->objects);
+					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					const char *logical_schema = NULL;
 					char	   *obj = rv->relname;
 					bool exec_pg_command = false;
@@ -4337,6 +4349,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/* Special database roles should throw an error. */
+								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 								add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true, NULL);
 							}
 						}
@@ -4345,6 +4359,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/* Special database roles should throw an error. */
+								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 								/*
 								 * 1. If permission on schema exists, don't revoke any permission from the object.
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
@@ -4369,6 +4385,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									/* Special database roles should throw an error. */
+									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 									add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
 								}
 							}
@@ -4381,6 +4399,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									/* Special database roles should throw an error. */
+									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 									/*
 									 * If permission on schema exists, don't revoke any permission from the object.
 									 */
@@ -4399,6 +4419,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
 				{
 					ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
+					const char *current_user = GetUserNameFromId(GetUserId(), false);
 					ListCell   *lc;
 					ListCell	*lc1;
 					bool exec_pg_command = false;
@@ -4449,6 +4470,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/* Special database roles should throw an error. */
+								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 								add_or_update_object_in_bbf_schema(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, true, func_args);
 							}
 						}
@@ -4457,6 +4480,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/* Special database roles should throw an error. */
+								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 								/*
 								 * 1. If permission on schema exists, don't revoke any permission from the object.
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
@@ -4475,7 +4500,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						if (grant->is_grant)
 						{
 							exec_pg_command = true;
-							if (strcmp("(GRANT STATEMENT )", queryString) != 0)
+							if (strcmp(INTERNAL_GRANT_STATEMENT, queryString) != 0)
 							{
 								/*
 								 * If it is an implicit GRANT issued by exec_internal_grant_on_function, then we should not add catalog
@@ -4484,6 +4509,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									/* Special database roles should throw an error. */
+									throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 									add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true, func_args);
 								}
 							}
@@ -4493,7 +4520,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-
+								/* Special database roles should throw an error. */
+								throw_error_for_fixed_db_role(rol_spec->rolename, dbname);
 								/*
 								 * If permission on schema exists, don't revoke any permission from the object.
 								 */
@@ -4508,6 +4536,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 					return;
 				}
+				pfree(db_datareader);
+				pfree(db_datawriter);
+				pfree(db_accessadmin);
+				pfree(dbname);
 			}
 		default:
 			break;

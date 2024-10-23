@@ -584,4 +584,5 @@ BABEL-2736
 smalldatetime_date_cmp
 securityadmin_role
 db_accessadmin
+datareader_datawriter
 
