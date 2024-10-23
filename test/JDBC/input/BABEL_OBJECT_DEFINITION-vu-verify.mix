@@ -100,3 +100,36 @@ GO
 
 SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_db.dbo.object_definition_proc'))
 GO
+
+-- Test  : Brackets around datatype for procedure
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_procedure';
+go
+-- Test  : Single Line comment for procedure
+ALTER PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_procedure';
+go
+-- Test  : Multi Line comment for procedure
+
+-- multiline comment line 1
+-- multiline comment line 2
+ALTER PROCEDURE object_definition_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_procedure';
+go
+-- Test  : Revise test 1,2,3 with functions
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
+go
+-- Test  : Single Line comment for function
+ALTER function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
+go
+-- Test  : Multi Line comment for function
+
+-- multiline comment line 1
+-- multiline comment line 2
+ALTER function object_definition_function() RETURNS [VARCHAR](6000) AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (6000) RETURN @storeOriginalQuery_var END
+go
+SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = 'object_definition_function';
+go

@@ -46,3 +46,8 @@ GO
 
 DROP DATABASE object_definition_db;
 GO
+
+DROP PROCEDURE if exists object_definition_procedure;
+GO
+DROP FUNCTION if exists object_definition_function();
+GO

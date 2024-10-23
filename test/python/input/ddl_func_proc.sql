@@ -46,6 +46,10 @@ drop  function  IF EXISTS routines_fc7;
 go
 DROP   TABLE  IF EXISTS routines_customers;
 go
+drop procedure if exists storeoriginalquery_procedure;
+go
+drop function if exists storeOriginalQuery_function();
+go
 
 create procedure routines_test_nvar(@test_nvar_a nvarchar , @test_nvar_b int = 8)
 AS
@@ -182,6 +186,14 @@ RETURN
 END;
 GO
 
+--create procedure with multiline comment
+-- multiline comment with bracket around datatype
+CREATE PROCEDURE storeOriginalQuery_procedure AS BEGIN DECLARE @storeOriginalQuery_var [varchar] (8000) END
+go
+--create function with multiline comment
+-- multiline comment  with bracket around datatype
+CREATE FUNCTION storeOriginalQuery_function() RETURNS [VARCHAR](8000) AS BEGIN DECLARE @storeOriginalQuery_var [VARCHAR](8000) RETURN @storeOriginalQuery_var END
+go
 -- Create procedure with more than 4K characters
 CREATE PROCEDURE proc_more_than_4k
 AS
@@ -238,4 +250,8 @@ go
 DROP TABLE IF EXISTS routines_customers;
 go
 drop procedure IF EXISTS proc_more_than_4k;
+go
+drop procedure if exists storeoriginalquery_procedure;
+go
+drop function if exists storeOriginalQuery_function();
 go
