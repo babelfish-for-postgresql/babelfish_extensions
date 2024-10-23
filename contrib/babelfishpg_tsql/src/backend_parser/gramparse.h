@@ -87,6 +87,5 @@ extern int	pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE * llocp,
 /* from pgtsql_gram.y */
 extern void pgtsql_parser_init(pgtsql_base_yy_extra_type *yyext);
 extern int	pgtsql_base_yyparse(core_yyscan_t yyscanner);
-extern int	pgtsql_base_yydebug;
 
 #endif							/* PGTSQL_GRAMPARSE_H */
