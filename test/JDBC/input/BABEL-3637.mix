@@ -246,5 +246,9 @@ GO
 -- tsql
 USE master
 GO
+DROP PROC test_babel_3637_proc1;
+GO
+DROP PROC test_babel_3637_proc2;
+GO
 DROP DATABASE babel_3637_db;
 GO

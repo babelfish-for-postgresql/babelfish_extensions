@@ -51,7 +51,7 @@ GO
 
 ~~ERROR (Message: role "babel_5136_babel_5136_l1" does not exist)~~
 
--- Cannot add fixed roles ass member of db_accessadmin
+-- Cannot add fixed roles as member of db_accessadmin
 ALTER ROLE db_accessadmin ADD MEMBER syadmin
 GO
 ~~ERROR (Code: 33557097)~~
@@ -99,6 +99,31 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot use the special principal 'db_accessadmin')~~
+
+-- Cannot GRANT/REVOKE on objects TO/FROM db_accessadmin
+GRANT ALL on object::t1 to db_accessadmin; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+REVOKE ALL on object::t1 to db_accessadmin; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+GRANT SELECT on object::t1 to db_accessadmin; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+REVOKE EXECUTE on object::t1 to db_accessadmin; -- Error, no grant on special roles
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
 
 
 -- MEMBERS OF db_accessadmin WILL ALWAYS HAVE CONNECT PRIVILEGES

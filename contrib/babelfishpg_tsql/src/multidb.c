@@ -1420,6 +1420,43 @@ get_db_owner_oid(const char *dbname, bool missing_ok)
 }
 
 char *
+get_db_datareader_name(const char *dbname)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+	Assert(dbname != NULL);
+
+	if (get_migration_mode() == SINGLE_DB && !IS_BBF_BUILT_IN_DB(dbname))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_DATAREADER);
+	}
+	else
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_DATAREADER);
+		truncate_identifier(name, strlen(name), false);
+	}
+	return name;
+}
+
+char *
+get_db_datawriter_name(const char *dbname)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (get_migration_mode() == SINGLE_DB && !IS_BBF_BUILT_IN_DB(dbname))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_DATAWRITER);
+	}
+	else
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_DATAWRITER);
+		truncate_identifier(name, strlen(name), false);
+	}
+	return name;
+}
+
+char *
 get_guest_role_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
@@ -1440,7 +1477,7 @@ get_db_accessadmin_role_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	Assert(dbname != NULL && strlen(dbname) != 0);
+	Assert(dbname != NULL);
 
 	if (get_migration_mode() == SINGLE_DB && !IS_BBF_BUILT_IN_DB(dbname))
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_ACCESSADMIN);

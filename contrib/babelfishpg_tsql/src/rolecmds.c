@@ -952,7 +952,6 @@ get_original_login_name(char *login)
 	return result;
 }
 
-
 PG_FUNCTION_INFO_V1(suser_name);
 Datum
 suser_name(PG_FUNCTION_ARGS)
