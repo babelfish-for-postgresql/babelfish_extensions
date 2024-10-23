@@ -206,7 +206,6 @@ GO
 ~~ROW COUNT: 1~~
 
 
--- Expect an error
 INSERT INTO dbo.db1_t1 (a)
 EXECUTE master.dbo.master_p1;
 GO
@@ -222,6 +221,14 @@ int
 10
 30
 ~~END~~
+
+
+UPDATE dbo.db1_t1
+SET dbo.db1_t1.a = dbo.db1_t1.a + 1
+FROM master.dbo.master_t1 AS x
+WHERE dbo.db1_t1.a = x.a;
+GO
+~~ROW COUNT: 8~~
 
 
 SELECT current_user;
@@ -260,6 +267,21 @@ int#!#int
 
 USE MASTER;
 GO
+
+SELECT * FROM db1.dbo.db1_t1 ORDER BY a;
+GO
+~~START~~
+int
+11
+11
+11
+11
+11
+11
+31
+31
+~~END~~
+
 
 --tsql
 USE MASTER;
@@ -693,6 +715,23 @@ GO
 -- tsql user=johndoe password=12345678
 USE MASTER;
 GO
+
+SELECT * FROM db1.dbo.db1_t1 ORDER BY a;
+GO
+~~START~~
+int
+10
+10
+10
+10
+10
+10
+10
+10
+30
+30
+~~END~~
+
 
 USE db1;
 GO
