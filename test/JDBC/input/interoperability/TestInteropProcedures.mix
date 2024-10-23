@@ -192,3 +192,114 @@ GO
 -- psql     currentSchema=master_dbo,public
 DROP PROCEDURE psql_interop_proc
 GO
+
+
+-- psql     currentSchema=master_dbo,public
+CREATE FUNCTION pg_stable_func()
+RETURNS INT 
+AS $$ 
+BEGIN 
+    RETURN (SELECT id FROM t); END; 
+$$ LANGUAGE plpgsql STABLE;
+GO
+
+CREATE PROCEDURE pg_proc_inner(i INT)
+AS $$ 
+BEGIN 
+    INSERT INTO TEMP VALUES (i); 
+END; 
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE OR REPLACE PROCEDURE pg_proc_outer() 
+AS $$
+BEGIN 
+    BEGIN
+        UPDATE t SET id = 2; 
+        CALL pg_proc_inner(pg_stable_func()); 
+    EXCEPTION WHEN DIVISION_BY_ZERO THEN 
+        RAISE NOTICE '%', SQLERRM;
+    END; 
+END; 
+$$ LANGUAGE plpgsql;
+GO
+
+-- tsql
+CREATE TABLE t(id INT)
+GO
+CREATE TABLE temp(id INT)
+GO
+INSERT INTO t VALUES (1)
+GO
+
+CREATE PROC ptsql_proc AS EXEC pg_proc_outer; UPDATE t SET id = 1;
+GO
+
+
+-- BEGIN TRAN -> tsql proc -> pg_proc_outer -> pg_proc_inner with a plpgsql stable function in argument
+BEGIN TRAN
+GO
+EXEC ptsql_proc
+GO
+COMMIT
+GO
+
+-- same test as above but no explicit transaction block
+-- tsql proc -> pg_proc_outer -> pg_proc_inner with a plpgsql stable function in argument
+EXEC ptsql_proc
+GO
+
+
+-- psql     currentSchema=master_dbo,public
+CREATE FUNCTION pltsql_stable_func()
+RETURNS INT 
+AS $$
+BEGIN 
+    RETURN (SELECT id FROM t);
+END; 
+$$ LANGUAGE PLTSQL STABLE;
+GO
+
+CREATE OR REPLACE PROCEDURE pg_proc_outer()
+AS $$
+BEGIN
+    BEGIN
+        UPDATE t SET id = 2;
+        CALL pg_proc_inner(pltsql_stable_func());
+    EXCEPTION WHEN DIVISION_BY_ZERO THEN
+        RAISE NOTICE '%', SQLERRM;
+    END;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+-- tsql
+-- BEGIN TRAN -> tsql proc -> pg_proc_outer -> pg_proc_inner with a pltsql stable function in argument
+BEGIN TRAN
+GO
+EXEC ptsql_proc
+GO
+COMMIT
+GO
+
+-- same test as above but no explicit transaction block
+-- tsql proc -> pg_proc_outer -> pg_proc_inner with a pltsql stable function in argument
+EXEC ptsql_proc
+GO
+
+-- we should only see "2" since we always update value before inserting
+SELECT * FROM temp
+GO
+
+DROP PROCEDURE ptsql_proc
+GO
+
+DROP TABLE t, temp
+GO
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE IF EXISTS pg_proc_inner, pg_proc_outer;
+GO
+
+DROP FUNCTION IF EXISTS pg_stable_func, pltsql_stable_func;
+GO
