@@ -123,6 +123,8 @@ GO
 DECLARE @in bigint = 922337203685478;
 SELECT * FROM babel_3556_vu_prepare_f1(@in);
 GO
+~~START~~
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
@@ -131,6 +133,8 @@ GO
 DECLARE @in bigint = -922337203685478;
 SELECT * FROM babel_3556_vu_prepare_f1(@in);
 GO
+~~START~~
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
@@ -281,6 +285,8 @@ GO
 DECLARE @in bigint = 922337203685478;
 SELECT * FROM babel_3556_vu_prepare_f2(@in);
 GO
+~~START~~
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "922337203685478" is out of range for type money)~~
@@ -289,6 +295,8 @@ GO
 DECLARE @in bigint = -922337203685478;
 SELECT * FROM babel_3556_vu_prepare_f2(@in);
 GO
+~~START~~
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "-922337203685478" is out of range for type money)~~
@@ -463,6 +471,8 @@ GO
 DECLARE @in bigint = 922337203685478;
 SELECT * FROM babel_3556_vu_prepare_f3(@in);
 GO
+~~START~~
+smallmoney
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "922337203685478" is out of range for type smallmoney)~~
@@ -471,6 +481,8 @@ GO
 DECLARE @in bigint = -922337203685478;
 SELECT * FROM babel_3556_vu_prepare_f3(@in);
 GO
+~~START~~
+smallmoney
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value "-922337203685478" is out of range for type smallmoney)~~

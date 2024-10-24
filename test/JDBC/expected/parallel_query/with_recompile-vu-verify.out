@@ -104,7 +104,7 @@ Query Text: EXEC    p_recomp_11 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
-              Index Cond: (c11 = 0)
+              Index Cond: (c11 = $1)
   Query Text: select * from tb_recomp_11 where c11 = 0
   ->  Gather
         Workers Planned: 1
@@ -115,7 +115,7 @@ Query Text: EXEC    p_recomp_11 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 156.798 ms
+Babelfish T-SQL Batch Parsing Time: 172.170 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -243,9 +243,9 @@ Query Text: EXEC    p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_11
-              Recheck Cond: (c11 = 0)
+              Recheck Cond: (c11 = $1)
               ->  Bitmap Index Scan on tb_recomp_11_pkey
-                    Index Cond: (c11 = 0)
+                    Index Cond: (c11 = $1)
   Query Text: select * from tb_recomp_11 where c11 = 0
   ->  Gather
         Workers Planned: 1
@@ -256,7 +256,7 @@ Query Text: EXEC    p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.990 ms
+Babelfish T-SQL Batch Parsing Time: 6.470 ms
 ~~END~~
 
 exec    p_recomp_12 0 with recompile
@@ -269,9 +269,9 @@ Query Text: EXEC    p_recomp_12 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_12
-              Recheck Cond: (c12 = 0)
+              Recheck Cond: (c12 = $1)
               ->  Bitmap Index Scan on tb_recomp_12_pkey
-                    Index Cond: (c12 = 0)
+                    Index Cond: (c12 = $1)
   Query Text: select * from tb_recomp_12 where c12 = 0
   ->  Gather
         Workers Planned: 1
@@ -282,7 +282,7 @@ Query Text: EXEC    p_recomp_12 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.128 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -314,7 +314,7 @@ Query Text: EXEC p_recomp_12 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.406 ms
+Babelfish T-SQL Batch Parsing Time: 2.489 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -336,9 +336,9 @@ Query Text: EXEC p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_11
-              Recheck Cond: (c11 = 0)
+              Recheck Cond: (c11 = $1)
               ->  Bitmap Index Scan on tb_recomp_11_pkey
-                    Index Cond: (c11 = 0)
+                    Index Cond: (c11 = $1)
   Query Text: select * from tb_recomp_11 where c11 = 0
   ->  Gather
         Workers Planned: 1
@@ -349,7 +349,7 @@ Query Text: EXEC p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.875 ms
+Babelfish T-SQL Batch Parsing Time: 0.909 ms
 ~~END~~
 
 -- test case without execute keyword
@@ -363,9 +363,9 @@ Query Text: EXEC p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_11
-              Recheck Cond: (c11 = 0)
+              Recheck Cond: (c11 = $1)
               ->  Bitmap Index Scan on tb_recomp_11_pkey
-                    Index Cond: (c11 = 0)
+                    Index Cond: (c11 = $1)
   Query Text: select * from tb_recomp_11 where c11 = 0
   ->  Gather
         Workers Planned: 1
@@ -376,7 +376,7 @@ Query Text: EXEC p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.102 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -396,9 +396,9 @@ Query Text: EXEC    p_recomp_13 0
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_13
-              Recheck Cond: (c13 = 0)
+              Recheck Cond: (c13 = $1)
               ->  Bitmap Index Scan on tb_recomp_13_pkey
-                    Index Cond: (c13 = 0)
+                    Index Cond: (c13 = $1)
   Query Text: select * from tb_recomp_13 where c13 = 0
   ->  Gather
         Workers Planned: 1
@@ -411,7 +411,7 @@ Query Text: EXEC    p_recomp_13 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.226 ms
+Babelfish T-SQL Batch Parsing Time: 0.367 ms
 ~~END~~
 
 exec    p_recomp_13 0 with recompile
@@ -424,9 +424,9 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_13
-              Recheck Cond: (c13 = 0)
+              Recheck Cond: (c13 = $1)
               ->  Bitmap Index Scan on tb_recomp_13_pkey
-                    Index Cond: (c13 = 0)
+                    Index Cond: (c13 = $1)
   Query Text: select * from tb_recomp_13 where c13 = 0
   ->  Gather
         Workers Planned: 1
@@ -439,7 +439,7 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -534,7 +534,7 @@ Query Text: EXEC    p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_11_pkey on tb_recomp_11
-              Index Cond: (c11 = 0)
+              Index Cond: (c11 = $1)
   Query Text: select * from tb_recomp_11 where c11 = 0
   ->  Gather
         Workers Planned: 1
@@ -545,7 +545,7 @@ Query Text: EXEC    p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 exec    p_recomp_12 0 with recompile 
@@ -558,7 +558,7 @@ Query Text: EXEC    p_recomp_12 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-              Index Cond: (c12 = 0)
+              Index Cond: (c12 = $1)
   Query Text: select * from tb_recomp_12 where c12 = 0
   ->  Gather
         Workers Planned: 1
@@ -569,7 +569,7 @@ Query Text: EXEC    p_recomp_12 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.113 ms
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -600,7 +600,7 @@ Query Text: EXEC    p_recomp_12 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.068 ms
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -620,7 +620,7 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_13_pkey on tb_recomp_13
-              Index Cond: (c13 = 0)
+              Index Cond: (c13 = $1)
   Query Text: select * from tb_recomp_13 where c13 = 0
   ->  Gather
         Workers Planned: 1
@@ -633,7 +633,7 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.074 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -668,7 +668,7 @@ Query Text: EXEC    p_recomp_13 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.063 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 exec    p_recomp_13 0 with recompile
@@ -681,7 +681,7 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_13_pkey on tb_recomp_13
-              Index Cond: (c13 = 0)
+              Index Cond: (c13 = $1)
   Query Text: select * from tb_recomp_13 where c13 = 0
   ->  Gather
         Workers Planned: 1
@@ -694,7 +694,7 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.080 ms
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -753,7 +753,7 @@ Query Text: EXEC    p_recomp_21 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.291 ms
+Babelfish T-SQL Batch Parsing Time: 0.311 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -790,9 +790,9 @@ Query Text: EXEC    p_recomp_21 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_21
-              Recheck Cond: (c21 = 0)
+              Recheck Cond: (c21 = $1)
               ->  Bitmap Index Scan on tb_recomp_21_pkey
-                    Index Cond: (c21 = 0)
+                    Index Cond: (c21 = $1)
   Query Text: select * from tb_recomp_21 where c21 = 0
   ->  Gather
         Workers Planned: 1
@@ -803,7 +803,7 @@ Query Text: EXEC    p_recomp_21 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.105 ms
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
 ~~END~~
 
 
@@ -819,9 +819,9 @@ Query Text: EXEC    p_recomp_22 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_22
-              Recheck Cond: (c22 = 0)
+              Recheck Cond: (c22 = $1)
               ->  Bitmap Index Scan on tb_recomp_22_pkey
-                    Index Cond: (c22 = 0)
+                    Index Cond: (c22 = $1)
   Query Text: select * from tb_recomp_22 where c22 = 0
   ->  Gather
         Workers Planned: 1
@@ -834,7 +834,7 @@ Query Text: EXEC    p_recomp_22 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.243 ms
+Babelfish T-SQL Batch Parsing Time: 0.270 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -869,7 +869,7 @@ Query Text: EXEC    p_recomp_22 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.067 ms
+Babelfish T-SQL Batch Parsing Time: 0.079 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -906,7 +906,7 @@ Query Text: EXEC    p_recomp_21 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_21_pkey on tb_recomp_21
-              Index Cond: (c21 = 0)
+              Index Cond: (c21 = $1)
   Query Text: select * from tb_recomp_21 where c21 = 0
   ->  Gather
         Workers Planned: 1
@@ -917,7 +917,7 @@ Query Text: EXEC    p_recomp_21 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.083 ms
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
 ~~END~~
 
 
@@ -933,7 +933,7 @@ Query Text: EXEC    p_recomp_22 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_22_pkey on tb_recomp_22
-              Index Cond: (c22 = 0)
+              Index Cond: (c22 = $1)
   Query Text: select * from tb_recomp_22 where c22 = 0
   ->  Gather
         Workers Planned: 1
@@ -946,7 +946,7 @@ Query Text: EXEC    p_recomp_22 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.080 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -981,7 +981,7 @@ Query Text: EXEC    p_recomp_22 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.063 ms
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1027,7 +1027,7 @@ Query Text: EXEC    p_recomp_31 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_31_pkey on tb_recomp_31
-              Index Cond: (c31 = 0)
+              Index Cond: (c31 = $1)
   Query Text: select * from tb_recomp_31 where c31 = 0
   ->  Gather
         Workers Planned: 1
@@ -1038,7 +1038,7 @@ Query Text: EXEC    p_recomp_31 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.304 ms
+Babelfish T-SQL Batch Parsing Time: 0.303 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1076,9 +1076,9 @@ Query Text: EXEC    p_recomp_31 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_31
-              Recheck Cond: (c31 = 0)
+              Recheck Cond: (c31 = $1)
               ->  Bitmap Index Scan on tb_recomp_31_pkey
-                    Index Cond: (c31 = 0)
+                    Index Cond: (c31 = $1)
   Query Text: select * from tb_recomp_31 where c31 = 0
   ->  Gather
         Workers Planned: 1
@@ -1089,7 +1089,7 @@ Query Text: EXEC    p_recomp_31 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
 ~~END~~
 
 
@@ -1105,9 +1105,9 @@ Query Text: EXEC    p_recomp_32 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_32
-              Recheck Cond: (c32 = 0)
+              Recheck Cond: (c32 = $1)
               ->  Bitmap Index Scan on tb_recomp_32_pkey
-                    Index Cond: (c32 = 0)
+                    Index Cond: (c32 = $1)
   Query Text: select * from tb_recomp_32 where c32 = 0
   ->  Gather
         Workers Planned: 1
@@ -1120,7 +1120,7 @@ Query Text: EXEC    p_recomp_32 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.232 ms
+Babelfish T-SQL Batch Parsing Time: 0.278 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1140,9 +1140,9 @@ Query Text: EXEC    p_recomp_32 0
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_32
-              Recheck Cond: (c32 = 0)
+              Recheck Cond: (c32 = $1)
               ->  Bitmap Index Scan on tb_recomp_32_pkey
-                    Index Cond: (c32 = 0)
+                    Index Cond: (c32 = $1)
   Query Text: select * from tb_recomp_32 where c32 = 0
   ->  Gather
         Workers Planned: 1
@@ -1155,7 +1155,7 @@ Query Text: EXEC    p_recomp_32 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.071 ms
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1175,9 +1175,9 @@ Query Text: EXEC    p_recomp_33 0
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_33
-              Recheck Cond: (c33 = 0)
+              Recheck Cond: (c33 = $1)
               ->  Bitmap Index Scan on tb_recomp_33_pkey
-                    Index Cond: (c33 = 0)
+                    Index Cond: (c33 = $1)
   Query Text: select * from tb_recomp_33 where c33 = 0
   ->  Gather
         Workers Planned: 1
@@ -1190,7 +1190,7 @@ Query Text: EXEC    p_recomp_33 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.219 ms
+Babelfish T-SQL Batch Parsing Time: 0.384 ms
 ~~END~~
 
 --- tb_recomp_33: with RECOMPILE: bitmap scans ----
@@ -1205,9 +1205,9 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_33
-              Recheck Cond: (c33 = 0)
+              Recheck Cond: (c33 = $1)
               ->  Bitmap Index Scan on tb_recomp_33_pkey
-                    Index Cond: (c33 = 0)
+                    Index Cond: (c33 = $1)
   Query Text: select * from tb_recomp_33 where c33 = 0
   ->  Gather
         Workers Planned: 1
@@ -1220,7 +1220,7 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.078 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1257,7 +1257,7 @@ Query Text: EXEC    p_recomp_31 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_31_pkey on tb_recomp_31
-              Index Cond: (c31 = 0)
+              Index Cond: (c31 = $1)
   Query Text: select * from tb_recomp_31 where c31 = 0
   ->  Gather
         Workers Planned: 1
@@ -1268,7 +1268,7 @@ Query Text: EXEC    p_recomp_31 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.084 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 --- p_recomp_32: EXEC with RECOMPILE: recompiled plan: index scan for paramtrized, bitmap scan for non-parametrized ----
@@ -1283,7 +1283,7 @@ Query Text: EXEC    p_recomp_32 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-              Index Cond: (c32 = 0)
+              Index Cond: (c32 = $1)
   Query Text: select * from tb_recomp_32 where c32 = 0
   ->  Gather
         Workers Planned: 1
@@ -1296,7 +1296,7 @@ Query Text: EXEC    p_recomp_32 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.077 ms
+Babelfish T-SQL Batch Parsing Time: 0.100 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1316,7 +1316,7 @@ Query Text: EXEC    p_recomp_32 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_32_pkey on tb_recomp_32
-              Index Cond: (c32 = 0)
+              Index Cond: (c32 = $1)
   Query Text: select * from tb_recomp_32 where c32 = 0
   ->  Gather
         Workers Planned: 1
@@ -1329,7 +1329,7 @@ Query Text: EXEC    p_recomp_32 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.064 ms
+Babelfish T-SQL Batch Parsing Time: 0.065 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1349,7 +1349,7 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_33_pkey on tb_recomp_33
-              Index Cond: (c33 = 0)
+              Index Cond: (c33 = $1)
   Query Text: select * from tb_recomp_33 where c33 = 0
   ->  Gather
         Workers Planned: 1
@@ -1362,7 +1362,7 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.072 ms
+Babelfish T-SQL Batch Parsing Time: 0.105 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1382,7 +1382,7 @@ Query Text: EXEC    p_recomp_33 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_33_pkey on tb_recomp_33
-              Index Cond: (c33 = 0)
+              Index Cond: (c33 = $1)
   Query Text: select * from tb_recomp_33 where c33 = 0
   ->  Gather
         Workers Planned: 1
@@ -1395,7 +1395,7 @@ Query Text: EXEC    p_recomp_33 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.065 ms
 ~~END~~
 
 --- tb_recomp_33 with RECOMPILE: index scan for paramtrized stmt, bitmap scan for non-param stmt  ----
@@ -1410,7 +1410,7 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_33_pkey on tb_recomp_33
-              Index Cond: (c33 = 0)
+              Index Cond: (c33 = $1)
   Query Text: select * from tb_recomp_33 where c33 = 0
   ->  Gather
         Workers Planned: 1
@@ -1423,7 +1423,7 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.076 ms
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1584,7 +1584,7 @@ Query Text: EXEC    p_recomp_41 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-              Index Cond: (c41 = 0)
+              Index Cond: (c41 = $1)
   Query Text: select * from tb_recomp_41 where c41 = 0
   ->  Gather
         Workers Planned: 1
@@ -1597,7 +1597,7 @@ Query Text: EXEC    p_recomp_61 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-              Index Cond: (c61 = 0)
+              Index Cond: (c61 = $1)
   Query Text: select * from tb_recomp_61 where c61 = 0
   ->  Gather
         Workers Planned: 1
@@ -1608,7 +1608,7 @@ Query Text: EXEC    p_recomp_61 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.213 ms
+Babelfish T-SQL Batch Parsing Time: 0.146 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1647,9 +1647,9 @@ Query Text: EXEC    p_recomp_41 0
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_41
-              Recheck Cond: (c41 = 0)
+              Recheck Cond: (c41 = $1)
               ->  Bitmap Index Scan on tb_recomp_41_pkey
-                    Index Cond: (c41 = 0)
+                    Index Cond: (c41 = $1)
   Query Text: select * from tb_recomp_41 where c41 = 0
   ->  Gather
         Workers Planned: 1
@@ -1662,9 +1662,9 @@ Query Text: EXEC    p_recomp_61 0
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_61
-              Recheck Cond: (c61 = 0)
+              Recheck Cond: (c61 = $1)
               ->  Bitmap Index Scan on tb_recomp_61_pkey
-                    Index Cond: (c61 = 0)
+                    Index Cond: (c61 = $1)
   Query Text: select * from tb_recomp_61 where c61 = 0
   ->  Gather
         Workers Planned: 1
@@ -1675,7 +1675,7 @@ Query Text: EXEC    p_recomp_61 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.147 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1696,9 +1696,9 @@ Query Text: EXEC    p_recomp_41 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_41
-              Recheck Cond: (c41 = 0)
+              Recheck Cond: (c41 = $1)
               ->  Bitmap Index Scan on tb_recomp_41_pkey
-                    Index Cond: (c41 = 0)
+                    Index Cond: (c41 = $1)
   Query Text: select * from tb_recomp_41 where c41 = 0
   ->  Gather
         Workers Planned: 1
@@ -1711,9 +1711,9 @@ Query Text: EXEC    p_recomp_61 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_61
-              Recheck Cond: (c61 = 0)
+              Recheck Cond: (c61 = $1)
               ->  Bitmap Index Scan on tb_recomp_61_pkey
-                    Index Cond: (c61 = 0)
+                    Index Cond: (c61 = $1)
   Query Text: select * from tb_recomp_61 where c61 = 0
   ->  Gather
         Workers Planned: 1
@@ -1724,7 +1724,7 @@ Query Text: EXEC    p_recomp_61 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.206 ms
+Babelfish T-SQL Batch Parsing Time: 0.238 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1763,7 +1763,7 @@ Query Text: EXEC    p_recomp_41 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-              Index Cond: (c41 = 0)
+              Index Cond: (c41 = $1)
   Query Text: select * from tb_recomp_41 where c41 = 0
   ->  Gather
         Workers Planned: 1
@@ -1776,7 +1776,7 @@ Query Text: EXEC    p_recomp_61 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-              Index Cond: (c61 = 0)
+              Index Cond: (c61 = $1)
   Query Text: select * from tb_recomp_61 where c61 = 0
   ->  Gather
         Workers Planned: 1
@@ -1787,7 +1787,7 @@ Query Text: EXEC    p_recomp_61 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1808,7 +1808,7 @@ Query Text: EXEC    p_recomp_41 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-              Index Cond: (c41 = 0)
+              Index Cond: (c41 = $1)
   Query Text: select * from tb_recomp_41 where c41 = 0
   ->  Gather
         Workers Planned: 1
@@ -1821,7 +1821,7 @@ Query Text: EXEC    p_recomp_61 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_61_pkey on tb_recomp_61
-              Index Cond: (c61 = 0)
+              Index Cond: (c61 = $1)
   Query Text: select * from tb_recomp_61 where c61 = 0
   ->  Gather
         Workers Planned: 1
@@ -1832,7 +1832,7 @@ Query Text: EXEC    p_recomp_61 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.116 ms
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2254,7 +2254,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-                Index Cond: (c12 = 0)
+                Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2267,7 +2267,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-                Index Cond: (c12 = 0)
+                Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2280,7 +2280,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-                Index Cond: (c41 = 0)
+                Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2293,7 +2293,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-                Index Cond: (c41 = 0)
+                Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2306,7 +2306,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-                Index Cond: (c41 = 0)
+                Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2317,7 +2317,7 @@ Query Text: EXEC    p_recomp_51 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2380,9 +2380,9 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_12
-                Recheck Cond: (c12 = 0)
+                Recheck Cond: (c12 = $1)
                 ->  Bitmap Index Scan on tb_recomp_12_pkey
-                      Index Cond: (c12 = 0)
+                      Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2395,9 +2395,9 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_12
-                Recheck Cond: (c12 = 0)
+                Recheck Cond: (c12 = $1)
                 ->  Bitmap Index Scan on tb_recomp_12_pkey
-                      Index Cond: (c12 = 0)
+                      Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2410,9 +2410,9 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_41
-                Recheck Cond: (c41 = 0)
+                Recheck Cond: (c41 = $1)
                 ->  Bitmap Index Scan on tb_recomp_41_pkey
-                      Index Cond: (c41 = 0)
+                      Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2425,9 +2425,9 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_41
-                Recheck Cond: (c41 = 0)
+                Recheck Cond: (c41 = $1)
                 ->  Bitmap Index Scan on tb_recomp_41_pkey
-                      Index Cond: (c41 = 0)
+                      Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2440,9 +2440,9 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_41
-                Recheck Cond: (c41 = 0)
+                Recheck Cond: (c41 = $1)
                 ->  Bitmap Index Scan on tb_recomp_41_pkey
-                      Index Cond: (c41 = 0)
+                      Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2453,7 +2453,7 @@ Query Text: EXEC    p_recomp_51 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.111 ms
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2473,9 +2473,9 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Bitmap Heap Scan on tb_recomp_51
-              Recheck Cond: (c51 = 0)
+              Recheck Cond: (c51 = $1)
               ->  Bitmap Index Scan on tb_recomp_51_pkey
-                    Index Cond: (c51 = 0)
+                    Index Cond: (c51 = $1)
   Query Text: select * from tb_recomp_51 where c51 = 0
   ->  Gather
         Workers Planned: 1
@@ -2501,9 +2501,9 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_12
-                Recheck Cond: (c12 = 0)
+                Recheck Cond: (c12 = $1)
                 ->  Bitmap Index Scan on tb_recomp_12_pkey
-                      Index Cond: (c12 = 0)
+                      Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2516,9 +2516,9 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_12
-                Recheck Cond: (c12 = 0)
+                Recheck Cond: (c12 = $1)
                 ->  Bitmap Index Scan on tb_recomp_12_pkey
-                      Index Cond: (c12 = 0)
+                      Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2531,9 +2531,9 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_41
-                Recheck Cond: (c41 = 0)
+                Recheck Cond: (c41 = $1)
                 ->  Bitmap Index Scan on tb_recomp_41_pkey
-                      Index Cond: (c41 = 0)
+                      Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2546,9 +2546,9 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_41
-                Recheck Cond: (c41 = 0)
+                Recheck Cond: (c41 = $1)
                 ->  Bitmap Index Scan on tb_recomp_41_pkey
-                      Index Cond: (c41 = 0)
+                      Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2561,9 +2561,9 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Bitmap Heap Scan on tb_recomp_41
-                Recheck Cond: (c41 = 0)
+                Recheck Cond: (c41 = $1)
                 ->  Bitmap Index Scan on tb_recomp_41_pkey
-                      Index Cond: (c41 = 0)
+                      Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2574,7 +2574,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.104 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2638,7 +2638,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-                Index Cond: (c12 = 0)
+                Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2651,7 +2651,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-                Index Cond: (c12 = 0)
+                Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2664,7 +2664,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-                Index Cond: (c41 = 0)
+                Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2677,7 +2677,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-                Index Cond: (c41 = 0)
+                Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2690,7 +2690,7 @@ Query Text: EXEC    p_recomp_51 0
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-                Index Cond: (c41 = 0)
+                Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2701,7 +2701,7 @@ Query Text: EXEC    p_recomp_51 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.126 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2722,7 +2722,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_recomp_51_pkey on tb_recomp_51
-              Index Cond: (c51 = 0)
+              Index Cond: (c51 = $1)
   Query Text: select * from tb_recomp_51 where c51 = 0
   ->  Gather
         Workers Planned: 1
@@ -2748,7 +2748,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-                Index Cond: (c12 = 0)
+                Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2761,7 +2761,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_12_pkey on tb_recomp_12
-                Index Cond: (c12 = 0)
+                Index Cond: (c12 = $1)
     Query Text: select * from tb_recomp_12 where c12 = 0
     ->  Gather
           Workers Planned: 1
@@ -2774,7 +2774,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-                Index Cond: (c41 = 0)
+                Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2787,7 +2787,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-                Index Cond: (c41 = 0)
+                Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2800,7 +2800,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
           Workers Planned: 1
           Single Copy: true
           ->  Index Scan using tb_recomp_41_pkey on tb_recomp_41
-                Index Cond: (c41 = 0)
+                Index Cond: (c41 = $1)
     Query Text: select * from tb_recomp_41 where c41 = 0
     ->  Gather
           Workers Planned: 1
@@ -2811,7 +2811,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 set babelfish_showplan_all off

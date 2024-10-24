@@ -223,6 +223,8 @@ SET @point1 = geometry::Point(22.34900, -47.65100, 4326);;
 SET @point2 = 'Test_String';
 SELECT @point1.STDistance(@point2);
 Go
+~~START~~
+float
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: parse error - invalid geometry)~~
@@ -2314,6 +2316,8 @@ SET @point1 = geography::Point(22.34900, -47.65100, 4326);
 SET @point2 = 'Test_String';
 SELECT @point2.STDistance(@point1);
 Go
+~~START~~
+float
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: parse error - invalid geometry)~~

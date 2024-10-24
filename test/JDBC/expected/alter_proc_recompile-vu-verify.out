@@ -176,7 +176,7 @@ Query Text: EXEC    p_alter_recomp_01 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.150 ms
+Babelfish T-SQL Batch Parsing Time: 0.196 ms
 ~~END~~
 
 execute p_alter_recomp_02 0  -- created with recompile
@@ -186,12 +186,12 @@ text
 Query Text: EXEC    p_alter_recomp_02 0
   Query Text: select 'p_alter_recomp_02', * from tb_alter_recomp_1 where c1 = "@p"
   ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
-        Index Cond: (c1 = 0)
+        Index Cond: (c1 = $1)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.079 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 execute p_alter_recomp_11 0  -- altered with recompile; for MVU test
@@ -201,12 +201,12 @@ text
 Query Text: EXEC    p_alter_recomp_11 0
   Query Text: select 'p_alter_recomp_11', c1 as col1, x as col2 from tb_alter_recomp_1 where c1 = "@p"
   ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
-        Index Cond: (c1 = 0)
+        Index Cond: (c1 = $1)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.075 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 execute p_alter_recomp_12 0  -- altered without recompile; for MVU test
@@ -221,7 +221,7 @@ Query Text: EXEC    p_alter_recomp_12 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.075 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -244,7 +244,7 @@ Query Text: EXEC    p_alter_recomp_01 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.066 ms
+Babelfish T-SQL Batch Parsing Time: 0.072 ms
 ~~END~~
 
 execute p_alter_recomp_02 0  -- created with recompile
@@ -254,12 +254,12 @@ text
 Query Text: EXEC    p_alter_recomp_02 0
   Query Text: select 'p_alter_recomp_02', * from tb_alter_recomp_1 where c1 = "@p"
   ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
-        Index Cond: (c1 = 0)
+        Index Cond: (c1 = $1)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.073 ms
+Babelfish T-SQL Batch Parsing Time: 0.077 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -359,12 +359,12 @@ text
 Query Text: EXEC    p_alter_recomp_01 0
   Query Text: select 'p_alter_recomp_01', c1 as col1, x as col2 from tb_alter_recomp_1 where c1 = "@p"
   ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
-        Index Cond: (c1 = 0)
+        Index Cond: (c1 = $1)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.067 ms
+Babelfish T-SQL Batch Parsing Time: 0.081 ms
 ~~END~~
 
 execute p_alter_recomp_02 0  -- altered without recompile
@@ -379,7 +379,7 @@ Query Text: EXEC    p_alter_recomp_02 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.075 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 set babelfish_showplan_all off

@@ -345,7 +345,6 @@ static char *tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 static text *tsql_get_expr_worker(text *expr, Oid relid, const char *relname,
 								  int prettyFlags);
 static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
-static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 int			tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 										  bool print_table_args, bool print_defaults, int **typmod_arr_arg, bool *has_tvp);
 char	   *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
@@ -2793,7 +2792,7 @@ find_recursive_union(deparse_namespace *dpns, WorkTableScan *wtscan)
  *
  * Returns a palloc'd string.
  */
-static char *
+char *
 tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 {
 	HeapTuple	tuple;

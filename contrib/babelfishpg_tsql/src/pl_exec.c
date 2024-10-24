@@ -62,7 +62,6 @@
 #include "guc.h"
 #include "multidb.h"
 #include "session.h"
-#include "guc.h"
 #include "catalog.h"
 
 uint64		rowcount_var = 0;
@@ -7858,12 +7857,14 @@ pltsql_param_fetch(ParamListInfo params,
 		}
 	}
 
+	/* Let extension to set value of param dynamically during execution */
+	prm->pflags = 0;
+
 	/* Return "no such parameter" if not ok */
 	if (!ok)
 	{
 		prm->value = (Datum) 0;
 		prm->isnull = true;
-		prm->pflags = 0;
 		prm->ptype = InvalidOid;
 		return prm;
 	}
@@ -7872,8 +7873,6 @@ pltsql_param_fetch(ParamListInfo params,
 	exec_eval_datum(estate, datum,
 					&prm->ptype, &prmtypmod,
 					&prm->value, &prm->isnull);
-	/* We can always mark params as "const" for executor's purposes */
-	prm->pflags = PARAM_FLAG_CONST;
 
 	/*
 	 * If it's a read/write expanded datum, convert reference to read-only,
@@ -10422,4 +10421,33 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 	}
 	PG_END_TRY();
+}
+
+PG_FUNCTION_INFO_V1(pltsql_assign_var);
+
+Datum
+pltsql_assign_var(PG_FUNCTION_ARGS)
+{
+	int dno = PG_GETARG_INT32(0);
+	Datum data = PG_GETARG_DATUM(1);
+	Oid valtype = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	bool isNull = PG_ARGISNULL(1);
+	int32 valtypmod = -1;
+	PLtsql_datum *target;
+	MemoryContext oldcontext;
+
+	PLtsql_execstate *estate = get_current_tsql_estate();
+	Assert(estate != NULL);
+	oldcontext = MemoryContextSwitchTo(estate->datum_context);
+	target = estate->datums[dno];
+
+	/* we will reuse exec_assign_value function here provided in pl_exec.c */
+	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	if (isNull)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(data);
 }

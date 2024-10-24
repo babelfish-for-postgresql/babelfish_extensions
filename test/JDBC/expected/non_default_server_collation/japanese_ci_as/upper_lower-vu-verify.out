@@ -530,6 +530,8 @@ DECLARE @myid sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_
 SELECT UPPER(@myid)
 SELECT LOWER(@myid)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of upper function.)~~
@@ -539,6 +541,8 @@ DECLARE @myid xml = CAST ('<body/>' AS xml)
 SELECT UPPER(@myid)
 SELECT LOWER(@myid)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type xml is invalid for argument 1 of upper function.)~~
@@ -548,6 +552,8 @@ DECLARE @myid geometry = geometry::STGeomFromText('POINT (1 2)', 0)
 SELECT UPPER(@myid)
 SELECT LOWER(@myid)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geometry is invalid for argument 1 of upper function.)~~
@@ -838,6 +844,8 @@ adjnfjh
 declare @b dbo.MyUDT = CAST('scsdc' AS dbo.MyUDT)
 select upper(@b)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type image is invalid for argument 1 of upper function.)~~
