@@ -43,6 +43,9 @@
 '14.13':
   engine_branch: BABEL_2_10_STABLE__PG_14_13
   extension_branch: BABEL_2_10_STABLE
+'14.14':
+  engine_branch: BABEL_2_11_STABLE__PG_14_14
+  extension_branch: BABEL_2_11_STABLE
 'source.latest':
   engine_branch: latest
   extension_branch: latest
