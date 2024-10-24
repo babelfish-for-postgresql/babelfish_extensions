@@ -184,13 +184,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jones'
 Bitmap Heap Scan on testing4  (cost=11.40..31.15 rows=3 width=32)
-  Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text COLLATE "default")
+  Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.444 ms
+Babelfish T-SQL Batch Parsing Time: 9.804 ms
 ~~END~~
 
 
@@ -200,13 +200,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE 'Jon%'
 Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text) AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text) AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 
@@ -216,13 +216,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jone_'
 Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text) AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text) AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.131 ms
+Babelfish T-SQL Batch Parsing Time: 0.153 ms
 ~~END~~
 
 
@@ -232,13 +232,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE '_one_'
 Bitmap Heap Scan on testing4  (cost=11.40..31.15 rows=5 width=32)
-  Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text COLLATE "default")
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.130 ms
+Babelfish T-SQL Batch Parsing Time: 0.153 ms
 ~~END~~
 
 
@@ -248,13 +248,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE '%on%s'
 Bitmap Heap Scan on testing4  (cost=11.41..31.16 rows=26 width=32)
-  Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text COLLATE "default")
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.139 ms
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 
@@ -265,13 +265,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ab%'
 Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'ab%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'ab'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'ab?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'ab%'::text) AND ((remove_accents_internal((c1)::text))::text >= 'ab'::text) AND ((remove_accents_internal((c1)::text))::text < 'ab?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.148 ms
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äb%';
@@ -280,13 +280,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE 'äb%'
 Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'ab%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'ab'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'ab?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'ab%'::text) AND ((remove_accents_internal((c1)::text))::text >= 'ab'::text) AND ((remove_accents_internal((c1)::text))::text < 'ab?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.138 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äḃĆ_';
@@ -295,13 +295,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ä??_'
 Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'abC_'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'abC'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'abC?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'abC_'::text) AND ((remove_accents_internal((c1)::text))::text >= 'abC'::text) AND ((remove_accents_internal((c1)::text))::text < 'abC?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.141 ms
+Babelfish T-SQL Batch Parsing Time: 0.166 ms
 ~~END~~
 
 
@@ -312,13 +312,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jones'
 Bitmap Heap Scan on testing4  (cost=11.56..31.31 rows=647 width=32)
-  Filter: ((remove_accents_internal((c1)::text))::text <> 'jones'::text COLLATE "default")
+  Filter: ((remove_accents_internal((c1)::text))::text <> 'jones'::text)
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.254 ms
+Babelfish T-SQL Batch Parsing Time: 1.456 ms
 ~~END~~
 
 
@@ -328,13 +328,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jone%'
 Bitmap Heap Scan on testing4  (cost=11.56..37.81 rows=648 width=32)
-  Filter: (((remove_accents_internal((c1)::text))::text !~~* 'jone%'::text COLLATE "default") OR ((remove_accents_internal((c1)::text))::text < 'jone'::text COLLATE "default") OR ((remove_accents_internal((c1)::text))::text >= 'jone?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text !~~* 'jone%'::text) OR ((remove_accents_internal((c1)::text))::text < 'jone'::text) OR ((remove_accents_internal((c1)::text))::text >= 'jone?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.207 ms
+Babelfish T-SQL Batch Parsing Time: 0.158 ms
 ~~END~~
 
 
@@ -344,13 +344,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'ä%'
 Bitmap Heap Scan on testing4  (cost=11.49..37.74 rows=361 width=32)
-  Filter: (((remove_accents_internal((c1)::text))::text !~~* 'a%'::text COLLATE "default") OR ((remove_accents_internal((c1)::text))::text < 'a'::text COLLATE "default") OR ((remove_accents_internal((c1)::text))::text >= 'a?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text !~~* 'a%'::text) OR ((remove_accents_internal((c1)::text))::text < 'a'::text) OR ((remove_accents_internal((c1)::text))::text >= 'a?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.143 ms
+Babelfish T-SQL Batch Parsing Time: 0.164 ms
 ~~END~~
 
 
@@ -362,13 +362,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE '\%ones'
 Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* '\%ones'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= '\'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < '\?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* '\%ones'::text) AND ((remove_accents_internal((c1)::text))::text >= '\'::text) AND ((remove_accents_internal((c1)::text))::text < '\?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.149 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 
@@ -378,13 +378,13 @@ GO
 text
 Query Text: select c1 from testing4 where c1 LIKE '\_ones'
 Bitmap Heap Scan on testing4  (cost=11.40..37.65 rows=1 width=32)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* '\_ones'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= '\'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < '\?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* '\_ones'::text) AND ((remove_accents_internal((c1)::text))::text >= '\'::text) AND ((remove_accents_internal((c1)::text))::text < '\?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.131 ms
+Babelfish T-SQL Batch Parsing Time: 0.152 ms
 ~~END~~
 
 
@@ -510,12 +510,12 @@ GO
 text
 Query Text: select * from testing5 where c1 LIKE 'jo%'
 Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=7 width=32)
-  Filter: ((c1)::text ~~ 'jo%'::text COLLATE "default")
+  Filter: ((c1)::text ~~ 'jo%'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -551,12 +551,12 @@ GO
 text
 Query Text: SELECT * from testing5 where c1 like ''
 Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=7 width=32)
-  Filter: ((c1)::text ~~ ''::text COLLATE "default")
+  Filter: ((c1)::text ~~ ''::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.112 ms
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -580,7 +580,7 @@ Result  (cost=0.00..0.00 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.112 ms
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -602,12 +602,12 @@ GO
 text
 Query Text: SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%'
 Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
-  Filter: (((c1)::text ~~* 'jo%'::text COLLATE "default") AND ((c1)::text >= 'jo'::text COLLATE "default") AND ((c1)::text < 'jo?'::text))
+  Filter: (((c1)::text ~~* 'jo%'::text) AND ((c1)::text >= 'jo'::text) AND ((c1)::text < 'jo?'::text))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.130 ms
+Babelfish T-SQL Batch Parsing Time: 0.156 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -628,12 +628,12 @@ GO
 text
 Query Text: SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%'
 Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
-  Filter: (((c1)::text ~~* 'jo%'::text COLLATE "default") AND ((c1)::text >= 'jo'::text COLLATE "default") AND ((c1)::text < 'jo?'::text))
+  Filter: (((c1)::text ~~* 'jo%'::text) AND ((c1)::text >= 'jo'::text) AND ((c1)::text < 'jo?'::text))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Babelfish T-SQL Batch Parsing Time: 0.157 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;

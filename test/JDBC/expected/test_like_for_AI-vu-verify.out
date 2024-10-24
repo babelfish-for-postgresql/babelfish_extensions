@@ -5470,12 +5470,12 @@ GO
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jones'
 Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text COLLATE "default")
+  Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.432 ms
+Babelfish T-SQL Batch Parsing Time: 0.463 ms
 ~~END~~
 
 
@@ -5485,12 +5485,12 @@ GO
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'Jon%'
 Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text) AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text) AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.200 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -5500,12 +5500,12 @@ GO
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jone_'
 Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
+  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text) AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text) AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.143 ms
+Babelfish T-SQL Batch Parsing Time: 0.199 ms
 ~~END~~
 
 
@@ -5515,12 +5515,12 @@ GO
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE '_one_'
 Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text COLLATE "default")
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.135 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -5530,12 +5530,12 @@ GO
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE '%on%s'
 Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-  Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text COLLATE "default")
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.135 ms
+Babelfish T-SQL Batch Parsing Time: 0.157 ms
 ~~END~~
 
 
@@ -5551,7 +5551,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.177 ms
+Babelfish T-SQL Batch Parsing Time: 0.193 ms
 ~~END~~
 
 
@@ -5566,7 +5566,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.155 ms
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -5581,7 +5581,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.136 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -5596,7 +5596,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.134 ms
+Babelfish T-SQL Batch Parsing Time: 0.157 ms
 ~~END~~
 
 
@@ -5611,7 +5611,7 @@ Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e813
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.134 ms
+Babelfish T-SQL Batch Parsing Time: 0.157 ms
 ~~END~~
 
 

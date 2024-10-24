@@ -5473,12 +5473,12 @@ Gather  (cost=0.13..12.23 rows=1 width=6)
   Workers Planned: 1
   Single Copy: true
   ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text COLLATE "default")
+        Filter: ((remove_accents_internal((c1)::text))::text = 'jones'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.418 ms
+Babelfish T-SQL Batch Parsing Time: 0.465 ms
 ~~END~~
 
 
@@ -5491,12 +5491,12 @@ Gather  (cost=0.13..12.28 rows=1 width=6)
   Workers Planned: 1
   Single Copy: true
   ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-        Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
+        Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text) AND ((remove_accents_internal((c1)::text))::text >= 'Jon'::text) AND ((remove_accents_internal((c1)::text))::text < 'Jon?'::text))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.195 ms
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
 ~~END~~
 
 
@@ -5509,12 +5509,12 @@ Gather  (cost=0.13..12.28 rows=1 width=6)
   Workers Planned: 1
   Single Copy: true
   ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-        Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text COLLATE "default") AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
+        Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text) AND ((remove_accents_internal((c1)::text))::text >= 'jone'::text) AND ((remove_accents_internal((c1)::text))::text < 'jone?'::text))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
+Babelfish T-SQL Batch Parsing Time: 0.157 ms
 ~~END~~
 
 
@@ -5527,12 +5527,12 @@ Gather  (cost=0.13..12.23 rows=1 width=6)
   Workers Planned: 1
   Single Copy: true
   ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text COLLATE "default")
+        Filter: ((remove_accents_internal((c1)::text))::text ~~* '_one_'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.168 ms
+Babelfish T-SQL Batch Parsing Time: 0.156 ms
 ~~END~~
 
 
@@ -5545,12 +5545,12 @@ Gather  (cost=0.13..12.23 rows=1 width=6)
   Workers Planned: 1
   Single Copy: true
   ->  Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
-        Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text COLLATE "default")
+        Filter: ((remove_accents_internal((c1)::text))::text ~~* '%on%s'::text)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.139 ms
+Babelfish T-SQL Batch Parsing Time: 0.156 ms
 ~~END~~
 
 
@@ -5569,7 +5569,7 @@ Gather  (cost=0.13..12.23 rows=1 width=6)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.179 ms
+Babelfish T-SQL Batch Parsing Time: 0.193 ms
 ~~END~~
 
 
@@ -5587,7 +5587,7 @@ Gather  (cost=0.13..12.23 rows=1 width=6)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.140 ms
+Babelfish T-SQL Batch Parsing Time: 0.158 ms
 ~~END~~
 
 
@@ -5605,7 +5605,7 @@ Gather  (cost=0.13..12.23 rows=1 width=6)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.140 ms
+Babelfish T-SQL Batch Parsing Time: 0.157 ms
 ~~END~~
 
 
@@ -5623,7 +5623,7 @@ Gather  (cost=0.13..12.23 rows=1 width=6)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.137 ms
+Babelfish T-SQL Batch Parsing Time: 0.155 ms
 ~~END~~
 
 
@@ -5641,7 +5641,7 @@ Gather  (cost=0.13..12.23 rows=1 width=6)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.153 ms
+Babelfish T-SQL Batch Parsing Time: 0.156 ms
 ~~END~~
 
 
