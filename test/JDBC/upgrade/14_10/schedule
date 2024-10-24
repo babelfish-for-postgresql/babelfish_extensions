@@ -55,7 +55,7 @@ BABEL-3234
 BABEL-3402
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
-routines_definition_before_16_5
+routines_definition_before_16_5_or_15_9
 column_domain_usage
 constraint_column_usage
 select-strip-parens-before-15_5
@@ -281,7 +281,7 @@ msdb-dbo-syspolicy_system_health_state
 dateadd_internal_df
 sys-all_columns
 sys-all_columns-dep
-sys-all_sql_modules_before_16_5
+sys-all_sql_modules_before_16_5_or_15_9
 sys-assembly_modules
 sys-change_tracking_databases
 sys-change_tracking_tables
@@ -330,7 +330,7 @@ sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
 sys-system_sql_modules
-sys-sql_modules_before_16_5
+sys-sql_modules_before_16_5_or_15_9
 sys-table_types
 sys-tables
 sys-triggers
@@ -391,12 +391,12 @@ BABEL_SCHEMATA
 isc-schemata-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
-bbf_view_def_before_16_5
+bbf_view_def_before_16_5_or_15_9
 BABEL-3802
 BABEL-3914
 BABEL_OBJECT_NAME
 sys-systypes-before-16-2
-BABEL_OBJECT_DEFINITION_before_16_5
+BABEL_OBJECT_DEFINITION_before_16_5_or_15_9
 Test-sp_rename
 Test-sp_rename-dep
 BABEL-3657
@@ -432,7 +432,7 @@ permission_restrictions_from_pg
 BABEL-4529-before-15_6-or-14_11
 BABEL-730-before-15_6-or-16_1
 GRANT_SCHEMA-before-15_7-16_3
-babel-4475_before_16_5
+babel-4475_before_16_5_or_15_9
 babel-3254
 babel-4517
 BABEL-4815
@@ -463,7 +463,7 @@ concat-before-15_9-or-16_5
 concat_ws-before-15_9-or-16_5
 space
 binary-datatype-operators
-BABEL-5059_before_16_5
+BABEL-5059_before_16_5_or_15_9
 cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
