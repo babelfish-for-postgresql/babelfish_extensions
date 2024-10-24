@@ -3331,10 +3331,11 @@ add_rewritten_query_fragment_for_select_expression(PLtsql_expr_query_mutator *mu
 	TSqlParser::ExpressionContext *ectx = (TSqlParser::ExpressionContext *) mutator->ctx;
 	for (auto &entry : rewritten_query_fragment)
 	{
-		if (entry.first > ectx->stop->getStopIndex())
-			break;
-		mutator->add(entry.first, entry.second.first, entry.second.second);
-		keysToRemove.push_back(entry.first);
+		if (entry.first >= ectx->start->getStartIndex() && entry.first <= ectx->stop->getStopIndex())
+		{
+			mutator->add(entry.first, entry.second.first, entry.second.second);
+			keysToRemove.push_back(entry.first);
+		}
 	}
 	for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
 	keysToRemove.clear();
