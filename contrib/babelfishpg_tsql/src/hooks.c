@@ -5276,56 +5276,149 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 }
 
 
-static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
+static inline bool
+is_integer_type(Oid type)
+{
+	return type == INT2OID || type == INT4OID || type == INT8OID;
+}
+
+static bool
+lower_precision_than(Oid int_type1, Oid int_type2)
+{
+	Assert(is_integer_type(int_type1));
+	Assert(is_integer_type(int_type2));
+
+	switch (int_type1)
+	{
+		case INT2OID:
+			return int_type2 == INT4OID || int_type2 == INT8OID;
+		case INT4OID:
+			return int_type2 == INT8OID;
+		default:
+			Assert(int_type1 == INT8OID);
+			return false;
+	}
+}
+
+static Node *
+optimize_explicit_cast(ParseState *pstate, Node *node)
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return node;
 	if (node == NULL)
 		return NULL;
-	if (IsA(node, FuncExpr))
+
+	if (IsA(node, FuncExpr) &&
+		((FuncExpr *) node)->funcformat == COERCE_EXPLICIT_CAST)
 	{
-		FuncExpr   *f = (FuncExpr *) node;
-		if (f->funcformat == COERCE_EXPLICIT_CAST){
-			Node* arg = (Node*)linitial(f->args);
-			if (nodeTag(arg) == T_Var && 
-			   ((Var*) arg)->vartype == INT4OID && 
-			   f->funcresulttype == INT8OID)
-				return optimize_explicit_cast(pstate, linitial(f->args));
-		}
+		Node *original_node = node;
+		/*
+		 * Record the integer result type with lowest precision during CAST
+		 * process. If the original SQL casts a variable of integer type to a
+		 * type with less precision, removing the CASE funcition will lead to
+		 * different results. Initial value as highest precision integer type.
+		 */
+		Oid lowest_precision_type = INT8OID;
+		/*
+		 * Deal with nested CAST functions.
+		 * For example: CAST((CAST col_int AS BIGINT) AS INT) => col_int
+		 */
+		do {
+			FuncExpr *f = (FuncExpr *) node;
+
+			if (!is_integer_type(f->funcresulttype))
+				break;
+
+			if (lower_precision_than(f->funcresulttype, lowest_precision_type))
+				lowest_precision_type = f->funcresulttype;
+
+			node = (Node *) linitial(f->args);
+
+		} while (IsA(node, FuncExpr) &&
+                 ((FuncExpr *) node)->funcformat == COERCE_EXPLICIT_CAST);
+
+		/*
+		 * Casting a integer variable to a type with higher precision is
+		 * unnecessary. Optimizer will figure out the appropriate operator to
+		 * calculate without loss of precision.
+		 */
+		if (IsA(node, Var) && is_integer_type(((Var *) node)->vartype) &&
+			!lower_precision_than(lowest_precision_type,
+								  ((Var *) node)->vartype))
+			return node;
+		else
+			return original_node;
 	}
 	else if (IsA(node, BoolExpr))
 	{
 		BoolExpr *r = (BoolExpr *) node;
 		ListCell *l;
-		foreach (l , r->args)
+		foreach (l, r->args)
 		{
-			optimize_explicit_cast(pstate, (Node*)lfirst(l));
+			Node *new_node = optimize_explicit_cast(pstate, (Node*)lfirst(l));
+			if (lfirst(l) != new_node) lfirst(l) = new_node;
 		}
 	}
 	else if (IsA(node, OpExpr))
 	{
 		OpExpr *opExpr = (OpExpr*) node;
-		Form_pg_operator form;
-		HeapTuple	tuple;
-		Node* node1 = optimize_explicit_cast(pstate, linitial(opExpr->args));
-		Node* result = NULL;
-		if (node1 != linitial(opExpr->args))
+		Node *first_old_arg, *fist_new_arg, *second_old_arg, *second_new_arg;
+		Oid oprnamespace;
+		char *opname;
+
 		{
-			char	   *opname;
+			Form_pg_operator optup;
+			HeapTuple tp = SearchSysCache1(OPEROID,
+										   ObjectIdGetDatum(opExpr->opno));
 
-			tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(opExpr->opno));
-			if (!HeapTupleIsValid(tuple))
-				return node1; // no need to error out in here, stop transform and quite, keep the original node
-			form = (Form_pg_operator) GETSTRUCT(tuple);
+			if (!HeapTupleIsValid(tp))
+				return node;
 
-			opname = NameStr(form->oprname);
-			if (strcmp(opname, "=") == 0)
-			{
-				result =(Node*)make_op(pstate, list_make1(makeString(opname)), node1, lsecond(opExpr->args), pstate->p_last_srf, -1);
-			}
-			ReleaseSysCache(tuple);
-			if (result)
-				return result;
+			optup = (Form_pg_operator) GETSTRUCT(tp);
+			oprnamespace = optup->oprnamespace;
+			opname = pstrdup(NameStr(optup->oprname));
+			ReleaseSysCache(tp);
+		}
+
+		/*
+		 * Only when the operators are built-in operators, we assume there must
+		 * be appropriate operators for the arguments of new type after removing
+		 * CAST functions. Don't do this optimization for user-defined operator.
+		 */
+		if (!IsCatalogNamespace(oprnamespace))
+			return node;
+
+		/*
+		 * Only the following comparsion operators could make use of index after
+		 * removing unnecessary CAST function, which are our targets.
+		 */
+		if (strlen(opname) == 1)
+		{
+			if (opname[0] != '=' && opname[0] != '<' && opname[0] != '>')
+				return node;
+		}
+		else
+		{
+			if (strncmp(opname, ">=", 2) != 0 && strncmp(opname, "<=", 2) != 0)
+				return node;
+		}
+
+		Assert(list_length(opExpr->args) == 2);
+		first_old_arg = linitial(opExpr->args);
+		fist_new_arg = optimize_explicit_cast(pstate, first_old_arg);
+
+		second_old_arg = lsecond(opExpr->args);
+		second_new_arg = optimize_explicit_cast(pstate, second_old_arg);
+
+		/*
+		 * Some of the old nodes have been optimized to new nodes. Make a new
+		 * operator according to the new arguments.
+		 */
+		if (first_old_arg != fist_new_arg || second_old_arg != second_new_arg)
+		{
+			return (Node *)make_op(pstate, list_make1(makeString(opname)),
+								   fist_new_arg, second_new_arg,
+								   pstate->p_last_srf, -1);
 		}
 	}
 	return node;
