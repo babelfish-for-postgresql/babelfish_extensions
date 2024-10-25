@@ -97,17 +97,22 @@ $$;
 DO
 LANGUAGE plpgsql
 $$
-DECLARE securityadmin TEXT;
+DECLARE 
+	existing_server_roles TEXT;
 BEGIN
-    IF EXISTS (
-               SELECT FROM pg_catalog.pg_roles
-               WHERE  rolname = 'securityadmin') 
-        THEN
-            RAISE EXCEPTION 'Role "securityadmin" already exists.';
+    SELECT STRING_AGG(rolname::text, ', ')
+    INTO existing_server_roles FROM pg_catalog.pg_roles
+    WHERE rolname IN ('securityadmin', 'dbcreator');
+        
+    IF existing_server_roles IS NOT NULL THEN
+            RAISE EXCEPTION 'The following role(s) already exist(s): %', existing_server_roles; 
     ELSE
         EXECUTE format('CREATE ROLE securityadmin CREATEROLE INHERIT PASSWORD NULL');
         EXECUTE format('GRANT securityadmin TO bbf_role_admin WITH ADMIN TRUE');
         CALL sys.babel_initialize_logins('securityadmin');
+	EXECUTE format('CREATE ROLE dbcreator CREATEDB INHERIT PASSWORD NULL');
+        EXECUTE format('GRANT dbcreator TO bbf_role_admin WITH ADMIN TRUE');
+        CALL sys.babel_initialize_logins('dbcreator');
     END IF;
 END;
 $$;
@@ -462,7 +467,12 @@ CAST(0 AS INT) AS serveradmin,
 CAST(0 AS INT) AS setupadmin,
 CAST(0 AS INT) AS processadmin,
 CAST(0 AS INT) AS diskadmin,
-CAST(0 AS INT) AS dbcreator,
+CAST(
+    CASE
+        WHEN is_srvrolemember('dbcreator', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS dbcreator,
 CAST(0 AS INT) AS bulkadmin
 FROM sys.server_principals AS Base
 WHERE Base.type in ('S', 'U');
@@ -1582,7 +1592,7 @@ BEGIN
 	 			FROM sys.server_principals
 		 	 	WHERE 
 				pg_catalog.lower(name) = login COLLATE sys.database_default
-				AND type = 'S'));
+				AND type IN ('S', 'R')));
  	
  	IF NOT login_valid THEN
  		RETURN NULL;
@@ -1590,8 +1600,10 @@ BEGIN
     ELSIF role = 'public' COLLATE sys.database_default THEN
     	RETURN 1;
 	
- 	ELSIF role = 'sysadmin' COLLATE sys.database_default OR role = 'securityadmin' COLLATE sys.database_default THEN
-	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER') OR pg_has_role(login::TEXT, 'sysadmin'::TEXT, 'MEMBER'));
+ 	ELSIF role COLLATE sys.database_default IN ('sysadmin', 'securityadmin', 'dbcreator') THEN
+	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER')
+				OR ((login COLLATE sys.database_default NOT IN ('sysadmin', 'securityadmin', 'dbcreator'))
+					AND pg_has_role(login::TEXT, 'sysadmin'::TEXT, 'MEMBER')));
 	    IF has_role THEN
 			RETURN 1;
 		ELSE
@@ -1602,7 +1614,6 @@ BEGIN
             'serveradmin',
             'setupadmin',
             'processadmin',
-            'dbcreator',
             'diskadmin',
             'bulkadmin') THEN 
     	RETURN 0;
@@ -1737,8 +1748,8 @@ BEGIN
 					OR pg_catalog.lower(rolname) = pg_catalog.lower(PG_CATALOG.RTRIM(@srvrolename)))
 					AND type = 'R')
 					OR pg_catalog.lower(PG_CATALOG.RTRIM(@srvrolename)) IN (
-					'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
-					'dbcreator', 'diskadmin', 'bulkadmin')
+					'serveradmin', 'setupadmin', 'processadmin',
+					'diskadmin', 'bulkadmin')
 	BEGIN
 		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
 			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
