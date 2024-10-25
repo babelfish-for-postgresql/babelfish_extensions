@@ -2072,7 +2072,7 @@ check_server_role_and_throw_if_unsupported (const char *serverrole, int position
 					errmsg("Fixed server role '%s' is currently not supported in Babelfish", serverrole),
 										parser_errposition(position)));
 	}
-	else if (!IS_ROLENAME_SYSADMIN(serverrole) && !IS_ROLENAME_SECURITYADMIN(serverrole))
+	else if (!IS_BBF_FIXED_SERVER_ROLE(serverrole))
 	{
 		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("Only fixed server role is supported in ALTER SERVER ROLE statement"),

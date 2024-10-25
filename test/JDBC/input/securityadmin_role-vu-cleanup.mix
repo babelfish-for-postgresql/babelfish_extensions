@@ -32,6 +32,9 @@ go
 drop TRIGGER securityadmin_tggr1
 go
 
+DROP TABLE sadm_sp_helpsrvrolemember_tbl
+GO
+
 drop table securityadmin_tb1
 go
 

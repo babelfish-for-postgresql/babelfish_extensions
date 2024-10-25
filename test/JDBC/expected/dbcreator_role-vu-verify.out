@@ -1,0 +1,1338 @@
+-- tsql
+-- should be 0
+select is_srvrolemember('sysadmin', 'dbcreator')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select is_srvrolemember('securityadmin', 'dbcreator')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select is_srvrolemember('dbcreator', 'sysadmin')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select is_srvrolemember('dbcreator', 'securityadmin')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+alter login dbcreator_login1 with password='123'
+go
+
+alter login no_dbcreator_login1 with password='123'
+go
+
+TRUNCATE TABLE dbc_sp_helpsrvrolemember_tbl
+GO
+
+-- sp_helpsrvrolemember
+INSERT INTO dbc_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'dbcreator'
+GO
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM dbc_sp_helpsrvrolemember_tbl where MemberName like '%dbcreator%'
+GO
+~~START~~
+varchar#!#varchar#!#int
+~~END~~
+
+
+-- make login member of dbcreator
+Alter server role dbcreator add member dbcreator_login1
+go
+
+select * from dbcreator_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%dbcreator_%'
+go
+~~START~~
+varchar#!#varchar
+dbcreator#!#dbcreator_login1
+sysadmin#!#jdbc_user
+~~END~~
+
+
+-- should error out
+create login dbcreator with password = '123'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The Server principal 'dbcreator' already exists)~~
+
+
+-- terminate-tsql-conn
+
+
+-- tsql user=dbcreator_login1 password=123
+
+-- Case 1 - positives 
+-- dbcreator's login privileges
+-- alter server role dbcreator should be allowed
+Alter server role dbcreator add member no_dbcreator_login1
+go
+
+Alter server role dbcreator drop member no_dbcreator_login1
+go
+
+-- create/drop database should be allowed
+drop database dbcreator_db1
+go
+
+create database dbcreator_db;
+go
+
+-- owner should be dbcreator_login1
+SELECT owner AS database_owner FROM sys.babelfish_sysdatabases WHERE name = 'dbcreator_db';
+go
+~~START~~
+varchar
+dbcreator_login1
+~~END~~
+
+
+use dbcreator_db
+go
+
+select current_user
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+create table dbc_t1(a int)
+go
+
+drop table dbc_t1
+go
+
+use master
+go
+
+-- alter database should be allowed
+alter database dbcreator_db modify name=dbcreator_db_1
+go
+
+-- sp_renamedb should be allowed
+EXEC sp_renamedb 'dbcreator_db_1', 'dbcreator_db'
+GO
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+-- transfer ownership to different login
+alter authorization on database::dbcreator_db to no_dbcreator_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_login1 password=123
+-- should not be allowed
+use dbcreator_db
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "dbcreator_login1" is not able to access the database "dbcreator_db" under the current security context)~~
+
+
+EXEC sp_renamedb 'dbcreator_db', 'dbcreator_db_1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to rename the database 'dbcreator_db', the database does not exist, or the database is not in a state that allows access checks.)~~
+
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+use dbcreator_db
+go
+
+create user u1 for login dbcreator_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_login1 password=123
+-- should be allowed
+use dbcreator_db
+go
+
+-- should not be dbo
+select current_user
+go
+~~START~~
+varchar
+u1
+~~END~~
+
+
+use master
+go
+
+EXEC sp_renamedb 'dbcreator_db', 'dbcreator_db_1'
+GO
+
+EXEC sp_renamedb 'dbcreator_db_1', 'dbcreator_db'
+GO
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+
+use dbcreator_db
+go
+
+drop user u1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_login1 password=123
+-- drop database should be allowed
+-- password based login
+drop database dbcreator_db
+go
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+create database dbcreator_db1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=no_dbcreator_login1 password=123
+-- connection should get refused
+use dbcreator_db1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "no_dbcreator_login1" is not able to access the database "dbcreator_db1" under the current security context)~~
+
+
+-- should give permission denied
+Alter server role dbcreator add member no_dbcreator_login1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login no_dbcreator_login1 does not have permission to alter server role)~~
+
+
+Alter server role dbcreator drop member no_dbcreator_login1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login no_dbcreator_login1 does not have permission to alter server role)~~
+
+
+-- terminate-tsql-conn user=no_dbcreator_login1 password=123
+
+-- tsql user=dbcreator_login1 password=123
+-- System objects
+select name, sysadmin, dbcreator from syslogins where name like '%dbcreator%' order by name
+go
+~~START~~
+varchar#!#int#!#int
+dbcreator_login1#!#0#!#1
+~~END~~
+
+
+-- should give permission denied
+EXEC sp_renamedb 'dbcreator_db1', 'dbcreator_db2'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to rename the database 'dbcreator_db1', the database does not exist, or the database is not in a state that allows access checks.)~~
+
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+use dbcreator_db1
+go
+
+grant connect to guest
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_login1 password=123
+-- should be allowed
+EXEC sp_renamedb 'dbcreator_db1', 'dbcreator_db2'
+GO
+
+-- should return 0
+select is_srvrolemember ('sysadmin')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- should return 1
+select is_srvrolemember ('dbcreator')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select is_srvrolemember ('dbcreator', 'dbcreator_login1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- it should be allowed
+drop database dbcreator_db2
+go
+
+-- inside procedure
+exec dbcreator_create_database_p1
+go
+
+exec dbcreator_add_mem_p1
+go
+
+exec dbcreator_drop_mem_p1
+go
+
+exec dbcreator_drop_database_p1
+go
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+-- login is member of both dbcreator as well as sysadmin
+drop user dbcreator_user1
+go
+
+Alter server role sysadmin add member dbcreator_login1
+go
+
+create database dbcreator_db1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_login1 password=123
+-- it should be able to connect to the database
+use dbcreator_db1
+go
+
+-- it should be dbo
+select current_user
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+-- both attribute should be true
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'dbcreator_login1'
+go
+~~START~~
+varchar#!#bit#!#bit
+dbcreator_login1#!#1#!#1
+~~END~~
+
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+-- only member of dbcreator
+alter server role sysadmin drop member dbcreator_login1
+go
+
+create user dbcreator_user1 for login dbcreator_login1
+go
+
+TRUNCATE TABLE dbc_sp_helpsrvrolemember_tbl
+GO
+
+-- sp_helpsrvrolemember
+INSERT INTO dbc_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'dbcreator'
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM dbc_sp_helpsrvrolemember_tbl where MemberName like '%dbcreator%'
+GO
+~~START~~
+varchar#!#varchar#!#int
+dbcreator#!#dbcreator_login1#!#1
+~~END~~
+
+
+-- only rolcreatedb attribute should be true
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'dbcreator_login1'
+go
+~~START~~
+varchar#!#bit#!#bit
+dbcreator_login1#!#0#!#1
+~~END~~
+
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_login1 password=123
+
+-- should be able to create/drop database
+drop database dbcreator_db1
+go
+
+create database dbcreator_db3
+go
+
+drop database dbcreator_db3
+go
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+-- only member of sysadmin
+create database dbcreator_db1
+go
+
+drop user dbcreator_user1
+go
+
+alter server role sysadmin add member dbcreator_login1
+go
+
+alter server role dbcreator drop member dbcreator_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_login1 password=123
+
+-- should be 1
+select is_srvrolemember('sysadmin')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- both attribute should be true
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'dbcreator_login1'
+go
+~~START~~
+varchar#!#bit#!#bit
+dbcreator_login1#!#1#!#1
+~~END~~
+
+
+-- should be able to create/drop login
+create login test_dbcreator_l1 with password ='123'
+go
+
+drop login test_dbcreator_l1
+go
+
+-- should return 1
+select is_srvrolemember ('sysadmin')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- should return 1
+select is_srvrolemember ('dbcreator')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+-- make it member of dbcreator only
+alter server role sysadmin drop member dbcreator_login1
+go
+
+alter server role dbcreator add member dbcreator_login1
+go
+
+create user dbcreator_user1 for login dbcreator_login1
+go
+
+use dbcreator_db1
+go
+
+create user dbcreator_user1 for login dbcreator_login1
+go
+
+create user no_dbcreator_user1 for login no_dbcreator_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_login1 password=123
+-- Case 2 - negatives
+-- alter server role sysadmin should give permission denied
+Alter server role sysadmin add member no_dbcreator_login1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login dbcreator_login1 does not have permission to alter server role)~~
+
+
+-- alter server role dbcreator add member db roles should error out
+Alter server role dbcreator add member guest
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "guest" does not exist)~~
+
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+create role dummy_role
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_login1 password=123
+-- should error out
+Alter server role dbcreator add member dummy_role
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "dummy_role" does not exist)~~
+
+
+-- create login permission denied
+-- windows login
+create login [babel\dbcreator_l1] from windows;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login dbcreator_login1 does not have permission to create new login)~~
+
+
+-- password based login
+create login dbcreator_l2 with password = '123'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login dbcreator_login1 does not have permission to create new login)~~
+
+
+-- alter authorization on database permission denied
+alter authorization on database::dbcreator_db1 to no_dbcreator_login1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'no_dbcreator_login1', because it does not exist or you do not have permission.)~~
+
+
+-- alter login should give permission denied
+-- password based login
+alter login dbcreator_l2 with password = '123'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the login 'dbcreator_l2', because it does not exist or you do not have permission.)~~
+
+
+ALTER LOGIN dbcreator_l2 disable;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the login 'dbcreator_l2', because it does not exist or you do not have permission.)~~
+
+
+ALTER LOGIN dbcreator_l2 enable;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the login 'dbcreator_l2', because it does not exist or you do not have permission.)~~
+
+
+ALTER LOGIN no_dbcreator_login1 with default_database=dbcreator_db1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the login 'no_dbcreator_login1', because it does not exist or you do not have permission.)~~
+
+
+-- drop login permission denied
+drop login no_dbcreator_login1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'no_dbcreator_login1', because it does not exist or you do not have permission.)~~
+
+
+-- grant database permissions (only connect is supported)
+-- should give permission denied
+REVOKE CONNECT FROM no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Grantor does not have GRANT permission.)~~
+
+
+GRANT CONNECT TO no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Grantor does not have GRANT permission.)~~
+
+
+-- dbcreator login's mapped user should not have any priv
+select current_user, db_name()
+go
+~~START~~
+varchar#!#nvarchar
+dbcreator_user1#!#master
+~~END~~
+
+
+select suser_name()
+go
+~~START~~
+nvarchar
+dbcreator_login1
+~~END~~
+
+
+-- create objects/user permission denied
+create user dbcreator_l2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+create role dbcreator_role1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+create schema perm_denied_scm
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for database jdbc_testdb)~~
+
+
+create view perm_denied_v1 as select 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+
+create table perm_denied_tb1 (a int);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+
+select 1 into perm_denied_tb2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+
+create function perm_denied_func1() returns int as begin return 1 end;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+
+create procedure perm_denied_proc1 as begin select 1; end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+
+create type perm_denied_typ1 from int;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+
+create index perm_denied_index1 on dbcreator_tb1(a);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table dbcreator_tb1)~~
+
+
+CREATE FUNCTION perm_denied_func1() RETURNS TABLE AS RETURN ( SELECT 1 AS Value);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_dbo)~~
+
+
+-- DMLS on object permission denied
+Alter user no_dbcreator_user1 with DEFAULT_SCHEMA=dbcreator_scm1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change schema)~~
+
+
+Alter role dbcreator_rol add member no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login dbcreator_login1 does not have permission to alter role master_dbcreator_rol)~~
+
+
+Alter role dbcreator_rol drop member no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login dbcreator_login1 does not have permission to alter role master_dbcreator_rol)~~
+
+
+Alter table dbcreator_tb1 add b int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table dbcreator_tb1)~~
+
+
+Insert into dbcreator_tb1 values (1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_tb1)~~
+
+
+UPDATE dbcreator_tb1 SET a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_tb1)~~
+
+
+DELETE FROM dbcreator_tb1 WHERE a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_tb1)~~
+
+
+TRUNCATE TABLE dbcreator_tb1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_tb1)~~
+
+
+select * from dbcreator_tb1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_tb1)~~
+
+
+select * from dbcreator_v1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view dbcreator_v1)~~
+
+
+select dbcreator_func1()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbcreator_func1)~~
+
+
+exec dbcreator_proc1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure dbcreator_proc1)~~
+
+
+Enable trigger dbcreator_tggr1 on dbcreator_tb1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table dbcreator_tb1)~~
+
+
+Disable trigger dbcreator_tggr1 on dbcreator_tb1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table dbcreator_tb1)~~
+
+
+-- grant on objects permission denied
+Grant select on dbcreator_tb1 to no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_tb1)~~
+
+
+Grant update on dbcreator_v1 to no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_v1)~~
+
+
+Grant update on dbcreator_v1 to no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_v1)~~
+
+
+Grant exec on dbcreator_func1 to no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbcreator_func1)~~
+
+
+Grant exec on dbcreator_proc1 to no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbcreator_proc1)~~
+
+
+-- Revoke on objects permission denied
+Revoke select on dbcreator_tb1 from no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_tb1)~~
+
+
+Revoke update on dbcreator_v1 from no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_v1)~~
+
+
+Revoke update on dbcreator_v1 from no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_v1)~~
+
+
+Revoke exec on dbcreator_func1 from no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbcreator_func1)~~
+
+
+Revoke exec on dbcreator_proc1 from no_dbcreator_user1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbcreator_proc1)~~
+
+
+-- grant on schema
+-- permission denied
+grant select on dbcreator_v1 to no_dbcreator_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_v1)~~
+
+grant select on dbo.dbcreator_v1 to no_dbcreator_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_v1)~~
+
+grant execute on dbcreator_proc1 to no_dbcreator_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbcreator_proc1)~~
+
+grant execute on dbo.dbcreator_proc1 to no_dbcreator_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbcreator_proc1)~~
+
+
+-- revoke on schema
+-- permission denied
+revoke select on dbcreator_v1 from no_dbcreator_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_v1)~~
+
+revoke select on dbo.dbcreator_v1 from no_dbcreator_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_v1)~~
+
+revoke execute on dbcreator_proc1 from no_dbcreator_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbcreator_proc1)~~
+
+revoke execute on dbo.dbcreator_proc1 from no_dbcreator_user1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function dbcreator_proc1)~~
+
+
+-- drop object permission denied
+drop user dbcreator_l2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'dbcreator_l2', because it does not exist or you do not have permission.)~~
+
+
+drop role dbcreator_rol
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'dbcreator_rol', because it does not exist or you do not have permission.)~~
+
+
+drop schema dbcreator_scm1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of schema master_dbcreator_scm1)~~
+
+
+drop view dbcreator_show_role_mem
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view dbcreator_show_role_mem)~~
+
+
+drop TRIGGER dbcreator_tggr1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of relation dbcreator_tb1)~~
+
+
+drop table dbcreator_tb1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table dbcreator_tb1)~~
+
+
+drop view dbcreator_v1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view dbcreator_v1)~~
+
+
+drop function dbcreator_func1()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function dbcreator_func1)~~
+
+
+drop procedure dbcreator_proc1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of procedure dbcreator_proc1)~~
+
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+
+-- tsql database=dbcreator_db1
+-- dbcreator login should not get mapped to dbo if no user exist, it should disconnect
+drop user dbcreator_user1
+go
+
+-- terminate-tsql-conn database=dbcreator_db1
+
+-- tsql user=dbcreator_login1 password=123
+-- it should disconnect
+use dbcreator_db1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "dbcreator_login1" is not able to access the database "dbcreator_db1" under the current security context)~~
+
+
+-- terminate-tsql-conn user=dbcreator_login1 password=123
+
+-- tsql
+-- Case 3 - check unintended/unauthorized use of dbcreator
+drop role dummy_role
+go
+
+CREATE LOGIN dbcreator_restrict_new_login WITH password = '12345678';
+go
+
+ALTER SERVER ROLE sysadmin ADD MEMBER dbcreator_restrict_new_login;
+GO
+
+select * from dbcreator_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%dbcreator_%'
+go
+~~START~~
+varchar#!#varchar
+dbcreator#!#dbcreator_login1
+sysadmin#!#dbcreator_restrict_new_login
+sysadmin#!#jdbc_user
+~~END~~
+
+
+-- terminate-tsql-conn
+
+-- tsql user=dbcreator_restrict_new_login password=12345678
+select * from dbcreator_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%dbcreator_%'
+go
+~~START~~
+varchar#!#varchar
+dbcreator#!#dbcreator_login1
+sysadmin#!#dbcreator_restrict_new_login
+sysadmin#!#jdbc_user
+~~END~~
+
+
+select current_user, db_name()
+go
+~~START~~
+varchar#!#nvarchar
+dbo#!#master
+~~END~~
+
+
+CREATE ROLE dbcreator_restrictions_role;
+GO
+
+-- a tsql login should not be able to drop dbcreator explicitly from tsql port
+-- should be denied
+ALTER ROLE dbcreator_restrictions_role ADD MEMBER dbcreator;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_dbcreator" does not exist)~~
+
+
+DROP LOGIN dbcreator;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'dbcreator', because it does not exist or you do not have permission.)~~
+
+
+DROP ROLE dbcreator_restrictions_role;
+GO
+
+-- terminate-tsql-conn user=dbcreator_restrict_new_login password=12345678
+
+-- psql user=dbcreator_restrict_new_login password=12345678
+-- a tsql login should not be able to alter/grant/drop dbcreator from pg port
+ALTER ROLE dbcreator NOCREATEDB;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE dbcreator WITH PASSWORD '12345678';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE dbcreator VALID UNTIL 'infinity';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE dbcreator WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT dbcreator TO dbcreator_restrict_new_login;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT sysadmin TO dbcreator
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT dbcreator TO dbcreator
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT dbcreator_restrict_new_login TO dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE dbcreator FROM master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE master_dbo FROM dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+DROP ROLE dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET SESSION AUTHORIZATION dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set session authorization
+    Server SQLState: 42501)~~
+
+
+SET ROLE dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "dbcreator"
+    Server SQLState: 42501)~~
+
+
+-- psql
+-- normal PG user
+CREATE USER dbcreator_restrictions_pg_user WITH LOGIN CREATEROLE PASSWORD '12345678' inherit;
+go
+
+-- psql user=dbcreator_restrictions_pg_user password=12345678
+-- a normal psql user should not be able to alter/grant/drop dbcreator from pg port
+ALTER ROLE dbcreator NOCREATEDB;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- Altering a role by an underprivileged login should be restricted
+alter user dbcreator_restrict_new_login with password '123'
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to alter role
+  Detail: To change another role's password, the current user must have the CREATEROLE attribute and the ADMIN option on the role.
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE dbcreator WITH PASSWORD '12345678';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE dbcreator VALID UNTIL 'infinity';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE dbcreator WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT dbcreator TO dbcreator_restrict_new_login;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT dbcreator_restrict_new_login TO dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE dbcreator FROM master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE sysadmin FROM dbcreator
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE dbcreator FROM dbcreator
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE master_dbo FROM dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+DROP ROLE dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET SESSION AUTHORIZATION dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set session authorization
+    Server SQLState: 42501)~~
+
+
+SET ROLE dbcreator;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "dbcreator"
+    Server SQLState: 42501)~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'dbcreator_restrict_new_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+DROP USER dbcreator_restrictions_pg_user;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+
+ALTER SERVER ROLE sysadmin drop MEMBER dbcreator_restrict_new_login;
+GO
+
+DROP LOGIN dbcreator_restrict_new_login
+GO

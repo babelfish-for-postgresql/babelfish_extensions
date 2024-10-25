@@ -1,9 +1,25 @@
 -- tsql
+select is_srvrolemember('sysadmin', 'securityadmin')
+go
+
+select is_srvrolemember('securityadmin', 'sysadmin')
+go
+
 alter login securityadmin_login1 with password='123'
 go
 
 alter login no_securityadmin_login1 with password='123'
 go
+
+TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
+GO
+
+-- sp_helpsrvrolemember
+INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
+GO
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM sadm_sp_helpsrvrolemember_tbl where MemberName like '%securityadmin%'
+GO
 
 -- make login member of securityadmin
 Alter server role securityadmin add member securityadmin_login1
@@ -374,6 +390,16 @@ go
 
 create user securityadmin_user1 for login securityadmin_login1
 go
+
+TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
+GO
+
+-- sp_helpsrvrolemember
+INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
+GO
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM sadm_sp_helpsrvrolemember_tbl where MemberName like '%securityadmin%'
+GO
 
 -- terminate-tsql-conn
 

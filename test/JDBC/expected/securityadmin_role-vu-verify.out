@@ -1,9 +1,39 @@
 -- tsql
+select is_srvrolemember('sysadmin', 'securityadmin')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select is_srvrolemember('securityadmin', 'sysadmin')
+go
+~~START~~
+int
+0
+~~END~~
+
+
 alter login securityadmin_login1 with password='123'
 go
 
 alter login no_securityadmin_login1 with password='123'
 go
+
+TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
+GO
+
+-- sp_helpsrvrolemember
+INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
+GO
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM sadm_sp_helpsrvrolemember_tbl where MemberName like '%securityadmin%'
+GO
+~~START~~
+varchar#!#varchar#!#int
+~~END~~
+
 
 -- make login member of securityadmin
 Alter server role securityadmin add member securityadmin_login1
@@ -262,6 +292,7 @@ FROM sys.server_principals ORDER BY name
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#bit
+dbcreator#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
 jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1#!#0
 no_securityadmin_login1#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1#!#0
 public#!#R#!#SERVER_ROLE#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0
@@ -552,6 +583,23 @@ go
 
 create user securityadmin_user1 for login securityadmin_login1
 go
+
+TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
+GO
+
+-- sp_helpsrvrolemember
+INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM sadm_sp_helpsrvrolemember_tbl where MemberName like '%securityadmin%'
+GO
+~~START~~
+varchar#!#varchar#!#int
+securityadmin#!#securityadmin_login1#!#1
+~~END~~
+
 
 -- terminate-tsql-conn
 

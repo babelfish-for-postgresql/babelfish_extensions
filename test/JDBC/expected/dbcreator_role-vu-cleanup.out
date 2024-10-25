@@ -1,0 +1,66 @@
+-- tsql
+drop user dbcreator_user1
+go
+
+drop user no_dbcreator_user1
+go
+
+drop login dbcreator_login1
+go
+
+drop login dbcreator_l2
+go
+
+use dbcreator_db1
+go
+
+drop user no_dbcreator_user1
+go
+
+use master
+go
+
+drop login no_dbcreator_login1
+go
+
+drop database dbcreator_db1
+go
+
+drop schema dbcreator_scm1
+go
+
+drop view dbcreator_show_role_mem
+go
+
+drop TRIGGER dbcreator_tggr1
+go
+
+DROP TABLE dbc_sp_helpsrvrolemember_tbl
+GO
+
+drop table dbcreator_tb1
+go
+
+drop view dbcreator_v1
+go
+
+drop function dbcreator_func1()
+go
+
+drop procedure dbcreator_proc1
+go
+
+drop procedure dbcreator_create_database_p1
+go
+
+drop procedure dbcreator_drop_database_p1
+go
+
+drop procedure dbcreator_add_mem_p1
+go
+
+drop procedure dbcreator_drop_mem_p1
+go
+
+drop role dbcreator_rol
+go

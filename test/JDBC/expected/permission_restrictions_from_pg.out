@@ -12,8 +12,7 @@ grant sysadmin to permission_restrictions_tsql_login;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to grant role "sysadmin"
-  Detail: Only roles with the ADMIN option on role "sysadmin" may grant this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -32,8 +31,7 @@ grant sysadmin to permission_restrictions_psql_user;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to grant role "sysadmin"
-  Detail: Only roles with the ADMIN option on role "sysadmin" may grant this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -63,8 +61,7 @@ grant sysadmin to permission_restrictions_tsql_login;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to grant role "sysadmin"
-  Detail: Only roles with the ADMIN option on role "sysadmin" may grant this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -83,8 +80,7 @@ grant sysadmin to permission_restrictions_psql_user;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to grant role "sysadmin"
-  Detail: Only roles with the ADMIN option on role "sysadmin" may grant this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 

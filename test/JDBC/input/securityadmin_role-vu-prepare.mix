@@ -32,6 +32,11 @@ INNER JOIN sys.server_principals AS members
     ON server_role_members.member_principal_id = members.principal_id order by MemberPrincipalName;
 GO
 
+CREATE TABLE sadm_sp_helpsrvrolemember_tbl (ServerRole sys.SYSNAME,
+											MemberName sys.SYSNAME,
+											MemberSID sys.VARBINARY(85));
+GO
+
 create table securityadmin_tb1(a int)
 go
 

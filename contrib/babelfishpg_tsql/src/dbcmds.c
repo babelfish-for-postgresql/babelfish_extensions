@@ -512,7 +512,6 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 {
 	int16       old_dbid;
 	char        *old_dbname;
-	Oid         datdba;
 	Datum       *new_record;
 	bool        *new_record_nulls;
 	Relation    sysdatabase_rel;
@@ -529,6 +528,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	const char  *old_createrole_self_grant;
 	ListCell    *option;
 	const char  *database_collation_name = NULL;
+	Oid         datdba;
 
 	/* Check options */
 	foreach(option, options)
@@ -576,7 +576,10 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	PG_TRY();
 	{
 		SetUserIdAndSecContext(GetSessionUserId(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		if (!have_createdb_privilege())
+
+		/* Session user must be member of sysadmin or dbcreator fixed server role */
+		if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+							!has_privs_of_role(GetSessionUserId(), get_dbcreator_oid()))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("permission denied to create database")));
@@ -586,10 +589,6 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 	}
 	PG_END_TRY();
-
-	/* dbowner is always sysadmin */
-	datdba = get_role_oid("sysadmin", false);
-	check_can_set_role(GetSessionUserId(), datdba);
 
 	/* For simplicity, do not allow bbf db name clides with pg dbnames */
 	/* TODO: add another check in orignal createdb */
@@ -633,6 +632,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	old_dbname = get_cur_db_name();
 	set_cur_db(dbid, dbname);	/* temporarily set current dbid as the new id */
 	dbo_role = get_dbo_role_name(dbname);
+	datdba = get_sysadmin_oid();
 
 	PG_TRY();
 	{
@@ -774,7 +774,9 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		const char *login = GetUserNameFromId(roleid, false);
 		bool		login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 
-		if (!(has_privs_of_role(roleid, get_role_oid("sysadmin", false)) || login_is_db_owner))
+		/* Check if login has required privilege to drop the database */
+		if (!(has_privs_of_role(roleid, get_sysadmin_oid()) 
+			|| has_privs_of_role(roleid, get_dbcreator_oid()) || login_is_db_owner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   dbname);
 

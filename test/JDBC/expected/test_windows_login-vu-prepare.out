@@ -7,6 +7,7 @@ $$ begin
     end if; 
 end $$;
 GO
+-- terminate-psql-conn
 
 -- tsql
 CREATE DATABASE ad_db;

@@ -1,0 +1,92 @@
+-- tsql
+create login dbcreator_login1 with password = '123'
+go
+
+create login no_dbcreator_login1 with password = '123'
+go
+
+create login dbcreator_l2 with password = '123'
+go
+
+create user dbcreator_user1 for login dbcreator_login1
+go
+
+create user no_dbcreator_user1 for login no_dbcreator_login1
+go
+
+-- tsql
+create role dbcreator_rol
+go
+
+create database dbcreator_db1
+go
+
+create schema dbcreator_scm1
+go
+
+CREATE VIEW dbcreator_show_role_mem AS
+SELECT 
+roles.name AS RolePrincipalName
+, members.name AS MemberPrincipalName
+FROM sys.server_role_members AS server_role_members
+INNER JOIN sys.server_principals AS roles
+    ON server_role_members.role_principal_id = roles.principal_id
+INNER JOIN sys.server_principals AS members 
+    ON server_role_members.member_principal_id = members.principal_id order by MemberPrincipalName;
+GO
+
+CREATE TABLE dbc_sp_helpsrvrolemember_tbl (ServerRole sys.SYSNAME,
+											MemberName sys.SYSNAME,
+											MemberSID sys.VARBINARY(85));
+GO
+
+create table dbcreator_tb1(a int)
+go
+
+create view dbcreator_v1 as select 1;
+go
+
+create function dbcreator_func1() returns int as begin return 1 end;
+go
+
+create procedure dbcreator_proc1 as begin select 1; end
+go
+
+CREATE TRIGGER dbcreator_tggr1 on dbcreator_tb1 AFTER INSERT AS BEGIN END;
+go
+
+create procedure dbcreator_create_database_p1 as begin create database dbcreator_db_new; end
+go
+
+Grant execute on dbcreator_create_database_p1 to PUBLIC;
+go
+
+create procedure dbcreator_drop_database_p1 as begin drop database dbcreator_db_new; end
+go
+
+Grant execute on dbcreator_drop_database_p1 to PUBLIC;
+go
+
+create procedure dbcreator_add_mem_p1 as begin Alter server role dbcreator add member no_dbcreator_login1; end
+go
+
+Grant execute on dbcreator_add_mem_p1 to PUBLIC;
+go
+
+create procedure dbcreator_drop_mem_p1 as begin Alter server role dbcreator drop member no_dbcreator_login1; end
+go
+
+Grant execute on dbcreator_drop_mem_p1 to PUBLIC;
+go
+
+use dbcreator_db1
+go
+
+create user dbcreator_user1 for login dbcreator_login1
+go
+
+create user no_dbcreator_user1 for login no_dbcreator_login1
+go
+
+use master
+go
