@@ -180,3 +180,541 @@ smallint
 ~~END~~
 
 
+-- Trying resource name greater than 255 characters (1200 characters)
+-- Should return success return code i.e. 0
+DECLARE	@return_value int;
+exec    @return_value = sp_getapplock @Resource = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        @LockMode = 'SHARED', @LockOwner = 'session'
+SELECT @return_value;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Because resource name is expected to be only 255 characters long,
+-- it doesn't matter what the characters are beyond the 255th character
+-- Thus sp_releaseapplock request will succeed i.e return code will be 0
+DECLARE	@return_value int;
+exec    @return_value = sp_releaseapplock @Resource = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        @LockOwner = 'session';
+SELECT @return_value;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Let's try the same example again but this time, sp_releaseapplock
+-- is passed a resource name which differs onwards from the 254th character
+-- Thus sp_releaseapplock lock request will fail i.e it will thorw an error
+DECLARE	@return_value int;
+exec    @return_value = sp_getapplock @Resource = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        @LockMode = 'SHARED', @LockOwner = 'session'
+SELECT @return_value;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec    sp_releaseapplock @Resource = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        @LockOwner = 'session';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: lock TsqlApplockSyncLock is not held)~~
+
+
+-- Trying lockmode greater than 255 characters (1200 characters)
+-- Since lockmode is invalid, return code is -999
+BEGIN TRAN
+DECLARE	@return_value int;
+exec    @return_value = sp_getapplock @Resource = 'lock1',
+        @LockMode = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+SELECT @return_value;
+COMMIT
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Option 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' not recognized for '@LockMode' parameter  Server SQLState: S0001)~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- Checking string arguments of edge case lengths to sp_getapplock_function
+-- @Resource = 254 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', 'exclusive');
+SELECT sys.sp_releaseapplock_function('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @Resource = 255 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', 'exclusive');
+SELECT sys.sp_releaseapplock_function('ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @Resource = 256 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', 'exclusive');
+SELECT sys.sp_releaseapplock_function('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @Lockmode = 31 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'ccccccccccccccccccccccccccccccc');
+SELECT sys.sp_releaseapplock_function('my_lock');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: lock TsqlApplockSyncLock is not held)~~
+
+
+-- @Lockmode = 32 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'cccccccccccccccccccccccccccccccc');
+SELECT sys.sp_releaseapplock_function('my_lock');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: lock TsqlApplockSyncLock is not held)~~
+
+
+-- @Lockmode = 33 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'ccccccccccccccccccccccccccccccccc');
+SELECT sys.sp_releaseapplock_function('my_lock');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: lock TsqlApplockSyncLock is not held)~~
+
+
+-- @LockOwner = 31 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'ccccccccccccccccccccccccccccccc');
+SELECT sys.sp_releaseapplock_function('my_lock', 'ccccccccccccccccccccccccccccccc');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @LockOwner = 32 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'cccccccccccccccccccccccccccccccc');
+SELECT sys.sp_releaseapplock_function('my_lock', 'cccccccccccccccccccccccccccccccc');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @LockOwner = 33 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'ccccccccccccccccccccccccccccccccc');
+SELECT sys.sp_releaseapplock_function('my_lock', 'ccccccccccccccccccccccccccccccccc');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @dbprincipal = 31 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'TRANSACTION', -99, 'ccccccccccccccccccccccccccccccc');
+SELECT sys.sp_releaseapplock_function('my_lock', 'TRANSACTION', 'ccccccccccccccccccccccccccccccc');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @dbprincipal = 32 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'TRANSACTION', -99, 'cccccccccccccccccccccccccccccccc');
+SELECT sys.sp_releaseapplock_function('my_lock', 'TRANSACTION', 'cccccccccccccccccccccccccccccccc');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @dbprincipal = 33 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'TRANSACTION', -99, 'ccccccccccccccccccccccccccccccccc');
+SELECT sys.sp_releaseapplock_function('my_lock', 'TRANSACTION', 'ccccccccccccccccccccccccccccccccc');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- Checking string arguments of length one to sp_getapplock_function
+-- @Resource = 'd'
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('d', 'exclusive');
+SELECT sys.sp_releaseapplock_function('d');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @LockMode = 'd'
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'd');
+SELECT sys.sp_releaseapplock_function('my_lock');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: lock TsqlApplockSyncLock is not held)~~
+
+
+-- @LockOwner = 'd'
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'd');
+SELECT sys.sp_releaseapplock_function('my_lock', 'd');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @dbprincipal = 'd'
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'TRANSACTION', -99, 'd');
+SELECT sys.sp_releaseapplock_function('my_lock', 'TRANSACTION', 'd');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- Checking empty string arguments to sp_getapplock_function
+-- @Resource = ''
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('', 'exclusive');
+SELECT sys.sp_releaseapplock_function('');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @LockMode = ''
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', '');
+SELECT sys.sp_releaseapplock_function('my_lock');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: lock TsqlApplockSyncLock is not held)~~
+
+
+-- @LockOwner = ''
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', '');
+SELECT sys.sp_releaseapplock_function('my_lock', '');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @dbprincipal = ''
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'TRANSACTION', -99, '');
+SELECT sys.sp_releaseapplock_function('my_lock', 'TRANSACTION', '');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- Checking NULL string arguments to sp_getapplock_function
+-- @Resource = NULL
+BEGIN TRAN
+SELECT sys.sp_getapplock_function(NULL, 'exclusive');
+SELECT sys.sp_releaseapplock_function(NULL);
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @LockMode = NULL
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', NULL);
+SELECT sys.sp_releaseapplock_function('my_lock');
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: lock TsqlApplockSyncLock is not held)~~
+
+
+-- @LockOwner = NULL
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', NULL);
+SELECT sys.sp_releaseapplock_function('my_lock', NULL);
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- @dbprincipal = NULL
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('my_lock', 'shared', 'TRANSACTION', -99, NULL);
+SELECT sys.sp_releaseapplock_function('my_lock', 'TRANSACTION', NULL);
+COMMIT
+GO
+~~START~~
+int
+-999
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- Checking if there are any issues if the warning message buffer is of edge case lengths
+-- Here we will execute a SQL Batch that will send a warning message of the format
+-- "Wrong LockOwner for lock resource \'%s\', it is a Transaction lock."
+-- To get above message of length 127, @Resource = 64 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', 'shared');
+SELECT sys.sp_releaseapplock_function('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', 'SESSION');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- To get above message of length 128, @Resource = 65 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', 'shared');
+SELECT sys.sp_releaseapplock_function('ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', 'SESSION');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
+
+-- To get above message of length 129, @Resource = 66 characters
+BEGIN TRAN
+SELECT sys.sp_getapplock_function('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', 'shared');
+SELECT sys.sp_releaseapplock_function('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', 'SESSION');
+COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+-999
+~~END~~
+
