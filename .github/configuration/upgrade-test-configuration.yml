@@ -101,7 +101,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '14.14',
+      version: '14.15',
       upgrade-type: null
     },
     { 
@@ -161,7 +161,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 16.4,
+      version: 16.5,
       upgrade-type: null
     },
     { 
@@ -177,11 +177,11 @@ upgrade-version: [{
       upgrade-type: null
     },
     {
-      version: '14.14',
+      version: '14.15',
       upgrade-type: major
     },
     {
-      version: 15.9,
+      version: '15.10',
       upgrade-type: major
     },
     { 
@@ -207,7 +207,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 15.9,
+      version: '15.10',
       upgrade-type: null
     },
     { 
@@ -220,7 +220,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 15.9,
+      version: '15.10',
       upgrade-type: null
     },
     { 
@@ -237,7 +237,7 @@ upgrade-version: [{
       upgrade-type: null
     },
     {
-      version: 15.9,
+      version: '15.10',
       upgrade-type: minor
     },
     { 
