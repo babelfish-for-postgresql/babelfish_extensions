@@ -562,6 +562,7 @@ db_accessadmin
 xml_exist-before-16_5
 GRANT_SCHEMA-before-15_9-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
+dbcreator_role
 securityadmin_role
 datareader_datawriter
 BABEL-5186

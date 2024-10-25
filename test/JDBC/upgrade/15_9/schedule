@@ -548,6 +548,7 @@ securityadmin_role
 cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-5119
+dbcreator_role
 db_accessadmin
 BABEL-CASE_EXPR
 datareader_datawriter

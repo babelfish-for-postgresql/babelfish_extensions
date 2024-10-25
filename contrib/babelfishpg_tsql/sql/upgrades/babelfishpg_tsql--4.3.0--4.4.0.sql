@@ -82,17 +82,22 @@ DROP PROCEDURE sys.create_db_roles_during_upgrade();
 DO
 LANGUAGE plpgsql
 $$
-DECLARE securityadmin TEXT;
+DECLARE
+    existing_server_roles TEXT;
 BEGIN
-    IF EXISTS (
-               SELECT FROM pg_catalog.pg_roles
-               WHERE  rolname = 'securityadmin') 
-        THEN
-            RAISE EXCEPTION 'Role "securityadmin" already exists.';
+    SELECT STRING_AGG(rolname::text, ', ')
+    INTO existing_server_roles FROM pg_catalog.pg_roles
+    WHERE rolname IN ('securityadmin', 'dbcreator');
+        
+    IF existing_server_roles IS NOT NULL THEN
+            RAISE EXCEPTION 'The following role(s) already exist(s): %', existing_server_roles;   
     ELSE
         EXECUTE format('CREATE ROLE securityadmin CREATEROLE INHERIT PASSWORD NULL');
         EXECUTE format('GRANT securityadmin TO bbf_role_admin WITH ADMIN TRUE');
         CALL sys.babel_initialize_logins('securityadmin');
+        EXECUTE format('CREATE ROLE dbcreator CREATEDB INHERIT PASSWORD NULL');
+        EXECUTE format('GRANT dbcreator TO bbf_role_admin WITH ADMIN TRUE');
+        CALL sys.babel_initialize_logins('dbcreator');
     END IF;
 END;
 $$;
@@ -183,13 +188,13 @@ DECLARE login_valid BOOLEAN;
 BEGIN
 	role  := TRIM(trailing from LOWER(role));
 	login := TRIM(trailing from LOWER(login));
-	
+
 	login_valid = (login = suser_name() COLLATE sys.database_default) OR 
 		(EXISTS (SELECT name
 	 			FROM sys.server_principals
 		 	 	WHERE 
 				LOWER(name) = login COLLATE sys.database_default
-				AND type = 'S'));
+				AND type IN ('S', 'R')));
  	
  	IF NOT login_valid THEN
  		RETURN NULL;
@@ -197,8 +202,10 @@ BEGIN
     ELSIF role = 'public' COLLATE sys.database_default THEN
     	RETURN 1;
 	
-    ELSIF role = 'sysadmin' COLLATE sys.database_default OR role = 'securityadmin' COLLATE sys.database_default THEN
-	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER') OR pg_has_role(login::TEXT, 'sysadmin'::TEXT, 'MEMBER'));
+ 	ELSIF role COLLATE sys.database_default IN ('sysadmin', 'securityadmin', 'dbcreator') THEN
+	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER')
+                        OR ((login COLLATE sys.database_default NOT IN ('sysadmin', 'securityadmin', 'dbcreator'))
+					        AND pg_has_role(login::TEXT, 'sysadmin'::TEXT, 'MEMBER')));
 	    IF has_role THEN
 			RETURN 1;
 		ELSE
@@ -209,19 +216,68 @@ BEGIN
             'serveradmin',
             'setupadmin',
             'processadmin',
-            'dbcreator',
             'diskadmin',
             'bulkadmin') THEN 
     	RETURN 0;
  	
     ELSE
  		  RETURN NULL;
-    END IF;
+ 	END IF;
 	
  	EXCEPTION WHEN OTHERS THEN
 	 	  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql STABLE;
+
+-- sp_helpsrvrolemember
+CREATE OR REPLACE PROCEDURE sys.sp_helpsrvrolemember("@srvrolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If server role is not specified, return info for all server roles
+	IF @srvrolename IS NULL
+	BEGIN
+		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
+			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.type = 'R' AND Ext2.type != 'Z'
+		ORDER BY ServerRole, MemberName;
+	END
+	-- If a valid server role is specified, return its member info
+	-- If the role is a SQL server predefined role (i.e. serveradmin), 
+	-- do not raise an error even if it does not exist
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_login_ext
+					WHERE (rolname = RTRIM(@srvrolename)
+					OR lower(rolname) = lower(RTRIM(@srvrolename)))
+					AND type = 'R')
+					OR lower(RTRIM(@srvrolename)) IN (
+					'serveradmin', 'setupadmin', 'processadmin',
+					'diskadmin', 'bulkadmin')
+	BEGIN
+		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
+			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.type = 'R' AND Ext2.type != 'Z'
+		AND (Ext1.rolname = RTRIM(@srvrolename) OR lower(Ext1.rolname) = lower(RTRIM(@srvrolename)))
+		ORDER BY ServerRole, MemberName;
+	END
+	-- If the specified server role is not valid
+	ELSE
+		RAISERROR('%s is not a known fixed role.', 16, 1, @srvrolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
 -- SYSLOGINS
 CREATE OR REPLACE VIEW sys.syslogins
@@ -277,7 +333,12 @@ CAST(0 AS INT) AS serveradmin,
 CAST(0 AS INT) AS setupadmin,
 CAST(0 AS INT) AS processadmin,
 CAST(0 AS INT) AS diskadmin,
-CAST(0 AS INT) AS dbcreator,
+CAST(
+    CASE
+        WHEN is_srvrolemember('dbcreator', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS dbcreator,
 CAST(0 AS INT) AS bulkadmin
 FROM sys.server_principals AS Base
 WHERE Base.type in ('S', 'U');

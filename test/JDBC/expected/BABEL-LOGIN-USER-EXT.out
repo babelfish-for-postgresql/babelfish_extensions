@@ -281,7 +281,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-4
+5
 ~~END~~
 
 
@@ -292,7 +292,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-5
+6
 ~~END~~
 
 
@@ -304,7 +304,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-6
+7
 ~~END~~
 
 
@@ -392,7 +392,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-5
+6
 ~~END~~
 
 
@@ -422,7 +422,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-4
+5
 ~~END~~
 
 

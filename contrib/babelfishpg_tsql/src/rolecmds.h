@@ -56,6 +56,7 @@ extern void drop_bbf_roles(ObjectAccessType access,
 extern bool role_is_sa(Oid roleid);
 extern Oid get_bbf_role_admin_oid(void);
 extern Oid get_securityadmin_oid(void);
+extern Oid get_dbcreator_oid(void);
 extern Oid get_sa_role_oid(void);
 extern bool tsql_has_pgstat_permissions(Oid roleid);
 extern bool tsql_has_linked_srv_permissions(Oid roleid);
