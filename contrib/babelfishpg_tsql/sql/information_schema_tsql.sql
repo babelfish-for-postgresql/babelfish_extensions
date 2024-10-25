@@ -520,7 +520,7 @@ CREATE VIEW information_schema_tsql.table_constraints AS
 
     WHERE nc.oid = c.connamespace AND nr.oid = r.relnamespace
           AND c.conrelid = r.oid
-          AND c.contype NOT IN ('t', 'x')
+          AND c.contype IN ('c', 'f', 'p', 'u')
           AND r.relkind IN ('r', 'p')
           AND relispartition = false
           AND (NOT pg_is_other_temp_schema(nr.oid))
