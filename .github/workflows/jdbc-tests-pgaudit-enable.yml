@@ -81,6 +81,11 @@ jobs:
         timeout-minutes: 60
         uses: ./.github/composite-actions/run-jdbc-tests
 
+      - name: Run Dotnet Tests
+        id: run-dotnet-tests
+        if: always() && steps.install-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-and-run-dotnet
+
       - name: Start secondary server
         id: start-secondary
         if: always() && steps.jdbc.outcome == 'success'

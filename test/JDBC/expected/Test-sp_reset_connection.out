@@ -1,5 +1,12 @@
 -- tsql
 -- 1. Test resets GUC variables
+SELECT @@lock_timeout;
+GO
+~~START~~
+int
+-1
+~~END~~
+
 SET lock_timeout 0;
 GO
 SELECT @@lock_timeout;
@@ -10,12 +17,12 @@ int
 ~~END~~
 
 EXEC sys.sp_reset_connection
--- TODO: GUC is not resetting
+GO
 SELECT @@lock_timeout;
 GO
 ~~START~~
 int
-0
+-1
 ~~END~~
 
 
