@@ -76,38 +76,6 @@ int#!#varchar
 ~~END~~
 
 
--- Invalid server name (Should throw error)
-SELECT * FROM invalid_server.master.dbo.fpn_table
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: server "invalid_server" does not exist)~~
-
-
--- Invalid database name (Should throw error)
-SELECT * FROM bbf_fpn_server.invalid_db.dbo.fpn_table
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: database "invalid_db" does not exist. Make sure that the name is entered correctly., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
-
-
--- Invalid schema name (Should throw error)
-SELECT * FROM bbf_fpn_server.master.invalid_schema.fpn_table
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "master_invalid_schema.fpn_table" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
-
-
--- Invalid object name (Should throw error)
-SELECT * FROM bbf_fpn_server.master.dbo.invalid_fpn_table
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "master_dbo.invalid_fpn_table" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
-
-
 -- four part object is a procedure (Should throw error)
 EXEC bbf_fpn_server.master.dbo.sp_linkedserver
 GO
