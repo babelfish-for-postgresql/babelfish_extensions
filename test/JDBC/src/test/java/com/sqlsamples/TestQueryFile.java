@@ -268,11 +268,16 @@ public class TestQueryFile {
     // close connections that are not null after every test
     @AfterEach
     public void closeConnections() throws SQLException, ClassNotFoundException, Throwable {
+        if (isUpgradeTestMode) {
+            if (connection_bbl != null) connection_bbl.close();
+            connection_bbl = null;
+            return;
+        }
         if (connection_bbl == null)
             return;
         try{
             connection_bbl.createStatement().execute("EXEC sys.sp_reset_connection");
-            }
+        }
         catch (Exception e) {
             e.printStackTrace();
         }

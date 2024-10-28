@@ -162,14 +162,14 @@ public class JDBCCrossDialect {
     }
 
     void closeConnectionsUtil (HashMap<String, Connection> connectionMap, BufferedWriter bw, Logger logger) {
-        boolean skipFirst = false;
+        boolean needSkipFirst = isUpgradeTestMode ? false : true;
         Iterator<Map.Entry<String, Connection>> iterator = connectionMap.entrySet().iterator();
 
         while (iterator.hasNext()) {
             Map.Entry<String, Connection> entry = iterator.next();
             Connection connection = entry.getValue();
 
-            if (skipFirst) {
+            if (!needSkipFirst) {
                 try {
                     connection.close();
                 } catch (SQLException e) {
@@ -177,7 +177,7 @@ public class JDBCCrossDialect {
                 }
             }
             else
-                skipFirst = true;
+                needSkipFirst = false;
         }
     }
 
