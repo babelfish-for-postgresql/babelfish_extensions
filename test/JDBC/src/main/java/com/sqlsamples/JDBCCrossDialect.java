@@ -162,17 +162,23 @@ public class JDBCCrossDialect {
     }
 
     void closeConnectionsUtil (HashMap<String, Connection> connectionMap, BufferedWriter bw, Logger logger) {
-        connectionMap.forEach(
-            (connectionAttribute, connection) -> {
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (SQLException e) {
-                        handleSQLExceptionWithFile(e, bw, logger);
-                    }
+        boolean skipFirst = false;
+        Iterator<Map.Entry<String, Connection>> iterator = connectionMap.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Map.Entry<String, Connection> entry = iterator.next();
+            Connection connection = entry.getValue();
+
+            if (skipFirst) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    handleSQLExceptionWithFile(e, bw, logger);
                 }
             }
-        );
+            else
+                skipFirst = true;
+        }
     }
 
     void closeConnections (BufferedWriter bw, Logger logger) {
